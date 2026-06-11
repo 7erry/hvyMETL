@@ -45,11 +45,12 @@ const BOUNDED_CHILDREN_THRESHOLD = 100;
  */
 export function sqlTypeToBsonType(sqlType: string): string {
   const normalized = sqlType.toUpperCase();
-  if (/INT/.test(normalized)) return 'long';
-  if (/(REAL|FLOA|DOUB|NUMERIC|DECIMAL)/.test(normalized)) return 'double';
-  if (/BOOL/.test(normalized)) return 'bool';
-  if (/(DATE|TIME)/.test(normalized)) return 'date';
-  if (/BLOB/.test(normalized)) return 'binData';
+  if (/(^|\b)(INT64|INT32|INT16|INT8|INTEGER|INT|SMALLINT|BIGINT|TINYINT)\b/.test(normalized)) return 'long';
+  if (/(^|\b)(FLOAT64|FLOAT32|REAL|FLOA|DOUB|NUMERIC|DECIMAL)\b/.test(normalized)) return 'double';
+  if (/(^|\b)(BOOL|BOOLEAN)\b/.test(normalized)) return 'bool';
+  if (/(DATE|TIME|TIMESTAMP)/.test(normalized)) return 'date';
+  if (/(BLOB|BYTES)/.test(normalized)) return 'binData';
+  if (/(STRING|CHAR|CLOB|TEXT|VARCHAR|NVARCHAR)/.test(normalized)) return 'string';
   return 'string';
 }
 

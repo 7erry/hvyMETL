@@ -95,3 +95,81 @@ describe('parseDdlToModel', () => {
     });
   });
 });
+
+const DB2_DDL = `
+CREATE TABLE "SALES"."CUSTOMERS" (
+  "CUSTOMER_ID" INTEGER NOT NULL GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  "NAME" VARCHAR(100) NOT NULL
+);
+
+CREATE TABLE "SALES"."ORDERS" (
+  "ORDER_ID" INTEGER NOT NULL GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  "CUSTOMER_ID" INTEGER NOT NULL,
+  "ORDER_DATE" DATE NOT NULL,
+  CONSTRAINT FK_ORDERS_CUST FOREIGN KEY ("CUSTOMER_ID") REFERENCES "SALES"."CUSTOMERS" ("CUSTOMER_ID")
+);
+`;
+
+const COCKROACH_DDL = `
+CREATE TABLE IF NOT EXISTS users (
+  id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
+  email STRING NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS orders (
+  id INT8 NOT NULL PRIMARY KEY,
+  user_id UUID NOT NULL REFERENCES users(id),
+  total DECIMAL(12,2) NOT NULL
+);
+`;
+
+const SPANNER_DDL = `
+CREATE TABLE Singers (
+  SingerId INT64 NOT NULL,
+  FirstName STRING(1024),
+  LastName STRING(1024),
+  SingerInfo BYTES(MAX)
+) PRIMARY KEY (SingerId);
+
+CREATE TABLE Albums (
+  SingerId INT64 NOT NULL,
+  AlbumId INT64 NOT NULL,
+  AlbumTitle STRING(MAX) NOT NULL
+) PRIMARY KEY (SingerId, AlbumId),
+  INTERLEAVE IN PARENT Singers ON DELETE CASCADE;
+`;
+
+describe('parseDdlToModel — additional dialects', () => {
+  it('parses IBM Db2 schema-qualified tables and quoted FK references', () => {
+    const model = parseDdlToModel(DB2_DDL, 'db2');
+    expect(model.tables.map((t) => t.name)).toContain('SALES.CUSTOMERS');
+    expect(model.tables.map((t) => t.name)).toContain('SALES.ORDERS');
+    const orders = model.tables.find((t) => t.name === 'SALES.ORDERS');
+    expect(orders?.foreignKeys).toEqual([
+      { column: 'CUSTOMER_ID', referencesTable: 'CUSTOMERS', referencesColumn: 'CUSTOMER_ID' },
+    ]);
+  });
+
+  it('parses CockroachDB IF NOT EXISTS and PostgreSQL-style types', () => {
+    const model = parseDdlToModel(COCKROACH_DDL, 'cockroachdb');
+    expect(model.tables).toHaveLength(2);
+    const orders = model.tables.find((t) => t.name === 'orders');
+    expect(orders?.columns[0]).toMatchObject({ name: 'id', sqlType: 'INT8', bsonType: 'long' });
+    expect(orders?.foreignKeys[0]?.referencesTable).toBe('users');
+  });
+
+  it('parses Google Cloud Spanner trailing PRIMARY KEY and interleaved tables', () => {
+    const model = parseDdlToModel(SPANNER_DDL, 'spanner');
+    const singers = model.tables.find((t) => t.name === 'Singers');
+    const albums = model.tables.find((t) => t.name === 'Albums');
+    expect(singers?.primaryKey).toEqual(['SingerId']);
+    expect(albums?.primaryKey).toEqual(['SingerId', 'AlbumId']);
+    expect(singers?.columns[0]).toMatchObject({ name: 'SingerId', sqlType: 'INT64', bsonType: 'long' });
+    expect(singers?.columns[3]).toMatchObject({ name: 'SingerInfo', sqlType: 'BYTES(MAX)', bsonType: 'binData' });
+  });
+
+  it('parses Amazon Aurora PostgreSQL DDL (PostgreSQL-compatible)', () => {
+    const model = parseDdlToModel(SAMPLE, 'aurora-postgresql');
+    expect(model.tables).toHaveLength(2);
+  });
+});

@@ -52,7 +52,7 @@ editable text, per-file download, and **Download all**. Artifacts persist in
 | Feature | How to use |
 | --- | --- |
 | **Instant Schema Import** | Paste DDL in the sidebar → **Import Query** |
-| **Broad database support** | Dialect selector: PostgreSQL, MySQL, SQLite, MSSQL, ClickHouse, Oracle (DDL paste); **SQLite file** upload is live |
+| **Broad database support** | Dialect selector: PostgreSQL, MySQL, SQLite, MSSQL, ClickHouse, Oracle, IBM Db2, CockroachDB, Amazon Aurora (PostgreSQL/MySQL), Google Cloud Spanner (DDL paste); **SQLite file** upload is live |
 | **Templates** | Dropdown (Laravel, Django, Twitter, catalog, iot, cms) → **Load template** |
 | **Customizable ER diagrams** | Drag/zoom canvas, FK edges, minimap (React Flow) |
 | **Table details** | Click a table on the canvas or in the sidebar list |
@@ -86,6 +86,19 @@ HVYMETL_SOURCE_DB=/path/to/source.db   # optional if you upload SQLite in the UI
 
 Then **Run Full Pipeline** in the header. The modal shows what is configured vs missing
 and accepts overrides for this session only (Mongo URI is never stored in `sessionStorage`).
+
+### Supported SQL dialects
+
+| Dialect | Import |
+| --- | --- |
+| SQLite | **File upload** or DDL paste |
+| PostgreSQL, MySQL, MSSQL, ClickHouse, Oracle | DDL paste |
+| IBM Db2 | DDL paste — schema-qualified tables (`SALES.ORDERS`), quoted FKs |
+| CockroachDB | DDL paste — PostgreSQL-compatible (`IF NOT EXISTS`, `INT8`) |
+| Amazon Aurora (PostgreSQL / MySQL) | DDL paste — same rules as PostgreSQL or MySQL |
+| Google Cloud Spanner | DDL paste — trailing `PRIMARY KEY`, `INT64` / `STRING` / `BYTES` |
+
+Full dialect IDs and parser notes: [docs/13-web-ui.md §5](../docs/13-web-ui.md#5-supported-sql-dialects).
 
 ### CLI parity
 

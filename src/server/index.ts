@@ -10,6 +10,7 @@ import { existsSync, mkdirSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createSqliteAdapter } from '../adapters/sqlite.js';
+import { DIALECTS } from '../dialects.js';
 import { designFromModel, writeDesignArtifacts } from '../design/designFromModel.js';
 import { ALL_PROFILES } from '../profiles/profiles.js';
 import { loadKnowledgeBase } from '../rag/chunker.js';
@@ -32,16 +33,6 @@ const upload = multer({ dest: UPLOAD_DIR });
 const app = express();
 app.use(cors());
 app.use(express.json({ limit: '4mb' }));
-
-/** Supported dialect labels for the import UI (SQLite is live; others use DDL paste). */
-const DIALECTS = [
-  { id: 'sqlite', label: 'SQLite', live: true },
-  { id: 'postgresql', label: 'PostgreSQL', live: false },
-  { id: 'mysql', label: 'MySQL', live: false },
-  { id: 'mssql', label: 'Microsoft SQL Server', live: false },
-  { id: 'clickhouse', label: 'ClickHouse', live: false },
-  { id: 'oracle', label: 'Oracle', live: false },
-];
 
 app.get('/api/health', (_req, res) => {
   res.json({ ok: true, name: 'hvyMETL', cli: 'available' });

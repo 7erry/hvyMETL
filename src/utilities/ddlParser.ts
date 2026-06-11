@@ -1,26 +1,123 @@
 /**
  * Lightweight DDL parser for instant schema import from pasted SQL.
  *
- * Extracts CREATE TABLE definitions (PostgreSQL, MySQL, SQLite, MSSQL, Oracle)
- * into the same SqlStructuralModel shape the design engine consumes.
+ * Extracts CREATE TABLE definitions (PostgreSQL, MySQL, SQLite, MSSQL, Oracle,
+ * IBM Db2, CockroachDB, Amazon Aurora, Google Cloud Spanner) into the same
+ * SqlStructuralModel shape the design engine consumes.
  * Row counts default to 0; relationship stats use conservative defaults.
  */
 
 import type { ForeignKeyModel, SqlStructuralModel, TableModel } from '../types.js';
 import { sqlTypeToBsonType } from '../adapters/sqlite.js';
 
-/** Regex to find CREATE TABLE blocks (supports optional IF NOT EXISTS and quoting). */
-const CREATE_TABLE_RE =
-  /CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?(?:"([^"]+)"|'([^']+)'|`([^`]+)`|(\w+))\s*\(/gi;
-
 /** Words that begin table/column constraint clauses (not part of the SQL type). */
 const CONSTRAINT_KEYWORD =
-  /\s+(?:GENERATED|DEFAULT|NOT\s+NULL|NULL|PRIMARY\s+KEY|UNIQUE|CHECK|CONSTRAINT|REFERENCES)\b/i;
+  /\s+(?:GENERATED|DEFAULT|NOT\s+NULL|NULL|PRIMARY\s+KEY|UNIQUE|CHECK|CONSTRAINT|REFERENCES|OPTIONS)\b/i;
 
-const FK_LINE_RE =
-  /(?:CONSTRAINT\s+\w+\s+)?FOREIGN\s+KEY\s*\(\s*["'`]?(\w+)["'`]?\s*\)\s*REFERENCES\s+["'`]?(\w+)["'`]?\s*\(\s*["'`]?(\w+)["'`]?\s*\)/i;
+/** Parse one SQL identifier (quoted or bare) starting at pos. */
+function parseIdentifierAt(text: string, pos: number): { value: string; next: number } | null {
+  let index = pos;
+  while (index < text.length && /\s/.test(text[index]!)) index += 1;
+  if (index >= text.length) return null;
 
-const INLINE_REF_RE = /REFERENCES\s+["'`]?(\w+)["'`]?\s*\(\s*["'`]?(\w+)["'`]?\s*\)/i;
+  const quote = text[index]!;
+  if (quote === '"' || quote === "'" || quote === '`') {
+    index += 1;
+    let value = '';
+    while (index < text.length && text[index] !== quote) {
+      value += text[index]!;
+      index += 1;
+    }
+    if (text[index] === quote) index += 1;
+    return { value, next: index };
+  }
+
+  if (/[\w$#@]/.test(quote)) {
+    let value = '';
+    while (index < text.length && /[\w$#@]/.test(text[index]!)) {
+      value += text[index]!;
+      index += 1;
+    }
+    return { value, next: index };
+  }
+
+  return null;
+}
+
+/** Parse a possibly schema-qualified table name (e.g. SALES.CUSTOMERS or "SALES"."CUSTOMERS"). */
+function parseQualifiedTableName(text: string, pos: number): { name: string; next: number } | null {
+  const first = parseIdentifierAt(text, pos);
+  if (!first) return null;
+
+  let name = first.value;
+  let index = first.next;
+  while (index < text.length) {
+    while (index < text.length && /\s/.test(text[index]!)) index += 1;
+    if (text[index] !== '.') break;
+    index += 1;
+    const nextPart = parseIdentifierAt(text, index);
+    if (!nextPart) break;
+    name = `${name}.${nextPart.value}`;
+    index = nextPart.next;
+  }
+
+  return { name, next: index };
+}
+
+/** Extract trailing PRIMARY KEY (…) after the column list — used by Google Cloud Spanner. */
+function parseTrailingPrimaryKey(text: string, pos: number): { columns: string[]; next: number } {
+  let index = pos;
+  while (index < text.length && /\s/.test(text[index]!)) index += 1;
+
+  const match = text.slice(index).match(/^PRIMARY\s+KEY\s*\(([^)]+)\)/i);
+  if (!match) return { columns: [], next: index };
+
+  const columns = match[1]
+    .split(',')
+    .map((column) => unquoteIdentifier(column.trim()))
+    .filter(Boolean);
+
+  return { columns, next: index + match[0].length };
+}
+
+/** Locate CREATE TABLE blocks with optional qualified names and Spanner-style trailing PKs. */
+function findCreateTableBlocks(
+  ddl: string,
+): { tableName: string; body: string; trailingPrimaryKey: string[] }[] {
+  const blocks: { tableName: string; body: string; trailingPrimaryKey: string[] }[] = [];
+  const headRe = /CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?/gi;
+  let headMatch: RegExpExecArray | null;
+
+  while ((headMatch = headRe.exec(ddl)) !== null) {
+    const tableRef = parseQualifiedTableName(ddl, headMatch.index + headMatch[0].length);
+    if (!tableRef) continue;
+
+    let pos = tableRef.next;
+    while (pos < ddl.length && /\s/.test(ddl[pos]!)) pos += 1;
+    if (ddl[pos] !== '(') continue;
+
+    pos += 1;
+    const bodyStart = pos;
+    let depth = 1;
+    while (pos < ddl.length && depth > 0) {
+      if (ddl[pos] === '(') depth += 1;
+      if (ddl[pos] === ')') depth -= 1;
+      pos += 1;
+    }
+
+    const trailingPk = parseTrailingPrimaryKey(ddl, pos);
+    blocks.push({
+      tableName: tableRef.name,
+      body: ddl.slice(bodyStart, pos - 1),
+      trailingPrimaryKey: trailingPk.columns,
+    });
+  }
+
+  return blocks;
+}
+
+/** Optional schema/catalog prefix before a referenced table name in inline column refs. */
+const INLINE_REF_MARKER = /\bREFERENCES\b/i;
 
 /**
  * Split a CREATE TABLE column list on commas, respecting nested parentheses.
@@ -48,14 +145,32 @@ function unquoteIdentifier(name: string): string {
   return name.replace(/^["'`]|["'`]$/g, '');
 }
 
+/** Parse REFERENCES target clause into table and column (handles schema-qualified names). */
+function parseReferenceTarget(refClause: string): { table: string; column: string } | null {
+  const open = refClause.lastIndexOf('(');
+  if (open === -1) return null;
+  const tablePart = refClause.slice(0, open).trim();
+  const close = refClause.lastIndexOf(')');
+  const colPart = close > open ? refClause.slice(open + 1, close).trim() : '';
+  const segments = tablePart.split('.').map((segment) => unquoteIdentifier(segment.trim()));
+  const table = segments[segments.length - 1];
+  const column = unquoteIdentifier(colPart);
+  if (!table || !column) return null;
+  return { table, column };
+}
+
 /** Parse a table-level or inline FOREIGN KEY constraint line. */
 function parseForeignKeyLine(line: string): ForeignKeyModel | null {
-  const match = line.trim().match(FK_LINE_RE);
+  const trimmed = line.trim();
+  const match = trimmed.match(/(?:CONSTRAINT\s+\w+\s+)?FOREIGN\s+KEY\s*\(([^)]+)\)\s*REFERENCES\s+(.+)/i);
   if (!match) return null;
+  const column = unquoteIdentifier(match[1].trim());
+  const target = parseReferenceTarget(match[2].replace(/[,;].*$/, '').trim());
+  if (!target) return null;
   return {
-    column: match[1],
-    referencesTable: match[2],
-    referencesColumn: match[3],
+    column,
+    referencesTable: target.table,
+    referencesColumn: target.column,
   };
 }
 
@@ -68,13 +183,15 @@ function isNonColumnConstraint(line: string): boolean {
   if (/^FOREIGN\s+KEY\s*\(/i.test(trimmed)) return true;
   if (/^CONSTRAINT\s+\w+\s+FOREIGN\s+KEY\s*\(/i.test(trimmed)) return true;
   if (/^CONSTRAINT\s+\w+\s+(?:UNIQUE|CHECK|PRIMARY\s+KEY)\b/i.test(trimmed)) return true;
+  if (/^INTERLEAVE\s+IN\s+PARENT\b/i.test(trimmed)) return true;
   if (/^(?:KEY|INDEX)\s/i.test(trimmed)) return true;
   return false;
 }
 
 /** Extract the SQL type token(s) before constraint keywords. */
 function extractSqlType(rest: string): string {
-  const withoutRef = rest.replace(INLINE_REF_RE, '').trim();
+  const refAt = rest.search(INLINE_REF_MARKER);
+  const withoutRef = refAt === -1 ? rest : rest.slice(0, refAt).trim();
   const constraintAt = withoutRef.search(CONSTRAINT_KEYWORD);
   if (constraintAt === -1) return withoutRef.trim();
   return withoutRef.slice(0, constraintAt).trim();
@@ -104,9 +221,13 @@ function parseColumnLine(line: string): {
   const sqlType = extractSqlType(rest);
 
   let foreignKey: ForeignKeyModel | null = null;
-  const refMatch = rest.match(INLINE_REF_RE);
-  if (refMatch) {
-    foreignKey = { column: name, referencesTable: refMatch[1], referencesColumn: refMatch[2] };
+  const refAt = rest.search(INLINE_REF_MARKER);
+  if (refAt !== -1) {
+    const refClause = rest.slice(refAt).replace(/^REFERENCES\s+/i, '').trim();
+    const target = parseReferenceTarget(refClause);
+    if (target) {
+      foreignKey = { column: name, referencesTable: target.table, referencesColumn: target.column };
+    }
   }
 
   return { name, sqlType, nullable, isPrimaryKey, foreignKey };
@@ -151,24 +272,11 @@ function ensureReferencedTables(tables: TableModel[]): TableModel[] {
 export function parseDdlToModel(ddl: string, sourceLabel = 'ddl:import'): SqlStructuralModel {
   const tables: TableModel[] = [];
 
-  let match: RegExpExecArray | null;
-  const re = new RegExp(CREATE_TABLE_RE.source, 'gi');
-  while ((match = re.exec(ddl)) !== null) {
-    const tableName = unquoteIdentifier(match[1] ?? match[2] ?? match[3] ?? match[4] ?? '');
-    const start = match.index + match[0].length;
-    let depth = 1;
-    let pos = start;
-    while (pos < ddl.length && depth > 0) {
-      if (ddl[pos] === '(') depth += 1;
-      if (ddl[pos] === ')') depth -= 1;
-      pos += 1;
-    }
-    const body = ddl.slice(start, pos - 1);
-    const lines = splitColumnDefinitions(body);
-
+  for (const block of findCreateTableBlocks(ddl)) {
+    const lines = splitColumnDefinitions(block.body);
     const columns: TableModel['columns'] = [];
     const foreignKeys: ForeignKeyModel[] = [];
-    const pkCols: string[] = [];
+    const pkCols: string[] = [...block.trailingPrimaryKey];
 
     for (const line of lines) {
       const fkLine = parseForeignKeyLine(line);
@@ -186,19 +294,21 @@ export function parseDdlToModel(ddl: string, sourceLabel = 'ddl:import'): SqlStr
         }
         continue;
       }
+
+      const isPk = parsed.isPrimaryKey || pkCols.includes(parsed.name);
       columns.push({
         name: parsed.name,
         sqlType: parsed.sqlType,
         bsonType: sqlTypeToBsonType(parsed.sqlType),
         nullable: parsed.nullable,
-        isPrimaryKey: parsed.isPrimaryKey,
+        isPrimaryKey: isPk,
       });
-      if (parsed.isPrimaryKey) pkCols.push(parsed.name);
+      if (isPk && !pkCols.includes(parsed.name)) pkCols.push(parsed.name);
       if (parsed.foreignKey) foreignKeys.push(parsed.foreignKey);
     }
 
     tables.push({
-      name: tableName,
+      name: block.tableName,
       columns,
       primaryKey: pkCols.length > 0 ? pkCols : columns[0] ? [columns[0].name] : [],
       foreignKeys,
