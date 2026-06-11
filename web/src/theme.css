@@ -86,15 +86,28 @@ textarea {
 .app-logo {
   display: flex;
   align-items: center;
-  line-height: 0;
+  gap: 0.65rem;
 }
 
-.app-logo__image {
+.app-logo__leaf {
+  width: 36px;
   height: 36px;
-  width: auto;
-  max-width: min(200px, 50vw);
-  object-fit: contain;
-  display: block;
+  flex-shrink: 0;
+  color: var(--mdb-green-base);
+}
+
+.app-logo__title {
+  font-weight: 700;
+  font-size: 1.15rem;
+  color: var(--mdb-green-base);
+  line-height: 1.1;
+}
+
+.app-logo__tagline {
+  font-size: 0.7rem;
+  color: var(--mdb-spring-green);
+  opacity: 0.85;
+  line-height: 1.2;
 }
 
 .table-node {
