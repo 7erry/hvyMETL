@@ -159,7 +159,7 @@ export async function runEtl(options: EtlOptions): Promise<void> {
     for (const error of csvToAtlasCheck.errors) {
       console.error(`csvToAtlas: ${error}`);
     }
-    throw new Error('csvToAtlas is not available. Run npm run build or set CSV_TO_ATLAS_PATH in .env.');
+    throw new Error('csvToAtlas is not available. Set CSV_TO_ATLAS_PATH in .env (see docs/14-validate-csv-to-atlas.md).');
   }
 
   console.log(`ETL ${dryRun ? 'DRY RUN (3 chunks x 1,000 records per collection)' : 'production run'}`);

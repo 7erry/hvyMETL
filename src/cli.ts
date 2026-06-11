@@ -9,8 +9,8 @@
  *   etl        run the parallel pattern-aware extraction to CSV chunks
  *   repogen    generate the concurrency-safe repository layer from a plan
  *
- * The csvToAtlas import CLI is a separate entry point (npm run import-cli)
- * so it matches the documented csvToAtlas contract exactly.
+ * CSV imports use the external csvToAtlas tool via npm run import-cli
+ * (requires CSV_TO_ATLAS_PATH in .env).
  */
 
 import 'dotenv/config';

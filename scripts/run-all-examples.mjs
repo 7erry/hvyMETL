@@ -90,6 +90,10 @@ async function main() {
     console.error('MONGODB_URI is not set in .env');
     process.exit(1);
   }
+  if (!process.env.CSV_TO_ATLAS_PATH?.trim()) {
+    console.error('CSV_TO_ATLAS_PATH is not set in .env (clone https://github.com/7erry/cvsToAtlas)');
+    process.exit(1);
+  }
 
   console.log('=== hvyMETL full example run ===');
   console.log(`Cluster: ${process.env.MONGODB_URI.replace(/\/\/[^@]+@/, '//***@').split('?')[0]}`);

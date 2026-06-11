@@ -4,8 +4,8 @@ Source: [`scripts/run-all-examples.mjs`](../scripts/run-all-examples.mjs)
 
 ## 1. High-Level Summary
 
-`run-all-examples` is the end-to-end integration harness for hvyMETL. Given a
-`MONGODB_URI` in `.env`, it seeds all seven example SQLite databases, runs design →
+`run-all-examples` is the end-to-end integration harness for hvyMETL. Given
+`MONGODB_URI` and `CSV_TO_ATLAS_PATH` in `.env`, it seeds all seven example SQLite databases, runs design →
 ETL → csvToAtlas import for every domain, then validates the Atlas imports against
 the ETL manifest and SQLite source. Each domain lands in its own database
 (`hvymetl_<domain>`) so collection names never collide across examples.
@@ -24,6 +24,7 @@ npm run run-all-examples
 | Name | Required | Default | Description |
 | --- | --- | --- | --- |
 | `MONGODB_URI` | **yes** | — | Atlas connection string (loaded from `.env`) |
+| `CSV_TO_ATLAS_PATH` | **yes** | — | Path to [cvsToAtlas](https://github.com/7erry/cvsToAtlas) clone |
 | `MONGODB_DB` | no | `csv_to_atlas` | **Not used** by this script; each domain gets `hvymetl_<id>` |
 | `DRY_RUN` | no | — | Cleared internally so ETL always runs at full scale |
 
@@ -58,11 +59,11 @@ npm run run-all-examples
 
 ### Dependencies
 
-`dotenv`, `mongodb`, `better-sqlite3`, compiled `dist/cli.js` and `dist/import/cli.js`.
+`dotenv`, `mongodb`, `better-sqlite3`, compiled `dist/cli.js`, external csvToAtlas at `CSV_TO_ATLAS_PATH`.
 
 ## 3. Edge Cases & Error Handling
 
-- **Missing `MONGODB_URI`:** script exits immediately with a clear message before any work.
+- **Missing `MONGODB_URI` or `CSV_TO_ATLAS_PATH`:** script exits immediately with a clear message before any work.
 - **`DRY_RUN=true` in `.env`:** overridden for the ETL subprocesses so validation always exercises full extraction.
 - **Isolated databases:** imports use `--db hvymetl_<domain>`, not `MONGODB_DB`, preventing cross-domain overwrites when two examples share a collection name (e.g. both could conceptually have a `sites` collection).
 - **`--drop` on every import:** each collection is replaced wholesale; safe because database names are example-specific.

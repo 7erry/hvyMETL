@@ -27,7 +27,7 @@ merge-mode diagrams.
 | [04-adapters.md](04-adapters.md) | The pluggable SQL source adapter and SQLite implementation | `src/adapters/` |
 | [05-design-engine.md](05-design-engine.md) | Introspection-to-pattern decision engine and `migration-plan.json` | `src/design/` |
 | [06-etl.md](06-etl.md) | Parallel worker-thread extraction, range splitting, CSV shaping | `src/etl/` |
-| [07-import-cli.md](07-import-cli.md) | The csvToAtlas import CLI: analysis, merging, idempotent upserts | `src/import/` |
+| [07-import-cli.md](07-import-cli.md) | csvToAtlas import via `CSV_TO_ATLAS_PATH` (external [cvsToAtlas](https://github.com/7erry/cvsToAtlas)) | `scripts/import-cli.mjs` |
 | [08-repogen.md](08-repogen.md) | Generated repository layer with atomic modifiers | `src/repogen/` |
 | [09-utilities.md](09-utilities.md) | CSV dialect, deterministic ids, naming conversions | `src/utilities/` |
 | [10-examples.md](10-examples.md) | The seven example SQL domains and the deterministic seeder | `examples/`, `src/examples/` |

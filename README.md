@@ -76,7 +76,7 @@ pool, merge modes): **[docs/diagrams.md](docs/diagrams.md)**.
    rows inside SQL: pre-joined Extended Reference columns, initialized Computed
    counters, capped Subset arrays, grouped Bucket documents. Streams to CSV with O(1)
    memory. `--dry-run` extracts exactly 3 chunks of 1,000 records with validation logs.
-5. **csvToAtlas import** ([cvsToAtlas](https://github.com/7erry/cvsToAtlas) or bundled `src/import/`): set `CSV_TO_ATLAS_PATH` in `.env` to use the external tool; analysis (`--analyze`), join/embed merging,
+5. **csvToAtlas import** ([cvsToAtlas](https://github.com/7erry/cvsToAtlas)): requires `CSV_TO_ATLAS_PATH` in `.env`; analysis (`--analyze`), join/embed merging,
    and concurrency-safe bulk upserts keyed on the deterministic `_id`, so parallel
    chunk imports are idempotent and race-free.
 6. **Repository generator** (`src/repogen/`): emits typed repository modules using
@@ -93,11 +93,12 @@ cp .env.example .env
 
 | Variable | Required for | Description |
 | --- | --- | --- |
+| `CSV_TO_ATLAS_PATH` | ETL, import, `run-all-examples` | Path to [cvsToAtlas](https://github.com/7erry/cvsToAtlas) clone |
 | `MONGODB_URI` | Atlas import, `run-all-examples` | Cluster connection string |
 | `MONGODB_MODEL_KEY` | Hybrid RAG (optional) | MongoDB Model Key; enables BM25 + Voyage 4 + RRF |
 | `OPENAI_API_KEY` | Vector-only RAG (optional) | Used only when Model Key is unset |
 
-Requires Node.js 20+. Design, ETL, and unit tests run fully offline with no keys.
+Requires Node.js 20+. Design and unit tests run offline; ETL needs `CSV_TO_ATLAS_PATH` set (validated at runtime).
 
 ## Web UI (optional)
 
@@ -114,7 +115,7 @@ See **[docs/13-web-ui.md](docs/13-web-ui.md)** for features and API reference.
 
 ## Run all examples against Atlas
 
-With `MONGODB_URI` set in `.env`, one command seeds, designs, extracts, imports, and
+With `MONGODB_URI` and `CSV_TO_ATLAS_PATH` set in `.env`, one command seeds, designs, extracts, imports, and
 validates **all seven example domains** (~50 seconds on a typical connection):
 
 ```bash
@@ -196,7 +197,7 @@ npm run hvymetl -- design --source my.db --custom --read-write 20:80 --rpm 25000
 ```bash
 npm test                              # unit tests (offline)
 npm run validate-hybrid-rag           # live hybrid RAG check (needs MONGODB_MODEL_KEY)
-npm run validate-csv-to-atlas         # verify bundled or CSV_TO_ATLAS_PATH csvToAtlas
+npm run validate-csv-to-atlas         # verify CSV_TO_ATLAS_PATH + csvToAtlas smoke test
 npm run run-all-examples              # full pipeline + Atlas validation (needs MONGODB_URI)
 ```
 
@@ -206,17 +207,13 @@ is configured — see [docs/12-validate-hybrid-rag.md](docs/12-validate-hybrid-r
 
 ## csvToAtlas CLI reference
 
+hvyMETL wraps the external [cvsToAtlas](https://github.com/7erry/cvsToAtlas) tool:
+
 ```bash
 npm run import-cli -- <file.csv...> [collection] [flags]
-  --analyze            analysis only (no MONGODB_URI needed)
-  --join <field>       join field linking related CSVs
-  --parent <file.csv>  parent file for embed mode
-  --embed <file:field> embed a child CSV as an array field (repeatable)
-  --drop               drop the existing collection first (explicit opt-in)
-  --db <name>          override MONGODB_DB
-  --write-concern <w>  "1" (default) or "majority"
-  --journal            wait for the on-disk journal
 ```
+
+See the [cvsToAtlas README](https://github.com/7erry/cvsToAtlas) for `--analyze`, `--join`, `--embed`, `--drop`, and column naming rules. hvyMETL adds `--db <name>` (sets `MONGODB_DB` for the external CLI).
 
 Files sharing identical headers are treated as partitions of one dataset (the
 parallel ETL's chunk output) and upserted concurrently-safely by `_id`.

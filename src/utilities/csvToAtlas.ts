@@ -1,6 +1,6 @@
 /**
- * csvToAtlas integration — resolve the external [cvsToAtlas](https://github.com/7erry/cvsToAtlas)
- * installation or fall back to hvyMETL's bundled import CLI (`src/import/`).
+ * csvToAtlas integration — hvyMETL delegates all CSV imports to the standalone
+ * [cvsToAtlas](https://github.com/7erry/cvsToAtlas) CLI.
  *
  * Set `CSV_TO_ATLAS_PATH` in `.env` to the clone root (directory containing
  * `package.json` and `dist/cli.js` or `src/cli.ts`).
@@ -10,16 +10,14 @@ import { existsSync, readFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-/** Public GitHub repository for the standalone csvToAtlas tool. */
+/** Public GitHub repository for the csvToAtlas tool. */
 export const CSV_TO_ATLAS_REPOSITORY = 'https://github.com/7erry/cvsToAtlas';
 
 const HVYMETL_ROOT = join(dirname(fileURLToPath(import.meta.url)), '../..');
-const BUNDLED_CLI = join(HVYMETL_ROOT, 'dist/import/cli.js');
 
-/** Where the import CLI will be invoked from. */
+/** Resolved csvToAtlas installation used for imports and ETL manifests. */
 export type CsvToAtlasSource = {
-  mode: 'bundled' | 'external';
-  /** Absolute path to the tool root (hvyMETL root or external clone). */
+  /** Absolute path to the cvsToAtlas clone root. */
   rootPath: string;
   /** Absolute path to the Node entry script. */
   cliPath: string;
@@ -31,7 +29,7 @@ export type CsvToAtlasSource = {
 
 export type CsvToAtlasValidation = {
   ok: boolean;
-  source: CsvToAtlasSource;
+  source: CsvToAtlasSource | null;
   errors: string[];
   warnings: string[];
 };
@@ -53,7 +51,7 @@ function readPackageName(rootPath: string): string | undefined {
   }
 }
 
-function resolveExternalCli(rootPath: string): { cliPath: string; warnings: string[] } {
+function resolveCliEntry(rootPath: string): { cliPath: string; warnings: string[] } {
   const warnings: string[] = [];
   const distCli = join(rootPath, 'dist/cli.js');
   if (existsSync(distCli)) {
@@ -69,25 +67,20 @@ function resolveExternalCli(rootPath: string): { cliPath: string; warnings: stri
   return { cliPath: distCli, warnings };
 }
 
-/** Resolve which csvToAtlas installation hvyMETL should use. */
+/** Resolve the cvsToAtlas installation from env or an explicit path override. */
 export function resolveCsvToAtlasInstallation(explicitPath?: string): CsvToAtlasSource {
   const envPath = explicitPath ?? readCsvToAtlasPathFromEnv();
   if (!envPath) {
-    return {
-      mode: 'bundled',
-      rootPath: HVYMETL_ROOT,
-      cliPath: BUNDLED_CLI,
-      packageName: 'hvymetl',
-      label: 'bundled (src/import/)',
-    };
+    throw new Error(
+      `CSV_TO_ATLAS_PATH is not set. Clone ${CSV_TO_ATLAS_REPOSITORY}, run npm install && npm run build, then add CSV_TO_ATLAS_PATH to .env.`,
+    );
   }
 
   const rootPath = resolve(envPath);
-  const { cliPath } = resolveExternalCli(rootPath);
+  const { cliPath } = resolveCliEntry(rootPath);
   const packageName = readPackageName(rootPath);
 
   return {
-    mode: 'external',
     rootPath,
     cliPath,
     packageName,
@@ -95,34 +88,49 @@ export function resolveCsvToAtlasInstallation(explicitPath?: string): CsvToAtlas
   };
 }
 
-/** Validate that the resolved csvToAtlas installation can run imports. */
+/** Validate that csvToAtlas is configured and runnable. */
 export function validateCsvToAtlasInstallation(explicitPath?: string): CsvToAtlasValidation {
-  const source = resolveCsvToAtlasInstallation(explicitPath);
   const errors: string[] = [];
   const warnings: string[] = [];
+  let source: CsvToAtlasSource | null = null;
 
-  if (source.mode === 'external') {
-    if (!existsSync(source.rootPath)) {
-      errors.push(`CSV_TO_ATLAS_PATH does not exist: ${source.rootPath}`);
-    } else if (!existsSync(join(source.rootPath, 'package.json'))) {
-      errors.push(`No package.json in CSV_TO_ATLAS_PATH: ${source.rootPath}`);
-    } else {
-      const pkgName = readPackageName(source.rootPath);
-      if (pkgName && pkgName !== 'csv-to-atlas') {
-        warnings.push(`Expected package name "csv-to-atlas", found "${pkgName}".`);
-      }
-      if (!existsSync(source.cliPath)) {
-        errors.push(
-          `csvToAtlas CLI not found at ${source.cliPath}. Clone ${CSV_TO_ATLAS_REPOSITORY} and run npm install && npm run build.`,
-        );
-      } else if (source.cliPath.endsWith('.ts')) {
-        warnings.push('Using TypeScript CLI entry — ensure `tsx` is available or build dist/cli.js.');
-      }
-    }
-  } else if (!existsSync(source.cliPath)) {
-    errors.push(`Bundled import CLI not built: ${source.cliPath}. Run npm run build in hvyMETL.`);
+  const envPath = explicitPath ?? readCsvToAtlasPathFromEnv();
+  if (!envPath) {
+    errors.push(
+      `CSV_TO_ATLAS_PATH is not set in .env. Clone ${CSV_TO_ATLAS_REPOSITORY} and point CSV_TO_ATLAS_PATH at the directory.`,
+    );
+    return { ok: false, source: null, errors, warnings };
   }
 
+  try {
+    source = resolveCsvToAtlasInstallation(envPath);
+  } catch (error) {
+    errors.push(String(error));
+    return { ok: false, source: null, errors, warnings };
+  }
+
+  const { cliPath, warnings: cliWarnings } = resolveCliEntry(source.rootPath);
+  warnings.push(...cliWarnings);
+
+  if (!existsSync(source.rootPath)) {
+    errors.push(`CSV_TO_ATLAS_PATH does not exist: ${source.rootPath}`);
+  } else if (!existsSync(join(source.rootPath, 'package.json'))) {
+    errors.push(`No package.json in CSV_TO_ATLAS_PATH: ${source.rootPath}`);
+  } else {
+    const pkgName = readPackageName(source.rootPath);
+    if (pkgName && pkgName !== 'csv-to-atlas') {
+      warnings.push(`Expected package name "csv-to-atlas", found "${pkgName}".`);
+    }
+    if (!existsSync(cliPath)) {
+      errors.push(
+        `csvToAtlas CLI not found at ${cliPath}. Clone ${CSV_TO_ATLAS_REPOSITORY} and run npm install && npm run build.`,
+      );
+    } else if (cliPath.endsWith('.ts')) {
+      warnings.push('Using TypeScript CLI entry — ensure `tsx` is available or build dist/cli.js.');
+    }
+  }
+
+  source = { ...source, cliPath };
   return { ok: errors.length === 0, source, errors, warnings };
 }
 
@@ -150,15 +158,25 @@ export function buildImportCliInvocation(
   const fileArgs = csvPaths.map((p) => (p.includes(' ') ? `"${p}"` : p));
   const flagArgs = trailingArgs.map((a) => (a.includes(' ') ? `"${a}"` : a));
 
-  if (source.mode === 'external' && source.cliPath.endsWith('.ts')) {
-    const args = [source.cliPath, ...csvPaths, ...trailingArgs];
+  if (source.cliPath.endsWith('.ts')) {
     const shellCommand = `npx tsx "${source.cliPath}" ${[...fileArgs, ...flagArgs].join(' ')}`;
-    return { source, executable: 'npx', args: ['tsx', source.cliPath, ...csvPaths, ...trailingArgs], cwd, shellCommand };
+    return {
+      source,
+      executable: 'npx',
+      args: ['tsx', source.cliPath, ...csvPaths, ...trailingArgs],
+      cwd,
+      shellCommand,
+    };
   }
 
-  const args = [source.cliPath, ...csvPaths, ...trailingArgs];
   const shellCommand = `node "${source.cliPath}" ${[...fileArgs, ...flagArgs].join(' ')}`;
-  return { source, executable: 'node', args, cwd, shellCommand };
+  return {
+    source,
+    executable: 'node',
+    args: [source.cliPath, ...csvPaths, ...trailingArgs],
+    cwd,
+    shellCommand,
+  };
 }
 
 /** Convenience wrapper: collection name plus optional import flags. */
@@ -174,7 +192,6 @@ export function buildCollectionImportCommand(
 /** Metadata block written into etl-manifest.json. */
 export function csvToAtlasManifestMeta(source: CsvToAtlasSource): Record<string, string> {
   return {
-    mode: source.mode,
     repository: CSV_TO_ATLAS_REPOSITORY,
     rootPath: source.rootPath,
     cliPath: source.cliPath,

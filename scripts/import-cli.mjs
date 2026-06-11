@@ -1,15 +1,12 @@
 /**
- * Delegates `npm run import-cli` to the external csvToAtlas clone when
- * CSV_TO_ATLAS_PATH is set in .env; otherwise uses hvyMETL's bundled CLI.
- *
- * Translates `--db <name>` into MONGODB_DB for the external tool (which reads
- * the database from the environment rather than a CLI flag).
+ * Thin wrapper around the external csvToAtlas CLI (CSV_TO_ATLAS_PATH in .env).
+ * Translates `--db <name>` into MONGODB_DB for csvToAtlas.
  */
 import 'dotenv/config';
 import { spawnSync } from 'node:child_process';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { resolveCsvToAtlasInstallation } from '../dist/utilities/csvToAtlas.js';
+import { buildImportCliInvocation } from '../dist/utilities/csvToAtlas.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const rawArgs = process.argv.slice(2);
@@ -23,28 +20,32 @@ const env = { ...process.env };
 const args = [...rawArgs];
 
 const dbFlagIndex = args.indexOf('--db');
+let forwardedArgs = args;
 if (dbFlagIndex !== -1 && args[dbFlagIndex + 1]) {
   env.MONGODB_DB = args[dbFlagIndex + 1];
+  forwardedArgs = args.filter((_, index) => index !== dbFlagIndex && index !== dbFlagIndex + 1);
 }
 
-const source = resolveCsvToAtlasInstallation();
-let forwardedArgs = args;
+const flagStart = forwardedArgs.findIndex((arg) => arg.startsWith('--'));
+const csvPaths = flagStart === -1 ? forwardedArgs.slice(0, -1) : forwardedArgs.slice(0, flagStart);
+const rest = flagStart === -1 ? forwardedArgs.slice(-1) : forwardedArgs.slice(flagStart);
 
-if (source.mode === 'external') {
-  console.error(`csvToAtlas: ${source.label}`);
-  if (dbFlagIndex !== -1) {
-    forwardedArgs = args.filter((_, index) => index !== dbFlagIndex && index !== dbFlagIndex + 1);
-  }
+if (csvPaths.length === 0) {
+  console.error('At least one CSV file is required.');
+  process.exit(1);
 }
 
-const executable = source.mode === 'external' && source.cliPath.endsWith('.ts') ? 'npx' : 'node';
-const cliArgs =
-  executable === 'npx'
-    ? ['tsx', source.cliPath, ...forwardedArgs]
-    : [source.cliPath, ...forwardedArgs];
+let invocation;
+try {
+  invocation = buildImportCliInvocation(csvPaths, rest);
+} catch (error) {
+  console.error(String(error));
+  process.exit(1);
+}
 
-// Always run from hvyMETL root so relative CSV paths (out/<domain>/csv/…) resolve.
-const result = spawnSync(executable, cliArgs, {
+console.error(`csvToAtlas: ${invocation.source.label}`);
+
+const result = spawnSync(invocation.executable, invocation.args, {
   cwd: ROOT,
   stdio: 'inherit',
   env,

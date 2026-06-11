@@ -1,5 +1,5 @@
 /**
- * Validate csvToAtlas integration: bundled or external per CSV_TO_ATLAS_PATH.
+ * Validate csvToAtlas integration (CSV_TO_ATLAS_PATH required).
  * Exits 0 on success, 1 on failure.
  */
 import 'dotenv/config';
@@ -15,12 +15,10 @@ import {
   CSV_TO_ATLAS_REPOSITORY,
 } from '../dist/utilities/csvToAtlas.js';
 
-const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
-
 function main() {
   const envPath = readCsvToAtlasPathFromEnv();
   console.log(`csvToAtlas repository: ${CSV_TO_ATLAS_REPOSITORY}`);
-  console.log(`CSV_TO_ATLAS_PATH: ${envPath ?? '(unset — using bundled src/import/)'}`);
+  console.log(`CSV_TO_ATLAS_PATH: ${envPath ?? '(not set)'}`);
 
   const validation = validateCsvToAtlasInstallation();
   for (const warning of validation.warnings) {
@@ -33,8 +31,8 @@ function main() {
     process.exit(1);
   }
 
-  console.log(`Resolved: ${validation.source.label}`);
-  console.log(`CLI entry: ${validation.source.cliPath}`);
+  console.log(`Resolved: ${validation.source?.label}`);
+  console.log(`CLI entry: ${validation.source?.cliPath}`);
 
   const tmpDir = mkdtempSync(join(tmpdir(), 'hvymetl-csv-validate-'));
   const sampleCsv = join(tmpDir, 'validate_sample.csv');
@@ -42,7 +40,7 @@ function main() {
 
   try {
     const invocation = buildImportCliInvocation([sampleCsv], ['--analyze']);
-    console.log(`\nRunning analyze smoke test…`);
+    console.log('\nRunning analyze smoke test…');
     const result = spawnSync(invocation.executable, invocation.args, {
       cwd: invocation.cwd,
       encoding: 'utf8',

@@ -8,9 +8,9 @@ Source: [`src/cli.ts`](../src/cli.ts)
 `commander`-based command-line interface with five subcommands (`profiles`, `design`,
 `prompt`, `etl`, `repogen`). Architecturally it is a thin orchestration shell: it
 parses flags, resolves the runtime workload profile (interactively when none is
-given), and delegates all real work to the stage modules. The csvToAtlas importer has
-its own entry point ([07-import-cli.md](07-import-cli.md)) so it can match the
-documented `npm run import-cli` contract exactly.
+given), and delegates all real work to the stage modules. CSV imports use the external
+[cvsToAtlas](https://github.com/7erry/cvsToAtlas) tool via `npm run import-cli`
+([07-import-cli.md](07-import-cli.md); requires `CSV_TO_ATLAS_PATH` in `.env`).
 
 ## 2. Technical Details & Signature
 

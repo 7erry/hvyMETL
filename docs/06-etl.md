@@ -78,7 +78,7 @@ Other constants: `TARGET_CHUNK_ROWS = 20000` (production chunk sizing),
 | `better-sqlite3` | external | Per-worker lazy row cursors |
 | `src/utilities/csv.ts`, `src/utilities/ids.ts` | internal | CSV dialect + `_id` derivation |
 | `DRY_RUN` (env) | optional | Forces the safety gate regardless of flags |
-| `CSV_TO_ATLAS_PATH` (env) | optional | Path to external [cvsToAtlas](https://github.com/7erry/cvsToAtlas) clone for import commands |
+| `CSV_TO_ATLAS_PATH` (env) | **required** | Path to [cvsToAtlas](https://github.com/7erry/cvsToAtlas) clone for import commands |
 
 ## 3. Edge Cases & Error Handling
 
@@ -120,9 +120,8 @@ Other constants: `TARGET_CHUNK_ROWS = 20000` (production chunk sizing),
 5. **Manifest.** Results aggregate into `etl-manifest.json` — files, row counts,
    columns, a `csvToAtlas` metadata block, and a ready-to-paste `importCommand`
    per collection (delegates to [cvsToAtlas](https://github.com/7erry/cvsToAtlas)
-   when `CSV_TO_ATLAS_PATH` is set) — plus the structural validation log on stdout.
-6. **csvToAtlas gate.** Before extraction, `runEtl` validates the resolved csvToAtlas
-   installation (`bundled` or external). See [14-validate-csv-to-atlas.md](14-validate-csv-to-atlas.md).
+   via [cvsToAtlas](https://github.com/7erry/cvsToAtlas)) — plus the structural validation log on stdout.
+6. **csvToAtlas gate.** Before extraction, `runEtl` validates `CSV_TO_ATLAS_PATH`. See [14-validate-csv-to-atlas.md](14-validate-csv-to-atlas.md).
 
 ## 5. Usage Example
 

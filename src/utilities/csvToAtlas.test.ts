@@ -10,10 +10,8 @@ import {
 } from './csvToAtlas.js';
 
 describe('csvToAtlas integration', () => {
-  it('defaults to bundled import when CSV_TO_ATLAS_PATH is unset', () => {
-    const source = resolveCsvToAtlasInstallation(undefined);
-    expect(source.mode).toBe('bundled');
-    expect(source.cliPath).toContain('dist/import/cli.js');
+  it('throws when CSV_TO_ATLAS_PATH is unset', () => {
+    expect(() => resolveCsvToAtlasInstallation(undefined)).toThrow(/CSV_TO_ATLAS_PATH/);
   });
 
   it('resolves external path when CSV_TO_ATLAS_PATH is set', () => {
@@ -23,7 +21,6 @@ describe('csvToAtlas integration', () => {
     writeFileSync(join(root, 'dist/cli.js'), '// cli\n');
 
     const source = resolveCsvToAtlasInstallation(root);
-    expect(source.mode).toBe('external');
     expect(source.cliPath).toBe(join(root, 'dist/cli.js'));
     expect(source.packageName).toBe('csv-to-atlas');
   });
@@ -34,9 +31,20 @@ describe('csvToAtlas integration', () => {
     expect(result.errors.some((e) => e.includes('does not exist'))).toBe(true);
   });
 
+  it('validates unset env path', () => {
+    const result = validateCsvToAtlasInstallation(undefined);
+    expect(result.ok).toBe(false);
+    expect(result.errors.some((e) => e.includes('CSV_TO_ATLAS_PATH'))).toBe(true);
+  });
+
   it('builds shell command with quoted paths', () => {
+    const root = mkdtempSync(join(tmpdir(), 'csv-to-atlas-'));
+    writeFileSync(join(root, 'package.json'), JSON.stringify({ name: 'csv-to-atlas' }));
+    mkdirSync(join(root, 'dist'), { recursive: true });
+    writeFileSync(join(root, 'dist/cli.js'), '// cli\n');
+
     const invocation = buildImportCliInvocation(['out/csv/a chunk.csv', 'out/csv/b.csv'], ['products', '--drop'], {
-      explicitPath: undefined,
+      explicitPath: root,
     });
     expect(invocation.shellCommand).toContain('node');
     expect(invocation.shellCommand).toContain('"out/csv/a chunk.csv"');
@@ -45,7 +53,12 @@ describe('csvToAtlas integration', () => {
   });
 
   it('buildCollectionImportCommand includes collection name', () => {
-    const cmd = buildCollectionImportCommand(['a.csv', 'b.csv'], 'orders', ['--drop']);
+    const root = mkdtempSync(join(tmpdir(), 'csv-to-atlas-'));
+    writeFileSync(join(root, 'package.json'), JSON.stringify({ name: 'csv-to-atlas' }));
+    mkdirSync(join(root, 'dist'), { recursive: true });
+    writeFileSync(join(root, 'dist/cli.js'), '// cli\n');
+
+    const cmd = buildCollectionImportCommand(['a.csv', 'b.csv'], 'orders', ['--drop'], { explicitPath: root });
     expect(cmd).toContain('orders');
     expect(cmd).toContain('--drop');
   });
