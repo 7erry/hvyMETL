@@ -28,6 +28,7 @@ merge-mode diagrams.
 | [08-repogen.md](08-repogen.md) | Generated repository layer with atomic modifiers | `src/repogen/` |
 | [09-utilities.md](09-utilities.md) | CSV dialect, deterministic ids, naming conversions | `src/utilities/` |
 | [10-examples.md](10-examples.md) | The seven example SQL domains and the deterministic seeder | `examples/`, `src/examples/` |
+| [11-run-all-examples.md](11-run-all-examples.md) | End-to-end Atlas run for all seven domains with automated validation | `scripts/run-all-examples.mjs` |
 
 ## Architectural Role
 

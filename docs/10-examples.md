@@ -105,6 +105,15 @@ npm run hvymetl -- design --source examples/cms.db --profile cms --out out/cms
 # (block_type discriminator + sparse text/image/video variant columns).
 ```
 
+### Run all seven domains into Atlas
+
+To exercise every example end-to-end with automated validation against your Atlas
+cluster, see **[11-run-all-examples.md](11-run-all-examples.md)**:
+
+```bash
+npm run run-all-examples   # requires MONGODB_URI in .env
+```
+
 ## 6. Refactoring / Optimization Suggestions
 
 - Row volumes are compile-time constants; a `--scale 10` flag multiplying volumes

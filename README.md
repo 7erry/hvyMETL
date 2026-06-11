@@ -92,6 +92,22 @@ cp .env.example .env   # set MONGODB_URI for real imports
 Requires Node.js 20+. `MONGODB_URI` is only needed for the import step; everything
 else runs locally.
 
+## Run all examples against Atlas
+
+With `MONGODB_URI` set in `.env`, one command seeds, designs, extracts, imports, and
+validates **all seven example domains** (~50 seconds on a typical connection):
+
+```bash
+npm run run-all-examples
+```
+
+Each domain imports into an isolated database (`hvymetl_catalog`, `hvymetl_iot`, …)
+so collection names never collide. Validation checks document counts against the ETL
+manifest, duplicate `_id` absence, `schemaVersion` presence, and bucket integrity
+(`sum(count)` in Atlas === source SQL row count).
+
+Full reference: **[docs/11-run-all-examples.md](docs/11-run-all-examples.md)**.
+
 ## End-to-end walkthrough
 
 ```bash

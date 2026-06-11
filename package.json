@@ -19,6 +19,7 @@
     "hvymetl": "npm run -s build && node dist/cli.js",
     "import-cli": "npm run -s build && node dist/import/cli.js",
     "seed-examples": "npm run -s build && node dist/examples/seed.js",
+    "run-all-examples": "node scripts/run-all-examples.mjs",
     "test": "vitest run"
   },
   "dependencies": {
