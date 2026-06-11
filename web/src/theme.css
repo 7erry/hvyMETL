@@ -1,0 +1,125 @@
+/* MongoDB LeafyGreen official palette — mongodb.design */
+:root {
+  --mdb-black: #001e2b;
+  --mdb-gray-dark-4: #112733;
+  --mdb-green-dark-3: #023430;
+  --mdb-green-dark-2: #00684a;
+  --mdb-green-base: #00ed64;
+  --mdb-spring-green: #e3fcf7;
+  --mdb-gray-light-2: #e8edeb;
+  --grid-size: 20px;
+  font-family: 'Euclid Circular A', 'Segoe UI', system-ui, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  height: 100%;
+  background: var(--mdb-black);
+  color: var(--mdb-spring-green);
+}
+
+button {
+  font: inherit;
+  cursor: pointer;
+  border: 1px solid var(--mdb-green-base);
+  background: var(--mdb-green-dark-2);
+  color: var(--mdb-spring-green);
+  border-radius: 6px;
+  padding: 0.45rem 0.85rem;
+}
+
+button:hover {
+  background: var(--mdb-green-dark-3);
+  box-shadow: 0 0 0 1px var(--mdb-green-base);
+}
+
+button.primary {
+  background: var(--mdb-green-base);
+  color: var(--mdb-black);
+  font-weight: 600;
+}
+
+button.ghost {
+  background: transparent;
+  border-color: var(--mdb-gray-light-2);
+}
+
+input,
+select,
+textarea {
+  font: inherit;
+  background: var(--mdb-gray-dark-4);
+  border: 1px solid var(--mdb-green-dark-2);
+  color: var(--mdb-spring-green);
+  border-radius: 6px;
+  padding: 0.5rem;
+}
+
+textarea {
+  width: 100%;
+  min-height: 120px;
+  font-family: ui-monospace, monospace;
+  font-size: 0.85rem;
+}
+
+.panel {
+  background: var(--mdb-gray-dark-4);
+  border: 1px solid var(--mdb-green-dark-2);
+  border-radius: 8px;
+  padding: 1rem;
+}
+
+.panel h3 {
+  margin: 0 0 0.75rem;
+  color: var(--mdb-green-base);
+  font-size: 0.95rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.table-node {
+  background: var(--mdb-green-dark-3);
+  border: 2px solid var(--mdb-green-base);
+  border-radius: 8px;
+  min-width: 200px;
+  font-size: 0.8rem;
+  box-shadow: 0 4px 24px rgba(0, 237, 100, 0.12);
+}
+
+.table-node header {
+  background: var(--mdb-green-dark-2);
+  padding: 0.5rem 0.75rem;
+  font-weight: 700;
+  color: var(--mdb-green-base);
+  border-radius: 6px 6px 0 0;
+}
+
+.table-node ul {
+  list-style: none;
+  margin: 0;
+  padding: 0.5rem 0.75rem;
+}
+
+.table-node li {
+  padding: 0.15rem 0;
+  color: var(--mdb-spring-green);
+  font-family: ui-monospace, monospace;
+}
+
+.table-node li.pk {
+  color: var(--mdb-green-base);
+}
+
+.react-flow__background {
+  background: var(--mdb-black) !important;
+}
+
+.react-flow__edge-path {
+  stroke: var(--mdb-green-base) !important;
+}

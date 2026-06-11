@@ -99,6 +99,19 @@ cp .env.example .env
 
 Requires Node.js 20+. Design, ETL, and unit tests run fully offline with no keys.
 
+## Web UI (optional)
+
+MongoDB-branded **Migration Studio** for visual ER diagrams, instant DDL import,
+templates (Laravel, Django, Twitter, …), and AI-powered migration export. The CLI
+remains fully available.
+
+```bash
+npm run dev:ui      # http://localhost:5173 (API on :3847)
+npm run start:ui    # production build on http://localhost:3847
+```
+
+See **[docs/13-web-ui.md](docs/13-web-ui.md)** for features and API reference.
+
 ## Run all examples against Atlas
 
 With `MONGODB_URI` set in `.env`, one command seeds, designs, extracts, imports, and

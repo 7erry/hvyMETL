@@ -21,18 +21,28 @@
     "seed-examples": "npm run -s build && node dist/examples/seed.js",
     "run-all-examples": "node scripts/run-all-examples.mjs",
     "validate-hybrid-rag": "npm run -s build && node scripts/validate-hybrid-rag.mjs",
+    "build:ui": "npm run -s build && npm install --prefix web && npm run -s build --prefix web",
+    "dev:ui": "npm run -s build && concurrently -k \"node dist/server/index.js\" \"npm run dev --prefix web\"",
+    "start:ui": "npm run -s build:ui && node dist/server/index.js",
     "test": "vitest run"
   },
   "dependencies": {
     "@inquirer/prompts": "^8.5.2",
     "better-sqlite3": "^12.10.0",
     "commander": "^15.0.0",
+    "cors": "^2.8.5",
     "dotenv": "^17.4.2",
-    "mongodb": "^7.3.0"
+    "express": "^5.1.0",
+    "mongodb": "^7.3.0",
+    "multer": "^2.0.2"
   },
   "devDependencies": {
     "@types/better-sqlite3": "^7.6.13",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.5",
+    "@types/multer": "^2.0.0",
     "@types/node": "^25.9.3",
+    "concurrently": "^9.2.1",
     "typescript": "^6.0.3",
     "vitest": "^4.1.8"
   }
