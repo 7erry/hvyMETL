@@ -2,9 +2,9 @@
  * Pluggable embedding providers.
  *
  * The toolkit never REQUIRES embeddings: when no API key is configured the
- * retriever falls back to lexical BM25 scoring. When OPENAI_API_KEY is set,
- * this module supplies an OpenAI-compatible provider (works with OpenAI or
- * any API exposing the same /embeddings endpoint via OPENAI_BASE_URL).
+ * retriever uses lexical BM25 only. When VOYAGE_API_KEY is set, see voyage.ts
+ * for hybrid BM25 + Voyage 4 retrieval. When only OPENAI_API_KEY is set, this
+ * module supplies an OpenAI-compatible vector provider.
  */
 
 import type { EmbeddingProvider } from '../types.js';

@@ -26,8 +26,7 @@ import { runEtl, MAX_PARALLEL_WORKERS } from './etl/runEtl.js';
 import { runRepogen } from './repogen/generate.js';
 import { createSqliteAdapter } from './adapters/sqlite.js';
 import { loadKnowledgeBase } from './rag/chunker.js';
-import { createEmbeddingProviderFromEnv } from './rag/embeddings.js';
-import { retrieve } from './rag/retriever.js';
+import { createRetrievalConfigFromEnv, describeRetrievalStrategy, retrieve } from './rag/retrieval.js';
 import { buildPromptBundle, buildRetrievalQuery } from './rag/promptBundle.js';
 
 /** Repo root (this file compiles to dist/cli.js, so root is one level up). */
@@ -139,8 +138,8 @@ withProfileFlags(
   adapter.close();
 
   const chunks = loadKnowledgeBase(KNOWLEDGE_DIR);
-  const provider = createEmbeddingProviderFromEnv();
-  const retrieved = await retrieve(chunks, buildRetrievalQuery(profile), PROMPT_CHUNK_COUNT, provider);
+  const retrievalConfig = createRetrievalConfigFromEnv();
+  const retrieved = await retrieve(chunks, buildRetrievalQuery(profile), PROMPT_CHUNK_COUNT, retrievalConfig);
 
   mkdirSync(flags.out, { recursive: true });
   for (const promptFile of buildPromptBundle({ profile, ddl, retrievedChunks: retrieved })) {
@@ -148,7 +147,7 @@ withProfileFlags(
     writeFileSync(filePath, promptFile.content);
     console.log(`Wrote ${filePath}`);
   }
-  console.log(`Retrieval strategy: ${provider ? `vector (${provider.name})` : 'lexical BM25 (no API key configured)'}.`);
+  console.log(`Retrieval strategy: ${describeRetrievalStrategy(retrievalConfig)}.`);
 });
 
 program

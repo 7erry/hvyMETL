@@ -59,7 +59,8 @@ pool, merge modes): **[docs/diagrams.md](docs/diagrams.md)**.
    documents (Bucket, Outlier, Extended Reference, Computed, Subset, Attribute,
    Polymorphic, Schema Versioning, Tree, Pre-allocation, Embed-vs-Reference) with
    applicability rules and verified code blocks. Retrieval is deterministic BM25 by
-   default; set `OPENAI_API_KEY` to switch to embedding-based vector retrieval.
+   default; set `VOYAGE_API_KEY` for hybrid BM25 + Voyage 4 search merged with
+   Reciprocal Rank Fusion, or `OPENAI_API_KEY` alone for vector-only retrieval.
 2. **Workload profiles** (`src/profiles/`): eight presets (catalog, cms, iot, mobile,
    personalization, realtime-analytics, single-view, ledger) selectable at runtime,
    each carrying telemetry, preferred patterns, write concern, and pool tuning.

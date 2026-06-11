@@ -1,19 +1,25 @@
 /**
- * RAG retriever with two interchangeable strategies:
+ * RAG retriever strategies:
  *
- * 1. Lexical (default): a BM25 relevance score computed locally. Fully
- *    deterministic and requires zero API keys, so the toolkit always works.
- * 2. Vector (optional): when an embedding provider is configured, chunks and
- *    the query are embedded and ranked by cosine similarity, which captures
- *    semantic matches that keyword scoring misses.
+ * 1. Lexical (default): BM25 relevance scoring — deterministic, no API keys.
+ * 2. Hybrid (optional): BM25 + Voyage 4 embeddings merged with Reciprocal Rank
+ *    Fusion when VOYAGE_API_KEY is set. Captures both exact keyword tokens and
+ *    deep conceptual context.
+ * 3. Vector (optional): OpenAI-compatible embeddings ranked by cosine similarity
+ *    when only OPENAI_API_KEY is set (Voyage takes precedence for hybrid).
  */
 
 import type { EmbeddingProvider, KnowledgeChunk, ScoredChunk } from '../types.js';
+import type { VoyageEmbeddingProvider } from './voyage.js';
 
 /** BM25 term-frequency saturation constant (standard default). */
 const BM25_K1 = 1.2;
 /** BM25 document-length normalization constant (standard default). */
 const BM25_B = 0.75;
+/** RRF constant k; 60 is the widely used default from the original RRF paper. */
+export const DEFAULT_RRF_K = 60;
+/** How many candidates each retrieval leg contributes before fusion. */
+const HYBRID_CANDIDATE_MULTIPLIER = 3;
 
 /**
  * Lowercase a text and split it into simple word tokens. Both documents and
@@ -26,22 +32,22 @@ export function tokenize(text: string): string[] {
     .filter((token) => token.length > 1);
 }
 
+/** Stable identity for a knowledge chunk across ranked lists. */
+export function chunkKey(chunk: KnowledgeChunk): string {
+  return `${chunk.sourceFile}\0${chunk.heading}`;
+}
+
 /**
  * Score every chunk against a query using BM25 and return the top matches.
  *
  * BM25 in one sentence: a chunk scores higher when it contains rare query
  * terms many times, with diminishing returns, adjusted for chunk length.
- *
- * @param chunks - The full chunked knowledge base.
- * @param query - Natural-language description of what we need patterns for.
- * @param topK - How many of the best chunks to return.
  */
 export function lexicalRetrieve(chunks: KnowledgeChunk[], query: string, topK: number): ScoredChunk[] {
   const chunkTokenLists = chunks.map((chunk) => tokenize(`${chunk.heading} ${chunk.text}`));
   const averageLength =
     chunkTokenLists.reduce((sum, tokens) => sum + tokens.length, 0) / Math.max(chunkTokenLists.length, 1);
 
-  // Document frequency: in how many chunks does each term appear at least once?
   const documentFrequency = new Map<string, number>();
   for (const tokens of chunkTokenLists) {
     for (const term of new Set(tokens)) {
@@ -54,7 +60,6 @@ export function lexicalRetrieve(chunks: KnowledgeChunk[], query: string, topK: n
 
   const scored: ScoredChunk[] = chunks.map((chunk, chunkIndex) => {
     const tokens = chunkTokenLists[chunkIndex];
-    // Term frequency within this single chunk.
     const termFrequency = new Map<string, number>();
     for (const token of tokens) termFrequency.set(token, (termFrequency.get(token) ?? 0) + 1);
 
@@ -63,7 +68,6 @@ export function lexicalRetrieve(chunks: KnowledgeChunk[], query: string, topK: n
       const frequencyInChunk = termFrequency.get(term) ?? 0;
       if (frequencyInChunk === 0) continue;
       const chunksContainingTerm = documentFrequency.get(term) ?? 0;
-      // Inverse document frequency: rare terms are worth more.
       const idf = Math.log(1 + (totalChunks - chunksContainingTerm + 0.5) / (chunksContainingTerm + 0.5));
       const lengthNormalization = 1 - BM25_B + BM25_B * (tokens.length / averageLength);
       score += idf * ((frequencyInChunk * (BM25_K1 + 1)) / (frequencyInChunk + BM25_K1 * lengthNormalization));
@@ -92,10 +96,35 @@ export function cosineSimilarity(a: number[], b: number[]): number {
 }
 
 /**
- * Rank chunks by embedding similarity to the query using the configured
- * provider. Embeds the whole knowledge base in one batch call (it is small)
- * plus the query, then sorts by cosine similarity.
+ * Merge multiple ranked lists with Reciprocal Rank Fusion (RRF).
+ *
+ * score(chunk) = Σ 1 / (k + rank_i)  across every list where the chunk appears.
+ * Rank is 1-based. Chunks that rank well in both BM25 and semantic search rise
+ * to the top without needing score normalization across incompatible scales.
  */
+export function reciprocalRankFusion(rankedLists: ScoredChunk[][], k = DEFAULT_RRF_K): ScoredChunk[] {
+  const fused = new Map<string, { chunk: KnowledgeChunk; score: number }>();
+
+  for (const list of rankedLists) {
+    for (let index = 0; index < list.length; index += 1) {
+      const item = list[index];
+      const key = chunkKey(item);
+      const contribution = 1 / (k + index + 1);
+      const existing = fused.get(key);
+      if (existing) {
+        existing.score += contribution;
+      } else {
+        fused.set(key, { chunk: item, score: contribution });
+      }
+    }
+  }
+
+  return [...fused.values()]
+    .map(({ chunk, score }) => ({ ...chunk, score }))
+    .sort((a, b) => b.score - a.score);
+}
+
+/** Rank chunks by OpenAI-compatible embedding cosine similarity to the query. */
 export async function vectorRetrieve(
   provider: EmbeddingProvider,
   chunks: KnowledgeChunk[],
@@ -112,21 +141,29 @@ export async function vectorRetrieve(
 }
 
 /**
- * Retrieve the most relevant knowledge chunks for a query.
- * Uses vector retrieval when a provider is available, BM25 otherwise.
+ * Hybrid retrieval: BM25 for keyword precision + Voyage 4 for semantic depth,
+ * fused with RRF. Requires VOYAGE_API_KEY.
  */
-export async function retrieve(
+export async function hybridRetrieve(
+  voyageProvider: VoyageEmbeddingProvider,
   chunks: KnowledgeChunk[],
   query: string,
   topK: number,
-  provider: EmbeddingProvider | null,
 ): Promise<ScoredChunk[]> {
-  if (provider) {
-    try {
-      return await vectorRetrieve(provider, chunks, query, topK);
-    } catch (error) {
-      console.error(`Vector retrieval failed (${String(error)}); falling back to lexical scoring.`);
-    }
-  }
-  return lexicalRetrieve(chunks, query, topK);
+  const candidateCount = Math.min(chunks.length, Math.max(topK * HYBRID_CANDIDATE_MULTIPLIER, topK));
+
+  const lexicalRanked = lexicalRetrieve(chunks, query, candidateCount);
+
+  const chunkTexts = chunks.map((chunk) => `${chunk.heading}\n${chunk.text}`);
+  const [docVectors, queryVector] = await Promise.all([
+    voyageProvider.embedDocuments(chunkTexts),
+    voyageProvider.embedQuery(query),
+  ]);
+
+  const semanticRanked = chunks
+    .map((chunk, index) => ({ ...chunk, score: cosineSimilarity(docVectors[index], queryVector) }))
+    .sort((a, b) => b.score - a.score)
+    .slice(0, candidateCount);
+
+  return reciprocalRankFusion([lexicalRanked, semanticRanked]).slice(0, topK);
 }

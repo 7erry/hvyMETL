@@ -15,8 +15,7 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { createSqliteAdapter } from '../adapters/sqlite.js';
 import { loadKnowledgeBase } from '../rag/chunker.js';
-import { createEmbeddingProviderFromEnv } from '../rag/embeddings.js';
-import { retrieve } from '../rag/retriever.js';
+import { createRetrievalConfigFromEnv, describeRetrievalStrategy, retrieve } from '../rag/retrieval.js';
 import { buildRetrievalQuery } from '../rag/promptBundle.js';
 import type { MigrationPlan, ScoredChunk, WorkloadProfile } from '../types.js';
 import { buildMigrationPlan } from './patternSelector.js';
@@ -90,9 +89,9 @@ export async function runDesign(options: DesignOptions): Promise<MigrationPlan> 
     const model = adapter.introspect();
 
     const chunks = loadKnowledgeBase(options.knowledgeDir);
-    const provider = createEmbeddingProviderFromEnv();
+    const retrievalConfig = createRetrievalConfigFromEnv();
     const retrievalQuery = buildRetrievalQuery(options.profile);
-    const retrieved = await retrieve(chunks, retrievalQuery, REPORT_CHUNK_COUNT, provider);
+    const retrieved = await retrieve(chunks, retrievalQuery, REPORT_CHUNK_COUNT, retrievalConfig);
 
     const plan = buildMigrationPlan(model, options.profile);
 
@@ -103,7 +102,7 @@ export async function runDesign(options: DesignOptions): Promise<MigrationPlan> 
     writeFileSync(reportPath, renderDesignReport(plan, options.profile, retrieved));
 
     console.log(`Introspected ${model.tables.length} tables, ${model.relationships.length} relationships.`);
-    console.log(`Retrieval strategy: ${provider ? `vector (${provider.name})` : 'lexical BM25 (no API key configured)'}.`);
+    console.log(`Retrieval strategy: ${describeRetrievalStrategy(retrievalConfig)}.`);
     console.log(`Planned ${plan.collections.length} collections.`);
     console.log(`Wrote ${planPath}`);
     console.log(`Wrote ${reportPath}`);

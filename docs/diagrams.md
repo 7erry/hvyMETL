@@ -152,16 +152,24 @@ flowchart LR
 
     CHUNK --> CHUNKS[(KnowledgeChunk[])]
 
-    QUERY --> RET{OPENAI_API_KEY?}
+    QUERY --> RET{VOYAGE_API_KEY?}
 
-    RET -->|yes| EMB[embed batch]
-    EMB --> COS[cosine similarity]
-    COS --> TOP[top-K chunks]
+    RET -->|yes| BM25H[BM25 keyword rank]
+    RET -->|yes| VOY[Voyage 4 embed<br/>query + document]
+    VOY --> COS[cosine similarity rank]
+    BM25H --> RRF[Reciprocal Rank Fusion<br/>k=60]
+    COS --> RRF
+    RRF --> TOP[top-K chunks]
 
-    RET -->|no| BM25[lexical BM25]
+    RET -->|no| OPENAI{OPENAI_API_KEY?}
+    OPENAI -->|yes| EMB[OpenAI embed batch]
+    EMB --> VEC[cosine rank]
+    VEC --> TOP
+    OPENAI -->|no| BM25[BM25 only default]
     BM25 --> TOP
 
-    EMB -.->|API failure| BM25
+    RRF -.->|API failure| BM25
+    VEC -.->|API failure| BM25
 
     TOP --> REPORT[design-report.md citations]
     TOP --> PROMPTS[3 production prompts]

@@ -1,7 +1,9 @@
 # 03 — Knowledge Base & RAG Retrieval
 
 Sources: [`knowledge/`](../knowledge/), [`src/rag/chunker.ts`](../src/rag/chunker.ts),
+[`src/rag/retrieval.ts`](../src/rag/retrieval.ts),
 [`src/rag/retriever.ts`](../src/rag/retriever.ts),
+[`src/rag/voyage.ts`](../src/rag/voyage.ts),
 [`src/rag/embeddings.ts`](../src/rag/embeddings.ts),
 [`src/rag/promptBundle.ts`](../src/rag/promptBundle.ts)
 
@@ -10,9 +12,12 @@ Sources: [`knowledge/`](../knowledge/), [`src/rag/chunker.ts`](../src/rag/chunke
 The RAG layer grounds the toolkit's schema decisions in concrete source material
 instead of generic LLM training data. Eleven curated markdown documents (one per
 MongoDB design pattern, each with applicability thresholds and verified code blocks)
-are chunked at heading boundaries and ranked against a workload-derived query — by
-deterministic BM25 by default, or by embedding cosine similarity when an API key is
-configured. The top chunks are cited in the design report and assembled into three
+are chunked at heading boundaries and ranked against a workload-derived query. By
+default retrieval is **BM25 only** (no API keys, fully offline). When `VOYAGE_API_KEY`
+is set, the retriever runs **hybrid search**: BM25 for exact keyword tokens plus
+[Voyage 4](https://docs.voyageai.com/docs/embeddings) embeddings for conceptual
+context, with scores merged via **Reciprocal Rank Fusion (RRF)**. The top chunks are
+cited in the design report and assembled into three
 "hardened production prompts" for LLM/Cursor use. The pattern content itself is
 grounded in MongoDB's
 [Building with Patterns series](https://www.mongodb.com/company/blog/building-with-patterns-a-summary).
@@ -39,27 +44,58 @@ Classic BM25 (`k1 = 1.2`, `b = 0.75`): a chunk scores higher when it contains *r
 query terms *many times*, with diminishing returns, normalized by chunk length.
 Fully deterministic and dependency-free, so the toolkit always works offline.
 
+### `hybridRetrieve(voyageProvider, chunks, query, topK): Promise<ScoredChunk[]>`
+
+When `VOYAGE_API_KEY` is set:
+
+1. Rank candidates with **BM25** (`lexicalRetrieve`).
+2. Rank candidates with **Voyage 4** (`embedDocuments` + `embedQuery`, cosine similarity).
+3. Fuse both ranked lists with **Reciprocal Rank Fusion**:
+
+   `RRF_score(chunk) = Σ 1 / (k + rank_i)` across each list (default `k = 60`).
+
+Chunks that match both exact pattern keywords *and* semantic workload context rise to
+the top without normalizing incompatible score scales.
+
+### `reciprocalRankFusion(rankedLists, k?): ScoredChunk[]`
+
+Pure function; unit-tested in `retriever.test.ts`. Merges any number of ranked lists.
+
 ### `vectorRetrieve(provider, chunks, query, topK): Promise<ScoredChunk[]>`
 
-Embeds the entire knowledge base in one batch call plus the query, ranks by
-`cosineSimilarity`. The knowledge base is small (dozens of chunks), so in-memory
-cosine ranking avoids requiring an Atlas Vector Search index for retrieval.
+OpenAI-compatible vector path used **only when `VOYAGE_API_KEY` is unset** and
+`OPENAI_API_KEY` is set. Ranks by cosine similarity.
 
-### `retrieve(chunks, query, topK, provider): Promise<ScoredChunk[]>`
+### `retrieve(chunks, query, topK, config): Promise<ScoredChunk[]>`
 
-The strategy selector: vector when a provider exists, BM25 otherwise — and BM25 as a
-runtime *fallback* if the embedding API call throws.
+Strategy priority (see `retrieval.ts`):
 
-### `createEmbeddingProviderFromEnv(): EmbeddingProvider | null`
+| Condition | Strategy |
+| --- | --- |
+| `VOYAGE_API_KEY` set | Hybrid BM25 + Voyage 4 → RRF |
+| Only `OPENAI_API_KEY` set | Vector cosine similarity |
+| No keys | BM25 only (default) |
 
-| Environment variable | Required | Default | Description |
+API failures fall back to BM25 with a console warning.
+
+### `createRetrievalConfigFromEnv(): RetrievalConfig`
+
+Loads `{ openaiProvider, voyageProvider }` from `.env`.
+
+### `describeRetrievalStrategy(config): string`
+
+Returns the log line printed by `design` and `prompt` commands.
+
+### Environment variables
+
+| Name | Required | Default | Description |
 | --- | --- | --- | --- |
-| `OPENAI_API_KEY` | optional | — | Absent → returns `null` (lexical mode) |
-| `OPENAI_BASE_URL` | optional | `https://api.openai.com/v1` | Any OpenAI-compatible `/embeddings` endpoint |
-| `EMBEDDING_MODEL` | optional | `text-embedding-3-small` | Embedding model name |
-
-**Returns:** an `EmbeddingProvider` (`{ name, embed(texts) => Promise<number[][]> }`)
-or `null`.
+| `VOYAGE_API_KEY` | optional | — | Enables hybrid BM25 + Voyage 4 + RRF |
+| `VOYAGE_EMBEDDING_MODEL` | optional | `voyage-4` | Voyage 4 series model |
+| `VOYAGE_BASE_URL` | optional | `https://api.voyageai.com/v1` | Voyage platform; use `https://ai.mongodb.com/v1` for Atlas keys |
+| `OPENAI_API_KEY` | optional | — | Vector-only retrieval when Voyage key absent |
+| `OPENAI_BASE_URL` | optional | `https://api.openai.com/v1` | OpenAI-compatible `/embeddings` endpoint |
+| `EMBEDDING_MODEL` | optional | `text-embedding-3-small` | OpenAI embedding model |
 
 ### `buildPromptBundle(input: PromptBundleInput): PromptFile[]`
 
@@ -81,11 +117,12 @@ right documents.
 
 ## 3. Edge Cases & Error Handling
 
-- **No API key:** the entire vector path is skipped — `retrieve` silently uses BM25.
-  The CLI reports which strategy ran (`Retrieval strategy: lexical BM25 ...`).
-- **Embedding API failure:** `retrieve` catches, logs
-  `Vector retrieval failed (...); falling back to lexical scoring.`, and degrades
-  gracefully instead of failing the design run.
+- **No API keys (default):** retrieval is BM25-only. The CLI reports
+  `Retrieval strategy: lexical BM25 (no API key configured)`.
+- **Voyage takes precedence:** when both `VOYAGE_API_KEY` and `OPENAI_API_KEY` are
+  set, hybrid RRF runs; OpenAI is ignored until Voyage is removed.
+- **Hybrid API failure:** logs `Hybrid retrieval failed (...); falling back to lexical BM25.`
+- **OpenAI-only API failure:** logs `Vector retrieval failed (...); falling back to lexical BM25.`
 - **Out-of-order embedding responses:** the provider re-sorts response items by
   `index` before returning, guarding against APIs that batch asynchronously.
 - **Zero-score chunks** are filtered out of BM25 results — a query with no overlap
@@ -104,40 +141,41 @@ right documents.
 3. **Length normalization** prevents long chunks from winning just by containing more
    words: the `1 - b + b * (len / avgLen)` denominator term scales term frequency by
    how unusually long the chunk is.
-4. **The provider is an interface, not a client** (`embeddings.ts`): anything with an
-   `/embeddings`-shaped endpoint plugs in via `OPENAI_BASE_URL`, and tests can inject
-   a stub `EmbeddingProvider` without network access.
-5. **Prompts are artifacts, not API calls** (`promptBundle.ts`): emitting markdown
+4. **Voyage query/document types** (`voyage.ts`): chunks embed with
+   `input_type: "document"`; the workload query uses `input_type: "query"` per
+   [Voyage retrieval guidance](https://docs.voyageai.com/docs/embeddings).
+5. **RRF avoids score-scale problems** (`retriever.ts`): BM25 scores (unbounded) and
+   cosine similarity (0–1) are never added directly — only ranks contribute.
+6. **The provider is an interface, not a client** (`embeddings.ts` / `voyage.ts`):
+   tests inject stubs without network access (`retriever.test.ts` covers RRF).
+7. **Prompts are artifacts, not API calls** (`promptBundle.ts`): emitting markdown
    files keeps the toolkit useful without any LLM key — paste them into Cursor with
    `@`-references or pipe them to an API in a wrapper script.
 
 ## 5. Usage Example
 
+```bash
+# Default: BM25 only (no keys required)
+npm run hvymetl -- design --source examples/iot.db --profile iot --out out/iot
+# Retrieval strategy: lexical BM25 (no API key configured).
+
+# Hybrid: add to .env → VOYAGE_API_KEY=pa-...
+npm run hvymetl -- design --source examples/iot.db --profile iot --out out/iot
+# Retrieval strategy: hybrid BM25 + voyage-4 (Reciprocal Rank Fusion).
+```
+
 ```typescript
 import { loadKnowledgeBase } from './rag/chunker.js';
-import { retrieve } from './rag/retriever.js';
-import { createEmbeddingProviderFromEnv } from './rag/embeddings.js';
+import { createRetrievalConfigFromEnv, describeRetrievalStrategy, retrieve } from './rag/retrieval.js';
 import { buildRetrievalQuery } from './rag/promptBundle.js';
 import { getProfile } from './profiles/profiles.js';
 
 const chunks = loadKnowledgeBase('knowledge');
-const profile = getProfile('iot');
-const top = await retrieve(chunks, buildRetrievalQuery(profile), 3, createEmbeddingProviderFromEnv());
+const config = createRetrievalConfigFromEnv();
+console.log(describeRetrievalStrategy(config));
 
-for (const chunk of top) console.log(chunk.score.toFixed(2), '-', chunk.heading);
-// Example output (lexical mode):
-// 4.91 - Bucket Pattern > Applicability rules
-// 4.55 - Pre-allocation Pattern > Applicability rules
-// 4.12 - Bucket Pattern > Benefits under high RPM
-```
-
-Or from the shell:
-
-```bash
-npm run hvymetl -- prompt --source examples/iot.db --profile iot
-# Wrote out/prompts/1-schema-design-architect.md
-# Wrote out/prompts/2-parallel-etl-generator.md
-# Wrote out/prompts/3-repository-layer.md
+const top = await retrieve(chunks, buildRetrievalQuery(getProfile('iot')), 3, config);
+for (const chunk of top) console.log(chunk.score.toFixed(4), '-', chunk.heading);
 ```
 
 ## 6. Refactoring / Optimization Suggestions
