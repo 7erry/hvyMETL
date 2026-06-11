@@ -38,6 +38,9 @@ exports, same as CLI).
 | **AI-Powered DDL Export** | Full-screen artifact editor (editable + per-file download) | `POST /api/export/migration` + prompts |
 | **Full pipeline** | Header → **Run Full Pipeline** (design → csvToAtlas import from CSV exports) | `GET /api/pipeline/config`, `POST /api/pipeline/run` |
 
+Artifact purposes (migration plan, design report, RAG prompts, repository layer):
+[15-migration-artifacts.md](15-migration-artifacts.md).
+
 ## 4. API Reference
 
 | Method | Path | Body | Response |

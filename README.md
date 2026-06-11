@@ -83,6 +83,10 @@ pool, merge modes): **[docs/diagrams.md](docs/diagrams.md)**.
    atomic modifiers only (`$inc`, `$push` + `$position` + `$slice`, bucket upserts)
    plus a connection module tuned to the profile.
 
+**What each output is for:** see **[docs/15-migration-artifacts.md](docs/15-migration-artifacts.md)**
+— migration plan, design report, the three RAG production prompts (schema design
+architect, parallel ETL generator, repository layer), and generated repository code.
+
 ## Setup
 
 ```bash

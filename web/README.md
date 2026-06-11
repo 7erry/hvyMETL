@@ -64,6 +64,10 @@ editable text, per-file download, and **Download all**. Artifacts persist in
 | **AI Migration Export** | Generates migration plan JSON, design report, and 3 RAG prompts |
 | **Run Full Pipeline** | Header button — design → csvToAtlas import from CSV exports |
 
+See **[docs/15-migration-artifacts.md](../docs/15-migration-artifacts.md)** for what each
+artifact is for (migration plan, design report, schema design architect prompt,
+parallel ETL generator prompt, repository layer prompt vs `repogen` code).
+
 ## Typical workflow
 
 1. **Import schema** — paste `CREATE TABLE` DDL, upload SQLite, or load a template.
