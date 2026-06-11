@@ -18,6 +18,8 @@ import { buildPromptBundle, buildRetrievalQuery } from '../rag/promptBundle.js';
 import { getProfile } from '../profiles/profiles.js';
 import { parseDdlToModel } from '../utilities/ddlParser.js';
 import type { SqlStructuralModel } from '../types.js';
+import { getPipelineConfigStatus } from './pipelineConfig.js';
+import { runFullPipeline } from './runPipeline.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '../..');
 const KNOWLEDGE_DIR = join(ROOT, 'knowledge');
@@ -88,7 +90,7 @@ app.post('/api/schema/import-sqlite', upload.single('database'), (req, res) => {
     const model = adapter.introspect();
     const ddl = adapter.dumpDdl();
     adapter.close();
-    res.json({ model, ddl, dialect: 'sqlite' });
+    res.json({ model, ddl, dialect: 'sqlite', sourcePath: req.file.path });
   } catch (error) {
     res.status(400).json({ error: String(error) });
   }
@@ -170,6 +172,101 @@ app.get('/api/templates', (_req, res) => {
     return { id, name: id.charAt(0).toUpperCase() + id.slice(1), ddl, model };
   });
   res.json(templates);
+});
+
+/** Pipeline config status (non-secret) for the UI. */
+app.get('/api/pipeline/config', (_req, res) => {
+  res.json(getPipelineConfigStatus());
+});
+
+/**
+ * Run full pipeline: design → ETL → csvToAtlas import.
+ * Body may override MONGODB_URI, CSV_TO_ATLAS_PATH, sourceDbPath when not in .env.
+ */
+app.post('/api/pipeline/run', async (req, res) => {
+  try {
+    const profileId = String(req.body?.profileId ?? 'catalog');
+    const model = req.body?.model as SqlStructuralModel | undefined;
+    const ddl = String(req.body?.ddl ?? '');
+    if (!model) {
+      res.status(400).json({ error: 'model is required' });
+      return;
+    }
+
+    const result = await runFullPipeline({
+      profileId,
+      model,
+      ddl,
+      sourceDbPath: req.body?.sourceDbPath as string | undefined,
+      targetDb: req.body?.targetDb as string | undefined,
+      dryRun: Boolean(req.body?.dryRun),
+      workers: req.body?.workers ? Number(req.body.workers) : undefined,
+      drop: req.body?.drop !== false,
+      mongoUri: req.body?.mongoUri as string | undefined,
+      csvToAtlasPath: req.body?.csvToAtlasPath as string | undefined,
+      knowledgeDir: KNOWLEDGE_DIR,
+      rootDir: ROOT,
+    });
+
+    res.json({
+      ok: result.ok,
+      errors: result.errors,
+      paths: result.paths,
+      etl: result.etl,
+      imports: result.imports,
+      retrievalStrategy: result.design.retrievalStrategy,
+      migrationPlanJson: result.design.plan,
+      designReportMarkdown: result.design.designReport,
+    });
+  } catch (error) {
+    res.status(500).json({ error: String(error) });
+  }
+});
+
+/** Run pipeline with SQLite source uploaded in the same request. */
+app.post('/api/pipeline/run-with-source', upload.single('database'), async (req, res) => {
+  try {
+    const profileId = String(req.body?.profileId ?? 'catalog');
+    const model = req.body?.model ? (JSON.parse(String(req.body.model)) as SqlStructuralModel) : undefined;
+    const ddl = String(req.body?.ddl ?? '');
+    if (!model) {
+      res.status(400).json({ error: 'model is required' });
+      return;
+    }
+    if (!req.file) {
+      res.status(400).json({ error: 'database file is required when source is not in .env' });
+      return;
+    }
+
+    const result = await runFullPipeline({
+      profileId,
+      model,
+      ddl,
+      sourceDbPath: req.file.path,
+      targetDb: req.body?.targetDb as string | undefined,
+      dryRun: req.body?.dryRun === 'true' || req.body?.dryRun === true,
+      workers: req.body?.workers ? Number(req.body.workers) : undefined,
+      drop: req.body?.drop !== 'false',
+      mongoUri: req.body?.mongoUri as string | undefined,
+      csvToAtlasPath: req.body?.csvToAtlasPath as string | undefined,
+      knowledgeDir: KNOWLEDGE_DIR,
+      rootDir: ROOT,
+    });
+
+    res.json({
+      ok: result.ok,
+      errors: result.errors,
+      paths: result.paths,
+      etl: result.etl,
+      imports: result.imports,
+      sourcePath: req.file.path,
+      retrievalStrategy: result.design.retrievalStrategy,
+      migrationPlanJson: result.design.plan,
+      designReportMarkdown: result.design.designReport,
+    });
+  } catch (error) {
+    res.status(500).json({ error: String(error) });
+  }
 });
 
 /** Serve built UI (production). Vite dev server proxies /api during development. */

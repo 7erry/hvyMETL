@@ -373,3 +373,109 @@ textarea {
 .react-flow__edge-path {
   stroke: var(--mdb-green-base) !important;
 }
+
+.pipeline-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: rgba(0, 30, 43, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.pipeline-modal {
+  width: min(560px, 100%);
+  max-height: 90vh;
+  overflow: auto;
+  margin: 0;
+}
+
+.pipeline-modal__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.pipeline-modal__header h2 {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.pipeline-modal__footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.pipeline-status {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 1rem;
+  font-size: 0.85rem;
+}
+
+.pipeline-status li {
+  padding: 0.35rem 0;
+  border-bottom: 1px solid var(--mdb-green-dark-2);
+}
+
+.pipeline-status li.ok {
+  color: var(--mdb-green-base);
+}
+
+.pipeline-status li.missing {
+  color: #f5a8a8;
+}
+
+.pipeline-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.pipeline-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-size: 0.85rem;
+}
+
+.pipeline-file input[type='file'] {
+  margin-top: 0.25rem;
+}
+
+.pipeline-error {
+  color: #f5a8a8;
+  font-size: 0.85rem;
+}
+
+.pipeline-warn {
+  background: rgba(255, 200, 50, 0.1);
+  border: 1px solid #aa8800;
+  border-radius: 6px;
+  padding: 0.5rem 0.75rem;
+  margin-bottom: 0.75rem;
+  font-size: 0.8rem;
+}
+
+.pipeline-result {
+  margin-top: 1rem;
+  padding: 0.75rem;
+  background: var(--mdb-gray-dark-4);
+  border-radius: 6px;
+  font-size: 0.85rem;
+}
+
+.pipeline-result ul {
+  margin: 0.5rem 0 0;
+  padding-left: 1.25rem;
+}
+
+.pipeline-error-list {
+  color: #f5a8a8;
+}
+

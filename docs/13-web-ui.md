@@ -36,6 +36,7 @@ exports, same as CLI).
 | **Session state** | Auto-saved in `sessionStorage` (schema, layout, artifacts survive refresh) | Client-side |
 | **Table details** | Click table on canvas or sidebar | Column types, PKs, FKs |
 | **AI-Powered DDL Export** | Full-screen artifact editor (editable + per-file download) | `POST /api/export/migration` + prompts |
+| **Full pipeline** | Header → **Run Full Pipeline** (design → ETL → Atlas import) | `GET /api/pipeline/config`, `POST /api/pipeline/run` |
 
 ## 4. API Reference
 
@@ -46,10 +47,13 @@ exports, same as CLI).
 | `GET` | `/api/dialects` | — | Supported database labels |
 | `GET` | `/api/templates` | — | Template DDL + parsed model |
 | `POST` | `/api/schema/import-ddl` | `{ ddl, dialect }` | `{ model }` |
-| `POST` | `/api/schema/import-sqlite` | `multipart database` | `{ model, ddl }` |
+| `POST` | `/api/schema/import-sqlite` | `multipart database` | `{ model, ddl, sourcePath }` |
 | `POST` | `/api/design` | `{ model, profileId, ddl }` | `{ plan, designReport, retrievalStrategy }` |
 | `POST` | `/api/export/migration` | `{ model, profileId, ddl }` | Downloads: plan JSON, design report, RAG prompts |
 | `POST` | `/api/export/prompts` | `{ ddl, profileId }` | RAG prompt bundle |
+| `GET` | `/api/pipeline/config` | — | Non-secret pipeline status (Mongo URI, csvToAtlas, source DB) |
+| `POST` | `/api/pipeline/run` | `{ model, profileId, ddl, sourceDbPath?, mongoUri?, csvToAtlasPath?, targetDb?, dryRun?, drop? }` | Design + ETL + import summary |
+| `POST` | `/api/pipeline/run-with-source` | `multipart database` + form fields | Same as run, with uploaded SQLite source |
 
 ## 5. Diagram export format
 
@@ -71,6 +75,10 @@ The UI uses the official **LeafyGreen** palette (`#001E2B`, `#00ED64`, `#00684A`
 `#E3FCF7`) per [mongodb.design](https://www.mongodb.design/foundations/palette).
 
 ## 7. CLI parity
+
+Design and export are available in the UI. The **Run Full Pipeline** action runs
+design → ETL → csvToAtlas import when `MONGODB_URI`, `CSV_TO_ATLAS_PATH`, and a
+SQLite source (`HVYMETL_SOURCE_DB` or upload) are configured.
 
 All pipeline stages remain available without the UI:
 

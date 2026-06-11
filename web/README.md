@@ -62,18 +62,34 @@ editable text, per-file download, and **Download all**. Artifacts persist in
 | **Session state** | Auto-saved in `sessionStorage`; use **Clear session** to reset |
 | **Workload profiles** | Header dropdown (catalog, cms, iot, …) |
 | **AI Migration Export** | Generates migration plan JSON, design report, and 3 RAG prompts |
+| **Run Full Pipeline** | Header button — design → ETL → Atlas import via csvToAtlas |
 
 ## Typical workflow
 
 1. **Import schema** — paste `CREATE TABLE` DDL, upload SQLite, or load a template.
 2. **Arrange the ER diagram** — position tables, inspect details, duplicate as needed.
 3. **Choose a workload profile** — e.g. Content Management, IoT, Catalog.
-4. **AI Migration Export** — review and edit artifacts; download for Cursor/LLM or CLI follow-up.
-5. **Optional: share** — export diagram JSON for collaboration.
+4. **Run Full Pipeline** (optional) — prompts for missing `.env` values, runs ETL + Atlas import.
+5. **AI Migration Export** — review and edit artifacts; download for Cursor/LLM or CLI follow-up.
+6. **Optional: share** — export diagram JSON for collaboration.
+
+### Full pipeline from the UI
+
+Configure in `.env` (recommended):
+
+```bash
+CSV_TO_ATLAS_PATH=/path/to/cvsToAtlas
+MONGODB_URI=mongodb+srv://…
+MONGODB_DB=hvymetl_iot
+HVYMETL_SOURCE_DB=/path/to/source.db   # optional if you upload SQLite in the UI
+```
+
+Then **Run Full Pipeline** in the header. The modal shows what is configured vs missing
+and accepts overrides for this session only (Mongo URI is never stored in `sessionStorage`).
 
 ### CLI parity
 
-The UI covers **design** and **export**. Full pipeline stages remain on the CLI:
+The UI covers **design**, **export**, and **full pipeline**. Individual stages remain on the CLI:
 
 ```bash
 npm run hvymetl -- design --source examples/iot.db --profile iot --out out/iot

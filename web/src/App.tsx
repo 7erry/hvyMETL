@@ -4,6 +4,7 @@ import { MigrationArtifactsView } from './components/MigrationArtifactsView';
 import { SchemaCanvas, deleteTableFromModel, duplicateTableInModel } from './components/SchemaCanvas';
 import { TableDetails } from './components/TableDetails';
 import { ResizableSplit } from './components/ResizableSplit';
+import { PipelinePanel } from './components/PipelinePanel';
 import {
   downloadJson,
   exportMigration,
@@ -14,6 +15,7 @@ import {
   importDdl,
   importSqlite,
   type DiagramExport,
+  type PipelineRunResult,
 } from './api';
 import {
   defaultSessionState,
@@ -31,6 +33,7 @@ export default function App() {
   const [session, setSession] = useState<SessionState>(loadSessionState);
   const [status, setStatus] = useState('');
   const [exporting, setExporting] = useState(false);
+  const [pipelineOpen, setPipelineOpen] = useState(false);
 
   const {
     profileId,
@@ -45,6 +48,7 @@ export default function App() {
     selectedTemplateId,
     sidebarWidth,
     canvasPanelOpen,
+    sourceDbPath,
   } = session;
 
   const setSessionField = useCallback(<K extends keyof SessionState>(key: K, value: SessionState[K]) => {
@@ -93,8 +97,9 @@ export default function App() {
   const handleSqliteUpload = async (file: File) => {
     try {
       setStatus('Reading SQLite database…');
-      const { model: m, ddl: d } = await importSqlite(file);
+      const { model: m, ddl: d, sourcePath } = await importSqlite(file);
       setSessionField('dialect', 'sqlite');
+      if (sourcePath) setSessionField('sourceDbPath', sourcePath);
       await applySchema(d, m);
     } catch (e) {
       setStatus(`SQLite import failed: ${String(e)}`);
@@ -195,6 +200,30 @@ export default function App() {
     }
   };
 
+  const handlePipelineComplete = (result: PipelineRunResult) => {
+    if (result.migrationPlanJson && result.designReportMarkdown) {
+      const artifacts: MigrationArtifacts = {
+        planJson: JSON.stringify(result.migrationPlanJson, null, 2),
+        designReportMarkdown: result.designReportMarkdown,
+        prompts: [],
+        retrievalStrategy: result.retrievalStrategy,
+        generatedAt: new Date().toISOString(),
+        pipelineResult: {
+          ok: result.ok,
+          imports: result.imports.map((i) => ({
+            collection: i.collection,
+            ok: i.ok,
+            insertedCount: i.insertedCount,
+            error: i.error,
+          })),
+          outDir: result.paths.outDir,
+        },
+      };
+      setSession((prev) => ({ ...prev, migrationArtifacts: artifacts }));
+    }
+    setStatus(result.ok ? 'Full pipeline completed.' : `Pipeline finished with errors: ${result.errors.join('; ')}`);
+  };
+
   const handleClearSession = () => {
     const next = defaultSessionState();
     setSession(next);
@@ -228,9 +257,14 @@ export default function App() {
               ← Diagram
             </button>
           ) : (
-            <button type="button" className="primary" onClick={() => void handleAiExport()} disabled={!model || exporting}>
-              {exporting ? 'Generating…' : 'AI Migration Export'}
-            </button>
+            <>
+              <button type="button" className="ghost" onClick={() => setPipelineOpen(true)} disabled={!model}>
+                Run Full Pipeline
+              </button>
+              <button type="button" className="primary" onClick={() => void handleAiExport()} disabled={!model || exporting}>
+                {exporting ? 'Generating…' : 'AI Migration Export'}
+              </button>
+            </>
           )}
           <span style={{ fontSize: '0.75rem', opacity: 0.7 }}>CLI: npm run hvymetl</span>
         </div>
@@ -414,6 +448,19 @@ export default function App() {
           </main>
         )}
       </div>
+
+      {model ? (
+        <PipelinePanel
+          open={pipelineOpen}
+          onClose={() => setPipelineOpen(false)}
+          model={model}
+          ddl={ddl}
+          profileId={profileId}
+          sourceDbPath={sourceDbPath}
+          onSourceDbPathChange={(path) => setSessionField('sourceDbPath', path)}
+          onComplete={handlePipelineComplete}
+        />
+      ) : null}
     </div>
   );
 }

@@ -13,6 +13,11 @@ export type MigrationArtifacts = {
   prompts: PromptArtifact[];
   retrievalStrategy?: string;
   generatedAt: string;
+  pipelineResult?: {
+    ok: boolean;
+    imports: { collection: string; ok: boolean; insertedCount?: number; error?: string }[];
+    outDir: string;
+  };
 };
 
 export type AppView = 'diagram' | 'migration';
@@ -30,6 +35,7 @@ export type SessionState = {
   selectedTemplateId: string;
   sidebarWidth: number;
   canvasPanelOpen: boolean;
+  sourceDbPath: string | null;
 };
 
 export const defaultSessionState = (): SessionState => ({
@@ -45,6 +51,7 @@ export const defaultSessionState = (): SessionState => ({
   selectedTemplateId: '',
   sidebarWidth: 320,
   canvasPanelOpen: true,
+  sourceDbPath: null,
 });
 
 export function loadSessionState(): SessionState {
