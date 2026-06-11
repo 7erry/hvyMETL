@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { MongoLogo } from './components/MongoLogo';
 import { MigrationArtifactsView } from './components/MigrationArtifactsView';
-import { SchemaCanvas, duplicateTableInModel } from './components/SchemaCanvas';
+import { SchemaCanvas, deleteTableFromModel, duplicateTableInModel } from './components/SchemaCanvas';
 import { TableDetails } from './components/TableDetails';
+import { ResizableSplit } from './components/ResizableSplit';
 import {
   downloadJson,
   exportMigration,
@@ -42,6 +43,8 @@ export default function App() {
     view,
     migrationArtifacts,
     selectedTemplateId,
+    sidebarWidth,
+    canvasPanelOpen,
   } = session;
 
   const setSessionField = useCallback(<K extends keyof SessionState>(key: K, value: SessionState[K]) => {
@@ -115,6 +118,18 @@ export default function App() {
       selectedTable: next.tables.find((t) => t.name.startsWith(`${tableName}_copy`))?.name ?? tableName,
     }));
     setStatus(`Duplicated table ${tableName}.`);
+  };
+
+  const handleDelete = (tableName: string) => {
+    if (!model) return;
+    const { model: next, positions: nextPos } = deleteTableFromModel(model, tableName, positions);
+    setSession((prev) => ({
+      ...prev,
+      model: next,
+      positions: nextPos,
+      selectedTable: prev.selectedTable === tableName ? null : prev.selectedTable,
+    }));
+    setStatus(`Deleted table ${tableName}.`);
   };
 
   const handleExportDiagram = () => {
@@ -222,175 +237,182 @@ export default function App() {
       </header>
 
       <div style={{ display: 'flex', flex: 1, minHeight: 0 }}>
-        {view === 'diagram' && (
-          <aside
-            style={{
-              width: 320,
-              borderRight: '1px solid #00684A',
-              padding: '0.75rem',
-              overflowY: 'auto',
-              background: '#001E2B',
-            }}
-          >
-            <div className="panel" style={{ marginBottom: '0.75rem' }}>
-              <h3>Instant Schema Import</h3>
-              <label style={{ fontSize: '0.8rem' }}>Database dialect</label>
-              <select
-                value={dialect}
-                onChange={(e) => setSessionField('dialect', e.target.value)}
-                style={{ width: '100%', marginBottom: '0.5rem' }}
-              >
-                {dialects.map((d) => (
-                  <option key={d.id} value={d.id}>
-                    {d.label}
-                    {d.live ? ' ✓' : ' (DDL paste)'}
-                  </option>
-                ))}
-              </select>
-              <textarea
-                value={ddl}
-                onChange={(e) => setSessionField('ddl', e.target.value)}
-                placeholder="Paste one CREATE TABLE query or full DDL script…"
-                rows={8}
-              />
-              <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem', flexWrap: 'wrap' }}>
-                <button type="button" className="primary" onClick={() => void handleImportQuery()}>
-                  Import Query
-                </button>
-                <label className="ghost" style={{ padding: '0.45rem 0.85rem', cursor: 'pointer' }}>
-                  SQL file
-                  <input
-                    type="file"
-                    accept=".db,.sqlite,.sqlite3"
-                    hidden
-                    onChange={(e) => {
-                      const f = e.target.files?.[0];
-                      if (f) void handleSqliteUpload(f);
-                    }}
+        {view === 'diagram' ? (
+          <ResizableSplit
+            sidebarWidth={sidebarWidth}
+            onSidebarWidthChange={(width) => setSessionField('sidebarWidth', width)}
+            sidebar={
+              <div className="sidebar-scroll">
+                <div className="panel" style={{ marginBottom: '0.75rem' }}>
+                  <h3>Instant Schema Import</h3>
+                  <label style={{ fontSize: '0.8rem' }}>Database dialect</label>
+                  <select
+                    value={dialect}
+                    onChange={(e) => setSessionField('dialect', e.target.value)}
+                    style={{ width: '100%', marginBottom: '0.5rem' }}
+                  >
+                    {dialects.map((d) => (
+                      <option key={d.id} value={d.id}>
+                        {d.label}
+                        {d.live ? ' ✓' : ' (DDL paste)'}
+                      </option>
+                    ))}
+                  </select>
+                  <textarea
+                    value={ddl}
+                    onChange={(e) => setSessionField('ddl', e.target.value)}
+                    placeholder="Paste one CREATE TABLE query or full DDL script…"
+                    rows={8}
                   />
-                </label>
-              </div>
-            </div>
-
-            <div className="panel" style={{ marginBottom: '0.75rem' }}>
-              <h3>Templates</h3>
-              <select
-                value={selectedTemplateId}
-                onChange={(e) => setSessionField('selectedTemplateId', e.target.value)}
-                style={{ width: '100%', marginBottom: '0.5rem' }}
-                aria-label="Schema template"
-              >
-                <option value="">Choose a template…</option>
-                {templates.map((t) => (
-                  <option key={t.id} value={t.id}>
-                    {t.name}
-                  </option>
-                ))}
-              </select>
-              <button type="button" onClick={() => void handleTemplateLoad()} disabled={!selectedTemplateId} style={{ width: '100%' }}>
-                Load template
-              </button>
-            </div>
-
-            <div className="panel" style={{ marginBottom: '0.75rem' }}>
-              <h3>Canvas</h3>
-              <label style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', fontSize: '0.85rem' }}>
-                <input
-                  type="checkbox"
-                  checked={snapToGrid}
-                  onChange={(e) => setSessionField('snapToGrid', e.target.checked)}
-                />
-                Snap to grid (hold Shift for free move)
-              </label>
-              {model && (
-                <ul style={{ fontSize: '0.8rem', paddingLeft: '1rem', margin: '0.5rem 0' }}>
-                  {model.tables.map((t) => (
-                    <li
-                      key={t.name}
-                      style={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        gap: '0.25rem',
-                        cursor: 'pointer',
-                        color: selectedTable === t.name ? 'var(--mdb-green-base)' : undefined,
-                      }}
-                      onClick={() => setSessionField('selectedTable', t.name)}
-                    >
-                      <span>{t.name}</span>
-                      <button
-                        type="button"
-                        className="ghost"
-                        style={{ padding: '0 0.35rem' }}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDuplicate(t.name);
+                  <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem', flexWrap: 'wrap' }}>
+                    <button type="button" className="primary" onClick={() => void handleImportQuery()}>
+                      Import Query
+                    </button>
+                    <label className="ghost" style={{ padding: '0.45rem 0.85rem', cursor: 'pointer' }}>
+                      SQL file
+                      <input
+                        type="file"
+                        accept=".db,.sqlite,.sqlite3"
+                        hidden
+                        onChange={(e) => {
+                          const f = e.target.files?.[0];
+                          if (f) void handleSqliteUpload(f);
                         }}
-                      >
-                        ⧉
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
+                      />
+                    </label>
+                  </div>
+                </div>
 
-            {selectedTableModel && (
-              <div style={{ marginBottom: '0.75rem' }}>
-                <TableDetails
-                  table={selectedTableModel}
-                  onClose={() => setSessionField('selectedTable', null)}
-                  onDuplicate={handleDuplicate}
+                <div className="panel" style={{ marginBottom: '0.75rem' }}>
+                  <h3>Templates</h3>
+                  <select
+                    value={selectedTemplateId}
+                    onChange={(e) => setSessionField('selectedTemplateId', e.target.value)}
+                    style={{ width: '100%', marginBottom: '0.5rem' }}
+                    aria-label="Schema template"
+                  >
+                    <option value="">Choose a template…</option>
+                    {templates.map((t) => (
+                      <option key={t.id} value={t.id}>
+                        {t.name}
+                      </option>
+                    ))}
+                  </select>
+                  <button type="button" onClick={() => void handleTemplateLoad()} disabled={!selectedTemplateId} style={{ width: '100%' }}>
+                    Load template
+                  </button>
+                </div>
+
+                {selectedTableModel && (
+                  <div style={{ marginBottom: '0.75rem' }}>
+                    <TableDetails
+                      table={selectedTableModel}
+                      onClose={() => setSessionField('selectedTable', null)}
+                      onDuplicate={handleDuplicate}
+                      onDelete={handleDelete}
+                    />
+                  </div>
+                )}
+
+                <details
+                  className="panel panel-dropdown"
+                  open={canvasPanelOpen}
+                  onToggle={(e) => setSessionField('canvasPanelOpen', e.currentTarget.open)}
+                  style={{ marginBottom: '0.75rem' }}
+                >
+                  <summary className="panel-dropdown__summary">Canvas</summary>
+                  <div className="panel-dropdown__body">
+                    <label style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', fontSize: '0.85rem' }}>
+                      <input
+                        type="checkbox"
+                        checked={snapToGrid}
+                        onChange={(e) => setSessionField('snapToGrid', e.target.checked)}
+                      />
+                      Snap to grid (hold Shift for free move)
+                    </label>
+                    {model && (
+                      <ul className="canvas-table-list">
+                        {model.tables.map((t) => (
+                          <li
+                            key={t.name}
+                            className={selectedTable === t.name ? 'selected' : ''}
+                            onClick={() => setSessionField('selectedTable', t.name)}
+                          >
+                            <span>{t.name}</span>
+                            <button
+                              type="button"
+                              className="ghost"
+                              style={{ padding: '0 0.35rem' }}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDuplicate(t.name);
+                              }}
+                              title="Duplicate"
+                            >
+                              ⧉
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                </details>
+
+                <div className="panel" style={{ marginBottom: '0.75rem' }}>
+                  <h3>Share Diagram</h3>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                    <button type="button" onClick={handleExportDiagram} disabled={!model}>
+                      Export diagram JSON
+                    </button>
+                    <label style={{ textAlign: 'center', cursor: 'pointer' }}>
+                      Import diagram JSON
+                      <input type="file" accept=".json" hidden onChange={(e) => e.target.files?.[0] && handleImportDiagram(e.target.files[0])} />
+                    </label>
+                  </div>
+                </div>
+
+                <div className="panel">
+                  <h3>Session</h3>
+                  <p style={{ margin: '0 0 0.5rem', fontSize: '0.75rem', opacity: 0.8 }}>
+                    Your work is saved in this browser tab. Refreshing keeps schema, layout, and migration artifacts.
+                  </p>
+                  <button type="button" className="ghost" onClick={handleClearSession} style={{ width: '100%' }}>
+                    Clear session
+                  </button>
+                </div>
+              </div>
+            }
+            main={
+              <>
+                <SchemaCanvas
+                  model={model}
+                  snapToGrid={snapToGrid}
+                  onPositionsChange={(p) => setSessionField('positions', p)}
+                  positions={positions}
+                  onDuplicateTable={handleDuplicate}
+                  selectedTable={selectedTable}
+                  onSelectTable={(name) => setSessionField('selectedTable', name)}
                 />
-              </div>
-            )}
-
-            <div className="panel" style={{ marginBottom: '0.75rem' }}>
-              <h3>Share Diagram</h3>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
-                <button type="button" onClick={handleExportDiagram} disabled={!model}>
-                  Export diagram JSON
-                </button>
-                <label style={{ textAlign: 'center', cursor: 'pointer' }}>
-                  Import diagram JSON
-                  <input type="file" accept=".json" hidden onChange={(e) => e.target.files?.[0] && handleImportDiagram(e.target.files[0])} />
-                </label>
-              </div>
-            </div>
-
-            <div className="panel">
-              <h3>Session</h3>
-              <p style={{ margin: '0 0 0.5rem', fontSize: '0.75rem', opacity: 0.8 }}>
-                Your work is saved in this browser tab. Refreshing keeps schema, layout, and migration artifacts.
-              </p>
-              <button type="button" className="ghost" onClick={handleClearSession} style={{ width: '100%' }}>
-                Clear session
-              </button>
-            </div>
-          </aside>
+                <footer style={{ padding: '0.5rem 1rem', fontSize: '0.8rem', borderTop: '1px solid #00684A', background: '#112733' }}>
+                  {status || 'Ready — session persists on refresh. Broad database support via DDL import.'}
+                </footer>
+              </>
+            }
+          />
+        ) : (
+          <main style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+            {migrationArtifacts ? (
+              <MigrationArtifactsView
+                artifacts={migrationArtifacts}
+                onChange={(next) => setSessionField('migrationArtifacts', next)}
+                onBack={() => setSessionField('view', 'diagram')}
+              />
+            ) : null}
+            <footer style={{ padding: '0.5rem 1rem', fontSize: '0.8rem', borderTop: '1px solid #00684A', background: '#112733' }}>
+              {status || 'Ready — session persists on refresh. Broad database support via DDL import.'}
+            </footer>
+          </main>
         )}
-
-        <main style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-          {view === 'migration' && migrationArtifacts ? (
-            <MigrationArtifactsView
-              artifacts={migrationArtifacts}
-              onChange={(next) => setSessionField('migrationArtifacts', next)}
-              onBack={() => setSessionField('view', 'diagram')}
-            />
-          ) : (
-            <SchemaCanvas
-              model={model}
-              snapToGrid={snapToGrid}
-              onPositionsChange={(p) => setSessionField('positions', p)}
-              positions={positions}
-              onDuplicateTable={handleDuplicate}
-              selectedTable={selectedTable}
-              onSelectTable={(name) => setSessionField('selectedTable', name)}
-            />
-          )}
-          <footer style={{ padding: '0.5rem 1rem', fontSize: '0.8rem', borderTop: '1px solid #00684A', background: '#112733' }}>
-            {status || 'Ready — session persists on refresh. Broad database support via DDL import.'}
-          </footer>
-        </main>
       </div>
     </div>
   );

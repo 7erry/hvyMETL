@@ -28,6 +28,8 @@ export type SessionState = {
   view: AppView;
   migrationArtifacts: MigrationArtifacts | null;
   selectedTemplateId: string;
+  sidebarWidth: number;
+  canvasPanelOpen: boolean;
 };
 
 export const defaultSessionState = (): SessionState => ({
@@ -41,6 +43,8 @@ export const defaultSessionState = (): SessionState => ({
   view: 'diagram',
   migrationArtifacts: null,
   selectedTemplateId: '',
+  sidebarWidth: 320,
+  canvasPanelOpen: true,
 });
 
 export function loadSessionState(): SessionState {

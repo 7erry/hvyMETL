@@ -4,9 +4,10 @@ type TableDetailsProps = {
   table: TableModel | null;
   onClose: () => void;
   onDuplicate: (name: string) => void;
+  onDelete: (name: string) => void;
 };
 
-export function TableDetails({ table, onClose, onDuplicate }: TableDetailsProps) {
+export function TableDetails({ table, onClose, onDuplicate, onDelete }: TableDetailsProps) {
   if (!table) return null;
 
   return (
@@ -16,6 +17,15 @@ export function TableDetails({ table, onClose, onDuplicate }: TableDetailsProps)
         <div style={{ display: 'flex', gap: '0.35rem' }}>
           <button type="button" className="ghost" style={{ padding: '0.25rem 0.5rem' }} onClick={() => onDuplicate(table.name)} title="Duplicate table">
             ⧉ Duplicate
+          </button>
+          <button
+            type="button"
+            className="ghost danger"
+            style={{ padding: '0.25rem 0.5rem' }}
+            onClick={() => onDelete(table.name)}
+            title="Delete table"
+          >
+            ✕ Delete
           </button>
           <button type="button" className="ghost" style={{ padding: '0.25rem 0.5rem' }} onClick={onClose} aria-label="Close details">
             ✕

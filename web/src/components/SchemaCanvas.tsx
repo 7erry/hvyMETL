@@ -147,6 +147,32 @@ export function SchemaCanvas({
   );
 }
 
+/** Remove a table from the model and clear its canvas position. */
+export function deleteTableFromModel(
+  model: SqlStructuralModel,
+  tableName: string,
+  positions: Record<string, { x: number; y: number }>,
+): { model: SqlStructuralModel; positions: Record<string, { x: number; y: number }> } {
+  const nextPositions = { ...positions };
+  delete nextPositions[tableName];
+
+  const tables = model.tables
+    .filter((table) => table.name !== tableName)
+    .map((table) => ({
+      ...table,
+      foreignKeys: table.foreignKeys.filter((fk) => fk.referencesTable !== tableName),
+    }));
+
+  const relationships = model.relationships.filter(
+    (rel) => rel.childTable !== tableName && rel.parentTable !== tableName,
+  );
+
+  return {
+    model: { ...model, tables, relationships },
+    positions: nextPositions,
+  };
+}
+
 /** Clone a table with a new name and offset position. */
 export function duplicateTableInModel(
   model: SqlStructuralModel,
