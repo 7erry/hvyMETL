@@ -26,7 +26,7 @@ exports, same as CLI).
 
 | Feature | UI location | Backend |
 | --- | --- | --- |
-| **Instant Schema Import** | Sidebar → paste DDL → Import Query | `POST /api/schema/import-ddl` |
+| **Instant Schema Import** | Sidebar → paste DDL → Import Query, or **Import file** (DDL auto-imports on select) | `POST /api/schema/import-ddl` |
 | **Broad Database Support** | Dialect selector (PostgreSQL, MySQL, SQLite, MSSQL, ClickHouse, Oracle, IBM Db2, CockroachDB, Amazon Aurora, Google Cloud Spanner) | DDL parser; SQLite file upload live |
 | **Customizable ER Diagrams** | Main canvas (drag tables, zoom, minimap) | React Flow + `SqlStructuralModel` |
 | **Sharing** | Export / Import diagram JSON | Client-side + full model in file |

@@ -84,17 +84,28 @@ export default function App() {
     setStatus(`Imported ${nextModel.tables.length} tables.`);
   }, []);
 
-  const handleImportQuery = async () => {
+  const handleImportQuery = async (ddlText = ddl) => {
     try {
       setStatus('Importing schema…');
-      const { model: m } = await importDdl(ddl, dialect);
+      const { model: m } = await importDdl(ddlText, dialect);
       setSession((prev) => ({
         ...prev,
         sourceDbPath: dialect === 'sqlite' ? prev.sourceDbPath : null,
       }));
-      await applySchema(ddl, m);
+      await applySchema(ddlText, m);
     } catch (e) {
       setStatus(`Import failed: ${String(e)}`);
+    }
+  };
+
+  const handleDdlFileUpload = async (file: File) => {
+    try {
+      setStatus(`Reading ${file.name}…`);
+      const text = await file.text();
+      setSessionField('ddl', text);
+      await handleImportQuery(text);
+    } catch (e) {
+      setStatus(`DDL import failed: ${String(e)}`);
     }
   };
 
@@ -108,6 +119,15 @@ export default function App() {
     } catch (e) {
       setStatus(`SQLite import failed: ${String(e)}`);
     }
+  };
+
+  /** Route uploaded schema files to SQLite introspection or DDL parse by extension. */
+  const handleSchemaFileUpload = async (file: File) => {
+    if (/\.(db|sqlite|sqlite3)$/i.test(file.name)) {
+      await handleSqliteUpload(file);
+      return;
+    }
+    await handleDdlFileUpload(file);
   };
 
   const handleTemplateLoad = async () => {
@@ -299,7 +319,7 @@ export default function App() {
                     {dialects.map((d) => (
                       <option key={d.id} value={d.id}>
                         {d.label}
-                        {d.live ? ' ✓' : ' (DDL paste)'}
+                        {!d.live ? ' (DDL paste)' : ''}
                       </option>
                     ))}
                   </select>
@@ -314,14 +334,15 @@ export default function App() {
                       Import Query
                     </button>
                     <label className="ghost" style={{ padding: '0.45rem 0.85rem', cursor: 'pointer' }}>
-                      SQL file
+                      Import file
                       <input
                         type="file"
-                        accept=".db,.sqlite,.sqlite3"
+                        accept=".sql,.ddl,.txt,.db,.sqlite,.sqlite3"
                         hidden
                         onChange={(e) => {
                           const f = e.target.files?.[0];
-                          if (f) void handleSqliteUpload(f);
+                          if (f) void handleSchemaFileUpload(f);
+                          e.target.value = '';
                         }}
                       />
                     </label>

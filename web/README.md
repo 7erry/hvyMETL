@@ -51,7 +51,7 @@ editable text, per-file download, and **Download all**. Artifacts persist in
 
 | Feature | How to use |
 | --- | --- |
-| **Instant Schema Import** | Paste DDL in the sidebar → **Import Query** |
+| **Instant Schema Import** | Paste DDL in the sidebar → **Import Query**, or **Import file** (`.sql`, `.ddl`, `.txt` auto-imports; `.db` for SQLite) |
 | **Broad database support** | Dialect selector: PostgreSQL, MySQL, SQLite, MSSQL, ClickHouse, Oracle, IBM Db2, CockroachDB, Amazon Aurora (PostgreSQL/MySQL), Google Cloud Spanner (DDL paste); **SQLite file** upload is live |
 | **Templates** | Dropdown (Laravel, Django, Twitter, catalog, iot, cms) → **Load template** |
 | **Customizable ER diagrams** | Drag/zoom canvas, FK edges, minimap (React Flow) |
