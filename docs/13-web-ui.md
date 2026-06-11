@@ -32,8 +32,10 @@ exports, same as CLI).
 | **Sharing** | Export / Import diagram JSON | Client-side + full model in file |
 | **Duplicate table** | Canvas header ⧉ or sidebar list | `duplicateTableInModel` |
 | **Snap to Grid** | Checkbox; hold **Shift** for free positioning | 20px grid |
-| **Templates** | Laravel, Django, Twitter, catalog, iot, cms | `GET /api/templates` |
-| **AI-Powered DDL Export** | AI Migration Export button | `POST /api/export/migration` + prompts |
+| **Templates** | Dropdown → Load template | `GET /api/templates` |
+| **Session state** | Auto-saved in `sessionStorage` (schema, layout, artifacts survive refresh) | Client-side |
+| **Table details** | Click table on canvas or sidebar | Column types, PKs, FKs |
+| **AI-Powered DDL Export** | Full-screen artifact editor (editable + per-file download) | `POST /api/export/migration` + prompts |
 
 ## 4. API Reference
 

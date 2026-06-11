@@ -116,6 +116,117 @@ textarea {
   color: var(--mdb-green-base);
 }
 
+.table-node.selected {
+  border-color: var(--mdb-spring-green);
+  box-shadow: 0 0 0 2px var(--mdb-green-base), 0 4px 24px rgba(0, 237, 100, 0.2);
+}
+
+.details-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.75rem;
+}
+
+.details-table th,
+.details-table td {
+  border: 1px solid var(--mdb-green-dark-2);
+  padding: 0.35rem 0.5rem;
+  text-align: left;
+}
+
+.details-table th {
+  background: var(--mdb-green-dark-3);
+  color: var(--mdb-green-base);
+}
+
+.details-table td.pk {
+  color: var(--mdb-green-base);
+  font-weight: 600;
+}
+
+.table-details h3 {
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+.migration-view {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  background: var(--mdb-black);
+}
+
+.migration-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--mdb-green-dark-2);
+  background: var(--mdb-gray-dark-4);
+}
+
+.migration-body {
+  flex: 1;
+  display: flex;
+  min-height: 0;
+}
+
+.artifact-tabs {
+  width: 220px;
+  border-right: 1px solid var(--mdb-green-dark-2);
+  padding: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  overflow-y: auto;
+  background: var(--mdb-gray-dark-4);
+}
+
+.artifact-tabs button {
+  text-align: left;
+  font-size: 0.8rem;
+  background: transparent;
+  border-color: transparent;
+}
+
+.artifact-tabs button.active {
+  background: var(--mdb-green-dark-3);
+  border-color: var(--mdb-green-base);
+  color: var(--mdb-green-base);
+}
+
+.artifact-editor {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: 0.75rem 1rem;
+}
+
+.artifact-editor-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.artifact-editor-header code {
+  font-size: 0.85rem;
+  color: var(--mdb-green-base);
+}
+
+.artifact-textarea {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  resize: none;
+  font-family: ui-monospace, monospace;
+  font-size: 0.8rem;
+  line-height: 1.45;
+}
+
 .react-flow__background {
   background: var(--mdb-black) !important;
 }

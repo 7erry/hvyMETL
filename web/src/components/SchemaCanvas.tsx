@@ -24,6 +24,8 @@ type SchemaCanvasProps = {
   onPositionsChange: (positions: Record<string, { x: number; y: number }>) => void;
   positions: Record<string, { x: number; y: number }>;
   onDuplicateTable: (name: string) => void;
+  selectedTable: string | null;
+  onSelectTable: (name: string | null) => void;
 };
 
 function snap(value: number, enabled: boolean): number {
@@ -35,6 +37,7 @@ function modelToFlow(
   model: SqlStructuralModel,
   positions: Record<string, { x: number; y: number }>,
   onDuplicate: (name: string) => void,
+  selectedTable: string | null,
 ): { nodes: Node<TableNodeData>[]; edges: Edge[] } {
   const nodes: Node<TableNodeData>[] = model.tables.map((table, index) => {
     const col = index % 4;
@@ -44,7 +47,7 @@ function modelToFlow(
       id: table.name,
       type: 'table',
       position: pos,
-      data: { table, onDuplicate },
+      data: { table, onDuplicate, selected: table.name === selectedTable },
     };
   });
 
@@ -70,10 +73,12 @@ export function SchemaCanvas({
   onPositionsChange,
   positions,
   onDuplicateTable,
+  selectedTable,
+  onSelectTable,
 }: SchemaCanvasProps) {
   const flow = useMemo(
-    () => (model ? modelToFlow(model, positions, onDuplicateTable) : { nodes: [], edges: [] }),
-    [model, positions, onDuplicateTable],
+    () => (model ? modelToFlow(model, positions, onDuplicateTable, selectedTable) : { nodes: [], edges: [] }),
+    [model, positions, onDuplicateTable, selectedTable],
   );
 
   const [nodes, setNodes, onNodesChange] = useNodesState(flow.nodes);
@@ -123,6 +128,8 @@ export function SchemaCanvas({
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onNodeDragStop={onNodeDragStop}
+        onNodeClick={(_event, node) => onSelectTable(node.id)}
+        onPaneClick={() => onSelectTable(null)}
         nodeTypes={nodeTypes}
         fitView
         snapToGrid={snapToGrid}

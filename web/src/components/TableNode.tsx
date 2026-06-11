@@ -5,12 +5,13 @@ import type { TableModel } from '../types';
 export type TableNodeData = {
   table: TableModel;
   onDuplicate?: (name: string) => void;
+  selected?: boolean;
 };
 
 function TableNodeComponent({ data }: NodeProps & { data: TableNodeData }) {
-  const { table, onDuplicate } = data;
+  const { table, onDuplicate, selected } = data;
   return (
-    <div className="table-node">
+    <div className={`table-node${selected ? ' selected' : ''}`}>
       <Handle type="target" position={Position.Left} style={{ background: '#00ED64' }} />
       <header>
         {table.name}
