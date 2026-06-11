@@ -1,10 +1,21 @@
 import { describe, expect, it } from 'vitest';
 import type { KnowledgeChunk } from '../types.js';
 import { chunkKey, reciprocalRankFusion } from './retriever.js';
+import { resolveModelApiBaseUrl } from './voyage.js';
 
 const chunkA: KnowledgeChunk = { sourceFile: 'bucket.md', heading: 'When to use', text: 'time series' };
 const chunkB: KnowledgeChunk = { sourceFile: 'subset.md', heading: 'Applicability', text: 'bounded arrays' };
 const chunkC: KnowledgeChunk = { sourceFile: 'computed.md', heading: 'Counters', text: 'read heavy' };
+
+describe('resolveModelApiBaseUrl', () => {
+  it('routes Atlas model keys to ai.mongodb.com', () => {
+    expect(resolveModelApiBaseUrl('al-test-key')).toBe('https://ai.mongodb.com/v1');
+  });
+
+  it('routes Voyage platform keys to api.voyageai.com', () => {
+    expect(resolveModelApiBaseUrl('pa-test-key')).toBe('https://api.voyageai.com/v1');
+  });
+});
 
 describe('chunkKey', () => {
   it('is stable for fusion lookups', () => {

@@ -2,7 +2,7 @@
  * Pluggable embedding providers.
  *
  * The toolkit never REQUIRES embeddings: when no API key is configured the
- * retriever uses lexical BM25 only. When VOYAGE_API_KEY is set, see voyage.ts
+ * retriever uses lexical BM25 only. When MONGODB_MODEL_KEY is set, see voyage.ts
  * for hybrid BM25 + Voyage 4 retrieval. When only OPENAI_API_KEY is set, this
  * module supplies an OpenAI-compatible vector provider.
  */

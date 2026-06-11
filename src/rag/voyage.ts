@@ -1,19 +1,23 @@
 /**
- * Voyage AI embedding provider (voyage-4 series).
+ * Voyage AI embedding provider (voyage-4 series) via the MongoDB Model API.
  *
- * When VOYAGE_API_KEY is set, the retriever runs hybrid search: BM25 for exact
- * keyword matches plus Voyage 4 embeddings for conceptual similarity, merged
- * with Reciprocal Rank Fusion in retriever.ts.
+ * When MONGODB_MODEL_KEY is set in .env, the retriever runs hybrid search: BM25
+ * for exact keyword matches plus Voyage 4 embeddings for conceptual similarity,
+ * merged with Reciprocal Rank Fusion in retriever.ts.
  *
- * API reference: https://docs.voyageai.com/reference/embeddings-api
+ * API reference:
+ * - https://www.mongodb.com/docs/voyageai/api-and-clients/
+ * - https://docs.voyageai.com/reference/embeddings-api
  */
 
 import type { EmbeddingProvider } from '../types.js';
 
-/** Default Voyage embedding model when VOYAGE_EMBEDDING_MODEL is unset. */
-const DEFAULT_VOYAGE_MODEL = 'voyage-4';
-/** Default REST base URL (Voyage platform keys). */
-const DEFAULT_VOYAGE_BASE_URL = 'https://api.voyageai.com/v1';
+/** Default embedding model when MONGODB_MODEL_EMBEDDING_MODEL is unset. */
+const DEFAULT_MODEL = 'voyage-4';
+/** MongoDB Atlas Model API keys (al-…) use this endpoint. */
+const DEFAULT_ATLAS_MODEL_BASE_URL = 'https://ai.mongodb.com/v1';
+/** Voyage platform keys (pa-…) use this endpoint. */
+const DEFAULT_VOYAGE_PLATFORM_BASE_URL = 'https://api.voyageai.com/v1';
 
 /** Voyage input_type values tune vectors for retrieval vs indexing. */
 export type VoyageInputType = 'query' | 'document';
@@ -32,14 +36,26 @@ export type VoyageEmbeddingProvider = EmbeddingProvider & {
   embedQuery: (text: string) => Promise<number[]>;
 };
 
+/** Read the MongoDB Model Key from environment (supports legacy VOYAGE_API_KEY). */
+export function readMongoDbModelKeyFromEnv(): string | null {
+  const key = process.env.MONGODB_MODEL_KEY ?? process.env.VOYAGE_API_KEY;
+  if (!key || key.trim() === '') return null;
+  return key.trim().replace(/^["']|["']$/g, '');
+}
+
+/**
+ * Pick the embeddings API base URL from env and key format.
+ * Atlas Model keys (al-…) default to ai.mongodb.com; Voyage platform keys to voyageai.com.
+ */
+export function resolveModelApiBaseUrl(apiKey: string): string {
+  if (process.env.MONGODB_MODEL_BASE_URL) return process.env.MONGODB_MODEL_BASE_URL;
+  if (process.env.VOYAGE_BASE_URL) return process.env.VOYAGE_BASE_URL;
+  if (apiKey.startsWith('al-')) return DEFAULT_ATLAS_MODEL_BASE_URL;
+  return DEFAULT_VOYAGE_PLATFORM_BASE_URL;
+}
+
 /**
  * Call the Voyage /embeddings endpoint for a batch of texts.
- *
- * @param baseUrl - API root including /v1
- * @param apiKey - VOYAGE_API_KEY
- * @param model - e.g. voyage-4
- * @param texts - One or more strings to embed
- * @param inputType - "query" for the search query, "document" for corpus chunks
  */
 async function voyageEmbed(
   baseUrl: string,
@@ -61,7 +77,7 @@ async function voyageEmbed(
     }),
   });
   if (!response.ok) {
-    throw new Error(`Voyage embedding API returned ${response.status}: ${await response.text()}`);
+    throw new Error(`Model embedding API returned ${response.status}: ${await response.text()}`);
   }
   const payload = (await response.json()) as { data: VoyageEmbeddingItem[] };
   return payload.data.sort((a, b) => a.index - b.index).map((item) => item.embedding);
@@ -69,14 +85,17 @@ async function voyageEmbed(
 
 /**
  * Build a Voyage embedding provider from environment variables, or return null
- * when VOYAGE_API_KEY is not set (the retriever then stays on BM25-only).
+ * when MONGODB_MODEL_KEY is not set (the retriever then stays on BM25-only).
  */
 export function createVoyageProviderFromEnv(): VoyageEmbeddingProvider | null {
-  const apiKey = process.env.VOYAGE_API_KEY;
+  const apiKey = readMongoDbModelKeyFromEnv();
   if (!apiKey) return null;
 
-  const baseUrl = process.env.VOYAGE_BASE_URL ?? DEFAULT_VOYAGE_BASE_URL;
-  const model = process.env.VOYAGE_EMBEDDING_MODEL ?? DEFAULT_VOYAGE_MODEL;
+  const baseUrl = resolveModelApiBaseUrl(apiKey);
+  const model =
+    process.env.MONGODB_MODEL_EMBEDDING_MODEL ??
+    process.env.VOYAGE_EMBEDDING_MODEL ??
+    DEFAULT_MODEL;
 
   return {
     name: model,
@@ -85,7 +104,6 @@ export function createVoyageProviderFromEnv(): VoyageEmbeddingProvider | null {
       const [vector] = await voyageEmbed(baseUrl, apiKey, model, [text], 'query');
       return vector;
     },
-    // Default embed path indexes documents (knowledge-base chunks).
     embed: (texts) => voyageEmbed(baseUrl, apiKey, model, texts, 'document'),
   };
 }

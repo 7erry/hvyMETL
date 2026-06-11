@@ -3,7 +3,7 @@
  *
  * 1. Lexical (default): BM25 relevance scoring — deterministic, no API keys.
  * 2. Hybrid (optional): BM25 + Voyage 4 embeddings merged with Reciprocal Rank
- *    Fusion when VOYAGE_API_KEY is set. Captures both exact keyword tokens and
+ *    Fusion when MONGODB_MODEL_KEY is set. Captures both exact keyword tokens and
  *    deep conceptual context.
  * 3. Vector (optional): OpenAI-compatible embeddings ranked by cosine similarity
  *    when only OPENAI_API_KEY is set (Voyage takes precedence for hybrid).
@@ -142,7 +142,7 @@ export async function vectorRetrieve(
 
 /**
  * Hybrid retrieval: BM25 for keyword precision + Voyage 4 for semantic depth,
- * fused with RRF. Requires VOYAGE_API_KEY.
+ * fused with RRF. Requires MONGODB_MODEL_KEY.
  */
 export async function hybridRetrieve(
   voyageProvider: VoyageEmbeddingProvider,

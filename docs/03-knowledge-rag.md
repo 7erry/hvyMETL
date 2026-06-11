@@ -13,7 +13,7 @@ The RAG layer grounds the toolkit's schema decisions in concrete source material
 instead of generic LLM training data. Eleven curated markdown documents (one per
 MongoDB design pattern, each with applicability thresholds and verified code blocks)
 are chunked at heading boundaries and ranked against a workload-derived query. By
-default retrieval is **BM25 only** (no API keys, fully offline). When `VOYAGE_API_KEY`
+default retrieval is **BM25 only** (no API keys, fully offline). When `MONGODB_MODEL_KEY`
 is set, the retriever runs **hybrid search**: BM25 for exact keyword tokens plus
 [Voyage 4](https://docs.voyageai.com/docs/embeddings) embeddings for conceptual
 context, with scores merged via **Reciprocal Rank Fusion (RRF)**. The top chunks are
@@ -46,7 +46,7 @@ Fully deterministic and dependency-free, so the toolkit always works offline.
 
 ### `hybridRetrieve(voyageProvider, chunks, query, topK): Promise<ScoredChunk[]>`
 
-When `VOYAGE_API_KEY` is set:
+When `MONGODB_MODEL_KEY` is set:
 
 1. Rank candidates with **BM25** (`lexicalRetrieve`).
 2. Rank candidates with **Voyage 4** (`embedDocuments` + `embedQuery`, cosine similarity).
@@ -63,7 +63,7 @@ Pure function; unit-tested in `retriever.test.ts`. Merges any number of ranked l
 
 ### `vectorRetrieve(provider, chunks, query, topK): Promise<ScoredChunk[]>`
 
-OpenAI-compatible vector path used **only when `VOYAGE_API_KEY` is unset** and
+OpenAI-compatible vector path used **only when `MONGODB_MODEL_KEY` is unset** and
 `OPENAI_API_KEY` is set. Ranks by cosine similarity.
 
 ### `retrieve(chunks, query, topK, config): Promise<ScoredChunk[]>`
@@ -72,7 +72,7 @@ Strategy priority (see `retrieval.ts`):
 
 | Condition | Strategy |
 | --- | --- |
-| `VOYAGE_API_KEY` set | Hybrid BM25 + Voyage 4 → RRF |
+| `MONGODB_MODEL_KEY` set | Hybrid BM25 + Voyage 4 → RRF |
 | Only `OPENAI_API_KEY` set | Vector cosine similarity |
 | No keys | BM25 only (default) |
 
@@ -90,10 +90,10 @@ Returns the log line printed by `design` and `prompt` commands.
 
 | Name | Required | Default | Description |
 | --- | --- | --- | --- |
-| `VOYAGE_API_KEY` | optional | — | Enables hybrid BM25 + Voyage 4 + RRF |
-| `VOYAGE_EMBEDDING_MODEL` | optional | `voyage-4` | Voyage 4 series model |
-| `VOYAGE_BASE_URL` | optional | `https://api.voyageai.com/v1` | Voyage platform; use `https://ai.mongodb.com/v1` for Atlas keys |
-| `OPENAI_API_KEY` | optional | — | Vector-only retrieval when Voyage key absent |
+| `MONGODB_MODEL_KEY` | optional | — | MongoDB Model Key (Atlas); enables hybrid BM25 + Voyage 4 + RRF |
+| `MONGODB_MODEL_EMBEDDING_MODEL` | optional | `voyage-4` | Voyage 4 series model |
+| `MONGODB_MODEL_BASE_URL` | optional | auto (`al-` → `ai.mongodb.com`) | Override Model API endpoint |
+| `OPENAI_API_KEY` | optional | — | Vector-only retrieval when Model Key absent |
 | `OPENAI_BASE_URL` | optional | `https://api.openai.com/v1` | OpenAI-compatible `/embeddings` endpoint |
 | `EMBEDDING_MODEL` | optional | `text-embedding-3-small` | OpenAI embedding model |
 
@@ -119,8 +119,9 @@ right documents.
 
 - **No API keys (default):** retrieval is BM25-only. The CLI reports
   `Retrieval strategy: lexical BM25 (no API key configured)`.
-- **Voyage takes precedence:** when both `VOYAGE_API_KEY` and `OPENAI_API_KEY` are
-  set, hybrid RRF runs; OpenAI is ignored until Voyage is removed.
+- **MongoDB Model Key takes precedence:** when both `MONGODB_MODEL_KEY` and
+  `OPENAI_API_KEY` are set, hybrid RRF runs; OpenAI is ignored until the model key
+  is removed. Legacy `VOYAGE_API_KEY` is still accepted as a fallback alias.
 - **Hybrid API failure:** logs `Hybrid retrieval failed (...); falling back to lexical BM25.`
 - **OpenAI-only API failure:** logs `Vector retrieval failed (...); falling back to lexical BM25.`
 - **Out-of-order embedding responses:** the provider re-sorts response items by
@@ -159,7 +160,7 @@ right documents.
 npm run hvymetl -- design --source examples/iot.db --profile iot --out out/iot
 # Retrieval strategy: lexical BM25 (no API key configured).
 
-# Hybrid: add to .env → VOYAGE_API_KEY=pa-...
+# Hybrid: add to .env → MONGODB_MODEL_KEY=pa-...
 npm run hvymetl -- design --source examples/iot.db --profile iot --out out/iot
 # Retrieval strategy: hybrid BM25 + voyage-4 (Reciprocal Rank Fusion).
 ```

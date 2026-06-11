@@ -152,7 +152,7 @@ flowchart LR
 
     CHUNK --> CHUNKS[(KnowledgeChunk[])]
 
-    QUERY --> RET{VOYAGE_API_KEY?}
+    QUERY --> RET{MONGODB_MODEL_KEY?}
 
     RET -->|yes| BM25H[BM25 keyword rank]
     RET -->|yes| VOY[Voyage 4 embed<br/>query + document]

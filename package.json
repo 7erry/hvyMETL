@@ -20,6 +20,7 @@
     "import-cli": "npm run -s build && node dist/import/cli.js",
     "seed-examples": "npm run -s build && node dist/examples/seed.js",
     "run-all-examples": "node scripts/run-all-examples.mjs",
+    "validate-hybrid-rag": "npm run -s build && node scripts/validate-hybrid-rag.mjs",
     "test": "vitest run"
   },
   "dependencies": {
