@@ -1,11 +1,20 @@
-/** MongoDB leaf mark + hvyMETL wordmark and project purpose. */
+/**
+ * Official MongoDB logo mark (LeafyGreen @leafygreen-ui/logo MongoDBLogoMark)
+ * + hvyMETL wordmark. See https://www.mongodb.com/company/newsroom/brand-resources
+ */
 export function MongoLogo() {
   return (
     <div className="app-logo" aria-label="hvyMETL — SQL to MongoDB Migration Studio">
-      <svg className="app-logo__leaf" viewBox="0 0 32 32" aria-hidden="true">
+      <svg
+        className="app-logo__leaf"
+        viewBox="0 0 15 32"
+        fill="none"
+        role="img"
+        aria-label="MongoDB"
+      >
         <path
           fill="currentColor"
-          d="M16.1 2.2c-5.6 3.8-9.5 9.8-9.5 16.3 0 4.2 1.8 8.1 4.8 10.9-.3-4.8.8-10.5 4.7-15.1 1-.9 2.2-1.8 3.4-2.6-1.2 2.4-1.9 5.1-1.9 7.9 0 6.2 3.2 11.6 8 14.6 4.8-3 8-9.4 8-14.6 0-8.6-6.2-15.8-14.5-17.2z"
+          d="M10.2779 3.56801C8.93285 1.97392 7.76219 0.354933 7.52557 0.0186807C7.50066 -0.00622689 7.4633 -0.00622689 7.43839 0.0186807C7.20177 0.354933 6.04357 1.97392 4.69856 3.56801C-6.8461 18.2759 6.51681 28.1891 6.51681 28.1891L6.6289 28.2639C6.72853 29.7957 6.9776 32 6.9776 32H7.47576H7.97391C7.97391 32 8.22298 29.8081 8.32261 28.2639L8.4347 28.1767C8.44715 28.1891 21.8225 18.2759 10.2779 3.56801ZM7.48821 27.9774C7.48821 27.9774 6.89043 27.4668 6.72853 27.2053V27.1804L7.45085 11.1648C7.45085 11.115 7.52557 11.115 7.52557 11.1648L8.24789 27.1804V27.2053C8.08599 27.4668 7.48821 27.9774 7.48821 27.9774Z"
         />
       </svg>
       <div className="app-logo__text">

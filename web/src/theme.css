@@ -90,8 +90,8 @@ textarea {
 }
 
 .app-logo__leaf {
-  width: 36px;
   height: 36px;
+  width: auto;
   flex-shrink: 0;
   color: var(--mdb-green-base);
 }
