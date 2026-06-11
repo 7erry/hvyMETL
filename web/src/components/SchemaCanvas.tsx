@@ -10,11 +10,17 @@ import {
   type OnNodeDrag,
   BackgroundVariant,
   MarkerType,
+  Panel,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { useCallback, useEffect, useMemo } from 'react';
 import { RelationshipEdge } from './RelationshipEdge';
 import { TableNode, type TableNodeData } from './TableNode';
+import {
+  formatRelationshipLabel,
+  type RelationshipConnectionType,
+  type RelationshipNotation,
+} from '../relationshipDisplay';
 import type { SqlStructuralModel, TableModel } from '../types';
 
 const GRID = 20;
@@ -24,6 +30,8 @@ const edgeTypes = { relationship: RelationshipEdge };
 type SchemaCanvasProps = {
   model: SqlStructuralModel | null;
   snapToGrid: boolean;
+  connectionType: RelationshipConnectionType;
+  relationshipNotation: RelationshipNotation;
   onPositionsChange: (positions: Record<string, { x: number; y: number }>) => void;
   positions: Record<string, { x: number; y: number }>;
   onDuplicateTable: (name: string) => void;
@@ -70,6 +78,8 @@ function modelToFlow(
   positions: Record<string, { x: number; y: number }>,
   onDuplicate: (name: string) => void,
   selectedTable: string | null,
+  connectionType: RelationshipConnectionType,
+  relationshipNotation: RelationshipNotation,
 ): { nodes: Node<TableNodeData>[]; edges: Edge[] } {
   const tableNames = new Set(model.tables.map((t) => t.name));
   const referencedByColumn = buildReferencedColumns(model);
@@ -106,7 +116,13 @@ function modelToFlow(
 
       const highlighted =
         selectedTable === table.name || selectedTable === fk.referencesTable;
-      const label = `${table.name}.${fk.column} → ${fk.referencesTable}.${fk.referencesColumn}`;
+      const label = formatRelationshipLabel(
+        relationshipNotation,
+        table.name,
+        fk.column,
+        fk.referencesTable,
+        fk.referencesColumn,
+      );
 
       edges.push({
         id: `${table.name}.${fk.column}->${fk.referencesTable}.${fk.referencesColumn}`,
@@ -116,7 +132,12 @@ function modelToFlow(
         targetHandle: `${fk.referencesColumn}-in`,
         type: 'relationship',
         label,
-        data: { highlighted, fkColumn: fk.column, refColumn: fk.referencesColumn },
+        data: {
+          highlighted,
+          connectionType,
+          fkColumn: fk.column,
+          refColumn: fk.referencesColumn,
+        },
         markerEnd: { type: MarkerType.ArrowClosed, width: 18, height: 18, color: highlighted ? '#E3FCF7' : '#00A35C' },
         zIndex: highlighted ? 2 : 0,
       });
@@ -129,6 +150,8 @@ function modelToFlow(
 export function SchemaCanvas({
   model,
   snapToGrid,
+  connectionType,
+  relationshipNotation,
   onPositionsChange,
   positions,
   onDuplicateTable,
@@ -136,8 +159,18 @@ export function SchemaCanvas({
   onSelectTable,
 }: SchemaCanvasProps) {
   const flow = useMemo(
-    () => (model ? modelToFlow(model, positions, onDuplicateTable, selectedTable) : { nodes: [], edges: [] }),
-    [model, positions, onDuplicateTable, selectedTable],
+    () =>
+      model
+        ? modelToFlow(
+            model,
+            positions,
+            onDuplicateTable,
+            selectedTable,
+            connectionType,
+            relationshipNotation,
+          )
+        : { nodes: [], edges: [] },
+    [model, positions, onDuplicateTable, selectedTable, connectionType, relationshipNotation],
   );
 
   const relationshipCount = useMemo(
@@ -200,13 +233,13 @@ export function SchemaCanvas({
           maskColor="rgba(0, 30, 43, 0.8)"
           style={{ background: '#112733' }}
         />
+        <Panel position="bottom-center" className="schema-canvas-legend">
+          <span><span className="legend-dot legend-dot--pk">🔑</span> Primary key</span>
+          <span><span className="legend-dot legend-dot--fk">↗</span> Foreign key</span>
+          <span>{relationshipCount} relationship{relationshipCount === 1 ? '' : 's'}</span>
+          {selectedTable ? <span className="legend-hint">Click canvas to clear selection</span> : null}
+        </Panel>
       </ReactFlow>
-      <div className="schema-canvas-legend" aria-hidden="true">
-        <span><span className="legend-dot legend-dot--pk">🔑</span> Primary key</span>
-        <span><span className="legend-dot legend-dot--fk">↗</span> Foreign key</span>
-        <span>{relationshipCount} relationship{relationshipCount === 1 ? '' : 's'}</span>
-        {selectedTable ? <span className="legend-hint">Click canvas to clear selection</span> : null}
-      </div>
     </div>
   );
 }

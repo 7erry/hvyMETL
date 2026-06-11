@@ -235,14 +235,30 @@ textarea {
   margin: 0.5rem;
 }
 
+.schema-canvas-wrap .react-flow__controls {
+  margin: 0 0 0.75rem 0.75rem;
+  z-index: 10;
+  box-shadow: 0 2px 8px rgba(0, 30, 43, 0.35);
+}
+
+.schema-canvas-wrap .react-flow__controls-button {
+  background: var(--mdb-gray-dark-4);
+  border-color: var(--mdb-green-dark-2);
+  fill: var(--mdb-spring-green);
+  color: var(--mdb-spring-green);
+}
+
+.schema-canvas-wrap .react-flow__controls-button:hover {
+  background: var(--mdb-green-dark-3);
+}
+
 .schema-canvas-legend {
-  position: absolute;
-  left: 0.75rem;
-  bottom: 0.75rem;
-  z-index: 5;
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
   gap: 0.65rem 1rem;
+  margin-bottom: 0.75rem;
   padding: 0.4rem 0.65rem;
   background: rgba(17, 39, 51, 0.92);
   border: 1px solid var(--mdb-green-dark-2);
@@ -251,6 +267,7 @@ textarea {
   color: var(--mdb-spring-green);
   opacity: 0.9;
   pointer-events: none;
+  max-width: min(640px, calc(100vw - 12rem));
 }
 
 .legend-dot {
@@ -286,6 +303,13 @@ textarea {
   background: var(--mdb-spring-green);
   border-color: var(--mdb-green-base);
   box-shadow: 0 0 0 1px var(--mdb-green-base);
+}
+
+.relationship-edge-label--cardinality {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  padding: 0.15rem 0.4rem;
 }
 
 .table-details__section {

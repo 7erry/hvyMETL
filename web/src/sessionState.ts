@@ -1,4 +1,5 @@
 import type { SqlStructuralModel } from './types';
+import type { RelationshipConnectionType, RelationshipNotation } from './relationshipDisplay';
 
 const STORAGE_KEY = 'hvymetl-session-v1';
 
@@ -36,6 +37,8 @@ export type SessionState = {
   sidebarWidth: number;
   canvasPanelOpen: boolean;
   csvSourcePath: string | null;
+  relationshipConnectionType: RelationshipConnectionType;
+  relationshipNotation: RelationshipNotation;
 };
 
 export const defaultSessionState = (): SessionState => ({
@@ -52,6 +55,8 @@ export const defaultSessionState = (): SessionState => ({
   sidebarWidth: 320,
   canvasPanelOpen: true,
   csvSourcePath: null,
+  relationshipConnectionType: 'bezier',
+  relationshipNotation: 'detailed',
 });
 
 export function loadSessionState(): SessionState {

@@ -24,6 +24,10 @@ import {
   type MigrationArtifacts,
   type SessionState,
 } from './sessionState';
+import {
+  RELATIONSHIP_CONNECTION_OPTIONS,
+  RELATIONSHIP_NOTATION_OPTIONS,
+} from './relationshipDisplay';
 import type { Dialect, Profile, SqlStructuralModel } from './types';
 
 export default function App() {
@@ -49,6 +53,8 @@ export default function App() {
     sidebarWidth,
     canvasPanelOpen,
     csvSourcePath,
+    relationshipConnectionType,
+    relationshipNotation,
   } = session;
 
   const setSessionField = useCallback(<K extends keyof SessionState>(key: K, value: SessionState[K]) => {
@@ -407,6 +413,43 @@ export default function App() {
                       />
                       Snap to grid (hold Shift for free move)
                     </label>
+                    <label style={{ fontSize: '0.8rem', marginTop: '0.5rem' }}>
+                      Connection style
+                      <select
+                        value={relationshipConnectionType}
+                        onChange={(e) =>
+                          setSessionField(
+                            'relationshipConnectionType',
+                            e.target.value as SessionState['relationshipConnectionType'],
+                          )
+                        }
+                        style={{ width: '100%', marginTop: '0.25rem' }}
+                        aria-label="Relationship connection style"
+                      >
+                        {RELATIONSHIP_CONNECTION_OPTIONS.map((opt) => (
+                          <option key={opt.id} value={opt.id}>
+                            {opt.label}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    <label style={{ fontSize: '0.8rem', marginTop: '0.5rem' }}>
+                      Relationship labels
+                      <select
+                        value={relationshipNotation}
+                        onChange={(e) =>
+                          setSessionField('relationshipNotation', e.target.value as SessionState['relationshipNotation'])
+                        }
+                        style={{ width: '100%', marginTop: '0.25rem' }}
+                        aria-label="Relationship label notation"
+                      >
+                        {RELATIONSHIP_NOTATION_OPTIONS.map((opt) => (
+                          <option key={opt.id} value={opt.id}>
+                            {opt.label}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
                     {model && (
                       <ul className="canvas-table-list">
                         {model.tables.map((t) => (
@@ -464,6 +507,8 @@ export default function App() {
                 <SchemaCanvas
                   model={model}
                   snapToGrid={snapToGrid}
+                  connectionType={relationshipConnectionType}
+                  relationshipNotation={relationshipNotation}
                   onPositionsChange={(p) => setSessionField('positions', p)}
                   positions={positions}
                   onDuplicateTable={handleDuplicate}
