@@ -88,11 +88,16 @@ pool, merge modes): **[docs/diagrams.md](docs/diagrams.md)**.
 ```bash
 npm install
 npm run build
-cp .env.example .env   # set MONGODB_URI for real imports
+cp .env.example .env
 ```
 
-Requires Node.js 20+. `MONGODB_URI` is only needed for the import step; everything
-else runs locally.
+| Variable | Required for | Description |
+| --- | --- | --- |
+| `MONGODB_URI` | Atlas import, `run-all-examples` | Cluster connection string |
+| `MONGODB_MODEL_KEY` | Hybrid RAG (optional) | MongoDB Model Key; enables BM25 + Voyage 4 + RRF |
+| `OPENAI_API_KEY` | Vector-only RAG (optional) | Used only when Model Key is unset |
+
+Requires Node.js 20+. Design, ETL, and unit tests run fully offline with no keys.
 
 ## Run all examples against Atlas
 
@@ -176,11 +181,14 @@ npm run hvymetl -- design --source my.db --custom --read-write 20:80 --rpm 25000
 ## Tests
 
 ```bash
-npm test
+npm test                              # unit tests (offline)
+npm run validate-hybrid-rag           # live hybrid RAG check (needs MONGODB_MODEL_KEY)
+npm run run-all-examples              # full pipeline + Atlas validation (needs MONGODB_URI)
 ```
 
-Covers the pattern selector decision table, the range splitter invariants, the
-pattern formatting layer (shaped SQL), and the CSV/document modeling rules.
+Unit tests cover the pattern selector, range splitter, CSV shaper, RRF fusion, and
+Model API base URL routing. Hybrid RAG validation calls the live Model API when a key
+is configured — see [docs/12-validate-hybrid-rag.md](docs/12-validate-hybrid-rag.md).
 
 ## csvToAtlas CLI reference
 

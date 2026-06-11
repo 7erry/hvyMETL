@@ -20,7 +20,8 @@ merge-mode diagrams.
 | --- | --- | --- |
 | [01-cli.md](01-cli.md) | The `hvymetl` command-line interface and runtime profile selection | `src/cli.ts` |
 | [02-profiles.md](02-profiles.md) | Workload telemetry profiles, write concern, and pool tuning | `src/profiles/profiles.ts` |
-| [03-knowledge-rag.md](03-knowledge-rag.md) | Pattern knowledge base, chunking, BM25/vector retrieval, prompt bundles | `knowledge/`, `src/rag/` |
+| [03-knowledge-rag.md](03-knowledge-rag.md) | Pattern knowledge base, BM25 / hybrid RRF retrieval, prompt bundles | `knowledge/`, `src/rag/` |
+| [12-validate-hybrid-rag.md](12-validate-hybrid-rag.md) | Validate MongoDB Model Key + hybrid BM25 + Voyage 4 + RRF | `scripts/validate-hybrid-rag.mjs` |
 | [04-adapters.md](04-adapters.md) | The pluggable SQL source adapter and SQLite implementation | `src/adapters/` |
 | [05-design-engine.md](05-design-engine.md) | Introspection-to-pattern decision engine and `migration-plan.json` | `src/design/` |
 | [06-etl.md](06-etl.md) | Parallel worker-thread extraction, range splitting, CSV shaping | `src/etl/` |
@@ -94,5 +95,14 @@ npm run seed-examples
 npm run hvymetl -- design --source examples/iot.db --profile iot --out out/iot
 npm run hvymetl -- etl --plan out/iot/migration-plan.json --out out/iot --dry-run
 ```
+
+### Optional: hybrid RAG with MongoDB Model Key
+
+```bash
+# Add MONGODB_MODEL_KEY to .env (Atlas → AI Services → Models → API Keys)
+npm run validate-hybrid-rag
+```
+
+See [12-validate-hybrid-rag.md](12-validate-hybrid-rag.md) and [03-knowledge-rag.md](03-knowledge-rag.md).
 
 See the root [README.md](../README.md) for the complete end-to-end walkthrough.

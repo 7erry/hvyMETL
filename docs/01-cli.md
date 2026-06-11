@@ -54,7 +54,8 @@ concern, pool settings). See [02-profiles.md](02-profiles.md).
 | `@inquirer/prompts` | external | Interactive profile selection |
 | `dotenv/config` | external | Loads `.env` before any stage runs |
 | `src/profiles`, `src/design`, `src/etl`, `src/repogen`, `src/rag`, `src/adapters` | internal | The actual pipeline stages |
-| `OPENAI_API_KEY` (env) | optional | Switches RAG retrieval from BM25 to vector mode |
+| `MONGODB_MODEL_KEY` (env) | optional | Enables hybrid BM25 + Voyage 4 + RRF retrieval |
+| `OPENAI_API_KEY` (env) | optional | Vector-only RAG when Model Key is unset |
 
 ## 3. Edge Cases & Error Handling
 
@@ -95,7 +96,7 @@ npm run hvymetl -- design --source examples/analytics.db \
   --custom --read-write 20:80 --rpm 250000 --growth 1TB/week --out out/custom
 ```
 
-Expected output (preset run):
+Expected output (preset run, no Model Key):
 
 ```text
 Introspected 7 tables, 7 relationships.
@@ -103,6 +104,18 @@ Retrieval strategy: lexical BM25 (no API key configured).
 Planned 5 collections.
 Wrote out/catalog/migration-plan.json
 Wrote out/catalog/design-report.md
+```
+
+With `MONGODB_MODEL_KEY` in `.env`:
+
+```text
+Retrieval strategy: hybrid BM25 + voyage-4 (Reciprocal Rank Fusion).
+```
+
+Validate hybrid retrieval before a design run:
+
+```bash
+npm run validate-hybrid-rag
 ```
 
 ## 6. Refactoring / Optimization Suggestions

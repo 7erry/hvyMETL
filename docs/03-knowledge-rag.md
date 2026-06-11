@@ -86,6 +86,10 @@ Loads `{ openaiProvider, voyageProvider }` from `.env`.
 
 Returns the log line printed by `design` and `prompt` commands.
 
+### `npm run validate-hybrid-rag`
+
+Live integration check for the hybrid path. See [12-validate-hybrid-rag.md](12-validate-hybrid-rag.md).
+
 ### Environment variables
 
 | Name | Required | Default | Description |
