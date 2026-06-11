@@ -258,7 +258,7 @@ export default function App() {
                   Import Query
                 </button>
                 <label className="ghost" style={{ padding: '0.45rem 0.85rem', cursor: 'pointer' }}>
-                  SQLite file
+                  SQL file
                   <input
                     type="file"
                     accept=".db,.sqlite,.sqlite3"

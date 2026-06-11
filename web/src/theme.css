@@ -83,6 +83,20 @@ textarea {
   letter-spacing: 0.04em;
 }
 
+.app-logo {
+  display: flex;
+  align-items: center;
+  line-height: 0;
+}
+
+.app-logo__image {
+  height: 36px;
+  width: auto;
+  max-width: min(200px, 50vw);
+  object-fit: contain;
+  display: block;
+}
+
 .table-node {
   background: var(--mdb-green-dark-3);
   border: 2px solid var(--mdb-green-base);
