@@ -150,7 +150,7 @@ flowchart LR
 
   MD1 & MD2 & MD3 & MDN --> CHUNK
 
-    CHUNK --> CHUNKS[(KnowledgeChunk[])]
+    CHUNK --> CHUNKS[("Knowledge chunks")]
 
     QUERY --> RET{MONGODB_MODEL_KEY?}
 
