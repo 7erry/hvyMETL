@@ -1,0 +1,165 @@
+# hvyMETL Migration Studio
+
+Optional MongoDB-branded web UI for visual schema design, ER diagrams, and AI-powered
+migration export. The **CLI remains fully available** — every UI action uses the same
+design engine, RAG layer, and artifacts as `npm run hvymetl`.
+
+![ER diagram canvas with table details](docs/screenshots/er-diagram-canvas.png)
+
+## Quick start
+
+From the **repository root** (not this folder alone):
+
+```bash
+npm install
+cp .env.example .env   # optional: MONGODB_MODEL_KEY for hybrid RAG exports
+npm run dev:ui         # http://localhost:5173  (API on :3847)
+```
+
+Production (single port):
+
+```bash
+npm run start:ui       # http://localhost:3847
+```
+
+| Command | Description |
+| --- | --- |
+| `npm run dev:ui` | Vite dev server + Express API (hot reload) |
+| `npm run start:ui` | Build web assets and serve from API |
+| `npm run build:ui` | Build API + static `web/dist` only |
+
+Set `HVYMETL_UI_PORT` in `.env` to change the API port (default `3847`).
+
+## Screenshots
+
+### ER diagram & table details
+
+Import a schema, drag tables on the canvas, click a table for column/PK/FK details,
+duplicate tables, and snap to a 20px grid (hold **Shift** for free positioning).
+
+![ER diagram with CMS template loaded](docs/screenshots/er-diagram-canvas.png)
+
+### AI migration artifacts
+
+**AI Migration Export** opens a full-screen editor for every generated artifact —
+editable text, per-file download, and **Download all**. Artifacts persist in
+`sessionStorage` across browser refresh.
+
+![AI migration artifacts view with RAG prompts](docs/screenshots/ai-migration-artifacts.png)
+
+## Features
+
+| Feature | How to use |
+| --- | --- |
+| **Instant Schema Import** | Paste DDL in the sidebar → **Import Query** |
+| **Broad database support** | Dialect selector: PostgreSQL, MySQL, SQLite, MSSQL, ClickHouse, Oracle (DDL paste); **SQLite file** upload is live |
+| **Templates** | Dropdown (Laravel, Django, Twitter, catalog, iot, cms) → **Load template** |
+| **Customizable ER diagrams** | Drag/zoom canvas, FK edges, minimap (React Flow) |
+| **Table details** | Click a table on the canvas or in the sidebar list |
+| **Duplicate table** | ⧉ on canvas header or sidebar |
+| **Snap to grid** | Checkbox; hold **Shift** while dragging for free move |
+| **Share diagrams** | Export / import diagram JSON (schema + layout) |
+| **Session state** | Auto-saved in `sessionStorage`; use **Clear session** to reset |
+| **Workload profiles** | Header dropdown (catalog, cms, iot, …) |
+| **AI Migration Export** | Generates migration plan JSON, design report, and 3 RAG prompts |
+
+## Typical workflow
+
+1. **Import schema** — paste `CREATE TABLE` DDL, upload SQLite, or load a template.
+2. **Arrange the ER diagram** — position tables, inspect details, duplicate as needed.
+3. **Choose a workload profile** — e.g. Content Management, IoT, Catalog.
+4. **AI Migration Export** — review and edit artifacts; download for Cursor/LLM or CLI follow-up.
+5. **Optional: share** — export diagram JSON for collaboration.
+
+### CLI parity
+
+The UI covers **design** and **export**. Full pipeline stages remain on the CLI:
+
+```bash
+npm run hvymetl -- design --source examples/iot.db --profile iot --out out/iot
+npm run hvymetl -- etl --plan out/iot/migration-plan.json --out out/iot
+npm run import-cli -- out/iot/csv/*.csv sensorReadings --db hvymetl_iot
+```
+
+See the root [README](../README.md) and [docs/13-web-ui.md](../docs/13-web-ui.md).
+
+## Environment
+
+Loaded by the Express API (`src/server/index.ts`):
+
+| Variable | Required | Purpose |
+| --- | --- | --- |
+| `MONGODB_MODEL_KEY` | no | Hybrid RAG (BM25 + Voyage 4 + RRF) on AI export |
+| `OPENAI_API_KEY` | no | Vector-only RAG when Model Key is unset |
+| `HVYMETL_UI_PORT` | no | API port (default `3847`) |
+
+Schema import and diagram editing work **offline** with no API keys.
+
+## Project structure
+
+```
+web/
+├── src/
+│   ├── App.tsx                 # Main layout, sidebar, routing between views
+│   ├── api.ts                  # Fetch helpers for /api/*
+│   ├── sessionState.ts         # sessionStorage persistence
+│   ├── theme.css               # MongoDB LeafyGreen palette
+│   └── components/
+│       ├── SchemaCanvas.tsx    # React Flow ER canvas
+│       ├── TableNode.tsx       # Table card on canvas
+│       ├── TableDetails.tsx    # Column / PK / FK panel
+│       ├── MigrationArtifactsView.tsx
+│       └── MongoLogo.tsx
+├── public/templates/           # SQL templates served by API
+├── docs/screenshots/           # README images
+└── vite.config.ts              # Dev proxy: /api → :3847
+```
+
+## API (dev proxy)
+
+During `npm run dev:ui`, Vite proxies `/api/*` to the Express server. Endpoints:
+
+| Method | Path | Purpose |
+| --- | --- | --- |
+| `GET` | `/api/health` | Health check |
+| `GET` | `/api/profiles` | Workload presets |
+| `GET` | `/api/dialects` | Database dialect labels |
+| `GET` | `/api/templates` | Template DDL + parsed model |
+| `POST` | `/api/schema/import-ddl` | Parse pasted DDL |
+| `POST` | `/api/schema/import-sqlite` | Upload `.db` file |
+| `POST` | `/api/design` | Run design engine |
+| `POST` | `/api/export/migration` | Migration plan + design report |
+| `POST` | `/api/export/prompts` | RAG prompt bundle |
+
+## Diagram export format
+
+```json
+{
+  "version": 1,
+  "name": "ddl:postgresql",
+  "dialect": "postgresql",
+  "ddl": "CREATE TABLE …",
+  "model": { "tables": [], "relationships": [] },
+  "positions": { "users": { "x": 40, "y": 40 } },
+  "exportedAt": "2026-06-11T00:00:00.000Z"
+}
+```
+
+## Branding
+
+Official MongoDB **LeafyGreen** colors per [mongodb.design](https://www.mongodb.design/foundations/palette):
+
+- `#001E2B` — black
+- `#00ED64` — green base
+- `#00684A` — green dark
+- `#E3FCF7` — spring green (text on dark)
+
+## Local development (this package only)
+
+```bash
+cd web
+npm install
+npm run dev          # Vite only — needs API running separately on :3847
+```
+
+For full-stack dev, always use `npm run dev:ui` from the repo root.

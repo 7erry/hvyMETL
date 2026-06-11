@@ -111,7 +111,7 @@ npm run dev:ui      # http://localhost:5173 (API on :3847)
 npm run start:ui    # production build on http://localhost:3847
 ```
 
-See **[docs/13-web-ui.md](docs/13-web-ui.md)** for features and API reference.
+See **[web/README.md](web/README.md)** (screenshots & how-to) and **[docs/13-web-ui.md](docs/13-web-ui.md)** (API reference).
 
 ## Run all examples against Atlas
 

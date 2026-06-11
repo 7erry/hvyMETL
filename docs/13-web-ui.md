@@ -1,6 +1,6 @@
 # 13 — Web UI (Migration Studio)
 
-Sources: [`web/`](../web/), [`src/server/index.ts`](../src/server/index.ts)
+Sources: [`web/README.md`](../web/README.md), [`web/`](../web/), [`src/server/index.ts`](../src/server/index.ts)
 
 ## 1. High-Level Summary
 
