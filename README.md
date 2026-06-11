@@ -60,8 +60,9 @@ pool, merge modes): **[docs/diagrams.md](docs/diagrams.md)**.
    Polymorphic, Schema Versioning, Tree, Pre-allocation, Embed-vs-Reference) with
    applicability rules and verified code blocks. Retrieval is deterministic BM25 by
    default; set `MONGODB_MODEL_KEY` (MongoDB Model Key from Atlas) for hybrid BM25 +
-   Voyage 4 search merged with Reciprocal Rank Fusion, or `OPENAI_API_KEY` alone
-   for vector-only retrieval.
+   Voyage 4 ranks fused in-process by hvyMETL's
+   `reciprocalRankFusion()` ([details](docs/03-knowledge-rag.md#reciprocal-rank-fusion--whose-implementation)),
+   or `OPENAI_API_KEY` alone for vector-only retrieval.
 2. **Workload profiles** (`src/profiles/`): eight presets (catalog, cms, iot, mobile,
    personalization, realtime-analytics, single-view, ledger) selectable at runtime,
    each carrying telemetry, preferred patterns, write concern, and pool tuning.

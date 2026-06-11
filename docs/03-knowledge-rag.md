@@ -59,7 +59,73 @@ the top without normalizing incompatible score scales.
 
 ### `reciprocalRankFusion(rankedLists, k?): ScoredChunk[]`
 
-Pure function; unit-tested in `retriever.test.ts`. Merges any number of ranked lists.
+Pure function in [`src/rag/retriever.ts`](../src/rag/retriever.ts); unit-tested in
+`retriever.test.ts`. Merges any number of ranked lists. See
+[Reciprocal Rank Fusion — whose implementation?](#reciprocal-rank-fusion--whose-implementation)
+below for what runs RRF and what does not.
+
+### Reciprocal Rank Fusion — whose implementation?
+
+hvyMETL uses the **standard Reciprocal Rank Fusion (RRF) algorithm** from information
+retrieval research — the score for each chunk is the sum of `1 / (k + rank)` across
+every ranked list where it appears (1-based rank, default **`k = 60`**, the widely
+used constant from the original RRF literature). The fusion itself is **implemented
+entirely in hvyMETL**; it is **not** delegated to MongoDB Atlas hybrid search, Voyage
+AI's APIs, or a third-party npm package.
+
+| Component | Provided by | Role in hybrid retrieval |
+| --- | --- | --- |
+| **BM25 ranking** | hvyMETL (`lexicalRetrieve` in `retriever.ts`) | Leg 1 — exact keyword / pattern-token matches |
+| **Voyage 4 embeddings** | Voyage via [MongoDB Model API](https://www.mongodb.com/docs/voyageai/api-and-clients/) (or direct Voyage endpoint when using a `pa-…` key) | Leg 2 — semantic similarity vectors |
+| **Cosine ranking** | hvyMETL (`cosineSimilarity` in `retriever.ts`) | Ranks chunks by query–document vector similarity |
+| **RRF merge** | hvyMETL (`reciprocalRankFusion` in `retriever.ts`) | Fuses the two ranked lists in-process after both legs complete |
+
+**What `MONGODB_MODEL_KEY` does:** it enables the **embedding API call** for the
+semantic leg. MongoDB does not perform RRF on hvyMETL's behalf — the Model Key is
+only the credential path to Voyage 4 embeddings.
+
+**What is not used for RRF:**
+
+- MongoDB Atlas **`$vectorSearch`** or Atlas Search hybrid fusion
+- A Voyage-side rank-fusion endpoint
+- Elasticsearch, LangChain, or other library RRF helpers
+
+Flow when hybrid retrieval is active:
+
+```mermaid
+%%{init:{"theme":"base","themeVariables":{"darkMode":true,"background":"#001E2B","mainBkg":"#023430","primaryTextColor":"#E3FCF7","lineColor":"#00ED64","textColor":"#E3FCF7"}}}%%
+flowchart LR
+    Q[Workload query] --> BM25[hvyMETL BM25<br/>lexicalRetrieve]
+    Q --> VOY[Voyage 4 embed<br/>Model API]
+    VOY --> COS[hvyMETL cosine rank]
+    BM25 --> L1[Ranked list 1]
+    COS --> L2[Ranked list 2]
+    L1 --> RRF[hvyMETL reciprocalRankFusion<br/>k=60]
+    L2 --> RRF
+    RRF --> TOP[top-K chunks]
+```
+
+**When RRF is not used:**
+
+| `.env` configuration | Retrieval path |
+| --- | --- |
+| No API keys (default) | BM25 only — fully offline |
+| `OPENAI_API_KEY` only (no Model Key) | OpenAI embeddings + cosine rank only — no RRF |
+| `MONGODB_MODEL_KEY` set | Hybrid BM25 + Voyage 4 → **RRF** |
+| Hybrid API failure | Falls back to BM25 only (console warning) |
+
+Implementation reference:
+
+```typescript
+// src/rag/retriever.ts — both legs ranked locally, then fused in-process
+const lexicalRanked = lexicalRetrieve(chunks, query, candidateCount);
+const semanticRanked = /* Voyage embed + cosineSimilarity sort */;
+return reciprocalRankFusion([lexicalRanked, semanticRanked]).slice(0, topK);
+```
+
+Each candidate list contributes up to `topK × 3` entries before fusion
+(`HYBRID_CANDIDATE_MULTIPLIER`), so chunks with strong but not top-1 scores on both
+legs can still surface after RRF.
 
 ### `vectorRetrieve(provider, chunks, query, topK): Promise<ScoredChunk[]>`
 

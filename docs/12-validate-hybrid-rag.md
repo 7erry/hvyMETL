@@ -33,6 +33,11 @@ Runs `npm run build` then `node scripts/validate-hybrid-rag.mjs`.
 
 ### Retrieval strategy (see [03-knowledge-rag.md](03-knowledge-rag.md))
 
+RRF is **hvyMETL's in-process implementation** in `src/rag/retriever.ts` — it fuses
+local BM25 ranks with Voyage 4 cosine ranks. The Model Key supplies embeddings only;
+Atlas does not run the fusion step. Details:
+[Reciprocal Rank Fusion — whose implementation?](03-knowledge-rag.md#reciprocal-rank-fusion--whose-implementation).
+
 | Keys in `.env` | Strategy |
 | --- | --- |
 | none | BM25 only (script fails — expects Model Key) |
