@@ -17,7 +17,8 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "hvymetl": "npm run -s build && node dist/cli.js",
-    "import-cli": "npm run -s build && node dist/import/cli.js",
+    "import-cli": "npm run -s build && node scripts/import-cli.mjs",
+    "validate-csv-to-atlas": "npm run -s build && node scripts/validate-csv-to-atlas.mjs",
     "seed-examples": "npm run -s build && node dist/examples/seed.js",
     "run-all-examples": "node scripts/run-all-examples.mjs",
     "validate-hybrid-rag": "npm run -s build && node scripts/validate-hybrid-rag.mjs",

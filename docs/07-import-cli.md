@@ -14,6 +14,11 @@ chunk imported twice (or two chunks imported in parallel) always converges on ex
 one document. It supports four shapes: single CSV, partitioned chunk CSVs (the ETL's
 output), related CSVs merged by a join field, and parent/child embedding.
 
+When **`CSV_TO_ATLAS_PATH`** is set in `.env`, `npm run import-cli` delegates to the
+standalone [cvsToAtlas](https://github.com/7erry/cvsToAtlas) installation at that
+path; otherwise hvyMETL's bundled `src/import/` is used. Validate with
+`npm run validate-csv-to-atlas` ([14-validate-csv-to-atlas.md](14-validate-csv-to-atlas.md)).
+
 ## 2. Technical Details & Signature
 
 ### Command contract
@@ -37,6 +42,7 @@ npm run import-cli -- <file.csv...> [collection] [flags]
 | --- | --- | --- |
 | `MONGODB_URI` | for imports | Atlas connection string (never logged) |
 | `MONGODB_DB` | optional | Default database name |
+| `CSV_TO_ATLAS_PATH` | optional | Path to external cvsToAtlas clone (see [14-validate-csv-to-atlas.md](14-validate-csv-to-atlas.md)) |
 
 ### `analyzeCsvFiles(files: ParsedCsvFile[]): CsvAnalysis`
 

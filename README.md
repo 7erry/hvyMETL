@@ -76,7 +76,7 @@ pool, merge modes): **[docs/diagrams.md](docs/diagrams.md)**.
    rows inside SQL: pre-joined Extended Reference columns, initialized Computed
    counters, capped Subset arrays, grouped Bucket documents. Streams to CSV with O(1)
    memory. `--dry-run` extracts exactly 3 chunks of 1,000 records with validation logs.
-5. **csvToAtlas import** (`src/import/`): analysis (`--analyze`), join/embed merging,
+5. **csvToAtlas import** ([cvsToAtlas](https://github.com/7erry/cvsToAtlas) or bundled `src/import/`): set `CSV_TO_ATLAS_PATH` in `.env` to use the external tool; analysis (`--analyze`), join/embed merging,
    and concurrency-safe bulk upserts keyed on the deterministic `_id`, so parallel
    chunk imports are idempotent and race-free.
 6. **Repository generator** (`src/repogen/`): emits typed repository modules using
@@ -196,6 +196,7 @@ npm run hvymetl -- design --source my.db --custom --read-write 20:80 --rpm 25000
 ```bash
 npm test                              # unit tests (offline)
 npm run validate-hybrid-rag           # live hybrid RAG check (needs MONGODB_MODEL_KEY)
+npm run validate-csv-to-atlas         # verify bundled or CSV_TO_ATLAS_PATH csvToAtlas
 npm run run-all-examples              # full pipeline + Atlas validation (needs MONGODB_URI)
 ```
 

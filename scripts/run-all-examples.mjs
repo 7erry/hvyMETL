@@ -113,7 +113,7 @@ async function main() {
         throw new Error(`No CSV files found for ${domain.id}/${coll.name}: ${coll.files.join(', ')}`);
       }
       const fileArgs = actualFiles.join(' ');
-      run(`node dist/import/cli.js ${fileArgs} ${coll.name} --drop --db ${dbName}`);
+      run(`node scripts/import-cli.mjs ${fileArgs} ${coll.name} --drop --db ${dbName}`);
     }
   }
 

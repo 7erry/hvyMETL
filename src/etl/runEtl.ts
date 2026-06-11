@@ -26,6 +26,12 @@ import type { CollectionPlan, MigrationPlan } from '../types.js';
 import { splitRange, splitTimeRangeAligned, type ChunkRange } from './splitter.js';
 import { buildShapedQuery } from './shaper.js';
 import type { ExtractResult, ExtractTask } from './worker.js';
+import {
+  buildCollectionImportCommand,
+  csvToAtlasManifestMeta,
+  resolveCsvToAtlasInstallation,
+  validateCsvToAtlasInstallation,
+} from '../utilities/csvToAtlas.js';
 
 /** Hard ceiling on concurrent extraction threads. */
 export const MAX_PARALLEL_WORKERS = 8;
@@ -144,8 +150,21 @@ export async function runEtl(options: EtlOptions): Promise<void> {
   const adapter = createSqliteAdapter(plan.source);
   const model = adapter.introspect();
 
+  const csvToAtlas = resolveCsvToAtlasInstallation();
+  const csvToAtlasCheck = validateCsvToAtlasInstallation();
+  for (const warning of csvToAtlasCheck.warnings) {
+    console.warn(`csvToAtlas: ${warning}`);
+  }
+  if (!csvToAtlasCheck.ok) {
+    for (const error of csvToAtlasCheck.errors) {
+      console.error(`csvToAtlas: ${error}`);
+    }
+    throw new Error('csvToAtlas is not available. Run npm run build or set CSV_TO_ATLAS_PATH in .env.');
+  }
+
   console.log(`ETL ${dryRun ? 'DRY RUN (3 chunks x 1,000 records per collection)' : 'production run'}`);
   console.log(`Source: ${plan.source} | Profile: ${plan.profileId} | Workers: ${poolSize}`);
+  console.log(`csvToAtlas: ${csvToAtlas.label}`);
 
   // Build every task up front so the pool can interleave collections.
   const tasks: ExtractTask[] = [];
@@ -195,7 +214,7 @@ export async function runEtl(options: EtlOptions): Promise<void> {
       files: [],
       rowCount: 0,
       columns: ['_id', ...meta.columns],
-      importCommand: `npm run import-cli -- out/csv/${meta.collection}.chunk*.csv ${meta.collection}`,
+      importCommand: '',
     };
     entry.files.push(result.outFile);
     entry.rowCount += result.rowCount;
@@ -205,8 +224,10 @@ export async function runEtl(options: EtlOptions): Promise<void> {
   console.log('');
   console.log('Structural validation:');
   for (const entry of manifestCollections.values()) {
+    entry.importCommand = buildCollectionImportCommand(entry.files, entry.name);
     console.log(`  ${entry.name}: ${entry.rowCount.toLocaleString('en-US')} rows in ${entry.files.length} file(s)`);
     console.log(`    columns: ${entry.columns.join(', ')}`);
+    console.log(`    import: ${entry.importCommand}`);
   }
 
   const manifest = {
@@ -215,6 +236,7 @@ export async function runEtl(options: EtlOptions): Promise<void> {
     dryRun,
     generatedAt: new Date().toISOString(),
     elapsedSeconds: Number(elapsedSeconds),
+    csvToAtlas: csvToAtlasManifestMeta(csvToAtlas),
     collections: [...manifestCollections.values()],
   };
   const manifestPath = join(options.outDir, 'etl-manifest.json');
