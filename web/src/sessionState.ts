@@ -35,7 +35,7 @@ export type SessionState = {
   selectedTemplateId: string;
   sidebarWidth: number;
   canvasPanelOpen: boolean;
-  sourceDbPath: string | null;
+  csvSourcePath: string | null;
 };
 
 export const defaultSessionState = (): SessionState => ({
@@ -51,15 +51,20 @@ export const defaultSessionState = (): SessionState => ({
   selectedTemplateId: '',
   sidebarWidth: 320,
   canvasPanelOpen: true,
-  sourceDbPath: null,
+  csvSourcePath: null,
 });
 
 export function loadSessionState(): SessionState {
   try {
     const raw = sessionStorage.getItem(STORAGE_KEY);
     if (!raw) return defaultSessionState();
-    const parsed = JSON.parse(raw) as Partial<SessionState>;
-    return { ...defaultSessionState(), ...parsed };
+    const parsed = JSON.parse(raw) as Partial<SessionState> & { sourceDbPath?: string | null };
+    const { sourceDbPath: _legacy, ...rest } = parsed;
+    return {
+      ...defaultSessionState(),
+      ...rest,
+      csvSourcePath: rest.csvSourcePath ?? _legacy ?? null,
+    };
   } catch {
     return defaultSessionState();
   }

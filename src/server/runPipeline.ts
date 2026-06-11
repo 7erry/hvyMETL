@@ -1,18 +1,17 @@
 /**
- * Full pipeline: design → ETL → csvToAtlas import (used by the web UI).
+ * Full pipeline: design → csvToAtlas import from user CSV exports (web UI).
  */
 
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { designFromModel, writeDesignArtifacts, type DesignFromModelResult } from '../design/designFromModel.js';
-import { runEtl } from '../etl/runEtl.js';
-import type { MigrationPlan, SqlStructuralModel } from '../types.js';
+import type { SqlStructuralModel } from '../types.js';
+import { buildCollectionCsvMap, resolveCsvSourcePath } from '../utilities/csvSource.js';
 import { runImportCli } from '../utilities/runImportCli.js';
 import {
   buildPipelineImportEnv,
   getPipelineConfigStatus,
   resolvePipelineSchemaDialect,
-  resolvePipelineSourceDb,
 } from './pipelineConfig.js';
 
 export type PipelineRunRequest = {
@@ -20,11 +19,9 @@ export type PipelineRunRequest = {
   model: SqlStructuralModel;
   ddl: string;
   dialect?: string;
-  sourceDbPath?: string;
+  csvSourcePath?: string;
   targetDb?: string;
   outDir?: string;
-  dryRun?: boolean;
-  workers?: number;
   drop?: boolean;
   mongoUri?: string;
   csvToAtlasPath?: string;
@@ -49,20 +46,15 @@ export type PipelineRunResult = {
     reportPath: string;
     manifestPath: string;
   };
-  etl: {
-    elapsedSeconds?: number;
-    collections: { name: string; rowCount: number; files: string[] }[];
+  csvSource: {
+    path: string;
+    collections: { name: string; files: string[] }[];
   };
   imports: CollectionImportSummary[];
   errors: string[];
 };
 
-type EtlManifest = {
-  collections: { name: string; rowCount: number; files: string[] }[];
-  elapsedSeconds?: number;
-};
-
-/** Validate inputs then run design, ETL extraction, and Atlas import. */
+/** Validate inputs, run design, then import CSV exports via csvToAtlas. */
 export async function runFullPipeline(request: PipelineRunRequest): Promise<PipelineRunResult> {
   const errors: string[] = [];
   const importEnv = buildPipelineImportEnv({
@@ -74,7 +66,7 @@ export async function runFullPipeline(request: PipelineRunRequest): Promise<Pipe
   const schemaDialect = resolvePipelineSchemaDialect(request.dialect, request.model);
   const config = getPipelineConfigStatus(importEnv, {
     schemaDialect,
-    importedSourcePath: request.sourceDbPath,
+    csvSourcePath: request.csvSourcePath,
   });
   if (!importEnv.MONGODB_URI?.trim()) {
     throw new Error('MONGODB_URI is required for Atlas import.');
@@ -83,38 +75,37 @@ export async function runFullPipeline(request: PipelineRunRequest): Promise<Pipe
     throw new Error(config.csvToAtlasValidation.errors.join(' ') || 'CSV_TO_ATLAS_PATH is not configured.');
   }
 
-  const sourceDbPath = resolvePipelineSourceDb(request.sourceDbPath, importEnv, schemaDialect);
+  const csvRoot = resolveCsvSourcePath(request.csvSourcePath, importEnv);
   const outDir = request.outDir ?? join(request.rootDir, 'out', 'ui-pipeline');
   mkdirSync(outDir, { recursive: true });
 
   const design = await designFromModel(request.model, request.profileId, request.knowledgeDir);
   const paths = writeDesignArtifacts(outDir, design);
 
-  const plan: MigrationPlan = { ...design.plan, source: sourceDbPath };
-  writeFileSync(paths.planPath, `${JSON.stringify(plan, null, 2)}\n`);
+  const csvMap = buildCollectionCsvMap(csvRoot, design.plan.collections);
+  const csvCollections = design.plan.collections.map((collection) => ({
+    name: collection.name,
+    files: csvMap.get(collection.name) ?? [],
+  }));
 
-  await runEtl({
-    planPath: paths.planPath,
-    outDir,
-    dryRun: request.dryRun ?? false,
-    workers: request.workers ?? 8,
-  });
-
-  const manifestPath = join(outDir, 'etl-manifest.json');
-  const manifest = JSON.parse(readFileSync(manifestPath, 'utf8')) as EtlManifest;
+  const manifestPath = join(outDir, 'csv-import-manifest.json');
+  writeFileSync(
+    manifestPath,
+    `${JSON.stringify({ csvSource: csvRoot, schemaDialect, collections: csvCollections }, null, 2)}\n`,
+  );
 
   const targetDb = request.targetDb ?? importEnv.MONGODB_DB ?? 'csv_to_atlas';
   const imports: CollectionImportSummary[] = [];
-  for (const coll of manifest.collections) {
+  for (const coll of csvCollections) {
     const actualFiles = coll.files.filter((file) => existsSync(file));
     if (actualFiles.length === 0) {
       imports.push({
         collection: coll.name,
         files: coll.files,
         ok: false,
-        error: 'No CSV files found after ETL',
+        error: 'No matching CSV files found for this collection',
       });
-      errors.push(`${coll.name}: no CSV files`);
+      errors.push(`${coll.name}: no CSV files (export ${coll.name}.csv or matching source table name)`);
       continue;
     }
 
@@ -136,14 +127,7 @@ export async function runFullPipeline(request: PipelineRunRequest): Promise<Pipe
     ok: errors.length === 0,
     design,
     paths: { outDir, planPath: paths.planPath, reportPath: paths.reportPath, manifestPath },
-    etl: {
-      elapsedSeconds: manifest.elapsedSeconds,
-      collections: manifest.collections.map((c) => ({
-        name: c.name,
-        rowCount: c.rowCount,
-        files: c.files,
-      })),
-    },
+    csvSource: { path: csvRoot, collections: csvCollections },
     imports,
     errors,
   };

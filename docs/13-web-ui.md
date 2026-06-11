@@ -36,7 +36,7 @@ exports, same as CLI).
 | **Session state** | Auto-saved in `sessionStorage` (schema, layout, artifacts survive refresh) | Client-side |
 | **Table details** | Click table on canvas or sidebar | Column types, PKs, FKs |
 | **AI-Powered DDL Export** | Full-screen artifact editor (editable + per-file download) | `POST /api/export/migration` + prompts |
-| **Full pipeline** | Header → **Run Full Pipeline** (design → ETL → Atlas import) | `GET /api/pipeline/config`, `POST /api/pipeline/run` |
+| **Full pipeline** | Header → **Run Full Pipeline** (design → csvToAtlas import from CSV exports) | `GET /api/pipeline/config`, `POST /api/pipeline/run` |
 
 ## 4. API Reference
 
@@ -52,8 +52,8 @@ exports, same as CLI).
 | `POST` | `/api/export/migration` | `{ model, profileId, ddl }` | Downloads: plan JSON, design report, RAG prompts |
 | `POST` | `/api/export/prompts` | `{ ddl, profileId }` | RAG prompt bundle |
 | `GET` | `/api/pipeline/config` | — | Non-secret pipeline status (Mongo URI, csvToAtlas, source DB) |
-| `POST` | `/api/pipeline/run` | `{ model, profileId, ddl, sourceDbPath?, mongoUri?, csvToAtlasPath?, targetDb?, dryRun?, drop? }` | Design + ETL + import summary |
-| `POST` | `/api/pipeline/run-with-source` | `multipart database` + form fields | Same as run, with uploaded SQLite source |
+| `POST` | `/api/pipeline/run` | `{ model, profileId, ddl, dialect?, csvSourcePath?, mongoUri?, csvToAtlasPath?, targetDb?, drop? }` | Design + csvToAtlas import summary |
+| `POST` | `/api/pipeline/run-with-csv` | `multipart csvs` + form fields | Same as run, with uploaded CSV files |
 
 ## 5. Supported SQL dialects
 
@@ -108,8 +108,9 @@ The UI uses the official **LeafyGreen** palette (`#001E2B`, `#00ED64`, `#00684A`
 ## 8. CLI parity
 
 Design and export are available in the UI. The **Run Full Pipeline** action runs
-design → ETL → csvToAtlas import when `MONGODB_URI`, `CSV_TO_ATLAS_PATH`, and a
-SQLite source (`HVYMETL_SOURCE_DB` or upload) are configured.
+design → csvToAtlas import when `MONGODB_URI`, `CSV_TO_ATLAS_PATH`, and CSV exports
+(`HVYMETL_CSV_SOURCE` or upload) are configured. Works with any schema import dialect
+— export row data from your source database as CSV files named after each table.
 
 All pipeline stages remain available without the UI:
 

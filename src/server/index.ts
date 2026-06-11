@@ -168,13 +168,28 @@ app.get('/api/templates', (_req, res) => {
 /** Pipeline config status (non-secret) for the UI. */
 app.get('/api/pipeline/config', (req, res) => {
   const schemaDialect = String(req.query?.schemaDialect ?? req.query?.dialect ?? '').trim() || undefined;
-  const importedSourcePath = String(req.query?.importedSourcePath ?? req.query?.sourceDbPath ?? '').trim() || undefined;
-  res.json(getPipelineConfigStatus(process.env, { schemaDialect, importedSourcePath }));
+  const csvSourcePath = String(req.query?.csvSourcePath ?? req.query?.importedSourcePath ?? '').trim() || undefined;
+  res.json(getPipelineConfigStatus(process.env, { schemaDialect, csvSourcePath }));
 });
 
+/** Shared JSON shape for pipeline run responses. */
+function pipelineRunResponse(result: Awaited<ReturnType<typeof runFullPipeline>>) {
+  return {
+    ok: result.ok,
+    errors: result.errors,
+    paths: result.paths,
+    csvSource: result.csvSource,
+    imports: result.imports,
+    csvSourcePath: result.csvSource.path,
+    retrievalStrategy: result.design.retrievalStrategy,
+    migrationPlanJson: result.design.plan,
+    designReportMarkdown: result.design.designReport,
+  };
+}
+
 /**
- * Run full pipeline: design → ETL → csvToAtlas import.
- * Body may override MONGODB_URI, CSV_TO_ATLAS_PATH, sourceDbPath when not in .env.
+ * Run full pipeline: design → csvToAtlas import from CSV exports.
+ * Body may override MONGODB_URI, CSV_TO_ATLAS_PATH, csvSourcePath when not in .env.
  */
 app.post('/api/pipeline/run', async (req, res) => {
   try {
@@ -191,10 +206,8 @@ app.post('/api/pipeline/run', async (req, res) => {
       model,
       ddl,
       dialect: req.body?.dialect as string | undefined,
-      sourceDbPath: req.body?.sourceDbPath as string | undefined,
+      csvSourcePath: req.body?.csvSourcePath as string | undefined,
       targetDb: req.body?.targetDb as string | undefined,
-      dryRun: Boolean(req.body?.dryRun),
-      workers: req.body?.workers ? Number(req.body.workers) : undefined,
       drop: req.body?.drop !== false,
       mongoUri: req.body?.mongoUri as string | undefined,
       csvToAtlasPath: req.body?.csvToAtlasPath as string | undefined,
@@ -202,66 +215,62 @@ app.post('/api/pipeline/run', async (req, res) => {
       rootDir: ROOT,
     });
 
-    res.json({
-      ok: result.ok,
-      errors: result.errors,
-      paths: result.paths,
-      etl: result.etl,
-      imports: result.imports,
-      retrievalStrategy: result.design.retrievalStrategy,
-      migrationPlanJson: result.design.plan,
-      designReportMarkdown: result.design.designReport,
-    });
+    res.json(pipelineRunResponse(result));
   } catch (error) {
     res.status(500).json({ error: String(error) });
   }
 });
 
-/** Run pipeline with SQLite source uploaded in the same request. */
-app.post('/api/pipeline/run-with-source', upload.single('database'), async (req, res) => {
-  try {
-    const profileId = String(req.body?.profileId ?? 'catalog');
-    const model = req.body?.model ? (JSON.parse(String(req.body.model)) as SqlStructuralModel) : undefined;
-    const ddl = String(req.body?.ddl ?? '');
-    if (!model) {
-      res.status(400).json({ error: 'model is required' });
+/** Run pipeline with CSV files uploaded in the same request. */
+app.post('/api/pipeline/run-with-csv', (req, res) => {
+  const batchDir = join(UPLOAD_DIR, `csv-batch-${Date.now()}`);
+  mkdirSync(batchDir, { recursive: true });
+  const csvUpload = multer({
+    storage: multer.diskStorage({
+      destination: (_uploadReq, _file, cb) => cb(null, batchDir),
+      filename: (_uploadReq, file, cb) => cb(null, file.originalname),
+    }),
+  }).array('csvs', 500);
+
+  csvUpload(req, res, async (uploadError: unknown) => {
+    if (uploadError) {
+      res.status(400).json({ error: String(uploadError) });
       return;
     }
-    if (!req.file) {
-      res.status(400).json({ error: 'database file is required when source is not in .env' });
-      return;
+    try {
+      const files = req.files as Express.Multer.File[] | undefined;
+      if (!files?.length) {
+        res.status(400).json({ error: 'At least one CSV file is required' });
+        return;
+      }
+
+      const profileId = String(req.body?.profileId ?? 'catalog');
+      const model = req.body?.model ? (JSON.parse(String(req.body.model)) as SqlStructuralModel) : undefined;
+      const ddl = String(req.body?.ddl ?? '');
+      if (!model) {
+        res.status(400).json({ error: 'model is required' });
+        return;
+      }
+
+      const result = await runFullPipeline({
+        profileId,
+        model,
+        ddl,
+        dialect: req.body?.dialect as string | undefined,
+        csvSourcePath: batchDir,
+        targetDb: req.body?.targetDb as string | undefined,
+        drop: req.body?.drop !== 'false',
+        mongoUri: req.body?.mongoUri as string | undefined,
+        csvToAtlasPath: req.body?.csvToAtlasPath as string | undefined,
+        knowledgeDir: KNOWLEDGE_DIR,
+        rootDir: ROOT,
+      });
+
+      res.json(pipelineRunResponse(result));
+    } catch (error) {
+      res.status(500).json({ error: String(error) });
     }
-
-    const result = await runFullPipeline({
-      profileId,
-      model,
-      ddl,
-      dialect: req.body?.dialect as string | undefined,
-      sourceDbPath: req.file.path,
-      targetDb: req.body?.targetDb as string | undefined,
-      dryRun: req.body?.dryRun === 'true' || req.body?.dryRun === true,
-      workers: req.body?.workers ? Number(req.body.workers) : undefined,
-      drop: req.body?.drop !== 'false',
-      mongoUri: req.body?.mongoUri as string | undefined,
-      csvToAtlasPath: req.body?.csvToAtlasPath as string | undefined,
-      knowledgeDir: KNOWLEDGE_DIR,
-      rootDir: ROOT,
-    });
-
-    res.json({
-      ok: result.ok,
-      errors: result.errors,
-      paths: result.paths,
-      etl: result.etl,
-      imports: result.imports,
-      sourcePath: req.file.path,
-      retrievalStrategy: result.design.retrievalStrategy,
-      migrationPlanJson: result.design.plan,
-      designReportMarkdown: result.design.designReport,
-    });
-  } catch (error) {
-    res.status(500).json({ error: String(error) });
-  }
+  });
 });
 
 /** Serve built UI (production). Vite dev server proxies /api during development. */

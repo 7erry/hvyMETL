@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   fetchPipelineConfig,
   runPipeline,
-  runPipelineWithSource,
+  runPipelineWithCsv,
   type PipelineConfigStatus,
   type PipelineRunResult,
 } from '../api';
@@ -16,8 +16,8 @@ type PipelinePanelProps = {
   profileId: string;
   dialect: string;
   dialectLabel: string;
-  sourceDbPath: string | null;
-  onSourceDbPathChange: (path: string) => void;
+  csvSourcePath: string | null;
+  onCsvSourcePathChange: (path: string) => void;
   onComplete: (result: PipelineRunResult) => void;
 };
 
@@ -25,8 +25,7 @@ type PipelineForm = {
   mongoUri: string;
   csvToAtlasPath: string;
   targetDb: string;
-  sourceDbPath: string;
-  dryRun: boolean;
+  csvSourcePath: string;
   drop: boolean;
 };
 
@@ -38,8 +37,8 @@ export function PipelinePanel({
   profileId,
   dialect,
   dialectLabel,
-  sourceDbPath,
-  onSourceDbPathChange,
+  csvSourcePath,
+  onCsvSourcePathChange,
   onComplete,
 }: PipelinePanelProps) {
   const [config, setConfig] = useState<PipelineConfigStatus | null>(null);
@@ -47,30 +46,27 @@ export function PipelinePanel({
   const [running, setRunning] = useState(false);
   const [error, setError] = useState('');
   const [result, setResult] = useState<PipelineRunResult | null>(null);
-  const [sourceFile, setSourceFile] = useState<File | null>(null);
+  const [csvFiles, setCsvFiles] = useState<File[]>([]);
   const [form, setForm] = useState<PipelineForm>({
     mongoUri: '',
     csvToAtlasPath: '',
     targetDb: 'csv_to_atlas',
-    sourceDbPath: sourceDbPath ?? '',
-    dryRun: false,
+    csvSourcePath: csvSourcePath ?? '',
     drop: true,
   });
-
-  const isLiveSchemaSource = dialect === 'sqlite';
 
   const refreshConfig = useCallback(async () => {
     setLoadingConfig(true);
     try {
       const status = await fetchPipelineConfig({
         schemaDialect: dialect,
-        importedSourcePath: sourceDbPath ?? undefined,
+        csvSourcePath: form.csvSourcePath || csvSourcePath || undefined,
       });
       setConfig(status);
       setForm((prev) => ({
         ...prev,
         targetDb: status.defaultTargetDb,
-        sourceDbPath: prev.sourceDbPath || sourceDbPath || status.sourceDbPath || '',
+        csvSourcePath: prev.csvSourcePath || csvSourcePath || status.csvSourcePath || '',
         mongoUri: prev.mongoUri || (status.hasMongoUri ? '(configured in .env)' : ''),
         csvToAtlasPath: prev.csvToAtlasPath || status.csvToAtlasLabel || '',
       }));
@@ -79,40 +75,38 @@ export function PipelinePanel({
     } finally {
       setLoadingConfig(false);
     }
-  }, [dialect, sourceDbPath]);
+  }, [dialect, csvSourcePath, form.csvSourcePath]);
 
   useEffect(() => {
     if (!open) return;
     setError('');
     setResult(null);
-    setSourceFile(null);
+    setCsvFiles([]);
     void refreshConfig();
   }, [open, refreshConfig]);
 
   useEffect(() => {
-    if (sourceDbPath) {
-      setForm((prev) => ({ ...prev, sourceDbPath }));
+    if (csvSourcePath) {
+      setForm((prev) => ({ ...prev, csvSourcePath }));
     }
-  }, [sourceDbPath]);
+  }, [csvSourcePath]);
 
-  const effectiveSourcePath = sourceDbPath || form.sourceDbPath.trim() || config?.sourceDbPath || '';
-  const hasEtlSource = Boolean(config?.hasSourceDb || effectiveSourcePath || sourceFile);
+  const effectiveCsvPath = form.csvSourcePath.trim() || csvSourcePath || config?.csvSourcePath || '';
+  const hasCsvSource = Boolean(config?.hasCsvSource || effectiveCsvPath || csvFiles.length > 0);
 
   const needsMongoUri = !config?.hasMongoUri;
   const needsCsvToAtlas = !config?.hasCsvToAtlas;
-  const needsSourceDb = !hasEtlSource;
+  const needsCsvSource = !hasCsvSource;
 
-  const etlSourceHint = isLiveSchemaSource
-    ? 'Using the SQLite database from schema import.'
-    : `Schema imported as ${dialectLabel}. ETL still reads row data from a SQLite .db file with matching tables.`;
+  const csvSourceHint = `Export tables from ${dialectLabel} as CSV files. Name files after the table or MongoDB collection (e.g. products.csv).`;
 
   const canRun = useMemo(() => {
     if (running || !model) return false;
     if (needsMongoUri && !form.mongoUri.trim()) return false;
     if (needsCsvToAtlas && !form.csvToAtlasPath.trim()) return false;
-    if (needsSourceDb) return false;
+    if (needsCsvSource) return false;
     return true;
-  }, [running, model, needsMongoUri, needsCsvToAtlas, needsSourceDb, form.mongoUri, form.csvToAtlasPath]);
+  }, [running, model, needsMongoUri, needsCsvToAtlas, needsCsvSource, form.mongoUri, form.csvToAtlasPath]);
 
   const handleRun = async () => {
     setRunning(true);
@@ -125,23 +119,18 @@ export function PipelinePanel({
         ddl,
         dialect,
         targetDb: form.targetDb.trim() || undefined,
-        dryRun: form.dryRun,
         drop: form.drop,
         mongoUri: needsMongoUri ? form.mongoUri.trim() : undefined,
         csvToAtlasPath: needsCsvToAtlas ? form.csvToAtlasPath.trim() : undefined,
-        sourceDbPath:
-          !sourceFile && (sourceDbPath || form.sourceDbPath.trim())
-            ? sourceDbPath || form.sourceDbPath.trim()
-            : undefined,
+        csvSourcePath: csvFiles.length === 0 && effectiveCsvPath ? effectiveCsvPath : undefined,
       };
 
-      const pipelineResult = sourceFile
-        ? await runPipelineWithSource(sourceFile, overrides)
-        : await runPipeline(overrides);
+      const pipelineResult =
+        csvFiles.length > 0 ? await runPipelineWithCsv(csvFiles, overrides) : await runPipeline(overrides);
 
       setResult(pipelineResult);
-      if (pipelineResult.sourcePath) {
-        onSourceDbPathChange(pipelineResult.sourcePath);
+      if (pipelineResult.csvSourcePath) {
+        onCsvSourcePathChange(pipelineResult.csvSourcePath);
       }
       onComplete(pipelineResult);
     } catch (e) {
@@ -164,7 +153,7 @@ export function PipelinePanel({
         </header>
 
         <p style={{ fontSize: '0.85rem', opacity: 0.85, marginTop: 0 }}>
-          Design → ETL → Atlas import via csvToAtlas. Schema source and database settings follow your import.
+          Design → Atlas import via csvToAtlas. Schema comes from your import; row data from CSV exports.
         </p>
 
         <div className="pipeline-schema-source">
@@ -177,22 +166,18 @@ export function PipelinePanel({
           <p>Loading configuration…</p>
         ) : config ? (
           <ul className="pipeline-status">
-            <li className="ok">
-              Schema dialect {dialectLabel} ✓
-            </li>
+            <li className="ok">Schema dialect {dialectLabel} ✓</li>
             <li className={config.hasMongoUri ? 'ok' : 'missing'}>
               MONGODB_URI {config.hasMongoUri ? '✓' : '— required'}
             </li>
             <li className={config.hasCsvToAtlas ? 'ok' : 'missing'}>
               CSV_TO_ATLAS_PATH {config.hasCsvToAtlas ? `✓ ${config.csvToAtlasLabel ?? ''}` : '— required'}
             </li>
-            <li className={hasEtlSource ? 'ok' : 'missing'}>
-              ETL data source{' '}
-              {hasEtlSource
-                ? `✓ ${effectiveSourcePath || sourceFile?.name || config.sourceDbPath}`
-                : isLiveSchemaSource
-                  ? '— upload SQLite during import or below'
-                  : `— SQLite .db required (${dialectLabel} schema only)`}
+            <li className={hasCsvSource ? 'ok' : 'missing'}>
+              CSV data source{' '}
+              {hasCsvSource
+                ? `✓ ${csvFiles.length ? `${csvFiles.length} file(s) selected` : effectiveCsvPath}`
+                : '— directory path or upload CSVs'}
             </li>
           </ul>
         ) : null}
@@ -231,28 +216,27 @@ export function PipelinePanel({
             </label>
           )}
 
-          {needsSourceDb && (
+          {needsCsvSource && (
             <>
-              <p className="pipeline-hint">{etlSourceHint}</p>
-              {!isLiveSchemaSource && (
-                <label>
-                  SQLite path for ETL row data
-                  <input
-                    type="text"
-                    value={form.sourceDbPath}
-                    placeholder="/path/to/source.db"
-                    onChange={(e) => setForm((prev) => ({ ...prev, sourceDbPath: e.target.value }))}
-                  />
-                </label>
-              )}
+              <p className="pipeline-hint">{csvSourceHint}</p>
+              <label>
+                CSV directory path
+                <input
+                  type="text"
+                  value={form.csvSourcePath}
+                  placeholder="/path/to/csv/exports"
+                  onChange={(e) => setForm((prev) => ({ ...prev, csvSourcePath: e.target.value }))}
+                />
+              </label>
               <label className="pipeline-file">
-                {isLiveSchemaSource ? 'Upload SQLite database' : 'Or upload SQLite .db for ETL'}
+                Or upload CSV files
                 <input
                   type="file"
-                  accept=".db,.sqlite,.sqlite3"
-                  onChange={(e) => setSourceFile(e.target.files?.[0] ?? null)}
+                  accept=".csv,text/csv"
+                  multiple
+                  onChange={(e) => setCsvFiles(Array.from(e.target.files ?? []))}
                 />
-                {sourceFile ? <span>{sourceFile.name}</span> : null}
+                {csvFiles.length > 0 ? <span>{csvFiles.length} file(s): {csvFiles.map((f) => f.name).join(', ')}</span> : null}
               </label>
             </>
           )}
@@ -269,15 +253,6 @@ export function PipelinePanel({
           <label style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
             <input
               type="checkbox"
-              checked={form.dryRun}
-              onChange={(e) => setForm((prev) => ({ ...prev, dryRun: e.target.checked }))}
-            />
-            ETL dry run (limited rows)
-          </label>
-
-          <label style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-            <input
-              type="checkbox"
               checked={form.drop}
               onChange={(e) => setForm((prev) => ({ ...prev, drop: e.target.checked }))}
             />
@@ -289,10 +264,7 @@ export function PipelinePanel({
 
         {result ? (
           <div className="pipeline-result">
-            <p>
-              {result.ok ? 'Pipeline completed successfully.' : 'Pipeline finished with errors.'}
-              {result.etl.elapsedSeconds != null ? ` ETL: ${result.etl.elapsedSeconds.toFixed(1)}s.` : ''}
-            </p>
+            <p>{result.ok ? 'Pipeline completed successfully.' : 'Pipeline finished with errors.'}</p>
             <ul>
               {result.imports.map((imp) => (
                 <li key={imp.collection} className={imp.ok ? 'ok' : 'missing'}>

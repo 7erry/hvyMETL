@@ -48,16 +48,13 @@ export function inferSchemaDialect(
   return 'postgresql';
 }
 
-/** Whether ETL row extraction uses a SQLite file (all dialects today). */
-export function etlUsesSqliteFile(_schemaDialect: string): boolean {
+/** Whether ETL row extraction uses CSV exports (all schema import dialects). */
+export function pipelineUsesCsvExports(_schemaDialect: string): boolean {
   return true;
 }
 
-/** User-facing note when schema dialect differs from the ETL file format. */
-export function getEtlSourceHint(schemaDialect: string): string {
-  if (isLiveSourceDialect(schemaDialect)) {
-    return 'Use the SQLite database uploaded during schema import, or upload one below.';
-  }
+/** User-facing note for CSV data source in the pipeline dialog. */
+export function getCsvSourceHint(schemaDialect: string): string {
   const label = getDialectLabel(schemaDialect);
-  return `Schema was imported as ${label}. ETL row extraction still requires a SQLite .db file with matching tables.`;
+  return `Export row data from ${label} as CSV files (one file per table, named after the table or collection).`;
 }

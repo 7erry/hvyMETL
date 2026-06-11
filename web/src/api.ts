@@ -35,12 +35,11 @@ export type PipelineConfigStatus = {
   hasMongoUri: boolean;
   hasCsvToAtlas: boolean;
   csvToAtlasLabel?: string;
-  sourceDbPath?: string;
-  hasSourceDb: boolean;
+  csvSourcePath?: string;
+  hasCsvSource: boolean;
   defaultTargetDb: string;
   schemaDialect?: string;
   schemaDialectLabel?: string;
-  isLiveSchemaSource?: boolean;
   csvToAtlasValidation: { ok: boolean; errors: string[]; warnings: string[] };
   missing: string[];
 };
@@ -49,12 +48,12 @@ export type PipelineRunResult = {
   ok: boolean;
   errors: string[];
   paths: { outDir: string; planPath: string; reportPath: string; manifestPath: string };
-  etl: {
-    elapsedSeconds?: number;
-    collections: { name: string; rowCount: number; files: string[] }[];
+  csvSource: {
+    path: string;
+    collections: { name: string; files: string[] }[];
   };
   imports: { collection: string; files: string[]; ok: boolean; insertedCount?: number; error?: string }[];
-  sourcePath?: string;
+  csvSourcePath?: string;
   retrievalStrategy?: string;
   migrationPlanJson?: unknown;
   designReportMarkdown?: string;
@@ -65,9 +64,8 @@ export type PipelineRunRequest = {
   model: SqlStructuralModel;
   ddl: string;
   dialect?: string;
-  sourceDbPath?: string;
+  csvSourcePath?: string;
   targetDb?: string;
-  dryRun?: boolean;
   drop?: boolean;
   mongoUri?: string;
   csvToAtlasPath?: string;
@@ -75,11 +73,11 @@ export type PipelineRunRequest = {
 
 export async function fetchPipelineConfig(options?: {
   schemaDialect?: string;
-  importedSourcePath?: string;
+  csvSourcePath?: string;
 }): Promise<PipelineConfigStatus> {
   const params = new URLSearchParams();
   if (options?.schemaDialect) params.set('schemaDialect', options.schemaDialect);
-  if (options?.importedSourcePath) params.set('importedSourcePath', options.importedSourcePath);
+  if (options?.csvSourcePath) params.set('csvSourcePath', options.csvSourcePath);
   const query = params.toString();
   const res = await fetch(`${base}/api/pipeline/config${query ? `?${query}` : ''}`);
   if (!res.ok) throw new Error((await res.json()).error ?? res.statusText);
@@ -97,23 +95,22 @@ export async function runPipeline(request: PipelineRunRequest): Promise<Pipeline
   return data;
 }
 
-export async function runPipelineWithSource(
-  file: File,
+export async function runPipelineWithCsv(
+  files: File[],
   request: PipelineRunRequest,
 ): Promise<PipelineRunResult> {
   const body = new FormData();
-  body.append('database', file);
+  for (const file of files) body.append('csvs', file);
   body.append('profileId', request.profileId);
   body.append('model', JSON.stringify(request.model));
   body.append('ddl', request.ddl);
   if (request.dialect) body.append('dialect', request.dialect);
   if (request.targetDb) body.append('targetDb', request.targetDb);
-  if (request.dryRun) body.append('dryRun', 'true');
   if (request.drop === false) body.append('drop', 'false');
   if (request.mongoUri) body.append('mongoUri', request.mongoUri);
   if (request.csvToAtlasPath) body.append('csvToAtlasPath', request.csvToAtlasPath);
 
-  const res = await fetch(`${base}/api/pipeline/run-with-source`, { method: 'POST', body });
+  const res = await fetch(`${base}/api/pipeline/run-with-csv`, { method: 'POST', body });
   const data = await res.json();
   if (!res.ok) throw new Error(data.error ?? res.statusText);
   return data;

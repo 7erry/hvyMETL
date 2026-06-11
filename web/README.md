@@ -62,7 +62,7 @@ editable text, per-file download, and **Download all**. Artifacts persist in
 | **Session state** | Auto-saved in `sessionStorage`; use **Clear session** to reset |
 | **Workload profiles** | Header dropdown (catalog, cms, iot, …) |
 | **AI Migration Export** | Generates migration plan JSON, design report, and 3 RAG prompts |
-| **Run Full Pipeline** | Header button — design → ETL → Atlas import via csvToAtlas |
+| **Run Full Pipeline** | Header button — design → csvToAtlas import from CSV exports |
 
 ## Typical workflow
 
@@ -81,13 +81,14 @@ Configure in `.env` (recommended):
 CSV_TO_ATLAS_PATH=/path/to/cvsToAtlas
 MONGODB_URI=mongodb+srv://…
 MONGODB_DB=hvymetl_iot
-HVYMETL_SOURCE_DB=/path/to/source.db   # optional if you upload SQLite in the UI
+HVYMETL_CSV_SOURCE=/path/to/csv-exports   # directory of table CSV exports
 ```
 
-Then **Run Full Pipeline** in the header. The modal shows what is configured vs missing
-and accepts overrides for this session only (Mongo URI is never stored in `sessionStorage`).
-The **schema source dialect** (SQLite, PostgreSQL, etc.) is taken from your schema import
-automatically; SQLite uploads reuse the imported `.db` path for ETL without re-uploading.
+Then **Run Full Pipeline** in the header. Export row data from your source database
+(PostgreSQL, MySQL, Oracle, Db2, etc.) as CSV files — one per table, named after the
+table or collection. The modal shows what is configured vs missing and accepts
+overrides for this session only (Mongo URI is never stored in `sessionStorage`).
+The **schema source dialect** is taken from your schema import automatically.
 
 ### Supported SQL dialects
 
