@@ -479,3 +479,31 @@ textarea {
   color: #f5a8a8;
 }
 
+.pipeline-schema-source {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.35rem 0.5rem;
+  margin-bottom: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  background: var(--mdb-gray-dark-4);
+  border-radius: 6px;
+  font-size: 0.85rem;
+}
+
+.pipeline-schema-source__label {
+  opacity: 0.75;
+}
+
+.pipeline-schema-source__meta {
+  font-size: 0.75rem;
+  opacity: 0.6;
+}
+
+.pipeline-hint {
+  margin: 0;
+  font-size: 0.8rem;
+  opacity: 0.85;
+  line-height: 1.4;
+}
+

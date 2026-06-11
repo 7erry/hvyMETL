@@ -166,8 +166,10 @@ app.get('/api/templates', (_req, res) => {
 });
 
 /** Pipeline config status (non-secret) for the UI. */
-app.get('/api/pipeline/config', (_req, res) => {
-  res.json(getPipelineConfigStatus());
+app.get('/api/pipeline/config', (req, res) => {
+  const schemaDialect = String(req.query?.schemaDialect ?? req.query?.dialect ?? '').trim() || undefined;
+  const importedSourcePath = String(req.query?.importedSourcePath ?? req.query?.sourceDbPath ?? '').trim() || undefined;
+  res.json(getPipelineConfigStatus(process.env, { schemaDialect, importedSourcePath }));
 });
 
 /**
@@ -188,6 +190,7 @@ app.post('/api/pipeline/run', async (req, res) => {
       profileId,
       model,
       ddl,
+      dialect: req.body?.dialect as string | undefined,
       sourceDbPath: req.body?.sourceDbPath as string | undefined,
       targetDb: req.body?.targetDb as string | undefined,
       dryRun: Boolean(req.body?.dryRun),
@@ -233,6 +236,7 @@ app.post('/api/pipeline/run-with-source', upload.single('database'), async (req,
       profileId,
       model,
       ddl,
+      dialect: req.body?.dialect as string | undefined,
       sourceDbPath: req.file.path,
       targetDb: req.body?.targetDb as string | undefined,
       dryRun: req.body?.dryRun === 'true' || req.body?.dryRun === true,

@@ -88,6 +88,10 @@ export default function App() {
     try {
       setStatus('Importing schema…');
       const { model: m } = await importDdl(ddl, dialect);
+      setSession((prev) => ({
+        ...prev,
+        sourceDbPath: dialect === 'sqlite' ? prev.sourceDbPath : null,
+      }));
       await applySchema(ddl, m);
     } catch (e) {
       setStatus(`Import failed: ${String(e)}`);
@@ -109,9 +113,15 @@ export default function App() {
   const handleTemplateLoad = async () => {
     const t = templates.find((x) => x.id === selectedTemplateId);
     if (!t) return;
+    setSessionField('sourceDbPath', null);
     await applySchema(t.ddl, t.model);
     setStatus(`Loaded ${t.name} template.`);
   };
+
+  const dialectLabel = useMemo(
+    () => dialects.find((d) => d.id === dialect)?.label ?? dialect,
+    [dialects, dialect],
+  );
 
   const handleDuplicate = (tableName: string) => {
     if (!model) return;
@@ -165,6 +175,7 @@ export default function App() {
           positions: data.positions ?? {},
           selectedTable: null,
           view: 'diagram',
+          sourceDbPath: data.dialect === 'sqlite' ? prev.sourceDbPath : null,
         }));
         setStatus('Diagram imported.');
       } catch (e) {
@@ -456,6 +467,8 @@ export default function App() {
           model={model}
           ddl={ddl}
           profileId={profileId}
+          dialect={dialect}
+          dialectLabel={dialectLabel}
           sourceDbPath={sourceDbPath}
           onSourceDbPathChange={(path) => setSessionField('sourceDbPath', path)}
           onComplete={handlePipelineComplete}

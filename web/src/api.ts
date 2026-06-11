@@ -38,6 +38,9 @@ export type PipelineConfigStatus = {
   sourceDbPath?: string;
   hasSourceDb: boolean;
   defaultTargetDb: string;
+  schemaDialect?: string;
+  schemaDialectLabel?: string;
+  isLiveSchemaSource?: boolean;
   csvToAtlasValidation: { ok: boolean; errors: string[]; warnings: string[] };
   missing: string[];
 };
@@ -61,6 +64,7 @@ export type PipelineRunRequest = {
   profileId: string;
   model: SqlStructuralModel;
   ddl: string;
+  dialect?: string;
   sourceDbPath?: string;
   targetDb?: string;
   dryRun?: boolean;
@@ -69,8 +73,15 @@ export type PipelineRunRequest = {
   csvToAtlasPath?: string;
 };
 
-export async function fetchPipelineConfig(): Promise<PipelineConfigStatus> {
-  const res = await fetch(`${base}/api/pipeline/config`);
+export async function fetchPipelineConfig(options?: {
+  schemaDialect?: string;
+  importedSourcePath?: string;
+}): Promise<PipelineConfigStatus> {
+  const params = new URLSearchParams();
+  if (options?.schemaDialect) params.set('schemaDialect', options.schemaDialect);
+  if (options?.importedSourcePath) params.set('importedSourcePath', options.importedSourcePath);
+  const query = params.toString();
+  const res = await fetch(`${base}/api/pipeline/config${query ? `?${query}` : ''}`);
   if (!res.ok) throw new Error((await res.json()).error ?? res.statusText);
   return res.json();
 }
@@ -95,6 +106,7 @@ export async function runPipelineWithSource(
   body.append('profileId', request.profileId);
   body.append('model', JSON.stringify(request.model));
   body.append('ddl', request.ddl);
+  if (request.dialect) body.append('dialect', request.dialect);
   if (request.targetDb) body.append('targetDb', request.targetDb);
   if (request.dryRun) body.append('dryRun', 'true');
   if (request.drop === false) body.append('drop', 'false');

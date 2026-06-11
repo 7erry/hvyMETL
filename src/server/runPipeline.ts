@@ -11,6 +11,7 @@ import { runImportCli } from '../utilities/runImportCli.js';
 import {
   buildPipelineImportEnv,
   getPipelineConfigStatus,
+  resolvePipelineSchemaDialect,
   resolvePipelineSourceDb,
 } from './pipelineConfig.js';
 
@@ -18,6 +19,7 @@ export type PipelineRunRequest = {
   profileId: string;
   model: SqlStructuralModel;
   ddl: string;
+  dialect?: string;
   sourceDbPath?: string;
   targetDb?: string;
   outDir?: string;
@@ -69,7 +71,11 @@ export async function runFullPipeline(request: PipelineRunRequest): Promise<Pipe
     csvToAtlasPath: request.csvToAtlasPath,
   });
 
-  const config = getPipelineConfigStatus(importEnv);
+  const schemaDialect = resolvePipelineSchemaDialect(request.dialect, request.model);
+  const config = getPipelineConfigStatus(importEnv, {
+    schemaDialect,
+    importedSourcePath: request.sourceDbPath,
+  });
   if (!importEnv.MONGODB_URI?.trim()) {
     throw new Error('MONGODB_URI is required for Atlas import.');
   }
@@ -77,7 +83,7 @@ export async function runFullPipeline(request: PipelineRunRequest): Promise<Pipe
     throw new Error(config.csvToAtlasValidation.errors.join(' ') || 'CSV_TO_ATLAS_PATH is not configured.');
   }
 
-  const sourceDbPath = resolvePipelineSourceDb(request.sourceDbPath, importEnv);
+  const sourceDbPath = resolvePipelineSourceDb(request.sourceDbPath, importEnv, schemaDialect);
   const outDir = request.outDir ?? join(request.rootDir, 'out', 'ui-pipeline');
   mkdirSync(outDir, { recursive: true });
 

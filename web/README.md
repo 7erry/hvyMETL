@@ -86,6 +86,8 @@ HVYMETL_SOURCE_DB=/path/to/source.db   # optional if you upload SQLite in the UI
 
 Then **Run Full Pipeline** in the header. The modal shows what is configured vs missing
 and accepts overrides for this session only (Mongo URI is never stored in `sessionStorage`).
+The **schema source dialect** (SQLite, PostgreSQL, etc.) is taken from your schema import
+automatically; SQLite uploads reuse the imported `.db` path for ETL without re-uploading.
 
 ### Supported SQL dialects
 

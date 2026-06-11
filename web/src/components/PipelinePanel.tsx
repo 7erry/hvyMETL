@@ -14,6 +14,8 @@ type PipelinePanelProps = {
   model: SqlStructuralModel;
   ddl: string;
   profileId: string;
+  dialect: string;
+  dialectLabel: string;
   sourceDbPath: string | null;
   onSourceDbPathChange: (path: string) => void;
   onComplete: (result: PipelineRunResult) => void;
@@ -34,6 +36,8 @@ export function PipelinePanel({
   model,
   ddl,
   profileId,
+  dialect,
+  dialectLabel,
   sourceDbPath,
   onSourceDbPathChange,
   onComplete,
@@ -53,15 +57,20 @@ export function PipelinePanel({
     drop: true,
   });
 
+  const isLiveSchemaSource = dialect === 'sqlite';
+
   const refreshConfig = useCallback(async () => {
     setLoadingConfig(true);
     try {
-      const status = await fetchPipelineConfig();
+      const status = await fetchPipelineConfig({
+        schemaDialect: dialect,
+        importedSourcePath: sourceDbPath ?? undefined,
+      });
       setConfig(status);
       setForm((prev) => ({
         ...prev,
         targetDb: status.defaultTargetDb,
-        sourceDbPath: prev.sourceDbPath || status.sourceDbPath || sourceDbPath || '',
+        sourceDbPath: prev.sourceDbPath || sourceDbPath || status.sourceDbPath || '',
         mongoUri: prev.mongoUri || (status.hasMongoUri ? '(configured in .env)' : ''),
         csvToAtlasPath: prev.csvToAtlasPath || status.csvToAtlasLabel || '',
       }));
@@ -70,12 +79,13 @@ export function PipelinePanel({
     } finally {
       setLoadingConfig(false);
     }
-  }, [sourceDbPath]);
+  }, [dialect, sourceDbPath]);
 
   useEffect(() => {
     if (!open) return;
     setError('');
     setResult(null);
+    setSourceFile(null);
     void refreshConfig();
   }, [open, refreshConfig]);
 
@@ -85,9 +95,16 @@ export function PipelinePanel({
     }
   }, [sourceDbPath]);
 
+  const effectiveSourcePath = sourceDbPath || form.sourceDbPath.trim() || config?.sourceDbPath || '';
+  const hasEtlSource = Boolean(config?.hasSourceDb || effectiveSourcePath || sourceFile);
+
   const needsMongoUri = !config?.hasMongoUri;
   const needsCsvToAtlas = !config?.hasCsvToAtlas;
-  const needsSourceDb = !config?.hasSourceDb && !form.sourceDbPath.trim() && !sourceFile;
+  const needsSourceDb = !hasEtlSource;
+
+  const etlSourceHint = isLiveSchemaSource
+    ? 'Using the SQLite database from schema import.'
+    : `Schema imported as ${dialectLabel}. ETL still reads row data from a SQLite .db file with matching tables.`;
 
   const canRun = useMemo(() => {
     if (running || !model) return false;
@@ -106,12 +123,16 @@ export function PipelinePanel({
         profileId,
         model,
         ddl,
+        dialect,
         targetDb: form.targetDb.trim() || undefined,
         dryRun: form.dryRun,
         drop: form.drop,
         mongoUri: needsMongoUri ? form.mongoUri.trim() : undefined,
         csvToAtlasPath: needsCsvToAtlas ? form.csvToAtlasPath.trim() : undefined,
-        sourceDbPath: !sourceFile && form.sourceDbPath.trim() ? form.sourceDbPath.trim() : undefined,
+        sourceDbPath:
+          !sourceFile && (sourceDbPath || form.sourceDbPath.trim())
+            ? sourceDbPath || form.sourceDbPath.trim()
+            : undefined,
       };
 
       const pipelineResult = sourceFile
@@ -143,22 +164,35 @@ export function PipelinePanel({
         </header>
 
         <p style={{ fontSize: '0.85rem', opacity: 0.85, marginTop: 0 }}>
-          Design → ETL → Atlas import via csvToAtlas. Values from <code>.env</code> are used when present; fill in
-          missing fields below.
+          Design → ETL → Atlas import via csvToAtlas. Schema source and database settings follow your import.
         </p>
+
+        <div className="pipeline-schema-source">
+          <span className="pipeline-schema-source__label">Schema source</span>
+          <strong>{dialectLabel}</strong>
+          <span className="pipeline-schema-source__meta">from schema import</span>
+        </div>
 
         {loadingConfig ? (
           <p>Loading configuration…</p>
         ) : config ? (
           <ul className="pipeline-status">
+            <li className="ok">
+              Schema dialect {dialectLabel} ✓
+            </li>
             <li className={config.hasMongoUri ? 'ok' : 'missing'}>
               MONGODB_URI {config.hasMongoUri ? '✓' : '— required'}
             </li>
             <li className={config.hasCsvToAtlas ? 'ok' : 'missing'}>
               CSV_TO_ATLAS_PATH {config.hasCsvToAtlas ? `✓ ${config.csvToAtlasLabel ?? ''}` : '— required'}
             </li>
-            <li className={config.hasSourceDb || form.sourceDbPath || sourceFile ? 'ok' : 'missing'}>
-              SQLite source {config.hasSourceDb ? `✓ ${config.sourceDbPath}` : '— upload or set HVYMETL_SOURCE_DB'}
+            <li className={hasEtlSource ? 'ok' : 'missing'}>
+              ETL data source{' '}
+              {hasEtlSource
+                ? `✓ ${effectiveSourcePath || sourceFile?.name || config.sourceDbPath}`
+                : isLiveSchemaSource
+                  ? '— upload SQLite during import or below'
+                  : `— SQLite .db required (${dialectLabel} schema only)`}
             </li>
           </ul>
         ) : null}
@@ -197,19 +231,22 @@ export function PipelinePanel({
             </label>
           )}
 
-          {!config?.hasSourceDb && (
+          {needsSourceDb && (
             <>
-              <label>
-                SQLite source path (optional if uploading)
-                <input
-                  type="text"
-                  value={form.sourceDbPath}
-                  placeholder="/path/to/source.db"
-                  onChange={(e) => setForm((prev) => ({ ...prev, sourceDbPath: e.target.value }))}
-                />
-              </label>
+              <p className="pipeline-hint">{etlSourceHint}</p>
+              {!isLiveSchemaSource && (
+                <label>
+                  SQLite path for ETL row data
+                  <input
+                    type="text"
+                    value={form.sourceDbPath}
+                    placeholder="/path/to/source.db"
+                    onChange={(e) => setForm((prev) => ({ ...prev, sourceDbPath: e.target.value }))}
+                  />
+                </label>
+              )}
               <label className="pipeline-file">
-                Or upload SQLite database
+                {isLiveSchemaSource ? 'Upload SQLite database' : 'Or upload SQLite .db for ETL'}
                 <input
                   type="file"
                   accept=".db,.sqlite,.sqlite3"
