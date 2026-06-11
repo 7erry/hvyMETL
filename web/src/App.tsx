@@ -48,7 +48,7 @@ export default function App() {
     selectedTemplateId,
     sidebarWidth,
     canvasPanelOpen,
-    sourceDbPath,
+    csvSourcePath,
   } = session;
 
   const setSessionField = useCallback(<K extends keyof SessionState>(key: K, value: SessionState[K]) => {
@@ -72,6 +72,23 @@ export default function App() {
     [model, selectedTable],
   );
 
+  const incomingReferences = useMemo(() => {
+    if (!model || !selectedTable) return [];
+    const refs: { fromTable: string; column: string; referencesColumn: string }[] = [];
+    for (const table of model.tables) {
+      for (const fk of table.foreignKeys) {
+        if (fk.referencesTable === selectedTable) {
+          refs.push({
+            fromTable: table.name,
+            column: fk.column,
+            referencesColumn: fk.referencesColumn,
+          });
+        }
+      }
+    }
+    return refs;
+  }, [model, selectedTable]);
+
   const applySchema = useCallback(async (nextDdl: string, nextModel: SqlStructuralModel) => {
     setSession((prev) => ({
       ...prev,
@@ -88,10 +105,6 @@ export default function App() {
     try {
       setStatus('Importing schema…');
       const { model: m } = await importDdl(ddlText, dialect);
-      setSession((prev) => ({
-        ...prev,
-        sourceDbPath: dialect === 'sqlite' ? prev.sourceDbPath : null,
-      }));
       await applySchema(ddlText, m);
     } catch (e) {
       setStatus(`Import failed: ${String(e)}`);
@@ -112,9 +125,8 @@ export default function App() {
   const handleSqliteUpload = async (file: File) => {
     try {
       setStatus('Reading SQLite database…');
-      const { model: m, ddl: d, sourcePath } = await importSqlite(file);
+      const { model: m, ddl: d } = await importSqlite(file);
       setSessionField('dialect', 'sqlite');
-      if (sourcePath) setSessionField('sourceDbPath', sourcePath);
       await applySchema(d, m);
     } catch (e) {
       setStatus(`SQLite import failed: ${String(e)}`);
@@ -133,7 +145,6 @@ export default function App() {
   const handleTemplateLoad = async () => {
     const t = templates.find((x) => x.id === selectedTemplateId);
     if (!t) return;
-    setSessionField('sourceDbPath', null);
     await applySchema(t.ddl, t.model);
     setStatus(`Loaded ${t.name} template.`);
   };
@@ -195,7 +206,6 @@ export default function App() {
           positions: data.positions ?? {},
           selectedTable: null,
           view: 'diagram',
-          sourceDbPath: data.dialect === 'sqlite' ? prev.sourceDbPath : null,
         }));
         setStatus('Diagram imported.');
       } catch (e) {
@@ -373,6 +383,7 @@ export default function App() {
                   <div style={{ marginBottom: '0.75rem' }}>
                     <TableDetails
                       table={selectedTableModel}
+                      incoming={incomingReferences}
                       onClose={() => setSessionField('selectedTable', null)}
                       onDuplicate={handleDuplicate}
                       onDelete={handleDelete}
@@ -490,8 +501,8 @@ export default function App() {
           profileId={profileId}
           dialect={dialect}
           dialectLabel={dialectLabel}
-          sourceDbPath={sourceDbPath}
-          onSourceDbPathChange={(path) => setSessionField('sourceDbPath', path)}
+          csvSourcePath={csvSourcePath}
+          onCsvSourcePathChange={(path) => setSessionField('csvSourcePath', path)}
           onComplete={handlePipelineComplete}
         />
       ) : null}

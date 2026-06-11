@@ -9,14 +9,17 @@ import {
   type Edge,
   type OnNodeDrag,
   BackgroundVariant,
+  MarkerType,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { useCallback, useEffect, useMemo } from 'react';
+import { RelationshipEdge } from './RelationshipEdge';
 import { TableNode, type TableNodeData } from './TableNode';
 import type { SqlStructuralModel, TableModel } from '../types';
 
 const GRID = 20;
 const nodeTypes = { table: TableNode };
+const edgeTypes = { relationship: RelationshipEdge };
 
 type SchemaCanvasProps = {
   model: SqlStructuralModel | null;
@@ -33,37 +36,93 @@ function snap(value: number, enabled: boolean): number {
   return Math.round(value / GRID) * GRID;
 }
 
+/** Tables linked to the selection via any FK (in or out). */
+function relatedTableNames(model: SqlStructuralModel, selectedTable: string | null): Set<string> {
+  const related = new Set<string>();
+  if (!selectedTable) return related;
+
+  related.add(selectedTable);
+  for (const table of model.tables) {
+    if (table.name === selectedTable) {
+      for (const fk of table.foreignKeys) related.add(fk.referencesTable);
+    }
+    if (table.foreignKeys.some((fk) => fk.referencesTable === selectedTable)) {
+      related.add(table.name);
+    }
+  }
+  return related;
+}
+
+/** Columns on each table that are referenced by foreign keys from other tables. */
+function buildReferencedColumns(model: SqlStructuralModel): Map<string, Set<string>> {
+  const map = new Map<string, Set<string>>();
+  for (const table of model.tables) {
+    for (const fk of table.foreignKeys) {
+      if (!map.has(fk.referencesTable)) map.set(fk.referencesTable, new Set());
+      map.get(fk.referencesTable)!.add(fk.referencesColumn);
+    }
+  }
+  return map;
+}
+
 function modelToFlow(
   model: SqlStructuralModel,
   positions: Record<string, { x: number; y: number }>,
   onDuplicate: (name: string) => void,
   selectedTable: string | null,
 ): { nodes: Node<TableNodeData>[]; edges: Edge[] } {
+  const tableNames = new Set(model.tables.map((t) => t.name));
+  const referencedByColumn = buildReferencedColumns(model);
+  const related = relatedTableNames(model, selectedTable);
+  const hasSelection = Boolean(selectedTable);
+
   const nodes: Node<TableNodeData>[] = model.tables.map((table, index) => {
     const col = index % 4;
     const row = Math.floor(index / 4);
-    const pos = positions[table.name] ?? { x: col * 280 + 40, y: row * 220 + 40 };
+    const pos = positions[table.name] ?? { x: col * 300 + 40, y: row * 240 + 40 };
+    const fkColumns = table.foreignKeys.map((fk) => fk.column);
+    const referencedColumns = [...(referencedByColumn.get(table.name) ?? [])];
+
     return {
       id: table.name,
       type: 'table',
       position: pos,
-      data: { table, onDuplicate, selected: table.name === selectedTable },
+      data: {
+        table,
+        onDuplicate,
+        selected: table.name === selectedTable,
+        related: related.has(table.name),
+        dimmed: hasSelection && !related.has(table.name),
+        fkColumns,
+        referencedColumns,
+      },
     };
   });
 
   const edges: Edge[] = [];
   for (const table of model.tables) {
     for (const fk of table.foreignKeys) {
+      if (!tableNames.has(fk.referencesTable)) continue;
+
+      const highlighted =
+        selectedTable === table.name || selectedTable === fk.referencesTable;
+      const label = `${table.name}.${fk.column} → ${fk.referencesTable}.${fk.referencesColumn}`;
+
       edges.push({
-        id: `${table.name}.${fk.column}->${fk.referencesTable}`,
+        id: `${table.name}.${fk.column}->${fk.referencesTable}.${fk.referencesColumn}`,
         source: table.name,
         target: fk.referencesTable,
-        label: fk.column,
-        animated: true,
-        style: { stroke: '#00ED64' },
+        sourceHandle: `${fk.column}-out`,
+        targetHandle: `${fk.referencesColumn}-in`,
+        type: 'relationship',
+        label,
+        data: { highlighted, fkColumn: fk.column, refColumn: fk.referencesColumn },
+        markerEnd: { type: MarkerType.ArrowClosed, width: 18, height: 18, color: highlighted ? '#E3FCF7' : '#00A35C' },
+        zIndex: highlighted ? 2 : 0,
       });
     }
   }
+
   return { nodes, edges };
 }
 
@@ -79,6 +138,11 @@ export function SchemaCanvas({
   const flow = useMemo(
     () => (model ? modelToFlow(model, positions, onDuplicateTable, selectedTable) : { nodes: [], edges: [] }),
     [model, positions, onDuplicateTable, selectedTable],
+  );
+
+  const relationshipCount = useMemo(
+    () => model?.tables.reduce((n, t) => n + t.foreignKeys.length, 0) ?? 0,
+    [model],
   );
 
   const [nodes, setNodes, onNodesChange] = useNodesState(flow.nodes);
@@ -103,25 +167,14 @@ export function SchemaCanvas({
 
   if (!model) {
     return (
-      <div
-        style={{
-          flex: 1,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          color: '#889397',
-          border: '1px dashed #00684A',
-          borderRadius: 8,
-          margin: '0.5rem',
-        }}
-      >
+      <div className="schema-canvas-empty">
         Import a schema query or choose a template to visualize your ER diagram.
       </div>
     );
   }
 
   return (
-    <div style={{ flex: 1, minHeight: 0 }}>
+    <div className="schema-canvas-wrap">
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -131,9 +184,14 @@ export function SchemaCanvas({
         onNodeClick={(_event, node) => onSelectTable(node.id)}
         onPaneClick={() => onSelectTable(null)}
         nodeTypes={nodeTypes}
+        edgeTypes={edgeTypes}
         fitView
+        fitViewOptions={{ padding: 0.2 }}
         snapToGrid={snapToGrid}
         snapGrid={[GRID, GRID]}
+        minZoom={0.2}
+        maxZoom={1.5}
+        proOptions={{ hideAttribution: true }}
       >
         <Background variant={BackgroundVariant.Dots} gap={GRID} size={1} color="#00684A" />
         <Controls />
@@ -143,6 +201,12 @@ export function SchemaCanvas({
           style={{ background: '#112733' }}
         />
       </ReactFlow>
+      <div className="schema-canvas-legend" aria-hidden="true">
+        <span><span className="legend-dot legend-dot--pk">🔑</span> Primary key</span>
+        <span><span className="legend-dot legend-dot--fk">↗</span> Foreign key</span>
+        <span>{relationshipCount} relationship{relationshipCount === 1 ? '' : 's'}</span>
+        {selectedTable ? <span className="legend-hint">Click canvas to clear selection</span> : null}
+      </div>
     </div>
   );
 }

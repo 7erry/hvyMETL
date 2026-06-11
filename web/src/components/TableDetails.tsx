@@ -1,13 +1,20 @@
 import type { TableModel } from '../types';
 
+export type IncomingReference = {
+  fromTable: string;
+  column: string;
+  referencesColumn: string;
+};
+
 type TableDetailsProps = {
   table: TableModel | null;
+  incoming?: IncomingReference[];
   onClose: () => void;
   onDuplicate: (name: string) => void;
   onDelete: (name: string) => void;
 };
 
-export function TableDetails({ table, onClose, onDuplicate, onDelete }: TableDetailsProps) {
+export function TableDetails({ table, incoming = [], onClose, onDuplicate, onDelete }: TableDetailsProps) {
   if (!table) return null;
 
   return (
@@ -64,11 +71,28 @@ export function TableDetails({ table, onClose, onDuplicate, onDelete }: TableDet
 
       {table.foreignKeys.length > 0 && (
         <>
-          <h4 style={{ margin: '0.75rem 0 0.35rem', fontSize: '0.8rem', color: 'var(--mdb-green-base)' }}>Foreign keys</h4>
-          <ul style={{ margin: 0, paddingLeft: '1.1rem', fontSize: '0.8rem' }}>
+          <h4 className="table-details__section">Outgoing (this table references)</h4>
+          <ul className="table-details__rels">
             {table.foreignKeys.map((fk) => (
-              <li key={`${fk.column}-${fk.referencesTable}`}>
-                {fk.column} → {fk.referencesTable}.{fk.referencesColumn}
+              <li key={`out-${fk.column}-${fk.referencesTable}`}>
+                <code>{fk.column}</code>
+                <span className="rel-arrow">→</span>
+                <code>{fk.referencesTable}.{fk.referencesColumn}</code>
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
+
+      {incoming.length > 0 && (
+        <>
+          <h4 className="table-details__section">Incoming (referenced by)</h4>
+          <ul className="table-details__rels">
+            {incoming.map((ref) => (
+              <li key={`in-${ref.fromTable}-${ref.column}`}>
+                <code>{ref.fromTable}.{ref.column}</code>
+                <span className="rel-arrow">→</span>
+                <code>{table.name}.{ref.referencesColumn}</code>
               </li>
             ))}
           </ul>

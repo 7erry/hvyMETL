@@ -124,9 +124,20 @@ textarea {
   background: var(--mdb-green-dark-3);
   border: 2px solid var(--mdb-green-base);
   border-radius: 8px;
-  min-width: 200px;
+  min-width: 220px;
+  max-width: 280px;
   font-size: 0.8rem;
   box-shadow: 0 4px 24px rgba(0, 237, 100, 0.12);
+  transition: opacity 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+.table-node.dimmed {
+  opacity: 0.45;
+}
+
+.table-node.related {
+  border-color: var(--mdb-spring-green);
+  box-shadow: 0 0 0 1px rgba(227, 252, 247, 0.35), 0 4px 20px rgba(0, 237, 100, 0.15);
 }
 
 .table-node header {
@@ -137,25 +148,177 @@ textarea {
   border-radius: 6px 6px 0 0;
 }
 
+.table-node__name {
+  word-break: break-word;
+}
+
 .table-node ul {
   list-style: none;
   margin: 0;
-  padding: 0.5rem 0.75rem;
+  padding: 0.35rem 0;
 }
 
 .table-node li {
-  padding: 0.15rem 0;
+  position: relative;
+  display: flex;
+  align-items: baseline;
+  gap: 0.35rem;
+  padding: 0.2rem 1.1rem;
   color: var(--mdb-spring-green);
   font-family: ui-monospace, monospace;
+  font-size: 0.75rem;
+  line-height: 1.35;
 }
 
 .table-node li.pk {
   color: var(--mdb-green-base);
+  background: rgba(0, 237, 100, 0.06);
+}
+
+.table-node li.fk {
+  border-left: 2px solid var(--mdb-green-base);
+  background: rgba(0, 163, 92, 0.12);
+}
+
+.table-node li.referenced {
+  border-right: 2px solid rgba(227, 252, 247, 0.35);
+}
+
+.table-node .column-name {
+  flex: 1;
+  min-width: 0;
+  word-break: break-word;
+}
+
+.table-node .column-type {
+  opacity: 0.55;
+  font-size: 0.68rem;
+  white-space: nowrap;
+}
+
+.column-handle {
+  width: 8px !important;
+  height: 8px !important;
+  border: 2px solid var(--mdb-black) !important;
+  background: var(--mdb-green-base) !important;
+}
+
+.column-handle--in {
+  left: -4px !important;
+}
+
+.column-handle--out {
+  right: -4px !important;
 }
 
 .table-node.selected {
   border-color: var(--mdb-spring-green);
-  box-shadow: 0 0 0 2px var(--mdb-green-base), 0 4px 24px rgba(0, 237, 100, 0.2);
+  box-shadow: 0 0 0 2px var(--mdb-green-base), 0 4px 24px rgba(0, 237, 100, 0.25);
+  opacity: 1;
+  z-index: 2;
+}
+
+.schema-canvas-wrap {
+  flex: 1;
+  min-height: 0;
+  position: relative;
+}
+
+.schema-canvas-empty {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #889397;
+  border: 1px dashed #00684A;
+  border-radius: 8px;
+  margin: 0.5rem;
+}
+
+.schema-canvas-legend {
+  position: absolute;
+  left: 0.75rem;
+  bottom: 0.75rem;
+  z-index: 5;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem 1rem;
+  padding: 0.4rem 0.65rem;
+  background: rgba(17, 39, 51, 0.92);
+  border: 1px solid var(--mdb-green-dark-2);
+  border-radius: 6px;
+  font-size: 0.7rem;
+  color: var(--mdb-spring-green);
+  opacity: 0.9;
+  pointer-events: none;
+}
+
+.legend-dot {
+  margin-right: 0.2rem;
+}
+
+.legend-hint {
+  opacity: 0.65;
+  font-style: italic;
+}
+
+.relationship-edge-label {
+  position: absolute;
+  padding: 0.2rem 0.45rem;
+  background: rgba(227, 252, 247, 0.95);
+  color: var(--mdb-black);
+  border: 1px solid var(--mdb-green-dark-2);
+  border-radius: 4px;
+  font-size: 0.62rem;
+  font-family: ui-monospace, monospace;
+  font-weight: 600;
+  line-height: 1.25;
+  max-width: 220px;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  pointer-events: all;
+  box-shadow: 0 2px 8px rgba(0, 30, 43, 0.35);
+}
+
+.relationship-edge-label.highlighted {
+  background: var(--mdb-spring-green);
+  border-color: var(--mdb-green-base);
+  box-shadow: 0 0 0 1px var(--mdb-green-base);
+}
+
+.table-details__section {
+  margin: 0.75rem 0 0.35rem;
+  font-size: 0.8rem;
+  color: var(--mdb-green-base);
+}
+
+.table-details__rels {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.78rem;
+}
+
+.table-details__rels li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0;
+  border-bottom: 1px solid var(--mdb-green-dark-2);
+}
+
+.table-details__rels code {
+  font-family: ui-monospace, monospace;
+  font-size: 0.75rem;
+  color: var(--mdb-spring-green);
+}
+
+.table-details__rels .rel-arrow {
+  color: var(--mdb-green-base);
+  font-weight: 700;
 }
 
 .details-table {
@@ -372,6 +535,11 @@ textarea {
 
 .react-flow__edge-path {
   stroke: var(--mdb-green-base) !important;
+}
+
+.react-flow__edge.selected .react-flow__edge-path {
+  stroke: var(--mdb-spring-green) !important;
+  stroke-width: 2.5;
 }
 
 .pipeline-overlay {
