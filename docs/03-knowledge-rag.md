@@ -160,7 +160,8 @@ right documents.
 npm run hvymetl -- design --source examples/iot.db --profile iot --out out/iot
 # Retrieval strategy: lexical BM25 (no API key configured).
 
-# Hybrid: add to .env → MONGODB_MODEL_KEY=pa-...
+# Hybrid: MONGODB_MODEL_KEY in .env (Atlas Model Key, al-… prefix)
+npm run validate-hybrid-rag
 npm run hvymetl -- design --source examples/iot.db --profile iot --out out/iot
 # Retrieval strategy: hybrid BM25 + voyage-4 (Reciprocal Rank Fusion).
 ```
