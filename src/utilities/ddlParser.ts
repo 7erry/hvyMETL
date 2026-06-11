@@ -1,7 +1,7 @@
 /**
  * Lightweight DDL parser for instant schema import from pasted SQL.
  *
- * Extracts CREATE TABLE definitions (PostgreSQL, MySQL, SQLite, MSSQL-ish)
+ * Extracts CREATE TABLE definitions (PostgreSQL, MySQL, SQLite, MSSQL, Oracle)
  * into the same SqlStructuralModel shape the design engine consumes.
  * Row counts default to 0; relationship stats use conservative defaults.
  */
@@ -12,6 +12,15 @@ import { sqlTypeToBsonType } from '../adapters/sqlite.js';
 /** Regex to find CREATE TABLE blocks (supports optional IF NOT EXISTS and quoting). */
 const CREATE_TABLE_RE =
   /CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?(?:"([^"]+)"|'([^']+)'|`([^`]+)`|(\w+))\s*\(/gi;
+
+/** Words that begin table/column constraint clauses (not part of the SQL type). */
+const CONSTRAINT_KEYWORD =
+  /\s+(?:GENERATED|DEFAULT|NOT\s+NULL|NULL|PRIMARY\s+KEY|UNIQUE|CHECK|CONSTRAINT|REFERENCES)\b/i;
+
+const FK_LINE_RE =
+  /(?:CONSTRAINT\s+\w+\s+)?FOREIGN\s+KEY\s*\(\s*["'`]?(\w+)["'`]?\s*\)\s*REFERENCES\s+["'`]?(\w+)["'`]?\s*\(\s*["'`]?(\w+)["'`]?\s*\)/i;
+
+const INLINE_REF_RE = /REFERENCES\s+["'`]?(\w+)["'`]?\s*\(\s*["'`]?(\w+)["'`]?\s*\)/i;
 
 /**
  * Split a CREATE TABLE column list on commas, respecting nested parentheses.
@@ -39,6 +48,38 @@ function unquoteIdentifier(name: string): string {
   return name.replace(/^["'`]|["'`]$/g, '');
 }
 
+/** Parse a table-level or inline FOREIGN KEY constraint line. */
+function parseForeignKeyLine(line: string): ForeignKeyModel | null {
+  const match = line.trim().match(FK_LINE_RE);
+  if (!match) return null;
+  return {
+    column: match[1],
+    referencesTable: match[2],
+    referencesColumn: match[3],
+  };
+}
+
+/** True when the line is a table constraint we should not treat as a column definition. */
+function isNonColumnConstraint(line: string): boolean {
+  const trimmed = line.trim();
+  if (/^PRIMARY\s+KEY\s*\(/i.test(trimmed)) return true;
+  if (/^UNIQUE\s*\(/i.test(trimmed)) return true;
+  if (/^CHECK\s*\(/i.test(trimmed)) return true;
+  if (/^FOREIGN\s+KEY\s*\(/i.test(trimmed)) return true;
+  if (/^CONSTRAINT\s+\w+\s+FOREIGN\s+KEY\s*\(/i.test(trimmed)) return true;
+  if (/^CONSTRAINT\s+\w+\s+(?:UNIQUE|CHECK|PRIMARY\s+KEY)\b/i.test(trimmed)) return true;
+  if (/^(?:KEY|INDEX)\s/i.test(trimmed)) return true;
+  return false;
+}
+
+/** Extract the SQL type token(s) before constraint keywords. */
+function extractSqlType(rest: string): string {
+  const withoutRef = rest.replace(INLINE_REF_RE, '').trim();
+  const constraintAt = withoutRef.search(CONSTRAINT_KEYWORD);
+  if (constraintAt === -1) return withoutRef.trim();
+  return withoutRef.slice(0, constraintAt).trim();
+}
+
 /**
  * Parse one column line into column metadata, or null for table-level constraints.
  */
@@ -50,46 +91,57 @@ function parseColumnLine(line: string): {
   foreignKey: ForeignKeyModel | null;
 } | null {
   const trimmed = line.trim();
-  if (!trimmed || /^PRIMARY\s+KEY\s*\(/i.test(trimmed)) return null;
-  if (/^(CONSTRAINT|UNIQUE|KEY|INDEX|CHECK|FOREIGN)\s/i.test(trimmed) && !/^FOREIGN\s+KEY/i.test(trimmed)) {
-    if (!/^FOREIGN\s+KEY/i.test(trimmed)) return null;
-  }
+  if (!trimmed || isNonColumnConstraint(trimmed)) return null;
 
-  const fkOnly = trimmed.match(
-    /^FOREIGN\s+KEY\s*\(\s*["'`]?(\w+)["'`]?\s*\)\s*REFERENCES\s+["'`]?(\w+)["'`]?\s*\(\s*["'`]?(\w+)["'`]?\s*\)/i,
-  );
-  if (fkOnly) {
-    return {
-      name: fkOnly[1],
-      sqlType: 'INTEGER',
-      nullable: true,
-      isPrimaryKey: false,
-      foreignKey: {
-        column: fkOnly[1],
-        referencesTable: fkOnly[2],
-        referencesColumn: fkOnly[3],
-      },
-    };
-  }
-
-  const colMatch = trimmed.match(
-    /^["'`]?(\w+)["'`]?\s+([A-Za-z][\w\s()]*?)(?:\s+(NOT\s+NULL|NULL|PRIMARY\s+KEY|REFERENCES.*))?$/i,
-  );
+  const colMatch = trimmed.match(/^["'`]?(\w+)["'`]?\s+(.+)$/s);
   if (!colMatch) return null;
 
   const name = colMatch[1];
-  let sqlType = colMatch[2].trim().split(/\s+/).slice(0, 2).join(' ');
-  const tail = (colMatch[3] ?? '').toUpperCase();
-  const isPrimaryKey = /PRIMARY\s+KEY/.test(tail) || /PRIMARY\s+KEY/i.test(trimmed);
-  const nullable = !/NOT\s+NULL/.test(tail) && !isPrimaryKey;
+  const rest = colMatch[2];
+
+  const isPrimaryKey = /\bPRIMARY\s+KEY\b/i.test(rest);
+  const nullable = !/\bNOT\s+NULL\b/i.test(rest) && !isPrimaryKey;
+  const sqlType = extractSqlType(rest);
 
   let foreignKey: ForeignKeyModel | null = null;
-  const refMatch = trimmed.match(/REFERENCES\s+["'`]?(\w+)["'`]?\s*\(\s*["'`]?(\w+)["'`]?\s*\)/i);
+  const refMatch = rest.match(INLINE_REF_RE);
   if (refMatch) {
     foreignKey = { column: name, referencesTable: refMatch[1], referencesColumn: refMatch[2] };
   }
 
   return { name, sqlType, nullable, isPrimaryKey, foreignKey };
+}
+
+/** Add stub tables for FK targets not defined in the DDL script. */
+function ensureReferencedTables(tables: TableModel[]): TableModel[] {
+  const byName = new Map(tables.map((table) => [table.name.toLowerCase(), table]));
+  const stubs: TableModel[] = [];
+
+  for (const table of tables) {
+    for (const fk of table.foreignKeys) {
+      const refKey = fk.referencesTable.toLowerCase();
+      if (byName.has(refKey)) continue;
+      const stub: TableModel = {
+        name: fk.referencesTable,
+        columns: [
+          {
+            name: fk.referencesColumn,
+            sqlType: 'UNKNOWN',
+            bsonType: 'string',
+            nullable: false,
+            isPrimaryKey: true,
+          },
+        ],
+        primaryKey: [fk.referencesColumn],
+        foreignKeys: [],
+        rowCount: 0,
+      };
+      byName.set(refKey, stub);
+      stubs.push(stub);
+    }
+  }
+
+  return stubs.length > 0 ? [...tables, ...stubs] : tables;
 }
 
 /**
@@ -98,7 +150,6 @@ function parseColumnLine(line: string): {
  */
 export function parseDdlToModel(ddl: string, sourceLabel = 'ddl:import'): SqlStructuralModel {
   const tables: TableModel[] = [];
-  const tableMap = new Map<string, TableModel>();
 
   let match: RegExpExecArray | null;
   const re = new RegExp(CREATE_TABLE_RE.source, 'gi');
@@ -120,6 +171,12 @@ export function parseDdlToModel(ddl: string, sourceLabel = 'ddl:import'): SqlStr
     const pkCols: string[] = [];
 
     for (const line of lines) {
+      const fkLine = parseForeignKeyLine(line);
+      if (fkLine) {
+        foreignKeys.push(fkLine);
+        continue;
+      }
+
       const parsed = parseColumnLine(line);
       if (!parsed) {
         const inlinePk = line.match(/PRIMARY\s+KEY\s*\(\s*["'`]?(\w+)["'`]?(?:\s*,\s*["'`]?(\w+)["'`]?)?\s*\)/i);
@@ -140,18 +197,18 @@ export function parseDdlToModel(ddl: string, sourceLabel = 'ddl:import'): SqlStr
       if (parsed.foreignKey) foreignKeys.push(parsed.foreignKey);
     }
 
-    const table: TableModel = {
+    tables.push({
       name: tableName,
       columns,
       primaryKey: pkCols.length > 0 ? pkCols : columns[0] ? [columns[0].name] : [],
       foreignKeys,
       rowCount: 0,
-    };
-    tables.push(table);
-    tableMap.set(tableName.toLowerCase(), table);
+    });
   }
 
-  const relationships = tables.flatMap((child) =>
+  const allTables = ensureReferencedTables(tables);
+
+  const relationships = allTables.flatMap((child) =>
     child.foreignKeys.map((fk) => ({
       parentTable: fk.referencesTable,
       childTable: child.name,
@@ -162,5 +219,5 @@ export function parseDdlToModel(ddl: string, sourceLabel = 'ddl:import'): SqlStr
     })),
   );
 
-  return { source: sourceLabel, tables, relationships };
+  return { source: sourceLabel, tables: allTables, relationships };
 }
