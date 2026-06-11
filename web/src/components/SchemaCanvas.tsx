@@ -15,6 +15,7 @@ import {
 import '@xyflow/react/dist/style.css';
 import { useCallback, useEffect, useMemo } from 'react';
 import { RelationshipEdge } from './RelationshipEdge';
+import { RelationshipDisplayControls } from './RelationshipDisplayControls';
 import { TableNode, type TableNodeData } from './TableNode';
 import {
   formatRelationshipLabel,
@@ -32,6 +33,8 @@ type SchemaCanvasProps = {
   snapToGrid: boolean;
   connectionType: RelationshipConnectionType;
   relationshipNotation: RelationshipNotation;
+  onConnectionTypeChange: (type: RelationshipConnectionType) => void;
+  onRelationshipNotationChange: (notation: RelationshipNotation) => void;
   onPositionsChange: (positions: Record<string, { x: number; y: number }>) => void;
   positions: Record<string, { x: number; y: number }>;
   onDuplicateTable: (name: string) => void;
@@ -152,6 +155,8 @@ export function SchemaCanvas({
   snapToGrid,
   connectionType,
   relationshipNotation,
+  onConnectionTypeChange,
+  onRelationshipNotationChange,
   onPositionsChange,
   positions,
   onDuplicateTable,
@@ -228,6 +233,14 @@ export function SchemaCanvas({
       >
         <Background variant={BackgroundVariant.Dots} gap={GRID} size={1} color="#00684A" />
         <Controls />
+        <Panel position="top-right" className="schema-canvas-toolbar-panel">
+          <RelationshipDisplayControls
+            connectionType={connectionType}
+            relationshipNotation={relationshipNotation}
+            onConnectionTypeChange={onConnectionTypeChange}
+            onRelationshipNotationChange={onRelationshipNotationChange}
+          />
+        </Panel>
         <MiniMap
           nodeColor="#023430"
           maskColor="rgba(0, 30, 43, 0.8)"
