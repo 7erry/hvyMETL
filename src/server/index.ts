@@ -169,7 +169,8 @@ app.get('/api/templates', (_req, res) => {
 app.get('/api/pipeline/config', (req, res) => {
   const schemaDialect = String(req.query?.schemaDialect ?? req.query?.dialect ?? '').trim() || undefined;
   const csvSourcePath = String(req.query?.csvSourcePath ?? req.query?.importedSourcePath ?? '').trim() || undefined;
-  res.json(getPipelineConfigStatus(process.env, { schemaDialect, csvSourcePath }));
+  const csvToAtlasPath = String(req.query?.csvToAtlasPath ?? '').trim() || undefined;
+  res.json(getPipelineConfigStatus(process.env, { schemaDialect, csvSourcePath, csvToAtlasPath }));
 });
 
 /** Shared JSON shape for pipeline run responses. */

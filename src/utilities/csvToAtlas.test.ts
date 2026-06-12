@@ -37,6 +37,19 @@ describe('csvToAtlas integration', () => {
     expect(result.errors.some((e) => e.includes('CSV_TO_ATLAS_PATH'))).toBe(true);
   });
 
+  it('accepts CSV_TO_ATLAS_PATH pointing at dist/ with cli.js', () => {
+    const root = mkdtempSync(join(tmpdir(), 'csv-to-atlas-'));
+    writeFileSync(join(root, 'package.json'), JSON.stringify({ name: 'csv-to-atlas' }));
+    mkdirSync(join(root, 'dist'), { recursive: true });
+    writeFileSync(join(root, 'dist/cli.js'), '// cli\n');
+
+    const result = validateCsvToAtlasInstallation(join(root, 'dist'));
+    expect(result.ok).toBe(true);
+    expect(result.source?.rootPath).toBe(root);
+    expect(result.source?.cliPath).toBe(join(root, 'dist/cli.js'));
+    expect(result.warnings.some((w) => w.includes('dist/'))).toBe(true);
+  });
+
   it('builds shell command with quoted paths', () => {
     const root = mkdtempSync(join(tmpdir(), 'csv-to-atlas-'));
     writeFileSync(join(root, 'package.json'), JSON.stringify({ name: 'csv-to-atlas' }));

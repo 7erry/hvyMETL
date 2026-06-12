@@ -37,7 +37,19 @@ export type CsvToAtlasValidation = {
 /** Read `CSV_TO_ATLAS_PATH` from the environment (trimmed, empty → undefined). */
 export function readCsvToAtlasPathFromEnv(env: NodeJS.ProcessEnv = process.env): string | undefined {
   const raw = env.CSV_TO_ATLAS_PATH?.trim();
-  return raw || undefined;
+  return raw ? sanitizeConfigPath(raw) : undefined;
+}
+
+/** Trim whitespace and optional surrounding quotes from a configured path. */
+export function sanitizeConfigPath(raw: string): string {
+  const trimmed = raw.trim();
+  if (
+    (trimmed.startsWith('"') && trimmed.endsWith('"')) ||
+    (trimmed.startsWith("'") && trimmed.endsWith("'"))
+  ) {
+    return trimmed.slice(1, -1).trim();
+  }
+  return trimmed;
 }
 
 function readPackageName(rootPath: string): string | undefined {
@@ -49,6 +61,34 @@ function readPackageName(rootPath: string): string | undefined {
   } catch {
     return undefined;
   }
+}
+
+/**
+ * Accept clone root or a direct path to dist/ (common misconfiguration).
+ * Returns the directory that contains package.json and dist/cli.js.
+ */
+export function normalizeCsvToAtlasRoot(rawPath: string): { rootPath: string; warnings: string[] } {
+  const warnings: string[] = [];
+  const resolved = resolve(rawPath);
+
+  const hasRootPackage = existsSync(join(resolved, 'package.json'));
+  const hasRootDistCli = existsSync(join(resolved, 'dist/cli.js'));
+  const hasRootSrcCli = existsSync(join(resolved, 'src/cli.ts'));
+
+  if (hasRootPackage && (hasRootDistCli || hasRootSrcCli)) {
+    return { rootPath: resolved, warnings };
+  }
+
+  const cliInResolved = existsSync(join(resolved, 'cli.js'));
+  const parentPackage = existsSync(join(resolved, '..', 'package.json'));
+  if (cliInResolved && parentPackage) {
+    warnings.push(
+      'CSV_TO_ATLAS_PATH points at dist/ — resolved to the clone root (directory containing package.json).',
+    );
+    return { rootPath: resolve(resolved, '..'), warnings };
+  }
+
+  return { rootPath: resolved, warnings };
 }
 
 function resolveCliEntry(rootPath: string): { cliPath: string; warnings: string[] } {
@@ -72,14 +112,14 @@ export function resolveCsvToAtlasInstallation(
   explicitPath?: string,
   env: NodeJS.ProcessEnv = process.env,
 ): CsvToAtlasSource {
-  const envPath = explicitPath ?? readCsvToAtlasPathFromEnv(env);
+  const envPath = explicitPath ? sanitizeConfigPath(explicitPath) : readCsvToAtlasPathFromEnv(env);
   if (!envPath) {
     throw new Error(
       `CSV_TO_ATLAS_PATH is not set. Clone ${CSV_TO_ATLAS_REPOSITORY}, run npm install && npm run build, then add CSV_TO_ATLAS_PATH to .env.`,
     );
   }
 
-  const rootPath = resolve(envPath);
+  const { rootPath } = normalizeCsvToAtlasRoot(envPath);
   const { cliPath } = resolveCliEntry(rootPath);
   const packageName = readPackageName(rootPath);
 
@@ -100,7 +140,7 @@ export function validateCsvToAtlasInstallation(
   const warnings: string[] = [];
   let source: CsvToAtlasSource | null = null;
 
-  const envPath = explicitPath ?? readCsvToAtlasPathFromEnv(env);
+  const envPath = explicitPath ? sanitizeConfigPath(explicitPath) : readCsvToAtlasPathFromEnv(env);
   if (!envPath) {
     errors.push(
       `CSV_TO_ATLAS_PATH is not set in .env. Clone ${CSV_TO_ATLAS_REPOSITORY} and point CSV_TO_ATLAS_PATH at the directory.`,
@@ -114,6 +154,9 @@ export function validateCsvToAtlasInstallation(
     errors.push(String(error));
     return { ok: false, source: null, errors, warnings };
   }
+
+  const { warnings: rootWarnings } = normalizeCsvToAtlasRoot(envPath);
+  warnings.push(...rootWarnings);
 
   const { cliPath, warnings: cliWarnings } = resolveCliEntry(source.rootPath);
   warnings.push(...cliWarnings);

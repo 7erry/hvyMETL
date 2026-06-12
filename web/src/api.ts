@@ -35,6 +35,7 @@ export type PipelineConfigStatus = {
   hasMongoUri: boolean;
   hasCsvToAtlas: boolean;
   csvToAtlasLabel?: string;
+  csvToAtlasResolvedPath?: string;
   csvSourcePath?: string;
   hasCsvSource: boolean;
   defaultTargetDb: string;
@@ -74,10 +75,12 @@ export type PipelineRunRequest = {
 export async function fetchPipelineConfig(options?: {
   schemaDialect?: string;
   csvSourcePath?: string;
+  csvToAtlasPath?: string;
 }): Promise<PipelineConfigStatus> {
   const params = new URLSearchParams();
   if (options?.schemaDialect) params.set('schemaDialect', options.schemaDialect);
   if (options?.csvSourcePath) params.set('csvSourcePath', options.csvSourcePath);
+  if (options?.csvToAtlasPath) params.set('csvToAtlasPath', options.csvToAtlasPath);
   const query = params.toString();
   const res = await fetch(`${base}/api/pipeline/config${query ? `?${query}` : ''}`);
   if (!res.ok) throw new Error((await res.json()).error ?? res.statusText);

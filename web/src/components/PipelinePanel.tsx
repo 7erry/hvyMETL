@@ -61,6 +61,7 @@ export function PipelinePanel({
       const status = await fetchPipelineConfig({
         schemaDialect: dialect,
         csvSourcePath: form.csvSourcePath || csvSourcePath || undefined,
+        csvToAtlasPath: form.csvToAtlasPath.trim() || undefined,
       });
       setConfig(status);
       setForm((prev) => ({
@@ -68,14 +69,15 @@ export function PipelinePanel({
         targetDb: status.defaultTargetDb,
         csvSourcePath: prev.csvSourcePath || csvSourcePath || status.csvSourcePath || '',
         mongoUri: prev.mongoUri || (status.hasMongoUri ? '(configured in .env)' : ''),
-        csvToAtlasPath: prev.csvToAtlasPath || status.csvToAtlasLabel || '',
+        csvToAtlasPath:
+          prev.csvToAtlasPath || status.csvToAtlasResolvedPath || status.csvToAtlasLabel || '',
       }));
     } catch (e) {
       setError(String(e));
     } finally {
       setLoadingConfig(false);
     }
-  }, [dialect, csvSourcePath, form.csvSourcePath]);
+  }, [dialect, csvSourcePath, form.csvSourcePath, form.csvToAtlasPath]);
 
   useEffect(() => {
     if (!open) return;
@@ -83,7 +85,17 @@ export function PipelinePanel({
     setResult(null);
     setCsvFiles([]);
     void refreshConfig();
-  }, [open, refreshConfig]);
+    // Only re-run when the panel opens — path changes use the debounced validator below.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
+
+  useEffect(() => {
+    if (!open || !form.csvToAtlasPath.trim()) return;
+    const timer = window.setTimeout(() => {
+      void refreshConfig();
+    }, 500);
+    return () => window.clearTimeout(timer);
+  }, [open, form.csvToAtlasPath, refreshConfig]);
 
   useEffect(() => {
     if (csvSourcePath) {
@@ -190,6 +202,14 @@ export function PipelinePanel({
           </div>
         ) : null}
 
+        {config && !config.hasCsvToAtlas && config.csvToAtlasValidation.errors?.length ? (
+          <div className="pipeline-error">
+            {config.csvToAtlasValidation.errors.map((e) => (
+              <p key={e} style={{ margin: '0.25rem 0' }}>{e}</p>
+            ))}
+          </div>
+        ) : null}
+
         <div className="pipeline-form">
           {needsMongoUri && (
             <label>
@@ -210,9 +230,12 @@ export function PipelinePanel({
               <input
                 type="text"
                 value={form.csvToAtlasPath}
-                placeholder="/path/to/cvsToAtlas"
+                placeholder="/path/to/cvsToAtlas (clone root or dist/)"
                 onChange={(e) => setForm((prev) => ({ ...prev, csvToAtlasPath: e.target.value }))}
               />
+              <span className="pipeline-hint" style={{ marginTop: '0.25rem' }}>
+                Clone root with package.json, or path to dist/ containing cli.js
+              </span>
             </label>
           )}
 

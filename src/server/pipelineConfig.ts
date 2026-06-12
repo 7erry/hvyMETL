@@ -7,6 +7,7 @@ import { getDialectLabel, inferSchemaDialect } from '../dialects.js';
 import { hasCsvSourceAtPath, readCsvSourceFromEnv } from '../utilities/csvSource.js';
 import {
   readCsvToAtlasPathFromEnv,
+  sanitizeConfigPath,
   validateCsvToAtlasInstallation,
   type CsvToAtlasValidation,
 } from '../utilities/csvToAtlas.js';
@@ -16,6 +17,7 @@ export type PipelineConfigStatus = {
   hasMongoUri: boolean;
   hasCsvToAtlas: boolean;
   csvToAtlasLabel?: string;
+  csvToAtlasResolvedPath?: string;
   csvSourcePath?: string;
   hasCsvSource: boolean;
   defaultTargetDb: string;
@@ -28,10 +30,12 @@ export type PipelineConfigStatus = {
 /** Build a UI-safe summary of what is configured vs missing. */
 export function getPipelineConfigStatus(
   env: NodeJS.ProcessEnv = process.env,
-  options?: { schemaDialect?: string; csvSourcePath?: string },
+  options?: { schemaDialect?: string; csvSourcePath?: string; csvToAtlasPath?: string },
 ): PipelineConfigStatus {
   const hasMongoUri = Boolean(env.MONGODB_URI?.trim());
-  const csvToAtlasPath = readCsvToAtlasPathFromEnv(env);
+  const csvToAtlasPath =
+    (options?.csvToAtlasPath ? sanitizeConfigPath(options.csvToAtlasPath) : undefined) ||
+    readCsvToAtlasPathFromEnv(env);
   const csvToAtlasValidation = validateCsvToAtlasInstallation(csvToAtlasPath);
   const envCsvPath = readCsvSourceFromEnv(env);
   const requestedCsv = options?.csvSourcePath?.trim();
@@ -53,6 +57,7 @@ export function getPipelineConfigStatus(
     hasMongoUri,
     hasCsvToAtlas: csvToAtlasValidation.ok,
     csvToAtlasLabel: csvToAtlasValidation.source?.label,
+    csvToAtlasResolvedPath: csvToAtlasValidation.source?.rootPath,
     csvSourcePath: resolvedCsv,
     hasCsvSource,
     defaultTargetDb: env.MONGODB_DB?.trim() || 'csv_to_atlas',
