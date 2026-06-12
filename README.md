@@ -105,6 +105,8 @@ cp .env.example .env
 
 Requires Node.js 20+. Design and unit tests run offline; ETL needs `CSV_TO_ATLAS_PATH` set (validated at runtime).
 
+After upgrading Node.js, recompile native dependencies: `npm rebuild better-sqlite3` (or re-run `npm install` — the `postinstall` script rebuilds automatically).
+
 ## Web UI (optional)
 
 MongoDB-branded **Migration Studio** for visual ER diagrams, instant DDL import,

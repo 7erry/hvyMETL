@@ -11,7 +11,7 @@ import {
 
 describe('csvToAtlas integration', () => {
   it('throws when CSV_TO_ATLAS_PATH is unset', () => {
-    expect(() => resolveCsvToAtlasInstallation(undefined)).toThrow(/CSV_TO_ATLAS_PATH/);
+    expect(() => resolveCsvToAtlasInstallation(undefined, {})).toThrow(/CSV_TO_ATLAS_PATH/);
   });
 
   it('resolves external path when CSV_TO_ATLAS_PATH is set', () => {
@@ -32,7 +32,7 @@ describe('csvToAtlas integration', () => {
   });
 
   it('validates unset env path', () => {
-    const result = validateCsvToAtlasInstallation(undefined);
+    const result = validateCsvToAtlasInstallation(undefined, {});
     expect(result.ok).toBe(false);
     expect(result.errors.some((e) => e.includes('CSV_TO_ATLAS_PATH'))).toBe(true);
   });

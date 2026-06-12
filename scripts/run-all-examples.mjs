@@ -12,6 +12,24 @@ import Database from 'better-sqlite3';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 
+/** Fail fast with a clear fix when better-sqlite3 was built for another Node version. */
+function assertBetterSqlite3() {
+  try {
+    const probe = new Database(':memory:');
+    probe.close();
+  } catch (error) {
+    const message = String(error);
+    if (error?.code === 'ERR_DLOPEN_FAILED' || message.includes('NODE_MODULE_VERSION')) {
+      console.error('better-sqlite3 native module does not match this Node.js version.');
+      console.error(`  Node: ${process.version}`);
+      console.error('  Fix: npm rebuild better-sqlite3');
+      console.error('       (or npm install — postinstall rebuilds native deps automatically)');
+      process.exit(1);
+    }
+    throw error;
+  }
+}
+
 const DOMAINS = [
   { id: 'catalog', profile: 'catalog', source: 'examples/catalog.db' },
   { id: 'cms', profile: 'cms', source: 'examples/cms.db' },
@@ -98,6 +116,8 @@ async function main() {
   console.log('=== hvyMETL full example run ===');
   console.log(`Cluster: ${process.env.MONGODB_URI.replace(/\/\/[^@]+@/, '//***@').split('?')[0]}`);
   console.log(`Validation DB prefix: hvymetl_<domain>\n`);
+
+  assertBetterSqlite3();
 
   run('npm run -s build');
   run('npm test');

@@ -64,6 +64,7 @@ npm run run-all-examples
 ## 3. Edge Cases & Error Handling
 
 - **Missing `MONGODB_URI` or `CSV_TO_ATLAS_PATH`:** script exits immediately with a clear message before any work.
+- **`ERR_DLOPEN_FAILED` / `NODE_MODULE_VERSION` mismatch:** `better-sqlite3` was compiled for a different Node.js version (common after upgrading Node). Run `npm rebuild better-sqlite3` or `npm install` (postinstall rebuilds native deps). The script probes SQLite at startup and prints this fix before build/test/seed.
 - **`DRY_RUN=true` in `.env`:** overridden for the ETL subprocesses so validation always exercises full extraction.
 - **Isolated databases:** imports use `--db hvymetl_<domain>`, not `MONGODB_DB`, preventing cross-domain overwrites when two examples share a collection name (e.g. both could conceptually have a `sites` collection).
 - **`--drop` on every import:** each collection is replaced wholesale; safe because database names are example-specific.

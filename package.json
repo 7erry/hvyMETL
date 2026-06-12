@@ -21,6 +21,8 @@
     "validate-csv-to-atlas": "npm run -s build && node scripts/validate-csv-to-atlas.mjs",
     "seed-examples": "npm run -s build && node dist/examples/seed.js",
     "run-all-examples": "node scripts/run-all-examples.mjs",
+    "rebuild-native": "npm rebuild better-sqlite3",
+    "postinstall": "npm rebuild better-sqlite3 --silent",
     "validate-hybrid-rag": "npm run -s build && node scripts/validate-hybrid-rag.mjs",
     "build:ui": "npm run -s build && npm install --prefix web && npm run -s build --prefix web",
     "dev:ui": "npm run -s build && concurrently -k \"node dist/server/index.js\" \"npm run dev --prefix web\"",

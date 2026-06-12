@@ -68,8 +68,11 @@ function resolveCliEntry(rootPath: string): { cliPath: string; warnings: string[
 }
 
 /** Resolve the cvsToAtlas installation from env or an explicit path override. */
-export function resolveCsvToAtlasInstallation(explicitPath?: string): CsvToAtlasSource {
-  const envPath = explicitPath ?? readCsvToAtlasPathFromEnv();
+export function resolveCsvToAtlasInstallation(
+  explicitPath?: string,
+  env: NodeJS.ProcessEnv = process.env,
+): CsvToAtlasSource {
+  const envPath = explicitPath ?? readCsvToAtlasPathFromEnv(env);
   if (!envPath) {
     throw new Error(
       `CSV_TO_ATLAS_PATH is not set. Clone ${CSV_TO_ATLAS_REPOSITORY}, run npm install && npm run build, then add CSV_TO_ATLAS_PATH to .env.`,
@@ -89,12 +92,15 @@ export function resolveCsvToAtlasInstallation(explicitPath?: string): CsvToAtlas
 }
 
 /** Validate that csvToAtlas is configured and runnable. */
-export function validateCsvToAtlasInstallation(explicitPath?: string): CsvToAtlasValidation {
+export function validateCsvToAtlasInstallation(
+  explicitPath?: string,
+  env: NodeJS.ProcessEnv = process.env,
+): CsvToAtlasValidation {
   const errors: string[] = [];
   const warnings: string[] = [];
   let source: CsvToAtlasSource | null = null;
 
-  const envPath = explicitPath ?? readCsvToAtlasPathFromEnv();
+  const envPath = explicitPath ?? readCsvToAtlasPathFromEnv(env);
   if (!envPath) {
     errors.push(
       `CSV_TO_ATLAS_PATH is not set in .env. Clone ${CSV_TO_ATLAS_REPOSITORY} and point CSV_TO_ATLAS_PATH at the directory.`,
@@ -103,7 +109,7 @@ export function validateCsvToAtlasInstallation(explicitPath?: string): CsvToAtla
   }
 
   try {
-    source = resolveCsvToAtlasInstallation(envPath);
+    source = resolveCsvToAtlasInstallation(envPath, env);
   } catch (error) {
     errors.push(String(error));
     return { ok: false, source: null, errors, warnings };
