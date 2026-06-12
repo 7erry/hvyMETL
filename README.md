@@ -6,6 +6,12 @@ every schema decision in a retrievable knowledge base of MongoDB design patterns
 your workload telemetry (read:write ratio, peak RPM, data growth), then runs a
 parallel, pattern-aware ETL into MongoDB Atlas.
 
+An optional **ML engine** (`src/ml_engine/`) adds telemetry-aware reranking
+([Voyage rerank-2.5](https://docs.voyageai.com/reference/reranker-api) when
+`MONGODB_MODEL_KEY` is set), a predictive performance critic before ETL handoff, and
+an **in-context self-reflection loop** that logs migration outcomes and writes
+*lessons learned* back into vector memory so future runs avoid past mistakes.
+
 Full per-module reference documentation lives in [docs/](docs/README.md), including a
 mapping of every automated pattern to MongoDB's
 [Building with Patterns series](https://www.mongodb.com/company/blog/building-with-patterns-a-summary).
@@ -23,7 +29,13 @@ flowchart TB
 
     subgraph design [Design]
         Engine[design engine<br/>RAG + pattern selector]
+        ML[ML engine optional<br/>rerank + critic + memory]
         Plan[migration-plan.json<br/>design-report.md]
+    end
+
+    subgraph feedback [Self-reflection optional]
+        Logs[hvymetl_migration_logs]
+        Lessons[lessons_learned memory]
     end
 
     subgraph extract [Extract & Load]
@@ -40,12 +52,16 @@ flowchart TB
     SQL --> Engine
     Profile --> Engine
     KB -->|RAG retrieval| Engine
-    Engine --> Plan
+    Lessons -->|historical failures| ML
+    Engine --> ML
+    ML --> Plan
     Plan --> ETL
     SQL --> ETL
     ETL --> CSV
     CSV --> Import
     Import --> Atlas
+    Atlas --> Logs
+    Logs --> Lessons
     Plan --> Repo
     Profile --> Repo
     Repo --> App[Your application]
@@ -69,9 +85,39 @@ purpose, outputs, commands, and pipeline wiring for all six stages:
 
 Artifact purposes (plan, report, RAG prompts): **[docs/15-migration-artifacts.md](docs/15-migration-artifacts.md)**.
 
-**ML engine (optional):** telemetry-aware reranking, performance critic, and a
-self-reflection loop that stores migration lessons in vector memory —
+## ML engine (optional)
+
+The ML engine upgrades the design stage from static RAG + heuristics to a
+**telemetry-aware, self-improving** pipeline. Full reference:
 **[docs/17-ml-engine.md](docs/17-ml-engine.md)**.
+
+| Capability | What it does |
+| --- | --- |
+| **Telemetry reranker** | After bi-encoder retrieval (top 15), rescore patterns against workload telemetry (top 3). Uses [Voyage rerank-2.5](https://docs.voyageai.com/reference/reranker-api) when `MONGODB_MODEL_KEY` is set; local Xenova cross-encoder offline. |
+| **Performance critic** | Predicts cache-miss and IOPS risk from schema shape + telemetry before ETL. Rejects and regenerates (max 2 loops) with critic notes. ONNX model optional. |
+| **Lessons-learned memory** | Queries `lessons_learned` vector space in parallel with pattern RAG. Injects past failures into LLM prompts under **HISTORICAL LESSONS LEARNED FROM PAST MIGRATIONS**. |
+| **Feedback loop** | Logs decisions to `hvymetl_migration_logs`, fetches post-migration Atlas metrics, upserts new lessons when performance breaches thresholds. Cron/serverless safe. |
+
+```typescript
+import { designFromModelWithMlEngine } from './ml_engine/pipelinePatch.js';
+
+const { plan, designReport, ml } = await designFromModelWithMlEngine(model, profile, 'knowledge');
+// ml.rerankBackend        → 'voyage' | 'xenova' | 'heuristic'
+// ml.lessonChunks         → historical failures pulled into prompts
+// ml.migrationLogIds      → logged for post-ETL reflection
+```
+
+```typescript
+// After csvToAtlas import — fire-and-forget reflection (cron-safe)
+import { scheduleReflection } from './ml_engine/feedbackCollector.js';
+scheduleReflection(migrationId, { clusterId: 'my-atlas-cluster' });
+```
+
+```bash
+# Stub Atlas metrics for local testing
+HVYMETL_ATLAS_STUB_MODE=degraded npm run build
+HVYMETL_SCHEDULE_REFLECTION=1   # auto-reflect after ML design
+```
 
 ## Setup
 
@@ -84,10 +130,12 @@ cp .env.example .env
 | Variable | Required for | Description |
 | --- | --- | --- |
 | `CSV_TO_ATLAS_PATH` | ETL, import, `run-all-examples` | Path to [cvsToAtlas](https://github.com/7erry/cvsToAtlas) clone |
-| `MONGODB_URI` | Atlas import, `run-all-examples` | Cluster connection string |
+| `MONGODB_URI` | Atlas import, ML feedback loop | Cluster connection string; also persists `hvymetl_migration_logs` + `hvymetl_lessons_learned` |
 | `MONGODB_MODEL_KEY` | Hybrid RAG + ML reranker (optional) | MongoDB Model Key; BM25 + Voyage 4 + RRF + [rerank-2.5](https://docs.voyageai.com/reference/reranker-api) |
 | `OPENAI_API_KEY` | Vector-only RAG (optional) | Used only when Model Key is unset |
-| `MONGODB_URI` | ML feedback loop (optional) | Durable `hvymetl_migration_logs` + `hvymetl_lessons_learned` |
+| `HVYMETL_SCHEDULE_REFLECTION` | ML feedback loop (optional) | Set to `1` to auto-schedule post-migration reflection |
+| `HVYMETL_ATLAS_STUB_MODE` | ML local testing (optional) | `healthy` or `degraded` stub Atlas metrics |
+| `HVYMETL_MEMORY_DB` | ML feedback loop (optional) | Database for migration logs (default: `hvymetl_memory`) |
 
 Requires Node.js 20+. Design and unit tests run offline; ETL needs `CSV_TO_ATLAS_PATH` set (validated at runtime).
 
@@ -194,9 +242,11 @@ npm run validate-csv-to-atlas         # verify CSV_TO_ATLAS_PATH + csvToAtlas sm
 npm run run-all-examples              # full pipeline + Atlas validation (needs MONGODB_URI)
 ```
 
-Unit tests cover the pattern selector, range splitter, CSV shaper, RRF fusion, and
-Model API base URL routing. Hybrid RAG validation calls the live Model API when a key
-is configured — see [docs/12-validate-hybrid-rag.md](docs/12-validate-hybrid-rag.md).
+Unit tests cover the pattern selector, range splitter, CSV shaper, RRF fusion,
+Model API base URL routing, ML reranker/critic, Voyage rerank client, and the
+lessons-learned feedback loop. Hybrid RAG validation calls the live Model API when a
+key is configured — see [docs/12-validate-hybrid-rag.md](docs/12-validate-hybrid-rag.md).
+ML engine details: [docs/17-ml-engine.md](docs/17-ml-engine.md).
 
 ## csvToAtlas CLI reference
 
