@@ -70,3 +70,12 @@ export async function retrieve(
 
   return lexicalRetrieve(chunks, query, topK);
 }
+
+/**
+ * Dual-space retrieval: design patterns plus `lessons_learned` migration memory.
+ * Use this instead of `retrieve()` when the self-reflection loop is enabled.
+ */
+export {
+  retrieveWithLessonsLearned,
+  type RetrievalWithMemoryResult,
+} from '../ml_engine/memoryRetrieval.js';

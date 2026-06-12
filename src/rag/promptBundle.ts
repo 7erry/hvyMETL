@@ -22,6 +22,11 @@ export type PromptBundleInput = {
   ddl: string;
   /** Knowledge chunks retrieved for this workload, highest score first. */
   retrievedChunks: ScoredChunk[];
+  /**
+   * Markdown block from lessons_learned vector memory. When set, injected
+   * before the schema synthesis task in every prompt.
+   */
+  historicalLessonsMarkdown?: string;
 };
 
 /** A named prompt file: the file name it should be written to plus its text. */
@@ -53,9 +58,15 @@ function renderTelemetry(profile: WorkloadProfile): string {
 }
 
 /** Build all three production prompts for the given inputs. */
+function renderHistoricalLessonsBlock(markdown?: string): string {
+  if (!markdown?.trim()) return '';
+  return `\n${markdown.trim()}\n`;
+}
+
 export function buildPromptBundle(input: PromptBundleInput): PromptFile[] {
   const ragContext = renderRagContext(input.retrievedChunks);
   const telemetry = renderTelemetry(input.profile);
+  const historicalLessons = renderHistoricalLessonsBlock(input.historicalLessonsMarkdown);
 
   const schemaArchitectPrompt = `# Prompt 1: The RAG-Driven Schema Design Architect
 
@@ -74,7 +85,7 @@ ${input.ddl.trim()}
 ## Workload Telemetry
 
 ${telemetry}
-
+${historicalLessons}
 ## Task
 
 Analyze the SQL DDL through the lens of the Workload Telemetry and the retrieved MongoDB Design Patterns above. Synthesize a production-ready, pattern-driven MongoDB schema.
@@ -83,6 +94,7 @@ Mandatory Synthesis Rules:
 1. Telemetry-Driven Pattern Selection: if the workload is heavy-read, aggressively apply the Extended Reference and Computed patterns to pre-duplicate lookup data and aggregate values, optimizing for O(1) single-document reads. If the workload is heavy-write, avoid large embedded arrays; apply the Bucket pattern or reference strategies to keep writes fast. If RPM is high, ensure document boundaries protect against lock contention.
 2. Avoid the Monolith: no embedded array may grow infinitely under the stated RPM and growth metrics. Apply the Subset pattern to bound arrays strictly if they risk the 16MB limit.
 3. Ground every decision in the retrieved context: cite the pattern document that justifies each choice.
+4. When historical lessons are present above, treat them as hard constraints — do not repeat documented migration failures.
 
 Output: the final MongoDB layout in clean JSON Schema format, including single/compound index specs, and an architectural justification mapping each pattern choice directly to the Read:Write ratio and RPM constraints above.
 `;
@@ -102,7 +114,7 @@ We are using csvToAtlas to merge partitioned CSV files concurrently into unified
 ## Retrieved RAG Context
 
 ${ragContext}
-
+${historicalLessons}
 ## Task
 
 Write a highly resilient, multi-threaded extraction and migration script that structures SQL data into pattern-compliant CSV shapes.
@@ -126,7 +138,7 @@ ${telemetry}
 ## Retrieved RAG Context
 
 ${ragContext}
-
+${historicalLessons}
 ## Task
 
 Rewrite the legacy SQL data repository into a MongoDB repository using the native driver.

@@ -69,6 +69,10 @@ purpose, outputs, commands, and pipeline wiring for all six stages:
 
 Artifact purposes (plan, report, RAG prompts): **[docs/15-migration-artifacts.md](docs/15-migration-artifacts.md)**.
 
+**ML engine (optional):** telemetry-aware reranking, performance critic, and a
+self-reflection loop that stores migration lessons in vector memory —
+**[docs/17-ml-engine.md](docs/17-ml-engine.md)**.
+
 ## Setup
 
 ```bash
@@ -81,8 +85,9 @@ cp .env.example .env
 | --- | --- | --- |
 | `CSV_TO_ATLAS_PATH` | ETL, import, `run-all-examples` | Path to [cvsToAtlas](https://github.com/7erry/cvsToAtlas) clone |
 | `MONGODB_URI` | Atlas import, `run-all-examples` | Cluster connection string |
-| `MONGODB_MODEL_KEY` | Hybrid RAG (optional) | MongoDB Model Key; enables BM25 + Voyage 4 + RRF |
+| `MONGODB_MODEL_KEY` | Hybrid RAG + ML reranker (optional) | MongoDB Model Key; BM25 + Voyage 4 + RRF + [rerank-2.5](https://docs.voyageai.com/reference/reranker-api) |
 | `OPENAI_API_KEY` | Vector-only RAG (optional) | Used only when Model Key is unset |
+| `MONGODB_URI` | ML feedback loop (optional) | Durable `hvymetl_migration_logs` + `hvymetl_lessons_learned` |
 
 Requires Node.js 20+. Design and unit tests run offline; ETL needs `CSV_TO_ATLAS_PATH` set (validated at runtime).
 

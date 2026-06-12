@@ -4,8 +4,10 @@ Sources: [`knowledge/`](../knowledge/), [`src/rag/chunker.ts`](../src/rag/chunke
 [`src/rag/retrieval.ts`](../src/rag/retrieval.ts),
 [`src/rag/retriever.ts`](../src/rag/retriever.ts),
 [`src/rag/voyage.ts`](../src/rag/voyage.ts),
+[`src/rag/voyageReranker.ts`](../src/rag/voyageReranker.ts),
 [`src/rag/embeddings.ts`](../src/rag/embeddings.ts),
-[`src/rag/promptBundle.ts`](../src/rag/promptBundle.ts)
+[`src/rag/promptBundle.ts`](../src/rag/promptBundle.ts),
+[`src/ml_engine/memoryRetrieval.ts`](../src/ml_engine/memoryRetrieval.ts)
 
 ## 1. High-Level Summary
 
@@ -145,6 +147,17 @@ Strategy priority (see `retrieval.ts`):
 
 API failures fall back to BM25 with a console warning.
 
+### `retrieveWithLessonsLearned(chunks, query, topK, config, options?): Promise<RetrievalWithMemoryResult>`
+
+Dual-space retrieval used by the [ML engine](17-ml-engine.md). Runs **in parallel**:
+
+1. Standard pattern retrieval (`retrieve`) — bi-encoder / hybrid RRF.
+2. `lessons_learned` memory query (`retrieveLessonsLearned`) — past migration failures stored in `hvymetl_lessons_learned`.
+
+Returns `{ patternChunks, lessonChunks, historicalLessonsMarkdown }`. The markdown block is passed to `buildPromptBundle({ historicalLessonsMarkdown })` under the heading **HISTORICAL LESSONS LEARNED FROM PAST MIGRATIONS (DO NOT REPEAT THESE MISTAKES)**.
+
+When `MONGODB_MODEL_KEY` is set, the ML reranker uses [Voyage rerank-2.5](https://docs.voyageai.com/reference/reranker-api) (not Xenova) to rescore the top bi-encoder candidates against telemetry. See [17-ml-engine.md](17-ml-engine.md).
+
 ### `createRetrievalConfigFromEnv(): RetrievalConfig`
 
 Loads `{ openaiProvider, voyageProvider }` from `.env`.
@@ -175,6 +188,7 @@ Live integration check for the hybrid path. See [12-validate-hybrid-rag.md](12-v
 | `input.profile` | `WorkloadProfile` | required | Telemetry rendered into every prompt |
 | `input.ddl` | `string` | required | Legacy SQL DDL dumped from the real source |
 | `input.retrievedChunks` | `ScoredChunk[]` | required | Cited RAG context, highest score first |
+| `input.historicalLessonsMarkdown` | `string` | optional | Lessons from `lessons_learned` memory (ML feedback loop) |
 
 **Returns:** three `{ fileName, content }` markdown prompts:
 `1-schema-design-architect.md`, `2-parallel-etl-generator.md`,

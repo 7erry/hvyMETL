@@ -34,6 +34,7 @@ merge-mode diagrams.
 | [09-utilities.md](09-utilities.md) | CSV dialect, deterministic ids, naming conversions, DDL parser | `src/utilities/` |
 | [15-migration-artifacts.md](15-migration-artifacts.md) | Migration plan, design report, RAG prompts, and repository layer — purpose and when to use each | `src/design/`, `src/rag/`, `src/repogen/` |
 | [16-pipeline-steps.md](16-pipeline-steps.md) | All six pipeline steps — purpose, outputs, commands, and how each stage connects | full pipeline |
+| [17-ml-engine.md](17-ml-engine.md) | ML reranker (Voyage rerank-2.5), performance critic, lessons-learned self-reflection | `src/ml_engine/` |
 | [10-examples.md](10-examples.md) | The seven example SQL domains and the deterministic seeder | `examples/`, `src/examples/` |
 | [11-run-all-examples.md](11-run-all-examples.md) | End-to-end Atlas run for all seven domains with automated validation | `scripts/run-all-examples.mjs` |
 
@@ -119,5 +120,16 @@ npm run validate-hybrid-rag
 ```
 
 See [12-validate-hybrid-rag.md](12-validate-hybrid-rag.md) and [03-knowledge-rag.md](03-knowledge-rag.md).
+
+### Optional: ML engine (reranker, critic, self-reflection)
+
+```bash
+# MONGODB_MODEL_KEY enables Voyage rerank-2.5 + lesson embeddings
+# MONGODB_URI enables durable migration logs and lessons_learned memory
+npm run build
+# Programmatic: designFromModelWithMlEngine() — see docs/17-ml-engine.md
+```
+
+See [17-ml-engine.md](17-ml-engine.md) for the full ML pipeline, feedback loop, and cron hooks.
 
 See the root [README.md](../README.md) for the complete end-to-end walkthrough.

@@ -109,6 +109,22 @@ npm run hvymetl -- prompt --source examples/iot.db --profile iot
 
 Web UI: **AI Migration Export** embeds the same retrieved context in generated artifacts.
 
+### Optional: ML-enhanced RAG (reranker + lessons memory)
+
+When using the [ML engine](17-ml-engine.md), Step 1 expands to:
+
+1. **Bi-encoder** — top 15 patterns (same BM25 / hybrid path as above).
+2. **Memory** — parallel query of `lessons_learned` from past migration failures.
+3. **Reranker** — top 3 patterns rescored with telemetry (Voyage [rerank-2.5](https://docs.voyageai.com/reference/reranker-api) when `MONGODB_MODEL_KEY` is set).
+
+```typescript
+import { designFromModelWithMlEngine } from '../ml_engine/pipelinePatch.js';
+const { plan, ml } = await designFromModelWithMlEngine(model, profile, 'knowledge');
+// ml.lessonChunks — historical failures injected into prompts
+```
+
+Post-ETL reflection writes new lessons back to memory — see [17-ml-engine.md § Feedback loop](17-ml-engine.md#53-post-migration-feedback-loop-cron--serverless).
+
 ### How it fits the pipeline
 
 ```

@@ -1,7 +1,8 @@
 # 05 — The Design Engine
 
 Sources: [`src/design/patternSelector.ts`](../src/design/patternSelector.ts),
-[`src/design/designCommand.ts`](../src/design/designCommand.ts)
+[`src/design/designCommand.ts`](../src/design/designCommand.ts),
+[`src/ml_engine/pipelinePatch.ts`](../src/ml_engine/pipelinePatch.ts)
 
 ## 1. High-Level Summary
 
@@ -13,6 +14,11 @@ the knowledge document it is grounded in. It is intentionally **not** an LLM cal
 the same inputs always produce the same plan, which makes migrations reviewable,
 diffable, and testable. The pattern semantics follow MongoDB's
 [Building with Patterns series](https://www.mongodb.com/company/blog/building-with-patterns-a-summary).
+
+An optional **ML-enhanced path** (`designFromModelWithMlEngine` in
+[`pipelinePatch.ts`](../src/ml_engine/pipelinePatch.ts)) wraps the same
+`buildMigrationPlan()` with telemetry-aware reranking, a performance critic gate, and
+lessons-learned memory injection. See [17-ml-engine.md](17-ml-engine.md).
 
 ## 2. Technical Details & Signature
 
