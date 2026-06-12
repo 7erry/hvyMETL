@@ -133,7 +133,7 @@ Expected output (abridged):
 
 ```text
 ETL DRY RUN (3 chunks x 1,000 records per collection)
-Source: examples/iot.db | Profile: iot | Workers: 8
+Source: examples/iot/iot.db | Profile: iot | Workers: 8
   sensorReadings: 3 chunk(s) split on recorded_at (window-aligned time ranges)
 Structural validation:
   sensorReadings: 3,000 rows in 3 file(s)

@@ -1,0 +1,51 @@
+id,parent_id,name,slug
+1,,Electronics,electronics
+2,1,Computers,computers
+3,2,Laptops,laptops
+4,2,Desktops,desktops
+5,1,Audio,audio
+6,5,Headphones,headphones
+7,5,Speakers,speakers
+8,1,Phones,phones
+9,8,Smartphones,smartphones
+10,8,Cases,cases
+11,,Apparel,apparel
+12,11,Men's Clothing,mens-clothing
+13,12,Shirts,shirts
+14,12,Jeans,jeans
+15,11,Women's Clothing,womens-clothing
+16,15,Dresses,dresses
+17,15,Skirts,skirts
+18,11,Footwear,footwear
+19,18,Sneakers,sneakers
+20,18,Boots,boots
+21,,Home & Kitchen,home-kitchen
+22,21,Cookware,cookware
+23,22,Pots & Pans,pots-pans
+24,22,Bakeware,bakeware
+25,21,Furniture,furniture
+26,25,Chairs,chairs
+27,25,Tables,tables
+28,21,Appliances,appliances
+29,28,Blenders,blenders
+30,28,Microwaves,microwaves
+31,,Sports & Outdoors,sports-outdoors
+32,31,Fitness,fitness
+33,32,Treadmills,treadmills
+34,32,Dumbbells,dumbbells
+35,31,Camping,camping
+36,35,Tents,tents
+37,35,Sleeping Bags,sleeping-bags
+38,31,Cycling,cycling
+39,38,Bikes,bikes
+40,38,Helmets,helmets
+41,,Beauty,beauty
+42,41,Skincare,skincare
+43,42,Moisturizers,moisturizers
+44,42,Serums,serums
+45,41,Haircare,haircare
+46,45,Shampoos,shampoos
+47,45,Conditioners,conditioners
+48,41,Makeup,makeup
+49,48,Lipstick,lipstick
+50,48,Foundation,foundation

@@ -89,10 +89,10 @@ concern, pool settings). See [02-profiles.md](02-profiles.md).
 
 ```bash
 # Interactive profile selection (omit --profile to get the menu):
-npm run hvymetl -- design --source examples/catalog.db --out out/catalog
+npm run hvymetl -- design --source examples/catalog/catalog.db --out out/catalog
 
 # Fully scripted with a custom write-heavy profile:
-npm run hvymetl -- design --source examples/analytics.db \
+npm run hvymetl -- design --source examples/analytics/analytics.db \
   --custom --read-write 20:80 --rpm 250000 --growth 1TB/week --out out/custom
 ```
 

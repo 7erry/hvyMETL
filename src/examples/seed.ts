@@ -2,7 +2,7 @@
  * Example database seeder.
  *
  * Builds seven realistic SQLite databases (one per workload domain) from the
- * DDL files in examples/*.sql, then fills them with deterministic
+ * DDL files in examples/<domain>/<domain>.sql, then fills them with deterministic
  * pseudo-random data. The data is intentionally shaped to exercise the
  * pattern selector:
  *   - skewed child counts (most parents have few children, a few have
@@ -66,11 +66,12 @@ function isoMinutesAgo(minutesAgo: number): string {
 
 /** Delete any previous .db file and create a fresh one from its DDL script. */
 function createDatabase(name: string): Database.Database {
-  const dbPath = join(EXAMPLES_DIR, `${name}.db`);
+  const domainDir = join(EXAMPLES_DIR, name);
+  const dbPath = join(domainDir, `${name}.db`);
   if (existsSync(dbPath)) rmSync(dbPath);
   const db = new Database(dbPath);
   db.pragma('journal_mode = WAL');
-  db.exec(readFileSync(join(EXAMPLES_DIR, `${name}.sql`), 'utf8'));
+  db.exec(readFileSync(join(domainDir, `${name}.sql`), 'utf8'));
   return db;
 }
 
@@ -192,7 +193,7 @@ function seedCatalog(): void {
     }
   });
   db.close();
-  console.log('Seeded examples/catalog.db');
+  console.log('Seeded examples/catalog/catalog.db');
 }
 
 /** Seed the content-management domain with polymorphic blocks. */
@@ -289,7 +290,7 @@ function seedCms(): void {
     }
   });
   db.close();
-  console.log('Seeded examples/cms.db');
+  console.log('Seeded examples/cms/cms.db');
 }
 
 /** Seed the IoT domain with a 60k-row sensor reading firehose. */
@@ -345,7 +346,7 @@ function seedIot(): void {
     }
   });
   db.close();
-  console.log('Seeded examples/iot.db');
+  console.log('Seeded examples/iot/iot.db');
 }
 
 /** Seed the mobile backend domain with sessions and an event stream. */
@@ -412,7 +413,7 @@ function seedMobile(): void {
     }
   });
   db.close();
-  console.log('Seeded examples/mobile.db');
+  console.log('Seeded examples/mobile/mobile.db');
 }
 
 /** Seed the personalization domain with affinity scores and traits. */
@@ -477,7 +478,7 @@ function seedPersonalization(): void {
     }
   });
   db.close();
-  console.log('Seeded examples/personalization.db');
+  console.log('Seeded examples/personalization/personalization.db');
 }
 
 /** Seed the real-time analytics domain with a 60k-row event firehose. */
@@ -534,7 +535,7 @@ function seedAnalytics(): void {
     }
   });
   db.close();
-  console.log('Seeded examples/analytics.db');
+  console.log('Seeded examples/analytics/analytics.db');
 }
 
 /** Seed the single-view domain with skewed order counts (mega accounts). */
@@ -603,7 +604,7 @@ function seedSingleView(): void {
     }
   });
   db.close();
-  console.log('Seeded examples/singleview.db');
+  console.log('Seeded examples/singleview/singleview.db');
 }
 
 /* -------------------------------------------------------------------------- */
@@ -621,7 +622,7 @@ function main(): void {
   seedPersonalization();
   seedAnalytics();
   seedSingleView();
-  console.log('Done. Databases are in examples/*.db');
+  console.log('Done. Databases are in examples/<domain>/<domain>.db');
 }
 
 main();

@@ -109,7 +109,7 @@ Subset, Attribute, Tree, Pre-allocation, embed/reference).
 ```bash
 npm install && npm run build
 npm run seed-examples
-npm run hvymetl -- design --source examples/iot.db --profile iot --out out/iot
+npm run hvymetl -- design --source examples/iot/iot.db --profile iot --out out/iot
 npm run hvymetl -- etl --plan out/iot/migration-plan.json --out out/iot --dry-run
 ```
 

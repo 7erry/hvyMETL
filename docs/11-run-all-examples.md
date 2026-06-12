@@ -32,13 +32,13 @@ npm run run-all-examples
 
 | Domain id | Profile | Source | Atlas database | Collections |
 | --- | --- | --- | --- | --- |
-| `catalog` | `catalog` | `examples/catalog.db` | `hvymetl_catalog` | 5 |
-| `cms` | `cms` | `examples/cms.db` | `hvymetl_cms` | 5 |
-| `iot` | `iot` | `examples/iot.db` | `hvymetl_iot` | 6 |
-| `mobile` | `mobile` | `examples/mobile.db` | `hvymetl_mobile` | 4 |
-| `personalization` | `personalization` | `examples/personalization.db` | `hvymetl_personalization` | 3 |
-| `analytics` | `realtime-analytics` | `examples/analytics.db` | `hvymetl_analytics` | 6 |
-| `singleview` | `single-view` | `examples/singleview.db` | `hvymetl_singleview` | 2 |
+| `catalog` | `catalog` | `examples/catalog/catalog.db` | `hvymetl_catalog` | 5 |
+| `cms` | `cms` | `examples/cms/cms.db` | `hvymetl_cms` | 5 |
+| `iot` | `iot` | `examples/iot/iot.db` | `hvymetl_iot` | 6 |
+| `mobile` | `mobile` | `examples/mobile/mobile.db` | `hvymetl_mobile` | 4 |
+| `personalization` | `personalization` | `examples/personalization/personalization.db` | `hvymetl_personalization` | 3 |
+| `analytics` | `realtime-analytics` | `examples/analytics/analytics.db` | `hvymetl_analytics` | 6 |
+| `singleview` | `single-view` | `examples/singleview/singleview.db` | `hvymetl_singleview` | 2 |
 
 ### Per-domain pipeline (automated)
 

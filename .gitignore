@@ -3,9 +3,9 @@ dist/
 out/
 .env
 *.tsbuildinfo
-examples/*.db
-examples/*.db-shm
-examples/*.db-wal
+examples/**/*.db
+examples/**/*.db-shm
+examples/**/*.db-wal
 .cursor/
 web/node_modules/
 web/dist/

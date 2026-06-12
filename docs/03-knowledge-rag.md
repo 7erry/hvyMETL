@@ -247,12 +247,12 @@ right documents.
 
 ```bash
 # Default: BM25 only (no keys required)
-npm run hvymetl -- design --source examples/iot.db --profile iot --out out/iot
+npm run hvymetl -- design --source examples/iot/iot.db --profile iot --out out/iot
 # Retrieval strategy: lexical BM25 (no API key configured).
 
 # Hybrid: MONGODB_MODEL_KEY in .env (Atlas Model Key, al-… prefix)
 npm run validate-hybrid-rag
-npm run hvymetl -- design --source examples/iot.db --profile iot --out out/iot
+npm run hvymetl -- design --source examples/iot/iot.db --profile iot --out out/iot
 # Retrieval strategy: hybrid BM25 + voyage-4 (Reciprocal Rank Fusion).
 ```
 

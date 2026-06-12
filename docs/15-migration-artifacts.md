@@ -102,7 +102,7 @@ Think of it as a build spec: the design engine writes it once; ETL, csvToAtlas, 
 ### How to produce it
 
 ```bash
-npm run hvymetl -- design --source examples/iot.db --profile iot --out out/iot
+npm run hvymetl -- design --source examples/iot/iot.db --profile iot --out out/iot
 # → out/iot/migration-plan.json
 ```
 
@@ -147,7 +147,7 @@ full retrieved context so reviewers can trace decisions back to pattern document
 Written alongside the migration plan by `hvymetl design` or the web UI export:
 
 ```bash
-npm run hvymetl -- design --source examples/iot.db --profile iot --out out/iot
+npm run hvymetl -- design --source examples/iot/iot.db --profile iot --out out/iot
 # → out/iot/design-report.md
 ```
 
@@ -185,7 +185,7 @@ natural-language reasoning, custom constraints, or tooling outside hvyMETL.
 ### How to produce it
 
 ```bash
-npm run hvymetl -- prompt --source examples/iot.db --profile iot
+npm run hvymetl -- prompt --source examples/iot/iot.db --profile iot
 # → out/prompts/1-schema-design-architect.md (path varies by --out)
 ```
 
@@ -228,7 +228,7 @@ csvToAtlas merge semantics.
 ### How to produce it
 
 ```bash
-npm run hvymetl -- prompt --source examples/iot.db --profile iot
+npm run hvymetl -- prompt --source examples/iot/iot.db --profile iot
 ```
 
 Web UI: **AI Migration Export** → tab `2-parallel-etl-generator`.
@@ -296,7 +296,7 @@ code respects the workload profile even when hvyMETL is not the codegen tool.
 ### How to produce the prompt
 
 ```bash
-npm run hvymetl -- prompt --source examples/iot.db --profile iot
+npm run hvymetl -- prompt --source examples/iot/iot.db --profile iot
 ```
 
 Web UI: **AI Migration Export** → tab `3-repository-layer`.

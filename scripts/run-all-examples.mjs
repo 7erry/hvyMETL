@@ -31,13 +31,13 @@ function assertBetterSqlite3() {
 }
 
 const DOMAINS = [
-  { id: 'catalog', profile: 'catalog', source: 'examples/catalog.db' },
-  { id: 'cms', profile: 'cms', source: 'examples/cms.db' },
-  { id: 'iot', profile: 'iot', source: 'examples/iot.db' },
-  { id: 'mobile', profile: 'mobile', source: 'examples/mobile.db' },
-  { id: 'personalization', profile: 'personalization', source: 'examples/personalization.db' },
-  { id: 'analytics', profile: 'realtime-analytics', source: 'examples/analytics.db' },
-  { id: 'singleview', profile: 'single-view', source: 'examples/singleview.db' },
+  { id: 'catalog', profile: 'catalog', source: 'examples/catalog/catalog.db' },
+  { id: 'cms', profile: 'cms', source: 'examples/cms/cms.db' },
+  { id: 'iot', profile: 'iot', source: 'examples/iot/iot.db' },
+  { id: 'mobile', profile: 'mobile', source: 'examples/mobile/mobile.db' },
+  { id: 'personalization', profile: 'personalization', source: 'examples/personalization/personalization.db' },
+  { id: 'analytics', profile: 'realtime-analytics', source: 'examples/analytics/analytics.db' },
+  { id: 'singleview', profile: 'single-view', source: 'examples/singleview/singleview.db' },
 ];
 
 function run(cmd) {

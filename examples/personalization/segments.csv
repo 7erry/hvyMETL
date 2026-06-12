@@ -1,0 +1,6 @@
+id,name,rule_json
+1,High Affluence Shoppers,"{""min_lifetime_value_cents"": 50000, ""preferred_locales"": [""en-US"", ""en-GB""]}"
+2,Tech Enthusiasts,"{""required_traits"": {""preferred_category"": ""electronics""}, ""interaction_weight"": 2.5}"
+3,Dormant Risk Profiles,"{""days_since_last_interaction_gt"": 14, ""exclude_plan"": ""tier_2_enterprise""}"
+4,Active Mobile Churn Candidate,"{""primary_device"": [""mobile_ios"", ""mobile_android""], ""activity_score_lt"": 0.35}"
+5,International Trendsetters,"{""exclude_locales"": [""en-US""], ""affinity_threshold"": 0.75}"

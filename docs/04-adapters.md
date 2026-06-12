@@ -96,7 +96,7 @@ Maps raw SQLite column types to the closest BSON type for `$jsonSchema` validato
 ```typescript
 import { createSqliteAdapter } from './adapters/sqlite.js';
 
-const adapter = createSqliteAdapter('examples/iot.db');
+const adapter = createSqliteAdapter('examples/iot/iot.db');
 const model = adapter.introspect();
 
 const readings = model.relationships.find(

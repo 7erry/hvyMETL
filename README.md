@@ -190,7 +190,7 @@ Full reference: **[docs/11-run-all-examples.md](docs/11-run-all-examples.md)**.
 npm run seed-examples
 
 # 2. Design: pick a source and a workload profile (omit --profile for a menu).
-npm run hvymetl -- design --source examples/iot.db --profile iot --out out/iot
+npm run hvymetl -- design --source examples/iot/iot.db --profile iot --out out/iot
 
 # 3. Inspect out/iot/design-report.md, then dry-run the ETL (safe gate).
 npm run hvymetl -- etl --plan out/iot/migration-plan.json --out out/iot --dry-run
@@ -206,7 +206,7 @@ npm run hvymetl -- repogen --plan out/iot/migration-plan.json --out out/iot/repo
 # --lang: c, cpp, csharp, go, java, kotlin, node, php, python, ruby, rust, scala, swift
 
 # Optional: emit the three RAG-grounded production prompts for LLM/Cursor use.
-npm run hvymetl -- prompt --source examples/iot.db --profile iot
+npm run hvymetl -- prompt --source examples/iot/iot.db --profile iot
 ```
 
 `out/<name>/etl-manifest.json` lists every produced CSV with the exact import
@@ -229,13 +229,13 @@ Full matrix, parser limits, and examples: **[docs/18-sql-dialects.md](docs/18-sq
 
 | Database | Default profile | What it exercises |
 | --- | --- | --- |
-| `examples/catalog.db` | `catalog` (95:5) | Extended Reference, Subset, Outlier (skewed reviews), Attribute (EAV), Computed, Tree |
-| `examples/cms.db` | `cms` (90:10) | Polymorphic blocks, Tree pages, embeds, junction tags |
-| `examples/iot.db` | `iot` (10:90) | Bucket (60k readings), Computed counters, references |
-| `examples/mobile.db` | `mobile` (80:20) | Bucket events, Subset sessions, Extended Reference |
-| `examples/personalization.db` | `personalization` (70:30) | Computed affinities, Attribute traits, junction segments |
-| `examples/analytics.db` | `realtime-analytics` (30:70) | Bucket firehose, Pre-allocation rollups, Computed |
-| `examples/singleview.db` | `single-view` (85:15) | Customer-360 merge, Subset orders, Outlier mega accounts |
+| `examples/catalog/catalog.db` | `catalog` (95:5) | Extended Reference, Subset, Outlier (skewed reviews), Attribute (EAV), Computed, Tree |
+| `examples/cms/cms.db` | `cms` (90:10) | Polymorphic blocks, Tree pages, embeds, junction tags |
+| `examples/iot/iot.db` | `iot` (10:90) | Bucket (60k readings), Computed counters, references |
+| `examples/mobile/mobile.db` | `mobile` (80:20) | Bucket events, Subset sessions, Extended Reference |
+| `examples/personalization/personalization.db` | `personalization` (70:30) | Computed affinities, Attribute traits, junction segments |
+| `examples/analytics/analytics.db` | `realtime-analytics` (30:70) | Bucket firehose, Pre-allocation rollups, Computed |
+| `examples/singleview/singleview.db` | `single-view` (85:15) | Customer-360 merge, Subset orders, Outlier mega accounts |
 
 Any profile can be applied to any source: `--profile ledger` against `catalog.db`
 produces a reference-first plan with `w: "majority"` durability.

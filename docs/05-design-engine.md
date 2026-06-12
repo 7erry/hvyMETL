@@ -122,7 +122,7 @@ Internal: `src/adapters/sqlite.ts`, `src/rag/*` (for the report's cited context)
 ## 5. Usage Example
 
 ```bash
-npm run hvymetl -- design --source examples/catalog.db --profile catalog --out out/catalog
+npm run hvymetl -- design --source examples/catalog/catalog.db --profile catalog --out out/catalog
 ```
 
 Expected output:

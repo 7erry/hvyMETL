@@ -183,7 +183,7 @@ Disk artifacts are still written under `out/ui-pipeline/`:
 All pipeline stages remain available without the UI:
 
 ```bash
-npm run hvymetl -- design --source examples/iot.db --profile iot --out out/iot
+npm run hvymetl -- design --source examples/iot/iot.db --profile iot --out out/iot
 npm run hvymetl -- etl --plan out/iot/migration-plan.json --out out/iot
 npm run import-cli -- out/iot/csv/*.csv collectionName
 ```

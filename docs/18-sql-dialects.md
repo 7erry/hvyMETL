@@ -113,7 +113,7 @@ Does **not** execute DDL, connect to a server, or infer live statistics.
 
 ```bash
 npm run seed-examples
-npm run hvymetl -- design --source examples/iot.db --profile iot --out out/iot
+npm run hvymetl -- design --source examples/iot/iot.db --profile iot --out out/iot
 npm run hvymetl -- etl --plan out/iot/migration-plan.json --out out/iot
 ```
 
@@ -134,7 +134,7 @@ curl -X POST http://localhost:3847/api/schema/import-ddl \
 
 ```bash
 curl -X POST http://localhost:3847/api/schema/import-sqlite \
-  -F database=@examples/iot.db
+  -F database=@examples/iot/iot.db
 ```
 
 ### Oracle example bundle

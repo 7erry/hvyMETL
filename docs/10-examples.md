@@ -1,6 +1,6 @@
 # 10 — Example Domains & Seeder
 
-Sources: [`examples/*.sql`](../examples/), [`src/examples/seed.ts`](../src/examples/seed.ts)
+Sources: [`examples/`](../examples/) (one folder per domain), [`src/examples/seed.ts`](../src/examples/seed.ts)
 
 ## 1. High-Level Summary
 
@@ -33,7 +33,11 @@ npm run seed-examples        # builds, then node dist/examples/seed.js
 ```
 
 No parameters. For each domain it deletes any existing `.db` file, executes the DDL
-from `examples/<domain>.sql`, and populates it inside one transaction.
+from `examples/<domain>/<domain>.sql`, and populates it inside one transaction.
+
+Each domain folder also ships a Python CSV generator (`<domain>_generator.py`) that
+writes scaled mock CSVs alongside the SQL schema — useful for csvToAtlas pipeline
+demos without running the Node seeder.
 
 ### The deterministic RNG
 
@@ -88,19 +92,19 @@ npm run seed-examples
 Expected output:
 
 ```text
-Seeded examples/catalog.db
-Seeded examples/cms.db
-Seeded examples/iot.db
-Seeded examples/mobile.db
-Seeded examples/personalization.db
-Seeded examples/analytics.db
-Seeded examples/singleview.db
+Seeded examples/catalog/catalog.db
+Seeded examples/cms/cms.db
+Seeded examples/iot/iot.db
+Seeded examples/mobile/mobile.db
+Seeded examples/personalization/personalization.db
+Seeded examples/analytics/analytics.db
+Seeded examples/singleview/singleview.db
 ```
 
 Then run any pipeline stage against a domain:
 
 ```bash
-npm run hvymetl -- design --source examples/cms.db --profile cms --out out/cms
+npm run hvymetl -- design --source examples/cms/cms.db --profile cms --out out/cms
 # The design report will include a Polymorphic decision for content_blocks
 # (block_type discriminator + sparse text/image/video variant columns).
 ```

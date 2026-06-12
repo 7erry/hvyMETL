@@ -140,7 +140,7 @@ Full dialect IDs and parser notes: [docs/13-web-ui.md §5](../docs/13-web-ui.md#
 The UI covers **design**, **export**, and **full pipeline**. Individual stages remain on the CLI:
 
 ```bash
-npm run hvymetl -- design --source examples/iot.db --profile iot --out out/iot
+npm run hvymetl -- design --source examples/iot/iot.db --profile iot --out out/iot
 npm run hvymetl -- etl --plan out/iot/migration-plan.json --out out/iot
 npm run import-cli -- out/iot/csv/*.csv sensorReadings --db hvymetl_iot
 ```

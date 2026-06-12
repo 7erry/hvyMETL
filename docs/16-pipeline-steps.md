@@ -100,11 +100,11 @@ RAG runs automatically inside **`design`** and **`prompt`** — no separate comm
 
 ```bash
 # Offline (BM25 only)
-npm run hvymetl -- design --source examples/iot.db --profile iot --out out/iot
+npm run hvymetl -- design --source examples/iot/iot.db --profile iot --out out/iot
 
 # Hybrid RAG (requires MONGODB_MODEL_KEY in .env)
 npm run validate-hybrid-rag
-npm run hvymetl -- prompt --source examples/iot.db --profile iot
+npm run hvymetl -- prompt --source examples/iot/iot.db --profile iot
 ```
 
 Web UI: **AI Migration Export** embeds the same retrieved context in generated artifacts.
@@ -172,8 +172,8 @@ Eight presets: `catalog`, `cms`, `iot`, `mobile`, `personalization`,
 
 ```bash
 npm run hvymetl -- profiles                    # list presets
-npm run hvymetl -- design --source examples/iot.db --profile iot --out out/iot
-npm run hvymetl -- design --source examples/catalog.db --profile ledger --out out/ledger
+npm run hvymetl -- design --source examples/iot/iot.db --profile iot --out out/iot
+npm run hvymetl -- design --source examples/catalog/catalog.db --profile ledger --out out/ledger
 ```
 
 Web UI: workload dropdown in the header before **AI Migration Export** or **Run Full Pipeline**.
@@ -231,7 +231,7 @@ Key plan sections per collection:
 ### How to run
 
 ```bash
-npm run hvymetl -- design --source examples/iot.db --profile iot --out out/iot
+npm run hvymetl -- design --source examples/iot/iot.db --profile iot --out out/iot
 # → out/iot/migration-plan.json
 # → out/iot/design-report.md
 ```
@@ -459,7 +459,7 @@ npm install && npm run build && cp .env.example .env
 npm run seed-examples
 
 # Steps 1–3 (RAG + profile + design)
-npm run hvymetl -- design --source examples/iot.db --profile iot --out out/iot
+npm run hvymetl -- design --source examples/iot/iot.db --profile iot --out out/iot
 
 # Step 4
 npm run hvymetl -- etl --plan out/iot/migration-plan.json --out out/iot --dry-run
@@ -472,7 +472,7 @@ npm run import-cli -- out/iot/csv/sensorReadings.chunk0.csv sensorReadings --dro
 npm run hvymetl -- repogen --plan out/iot/migration-plan.json --out out/iot/repositories --lang node
 
 # Optional: RAG prompts for LLM workflows
-npm run hvymetl -- prompt --source examples/iot.db --profile iot
+npm run hvymetl -- prompt --source examples/iot/iot.db --profile iot
 ```
 
 All seven domains in one command: `npm run run-all-examples` (Steps 3–5 for each domain; Steps 1–2 embedded in design; Step 6 manual).
