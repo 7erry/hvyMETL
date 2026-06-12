@@ -84,6 +84,7 @@ use **Download repositories** to save the full set.
 | **Duplicate table** | ⧉ on canvas header or sidebar |
 | **Snap to grid** | Checkbox; hold **Shift** while dragging for free move |
 | **Share diagrams** | Export / import diagram JSON (schema + layout) |
+| **Example diagrams** | Import bundled `examples/*/hvymetl-diagram-*.json` — see [10-examples.md](../docs/10-examples.md) |
 | **Session state** | Auto-saved in `sessionStorage`; use **Clear session** to reset |
 | **Workload profiles** | Header dropdown (catalog, cms, iot, …) |
 | **AI Migration Export** | Generates migration plan JSON, design report, and 3 RAG prompts |
@@ -98,7 +99,7 @@ parallel ETL generator prompt, repository layer prompt vs `repogen` code).
 
 ## Typical workflow
 
-1. **Import schema** — paste `CREATE TABLE` DDL, upload SQLite, or load a template.
+1. **Import schema** — paste `CREATE TABLE` DDL, upload SQLite, load a template, or **import a bundled example diagram** (`examples/<domain>/hvymetl-diagram-*.json`).
 2. **Arrange the ER diagram** — position tables, inspect details, duplicate as needed.
 3. **Choose a workload profile** — e.g. Content Management, IoT, Catalog.
 4. **Run Full Pipeline** (optional) — prompts for missing `.env` values, runs ETL + Atlas import.

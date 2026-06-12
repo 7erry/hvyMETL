@@ -116,6 +116,25 @@ separate nodes with FK-like relationships when declared).
 }
 ```
 
+### Bundled example diagrams
+
+Every folder under [`examples/`](../examples/) includes a checked-in diagram export
+you can load immediately:
+
+| Path | Domain |
+| --- | --- |
+| `examples/analytics/hvymetl-diagram-Analytics.json` | Real-time analytics |
+| `examples/catalog/hvymetl-diagram-Catalog.json` | E-commerce catalog |
+| `examples/cms/hvymetl-diagram-CMS.json` | Content management |
+| `examples/iot/hvymetl-diagram-IOT.json` | IoT telemetry |
+| `examples/mobile/hvymetl-diagram-Mobile.json` | Mobile backend |
+| `examples/personalization/hvymetl-diagram-Pseronalization.json` | Personalization |
+| `examples/singleview/hvymetl-diagram-SingleView.json` | Single customer view |
+| `examples/oracle/hvymetl-diagram-Oracle.json` | Oracle multi-domain bundle |
+
+Sidebar → **Import diagram JSON** → pick the file. Full reference:
+[10-examples.md § Migration Studio diagram exports](10-examples.md#migration-studio-diagram-exports).
+
 ## 7. MongoDB branding
 
 The UI uses the official **LeafyGreen** palette (`#001E2B`, `#00ED64`, `#00684A`,

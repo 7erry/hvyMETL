@@ -50,7 +50,33 @@ Run the script from inside the domain folder — it writes one CSV per table nex
 the `.sql` schema. Adjust scale constants at the top of each generator before
 running if you need smaller or larger datasets.
 
-### The deterministic RNG
+### Migration Studio diagram exports
+
+Each example folder ships a pre-arranged **Migration Studio diagram JSON** file.
+These exports bundle the domain DDL, parsed structural model (`tables` +
+`relationships`), and canvas layout (`positions`) so you can open a ready-made ER
+diagram without pasting SQL or re-positioning tables.
+
+| Folder | Diagram file |
+| --- | --- |
+| `examples/analytics/` | `hvymetl-diagram-Analytics.json` |
+| `examples/catalog/` | `hvymetl-diagram-Catalog.json` |
+| `examples/cms/` | `hvymetl-diagram-CMS.json` |
+| `examples/iot/` | `hvymetl-diagram-IOT.json` |
+| `examples/mobile/` | `hvymetl-diagram-Mobile.json` |
+| `examples/personalization/` | `hvymetl-diagram-Pseronalization.json` |
+| `examples/singleview/` | `hvymetl-diagram-SingleView.json` |
+| `examples/oracle/` | `hvymetl-diagram-Oracle.json` |
+
+**Web UI:** start Migration Studio (`npm run dev:ui`), open the sidebar, click
+**Import diagram JSON**, and choose the file for your domain. Pick the matching
+workload profile from the header dropdown (e.g. `iot` for the IoT diagram), then
+run **AI Migration Export** or **Run Full Pipeline** as usual.
+
+**Format:** same schema as a diagram you export from the UI — see
+[13-web-ui.md §6](13-web-ui.md#6-diagram-export-format) (`version`, `dialect`,
+`ddl`, `model`, `positions`, `exportedAt`).
+
 
 | Function | Signature | Description |
 | --- | --- | --- |
@@ -118,6 +144,13 @@ Then run any pipeline stage against a domain:
 npm run hvymetl -- design --source examples/cms/cms.db --profile cms --out out/cms
 # The design report will include a Polymorphic decision for content_blocks
 # (block_type discriminator + sparse text/image/video variant columns).
+```
+
+Or open the bundled ER diagram in Migration Studio:
+
+```bash
+npm run dev:ui
+# Sidebar → Import diagram JSON → examples/cms/hvymetl-diagram-CMS.json
 ```
 
 ### Run all seven domains into Atlas

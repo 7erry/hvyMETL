@@ -237,8 +237,9 @@ Full matrix, parser limits, and examples: **[docs/18-sql-dialects.md](docs/18-sq
 | `examples/analytics/analytics.db` | `realtime-analytics` (30:70) | Bucket firehose, Pre-allocation rollups, Computed |
 | `examples/singleview/singleview.db` | `single-view` (85:15) | Customer-360 merge, Subset orders, Outlier mega accounts |
 
-Each domain lives under `examples/<domain>/` with `<domain>.sql` and
-`<domain>_generator.py`. SQLite databases are built with `npm run seed-examples`;
+Each domain lives under `examples/<domain>/` with `<domain>.sql`,
+`<domain>_generator.py`, and a pre-arranged **`hvymetl-diagram-*.json`** ER export
+for Migration Studio. SQLite databases are built with `npm run seed-examples`;
 per-table CSVs are generated locally (not in git) with e.g.
 `cd examples/iot && python iot_generator.py`. See **[docs/10-examples.md](docs/10-examples.md)**.
 

@@ -144,6 +144,7 @@ examples/oracle/
   oracle-all.ddl          # combined DDL
   oracle-*.ddl            # domain splits (HR, sales, …)
   generate_mock_data.py   # writes *.csv locally (not in git)
+  hvymetl-diagram-Oracle.json   # pre-arranged Migration Studio ER export
 ```
 
 Generate Oracle mock CSVs before pipeline import:
