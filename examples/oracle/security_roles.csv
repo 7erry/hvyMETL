@@ -1,6 +1,0 @@
-role_id,role_name,description
-1,Admin,Full access to system operations
-2,Manager,Access to departmental assets and metrics
-3,Staff,Standard operational transactional permissions
-4,Support Agent,Customer ticket support queue operations
-5,Auditor,Read-only access across standard ledgers

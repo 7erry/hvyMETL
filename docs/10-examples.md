@@ -36,8 +36,19 @@ No parameters. For each domain it deletes any existing `.db` file, executes the 
 from `examples/<domain>/<domain>.sql`, and populates it inside one transaction.
 
 Each domain folder also ships a Python CSV generator (`<domain>_generator.py`) that
-writes scaled mock CSVs alongside the SQL schema — useful for csvToAtlas pipeline
-demos without running the Node seeder.
+writes scaled mock CSVs alongside the SQL schema. **CSV files are not checked into
+git** (they can be large); generate them locally when you need csvToAtlas pipeline
+demos:
+
+```bash
+cd examples/iot && python iot_generator.py
+cd examples/catalog && python catalog_generator.py
+# … same pattern for analytics, cms, mobile, personalization, singleview
+```
+
+Run the script from inside the domain folder — it writes one CSV per table next to
+the `.sql` schema. Adjust scale constants at the top of each generator before
+running if you need smaller or larger datasets.
 
 ### The deterministic RNG
 

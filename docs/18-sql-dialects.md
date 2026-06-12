@@ -143,7 +143,13 @@ curl -X POST http://localhost:3847/api/schema/import-sqlite \
 examples/oracle/
   oracle-all.ddl          # combined DDL
   oracle-*.ddl            # domain splits (HR, sales, …)
-  *.csv                   # mock row data for pipeline import
+  generate_mock_data.py   # writes *.csv locally (not in git)
+```
+
+Generate Oracle mock CSVs before pipeline import:
+
+```bash
+cd examples/oracle && python generate_mock_data.py
 ```
 
 ## 6. Refactoring / Roadmap

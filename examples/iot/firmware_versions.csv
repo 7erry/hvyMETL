@@ -1,4 +1,0 @@
-id,version,released_at,changelog
-1,v1.0.0,2024-01-15 08:00:00,Initial production release.
-2,v1.1.2,2024-06-20 14:30:00,Patch for connection stability issues.
-3,v2.0.0,2025-02-10 10:15:00,Major upgrade with optimized telemetry payload.

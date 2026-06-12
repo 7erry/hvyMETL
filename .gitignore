@@ -6,6 +6,7 @@ out/
 examples/**/*.db
 examples/**/*.db-shm
 examples/**/*.db-wal
+examples/**/*.csv
 .cursor/
 web/node_modules/
 web/dist/
