@@ -4,8 +4,15 @@ import {
   runPipeline,
   runPipelineWithCsv,
   type PipelineConfigStatus,
+  type PipelineProgressEvent,
   type PipelineRunResult,
 } from '../api';
+import { pickCsvDirectory } from '../directoryPicker';
+import {
+  PIPELINE_PROGRESS_STAGES,
+  stageStatus,
+  type PipelineProgressStage,
+} from '../pipelineStages';
 import type { SqlStructuralModel } from '../types';
 
 type PipelinePanelProps = {
@@ -44,9 +51,11 @@ export function PipelinePanel({
   const [config, setConfig] = useState<PipelineConfigStatus | null>(null);
   const [loadingConfig, setLoadingConfig] = useState(false);
   const [running, setRunning] = useState(false);
+  const [progress, setProgress] = useState<PipelineProgressEvent | null>(null);
   const [error, setError] = useState('');
   const [result, setResult] = useState<PipelineRunResult | null>(null);
   const [csvFiles, setCsvFiles] = useState<File[]>([]);
+  const [csvDirectoryLabel, setCsvDirectoryLabel] = useState<string | null>(null);
   const [form, setForm] = useState<PipelineForm>({
     mongoUri: '',
     csvToAtlasPath: '',
@@ -66,9 +75,12 @@ export function PipelinePanel({
       setConfig(status);
       setForm((prev) => ({
         ...prev,
-        targetDb: status.defaultTargetDb,
+        targetDb: prev.targetDb || status.defaultTargetDb,
         csvSourcePath: prev.csvSourcePath || csvSourcePath || status.csvSourcePath || '',
-        mongoUri: prev.mongoUri || (status.hasMongoUri ? '(configured in .env)' : ''),
+        mongoUri:
+          prev.mongoUri && prev.mongoUri !== '(configured in .env)'
+            ? prev.mongoUri
+            : prev.mongoUri || (status.hasMongoUri ? '(configured in .env)' : ''),
         csvToAtlasPath:
           prev.csvToAtlasPath || status.csvToAtlasResolvedPath || status.csvToAtlasLabel || '',
       }));
@@ -83,7 +95,9 @@ export function PipelinePanel({
     if (!open) return;
     setError('');
     setResult(null);
+    setProgress(null);
     setCsvFiles([]);
+    setCsvDirectoryLabel(null);
     void refreshConfig();
     // Only re-run when the panel opens — path changes use the debounced validator below.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -98,32 +112,73 @@ export function PipelinePanel({
   }, [open, form.csvToAtlasPath, refreshConfig]);
 
   useEffect(() => {
-    if (csvSourcePath) {
-      setForm((prev) => ({ ...prev, csvSourcePath }));
+    if (csvSourcePath && open) {
+      setForm((prev) => (prev.csvSourcePath ? prev : { ...prev, csvSourcePath }));
     }
-  }, [csvSourcePath]);
+  }, [csvSourcePath, open]);
 
   const effectiveCsvPath = form.csvSourcePath.trim() || csvSourcePath || config?.csvSourcePath || '';
   const hasCsvSource = Boolean(config?.hasCsvSource || effectiveCsvPath || csvFiles.length > 0);
 
-  const needsMongoUri = !config?.hasMongoUri;
-  const needsCsvToAtlas = !config?.hasCsvToAtlas;
-  const needsCsvSource = !hasCsvSource;
+  const envMongoUri = Boolean(config?.hasMongoUri);
+  const envCsvToAtlas = Boolean(config?.hasCsvToAtlas);
+  const formMongoUri = form.mongoUri.trim();
+  const hasMongoUriInput = Boolean(formMongoUri && formMongoUri !== '(configured in .env)');
+  const hasMongoUri = envMongoUri || hasMongoUriInput;
+  const hasCsvToAtlasInput = Boolean(form.csvToAtlasPath.trim());
+  const hasCsvToAtlas = envCsvToAtlas || hasCsvToAtlasInput;
 
   const csvSourceHint = `Export tables from ${dialectLabel} as CSV files. Name files after the table or MongoDB collection (e.g. products.csv).`;
 
+  const resolveMongoUriOverride = (): string | undefined => {
+    if (hasMongoUriInput) return formMongoUri;
+    return undefined;
+  };
+
+  const handlePickCsvDirectory = async () => {
+    try {
+      const picked = await pickCsvDirectory();
+      if (!picked) return;
+
+      if (picked.files.length === 0) {
+        setError('No CSV files found in that folder.');
+        return;
+      }
+
+      setError('');
+      setCsvFiles(picked.files);
+      setCsvDirectoryLabel(picked.label);
+      setForm((prev) => ({ ...prev, csvSourcePath: '' }));
+    } catch (e) {
+      if (e instanceof DOMException && e.name === 'AbortError') return;
+      setError(String(e));
+    }
+  };
+
+  const handleCsvSourcePathChange = (value: string) => {
+    setCsvDirectoryLabel(null);
+    setCsvFiles([]);
+    setForm((prev) => ({ ...prev, csvSourcePath: value }));
+  };
+
+  const csvSourceDisplay =
+    csvDirectoryLabel && csvFiles.length > 0
+      ? `${csvDirectoryLabel} (${csvFiles.length} CSV file${csvFiles.length === 1 ? '' : 's'})`
+      : form.csvSourcePath;
+
   const canRun = useMemo(() => {
     if (running || !model) return false;
-    if (needsMongoUri && !form.mongoUri.trim()) return false;
-    if (needsCsvToAtlas && !form.csvToAtlasPath.trim()) return false;
-    if (needsCsvSource) return false;
+    if (!hasMongoUri) return false;
+    if (!hasCsvToAtlas) return false;
+    if (!hasCsvSource) return false;
     return true;
-  }, [running, model, needsMongoUri, needsCsvToAtlas, needsCsvSource, form.mongoUri, form.csvToAtlasPath]);
+  }, [running, model, hasMongoUri, hasCsvToAtlas, hasCsvSource]);
 
   const handleRun = async () => {
     setRunning(true);
     setError('');
     setResult(null);
+    setProgress({ stage: 'validating', message: 'Starting pipeline…' });
     try {
       const overrides = {
         profileId,
@@ -132,13 +187,17 @@ export function PipelinePanel({
         dialect,
         targetDb: form.targetDb.trim() || undefined,
         drop: form.drop,
-        mongoUri: needsMongoUri ? form.mongoUri.trim() : undefined,
-        csvToAtlasPath: needsCsvToAtlas ? form.csvToAtlasPath.trim() : undefined,
+        mongoUri: resolveMongoUriOverride(),
+        csvToAtlasPath: form.csvToAtlasPath.trim() || undefined,
         csvSourcePath: csvFiles.length === 0 && effectiveCsvPath ? effectiveCsvPath : undefined,
       };
 
+      const onProgress = (event: PipelineProgressEvent) => setProgress(event);
+
       const pipelineResult =
-        csvFiles.length > 0 ? await runPipelineWithCsv(csvFiles, overrides) : await runPipeline(overrides);
+        csvFiles.length > 0
+          ? await runPipelineWithCsv(csvFiles, overrides, onProgress)
+          : await runPipeline(overrides, onProgress);
 
       setResult(pipelineResult);
       if (pipelineResult.csvSourcePath) {
@@ -149,8 +208,11 @@ export function PipelinePanel({
       setError(String(e));
     } finally {
       setRunning(false);
+      setProgress(null);
     }
   };
+
+  const activeStage: PipelineProgressStage | null = running ? (progress?.stage ?? 'validating') : null;
 
   if (!open) return null;
 
@@ -159,7 +221,7 @@ export function PipelinePanel({
       <div className="pipeline-modal panel">
         <header className="pipeline-modal__header">
           <h2 id="pipeline-title">Run Full Pipeline</h2>
-          <button type="button" className="ghost" onClick={onClose} aria-label="Close">
+          <button type="button" className="ghost" onClick={onClose} disabled={running} aria-label="Close">
             ✕
           </button>
         </header>
@@ -188,8 +250,8 @@ export function PipelinePanel({
             <li className={hasCsvSource ? 'ok' : 'missing'}>
               CSV data source{' '}
               {hasCsvSource
-                ? `✓ ${csvFiles.length ? `${csvFiles.length} file(s) selected` : effectiveCsvPath}`
-                : '— directory path or upload CSVs'}
+                ? `✓ ${csvDirectoryLabel && csvFiles.length ? `${csvDirectoryLabel} (${csvFiles.length} CSVs)` : effectiveCsvPath}`
+                : '— choose a CSV folder or enter a server path'}
             </li>
           </ul>
         ) : null}
@@ -211,58 +273,64 @@ export function PipelinePanel({
         ) : null}
 
         <div className="pipeline-form">
-          {needsMongoUri && (
-            <label>
-              MongoDB URI
-              <input
-                type="password"
-                value={form.mongoUri === '(configured in .env)' ? '' : form.mongoUri}
-                placeholder="mongodb+srv://…"
-                onChange={(e) => setForm((prev) => ({ ...prev, mongoUri: e.target.value }))}
-                autoComplete="off"
-              />
-            </label>
-          )}
+          <label>
+            MongoDB URI
+            {envMongoUri ? <span className="pipeline-field-badge">.env configured</span> : null}
+            <input
+              type="password"
+              value={form.mongoUri === '(configured in .env)' ? '' : form.mongoUri}
+              placeholder={envMongoUri ? 'Leave empty to use .env, or enter to override' : 'mongodb+srv://…'}
+              onChange={(e) => setForm((prev) => ({ ...prev, mongoUri: e.target.value }))}
+              disabled={running}
+              autoComplete="off"
+            />
+          </label>
 
-          {needsCsvToAtlas && (
-            <label>
-              csvToAtlas path
+          <label>
+            csvToAtlas path
+            {envCsvToAtlas ? <span className="pipeline-field-badge">.env configured</span> : null}
+            <input
+              type="text"
+              value={form.csvToAtlasPath}
+              placeholder="/path/to/cvsToAtlas (clone root or dist/)"
+              onChange={(e) => setForm((prev) => ({ ...prev, csvToAtlasPath: e.target.value }))}
+              disabled={running}
+            />
+            <span className="pipeline-hint" style={{ marginTop: '0.25rem' }}>
+              Clone root with package.json, or path to dist/ containing cli.js
+            </span>
+          </label>
+
+          <p className="pipeline-hint">{csvSourceHint}</p>
+          <label>
+            CSV directory
+            <div className="pipeline-path-row">
               <input
                 type="text"
-                value={form.csvToAtlasPath}
-                placeholder="/path/to/cvsToAtlas (clone root or dist/)"
-                onChange={(e) => setForm((prev) => ({ ...prev, csvToAtlasPath: e.target.value }))}
+                value={csvSourceDisplay}
+                placeholder="Choose folder… or enter server path (e.g. /path/to/csv/exports)"
+                onChange={(e) => handleCsvSourcePathChange(e.target.value)}
+                disabled={running}
               />
+              <button
+                type="button"
+                className="primary"
+                onClick={() => void handlePickCsvDirectory()}
+                disabled={running}
+              >
+                Choose folder
+              </button>
+            </div>
+            {csvDirectoryLabel && csvFiles.length > 0 ? (
               <span className="pipeline-hint" style={{ marginTop: '0.25rem' }}>
-                Clone root with package.json, or path to dist/ containing cli.js
+                {csvFiles.length} file(s): {csvFiles.map((f) => f.name).join(', ')}
               </span>
-            </label>
-          )}
-
-          {needsCsvSource && (
-            <>
-              <p className="pipeline-hint">{csvSourceHint}</p>
-              <label>
-                CSV directory path
-                <input
-                  type="text"
-                  value={form.csvSourcePath}
-                  placeholder="/path/to/csv/exports"
-                  onChange={(e) => setForm((prev) => ({ ...prev, csvSourcePath: e.target.value }))}
-                />
-              </label>
-              <label className="pipeline-file">
-                Or upload CSV files
-                <input
-                  type="file"
-                  accept=".csv,text/csv"
-                  multiple
-                  onChange={(e) => setCsvFiles(Array.from(e.target.files ?? []))}
-                />
-                {csvFiles.length > 0 ? <span>{csvFiles.length} file(s): {csvFiles.map((f) => f.name).join(', ')}</span> : null}
-              </label>
-            </>
-          )}
+            ) : (
+              <span className="pipeline-hint" style={{ marginTop: '0.25rem' }}>
+                Choose a folder to upload CSVs from this browser, or type a path on the machine running the API.
+              </span>
+            )}
+          </label>
 
           <label>
             Target database
@@ -270,6 +338,7 @@ export function PipelinePanel({
               type="text"
               value={form.targetDb}
               onChange={(e) => setForm((prev) => ({ ...prev, targetDb: e.target.value }))}
+              disabled={running}
             />
           </label>
 
@@ -277,6 +346,7 @@ export function PipelinePanel({
             <input
               type="checkbox"
               checked={form.drop}
+              disabled={running}
               onChange={(e) => setForm((prev) => ({ ...prev, drop: e.target.checked }))}
             />
             Drop collections before import
@@ -284,6 +354,34 @@ export function PipelinePanel({
         </div>
 
         {error ? <p className="pipeline-error">{error}</p> : null}
+
+        {running ? (
+          <div className="pipeline-progress" role="status" aria-live="polite" aria-busy="true">
+            <div className="pipeline-progress__header">
+              <span className="pipeline-progress__spinner" aria-hidden="true" />
+              <p className="pipeline-progress__message">{progress?.message ?? 'Running pipeline…'}</p>
+            </div>
+            {progress?.stage === 'importing' && progress.current && progress.total ? (
+              <p className="pipeline-progress__detail">
+                Collection {progress.current} of {progress.total}
+                {progress.collection ? `: ${progress.collection}` : ''}
+              </p>
+            ) : null}
+            <ol className="pipeline-progress__steps">
+              {PIPELINE_PROGRESS_STAGES.filter((entry) => entry.stage !== 'done').map((entry) => {
+                const status = stageStatus(entry.stage, activeStage);
+                return (
+                  <li key={entry.stage} className={`pipeline-progress__step pipeline-progress__step--${status}`}>
+                    <span className="pipeline-progress__step-icon" aria-hidden="true">
+                      {status === 'done' ? '✓' : status === 'active' ? '●' : '○'}
+                    </span>
+                    {entry.label}
+                  </li>
+                );
+              })}
+            </ol>
+          </div>
+        ) : null}
 
         {result ? (
           <div className="pipeline-result">
@@ -310,8 +408,8 @@ export function PipelinePanel({
           <button type="button" className="ghost" onClick={() => void refreshConfig()} disabled={loadingConfig}>
             Refresh config
           </button>
-          <button type="button" className="primary" onClick={() => void handleRun()} disabled={!canRun}>
-            {running ? 'Running…' : 'Run Full Pipeline'}
+          <button type="button" className="primary" onClick={() => void handleRun()} disabled={!canRun || running}>
+            {running ? 'Running…' : result ? 'Run Again' : 'Run Full Pipeline'}
           </button>
         </footer>
       </div>

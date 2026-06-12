@@ -34,6 +34,7 @@ exports, same as CLI).
 | **Snap to Grid** | Checkbox; hold **Shift** for free positioning | 20px grid |
 | **Templates** | Dropdown → Load template | `GET /api/templates` |
 | **Session state** | Auto-saved in `sessionStorage` (schema, layout, artifacts survive refresh) | Client-side |
+| **Workload auto-detect** | Profile dropdown updates after schema import (e.g. E-commerce Catalog for product/order schemas) | `inferWorkloadProfile()` on import |
 | **Table details** | Click table on canvas or sidebar | Column types, PKs, FKs |
 | **AI-Powered DDL Export** | Full-screen artifact editor (editable + per-file download) | `POST /api/export/migration` + prompts |
 | **Full pipeline** | Header → **Run Full Pipeline** (ML design → shaped CSV import → Atlas persistence) | `GET /api/pipeline/config`, `POST /api/pipeline/run`, `GET /api/pipeline/executions` |
@@ -50,6 +51,7 @@ All six pipeline steps (Knowledge + RAG, profiles, design, ETL, import, codegen)
 | --- | --- | --- | --- |
 | `GET` | `/api/health` | — | `{ ok, name }` |
 | `GET` | `/api/profiles` | — | Workload presets |
+| `POST` | `/api/profiles/infer` | `{ model }` | Infer workload profile from table names and relationships |
 | `GET` | `/api/dialects` | — | Supported database labels |
 | `GET` | `/api/templates` | — | Template DDL + parsed model |
 | `POST` | `/api/schema/import-ddl` | `{ ddl, dialect }` | `{ model }` |

@@ -16,6 +16,8 @@ import {
   importSqlite,
   type DiagramExport,
   type PipelineRunResult,
+  inferProfile,
+  type ProfileInference,
 } from './api';
 import {
   defaultSessionState,
@@ -29,7 +31,7 @@ import type { Dialect, Profile, SqlStructuralModel } from './types';
 export default function App() {
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [dialects, setDialects] = useState<Dialect[]>([]);
-  const [templates, setTemplates] = useState<{ id: string; name: string; ddl: string; model: SqlStructuralModel }[]>([]);
+  const [templates, setTemplates] = useState<{ id: string; name: string; ddl: string; model: SqlStructuralModel; inferred?: ProfileInference }[]>([]);
   const [session, setSession] = useState<SessionState>(loadSessionState);
   const [status, setStatus] = useState('');
   const [exporting, setExporting] = useState(false);
@@ -93,23 +95,29 @@ export default function App() {
     return refs;
   }, [model, selectedTable]);
 
-  const applySchema = useCallback(async (nextDdl: string, nextModel: SqlStructuralModel) => {
+  const applySchema = useCallback(async (nextDdl: string, nextModel: SqlStructuralModel, inferredProfileId?: string) => {
     setSession((prev) => ({
       ...prev,
       ddl: nextDdl,
       model: nextModel,
+      profileId: inferredProfileId ?? prev.profileId,
       positions: {},
       selectedTable: null,
       view: 'diagram',
     }));
-    setStatus(`Imported ${nextModel.tables.length} tables.`);
-  }, []);
+    const profileLabel = profiles.find((p) => p.id === inferredProfileId)?.label;
+    if (inferredProfileId && profileLabel) {
+      setStatus(`Imported ${nextModel.tables.length} tables. Workload profile: ${profileLabel} (auto-detected).`);
+    } else {
+      setStatus(`Imported ${nextModel.tables.length} tables.`);
+    }
+  }, [profiles]);
 
   const handleImportQuery = async (ddlText = ddl) => {
     try {
       setStatus('Importing schema…');
-      const { model: m } = await importDdl(ddlText, dialect);
-      await applySchema(ddlText, m);
+      const { model: m, inferred } = await importDdl(ddlText, dialect);
+      await applySchema(ddlText, m, inferred?.profileId);
     } catch (e) {
       setStatus(`Import failed: ${String(e)}`);
     }
@@ -129,9 +137,9 @@ export default function App() {
   const handleSqliteUpload = async (file: File) => {
     try {
       setStatus('Reading SQLite database…');
-      const { model: m, ddl: d } = await importSqlite(file);
+      const { model: m, ddl: d, inferred } = await importSqlite(file);
       setSessionField('dialect', 'sqlite');
-      await applySchema(d, m);
+      await applySchema(d, m, inferred?.profileId);
     } catch (e) {
       setStatus(`SQLite import failed: ${String(e)}`);
     }
@@ -149,7 +157,7 @@ export default function App() {
   const handleTemplateLoad = async () => {
     const t = templates.find((x) => x.id === selectedTemplateId);
     if (!t) return;
-    await applySchema(t.ddl, t.model);
+    await applySchema(t.ddl, t.model, t.inferred?.profileId);
     setStatus(`Loaded ${t.name} template.`);
   };
 
@@ -200,21 +208,25 @@ export default function App() {
   const handleImportDiagram = (file: File) => {
     const reader = new FileReader();
     reader.onload = () => {
-      try {
-        const data = JSON.parse(String(reader.result)) as DiagramExport;
-        setSession((prev) => ({
-          ...prev,
-          dialect: data.dialect,
-          ddl: data.ddl,
-          model: data.model,
-          positions: data.positions ?? {},
-          selectedTable: null,
-          view: 'diagram',
-        }));
-        setStatus('Diagram imported.');
-      } catch (e) {
-        setStatus(`Invalid diagram file: ${String(e)}`);
-      }
+      void (async () => {
+        try {
+          const data = JSON.parse(String(reader.result)) as DiagramExport;
+          const inferred = await inferProfile(data.model);
+          setSession((prev) => ({
+            ...prev,
+            dialect: data.dialect,
+            ddl: data.ddl,
+            model: data.model,
+            profileId: inferred.profileId,
+            positions: data.positions ?? {},
+            selectedTable: null,
+            view: 'diagram',
+          }));
+          setStatus(`Diagram imported. Workload profile: ${inferred.label} (auto-detected).`);
+        } catch (e) {
+          setStatus(`Invalid diagram file: ${String(e)}`);
+        }
+      })();
     };
     reader.readAsText(file);
   };

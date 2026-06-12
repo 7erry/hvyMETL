@@ -12,15 +12,16 @@ import { fileURLToPath } from 'node:url';
 import { createSqliteAdapter } from '../adapters/sqlite.js';
 import { DIALECTS } from '../dialects.js';
 import { designFromModel, writeDesignArtifacts } from '../design/designFromModel.js';
-import { ALL_PROFILES } from '../profiles/profiles.js';
+import { ALL_PROFILES, getProfile } from '../profiles/profiles.js';
+import { inferWorkloadProfile } from '../profiles/inferProfile.js';
 import { loadKnowledgeBase } from '../rag/chunker.js';
 import { createRetrievalConfigFromEnv, retrieve } from '../rag/retrieval.js';
 import { buildPromptBundle, buildRetrievalQuery } from '../rag/promptBundle.js';
-import { getProfile } from '../profiles/profiles.js';
 import { parseDdlToModel } from '../utilities/ddlParser.js';
 import type { SqlStructuralModel } from '../types.js';
 import { getPipelineConfigStatus } from './pipelineConfig.js';
 import { runFullPipeline } from './runPipeline.js';
+import { runFullPipelineWithStream } from './pipelineStream.js';
 import {
   configureMigrationStore,
   getMigrationStore,
@@ -60,6 +61,21 @@ app.get('/api/profiles', (_req, res) => {
   );
 });
 
+/** Infer workload profile from a structural model (same logic as schema import auto-detect). */
+app.post('/api/profiles/infer', (req, res) => {
+  const model = req.body?.model as SqlStructuralModel | undefined;
+  if (!model?.tables?.length) {
+    res.status(400).json({ error: 'model with tables is required' });
+    return;
+  }
+  try {
+    const inferred = inferWorkloadProfile(model);
+    res.json({ inferred, profile: getProfile(inferred.profileId) });
+  } catch (error) {
+    res.status(400).json({ error: String(error) });
+  }
+});
+
 /** Instant schema import from one DDL query / script. */
 app.post('/api/schema/import-ddl', (req, res) => {
   const ddl = String(req.body?.ddl ?? '');
@@ -70,7 +86,8 @@ app.post('/api/schema/import-ddl', (req, res) => {
   }
   try {
     const model = parseDdlToModel(ddl, `ddl:${dialect}`);
-    res.json({ model, dialect, tableCount: model.tables.length });
+    const inferred = inferWorkloadProfile(model);
+    res.json({ model, dialect, tableCount: model.tables.length, inferred });
   } catch (error) {
     res.status(400).json({ error: String(error) });
   }
@@ -87,7 +104,8 @@ app.post('/api/schema/import-sqlite', upload.single('database'), (req, res) => {
     const model = adapter.introspect();
     const ddl = adapter.dumpDdl();
     adapter.close();
-    res.json({ model, ddl, dialect: 'sqlite', sourcePath: req.file.path });
+    const inferred = inferWorkloadProfile(model);
+    res.json({ model, ddl, dialect: 'sqlite', sourcePath: req.file.path, inferred });
   } catch (error) {
     res.status(400).json({ error: String(error) });
   }
@@ -166,7 +184,8 @@ app.get('/api/templates', (_req, res) => {
     const path = join(templatesDir, `${id}.sql`);
     const ddl = readFileSync(path, 'utf8');
     const model = parseDdlToModel(ddl, `template:${id}`);
-    return { id, name: id.charAt(0).toUpperCase() + id.slice(1), ddl, model };
+    const inferred = inferWorkloadProfile(model);
+    return { id, name: id.charAt(0).toUpperCase() + id.slice(1), ddl, model, inferred };
   });
   res.json(templates);
 });
@@ -249,6 +268,7 @@ function pipelineRunResponse(result: Awaited<ReturnType<typeof runFullPipeline>>
 /**
  * Run full pipeline: design → csvToAtlas import from CSV exports.
  * Body may override MONGODB_URI, CSV_TO_ATLAS_PATH, csvSourcePath when not in .env.
+ * Set `stream: true` for Server-Sent Events progress updates.
  */
 app.post('/api/pipeline/run', async (req, res) => {
   try {
@@ -260,7 +280,7 @@ app.post('/api/pipeline/run', async (req, res) => {
       return;
     }
 
-    const result = await runFullPipeline({
+    const pipelineRequest = {
       profileId,
       model,
       ddl,
@@ -272,8 +292,17 @@ app.post('/api/pipeline/run', async (req, res) => {
       csvToAtlasPath: req.body?.csvToAtlasPath as string | undefined,
       knowledgeDir: KNOWLEDGE_DIR,
       rootDir: ROOT,
-    });
+    };
 
+    if (req.body?.stream === true) {
+      await runFullPipelineWithStream(res, pipelineRequest, (result) => ({
+        type: 'complete',
+        ...pipelineRunResponse(result),
+      }));
+      return;
+    }
+
+    const result = await runFullPipeline(pipelineRequest);
     res.json(pipelineRunResponse(result));
   } catch (error) {
     res.status(500).json({ error: String(error) });
@@ -311,7 +340,9 @@ app.post('/api/pipeline/run-with-csv', (req, res) => {
         return;
       }
 
-      const result = await runFullPipeline({
+      const streamProgress = req.body?.stream === 'true' || req.body?.stream === true;
+
+      const pipelineRequest = {
         profileId,
         model,
         ddl,
@@ -323,7 +354,17 @@ app.post('/api/pipeline/run-with-csv', (req, res) => {
         csvToAtlasPath: req.body?.csvToAtlasPath as string | undefined,
         knowledgeDir: KNOWLEDGE_DIR,
         rootDir: ROOT,
-      });
+      };
+
+      if (streamProgress) {
+        await runFullPipelineWithStream(res, pipelineRequest, (result) => ({
+          type: 'complete',
+          ...pipelineRunResponse(result),
+        }));
+        return;
+      }
+
+      const result = await runFullPipeline(pipelineRequest);
 
       res.json(pipelineRunResponse(result));
     } catch (error) {

@@ -177,6 +177,9 @@ npm run hvymetl -- design --source examples/catalog.db --profile ledger --out ou
 ```
 
 Web UI: workload dropdown in the header before **AI Migration Export** or **Run Full Pipeline**.
+The profile is **auto-detected** when you import DDL, SQLite, a template, or a diagram
+(`inferWorkloadProfile()` — see [`src/profiles/inferProfile.ts`](../src/profiles/inferProfile.ts)).
+You can still change it manually.
 
 ### How it fits the pipeline
 

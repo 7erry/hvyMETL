@@ -28,6 +28,10 @@ import {
 import { persistPipelineExecution } from './persistPipelineExecution.js';
 import type { CollectionImportSummary, PipelineFeedbackSummary } from './pipelineExecutionTypes.js';
 import { PIPELINE_EXECUTIONS_COLLECTION } from './pipelineExecutionTypes.js';
+import type { PipelineProgressEvent } from './pipelineProgress.js';
+
+export type { PipelineProgressEvent, PipelineProgressStage } from './pipelineProgress.js';
+export { PIPELINE_PROGRESS_STAGES } from './pipelineProgress.js';
 
 export type PipelineRunRequest = {
   profileId: string;
@@ -44,6 +48,8 @@ export type PipelineRunRequest = {
   rootDir: string;
   /** Test hook: inject an in-memory store instead of configuring Atlas persistence. */
   migrationStore?: MigrationStore;
+  /** Optional progress callback (web UI SSE stream). */
+  onProgress?: (event: PipelineProgressEvent) => void;
 };
 
 export type { CollectionImportSummary, PipelineFeedbackSummary } from './pipelineExecutionTypes.js';
@@ -72,10 +78,15 @@ export type PipelineRunResult = {
   errors: string[];
 };
 
+function reportProgress(request: PipelineRunRequest, event: PipelineProgressEvent): void {
+  request.onProgress?.(event);
+}
+
 /** Validate inputs, run design, then import CSV exports via csvToAtlas. */
 export async function runFullPipeline(request: PipelineRunRequest): Promise<PipelineRunResult> {
   const startedAt = new Date().toISOString();
   const errors: string[] = [];
+  reportProgress(request, { stage: 'validating', message: 'Validating MongoDB URI and csvToAtlas configuration…' });
   const importEnv = buildPipelineImportEnv({
     mongoUri: request.mongoUri,
     mongoDb: request.targetDb,
@@ -98,6 +109,8 @@ export async function runFullPipeline(request: PipelineRunRequest): Promise<Pipe
   const outDir = request.outDir ?? join(request.rootDir, 'out', 'ui-pipeline');
   mkdirSync(outDir, { recursive: true });
 
+  reportProgress(request, { stage: 'enriching', message: 'Measuring CSV row counts and relationship cardinality…' });
+
   const modelForDesign: SqlStructuralModel = request.dialect?.trim()
     ? { ...request.model, source: `ddl:${request.dialect.trim()}` }
     : request.model;
@@ -113,6 +126,10 @@ export async function runFullPipeline(request: PipelineRunRequest): Promise<Pipe
 
   const profile = getProfile(request.profileId);
   const clusterId = importEnv.HVYMETL_ATLAS_CLUSTER_ID?.trim();
+  reportProgress(request, {
+    stage: 'designing',
+    message: `Running ML-enhanced design (${profile.label})…`,
+  });
   const mlDesign = await designFromModelWithMlEngine(enrichedModel, profile, request.knowledgeDir, {
     schedulePostMigrationReflection: false,
     clusterId,
@@ -122,6 +139,10 @@ export async function runFullPipeline(request: PipelineRunRequest): Promise<Pipe
     designReport: mlDesign.designReport,
     retrievalStrategy: mlDesign.retrievalStrategy,
   };
+  reportProgress(request, {
+    stage: 'artifacts',
+    message: `Writing migration plan (${design.plan.collections.length} collections)…`,
+  });
   const paths = writeDesignArtifacts(outDir, design);
 
   const migrationLogIds = mlDesign.ml.migrationLogIds;
@@ -130,6 +151,8 @@ export async function runFullPipeline(request: PipelineRunRequest): Promise<Pipe
   const allCsvFiles = listCsvFiles(csvRoot);
   const shapedDir = join(outDir, 'csv-shaped');
   mkdirSync(shapedDir, { recursive: true });
+
+  reportProgress(request, { stage: 'shaping', message: 'Shaping CSV files with embedded arrays and references…' });
 
   const csvCollections = design.plan.collections.map((collection) => {
     if (collectionNeedsShapedCsv(collection)) {
@@ -150,7 +173,17 @@ export async function runFullPipeline(request: PipelineRunRequest): Promise<Pipe
   const targetDb = request.targetDb ?? importEnv.MONGODB_DB ?? 'csv_to_atlas';
   importEnv.MONGODB_DB = targetDb;
   const imports: CollectionImportSummary[] = [];
+  const importTotal = csvCollections.length;
+  let importIndex = 0;
   for (const coll of csvCollections) {
+    importIndex += 1;
+    reportProgress(request, {
+      stage: 'importing',
+      message: `Importing ${coll.name}…`,
+      collection: coll.name,
+      current: importIndex,
+      total: importTotal,
+    });
     const actualFiles = coll.files.filter((file) => existsSync(file));
     if (actualFiles.length === 0) {
       imports.push({
@@ -179,6 +212,7 @@ export async function runFullPipeline(request: PipelineRunRequest): Promise<Pipe
 
   const reflectionScheduled = migrationLogIds.length > 0;
   if (reflectionScheduled) {
+    reportProgress(request, { stage: 'reflection', message: 'Scheduling post-import ML feedback reflection…' });
     triggerPostMigrationReflection(migrationLogIds, { clusterId });
   }
 
@@ -190,6 +224,7 @@ export async function runFullPipeline(request: PipelineRunRequest): Promise<Pipe
   };
 
   const store = request.migrationStore ?? getMigrationStore();
+  reportProgress(request, { stage: 'persisting', message: 'Saving pipeline execution record to MongoDB…' });
   const execution = await persistPipelineExecution({
     startedAt,
     ok: errors.length === 0,
@@ -222,6 +257,8 @@ export async function runFullPipeline(request: PipelineRunRequest): Promise<Pipe
       2,
     )}\n`,
   );
+
+  reportProgress(request, { stage: 'done', message: errors.length === 0 ? 'Pipeline completed successfully.' : 'Pipeline finished with errors.' });
 
   return {
     ok: errors.length === 0,
