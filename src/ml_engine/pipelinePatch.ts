@@ -265,14 +265,25 @@ export async function designFromModelWithMlEngine(
   model: SqlStructuralModel,
   profile: WorkloadProfile,
   knowledgeDir: string,
-  schemaGenerator?: SchemaGenerator,
+  options: {
+    schemaGenerator?: SchemaGenerator;
+    schedulePostMigrationReflection?: boolean;
+    clusterId?: string;
+  } = {},
 ): Promise<{
   plan: MigrationPlan;
   designReport: string;
   retrievalStrategy: string;
   ml: MlEnhancedDesignResult;
 }> {
-  const ml = await runMlEnhancedDesign({ model, profile, knowledgeDir, schemaGenerator });
+  const ml = await runMlEnhancedDesign({
+    model,
+    profile,
+    knowledgeDir,
+    schemaGenerator: options.schemaGenerator,
+    schedulePostMigrationReflection: options.schedulePostMigrationReflection,
+    clusterId: options.clusterId,
+  });
   const designReport = [
     '# Migration Design Report (ML-Enhanced)',
     '',

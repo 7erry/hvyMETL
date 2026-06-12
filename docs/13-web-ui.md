@@ -36,7 +36,7 @@ exports, same as CLI).
 | **Session state** | Auto-saved in `sessionStorage` (schema, layout, artifacts survive refresh) | Client-side |
 | **Table details** | Click table on canvas or sidebar | Column types, PKs, FKs |
 | **AI-Powered DDL Export** | Full-screen artifact editor (editable + per-file download) | `POST /api/export/migration` + prompts |
-| **Full pipeline** | Header → **Run Full Pipeline** (design → csvToAtlas import from CSV exports) | `GET /api/pipeline/config`, `POST /api/pipeline/run` |
+| **Full pipeline** | Header → **Run Full Pipeline** (ML design → shaped CSV import → Atlas persistence) | `GET /api/pipeline/config`, `POST /api/pipeline/run`, `GET /api/pipeline/executions` |
 
 Artifact purposes (migration plan, design report, RAG prompts, repository layer):
 [15-migration-artifacts.md](15-migration-artifacts.md).
@@ -58,8 +58,10 @@ All six pipeline steps (Knowledge + RAG, profiles, design, ETL, import, codegen)
 | `POST` | `/api/export/migration` | `{ model, profileId, ddl }` | Downloads: plan JSON, design report, RAG prompts |
 | `POST` | `/api/export/prompts` | `{ ddl, profileId }` | RAG prompt bundle |
 | `GET` | `/api/pipeline/config` | — | Non-secret pipeline status (Mongo URI, csvToAtlas, source DB) |
-| `POST` | `/api/pipeline/run` | `{ model, profileId, ddl, dialect?, csvSourcePath?, mongoUri?, csvToAtlasPath?, targetDb?, drop? }` | Design + csvToAtlas import summary |
+| `POST` | `/api/pipeline/run` | `{ model, profileId, ddl, dialect?, csvSourcePath?, mongoUri?, csvToAtlasPath?, targetDb?, drop? }` | ML design + csvToAtlas import + MongoDB execution record |
 | `POST` | `/api/pipeline/run-with-csv` | `multipart csvs` + form fields | Same as run, with uploaded CSV files |
+| `GET` | `/api/pipeline/executions?limit=20` | — | Recent pipeline runs from `hvymetl_pipeline_executions` |
+| `GET` | `/api/pipeline/executions/:executionId` | — | One run (includes migration plan, design report, csv manifest) |
 
 ## 5. Supported SQL dialects
 
@@ -117,9 +119,33 @@ The UI uses the official **LeafyGreen** palette (`#001E2B`, `#00ED64`, `#00684A`
 ## 8. CLI parity
 
 Design and export are available in the UI. The **Run Full Pipeline** action runs
-design → csvToAtlas import when `MONGODB_URI`, `CSV_TO_ATLAS_PATH`, and CSV exports
-(`HVYMETL_CSV_SOURCE` or upload) are configured. Works with any schema import dialect
-— export row data from your source database as CSV files named after each table.
+**ML-enhanced design** → **CSV shaping** → **csvToAtlas import** when `MONGODB_URI`,
+`CSV_TO_ATLAS_PATH`, and CSV exports (`HVYMETL_CSV_SOURCE` or upload) are configured.
+Works with any schema import dialect — export row data from your source database as
+CSV files named after each table (e.g. `orders.csv`, `order_items.csv`).
+
+Implementation: [`src/server/runPipeline.ts`](../src/server/runPipeline.ts).
+
+### What the web pipeline does
+
+| Stage | Behavior |
+| --- | --- |
+| **CSV enrichment** | Row counts and FK cardinality measured from CSV exports before design ([`csvModelEnrichment.ts`](../src/utilities/csvModelEnrichment.ts)) |
+| **ML design** | `designFromModelWithMlEngine` — reranker, critic, lessons-learned RAG, migration logs ([`pipelinePatch.ts`](../src/ml_engine/pipelinePatch.ts)) |
+| **CSV shaping** | Embeds, extended references, and computed counters merged into `out/ui-pipeline/csv-shaped/*.csv` ([`csvShaper.ts`](../src/utilities/csvShaper.ts)) |
+| **Import** | Shaped (or flat) CSVs imported via csvToAtlas into `targetDb` |
+| **Feedback loop** | Per-collection decisions logged; post-import reflection upserts lessons when metrics breach thresholds |
+| **Execution archive** | Full run persisted to MongoDB (see §9) |
+
+Disk artifacts are still written under `out/ui-pipeline/`:
+
+| File | Role |
+| --- | --- |
+| `migration-plan.json` | Pattern-driven collection plan |
+| `design-report.md` | Human-readable design report (includes ML trace) |
+| `csv-import-manifest.json` | Collection → CSV file mapping used for import |
+| `csv-shaped/*.csv` | Pattern-compliant import files (embedded `field[]` JSON columns) |
+| `feedback-manifest.json` | `executionId`, memory DB, migration log IDs |
 
 All pipeline stages remain available without the UI:
 
@@ -128,3 +154,61 @@ npm run hvymetl -- design --source examples/iot.db --profile iot --out out/iot
 npm run hvymetl -- etl --plan out/iot/migration-plan.json --out out/iot
 npm run import-cli -- out/iot/csv/*.csv collectionName
 ```
+
+## 9. MongoDB persistence (pipeline runs & ML memory)
+
+When `MONGODB_URI` is set, each **Run Full Pipeline** execution is archived in Atlas
+alongside the ML feedback loop. This is separate from the **import target database**
+(`targetDb` / `MONGODB_DB` on the csvToAtlas import) unless you configure otherwise.
+
+### Memory database
+
+| Variable | Default | Purpose |
+| --- | --- | --- |
+| `HVYMETL_MEMORY_DB` | — | Preferred database for all `hvymetl_*` metadata collections |
+| (fallback) | `hvymetl_memory` | Used when `HVYMETL_MEMORY_DB` is unset |
+
+Set `HVYMETL_MEMORY_DB=hvymetl_memory` in `.env` to keep migration metadata separate
+from application data in `MONGODB_DB`.
+
+### Collections
+
+| Collection | Written when | Contents |
+| --- | --- | --- |
+| `hvymetl_pipeline_executions` | Every pipeline run | `migrationPlan`, `designReport`, `csvImportManifest`, imports, errors, timestamps |
+| `hvymetl_migration_logs` | ML design phase | Per-collection decisions, telemetry, critic predictions |
+| `hvymetl_lessons_learned` | Post-import reflection (on metric breach) | Semantic failure lessons with optional embeddings |
+
+### Pipeline execution document
+
+Each run gets a unique `executionId` (returned in the API response as `execution`):
+
+```json
+{
+  "executionId": "…",
+  "completedAt": "2026-06-12T…",
+  "ok": true,
+  "profileId": "catalog",
+  "targetDb": "oracle_migration",
+  "memoryDb": "hvymetl_memory",
+  "migrationPlan": { },
+  "designReport": "# Migration Design Report (ML-Enhanced)\n…",
+  "csvImportManifest": {
+    "csvSource": "/path/to/csv",
+    "schemaDialect": "oracle",
+    "collections": [{ "name": "orders", "files": ["…/csv-shaped/orders.csv"] }]
+  },
+  "imports": [{ "collection": "orders", "ok": true, "insertedCount": 3500 }],
+  "migrationLogIds": ["ddl:oracle:orders-…"],
+  "reflectionScheduled": true
+}
+```
+
+Retrieve runs:
+
+```bash
+curl "http://localhost:3847/api/pipeline/executions?limit=10"
+curl "http://localhost:3847/api/pipeline/executions/<executionId>"
+```
+
+Deep dive on lessons learned and reflection: [17-ml-engine.md](17-ml-engine.md).

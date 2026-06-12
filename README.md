@@ -136,12 +136,13 @@ cp .env.example .env
 | Variable | Required for | Description |
 | --- | --- | --- |
 | `CSV_TO_ATLAS_PATH` | ETL, import, `run-all-examples` | Path to [cvsToAtlas](https://github.com/7erry/cvsToAtlas) clone |
-| `MONGODB_URI` | Atlas import, ML feedback loop | Cluster connection string; also persists `hvymetl_migration_logs` + `hvymetl_lessons_learned` |
+| `MONGODB_URI` | Atlas import, ML feedback loop | Cluster connection string; persists `hvymetl_*` metadata when set |
 | `MONGODB_MODEL_KEY` | Hybrid RAG + ML reranker (optional) | MongoDB Model Key; BM25 + Voyage 4 + RRF + [rerank-2.5](https://docs.voyageai.com/reference/reranker-api) |
 | `OPENAI_API_KEY` | Vector-only RAG (optional) | Used only when Model Key is unset |
-| `HVYMETL_SCHEDULE_REFLECTION` | ML feedback loop (optional) | Set to `1` to auto-schedule post-migration reflection |
+| `HVYMETL_SCHEDULE_REFLECTION` | ML feedback loop (optional) | Set to `1` to auto-schedule post-migration reflection (CLI ML design) |
 | `HVYMETL_ATLAS_STUB_MODE` | ML local testing (optional) | `healthy` or `degraded` stub Atlas metrics |
-| `HVYMETL_MEMORY_DB` | ML feedback loop (optional) | Database for migration logs (default: `hvymetl_memory`) |
+| `HVYMETL_MEMORY_DB` | ML memory + pipeline archive (optional) | Database for `hvymetl_migration_logs`, `hvymetl_lessons_learned`, `hvymetl_pipeline_executions` (default: `hvymetl_memory`) |
+| `HVYMETL_CSV_SOURCE` | Web UI full pipeline (optional) | Default directory of per-table CSV exports |
 
 Requires Node.js 20+. Design and unit tests run offline; ETL needs `CSV_TO_ATLAS_PATH` set (validated at runtime).
 
@@ -150,7 +151,9 @@ After upgrading Node.js, recompile native dependencies: `npm rebuild better-sqli
 ## Web UI (optional)
 
 MongoDB-branded **Migration Studio** for visual ER diagrams, instant DDL import,
-templates (Laravel, Django, Twitter, …), and AI-powered migration export. The CLI
+templates (Laravel, Django, Twitter, …), and **Run Full Pipeline** — ML-enhanced
+design, CSV shaping with embedded arrays, csvToAtlas import, and automatic
+persistence of each run to MongoDB (`hvymetl_pipeline_executions`). The CLI
 remains fully available.
 
 ```bash
@@ -158,7 +161,8 @@ npm run dev:ui      # http://localhost:5173 (API on :3847)
 npm run start:ui    # production build on http://localhost:3847
 ```
 
-See **[web/README.md](web/README.md)** (screenshots & how-to) and **[docs/13-web-ui.md](docs/13-web-ui.md)** (API reference).
+See **[web/README.md](web/README.md)** (screenshots & how-to) and
+**[docs/13-web-ui.md](docs/13-web-ui.md)** (API reference, MongoDB persistence).
 
 ## Run all examples against Atlas
 

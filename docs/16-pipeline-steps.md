@@ -292,7 +292,9 @@ npm run hvymetl -- etl --plan out/iot/migration-plan.json --out out/iot
 
 Requires `CSV_TO_ATLAS_PATH` in `.env` (clone root with `package.json` + `dist/cli.js`).
 
-Web UI: **Run Full Pipeline** runs design + csvToAtlas import from CSV exports (uses pre-exported CSVs, not `runEtl` worker pool in all paths — see [13-web-ui.md](13-web-ui.md)).
+Web UI: **Run Full Pipeline** runs ML design + CSV shaping + csvToAtlas import from
+CSV exports. Each run is archived to `hvymetl_pipeline_executions` in the memory
+database. See [13-web-ui.md](13-web-ui.md) §9.
 
 ### How it fits the pipeline
 
@@ -345,7 +347,9 @@ npm run run-all-examples        # all seven domains end-to-end
 
 Requires `MONGODB_URI` and `CSV_TO_ATLAS_PATH` in `.env`.
 
-Web UI: **Run Full Pipeline** (design → csvToAtlas from CSV directory or uploaded files).
+Web UI: **Run Full Pipeline** (ML design → shaped CSV import). Persists
+`migration-plan.json`, `design-report.md`, and `csv-import-manifest.json` to
+`hvymetl_pipeline_executions`. See [13-web-ui.md](13-web-ui.md).
 
 ### How it fits the pipeline
 

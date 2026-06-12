@@ -21,6 +21,18 @@ import { parseDdlToModel } from '../utilities/ddlParser.js';
 import type { SqlStructuralModel } from '../types.js';
 import { getPipelineConfigStatus } from './pipelineConfig.js';
 import { runFullPipeline } from './runPipeline.js';
+import {
+  configureMigrationStore,
+  getMigrationStore,
+  resolveMemoryDbName,
+} from '../ml_engine/migrationStore.js';
+import { PIPELINE_EXECUTIONS_COLLECTION } from './pipelineExecutionTypes.js';
+import {
+  configureMigrationStore,
+  getMigrationStore,
+  resolveMemoryDbName,
+} from '../ml_engine/migrationStore.js';
+import { PIPELINE_EXECUTIONS_COLLECTION } from './pipelineExecutionTypes.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '../..');
 const KNOWLEDGE_DIR = join(ROOT, 'knowledge');
@@ -173,6 +185,56 @@ app.get('/api/pipeline/config', (req, res) => {
   res.json(getPipelineConfigStatus(process.env, { schemaDialect, csvSourcePath, csvToAtlasPath }));
 });
 
+/** List recent pipeline executions stored in MongoDB (newest first). */
+app.get('/api/pipeline/executions', async (req, res) => {
+  try {
+    const mongoUri = String(req.query?.mongoUri ?? process.env.MONGODB_URI ?? '').trim();
+    if (!mongoUri) {
+      res.status(400).json({ error: 'MONGODB_URI is required to list pipeline executions.' });
+      return;
+    }
+    configureMigrationStore({
+      mongoUri,
+      dbName: resolveMemoryDbName(process.env),
+    });
+    const limit = Math.min(Math.max(Number(req.query?.limit ?? 20), 1), 100);
+    const store = getMigrationStore();
+    const executions = await store.listPipelineExecutions(limit);
+    res.json({
+      memoryDb: resolveMemoryDbName(process.env),
+      collection: PIPELINE_EXECUTIONS_COLLECTION,
+      count: executions.length,
+      executions,
+    });
+  } catch (error) {
+    res.status(500).json({ error: String(error) });
+  }
+});
+
+/** Fetch one pipeline execution by id (includes migration plan, design report, csv manifest). */
+app.get('/api/pipeline/executions/:executionId', async (req, res) => {
+  try {
+    const mongoUri = String(req.query?.mongoUri ?? process.env.MONGODB_URI ?? '').trim();
+    if (!mongoUri) {
+      res.status(400).json({ error: 'MONGODB_URI is required to fetch pipeline executions.' });
+      return;
+    }
+    configureMigrationStore({
+      mongoUri,
+      dbName: resolveMemoryDbName(process.env),
+    });
+    const store = getMigrationStore();
+    const execution = await store.findPipelineExecution(String(req.params.executionId));
+    if (!execution) {
+      res.status(404).json({ error: 'Pipeline execution not found.' });
+      return;
+    }
+    res.json({ execution });
+  } catch (error) {
+    res.status(500).json({ error: String(error) });
+  }
+});
+
 /** Shared JSON shape for pipeline run responses. */
 function pipelineRunResponse(result: Awaited<ReturnType<typeof runFullPipeline>>) {
   return {
@@ -185,6 +247,8 @@ function pipelineRunResponse(result: Awaited<ReturnType<typeof runFullPipeline>>
     retrievalStrategy: result.design.retrievalStrategy,
     migrationPlanJson: result.design.plan,
     designReportMarkdown: result.design.designReport,
+    feedback: result.feedback,
+    execution: result.execution,
   };
 }
 

@@ -1,18 +1,33 @@
 /**
- * Full pipeline: design → csvToAtlas import from user CSV exports (web UI).
+ * Full pipeline: ML design → csvToAtlas import from user CSV exports (web UI).
  */
 
 import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { designFromModel, writeDesignArtifacts, type DesignFromModelResult } from '../design/designFromModel.js';
+import { writeDesignArtifacts, type DesignFromModelResult } from '../design/designFromModel.js';
+import { designFromModelWithMlEngine } from '../ml_engine/pipelinePatch.js';
+import { triggerPostMigrationReflection } from '../ml_engine/feedbackHooks.js';
+import {
+  configureMigrationStore,
+  getMigrationStore,
+  resolveMemoryDbName,
+  setMigrationStore,
+  type MigrationStore,
+} from '../ml_engine/migrationStore.js';
+import { getProfile } from '../profiles/profiles.js';
 import type { SqlStructuralModel } from '../types.js';
-import { buildCollectionCsvMap, resolveCsvSourcePath } from '../utilities/csvSource.js';
+import { listCsvFiles, matchCsvFilesForCollection, resolveCsvSourcePath } from '../utilities/csvSource.js';
+import { enrichModelFromCsv } from '../utilities/csvModelEnrichment.js';
+import { collectionNeedsShapedCsv, shapeCollectionCsv } from '../utilities/csvShaper.js';
 import { runImportCli } from '../utilities/runImportCli.js';
 import {
   buildPipelineImportEnv,
   getPipelineConfigStatus,
   resolvePipelineSchemaDialect,
 } from './pipelineConfig.js';
+import { persistPipelineExecution } from './persistPipelineExecution.js';
+import type { CollectionImportSummary, PipelineFeedbackSummary } from './pipelineExecutionTypes.js';
+import { PIPELINE_EXECUTIONS_COLLECTION } from './pipelineExecutionTypes.js';
 
 export type PipelineRunRequest = {
   profileId: string;
@@ -27,24 +42,27 @@ export type PipelineRunRequest = {
   csvToAtlasPath?: string;
   knowledgeDir: string;
   rootDir: string;
+  /** Test hook: inject an in-memory store instead of configuring Atlas persistence. */
+  migrationStore?: MigrationStore;
 };
 
-export type CollectionImportSummary = {
-  collection: string;
-  files: string[];
-  ok: boolean;
-  insertedCount?: number;
-  error?: string;
-};
+export type { CollectionImportSummary, PipelineFeedbackSummary } from './pipelineExecutionTypes.js';
 
 export type PipelineRunResult = {
   ok: boolean;
   design: DesignFromModelResult;
+  feedback: PipelineFeedbackSummary;
+  execution: {
+    executionId: string;
+    memoryDb: string;
+    collection: string;
+  };
   paths: {
     outDir: string;
     planPath: string;
     reportPath: string;
     manifestPath: string;
+    feedbackPath: string;
   };
   csvSource: {
     path: string;
@@ -56,6 +74,7 @@ export type PipelineRunResult = {
 
 /** Validate inputs, run design, then import CSV exports via csvToAtlas. */
 export async function runFullPipeline(request: PipelineRunRequest): Promise<PipelineRunResult> {
+  const startedAt = new Date().toISOString();
   const errors: string[] = [];
   const importEnv = buildPipelineImportEnv({
     mongoUri: request.mongoUri,
@@ -79,20 +98,54 @@ export async function runFullPipeline(request: PipelineRunRequest): Promise<Pipe
   const outDir = request.outDir ?? join(request.rootDir, 'out', 'ui-pipeline');
   mkdirSync(outDir, { recursive: true });
 
-  const design = await designFromModel(request.model, request.profileId, request.knowledgeDir);
+  const modelForDesign: SqlStructuralModel = request.dialect?.trim()
+    ? { ...request.model, source: `ddl:${request.dialect.trim()}` }
+    : request.model;
+
+  const enrichedModel = enrichModelFromCsv(modelForDesign, csvRoot);
+
+  const memoryDb = resolveMemoryDbName(importEnv);
+  if (request.migrationStore) {
+    setMigrationStore(request.migrationStore);
+  } else {
+    configureMigrationStore({ mongoUri: importEnv.MONGODB_URI, dbName: memoryDb });
+  }
+
+  const profile = getProfile(request.profileId);
+  const clusterId = importEnv.HVYMETL_ATLAS_CLUSTER_ID?.trim();
+  const mlDesign = await designFromModelWithMlEngine(enrichedModel, profile, request.knowledgeDir, {
+    schedulePostMigrationReflection: false,
+    clusterId,
+  });
+  const design: DesignFromModelResult = {
+    plan: mlDesign.plan,
+    designReport: mlDesign.designReport,
+    retrievalStrategy: mlDesign.retrievalStrategy,
+  };
   const paths = writeDesignArtifacts(outDir, design);
 
-  const csvMap = buildCollectionCsvMap(csvRoot, design.plan.collections);
-  const csvCollections = design.plan.collections.map((collection) => ({
-    name: collection.name,
-    files: csvMap.get(collection.name) ?? [],
-  }));
+  const migrationLogIds = mlDesign.ml.migrationLogIds;
+  const feedbackPath = join(outDir, 'feedback-manifest.json');
+
+  const allCsvFiles = listCsvFiles(csvRoot);
+  const shapedDir = join(outDir, 'csv-shaped');
+  mkdirSync(shapedDir, { recursive: true });
+
+  const csvCollections = design.plan.collections.map((collection) => {
+    if (collectionNeedsShapedCsv(collection)) {
+      const shapedPath = join(shapedDir, `${collection.name}.csv`);
+      const written = shapeCollectionCsv(collection, enrichedModel, csvRoot, shapedPath);
+      if (written) {
+        return { name: collection.name, files: [written] };
+      }
+    }
+    const files = matchCsvFilesForCollection(allCsvFiles, collection);
+    return { name: collection.name, files };
+  });
 
   const manifestPath = join(outDir, 'csv-import-manifest.json');
-  writeFileSync(
-    manifestPath,
-    `${JSON.stringify({ csvSource: csvRoot, schemaDialect, collections: csvCollections }, null, 2)}\n`,
-  );
+  const csvImportManifest = { csvSource: csvRoot, schemaDialect, collections: csvCollections };
+  writeFileSync(manifestPath, `${JSON.stringify(csvImportManifest, null, 2)}\n`);
 
   const targetDb = request.targetDb ?? importEnv.MONGODB_DB ?? 'csv_to_atlas';
   importEnv.MONGODB_DB = targetDb;
@@ -124,10 +177,58 @@ export async function runFullPipeline(request: PipelineRunRequest): Promise<Pipe
     }
   }
 
+  const reflectionScheduled = migrationLogIds.length > 0;
+  if (reflectionScheduled) {
+    triggerPostMigrationReflection(migrationLogIds, { clusterId });
+  }
+
+  const feedback: PipelineFeedbackSummary = {
+    memoryDb,
+    migrationLogIds,
+    reflectionScheduled,
+    collectionsLogged: migrationLogIds.length,
+  };
+
+  const store = request.migrationStore ?? getMigrationStore();
+  const execution = await persistPipelineExecution({
+    startedAt,
+    ok: errors.length === 0,
+    profileId: request.profileId,
+    dialect: request.dialect,
+    schemaDialect,
+    targetDb,
+    memoryDb,
+    csvSourcePath: csvRoot,
+    outDir,
+    design,
+    csvImportManifest,
+    imports,
+    errors,
+    feedback,
+    store,
+  });
+
+  writeFileSync(
+    feedbackPath,
+    `${JSON.stringify(
+      {
+        executionId: execution.executionId,
+        memoryDb,
+        collections: `hvymetl_migration_logs, hvymetl_lessons_learned, ${PIPELINE_EXECUTIONS_COLLECTION}`,
+        migrationLogIds,
+        reflectionScheduled,
+      },
+      null,
+      2,
+    )}\n`,
+  );
+
   return {
     ok: errors.length === 0,
     design,
-    paths: { outDir, planPath: paths.planPath, reportPath: paths.reportPath, manifestPath },
+    feedback,
+    execution,
+    paths: { outDir, planPath: paths.planPath, reportPath: paths.reportPath, manifestPath, feedbackPath },
     csvSource: { path: csvRoot, collections: csvCollections },
     imports,
     errors,

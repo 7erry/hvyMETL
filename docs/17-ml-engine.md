@@ -111,8 +111,9 @@ Breaches produce a lesson like: *"CRITICAL FAILURE: Table 'order_items' migrated
 | --- | --- | --- | --- |
 | `MONGODB_MODEL_KEY` | optional | — | Enables Voyage **rerank-2.5** + lesson embeddings |
 | `MONGODB_MODEL_RERANK_MODEL` | optional | `rerank-2.5` | Override reranker model |
-| `MONGODB_URI` | optional | — | Persist logs + lessons (in-memory if unset) |
-| `MONGODB_DB` / `HVYMETL_MEMORY_DB` | optional | `hvymetl_memory` | Database for feedback collections |
+| `MONGODB_URI` | optional | — | Persist logs, lessons, and pipeline executions (in-memory if unset) |
+| `HVYMETL_MEMORY_DB` | optional | `hvymetl_memory` | Database for all `hvymetl_*` metadata collections |
+| `MONGODB_DB` | optional | — | Fallback memory DB name when `HVYMETL_MEMORY_DB` unset; also csvToAtlas import target |
 | `HVYMETL_ATLAS_CLUSTER_ID` | optional | `local-dev` | Cluster id on logged decisions |
 | `HVYMETL_ATLAS_STUB_MODE` | optional | — | `healthy` or `degraded` for stub metrics |
 | `HVYMETL_CRITIC_MODEL_PATH` | optional | `models/performance-critic.onnx` | ONNX critic model |
@@ -127,8 +128,10 @@ Breaches produce a lesson like: *"CRITICAL FAILURE: Table 'order_items' migrated
 | --- | --- |
 | `hvymetl_migration_logs` | Per-table decisions, telemetry, predictions, actuals |
 | `hvymetl_lessons_learned` | Failure lessons (`namespace: lessons_learned`) with optional `embedding` vector |
+| `hvymetl_pipeline_executions` | Full web UI pipeline runs: `migrationPlan`, `designReport`, `csvImportManifest`, import summary |
 
-Implementation: [`migrationStore.ts`](../src/ml_engine/migrationStore.ts).
+Implementation: [`migrationStore.ts`](../src/ml_engine/migrationStore.ts),
+[`persistPipelineExecution.ts`](../src/server/persistPipelineExecution.ts).
 
 ### Lessons-learned memory: storage vs retrieval
 
@@ -203,10 +206,10 @@ for migrating to Atlas Vector Search at scale.
 | Concern | Env var | Role |
 | --- | --- | --- |
 | **Migration target data** | `MONGODB_URI` + `MONGODB_DB` on import | Application collections from csvToAtlas |
-| **ML memory** | `MONGODB_URI` + `HVYMETL_MEMORY_DB` (or `MONGODB_DB`) | `hvymetl_*` metadata collections |
+| **ML memory** | `MONGODB_URI` + `HVYMETL_MEMORY_DB` (default `hvymetl_memory`) | `hvymetl_*` metadata collections |
 
-You may point both at one cluster with different database names, or share `MONGODB_DB`
-if you prefer a single database for app data and ML metadata.
+You may point both at one cluster with different database names. The web UI pipeline
+writes import data to `targetDb` and archives design artifacts to the memory database.
 
 ---
 
@@ -368,6 +371,15 @@ const { plan, designReport, ml } = await designFromModelWithMlEngine(model, prof
 | 5 | `evaluateAllSchemaCandidates(…)` | APPROVED or REJECTED (+ max 2 regen loops) |
 | 6 | `logMigrationPlanDecisions(…)` | Rows in `hvymetl_migration_logs` |
 | 7 | `scheduleReflection(migrationId)` | Async post-ETL lesson upsert |
+| 8 | `persistPipelineExecution(…)` | Row in `hvymetl_pipeline_executions` (web UI) |
+
+### Web UI full pipeline (default-on)
+
+The Migration Studio **Run Full Pipeline** action runs steps 1–8 automatically via
+[`runFullPipeline()`](../src/server/runPipeline.ts): CSV enrichment, ML design, CSV
+shaping (`csv-shaped/`), csvToAtlas import, reflection, and execution archive.
+
+List or fetch archived runs: `GET /api/pipeline/executions` — see [13-web-ui.md](13-web-ui.md).
 
 See also [16-pipeline-steps.md](16-pipeline-steps.md) for how this fits the six-stage CLI pipeline.
 
@@ -413,7 +425,7 @@ Console logs to watch:
 
 ## 9. Refactoring Notes
 
-- Wire `designFromModelWithMlEngine` behind `HVYMETL_ML_ENGINE=1` in the web UI pipeline when ready for default-on behavior.
 - Replace `StubAtlasMetricsConnector` with a real Atlas Performance Advisor / Query Profiler API client in production.
 - Persist lesson embeddings in Atlas with `$vectorSearch` when the lessons collection grows beyond in-memory cosine ranking.
 - Add a CLI subcommand (`hvymetl reflect --migration-id …`) for cron operators.
+- Expose pipeline execution history in the Migration Studio UI (API: `GET /api/pipeline/executions`).

@@ -386,7 +386,7 @@ function planChildRelationships(
     computedFields.push({
       field: counterField,
       description: `Running count of ${childTable.name} rows for this ${singularize(table.name)}.`,
-      initialExpression: `COUNT(*) FROM ${childTable.name} WHERE ${relationship.fkColumn} = ${table.name}.id`,
+      initialExpression: `COUNT(*) FROM ${childTable.name} WHERE ${relationship.fkColumn} = ${table.name}.${table.primaryKey[0] ?? 'id'}`,
     });
     properties[counterField] = { bsonType: 'long', description: 'Computed pattern counter maintained with $inc.' };
     patterns.push({

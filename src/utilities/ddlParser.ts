@@ -318,14 +318,16 @@ export function parseDdlToModel(ddl: string, sourceLabel = 'ddl:import'): SqlStr
 
   const allTables = ensureReferencedTables(tables);
 
+  // Cardinality is unknown until CSV or live DB stats are applied; assume unbounded
+  // so read-heavy workloads prefer Subset over incorrectly absorbing every child.
   const relationships = allTables.flatMap((child) =>
     child.foreignKeys.map((fk) => ({
       parentTable: fk.referencesTable,
       childTable: child.name,
       fkColumn: fk.column,
-      avgChildrenPerParent: 1,
-      maxChildrenPerParent: 1,
-      isBounded: true,
+      avgChildrenPerParent: 0,
+      maxChildrenPerParent: 0,
+      isBounded: false,
     })),
   );
 
