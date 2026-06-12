@@ -1,4 +1,7 @@
-# hvyMETL
+<h1>
+  <img src="docs/hvymetl-logo.png" alt="hvyMETL logo" width="52" style="vertical-align: middle; margin-right: 10px;" />
+  hvyMETL
+</h1>
 
 **hvyMETL** (**H**igh **V**olume **M**ongoDB **ETL**) is a RAG-driven SQL-to-MongoDB
 migration toolkit. Instead of naive table-to-collection translation, hvyMETL grounds
