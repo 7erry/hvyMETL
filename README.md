@@ -293,3 +293,11 @@ See the [cvsToAtlas README](https://github.com/7erry/cvsToAtlas) for `--analyze`
 
 Files sharing identical headers are treated as partitions of one dataset (the
 parallel ETL's chunk output) and upserted concurrently-safely by `_id`.
+
+## License
+
+Copyright (c) 2026 Terry Walters. Licensed under the
+[Business Source License 1.1](LICENSE) (BUSL-1.1). The Licensed Work converts to
+[Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0) on the Change Date
+(2026-06-10). Non-production and internal evaluation use is permitted under the
+Additional Use Grant.

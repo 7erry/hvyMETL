@@ -1,17 +1,46 @@
-                                 Apache License
-                           Version 2.0, January 2004
-                        http://www.apache.org/licenses/
+Business Source License 1.1
 
-   Copyright 2026 Terry Walters
+Copyright (c) 2026 Terry Walters
 
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
+Parameters:
 
-       http://www.apache.org/licenses/LICENSE-2.0
+Licensor:                       Terry Walters
+Licensed Work:                  hvyMETL (https://github.com/7erry/hvyMETL)
+Associated Derivative Works:    All works derived from the Licensed Work.
+Change Date:                    2026-06-10
+Change License:                 Apache License, Version 2.0
+Additional Use Grant:           Use of the Licensed Work is permitted for
+                                non-production environments and for internal
+                                evaluation purposes.
 
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
+Terms
+
+1. The Licensor hereby grants you the right to copy, modify, create derivative
+   works, redistribute, and make available the Licensed Work applied to the
+   Licensed Work and Associated Derivative Works, provided that you do not use the
+   Licensed Work for any purpose that breaches the restrictions or conditions
+   specified in the Parameters or the Additional Use Grant.
+
+2. Effective on the Change Date, the Licensor hereby grants you a permanent,
+   worldwide, royalty-free, non-exclusive, irrevocable license under the Licensor's
+   intellectual property rights to copy, modify, create derivative works,
+   redistribute, and make available the Licensed Work under the terms of the
+   Change License.
+
+3. To the extent that the terms of the Change License conflict with the terms
+   of this Business Source License, the terms of this Business Source License
+   shall govern until the Change Date, after which the terms of the Change
+   License shall govern.
+
+4. Intellectual property rights, including copyrights, in the Licensed Work
+   remain with the Licensor. You must include a copy of this License and all
+   notices of copyright, patent, trademark, and attribution with any copy or
+   derivative work of the Licensed Work that you redistribute.
+
+5. THE LICENSED WORK IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+   OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+   FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+   AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+   OUT OF OR IN CONNECTION WITH THE LICENSED WORK OR THE USE OR OTHER DEALINGS
+   IN THE LICENSED WORK.
