@@ -1,0 +1,8 @@
+job_id,job_title,min_salary,max_salary
+CEO,Chief Executive Officer,150000.0,500000.0
+MGR,Department Manager,80000.0,140000.0
+REP,Sales Representative,40000.0,90000.0
+ENG,Software Engineer,75000.0,160000.0
+SUP,Support Specialist,35000.0,65000.0
+FIN,Financial Analyst,60000.0,110000.0
+HR,HR Specialist,45000.0,85000.0

@@ -1,0 +1,11 @@
+country_id,country_name,region_id
+US,United States,1
+CA,Canada,1
+UK,United Kingdom,2
+FR,France,2
+DE,Germany,2
+JP,Japan,3
+CN,China,3
+BR,Brazil,4
+AU,Australia,5
+MX,Mexico,1
