@@ -41,6 +41,9 @@ exports, same as CLI).
 Artifact purposes (migration plan, design report, RAG prompts, repository layer):
 [15-migration-artifacts.md](15-migration-artifacts.md).
 
+All six pipeline steps (Knowledge + RAG, profiles, design, ETL, import, codegen):
+[16-pipeline-steps.md](16-pipeline-steps.md).
+
 ## 4. API Reference
 
 | Method | Path | Body | Response |

@@ -31,12 +31,13 @@ merge-mode diagrams.
 | [08-repogen.md](08-repogen.md) | Generated repository layer with atomic modifiers | `src/repogen/` |
 | [09-utilities.md](09-utilities.md) | CSV dialect, deterministic ids, naming conversions, DDL parser | `src/utilities/` |
 | [15-migration-artifacts.md](15-migration-artifacts.md) | Migration plan, design report, RAG prompts, and repository layer — purpose and when to use each | `src/design/`, `src/rag/`, `src/repogen/` |
+| [16-pipeline-steps.md](16-pipeline-steps.md) | All six pipeline steps — purpose, outputs, commands, and how each stage connects | full pipeline |
 | [10-examples.md](10-examples.md) | The seven example SQL domains and the deterministic seeder | `examples/`, `src/examples/` |
 | [11-run-all-examples.md](11-run-all-examples.md) | End-to-end Atlas run for all seven domains with automated validation | `scripts/run-all-examples.mjs` |
 
 ## Architectural Role
 
-hvyMETL is a CLI toolchain (not a service). Its five stages communicate through
+hvyMETL is a CLI toolchain (not a service). Its six steps communicate through
 artifacts on disk, so each stage can be run, inspected, and re-run independently:
 
 ```mermaid

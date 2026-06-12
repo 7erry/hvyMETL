@@ -68,6 +68,8 @@ See **[docs/15-migration-artifacts.md](../docs/15-migration-artifacts.md)** for 
 artifact is for (migration plan, design report, schema design architect prompt,
 parallel ETL generator prompt, repository layer prompt vs `repogen` code).
 
+**Six pipeline steps** (purpose, outputs, commands): **[docs/16-pipeline-steps.md](../docs/16-pipeline-steps.md)**.
+
 ## Typical workflow
 
 1. **Import schema** — paste `CREATE TABLE` DDL, upload SQLite, or load a template.

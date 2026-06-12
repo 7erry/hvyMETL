@@ -55,38 +55,19 @@ flowchart TB
 More diagrams (workflow sequence, schema transforms, JSON plan structure, ETL worker
 pool, merge modes): **[docs/diagrams.md](docs/diagrams.md)**.
 
-1. **Knowledge base + RAG** (`knowledge/`, `src/rag/`): eleven curated pattern
-   documents (Bucket, Outlier, Extended Reference, Computed, Subset, Attribute,
-   Polymorphic, Schema Versioning, Tree, Pre-allocation, Embed-vs-Reference) with
-   applicability rules and verified code blocks. Retrieval is deterministic BM25 by
-   default; set `MONGODB_MODEL_KEY` (MongoDB Model Key from Atlas) for hybrid BM25 +
-   Voyage 4 ranks fused in-process by hvyMETL's
-   `reciprocalRankFusion()` ([details](docs/03-knowledge-rag.md#reciprocal-rank-fusion--whose-implementation)),
-   or `OPENAI_API_KEY` alone for vector-only retrieval.
-2. **Workload profiles** (`src/profiles/`): eight presets (catalog, cms, iot, mobile,
-   personalization, realtime-analytics, single-view, ledger) selectable at runtime,
-   each carrying telemetry, preferred patterns, write concern, and pool tuning.
-   `--custom` accepts exact numbers instead.
-3. **Design engine** (`src/design/`): introspects tables, foreign keys, row counts,
-   and child-count skew, then deterministically maps (structure x telemetry) to
-   patterns. Output: `migration-plan.json` ($jsonSchema validators, index specs,
-   deterministic `_id` rules) and `design-report.md` (per-decision justification
-   citing the knowledge source).
-4. **Parallel ETL** (`src/etl/`): up to 8 worker threads extract non-overlapping
-   primary-key ranges (window-aligned time ranges for bucketed collections), shaping
-   rows inside SQL: pre-joined Extended Reference columns, initialized Computed
-   counters, capped Subset arrays, grouped Bucket documents. Streams to CSV with O(1)
-   memory. `--dry-run` extracts exactly 3 chunks of 1,000 records with validation logs.
-5. **csvToAtlas import** ([cvsToAtlas](https://github.com/7erry/cvsToAtlas)): requires `CSV_TO_ATLAS_PATH` in `.env`; analysis (`--analyze`), join/embed merging,
-   and concurrency-safe bulk upserts keyed on the deterministic `_id`, so parallel
-   chunk imports are idempotent and race-free.
-6. **Repository generator** (`src/repogen/`): emits typed repository modules using
-   atomic modifiers only (`$inc`, `$push` + `$position` + `$slice`, bucket upserts)
-   plus a connection module tuned to the profile.
+**Full step-by-step guide:** **[docs/16-pipeline-steps.md](docs/16-pipeline-steps.md)** —
+purpose, outputs, commands, and pipeline wiring for all six stages:
 
-**What each output is for:** see **[docs/15-migration-artifacts.md](docs/15-migration-artifacts.md)**
-— migration plan, design report, the three RAG production prompts (schema design
-architect, parallel ETL generator, repository layer), and generated repository code.
+| # | Stage | Primary output |
+| --- | --- | --- |
+| 1 | Knowledge base + RAG | Retrieved pattern chunks (report / prompts) |
+| 2 | Workload profiles | Telemetry + tuning on `migration-plan.json` |
+| 3 | Design engine | `migration-plan.json`, `design-report.md` |
+| 4 | Parallel ETL | `csv/*.csv`, `etl-manifest.json` |
+| 5 | csvToAtlas import | Documents in MongoDB Atlas |
+| 6 | Codegen (`repogen`) | Typed `*Repository.ts`, `mongoClient.ts`, `ensureIndexes.ts` |
+
+Artifact purposes (plan, report, RAG prompts): **[docs/15-migration-artifacts.md](docs/15-migration-artifacts.md)**.
 
 ## Setup
 
