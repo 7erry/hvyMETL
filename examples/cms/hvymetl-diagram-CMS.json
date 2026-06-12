@@ -1,0 +1,522 @@
+{
+  "version": 1,
+  "name": "ddl:postgresql",
+  "dialect": "postgresql",
+  "ddl": "-- Content Management: pages, polymorphic blocks, revisions, assets, tags.\n-- Demonstrates: Polymorphic (block subtypes), Tree (page hierarchy),\n-- Schema Versioning (revisions), Embed (bounded blocks per page).\n\nCREATE TABLE authors (\n  id INTEGER PRIMARY KEY,\n  display_name VARCHAR(120) NOT NULL,\n  email VARCHAR(255) NOT NULL,\n  role VARCHAR(40) NOT NULL DEFAULT 'editor'\n);\n\nCREATE TABLE pages (\n  id INTEGER PRIMARY KEY,\n  parent_id INTEGER REFERENCES pages(id),\n  author_id INTEGER NOT NULL REFERENCES authors(id),\n  slug VARCHAR(200) NOT NULL,\n  title VARCHAR(255) NOT NULL,\n  status VARCHAR(20) NOT NULL DEFAULT 'draft',\n  published_at DATETIME,\n  created_at DATETIME NOT NULL\n);\n\n-- Class-table-inheritance flattened to a type column with sparse variant\n-- columns: a textbook polymorphic candidate.\nCREATE TABLE content_blocks (\n  id INTEGER PRIMARY KEY,\n  page_id INTEGER NOT NULL REFERENCES pages(id),\n  position INTEGER NOT NULL,\n  block_type VARCHAR(20) NOT NULL,\n  text_body TEXT,\n  image_asset_id INTEGER REFERENCES assets(id),\n  image_alt VARCHAR(255),\n  video_asset_id INTEGER REFERENCES assets(id),\n  video_duration_sec INTEGER,\n  embed_url VARCHAR(500)\n);\n\nCREATE TABLE assets (\n  id INTEGER PRIMARY KEY,\n  file_name VARCHAR(255) NOT NULL,\n  mime_type VARCHAR(100) NOT NULL,\n  byte_size INTEGER NOT NULL,\n  storage_url VARCHAR(500) NOT NULL,\n  uploaded_at DATETIME NOT NULL\n);\n\nCREATE TABLE page_revisions (\n  id INTEGER PRIMARY KEY,\n  page_id INTEGER NOT NULL REFERENCES pages(id),\n  author_id INTEGER NOT NULL REFERENCES authors(id),\n  revision_number INTEGER NOT NULL,\n  change_summary VARCHAR(500),\n  snapshot_json TEXT NOT NULL,\n  created_at DATETIME NOT NULL\n);\n\nCREATE TABLE tags (\n  id INTEGER PRIMARY KEY,\n  name VARCHAR(60) NOT NULL,\n  slug VARCHAR(80) NOT NULL\n);\n\nCREATE TABLE page_tags (\n  id INTEGER PRIMARY KEY,\n  page_id INTEGER NOT NULL REFERENCES pages(id),\n  tag_id INTEGER NOT NULL REFERENCES tags(id)\n);\n",
+  "model": {
+    "source": "ddl:postgresql",
+    "tables": [
+      {
+        "name": "authors",
+        "columns": [
+          {
+            "name": "id",
+            "sqlType": "INTEGER",
+            "bsonType": "long",
+            "nullable": false,
+            "isPrimaryKey": true
+          },
+          {
+            "name": "display_name",
+            "sqlType": "VARCHAR(120)",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "email",
+            "sqlType": "VARCHAR(255)",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "role",
+            "sqlType": "VARCHAR(40)",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": false
+          }
+        ],
+        "primaryKey": [
+          "id"
+        ],
+        "foreignKeys": [],
+        "rowCount": 0
+      },
+      {
+        "name": "pages",
+        "columns": [
+          {
+            "name": "id",
+            "sqlType": "INTEGER",
+            "bsonType": "long",
+            "nullable": false,
+            "isPrimaryKey": true
+          },
+          {
+            "name": "parent_id",
+            "sqlType": "INTEGER",
+            "bsonType": "long",
+            "nullable": true,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "author_id",
+            "sqlType": "INTEGER",
+            "bsonType": "long",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "slug",
+            "sqlType": "VARCHAR(200)",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "title",
+            "sqlType": "VARCHAR(255)",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "status",
+            "sqlType": "VARCHAR(20)",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "published_at",
+            "sqlType": "DATETIME",
+            "bsonType": "date",
+            "nullable": true,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "created_at",
+            "sqlType": "DATETIME",
+            "bsonType": "date",
+            "nullable": false,
+            "isPrimaryKey": false
+          }
+        ],
+        "primaryKey": [
+          "id"
+        ],
+        "foreignKeys": [
+          {
+            "column": "parent_id",
+            "referencesTable": "pages",
+            "referencesColumn": "id"
+          },
+          {
+            "column": "author_id",
+            "referencesTable": "authors",
+            "referencesColumn": "id"
+          }
+        ],
+        "rowCount": 0
+      },
+      {
+        "name": "content_blocks",
+        "columns": [
+          {
+            "name": "id",
+            "sqlType": "INTEGER",
+            "bsonType": "long",
+            "nullable": false,
+            "isPrimaryKey": true
+          },
+          {
+            "name": "page_id",
+            "sqlType": "INTEGER",
+            "bsonType": "long",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "position",
+            "sqlType": "INTEGER",
+            "bsonType": "long",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "block_type",
+            "sqlType": "VARCHAR(20)",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "text_body",
+            "sqlType": "TEXT",
+            "bsonType": "string",
+            "nullable": true,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "image_asset_id",
+            "sqlType": "INTEGER",
+            "bsonType": "long",
+            "nullable": true,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "image_alt",
+            "sqlType": "VARCHAR(255)",
+            "bsonType": "string",
+            "nullable": true,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "video_asset_id",
+            "sqlType": "INTEGER",
+            "bsonType": "long",
+            "nullable": true,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "video_duration_sec",
+            "sqlType": "INTEGER",
+            "bsonType": "long",
+            "nullable": true,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "embed_url",
+            "sqlType": "VARCHAR(500)",
+            "bsonType": "string",
+            "nullable": true,
+            "isPrimaryKey": false
+          }
+        ],
+        "primaryKey": [
+          "id"
+        ],
+        "foreignKeys": [
+          {
+            "column": "page_id",
+            "referencesTable": "pages",
+            "referencesColumn": "id"
+          },
+          {
+            "column": "image_asset_id",
+            "referencesTable": "assets",
+            "referencesColumn": "id"
+          },
+          {
+            "column": "video_asset_id",
+            "referencesTable": "assets",
+            "referencesColumn": "id"
+          }
+        ],
+        "rowCount": 0
+      },
+      {
+        "name": "assets",
+        "columns": [
+          {
+            "name": "id",
+            "sqlType": "INTEGER",
+            "bsonType": "long",
+            "nullable": false,
+            "isPrimaryKey": true
+          },
+          {
+            "name": "file_name",
+            "sqlType": "VARCHAR(255)",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "mime_type",
+            "sqlType": "VARCHAR(100)",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "byte_size",
+            "sqlType": "INTEGER",
+            "bsonType": "long",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "storage_url",
+            "sqlType": "VARCHAR(500)",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "uploaded_at",
+            "sqlType": "DATETIME",
+            "bsonType": "date",
+            "nullable": false,
+            "isPrimaryKey": false
+          }
+        ],
+        "primaryKey": [
+          "id"
+        ],
+        "foreignKeys": [],
+        "rowCount": 0
+      },
+      {
+        "name": "page_revisions",
+        "columns": [
+          {
+            "name": "id",
+            "sqlType": "INTEGER",
+            "bsonType": "long",
+            "nullable": false,
+            "isPrimaryKey": true
+          },
+          {
+            "name": "page_id",
+            "sqlType": "INTEGER",
+            "bsonType": "long",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "author_id",
+            "sqlType": "INTEGER",
+            "bsonType": "long",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "revision_number",
+            "sqlType": "INTEGER",
+            "bsonType": "long",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "change_summary",
+            "sqlType": "VARCHAR(500)",
+            "bsonType": "string",
+            "nullable": true,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "snapshot_json",
+            "sqlType": "TEXT",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "created_at",
+            "sqlType": "DATETIME",
+            "bsonType": "date",
+            "nullable": false,
+            "isPrimaryKey": false
+          }
+        ],
+        "primaryKey": [
+          "id"
+        ],
+        "foreignKeys": [
+          {
+            "column": "page_id",
+            "referencesTable": "pages",
+            "referencesColumn": "id"
+          },
+          {
+            "column": "author_id",
+            "referencesTable": "authors",
+            "referencesColumn": "id"
+          }
+        ],
+        "rowCount": 0
+      },
+      {
+        "name": "tags",
+        "columns": [
+          {
+            "name": "id",
+            "sqlType": "INTEGER",
+            "bsonType": "long",
+            "nullable": false,
+            "isPrimaryKey": true
+          },
+          {
+            "name": "name",
+            "sqlType": "VARCHAR(60)",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "slug",
+            "sqlType": "VARCHAR(80)",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": false
+          }
+        ],
+        "primaryKey": [
+          "id"
+        ],
+        "foreignKeys": [],
+        "rowCount": 0
+      },
+      {
+        "name": "page_tags",
+        "columns": [
+          {
+            "name": "id",
+            "sqlType": "INTEGER",
+            "bsonType": "long",
+            "nullable": false,
+            "isPrimaryKey": true
+          },
+          {
+            "name": "page_id",
+            "sqlType": "INTEGER",
+            "bsonType": "long",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "tag_id",
+            "sqlType": "INTEGER",
+            "bsonType": "long",
+            "nullable": false,
+            "isPrimaryKey": false
+          }
+        ],
+        "primaryKey": [
+          "id"
+        ],
+        "foreignKeys": [
+          {
+            "column": "page_id",
+            "referencesTable": "pages",
+            "referencesColumn": "id"
+          },
+          {
+            "column": "tag_id",
+            "referencesTable": "tags",
+            "referencesColumn": "id"
+          }
+        ],
+        "rowCount": 0
+      }
+    ],
+    "relationships": [
+      {
+        "parentTable": "pages",
+        "childTable": "pages",
+        "fkColumn": "parent_id",
+        "avgChildrenPerParent": 0,
+        "maxChildrenPerParent": 0,
+        "isBounded": false
+      },
+      {
+        "parentTable": "authors",
+        "childTable": "pages",
+        "fkColumn": "author_id",
+        "avgChildrenPerParent": 0,
+        "maxChildrenPerParent": 0,
+        "isBounded": false
+      },
+      {
+        "parentTable": "pages",
+        "childTable": "content_blocks",
+        "fkColumn": "page_id",
+        "avgChildrenPerParent": 0,
+        "maxChildrenPerParent": 0,
+        "isBounded": false
+      },
+      {
+        "parentTable": "assets",
+        "childTable": "content_blocks",
+        "fkColumn": "image_asset_id",
+        "avgChildrenPerParent": 0,
+        "maxChildrenPerParent": 0,
+        "isBounded": false
+      },
+      {
+        "parentTable": "assets",
+        "childTable": "content_blocks",
+        "fkColumn": "video_asset_id",
+        "avgChildrenPerParent": 0,
+        "maxChildrenPerParent": 0,
+        "isBounded": false
+      },
+      {
+        "parentTable": "pages",
+        "childTable": "page_revisions",
+        "fkColumn": "page_id",
+        "avgChildrenPerParent": 0,
+        "maxChildrenPerParent": 0,
+        "isBounded": false
+      },
+      {
+        "parentTable": "authors",
+        "childTable": "page_revisions",
+        "fkColumn": "author_id",
+        "avgChildrenPerParent": 0,
+        "maxChildrenPerParent": 0,
+        "isBounded": false
+      },
+      {
+        "parentTable": "pages",
+        "childTable": "page_tags",
+        "fkColumn": "page_id",
+        "avgChildrenPerParent": 0,
+        "maxChildrenPerParent": 0,
+        "isBounded": false
+      },
+      {
+        "parentTable": "tags",
+        "childTable": "page_tags",
+        "fkColumn": "tag_id",
+        "avgChildrenPerParent": 0,
+        "maxChildrenPerParent": 0,
+        "isBounded": false
+      }
+    ]
+  },
+  "positions": {
+    "page_revisions": {
+      "x": 40,
+      "y": -100
+    },
+    "page_tags": {
+      "x": 40,
+      "y": 120
+    },
+    "content_blocks": {
+      "x": 380,
+      "y": 320
+    },
+    "assets": {
+      "x": 680,
+      "y": 380
+    },
+    "pages": {
+      "x": 680,
+      "y": -120
+    },
+    "authors": {
+      "x": 1020,
+      "y": 140
+    },
+    "tags": {
+      "x": 380,
+      "y": 180
+    }
+  },
+  "exportedAt": "2026-06-12T20:39:35.810Z"
+}

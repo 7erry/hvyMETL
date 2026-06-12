@@ -1,0 +1,448 @@
+{
+  "version": 1,
+  "name": "ddl:postgresql",
+  "dialect": "postgresql",
+  "ddl": "-- Mobile Backend: users, device registrations, sessions, event stream,\n-- purchases. Demonstrates: Extended Reference (user info on purchases),\n-- Subset (recent sessions), Bucket (event stream), Computed (lifetime spend).\n\nCREATE TABLE app_users (\n  id INTEGER PRIMARY KEY,\n  username VARCHAR(60) NOT NULL,\n  email VARCHAR(255) NOT NULL,\n  country CHAR(2) NOT NULL,\n  plan VARCHAR(20) NOT NULL DEFAULT 'free',\n  created_at DATETIME NOT NULL\n);\n\nCREATE TABLE user_devices (\n  id INTEGER PRIMARY KEY,\n  user_id INTEGER NOT NULL REFERENCES app_users(id),\n  platform VARCHAR(10) NOT NULL,\n  os_version VARCHAR(20) NOT NULL,\n  push_token VARCHAR(255),\n  registered_at DATETIME NOT NULL\n);\n\nCREATE TABLE sessions (\n  id INTEGER PRIMARY KEY,\n  user_id INTEGER NOT NULL REFERENCES app_users(id),\n  device_id INTEGER NOT NULL REFERENCES user_devices(id),\n  started_at DATETIME NOT NULL,\n  ended_at DATETIME,\n  duration_sec INTEGER\n);\n\n-- High-velocity event stream: taps, screens, errors.\nCREATE TABLE app_events (\n  id INTEGER PRIMARY KEY,\n  user_id INTEGER NOT NULL REFERENCES app_users(id),\n  session_id INTEGER NOT NULL REFERENCES sessions(id),\n  event_name VARCHAR(80) NOT NULL,\n  occurred_at DATETIME NOT NULL,\n  properties_json TEXT\n);\n\nCREATE TABLE purchases (\n  id INTEGER PRIMARY KEY,\n  user_id INTEGER NOT NULL REFERENCES app_users(id),\n  product_code VARCHAR(60) NOT NULL,\n  amount_cents INTEGER NOT NULL,\n  currency CHAR(3) NOT NULL DEFAULT 'USD',\n  purchased_at DATETIME NOT NULL\n);\n\nCREATE TABLE push_notifications (\n  id INTEGER PRIMARY KEY,\n  device_id INTEGER NOT NULL REFERENCES user_devices(id),\n  title VARCHAR(120) NOT NULL,\n  body VARCHAR(500),\n  sent_at DATETIME NOT NULL,\n  opened_at DATETIME\n);\n",
+  "model": {
+    "source": "ddl:postgresql",
+    "tables": [
+      {
+        "name": "app_users",
+        "columns": [
+          {
+            "name": "id",
+            "sqlType": "INTEGER",
+            "bsonType": "long",
+            "nullable": false,
+            "isPrimaryKey": true
+          },
+          {
+            "name": "username",
+            "sqlType": "VARCHAR(60)",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "email",
+            "sqlType": "VARCHAR(255)",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "country",
+            "sqlType": "CHAR(2)",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "plan",
+            "sqlType": "VARCHAR(20)",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "created_at",
+            "sqlType": "DATETIME",
+            "bsonType": "date",
+            "nullable": false,
+            "isPrimaryKey": false
+          }
+        ],
+        "primaryKey": [
+          "id"
+        ],
+        "foreignKeys": [],
+        "rowCount": 0
+      },
+      {
+        "name": "user_devices",
+        "columns": [
+          {
+            "name": "id",
+            "sqlType": "INTEGER",
+            "bsonType": "long",
+            "nullable": false,
+            "isPrimaryKey": true
+          },
+          {
+            "name": "user_id",
+            "sqlType": "INTEGER",
+            "bsonType": "long",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "platform",
+            "sqlType": "VARCHAR(10)",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "os_version",
+            "sqlType": "VARCHAR(20)",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "push_token",
+            "sqlType": "VARCHAR(255)",
+            "bsonType": "string",
+            "nullable": true,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "registered_at",
+            "sqlType": "DATETIME",
+            "bsonType": "date",
+            "nullable": false,
+            "isPrimaryKey": false
+          }
+        ],
+        "primaryKey": [
+          "id"
+        ],
+        "foreignKeys": [
+          {
+            "column": "user_id",
+            "referencesTable": "app_users",
+            "referencesColumn": "id"
+          }
+        ],
+        "rowCount": 0
+      },
+      {
+        "name": "sessions",
+        "columns": [
+          {
+            "name": "id",
+            "sqlType": "INTEGER",
+            "bsonType": "long",
+            "nullable": false,
+            "isPrimaryKey": true
+          },
+          {
+            "name": "user_id",
+            "sqlType": "INTEGER",
+            "bsonType": "long",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "device_id",
+            "sqlType": "INTEGER",
+            "bsonType": "long",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "started_at",
+            "sqlType": "DATETIME",
+            "bsonType": "date",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "ended_at",
+            "sqlType": "DATETIME",
+            "bsonType": "date",
+            "nullable": true,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "duration_sec",
+            "sqlType": "INTEGER",
+            "bsonType": "long",
+            "nullable": true,
+            "isPrimaryKey": false
+          }
+        ],
+        "primaryKey": [
+          "id"
+        ],
+        "foreignKeys": [
+          {
+            "column": "user_id",
+            "referencesTable": "app_users",
+            "referencesColumn": "id"
+          },
+          {
+            "column": "device_id",
+            "referencesTable": "user_devices",
+            "referencesColumn": "id"
+          }
+        ],
+        "rowCount": 0
+      },
+      {
+        "name": "app_events",
+        "columns": [
+          {
+            "name": "id",
+            "sqlType": "INTEGER",
+            "bsonType": "long",
+            "nullable": false,
+            "isPrimaryKey": true
+          },
+          {
+            "name": "user_id",
+            "sqlType": "INTEGER",
+            "bsonType": "long",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "session_id",
+            "sqlType": "INTEGER",
+            "bsonType": "long",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "event_name",
+            "sqlType": "VARCHAR(80)",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "occurred_at",
+            "sqlType": "DATETIME",
+            "bsonType": "date",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "properties_json",
+            "sqlType": "TEXT",
+            "bsonType": "string",
+            "nullable": true,
+            "isPrimaryKey": false
+          }
+        ],
+        "primaryKey": [
+          "id"
+        ],
+        "foreignKeys": [
+          {
+            "column": "user_id",
+            "referencesTable": "app_users",
+            "referencesColumn": "id"
+          },
+          {
+            "column": "session_id",
+            "referencesTable": "sessions",
+            "referencesColumn": "id"
+          }
+        ],
+        "rowCount": 0
+      },
+      {
+        "name": "purchases",
+        "columns": [
+          {
+            "name": "id",
+            "sqlType": "INTEGER",
+            "bsonType": "long",
+            "nullable": false,
+            "isPrimaryKey": true
+          },
+          {
+            "name": "user_id",
+            "sqlType": "INTEGER",
+            "bsonType": "long",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "product_code",
+            "sqlType": "VARCHAR(60)",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "amount_cents",
+            "sqlType": "INTEGER",
+            "bsonType": "long",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "currency",
+            "sqlType": "CHAR(3)",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "purchased_at",
+            "sqlType": "DATETIME",
+            "bsonType": "date",
+            "nullable": false,
+            "isPrimaryKey": false
+          }
+        ],
+        "primaryKey": [
+          "id"
+        ],
+        "foreignKeys": [
+          {
+            "column": "user_id",
+            "referencesTable": "app_users",
+            "referencesColumn": "id"
+          }
+        ],
+        "rowCount": 0
+      },
+      {
+        "name": "push_notifications",
+        "columns": [
+          {
+            "name": "id",
+            "sqlType": "INTEGER",
+            "bsonType": "long",
+            "nullable": false,
+            "isPrimaryKey": true
+          },
+          {
+            "name": "device_id",
+            "sqlType": "INTEGER",
+            "bsonType": "long",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "title",
+            "sqlType": "VARCHAR(120)",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "body",
+            "sqlType": "VARCHAR(500)",
+            "bsonType": "string",
+            "nullable": true,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "sent_at",
+            "sqlType": "DATETIME",
+            "bsonType": "date",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "opened_at",
+            "sqlType": "DATETIME",
+            "bsonType": "date",
+            "nullable": true,
+            "isPrimaryKey": false
+          }
+        ],
+        "primaryKey": [
+          "id"
+        ],
+        "foreignKeys": [
+          {
+            "column": "device_id",
+            "referencesTable": "user_devices",
+            "referencesColumn": "id"
+          }
+        ],
+        "rowCount": 0
+      }
+    ],
+    "relationships": [
+      {
+        "parentTable": "app_users",
+        "childTable": "user_devices",
+        "fkColumn": "user_id",
+        "avgChildrenPerParent": 0,
+        "maxChildrenPerParent": 0,
+        "isBounded": false
+      },
+      {
+        "parentTable": "app_users",
+        "childTable": "sessions",
+        "fkColumn": "user_id",
+        "avgChildrenPerParent": 0,
+        "maxChildrenPerParent": 0,
+        "isBounded": false
+      },
+      {
+        "parentTable": "user_devices",
+        "childTable": "sessions",
+        "fkColumn": "device_id",
+        "avgChildrenPerParent": 0,
+        "maxChildrenPerParent": 0,
+        "isBounded": false
+      },
+      {
+        "parentTable": "app_users",
+        "childTable": "app_events",
+        "fkColumn": "user_id",
+        "avgChildrenPerParent": 0,
+        "maxChildrenPerParent": 0,
+        "isBounded": false
+      },
+      {
+        "parentTable": "sessions",
+        "childTable": "app_events",
+        "fkColumn": "session_id",
+        "avgChildrenPerParent": 0,
+        "maxChildrenPerParent": 0,
+        "isBounded": false
+      },
+      {
+        "parentTable": "app_users",
+        "childTable": "purchases",
+        "fkColumn": "user_id",
+        "avgChildrenPerParent": 0,
+        "maxChildrenPerParent": 0,
+        "isBounded": false
+      },
+      {
+        "parentTable": "user_devices",
+        "childTable": "push_notifications",
+        "fkColumn": "device_id",
+        "avgChildrenPerParent": 0,
+        "maxChildrenPerParent": 0,
+        "isBounded": false
+      }
+    ]
+  },
+  "positions": {
+    "purchases": {
+      "x": 240,
+      "y": -200
+    },
+    "app_users": {
+      "x": 800,
+      "y": -40
+    },
+    "user_devices": {
+      "x": 520,
+      "y": 300
+    },
+    "sessions": {
+      "x": 240,
+      "y": 40
+    },
+    "app_events": {
+      "x": -140,
+      "y": -60
+    },
+    "push_notifications": {
+      "x": -120,
+      "y": 180
+    }
+  },
+  "exportedAt": "2026-06-12T20:34:58.319Z"
+}

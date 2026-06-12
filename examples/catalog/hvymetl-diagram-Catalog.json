@@ -1,0 +1,498 @@
+{
+  "version": 1,
+  "name": "ddl:postgresql",
+  "dialect": "postgresql",
+  "ddl": "-- E-commerce Catalog: classic normalized product schema.\n-- Demonstrates: Extended Reference (brand lookups), Subset/Outlier (skewed\n-- review counts), Attribute (EAV table), Computed (rating aggregates),\n-- Tree (self-referencing categories).\n\nCREATE TABLE brands (\n  id INTEGER PRIMARY KEY,\n  name VARCHAR(120) NOT NULL,\n  country VARCHAR(60) NOT NULL,\n  website VARCHAR(255)\n);\n\nCREATE TABLE categories (\n  id INTEGER PRIMARY KEY,\n  parent_id INTEGER REFERENCES categories(id),\n  name VARCHAR(120) NOT NULL,\n  slug VARCHAR(140) NOT NULL\n);\n\nCREATE TABLE products (\n  id INTEGER PRIMARY KEY,\n  brand_id INTEGER NOT NULL REFERENCES brands(id),\n  category_id INTEGER NOT NULL REFERENCES categories(id),\n  sku VARCHAR(40) NOT NULL,\n  name VARCHAR(200) NOT NULL,\n  description TEXT,\n  base_price_cents INTEGER NOT NULL,\n  currency CHAR(3) NOT NULL DEFAULT 'USD',\n  is_active BOOLEAN NOT NULL DEFAULT 1,\n  created_at DATETIME NOT NULL\n);\n\nCREATE TABLE product_variants (\n  id INTEGER PRIMARY KEY,\n  product_id INTEGER NOT NULL REFERENCES products(id),\n  variant_sku VARCHAR(48) NOT NULL,\n  color VARCHAR(40),\n  size VARCHAR(20),\n  price_cents INTEGER NOT NULL,\n  weight_grams INTEGER\n);\n\n-- Entity-Attribute-Value table: sparse per-product characteristics.\nCREATE TABLE product_attributes (\n  id INTEGER PRIMARY KEY,\n  product_id INTEGER NOT NULL REFERENCES products(id),\n  attr_key VARCHAR(60) NOT NULL,\n  attr_value VARCHAR(255) NOT NULL\n);\n\nCREATE TABLE reviews (\n  id INTEGER PRIMARY KEY,\n  product_id INTEGER NOT NULL REFERENCES products(id),\n  reviewer_name VARCHAR(120) NOT NULL,\n  stars INTEGER NOT NULL,\n  title VARCHAR(200),\n  body TEXT,\n  created_at DATETIME NOT NULL\n);\n\nCREATE TABLE inventory_levels (\n  id INTEGER PRIMARY KEY,\n  variant_id INTEGER NOT NULL REFERENCES product_variants(id),\n  warehouse_code VARCHAR(20) NOT NULL,\n  quantity_on_hand INTEGER NOT NULL,\n  updated_at DATETIME NOT NULL\n);\n",
+  "model": {
+    "source": "ddl:postgresql",
+    "tables": [
+      {
+        "name": "brands",
+        "columns": [
+          {
+            "name": "id",
+            "sqlType": "INTEGER",
+            "bsonType": "long",
+            "nullable": false,
+            "isPrimaryKey": true
+          },
+          {
+            "name": "name",
+            "sqlType": "VARCHAR(120)",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "country",
+            "sqlType": "VARCHAR(60)",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "website",
+            "sqlType": "VARCHAR(255)",
+            "bsonType": "string",
+            "nullable": true,
+            "isPrimaryKey": false
+          }
+        ],
+        "primaryKey": [
+          "id"
+        ],
+        "foreignKeys": [],
+        "rowCount": 0
+      },
+      {
+        "name": "categories",
+        "columns": [
+          {
+            "name": "id",
+            "sqlType": "INTEGER",
+            "bsonType": "long",
+            "nullable": false,
+            "isPrimaryKey": true
+          },
+          {
+            "name": "parent_id",
+            "sqlType": "INTEGER",
+            "bsonType": "long",
+            "nullable": true,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "name",
+            "sqlType": "VARCHAR(120)",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "slug",
+            "sqlType": "VARCHAR(140)",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": false
+          }
+        ],
+        "primaryKey": [
+          "id"
+        ],
+        "foreignKeys": [
+          {
+            "column": "parent_id",
+            "referencesTable": "categories",
+            "referencesColumn": "id"
+          }
+        ],
+        "rowCount": 0
+      },
+      {
+        "name": "products",
+        "columns": [
+          {
+            "name": "id",
+            "sqlType": "INTEGER",
+            "bsonType": "long",
+            "nullable": false,
+            "isPrimaryKey": true
+          },
+          {
+            "name": "brand_id",
+            "sqlType": "INTEGER",
+            "bsonType": "long",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "category_id",
+            "sqlType": "INTEGER",
+            "bsonType": "long",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "sku",
+            "sqlType": "VARCHAR(40)",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "name",
+            "sqlType": "VARCHAR(200)",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "description",
+            "sqlType": "TEXT",
+            "bsonType": "string",
+            "nullable": true,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "base_price_cents",
+            "sqlType": "INTEGER",
+            "bsonType": "long",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "currency",
+            "sqlType": "CHAR(3)",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "is_active",
+            "sqlType": "BOOLEAN",
+            "bsonType": "bool",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "created_at",
+            "sqlType": "DATETIME",
+            "bsonType": "date",
+            "nullable": false,
+            "isPrimaryKey": false
+          }
+        ],
+        "primaryKey": [
+          "id"
+        ],
+        "foreignKeys": [
+          {
+            "column": "brand_id",
+            "referencesTable": "brands",
+            "referencesColumn": "id"
+          },
+          {
+            "column": "category_id",
+            "referencesTable": "categories",
+            "referencesColumn": "id"
+          }
+        ],
+        "rowCount": 0
+      },
+      {
+        "name": "product_variants",
+        "columns": [
+          {
+            "name": "id",
+            "sqlType": "INTEGER",
+            "bsonType": "long",
+            "nullable": false,
+            "isPrimaryKey": true
+          },
+          {
+            "name": "product_id",
+            "sqlType": "INTEGER",
+            "bsonType": "long",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "variant_sku",
+            "sqlType": "VARCHAR(48)",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "color",
+            "sqlType": "VARCHAR(40)",
+            "bsonType": "string",
+            "nullable": true,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "size",
+            "sqlType": "VARCHAR(20)",
+            "bsonType": "string",
+            "nullable": true,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "price_cents",
+            "sqlType": "INTEGER",
+            "bsonType": "long",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "weight_grams",
+            "sqlType": "INTEGER",
+            "bsonType": "long",
+            "nullable": true,
+            "isPrimaryKey": false
+          }
+        ],
+        "primaryKey": [
+          "id"
+        ],
+        "foreignKeys": [
+          {
+            "column": "product_id",
+            "referencesTable": "products",
+            "referencesColumn": "id"
+          }
+        ],
+        "rowCount": 0
+      },
+      {
+        "name": "product_attributes",
+        "columns": [
+          {
+            "name": "id",
+            "sqlType": "INTEGER",
+            "bsonType": "long",
+            "nullable": false,
+            "isPrimaryKey": true
+          },
+          {
+            "name": "product_id",
+            "sqlType": "INTEGER",
+            "bsonType": "long",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "attr_key",
+            "sqlType": "VARCHAR(60)",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "attr_value",
+            "sqlType": "VARCHAR(255)",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": false
+          }
+        ],
+        "primaryKey": [
+          "id"
+        ],
+        "foreignKeys": [
+          {
+            "column": "product_id",
+            "referencesTable": "products",
+            "referencesColumn": "id"
+          }
+        ],
+        "rowCount": 0
+      },
+      {
+        "name": "reviews",
+        "columns": [
+          {
+            "name": "id",
+            "sqlType": "INTEGER",
+            "bsonType": "long",
+            "nullable": false,
+            "isPrimaryKey": true
+          },
+          {
+            "name": "product_id",
+            "sqlType": "INTEGER",
+            "bsonType": "long",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "reviewer_name",
+            "sqlType": "VARCHAR(120)",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "stars",
+            "sqlType": "INTEGER",
+            "bsonType": "long",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "title",
+            "sqlType": "VARCHAR(200)",
+            "bsonType": "string",
+            "nullable": true,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "body",
+            "sqlType": "TEXT",
+            "bsonType": "string",
+            "nullable": true,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "created_at",
+            "sqlType": "DATETIME",
+            "bsonType": "date",
+            "nullable": false,
+            "isPrimaryKey": false
+          }
+        ],
+        "primaryKey": [
+          "id"
+        ],
+        "foreignKeys": [
+          {
+            "column": "product_id",
+            "referencesTable": "products",
+            "referencesColumn": "id"
+          }
+        ],
+        "rowCount": 0
+      },
+      {
+        "name": "inventory_levels",
+        "columns": [
+          {
+            "name": "id",
+            "sqlType": "INTEGER",
+            "bsonType": "long",
+            "nullable": false,
+            "isPrimaryKey": true
+          },
+          {
+            "name": "variant_id",
+            "sqlType": "INTEGER",
+            "bsonType": "long",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "warehouse_code",
+            "sqlType": "VARCHAR(20)",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "quantity_on_hand",
+            "sqlType": "INTEGER",
+            "bsonType": "long",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "updated_at",
+            "sqlType": "DATETIME",
+            "bsonType": "date",
+            "nullable": false,
+            "isPrimaryKey": false
+          }
+        ],
+        "primaryKey": [
+          "id"
+        ],
+        "foreignKeys": [
+          {
+            "column": "variant_id",
+            "referencesTable": "product_variants",
+            "referencesColumn": "id"
+          }
+        ],
+        "rowCount": 0
+      }
+    ],
+    "relationships": [
+      {
+        "parentTable": "categories",
+        "childTable": "categories",
+        "fkColumn": "parent_id",
+        "avgChildrenPerParent": 0,
+        "maxChildrenPerParent": 0,
+        "isBounded": false
+      },
+      {
+        "parentTable": "brands",
+        "childTable": "products",
+        "fkColumn": "brand_id",
+        "avgChildrenPerParent": 0,
+        "maxChildrenPerParent": 0,
+        "isBounded": false
+      },
+      {
+        "parentTable": "categories",
+        "childTable": "products",
+        "fkColumn": "category_id",
+        "avgChildrenPerParent": 0,
+        "maxChildrenPerParent": 0,
+        "isBounded": false
+      },
+      {
+        "parentTable": "products",
+        "childTable": "product_variants",
+        "fkColumn": "product_id",
+        "avgChildrenPerParent": 0,
+        "maxChildrenPerParent": 0,
+        "isBounded": false
+      },
+      {
+        "parentTable": "products",
+        "childTable": "product_attributes",
+        "fkColumn": "product_id",
+        "avgChildrenPerParent": 0,
+        "maxChildrenPerParent": 0,
+        "isBounded": false
+      },
+      {
+        "parentTable": "products",
+        "childTable": "reviews",
+        "fkColumn": "product_id",
+        "avgChildrenPerParent": 0,
+        "maxChildrenPerParent": 0,
+        "isBounded": false
+      },
+      {
+        "parentTable": "product_variants",
+        "childTable": "inventory_levels",
+        "fkColumn": "variant_id",
+        "avgChildrenPerParent": 0,
+        "maxChildrenPerParent": 0,
+        "isBounded": false
+      }
+    ]
+  },
+  "positions": {
+    "product_attributes": {
+      "x": 40,
+      "y": -140
+    },
+    "brands": {
+      "x": 920,
+      "y": -40
+    },
+    "categories": {
+      "x": 920,
+      "y": 140
+    },
+    "reviews": {
+      "x": -80,
+      "y": 20
+    },
+    "products": {
+      "x": 520,
+      "y": -40
+    },
+    "product_variants": {
+      "x": 240,
+      "y": 220
+    },
+    "inventory_levels": {
+      "x": -60,
+      "y": 260
+    }
+  },
+  "exportedAt": "2026-06-12T20:41:34.438Z"
+}

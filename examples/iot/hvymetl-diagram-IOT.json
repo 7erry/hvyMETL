@@ -1,0 +1,413 @@
+{
+  "version": 1,
+  "name": "ddl:postgresql",
+  "dialect": "postgresql",
+  "ddl": "-- IoT Telemetry: sites, devices, sensors, and a massive readings table.\n-- Demonstrates: Bucket (time-series readings), Computed (per-bucket\n-- aggregates), Reference (unbounded child sets), Extended Reference\n-- (device metadata on alerts).\n\nCREATE TABLE sites (\n  id INTEGER PRIMARY KEY,\n  name VARCHAR(120) NOT NULL,\n  timezone VARCHAR(60) NOT NULL,\n  latitude REAL,\n  longitude REAL\n);\n\nCREATE TABLE firmware_versions (\n  id INTEGER PRIMARY KEY,\n  version VARCHAR(40) NOT NULL,\n  released_at DATETIME NOT NULL,\n  changelog TEXT\n);\n\nCREATE TABLE devices (\n  id INTEGER PRIMARY KEY,\n  site_id INTEGER NOT NULL REFERENCES sites(id),\n  firmware_id INTEGER NOT NULL REFERENCES firmware_versions(id),\n  serial_number VARCHAR(64) NOT NULL,\n  model VARCHAR(80) NOT NULL,\n  installed_at DATETIME NOT NULL,\n  is_online BOOLEAN NOT NULL DEFAULT 1\n);\n\nCREATE TABLE sensors (\n  id INTEGER PRIMARY KEY,\n  device_id INTEGER NOT NULL REFERENCES devices(id),\n  kind VARCHAR(40) NOT NULL,\n  unit VARCHAR(20) NOT NULL,\n  precision_digits INTEGER NOT NULL DEFAULT 2\n);\n\n-- The fire hose: one row per measurement. In MongoDB this becomes\n-- bucketed documents, never one document per row.\nCREATE TABLE sensor_readings (\n  id INTEGER PRIMARY KEY,\n  sensor_id INTEGER NOT NULL REFERENCES sensors(id),\n  device_id INTEGER NOT NULL REFERENCES devices(id),\n  recorded_at DATETIME NOT NULL,\n  value REAL NOT NULL,\n  quality_flag INTEGER NOT NULL DEFAULT 0\n);\n\nCREATE TABLE device_alerts (\n  id INTEGER PRIMARY KEY,\n  device_id INTEGER NOT NULL REFERENCES devices(id),\n  severity VARCHAR(20) NOT NULL,\n  message VARCHAR(500) NOT NULL,\n  raised_at DATETIME NOT NULL,\n  acknowledged_at DATETIME\n);\n",
+  "model": {
+    "source": "ddl:postgresql",
+    "tables": [
+      {
+        "name": "sites",
+        "columns": [
+          {
+            "name": "id",
+            "sqlType": "INTEGER",
+            "bsonType": "long",
+            "nullable": false,
+            "isPrimaryKey": true
+          },
+          {
+            "name": "name",
+            "sqlType": "VARCHAR(120)",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "timezone",
+            "sqlType": "VARCHAR(60)",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "latitude",
+            "sqlType": "REAL",
+            "bsonType": "double",
+            "nullable": true,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "longitude",
+            "sqlType": "REAL",
+            "bsonType": "double",
+            "nullable": true,
+            "isPrimaryKey": false
+          }
+        ],
+        "primaryKey": [
+          "id"
+        ],
+        "foreignKeys": [],
+        "rowCount": 0
+      },
+      {
+        "name": "firmware_versions",
+        "columns": [
+          {
+            "name": "id",
+            "sqlType": "INTEGER",
+            "bsonType": "long",
+            "nullable": false,
+            "isPrimaryKey": true
+          },
+          {
+            "name": "version",
+            "sqlType": "VARCHAR(40)",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "released_at",
+            "sqlType": "DATETIME",
+            "bsonType": "date",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "changelog",
+            "sqlType": "TEXT",
+            "bsonType": "string",
+            "nullable": true,
+            "isPrimaryKey": false
+          }
+        ],
+        "primaryKey": [
+          "id"
+        ],
+        "foreignKeys": [],
+        "rowCount": 0
+      },
+      {
+        "name": "devices",
+        "columns": [
+          {
+            "name": "id",
+            "sqlType": "INTEGER",
+            "bsonType": "long",
+            "nullable": false,
+            "isPrimaryKey": true
+          },
+          {
+            "name": "site_id",
+            "sqlType": "INTEGER",
+            "bsonType": "long",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "firmware_id",
+            "sqlType": "INTEGER",
+            "bsonType": "long",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "serial_number",
+            "sqlType": "VARCHAR(64)",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "model",
+            "sqlType": "VARCHAR(80)",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "installed_at",
+            "sqlType": "DATETIME",
+            "bsonType": "date",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "is_online",
+            "sqlType": "BOOLEAN",
+            "bsonType": "bool",
+            "nullable": false,
+            "isPrimaryKey": false
+          }
+        ],
+        "primaryKey": [
+          "id"
+        ],
+        "foreignKeys": [
+          {
+            "column": "site_id",
+            "referencesTable": "sites",
+            "referencesColumn": "id"
+          },
+          {
+            "column": "firmware_id",
+            "referencesTable": "firmware_versions",
+            "referencesColumn": "id"
+          }
+        ],
+        "rowCount": 0
+      },
+      {
+        "name": "sensors",
+        "columns": [
+          {
+            "name": "id",
+            "sqlType": "INTEGER",
+            "bsonType": "long",
+            "nullable": false,
+            "isPrimaryKey": true
+          },
+          {
+            "name": "device_id",
+            "sqlType": "INTEGER",
+            "bsonType": "long",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "kind",
+            "sqlType": "VARCHAR(40)",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "unit",
+            "sqlType": "VARCHAR(20)",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "precision_digits",
+            "sqlType": "INTEGER",
+            "bsonType": "long",
+            "nullable": false,
+            "isPrimaryKey": false
+          }
+        ],
+        "primaryKey": [
+          "id"
+        ],
+        "foreignKeys": [
+          {
+            "column": "device_id",
+            "referencesTable": "devices",
+            "referencesColumn": "id"
+          }
+        ],
+        "rowCount": 0
+      },
+      {
+        "name": "sensor_readings",
+        "columns": [
+          {
+            "name": "id",
+            "sqlType": "INTEGER",
+            "bsonType": "long",
+            "nullable": false,
+            "isPrimaryKey": true
+          },
+          {
+            "name": "sensor_id",
+            "sqlType": "INTEGER",
+            "bsonType": "long",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "device_id",
+            "sqlType": "INTEGER",
+            "bsonType": "long",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "recorded_at",
+            "sqlType": "DATETIME",
+            "bsonType": "date",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "value",
+            "sqlType": "REAL",
+            "bsonType": "double",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "quality_flag",
+            "sqlType": "INTEGER",
+            "bsonType": "long",
+            "nullable": false,
+            "isPrimaryKey": false
+          }
+        ],
+        "primaryKey": [
+          "id"
+        ],
+        "foreignKeys": [
+          {
+            "column": "sensor_id",
+            "referencesTable": "sensors",
+            "referencesColumn": "id"
+          },
+          {
+            "column": "device_id",
+            "referencesTable": "devices",
+            "referencesColumn": "id"
+          }
+        ],
+        "rowCount": 0
+      },
+      {
+        "name": "device_alerts",
+        "columns": [
+          {
+            "name": "id",
+            "sqlType": "INTEGER",
+            "bsonType": "long",
+            "nullable": false,
+            "isPrimaryKey": true
+          },
+          {
+            "name": "device_id",
+            "sqlType": "INTEGER",
+            "bsonType": "long",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "severity",
+            "sqlType": "VARCHAR(20)",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "message",
+            "sqlType": "VARCHAR(500)",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "raised_at",
+            "sqlType": "DATETIME",
+            "bsonType": "date",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "acknowledged_at",
+            "sqlType": "DATETIME",
+            "bsonType": "date",
+            "nullable": true,
+            "isPrimaryKey": false
+          }
+        ],
+        "primaryKey": [
+          "id"
+        ],
+        "foreignKeys": [
+          {
+            "column": "device_id",
+            "referencesTable": "devices",
+            "referencesColumn": "id"
+          }
+        ],
+        "rowCount": 0
+      }
+    ],
+    "relationships": [
+      {
+        "parentTable": "sites",
+        "childTable": "devices",
+        "fkColumn": "site_id",
+        "avgChildrenPerParent": 0,
+        "maxChildrenPerParent": 0,
+        "isBounded": false
+      },
+      {
+        "parentTable": "firmware_versions",
+        "childTable": "devices",
+        "fkColumn": "firmware_id",
+        "avgChildrenPerParent": 0,
+        "maxChildrenPerParent": 0,
+        "isBounded": false
+      },
+      {
+        "parentTable": "devices",
+        "childTable": "sensors",
+        "fkColumn": "device_id",
+        "avgChildrenPerParent": 0,
+        "maxChildrenPerParent": 0,
+        "isBounded": false
+      },
+      {
+        "parentTable": "sensors",
+        "childTable": "sensor_readings",
+        "fkColumn": "sensor_id",
+        "avgChildrenPerParent": 0,
+        "maxChildrenPerParent": 0,
+        "isBounded": false
+      },
+      {
+        "parentTable": "devices",
+        "childTable": "sensor_readings",
+        "fkColumn": "device_id",
+        "avgChildrenPerParent": 0,
+        "maxChildrenPerParent": 0,
+        "isBounded": false
+      },
+      {
+        "parentTable": "devices",
+        "childTable": "device_alerts",
+        "fkColumn": "device_id",
+        "avgChildrenPerParent": 0,
+        "maxChildrenPerParent": 0,
+        "isBounded": false
+      }
+    ]
+  },
+  "positions": {
+    "device_alerts": {
+      "x": -140,
+      "y": -60
+    },
+    "devices": {
+      "x": 320,
+      "y": 100
+    },
+    "firmware_versions": {
+      "x": 740,
+      "y": 340
+    },
+    "sensors": {
+      "x": 60,
+      "y": 420
+    },
+    "sites": {
+      "x": 740,
+      "y": 140
+    },
+    "sensor_readings": {
+      "x": -260,
+      "y": 180
+    }
+  },
+  "exportedAt": "2026-06-12T20:25:36.595Z"
+}

@@ -1,0 +1,499 @@
+{
+  "version": 1,
+  "name": "ddl:postgresql",
+  "dialect": "postgresql",
+  "ddl": "-- Single View (Customer 360): one customer fragmented across CRM, web,\n-- orders, support, marketing, and loyalty systems.\n-- Demonstrates: Extended Reference (denormalizing the fragments into one\n-- document), Subset (recent orders), Outlier (mega accounts), Computed\n-- (lifetime value), Schema Versioning (sources evolve independently).\n\nCREATE TABLE crm_customers (\n  id INTEGER PRIMARY KEY,\n  email VARCHAR(255) NOT NULL,\n  first_name VARCHAR(80),\n  last_name VARCHAR(80),\n  phone VARCHAR(40),\n  account_manager VARCHAR(120),\n  created_at DATETIME NOT NULL\n);\n\nCREATE TABLE web_accounts (\n  id INTEGER PRIMARY KEY,\n  crm_customer_id INTEGER NOT NULL REFERENCES crm_customers(id),\n  username VARCHAR(60) NOT NULL,\n  last_login_at DATETIME,\n  marketing_opt_in BOOLEAN NOT NULL DEFAULT 0\n);\n\nCREATE TABLE orders (\n  id INTEGER PRIMARY KEY,\n  crm_customer_id INTEGER NOT NULL REFERENCES crm_customers(id),\n  order_number VARCHAR(40) NOT NULL,\n  status VARCHAR(20) NOT NULL,\n  total_cents INTEGER NOT NULL,\n  currency CHAR(3) NOT NULL DEFAULT 'USD',\n  placed_at DATETIME NOT NULL\n);\n\nCREATE TABLE order_items (\n  id INTEGER PRIMARY KEY,\n  order_id INTEGER NOT NULL REFERENCES orders(id),\n  sku VARCHAR(40) NOT NULL,\n  product_name VARCHAR(200) NOT NULL,\n  quantity INTEGER NOT NULL,\n  unit_price_cents INTEGER NOT NULL\n);\n\nCREATE TABLE support_tickets (\n  id INTEGER PRIMARY KEY,\n  crm_customer_id INTEGER NOT NULL REFERENCES crm_customers(id),\n  subject VARCHAR(255) NOT NULL,\n  status VARCHAR(20) NOT NULL,\n  priority VARCHAR(10) NOT NULL DEFAULT 'normal',\n  opened_at DATETIME NOT NULL,\n  closed_at DATETIME\n);\n\nCREATE TABLE marketing_touches (\n  id INTEGER PRIMARY KEY,\n  crm_customer_id INTEGER NOT NULL REFERENCES crm_customers(id),\n  channel VARCHAR(30) NOT NULL,\n  campaign_name VARCHAR(120) NOT NULL,\n  touched_at DATETIME NOT NULL,\n  converted BOOLEAN NOT NULL DEFAULT 0\n);\n\nCREATE TABLE loyalty_accounts (\n  id INTEGER PRIMARY KEY,\n  crm_customer_id INTEGER NOT NULL REFERENCES crm_customers(id),\n  tier VARCHAR(20) NOT NULL DEFAULT 'bronze',\n  points_balance INTEGER NOT NULL DEFAULT 0,\n  enrolled_at DATETIME NOT NULL\n);\n",
+  "model": {
+    "source": "ddl:postgresql",
+    "tables": [
+      {
+        "name": "crm_customers",
+        "columns": [
+          {
+            "name": "id",
+            "sqlType": "INTEGER",
+            "bsonType": "long",
+            "nullable": false,
+            "isPrimaryKey": true
+          },
+          {
+            "name": "email",
+            "sqlType": "VARCHAR(255)",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "first_name",
+            "sqlType": "VARCHAR(80)",
+            "bsonType": "string",
+            "nullable": true,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "last_name",
+            "sqlType": "VARCHAR(80)",
+            "bsonType": "string",
+            "nullable": true,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "phone",
+            "sqlType": "VARCHAR(40)",
+            "bsonType": "string",
+            "nullable": true,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "account_manager",
+            "sqlType": "VARCHAR(120)",
+            "bsonType": "string",
+            "nullable": true,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "created_at",
+            "sqlType": "DATETIME",
+            "bsonType": "date",
+            "nullable": false,
+            "isPrimaryKey": false
+          }
+        ],
+        "primaryKey": [
+          "id"
+        ],
+        "foreignKeys": [],
+        "rowCount": 0
+      },
+      {
+        "name": "web_accounts",
+        "columns": [
+          {
+            "name": "id",
+            "sqlType": "INTEGER",
+            "bsonType": "long",
+            "nullable": false,
+            "isPrimaryKey": true
+          },
+          {
+            "name": "crm_customer_id",
+            "sqlType": "INTEGER",
+            "bsonType": "long",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "username",
+            "sqlType": "VARCHAR(60)",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "last_login_at",
+            "sqlType": "DATETIME",
+            "bsonType": "date",
+            "nullable": true,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "marketing_opt_in",
+            "sqlType": "BOOLEAN",
+            "bsonType": "bool",
+            "nullable": false,
+            "isPrimaryKey": false
+          }
+        ],
+        "primaryKey": [
+          "id"
+        ],
+        "foreignKeys": [
+          {
+            "column": "crm_customer_id",
+            "referencesTable": "crm_customers",
+            "referencesColumn": "id"
+          }
+        ],
+        "rowCount": 0
+      },
+      {
+        "name": "orders",
+        "columns": [
+          {
+            "name": "id",
+            "sqlType": "INTEGER",
+            "bsonType": "long",
+            "nullable": false,
+            "isPrimaryKey": true
+          },
+          {
+            "name": "crm_customer_id",
+            "sqlType": "INTEGER",
+            "bsonType": "long",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "order_number",
+            "sqlType": "VARCHAR(40)",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "status",
+            "sqlType": "VARCHAR(20)",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "total_cents",
+            "sqlType": "INTEGER",
+            "bsonType": "long",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "currency",
+            "sqlType": "CHAR(3)",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "placed_at",
+            "sqlType": "DATETIME",
+            "bsonType": "date",
+            "nullable": false,
+            "isPrimaryKey": false
+          }
+        ],
+        "primaryKey": [
+          "id"
+        ],
+        "foreignKeys": [
+          {
+            "column": "crm_customer_id",
+            "referencesTable": "crm_customers",
+            "referencesColumn": "id"
+          }
+        ],
+        "rowCount": 0
+      },
+      {
+        "name": "order_items",
+        "columns": [
+          {
+            "name": "id",
+            "sqlType": "INTEGER",
+            "bsonType": "long",
+            "nullable": false,
+            "isPrimaryKey": true
+          },
+          {
+            "name": "order_id",
+            "sqlType": "INTEGER",
+            "bsonType": "long",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "sku",
+            "sqlType": "VARCHAR(40)",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "product_name",
+            "sqlType": "VARCHAR(200)",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "quantity",
+            "sqlType": "INTEGER",
+            "bsonType": "long",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "unit_price_cents",
+            "sqlType": "INTEGER",
+            "bsonType": "long",
+            "nullable": false,
+            "isPrimaryKey": false
+          }
+        ],
+        "primaryKey": [
+          "id"
+        ],
+        "foreignKeys": [
+          {
+            "column": "order_id",
+            "referencesTable": "orders",
+            "referencesColumn": "id"
+          }
+        ],
+        "rowCount": 0
+      },
+      {
+        "name": "support_tickets",
+        "columns": [
+          {
+            "name": "id",
+            "sqlType": "INTEGER",
+            "bsonType": "long",
+            "nullable": false,
+            "isPrimaryKey": true
+          },
+          {
+            "name": "crm_customer_id",
+            "sqlType": "INTEGER",
+            "bsonType": "long",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "subject",
+            "sqlType": "VARCHAR(255)",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "status",
+            "sqlType": "VARCHAR(20)",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "priority",
+            "sqlType": "VARCHAR(10)",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "opened_at",
+            "sqlType": "DATETIME",
+            "bsonType": "date",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "closed_at",
+            "sqlType": "DATETIME",
+            "bsonType": "date",
+            "nullable": true,
+            "isPrimaryKey": false
+          }
+        ],
+        "primaryKey": [
+          "id"
+        ],
+        "foreignKeys": [
+          {
+            "column": "crm_customer_id",
+            "referencesTable": "crm_customers",
+            "referencesColumn": "id"
+          }
+        ],
+        "rowCount": 0
+      },
+      {
+        "name": "marketing_touches",
+        "columns": [
+          {
+            "name": "id",
+            "sqlType": "INTEGER",
+            "bsonType": "long",
+            "nullable": false,
+            "isPrimaryKey": true
+          },
+          {
+            "name": "crm_customer_id",
+            "sqlType": "INTEGER",
+            "bsonType": "long",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "channel",
+            "sqlType": "VARCHAR(30)",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "campaign_name",
+            "sqlType": "VARCHAR(120)",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "touched_at",
+            "sqlType": "DATETIME",
+            "bsonType": "date",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "converted",
+            "sqlType": "BOOLEAN",
+            "bsonType": "bool",
+            "nullable": false,
+            "isPrimaryKey": false
+          }
+        ],
+        "primaryKey": [
+          "id"
+        ],
+        "foreignKeys": [
+          {
+            "column": "crm_customer_id",
+            "referencesTable": "crm_customers",
+            "referencesColumn": "id"
+          }
+        ],
+        "rowCount": 0
+      },
+      {
+        "name": "loyalty_accounts",
+        "columns": [
+          {
+            "name": "id",
+            "sqlType": "INTEGER",
+            "bsonType": "long",
+            "nullable": false,
+            "isPrimaryKey": true
+          },
+          {
+            "name": "crm_customer_id",
+            "sqlType": "INTEGER",
+            "bsonType": "long",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "tier",
+            "sqlType": "VARCHAR(20)",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "points_balance",
+            "sqlType": "INTEGER",
+            "bsonType": "long",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "enrolled_at",
+            "sqlType": "DATETIME",
+            "bsonType": "date",
+            "nullable": false,
+            "isPrimaryKey": false
+          }
+        ],
+        "primaryKey": [
+          "id"
+        ],
+        "foreignKeys": [
+          {
+            "column": "crm_customer_id",
+            "referencesTable": "crm_customers",
+            "referencesColumn": "id"
+          }
+        ],
+        "rowCount": 0
+      }
+    ],
+    "relationships": [
+      {
+        "parentTable": "crm_customers",
+        "childTable": "web_accounts",
+        "fkColumn": "crm_customer_id",
+        "avgChildrenPerParent": 0,
+        "maxChildrenPerParent": 0,
+        "isBounded": false
+      },
+      {
+        "parentTable": "crm_customers",
+        "childTable": "orders",
+        "fkColumn": "crm_customer_id",
+        "avgChildrenPerParent": 0,
+        "maxChildrenPerParent": 0,
+        "isBounded": false
+      },
+      {
+        "parentTable": "orders",
+        "childTable": "order_items",
+        "fkColumn": "order_id",
+        "avgChildrenPerParent": 0,
+        "maxChildrenPerParent": 0,
+        "isBounded": false
+      },
+      {
+        "parentTable": "crm_customers",
+        "childTable": "support_tickets",
+        "fkColumn": "crm_customer_id",
+        "avgChildrenPerParent": 0,
+        "maxChildrenPerParent": 0,
+        "isBounded": false
+      },
+      {
+        "parentTable": "crm_customers",
+        "childTable": "marketing_touches",
+        "fkColumn": "crm_customer_id",
+        "avgChildrenPerParent": 0,
+        "maxChildrenPerParent": 0,
+        "isBounded": false
+      },
+      {
+        "parentTable": "crm_customers",
+        "childTable": "loyalty_accounts",
+        "fkColumn": "crm_customer_id",
+        "avgChildrenPerParent": 0,
+        "maxChildrenPerParent": 0,
+        "isBounded": false
+      }
+    ]
+  },
+  "positions": {
+    "support_tickets": {
+      "x": 240,
+      "y": 240
+    },
+    "marketing_touches": {
+      "x": 160,
+      "y": 460
+    },
+    "crm_customers": {
+      "x": 900,
+      "y": -100
+    },
+    "web_accounts": {
+      "x": 0,
+      "y": 140
+    },
+    "orders": {
+      "x": 300,
+      "y": -100
+    },
+    "order_items": {
+      "x": 0,
+      "y": -80
+    },
+    "loyalty_accounts": {
+      "x": 620,
+      "y": 320
+    }
+  },
+  "exportedAt": "2026-06-12T20:28:50.949Z"
+}

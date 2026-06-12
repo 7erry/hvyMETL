@@ -1,0 +1,414 @@
+{
+  "version": 1,
+  "name": "ddl:postgresql",
+  "dialect": "postgresql",
+  "ddl": "-- Real-Time Analytics: raw event firehose plus rollups and funnels.\n-- Demonstrates: Bucket (event stream), Pre-allocation (hourly rollup slots),\n-- Computed (running totals), Reference (unbounded event sets).\n\nCREATE TABLE tracked_sites (\n  id INTEGER PRIMARY KEY,\n  domain VARCHAR(255) NOT NULL,\n  owner_email VARCHAR(255) NOT NULL,\n  created_at DATETIME NOT NULL\n);\n\nCREATE TABLE campaigns (\n  id INTEGER PRIMARY KEY,\n  site_id INTEGER NOT NULL REFERENCES tracked_sites(id),\n  name VARCHAR(120) NOT NULL,\n  utm_code VARCHAR(80) NOT NULL,\n  started_at DATETIME NOT NULL,\n  ended_at DATETIME\n);\n\n-- The firehose: one row per page event at very high velocity.\nCREATE TABLE page_events (\n  id INTEGER PRIMARY KEY,\n  site_id INTEGER NOT NULL REFERENCES tracked_sites(id),\n  campaign_id INTEGER REFERENCES campaigns(id),\n  visitor_id VARCHAR(64) NOT NULL,\n  event_type VARCHAR(40) NOT NULL,\n  url_path VARCHAR(500) NOT NULL,\n  occurred_at DATETIME NOT NULL,\n  load_time_ms INTEGER\n);\n\nCREATE TABLE funnels (\n  id INTEGER PRIMARY KEY,\n  site_id INTEGER NOT NULL REFERENCES tracked_sites(id),\n  name VARCHAR(120) NOT NULL\n);\n\nCREATE TABLE funnel_steps (\n  id INTEGER PRIMARY KEY,\n  funnel_id INTEGER NOT NULL REFERENCES funnels(id),\n  step_number INTEGER NOT NULL,\n  match_url_path VARCHAR(500) NOT NULL,\n  label VARCHAR(120) NOT NULL\n);\n\n-- Pre-aggregated rollups the dashboard reads instead of scanning events.\nCREATE TABLE hourly_rollups (\n  id INTEGER PRIMARY KEY,\n  site_id INTEGER NOT NULL REFERENCES tracked_sites(id),\n  hour_start DATETIME NOT NULL,\n  views INTEGER NOT NULL DEFAULT 0,\n  clicks INTEGER NOT NULL DEFAULT 0,\n  conversions INTEGER NOT NULL DEFAULT 0,\n  avg_load_time_ms REAL\n);\n",
+  "model": {
+    "source": "ddl:postgresql",
+    "tables": [
+      {
+        "name": "tracked_sites",
+        "columns": [
+          {
+            "name": "id",
+            "sqlType": "INTEGER",
+            "bsonType": "long",
+            "nullable": false,
+            "isPrimaryKey": true
+          },
+          {
+            "name": "domain",
+            "sqlType": "VARCHAR(255)",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "owner_email",
+            "sqlType": "VARCHAR(255)",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "created_at",
+            "sqlType": "DATETIME",
+            "bsonType": "date",
+            "nullable": false,
+            "isPrimaryKey": false
+          }
+        ],
+        "primaryKey": [
+          "id"
+        ],
+        "foreignKeys": [],
+        "rowCount": 0
+      },
+      {
+        "name": "campaigns",
+        "columns": [
+          {
+            "name": "id",
+            "sqlType": "INTEGER",
+            "bsonType": "long",
+            "nullable": false,
+            "isPrimaryKey": true
+          },
+          {
+            "name": "site_id",
+            "sqlType": "INTEGER",
+            "bsonType": "long",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "name",
+            "sqlType": "VARCHAR(120)",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "utm_code",
+            "sqlType": "VARCHAR(80)",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "started_at",
+            "sqlType": "DATETIME",
+            "bsonType": "date",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "ended_at",
+            "sqlType": "DATETIME",
+            "bsonType": "date",
+            "nullable": true,
+            "isPrimaryKey": false
+          }
+        ],
+        "primaryKey": [
+          "id"
+        ],
+        "foreignKeys": [
+          {
+            "column": "site_id",
+            "referencesTable": "tracked_sites",
+            "referencesColumn": "id"
+          }
+        ],
+        "rowCount": 0
+      },
+      {
+        "name": "page_events",
+        "columns": [
+          {
+            "name": "id",
+            "sqlType": "INTEGER",
+            "bsonType": "long",
+            "nullable": false,
+            "isPrimaryKey": true
+          },
+          {
+            "name": "site_id",
+            "sqlType": "INTEGER",
+            "bsonType": "long",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "campaign_id",
+            "sqlType": "INTEGER",
+            "bsonType": "long",
+            "nullable": true,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "visitor_id",
+            "sqlType": "VARCHAR(64)",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "event_type",
+            "sqlType": "VARCHAR(40)",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "url_path",
+            "sqlType": "VARCHAR(500)",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "occurred_at",
+            "sqlType": "DATETIME",
+            "bsonType": "date",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "load_time_ms",
+            "sqlType": "INTEGER",
+            "bsonType": "long",
+            "nullable": true,
+            "isPrimaryKey": false
+          }
+        ],
+        "primaryKey": [
+          "id"
+        ],
+        "foreignKeys": [
+          {
+            "column": "site_id",
+            "referencesTable": "tracked_sites",
+            "referencesColumn": "id"
+          },
+          {
+            "column": "campaign_id",
+            "referencesTable": "campaigns",
+            "referencesColumn": "id"
+          }
+        ],
+        "rowCount": 0
+      },
+      {
+        "name": "funnels",
+        "columns": [
+          {
+            "name": "id",
+            "sqlType": "INTEGER",
+            "bsonType": "long",
+            "nullable": false,
+            "isPrimaryKey": true
+          },
+          {
+            "name": "site_id",
+            "sqlType": "INTEGER",
+            "bsonType": "long",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "name",
+            "sqlType": "VARCHAR(120)",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": false
+          }
+        ],
+        "primaryKey": [
+          "id"
+        ],
+        "foreignKeys": [
+          {
+            "column": "site_id",
+            "referencesTable": "tracked_sites",
+            "referencesColumn": "id"
+          }
+        ],
+        "rowCount": 0
+      },
+      {
+        "name": "funnel_steps",
+        "columns": [
+          {
+            "name": "id",
+            "sqlType": "INTEGER",
+            "bsonType": "long",
+            "nullable": false,
+            "isPrimaryKey": true
+          },
+          {
+            "name": "funnel_id",
+            "sqlType": "INTEGER",
+            "bsonType": "long",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "step_number",
+            "sqlType": "INTEGER",
+            "bsonType": "long",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "match_url_path",
+            "sqlType": "VARCHAR(500)",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "label",
+            "sqlType": "VARCHAR(120)",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": false
+          }
+        ],
+        "primaryKey": [
+          "id"
+        ],
+        "foreignKeys": [
+          {
+            "column": "funnel_id",
+            "referencesTable": "funnels",
+            "referencesColumn": "id"
+          }
+        ],
+        "rowCount": 0
+      },
+      {
+        "name": "hourly_rollups",
+        "columns": [
+          {
+            "name": "id",
+            "sqlType": "INTEGER",
+            "bsonType": "long",
+            "nullable": false,
+            "isPrimaryKey": true
+          },
+          {
+            "name": "site_id",
+            "sqlType": "INTEGER",
+            "bsonType": "long",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "hour_start",
+            "sqlType": "DATETIME",
+            "bsonType": "date",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "views",
+            "sqlType": "INTEGER",
+            "bsonType": "long",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "clicks",
+            "sqlType": "INTEGER",
+            "bsonType": "long",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "conversions",
+            "sqlType": "INTEGER",
+            "bsonType": "long",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "avg_load_time_ms",
+            "sqlType": "REAL",
+            "bsonType": "double",
+            "nullable": true,
+            "isPrimaryKey": false
+          }
+        ],
+        "primaryKey": [
+          "id"
+        ],
+        "foreignKeys": [
+          {
+            "column": "site_id",
+            "referencesTable": "tracked_sites",
+            "referencesColumn": "id"
+          }
+        ],
+        "rowCount": 0
+      }
+    ],
+    "relationships": [
+      {
+        "parentTable": "tracked_sites",
+        "childTable": "campaigns",
+        "fkColumn": "site_id",
+        "avgChildrenPerParent": 0,
+        "maxChildrenPerParent": 0,
+        "isBounded": false
+      },
+      {
+        "parentTable": "tracked_sites",
+        "childTable": "page_events",
+        "fkColumn": "site_id",
+        "avgChildrenPerParent": 0,
+        "maxChildrenPerParent": 0,
+        "isBounded": false
+      },
+      {
+        "parentTable": "campaigns",
+        "childTable": "page_events",
+        "fkColumn": "campaign_id",
+        "avgChildrenPerParent": 0,
+        "maxChildrenPerParent": 0,
+        "isBounded": false
+      },
+      {
+        "parentTable": "tracked_sites",
+        "childTable": "funnels",
+        "fkColumn": "site_id",
+        "avgChildrenPerParent": 0,
+        "maxChildrenPerParent": 0,
+        "isBounded": false
+      },
+      {
+        "parentTable": "funnels",
+        "childTable": "funnel_steps",
+        "fkColumn": "funnel_id",
+        "avgChildrenPerParent": 0,
+        "maxChildrenPerParent": 0,
+        "isBounded": false
+      },
+      {
+        "parentTable": "tracked_sites",
+        "childTable": "hourly_rollups",
+        "fkColumn": "site_id",
+        "avgChildrenPerParent": 0,
+        "maxChildrenPerParent": 0,
+        "isBounded": false
+      }
+    ]
+  },
+  "positions": {
+    "funnel_steps": {
+      "x": 40,
+      "y": 120
+    },
+    "page_events": {
+      "x": 0,
+      "y": -220
+    },
+    "tracked_sites": {
+      "x": 760,
+      "y": -200
+    },
+    "campaigns": {
+      "x": 380,
+      "y": -80
+    },
+    "funnels": {
+      "x": 380,
+      "y": 160
+    },
+    "hourly_rollups": {
+      "x": 360,
+      "y": -380
+    }
+  },
+  "exportedAt": "2026-06-12T20:45:02.026Z"
+}

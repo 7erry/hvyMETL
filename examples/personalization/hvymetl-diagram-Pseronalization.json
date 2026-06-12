@@ -1,0 +1,447 @@
+{
+  "version": 1,
+  "name": "ddl:postgresql",
+  "dialect": "postgresql",
+  "ddl": "-- Personalization Engine: profiles, item affinities, recommendations.\n-- Demonstrates: Computed (continuously updated affinity scores),\n-- Extended Reference (item metadata on recommendations), Subset (top-N\n-- recommendations per user), Attribute (sparse profile traits).\n\nCREATE TABLE profiles (\n  id INTEGER PRIMARY KEY,\n  external_user_id VARCHAR(64) NOT NULL,\n  email VARCHAR(255),\n  locale VARCHAR(10) NOT NULL DEFAULT 'en-US',\n  created_at DATETIME NOT NULL\n);\n\n-- Sparse profile traits captured as EAV rows.\nCREATE TABLE profile_traits (\n  id INTEGER PRIMARY KEY,\n  profile_id INTEGER NOT NULL REFERENCES profiles(id),\n  trait_key VARCHAR(60) NOT NULL,\n  trait_value VARCHAR(255) NOT NULL,\n  observed_at DATETIME NOT NULL\n);\n\nCREATE TABLE items (\n  id INTEGER PRIMARY KEY,\n  external_item_id VARCHAR(64) NOT NULL,\n  title VARCHAR(255) NOT NULL,\n  item_type VARCHAR(40) NOT NULL,\n  metadata_json TEXT\n);\n\n-- One row per (profile, item) with a continuously updated score.\nCREATE TABLE affinities (\n  id INTEGER PRIMARY KEY,\n  profile_id INTEGER NOT NULL REFERENCES profiles(id),\n  item_id INTEGER NOT NULL REFERENCES items(id),\n  score REAL NOT NULL,\n  interaction_count INTEGER NOT NULL DEFAULT 0,\n  last_interaction_at DATETIME\n);\n\nCREATE TABLE recommendations (\n  id INTEGER PRIMARY KEY,\n  profile_id INTEGER NOT NULL REFERENCES profiles(id),\n  item_id INTEGER NOT NULL REFERENCES items(id),\n  rank INTEGER NOT NULL,\n  reason VARCHAR(120),\n  generated_at DATETIME NOT NULL\n);\n\nCREATE TABLE segments (\n  id INTEGER PRIMARY KEY,\n  name VARCHAR(120) NOT NULL,\n  rule_json TEXT NOT NULL\n);\n\nCREATE TABLE profile_segments (\n  id INTEGER PRIMARY KEY,\n  profile_id INTEGER NOT NULL REFERENCES profiles(id),\n  segment_id INTEGER NOT NULL REFERENCES segments(id),\n  entered_at DATETIME NOT NULL\n);\n",
+  "model": {
+    "source": "ddl:postgresql",
+    "tables": [
+      {
+        "name": "profiles",
+        "columns": [
+          {
+            "name": "id",
+            "sqlType": "INTEGER",
+            "bsonType": "long",
+            "nullable": false,
+            "isPrimaryKey": true
+          },
+          {
+            "name": "external_user_id",
+            "sqlType": "VARCHAR(64)",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "email",
+            "sqlType": "VARCHAR(255)",
+            "bsonType": "string",
+            "nullable": true,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "locale",
+            "sqlType": "VARCHAR(10)",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "created_at",
+            "sqlType": "DATETIME",
+            "bsonType": "date",
+            "nullable": false,
+            "isPrimaryKey": false
+          }
+        ],
+        "primaryKey": [
+          "id"
+        ],
+        "foreignKeys": [],
+        "rowCount": 0
+      },
+      {
+        "name": "profile_traits",
+        "columns": [
+          {
+            "name": "id",
+            "sqlType": "INTEGER",
+            "bsonType": "long",
+            "nullable": false,
+            "isPrimaryKey": true
+          },
+          {
+            "name": "profile_id",
+            "sqlType": "INTEGER",
+            "bsonType": "long",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "trait_key",
+            "sqlType": "VARCHAR(60)",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "trait_value",
+            "sqlType": "VARCHAR(255)",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "observed_at",
+            "sqlType": "DATETIME",
+            "bsonType": "date",
+            "nullable": false,
+            "isPrimaryKey": false
+          }
+        ],
+        "primaryKey": [
+          "id"
+        ],
+        "foreignKeys": [
+          {
+            "column": "profile_id",
+            "referencesTable": "profiles",
+            "referencesColumn": "id"
+          }
+        ],
+        "rowCount": 0
+      },
+      {
+        "name": "items",
+        "columns": [
+          {
+            "name": "id",
+            "sqlType": "INTEGER",
+            "bsonType": "long",
+            "nullable": false,
+            "isPrimaryKey": true
+          },
+          {
+            "name": "external_item_id",
+            "sqlType": "VARCHAR(64)",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "title",
+            "sqlType": "VARCHAR(255)",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "item_type",
+            "sqlType": "VARCHAR(40)",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "metadata_json",
+            "sqlType": "TEXT",
+            "bsonType": "string",
+            "nullable": true,
+            "isPrimaryKey": false
+          }
+        ],
+        "primaryKey": [
+          "id"
+        ],
+        "foreignKeys": [],
+        "rowCount": 0
+      },
+      {
+        "name": "affinities",
+        "columns": [
+          {
+            "name": "id",
+            "sqlType": "INTEGER",
+            "bsonType": "long",
+            "nullable": false,
+            "isPrimaryKey": true
+          },
+          {
+            "name": "profile_id",
+            "sqlType": "INTEGER",
+            "bsonType": "long",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "item_id",
+            "sqlType": "INTEGER",
+            "bsonType": "long",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "score",
+            "sqlType": "REAL",
+            "bsonType": "double",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "interaction_count",
+            "sqlType": "INTEGER",
+            "bsonType": "long",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "last_interaction_at",
+            "sqlType": "DATETIME",
+            "bsonType": "date",
+            "nullable": true,
+            "isPrimaryKey": false
+          }
+        ],
+        "primaryKey": [
+          "id"
+        ],
+        "foreignKeys": [
+          {
+            "column": "profile_id",
+            "referencesTable": "profiles",
+            "referencesColumn": "id"
+          },
+          {
+            "column": "item_id",
+            "referencesTable": "items",
+            "referencesColumn": "id"
+          }
+        ],
+        "rowCount": 0
+      },
+      {
+        "name": "recommendations",
+        "columns": [
+          {
+            "name": "id",
+            "sqlType": "INTEGER",
+            "bsonType": "long",
+            "nullable": false,
+            "isPrimaryKey": true
+          },
+          {
+            "name": "profile_id",
+            "sqlType": "INTEGER",
+            "bsonType": "long",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "item_id",
+            "sqlType": "INTEGER",
+            "bsonType": "long",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "rank",
+            "sqlType": "INTEGER",
+            "bsonType": "long",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "reason",
+            "sqlType": "VARCHAR(120)",
+            "bsonType": "string",
+            "nullable": true,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "generated_at",
+            "sqlType": "DATETIME",
+            "bsonType": "date",
+            "nullable": false,
+            "isPrimaryKey": false
+          }
+        ],
+        "primaryKey": [
+          "id"
+        ],
+        "foreignKeys": [
+          {
+            "column": "profile_id",
+            "referencesTable": "profiles",
+            "referencesColumn": "id"
+          },
+          {
+            "column": "item_id",
+            "referencesTable": "items",
+            "referencesColumn": "id"
+          }
+        ],
+        "rowCount": 0
+      },
+      {
+        "name": "segments",
+        "columns": [
+          {
+            "name": "id",
+            "sqlType": "INTEGER",
+            "bsonType": "long",
+            "nullable": false,
+            "isPrimaryKey": true
+          },
+          {
+            "name": "name",
+            "sqlType": "VARCHAR(120)",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "rule_json",
+            "sqlType": "TEXT",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": false
+          }
+        ],
+        "primaryKey": [
+          "id"
+        ],
+        "foreignKeys": [],
+        "rowCount": 0
+      },
+      {
+        "name": "profile_segments",
+        "columns": [
+          {
+            "name": "id",
+            "sqlType": "INTEGER",
+            "bsonType": "long",
+            "nullable": false,
+            "isPrimaryKey": true
+          },
+          {
+            "name": "profile_id",
+            "sqlType": "INTEGER",
+            "bsonType": "long",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "segment_id",
+            "sqlType": "INTEGER",
+            "bsonType": "long",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "entered_at",
+            "sqlType": "DATETIME",
+            "bsonType": "date",
+            "nullable": false,
+            "isPrimaryKey": false
+          }
+        ],
+        "primaryKey": [
+          "id"
+        ],
+        "foreignKeys": [
+          {
+            "column": "profile_id",
+            "referencesTable": "profiles",
+            "referencesColumn": "id"
+          },
+          {
+            "column": "segment_id",
+            "referencesTable": "segments",
+            "referencesColumn": "id"
+          }
+        ],
+        "rowCount": 0
+      }
+    ],
+    "relationships": [
+      {
+        "parentTable": "profiles",
+        "childTable": "profile_traits",
+        "fkColumn": "profile_id",
+        "avgChildrenPerParent": 0,
+        "maxChildrenPerParent": 0,
+        "isBounded": false
+      },
+      {
+        "parentTable": "profiles",
+        "childTable": "affinities",
+        "fkColumn": "profile_id",
+        "avgChildrenPerParent": 0,
+        "maxChildrenPerParent": 0,
+        "isBounded": false
+      },
+      {
+        "parentTable": "items",
+        "childTable": "affinities",
+        "fkColumn": "item_id",
+        "avgChildrenPerParent": 0,
+        "maxChildrenPerParent": 0,
+        "isBounded": false
+      },
+      {
+        "parentTable": "profiles",
+        "childTable": "recommendations",
+        "fkColumn": "profile_id",
+        "avgChildrenPerParent": 0,
+        "maxChildrenPerParent": 0,
+        "isBounded": false
+      },
+      {
+        "parentTable": "items",
+        "childTable": "recommendations",
+        "fkColumn": "item_id",
+        "avgChildrenPerParent": 0,
+        "maxChildrenPerParent": 0,
+        "isBounded": false
+      },
+      {
+        "parentTable": "profiles",
+        "childTable": "profile_segments",
+        "fkColumn": "profile_id",
+        "avgChildrenPerParent": 0,
+        "maxChildrenPerParent": 0,
+        "isBounded": false
+      },
+      {
+        "parentTable": "segments",
+        "childTable": "profile_segments",
+        "fkColumn": "segment_id",
+        "avgChildrenPerParent": 0,
+        "maxChildrenPerParent": 0,
+        "isBounded": false
+      }
+    ]
+  },
+  "positions": {
+    "profiles": {
+      "x": 720,
+      "y": -100
+    },
+    "profile_traits": {
+      "x": 320,
+      "y": -120
+    },
+    "items": {
+      "x": 760,
+      "y": 460
+    },
+    "recommendations": {
+      "x": 160,
+      "y": 80
+    },
+    "affinities": {
+      "x": 160,
+      "y": 280
+    },
+    "profile_segments": {
+      "x": 180,
+      "y": 500
+    },
+    "segments": {
+      "x": 740,
+      "y": 260
+    }
+  },
+  "exportedAt": "2026-06-12T20:30:30.611Z"
+}
