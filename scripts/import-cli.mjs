@@ -6,7 +6,7 @@ import 'dotenv/config';
 import { spawnSync } from 'node:child_process';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { buildImportCliInvocation } from '../dist/utilities/csvToAtlas.js';
+import { applyImportDbFlag, buildImportCliInvocation } from '../dist/utilities/csvToAtlas.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const rawArgs = process.argv.slice(2);
@@ -19,12 +19,8 @@ if (rawArgs.length === 0) {
 const env = { ...process.env };
 const args = [...rawArgs];
 
-const dbFlagIndex = args.indexOf('--db');
-let forwardedArgs = args;
-if (dbFlagIndex !== -1 && args[dbFlagIndex + 1]) {
-  env.MONGODB_DB = args[dbFlagIndex + 1];
-  forwardedArgs = args.filter((_, index) => index !== dbFlagIndex && index !== dbFlagIndex + 1);
-}
+const { flags: forwardedArgs, env: importEnv } = applyImportDbFlag(args, env);
+Object.assign(env, importEnv);
 
 const flagStart = forwardedArgs.findIndex((arg) => arg.startsWith('--'));
 const csvPaths = flagStart === -1 ? forwardedArgs.slice(0, -1) : forwardedArgs.slice(0, flagStart);

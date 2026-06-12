@@ -248,3 +248,21 @@ export function csvToAtlasManifestMeta(source: CsvToAtlasSource): Record<string,
     envVar: 'CSV_TO_ATLAS_PATH',
   };
 }
+
+/**
+ * Strip hvyMETL-only `--db <name>` flags before invoking csvToAtlas.
+ * csvToAtlas reads the database from MONGODB_DB, not CLI args.
+ */
+export function applyImportDbFlag(
+  flags: string[],
+  env: NodeJS.ProcessEnv,
+): { flags: string[]; env: NodeJS.ProcessEnv } {
+  const nextEnv = { ...env };
+  const nextFlags = [...flags];
+  const dbIndex = nextFlags.indexOf('--db');
+  if (dbIndex !== -1 && nextFlags[dbIndex + 1]) {
+    nextEnv.MONGODB_DB = nextFlags[dbIndex + 1];
+    nextFlags.splice(dbIndex, 2);
+  }
+  return { flags: nextFlags, env: nextEnv };
+}

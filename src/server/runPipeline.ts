@@ -95,6 +95,7 @@ export async function runFullPipeline(request: PipelineRunRequest): Promise<Pipe
   );
 
   const targetDb = request.targetDb ?? importEnv.MONGODB_DB ?? 'csv_to_atlas';
+  importEnv.MONGODB_DB = targetDb;
   const imports: CollectionImportSummary[] = [];
   for (const coll of csvCollections) {
     const actualFiles = coll.files.filter((file) => existsSync(file));
@@ -109,7 +110,7 @@ export async function runFullPipeline(request: PipelineRunRequest): Promise<Pipe
       continue;
     }
 
-    const flags = request.drop === false ? ['--db', targetDb] : ['--drop', '--db', targetDb];
+    const flags = request.drop === false ? [] : ['--drop'];
     const result = runImportCli(actualFiles, coll.name, flags, importEnv);
     imports.push({
       collection: coll.name,

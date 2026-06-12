@@ -3,6 +3,7 @@ import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { describe, expect, it } from 'vitest';
 import {
+  applyImportDbFlag,
   buildCollectionImportCommand,
   buildImportCliInvocation,
   resolveCsvToAtlasInstallation,
@@ -74,5 +75,12 @@ describe('csvToAtlas integration', () => {
     const cmd = buildCollectionImportCommand(['a.csv', 'b.csv'], 'orders', ['--drop'], { explicitPath: root });
     expect(cmd).toContain('orders');
     expect(cmd).toContain('--drop');
+  });
+
+  it('applyImportDbFlag moves --db into MONGODB_DB and removes it from argv', () => {
+    const { flags, env } = applyImportDbFlag(['--drop', '--db', 'hvymetl_iot'], {});
+    expect(flags).toEqual(['--drop']);
+    expect(env.MONGODB_DB).toBe('hvymetl_iot');
+    expect(flags).not.toContain('--db');
   });
 });

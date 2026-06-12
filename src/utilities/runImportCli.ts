@@ -5,7 +5,7 @@
 import { spawnSync } from 'node:child_process';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { buildImportCliInvocation } from './csvToAtlas.js';
+import { buildImportCliInvocation, applyImportDbFlag } from './csvToAtlas.js';
 
 const HVYMETL_ROOT = join(dirname(fileURLToPath(import.meta.url)), '../..');
 
@@ -24,14 +24,15 @@ export function runImportCli(
   flags: string[],
   env: NodeJS.ProcessEnv,
 ): ImportCliResult {
-  const invocation = buildImportCliInvocation(csvPaths, [collectionName, ...flags], {
-    explicitPath: env.CSV_TO_ATLAS_PATH?.trim(),
+  const { flags: forwardedFlags, env: importEnv } = applyImportDbFlag(flags, env);
+  const invocation = buildImportCliInvocation(csvPaths, [collectionName, ...forwardedFlags], {
+    explicitPath: importEnv.CSV_TO_ATLAS_PATH?.trim(),
   });
 
   const result = spawnSync(invocation.executable, invocation.args, {
     cwd: HVYMETL_ROOT,
     encoding: 'utf8',
-    env,
+    env: importEnv,
   });
 
   const stdout = result.stdout ?? '';
