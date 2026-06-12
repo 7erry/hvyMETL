@@ -229,4 +229,71 @@ describe('buildMigrationPlan', () => {
       expect(collection.patterns.some((decision) => decision.pattern === 'schema-versioning')).toBe(true);
     }
   });
+
+  it('applies the Archive pattern to dated read-heavy tables and plans a mirror collection', () => {
+    const model: SqlStructuralModel = {
+      source: 'synthetic.db',
+      tables: [
+        table({
+          name: 'orders',
+          rowCount: 12000,
+          columns: [
+            { name: 'id', sqlType: 'INTEGER', bsonType: 'long', nullable: false, isPrimaryKey: true },
+            { name: 'customer_id', sqlType: 'INTEGER', bsonType: 'long', nullable: false, isPrimaryKey: false },
+            { name: 'total', sqlType: 'REAL', bsonType: 'double', nullable: false, isPrimaryKey: false },
+            { name: 'placed_at', sqlType: 'DATETIME', bsonType: 'date', nullable: false, isPrimaryKey: false },
+          ],
+        }),
+      ],
+      relationships: [],
+    };
+
+    const plan = buildMigrationPlan(model, WORKLOAD_PROFILES.catalog);
+    const orders = plan.collections.find((collection) => collection.name === 'orders');
+    const archive = plan.collections.find((collection) => collection.name === 'orders_archive');
+
+    expect(orders?.archive?.archiveCollection).toBe('orders_archive');
+    expect(orders?.patterns.some((decision) => decision.pattern === 'archive')).toBe(true);
+    expect(archive?.patterns.some((decision) => decision.pattern === 'archive')).toBe(true);
+  });
+
+  it('merges junction-linked entities into a Single Collection hub on high-RPM workloads', () => {
+    const model: SqlStructuralModel = {
+      source: 'synthetic.db',
+      tables: [
+        table({ name: 'students', rowCount: 500 }),
+        table({ name: 'classes', rowCount: 80 }),
+        table({
+          name: 'enrollments',
+          rowCount: 2000,
+          columns: [
+            { name: 'id', sqlType: 'INTEGER', bsonType: 'long', nullable: false, isPrimaryKey: true },
+            { name: 'student_id', sqlType: 'INTEGER', bsonType: 'long', nullable: false, isPrimaryKey: false },
+            { name: 'class_id', sqlType: 'INTEGER', bsonType: 'long', nullable: false, isPrimaryKey: false },
+            { name: 'enrolled_at', sqlType: 'DATETIME', bsonType: 'date', nullable: false, isPrimaryKey: false },
+          ],
+          foreignKeys: [
+            { column: 'student_id', referencesTable: 'students', referencesColumn: 'id' },
+            { column: 'class_id', referencesTable: 'classes', referencesColumn: 'id' },
+          ],
+        }),
+      ],
+      relationships: [
+        relationship({ parentTable: 'students', childTable: 'enrollments', fkColumn: 'student_id' }),
+        relationship({ parentTable: 'classes', childTable: 'enrollments', fkColumn: 'class_id' }),
+      ],
+    };
+
+    const plan = buildMigrationPlan(model, WORKLOAD_PROFILES.mobile);
+    const hub = plan.collections.find((collection) => collection.name === 'classes_students');
+
+    expect(hub?.singleCollection?.entityTables).toEqual(['classes', 'students']);
+    expect(hub?.patterns.some((decision) => decision.pattern === 'single-collection')).toBe(true);
+    expect(
+      plan.collections.filter(
+        (collection) =>
+          collection.name !== hub?.name && (collection.sourceTable === 'students' || collection.sourceTable === 'classes'),
+      ),
+    ).toHaveLength(0);
+  });
 });

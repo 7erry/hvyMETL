@@ -14,7 +14,7 @@
  */
 
 import type { CollectionPlan, SqlStructuralModel, TableModel } from '../types.js';
-import { toCamelCase } from '../utilities/naming.js';
+import { toCamelCase, singularize } from '../utilities/naming.js';
 import { findDateColumn, isEavTable, isJunctionTable } from '../design/patternSelector.js';
 
 /** Everything a worker needs to extract one collection's rows. */
@@ -211,4 +211,38 @@ function buildDocumentQuery(collection: CollectionPlan, model: SqlStructuralMode
 /** Build the shaped extraction query for any collection in the plan. */
 export function buildShapedQuery(collection: CollectionPlan, model: SqlStructuralModel): ShapedQuery {
   return collection.bucket ? buildBucketQuery(collection, model) : buildDocumentQuery(collection, model);
+}
+
+/** Optional docType literal injected for Single Collection entity exports. */
+function withDocTypeColumn(query: ShapedQuery, docType: string): ShapedQuery {
+  return {
+    ...query,
+    columns: ['docType', ...query.columns],
+    sql: query.sql.replace(/^SELECT/i, `SELECT\n  '${docType}' AS "docType",`),
+  };
+}
+
+/**
+ * Build one or more shaped queries for a collection. Single Collection hubs
+ * emit one query per entity table with a docType discriminator column.
+ */
+export function buildShapedQueriesForCollection(
+  collection: CollectionPlan,
+  model: SqlStructuralModel,
+): ShapedQuery[] {
+  if (collection.singleCollection) {
+    return collection.singleCollection.entityTables.map((entityTable) => {
+      const entityPlan: CollectionPlan = {
+        ...collection,
+        sourceTable: entityTable,
+        embeddedArrays: [],
+        extendedReferences: [],
+        computedFields: [],
+        singleCollection: undefined,
+      };
+      const docType = toCamelCase(singularize(entityTable));
+      return withDocTypeColumn(buildDocumentQuery(entityPlan, model), docType);
+    });
+  }
+  return [buildShapedQuery(collection, model)];
 }

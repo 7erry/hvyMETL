@@ -2,9 +2,11 @@
 
 **hvyMETL** (**H**igh **V**olume **M**ongoDB **ETL**) is a RAG-driven SQL-to-MongoDB
 migration toolkit. It grounds every schema decision in a retrievable knowledge base of
-MongoDB schema design patterns and the application's workload telemetry (read:write
-ratio, peak RPM, data growth), then executes a parallel, pattern-aware ETL into
-MongoDB Atlas and generates a concurrency-safe data access layer.
+MongoDB schema design patterns (including all six patterns from the
+[MongoDB Manual](https://www.mongodb.com/docs/manual/data-modeling/design-patterns/))
+and the application's workload telemetry (read:write ratio, peak RPM, data growth),
+then executes a parallel, pattern-aware ETL into MongoDB Atlas and generates a
+concurrency-safe data access layer.
 
 This documentation set follows one consistent template per module: high-level summary,
 technical signatures, edge cases, conceptual code breakdown, usage example, and
@@ -83,13 +85,22 @@ starting point for understanding *why* the design engine makes the choices it ma
 | `schema-versioning` | `knowledge/schema-versioning.md` | Schema Versioning | Zero-downtime migrations; transient dual indexes |
 | `subset` | `knowledge/subset.md` | Subset | Smaller working set; the subset must be managed |
 | `tree` | `knowledge/tree.md` | Tree | No recursive JOINs; app-managed graph updates |
-| `bucket` | `knowledge/bucket.md` | Bucket (same series) | Far fewer documents/index entries for time-series |
+| `bucket` | `knowledge/bucket.md` | Group Data ([Manual](https://www.mongodb.com/docs/manual/data-modeling/design-patterns/)) | Far fewer documents/index entries for time-series |
 | `embed` / `reference` | `knowledge/embed-vs-reference.md` | Foundational modeling guidance | Locality vs. unbounded growth (16MB limit) |
+| `archive` | `knowledge/archive.md` | [Archive Pattern](https://www.mongodb.com/docs/manual/data-modeling/design-patterns/archive/) | Hot working set stays fast; cold tier holds history |
+| `single-collection` | `knowledge/single-collection.md` | [Single Collection Pattern](https://www.mongodb.com/docs/manual/data-modeling/design-patterns/single-collection/) | One copy of each entity; graph reads without `$lookup` |
 
-Two patterns from the series are intentionally **not** automated: *Approximation*
-(requires application-level statistical writes) and *Document Versioning* (a revision
-history requirement the structural model cannot infer). Both are candidates for future
-rules; see the refactoring notes in [05-design-engine.md](05-design-engine.md).
+Two patterns from the Building with Patterns series are intentionally **not** automated: *Approximation*
+(requires application-level statistical writes) and *Document Versioning* (revision
+history — distinct from *Schema Versioning*, which is automated on every collection).
+Both remain candidates for future rules; see the refactoring notes in [05-design-engine.md](05-design-engine.md).
+
+The [MongoDB Manual Schema Design Patterns](https://www.mongodb.com/docs/manual/data-modeling/design-patterns/)
+page lists six first-class patterns; hvyMETL automates all six (Computed → `computed`,
+Group Data → `bucket`/`outlier`, Polymorphic → `polymorphic`, Document and Schema
+Versioning → `schema-versioning`, Archive → `archive`, Single Collection →
+`single-collection`) plus additional Building with Patterns entries (Extended Reference,
+Subset, Attribute, Tree, Pre-allocation, embed/reference).
 
 ## Quick Start
 

@@ -103,7 +103,9 @@ export type PatternId =
   | 'polymorphic'
   | 'schema-versioning'
   | 'tree'
-  | 'preallocation';
+  | 'preallocation'
+  | 'archive'
+  | 'single-collection';
 
 /* -------------------------------------------------------------------------- */
 /* SQL structural model (output of introspection)                             */
@@ -266,6 +268,31 @@ export type BucketPlan = {
   measurementsField: string;
 };
 
+/** Cold-storage routing for the Archive pattern (MongoDB Manual). */
+export type ArchivePlan = {
+  /** Timestamp column used to decide when a document is eligible to move. */
+  timeColumn: string;
+  /** Move documents older than this many days to the archive collection. */
+  archiveAfterDays: number;
+  /** Target collection name for archived documents (same schema, embedded shape). */
+  archiveCollection: string;
+};
+
+/**
+ * Single Collection pattern: multiple entity types share one collection with
+ * docType discriminators and a links[] graph (MongoDB Manual).
+ */
+export type SingleCollectionPlan = {
+  /** Discriminator field on every document, e.g. docType. */
+  docTypeField: string;
+  /** Array field holding { target, docType } references for single-query reads. */
+  linksField: string;
+  /** SQL tables whose rows become documents in this shared collection. */
+  entityTables: string[];
+  /** Junction table linking the entities, if one exists. */
+  junctionTable?: string;
+};
+
 /** The complete plan for one target MongoDB collection. */
 export type CollectionPlan = {
   /** Target MongoDB collection name. */
@@ -284,6 +311,10 @@ export type CollectionPlan = {
   computedFields: ComputedFieldPlan[];
   /** Present only when the Bucket pattern was applied to this collection. */
   bucket?: BucketPlan;
+  /** Present when hot data stays active and cold data routes to a mirror collection. */
+  archive?: ArchivePlan;
+  /** Present when multiple SQL entity tables share one MongoDB collection. */
+  singleCollection?: SingleCollectionPlan;
 };
 
 /** The top-level artifact the design engine writes to migration-plan.json. */

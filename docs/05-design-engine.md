@@ -57,12 +57,15 @@ Orchestrates introspect → retrieve → plan → write, and always closes the a
 | Referenced/bucketed child sets | reads ≥ 70% | **Computed** `total<Child>` counter | `computed.md` |
 | Self-referencing FK | always | **Tree** (`parentId` + index) | `tree.md` |
 | Type column + ≥ 2 nullable variants | always | **Polymorphic** (informational) | `polymorphic.md` |
+| Junction-linked entity pair | profile prefers single-collection or RPM ≥ 100k | **Single Collection** hub (`docType` + `links[]`) | `single-collection.md` |
+| Dated table ≥ 5,000 rows | reads ≥ 70%, profile prefers archive, not ledger | **Archive** + mirror collection | `archive.md` |
 | Every collection | always | **Schema Versioning** stamp | `schema-versioning.md` |
 
 Tunable thresholds (constants at the top of `patternSelector.ts`):
 `WRITE_HEAVY_PERCENT = 60`, `READ_HEAVY_PERCENT = 70`, `LOOKUP_TABLE_MAX_ROWS = 5000`,
 `FIREHOSE_MIN_ROWS = 10000`, `SUBSET_LIMIT = 10`, `EXTENDED_REFERENCE_MAX_COLUMNS = 3`,
-`OUTLIER_SKEW_RATIO = 10`, `OUTLIER_MIN_CHILDREN = 50`, `BUCKET_WINDOW_MINUTES = 60`.
+`OUTLIER_SKEW_RATIO = 10`, `OUTLIER_MIN_CHILDREN = 50`, `BUCKET_WINDOW_MINUTES = 60`,
+`ARCHIVE_MIN_ROWS = 5000`, `ARCHIVE_AFTER_DAYS_DEFAULT = 1825`, `SINGLE_COLLECTION_MIN_RPM = 100000`.
 
 ### Dependencies
 

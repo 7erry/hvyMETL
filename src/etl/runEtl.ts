@@ -24,7 +24,7 @@ import { createSqliteAdapter } from '../adapters/sqlite.js';
 import type { SqlSourceAdapter } from '../adapters/types.js';
 import type { CollectionPlan, MigrationPlan } from '../types.js';
 import { splitRange, splitTimeRangeAligned, type ChunkRange } from './splitter.js';
-import { buildShapedQuery } from './shaper.js';
+import { buildShapedQueriesForCollection } from './shaper.js';
 import type { ExtractResult, ExtractTask } from './worker.js';
 import {
   buildCollectionImportCommand,
@@ -171,26 +171,29 @@ export async function runEtl(options: EtlOptions): Promise<void> {
   const taskMeta = new Map<string, { collection: string; columns: string[] }>();
 
   for (const collection of plan.collections) {
-    const shaped = buildShapedQuery(collection, model);
-    const ranges = computeRanges(collection, adapter, shaped.splitColumn, shaped.splitsOnTime, dryRun, poolSize);
-    const sql = dryRun ? `${shaped.sql}\nLIMIT ${DRY_RUN_LIMIT}` : shaped.sql;
+    const shapedQueries = buildShapedQueriesForCollection(collection, model);
+    for (const shaped of shapedQueries) {
+      const entitySuffix = shapedQueries.length > 1 ? `.${shaped.columns[0] ?? 'entity'}` : '';
+      const ranges = computeRanges(collection, adapter, shaped.splitColumn, shaped.splitsOnTime, dryRun, poolSize);
+      const sql = dryRun ? `${shaped.sql}\nLIMIT ${DRY_RUN_LIMIT}` : shaped.sql;
 
-    ranges.forEach((range, index) => {
-      const outFile = join(csvDir, `${collection.name}.chunk${index}.csv`);
-      tasks.push({
-        dbPath: plan.source,
-        sql,
-        params: [range.start, range.end],
-        outFile,
-        columns: shaped.columns,
-        idFields: shaped.idFields,
+      ranges.forEach((range, index) => {
+        const outFile = join(csvDir, `${collection.name}.chunk${index}${entitySuffix}.csv`);
+        tasks.push({
+          dbPath: plan.source,
+          sql,
+          params: [range.start, range.end],
+          outFile,
+          columns: shaped.columns,
+          idFields: shaped.idFields,
+        });
+        taskMeta.set(outFile, { collection: collection.name, columns: shaped.columns });
       });
-      taskMeta.set(outFile, { collection: collection.name, columns: shaped.columns });
-    });
 
-    console.log(
-      `  ${collection.name}: ${ranges.length} chunk(s) split on ${shaped.splitColumn}${shaped.splitsOnTime ? ' (window-aligned time ranges)' : ''}`,
-    );
+      console.log(
+        `  ${collection.name}${entitySuffix ? ` (${shaped.columns[0]})` : ''}: ${ranges.length} chunk(s) split on ${shaped.splitColumn}${shaped.splitsOnTime ? ' (window-aligned time ranges)' : ''}`,
+      );
+    }
   }
   adapter.close();
 

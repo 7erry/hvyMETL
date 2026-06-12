@@ -10,11 +10,12 @@ Sources: [`knowledge/`](../knowledge/), [`src/rag/chunker.ts`](../src/rag/chunke
 ## 1. High-Level Summary
 
 The RAG layer grounds the toolkit's schema decisions in concrete source material
-instead of generic LLM training data. Eleven curated markdown documents (one per
-MongoDB design pattern, each with applicability thresholds and verified code blocks)
-are chunked at heading boundaries and ranked against a workload-derived query. By
-default retrieval is **BM25 only** (no API keys, fully offline). When `MONGODB_MODEL_KEY`
-is set, the retriever runs **hybrid search**: BM25 for exact keyword tokens plus
+instead of generic LLM training data. Thirteen curated markdown documents covering
+the [MongoDB Manual Schema Design Patterns](https://www.mongodb.com/docs/manual/data-modeling/design-patterns/)
+and the Building with Patterns series, each with applicability thresholds and
+verified code blocks, are chunked at heading boundaries and ranked against a
+workload-derived query. By default retrieval is **BM25 only** (no API keys, fully offline).
+When `MONGODB_MODEL_KEY` is set, the retriever runs **hybrid search**: BM25 for exact keyword tokens plus
 [Voyage 4](https://docs.voyageai.com/docs/embeddings) embeddings for conceptual
 context, with scores merged via **Reciprocal Rank Fusion (RRF)**. The top chunks are
 cited in the design report and assembled into three

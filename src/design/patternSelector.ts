@@ -21,10 +21,13 @@
  *   Referenced/subsetted children + read focus  -> Computed counters
  *   Self-referencing FK                         -> Tree
  *   Type column + sparse variant columns        -> Polymorphic
+ *   Junction-linked peer entities + high RPM    -> Single Collection
+ *   Dated tables + read-heavy historical growth -> Archive (+ mirror collection)
  *   Every collection                            -> Schema Versioning stamp
  */
 
 import type {
+  ArchivePlan,
   BucketPlan,
   CollectionPlan,
   ColumnModel,
@@ -35,6 +38,7 @@ import type {
   MigrationPlan,
   PatternDecision,
   RelationshipModel,
+  SingleCollectionPlan,
   SqlStructuralModel,
   TableModel,
   WorkloadProfile,
@@ -63,6 +67,12 @@ const OUTLIER_SKEW_RATIO = 10;
 const OUTLIER_MIN_CHILDREN = 50;
 /** Bucket window size for time-series data, in minutes. */
 const BUCKET_WINDOW_MINUTES = 60;
+/** Tables at or above this row count with a date column may use Archive. */
+const ARCHIVE_MIN_ROWS = 5000;
+/** Default cold-data retention before archive sweep (matches MongoDB doc example). */
+const ARCHIVE_AFTER_DAYS_DEFAULT = 365 * 5;
+/** Peak RPM at which Single Collection is considered without an explicit preference. */
+const SINGLE_COLLECTION_MIN_RPM = 100_000;
 
 /* -------------------------------------------------------------------------- */
 /* Structural classification helpers                                          */
@@ -142,6 +152,170 @@ export function isOutlierSkewed(relationship: RelationshipModel): boolean {
  */
 export function isFirehoseTable(table: TableModel): boolean {
   return table.rowCount >= FIREHOSE_MIN_ROWS && findDateColumn(table) !== undefined;
+}
+
+/** Tables with dated history on read-heavy workloads qualify for Archive (not ledger). */
+export function isArchiveCandidate(
+  table: TableModel,
+  profile: WorkloadProfile,
+  bucketedTables: Set<string>,
+): boolean {
+  if (bucketedTables.has(table.name)) return false;
+  if (profile.id === 'ledger') return false;
+  if (!findDateColumn(table)) return false;
+  if (table.rowCount < ARCHIVE_MIN_ROWS) return false;
+  if (!profile.preferredPatterns.includes('archive')) return false;
+  return profile.telemetry.readPercent >= READ_HEAVY_PERCENT;
+}
+
+/** Retention window in days before documents move to the archive collection. */
+export function archiveRetentionDays(profile: WorkloadProfile): number {
+  if (profile.id === 'cms') return 365 * 3;
+  return ARCHIVE_AFTER_DAYS_DEFAULT;
+}
+
+/** Whether the profile favors merging junction-linked entities into one collection. */
+export function shouldUseSingleCollection(profile: WorkloadProfile): boolean {
+  return (
+    profile.preferredPatterns.includes('single-collection') ||
+    profile.telemetry.peakRpm >= SINGLE_COLLECTION_MIN_RPM
+  );
+}
+
+/** Find unordered entity-table pairs linked by a junction table. */
+export function findSingleCollectionPairs(model: SqlStructuralModel): [string, string][] {
+  const seen = new Set<string>();
+  const pairs: [string, string][] = [];
+  for (const table of model.tables) {
+    if (!isJunctionTable(table) || table.foreignKeys.length !== 2) continue;
+    const left = table.foreignKeys[0].referencesTable;
+    const right = table.foreignKeys[1].referencesTable;
+    if (left === right) continue;
+    const key = [left, right].sort().join('\0');
+    if (seen.has(key)) continue;
+    seen.add(key);
+    pairs.push([left, right].sort() as [string, string]);
+  }
+  return pairs;
+}
+
+function findJunctionBetween(model: SqlStructuralModel, tableA: string, tableB: string): TableModel | undefined {
+  return model.tables.find(
+    (candidate) =>
+      isJunctionTable(candidate) &&
+      candidate.foreignKeys.some((fk) => fk.referencesTable === tableA) &&
+      candidate.foreignKeys.some((fk) => fk.referencesTable === tableB),
+  );
+}
+
+/** Plan one shared collection for a junction-linked entity pair. */
+function planSingleCollectionHub(
+  tableA: string,
+  tableB: string,
+  junction: TableModel | undefined,
+  model: SqlStructuralModel,
+  profile: WorkloadProfile,
+): CollectionPlan {
+  const entityA = model.tables.find((table) => table.name === tableA)!;
+  const entityB = model.tables.find((table) => table.name === tableB)!;
+  const hubName = `${toCamelCase(tableA)}_${toCamelCase(tableB)}`;
+  const ratioLabel = `${profile.telemetry.readPercent}:${profile.telemetry.writePercent} R:W at ${profile.telemetry.peakRpm.toLocaleString('en-US')} RPM`;
+
+  const properties: Record<string, unknown> = {
+    ...buildBaseProperties(entityA),
+    ...buildBaseProperties(entityB),
+    docType: {
+      bsonType: 'string',
+      description: 'Entity discriminator (Single Collection pattern).',
+    },
+    links: {
+      bsonType: 'array',
+      items: {
+        bsonType: 'object',
+        properties: {
+          target: { bsonType: 'string' },
+          docType: { bsonType: 'string' },
+        },
+      },
+      description: 'Bidirectional references for single-query graph reads.',
+    },
+  };
+
+  const singleCollection: SingleCollectionPlan = {
+    docTypeField: 'docType',
+    linksField: 'links',
+    entityTables: [tableA, tableB],
+    junctionTable: junction?.name,
+  };
+
+  return {
+    name: hubName,
+    sourceTable: tableA,
+    mergedTables: [tableA, tableB, ...(junction ? [junction.name] : [])],
+    idDerivation: {
+      sourceColumns: entityA.primaryKey.length > 0 ? entityA.primaryKey : [entityA.columns[0].name],
+      strategy: entityA.primaryKey.length === 1 ? 'direct' : 'composite',
+    },
+    patterns: [
+      {
+        pattern: 'single-collection',
+        target: hubName,
+        reason: `${tableA} and ${tableB} are linked${junction ? ` via junction ${junction.name}` : ''}; storing both entity shapes in ${hubName} with docType + links[] avoids duplicating payloads across collections under ${ratioLabel}.`,
+        knowledgeSource: 'single-collection.md',
+      },
+      {
+        pattern: 'schema-versioning',
+        target: hubName,
+        reason: 'Every document is stamped with schemaVersion: 1 so future shape changes can migrate lazily.',
+        knowledgeSource: 'schema-versioning.md',
+      },
+    ],
+    jsonSchema: { bsonType: 'object', required: ['_id', 'schemaVersion', 'docType'], properties },
+    indexes: [
+      {
+        keys: { 'links.target': 1, 'links.docType': 1 },
+        options: { name: `idx_${hubName}_links_target_docType` },
+        reason: 'Single-query graph reads filter on links.target and links.docType.',
+      },
+      {
+        keys: { docType: 1 },
+        options: { name: `idx_${hubName}_docType` },
+        reason: 'Filter documents by entity kind within the shared collection.',
+      },
+    ],
+    embeddedArrays: [],
+    extendedReferences: [],
+    computedFields: [],
+    singleCollection,
+  };
+}
+
+/** Append a mirror archive collection for one hot collection. */
+function planArchiveMirror(hot: CollectionPlan): CollectionPlan {
+  const archive = hot.archive!;
+  const archiveName = archive.archiveCollection;
+  return {
+    ...hot,
+    name: archiveName,
+    archive: undefined,
+    patterns: [
+      {
+        pattern: 'archive',
+        target: archiveName,
+        reason: `Cold-storage mirror of ${hot.name}; documents older than ${archive.archiveAfterDays} days move here with the same embedded shape.`,
+        knowledgeSource: 'archive.md',
+      },
+      ...hot.patterns.filter((decision) => decision.pattern === 'schema-versioning'),
+    ],
+    indexes: [
+      ...hot.indexes,
+      {
+        keys: { [toCamelCase(archive.timeColumn)]: 1 },
+        options: { name: `idx_${archiveName}_${toCamelCase(archive.timeColumn)}` },
+        reason: 'Archive sweeps and time-range queries filter on document age.',
+      },
+    ],
+  };
 }
 
 /** Pick the lookup columns worth duplicating for Extended Reference. */
@@ -544,12 +718,26 @@ export function buildMigrationPlan(model: SqlStructuralModel, profile: WorkloadP
   );
 
   const collections: CollectionPlan[] = [];
+  const singleCollectionAbsorbed = new Set<string>();
+
+  // Pass 1.5: junction-linked entity pairs -> Single Collection hub.
+  if (shouldUseSingleCollection(profile)) {
+    for (const [tableA, tableB] of findSingleCollectionPairs(model)) {
+      if (singleCollectionAbsorbed.has(tableA) || singleCollectionAbsorbed.has(tableB)) continue;
+      const junction = findJunctionBetween(model, tableA, tableB);
+      collections.push(planSingleCollectionHub(tableA, tableB, junction, model, profile));
+      singleCollectionAbsorbed.add(tableA);
+      singleCollectionAbsorbed.add(tableB);
+      if (junction) singleCollectionAbsorbed.add(junction.name);
+    }
+  }
 
   // Pass 2: plan every collection. Children may be absorbed as we go, so we
   // plan parents in dependency order (tables with no FKs first).
   const orderedTables = [...model.tables].sort((a, b) => a.foreignKeys.length - b.foreignKeys.length);
 
   for (const table of orderedTables) {
+    if (singleCollectionAbsorbed.has(table.name)) continue;
     if (bucketedTables.has(table.name)) {
       collections.push(planBucketCollection(table, profile));
       continue;
@@ -619,6 +807,29 @@ export function buildMigrationPlan(model: SqlStructuralModel, profile: WorkloadP
     }
 
     const primaryKeyColumns = table.primaryKey.length > 0 ? table.primaryKey : [table.columns[0].name];
+
+    let archive: ArchivePlan | undefined;
+    if (isArchiveCandidate(table, profile, bucketedTables)) {
+      const dateColumn = findDateColumn(table)!;
+      const ratioLabel = `${profile.telemetry.readPercent}:${profile.telemetry.writePercent} R:W at ${profile.telemetry.peakRpm.toLocaleString('en-US')} RPM`;
+      archive = {
+        timeColumn: dateColumn.name,
+        archiveAfterDays: archiveRetentionDays(profile),
+        archiveCollection: `${collectionName}_archive`,
+      };
+      patterns.push({
+        pattern: 'archive',
+        target: collectionName,
+        reason: `${table.name} holds ${table.rowCount.toLocaleString('en-US')} dated rows under ${ratioLabel}; cold documents move to ${archive.archiveCollection} after ${archive.archiveAfterDays} days per the MongoDB Archive pattern.`,
+        knowledgeSource: 'archive.md',
+      });
+      indexes.push({
+        keys: { [toCamelCase(dateColumn.name)]: -1 },
+        options: { name: `idx_${collectionName}_${toCamelCase(dateColumn.name)}` },
+        reason: 'Active reads and archive sweeps filter on document age.',
+      });
+    }
+
     collections.push({
       name: collectionName,
       sourceTable: table.name,
@@ -637,6 +848,7 @@ export function buildMigrationPlan(model: SqlStructuralModel, profile: WorkloadP
       embeddedArrays: childPlan.embeddedArrays,
       extendedReferences: lookupPlan.extendedReferences,
       computedFields: childPlan.computedFields,
+      archive,
     });
   }
 
@@ -676,6 +888,14 @@ export function buildMigrationPlan(model: SqlStructuralModel, profile: WorkloadP
       });
       plannedNames.add(array.overflowCollection);
     }
+  }
+
+  // Pass 3.5: archive mirror collections for hot collections with an archive plan.
+  for (const collection of [...collections]) {
+    if (!collection.archive || plannedNames.has(collection.archive.archiveCollection)) continue;
+    const mirror = planArchiveMirror(collection);
+    collections.push(mirror);
+    plannedNames.add(mirror.name);
   }
 
   // Pass 4: drop standalone collections for tables that were fully absorbed
