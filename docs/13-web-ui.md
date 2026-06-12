@@ -63,6 +63,9 @@ All six pipeline steps (Knowledge + RAG, profiles, design, ETL, import, codegen)
 
 ## 5. Supported SQL dialects
 
+Full reference: **[18-sql-dialects.md](18-sql-dialects.md)** (live vs DDL paste, ETL
+paths, limitations, Oracle examples).
+
 Dialect definitions live in [`src/dialects.ts`](../src/dialects.ts). The UI loads them
 from `GET /api/dialects`. Only **SQLite** has a live file adapter; every other dialect
 uses the shared DDL parser ([`src/utilities/ddlParser.ts`](../src/utilities/ddlParser.ts))

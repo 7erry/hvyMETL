@@ -204,6 +204,19 @@ npm run hvymetl -- prompt --source examples/iot.db --profile iot
 `out/<name>/etl-manifest.json` lists every produced CSV with the exact import
 command per collection.
 
+## Supported SQL dialects
+
+Eleven dialects are recognized for schema import; only **SQLite** has a live database
+adapter (CLI + file upload). All others use **DDL paste** (web UI or API). Row data in
+the web pipeline comes from **CSV exports** per table.
+
+| Tier | Dialects |
+| --- | --- |
+| Live file | SQLite |
+| DDL paste | PostgreSQL, MySQL, SQL Server, ClickHouse, Oracle, Db2, CockroachDB, Aurora (PG/MySQL), Spanner |
+
+Full matrix, parser limits, and examples: **[docs/18-sql-dialects.md](docs/18-sql-dialects.md)**.
+
 ## The example domains
 
 | Database | Default profile | What it exercises |
