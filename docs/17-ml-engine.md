@@ -126,7 +126,87 @@ Breaches produce a lesson like: *"CRITICAL FAILURE: Table 'order_items' migrated
 | Collection | Contents |
 | --- | --- |
 | `hvymetl_migration_logs` | Per-table decisions, telemetry, predictions, actuals |
-| `hvymetl_lessons_learned` | Embedded failure lessons (`namespace: lessons_learned`) |
+| `hvymetl_lessons_learned` | Failure lessons (`namespace: lessons_learned`) with optional `embedding` vector |
+
+Implementation: [`migrationStore.ts`](../src/ml_engine/migrationStore.ts).
+
+### Lessons-learned memory: storage vs retrieval
+
+hvyMETL uses MongoDB for **persistence** of lessons learned, but **not** Atlas Vector
+Search (`$vectorSearch`) for similarity ranking today. Storage and retrieval are
+separate layers:
+
+```mermaid
+%%{init:{"theme":"base","themeVariables":{"darkMode":true,"background":"#001E2B","mainBkg":"#023430","primaryTextColor":"#E3FCF7","lineColor":"#00ED64","textColor":"#E3FCF7"}}}%%
+flowchart LR
+    subgraph write [Write path]
+        REFL[analyzeAndReflect] --> UPSERT[upsertLessonLearned]
+        UPSERT --> EMB[Voyage / OpenAI embed]
+        EMB --> COLL[(hvymetl_lessons_learned)]
+    end
+    subgraph read [Read path]
+        Q[Workload query] --> LOAD[listLessons from MongoDB or memory]
+        LOAD --> RANK[In-process cosine or BM25]
+        RANK --> PROMPT[Historical lessons markdown]
+    end
+    COLL --> LOAD
+```
+
+#### When is MongoDB used?
+
+| `MONGODB_URI` | Store | Durable across restarts? |
+| --- | --- | --- |
+| **Set** | `MongoMigrationStore` via the native `mongodb` driver | Yes |
+| **Unset** | `InMemoryMigrationStore` (process-local `Map`) | No — logs a console notice |
+
+Database name: `MONGODB_DB` or `HVYMETL_MEMORY_DB` (default **`hvymetl_memory`**). This
+can be the same Atlas cluster as your migrated data or a separate database; hvyMETL only
+requires a valid connection string.
+
+`getMigrationStore()` in `migrationStore.ts` picks the backend automatically. Tests can
+inject a store with `setMigrationStore()`.
+
+#### What is stored in `hvymetl_lessons_learned`?
+
+Each document is a `LessonLearnedDocument`:
+
+| Field | Purpose |
+| --- | --- |
+| `lessonId` | Unique id (indexed) |
+| `namespace` | Always `lessons_learned` (indexed with `createdAt`) |
+| `text` | Dense semantic lesson string (embedded for retrieval) |
+| `embedding` | Optional `number[]` from Voyage 4 or OpenAI when an API key is set |
+| `severity` | `critical` \| `warning` \| `success` |
+| `telemetrySnapshot`, `predictedMetrics`, `actualMetrics` | Context for auditing |
+| `patternsInvolved` | Pattern ids that caused the failure |
+
+Writes use `updateOne(…, { upsert: true })` keyed on `lessonId`.
+
+#### How are lessons retrieved? (not `$vectorSearch`)
+
+[`retrieveLessonsLearned()`](../src/ml_engine/memoryEngine.ts) loads matching documents
+from the store, then ranks them **in the Node.js process**:
+
+1. **Cosine similarity** — if lessons have stored `embedding` vectors and
+   `MONGODB_MODEL_KEY` or `OPENAI_API_KEY` can embed the workload query.
+2. **Vector embed-on-read** — embed all lesson texts and the query, then cosine rank
+   (same approach as pattern `vectorRetrieve`).
+3. **BM25 lexical** — offline fallback when no embedding provider is configured.
+
+There is **no** `$vectorSearch` aggregation stage and **no** Atlas vector index on the
+lessons collection yet. For small-to-medium lesson corpora (typical during early
+self-reflection), in-process ranking is sufficient. See [§9 Refactoring Notes](#9-refactoring-notes)
+for migrating to Atlas Vector Search at scale.
+
+#### Same cluster, different concerns
+
+| Concern | Env var | Role |
+| --- | --- | --- |
+| **Migration target data** | `MONGODB_URI` + `MONGODB_DB` on import | Application collections from csvToAtlas |
+| **ML memory** | `MONGODB_URI` + `HVYMETL_MEMORY_DB` (or `MONGODB_DB`) | `hvymetl_*` metadata collections |
+
+You may point both at one cluster with different database names, or share `MONGODB_DB`
+if you prefer a single database for app data and ML metadata.
 
 ---
 
@@ -312,7 +392,9 @@ When training a custom `performance-critic.onnx`, use **8 normalized float featu
 
 ## 8. Edge Cases & Logging
 
-- **`MONGODB_URI` unset:** migration logs and lessons use an in-process `InMemoryMigrationStore` (fine for unit tests; not durable across restarts).
+- **`MONGODB_URI` unset:** migration logs and lessons use an in-process `InMemoryMigrationStore` (fine for unit tests; not durable across restarts). Lessons written in one process are invisible to the next run.
+- **`MONGODB_URI` set, no embedding key:** lessons persist in MongoDB but retrieval uses BM25 over lesson `text` only (no `embedding` field written).
+- **Embedding key set, no `MONGODB_URI`:** lessons exist only in memory; embeddings are computed but lost on exit — set `MONGODB_URI` for production self-reflection.
 - **Voyage rerank failure:** falls back to telemetry heuristic (Xenova is **not** loaded when Model Key is set).
 - **Xenova failure (no Model Key):** falls back to heuristic.
 - **ONNX missing:** heuristic critic; migrations still proceed.

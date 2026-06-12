@@ -95,7 +95,7 @@ The ML engine upgrades the design stage from static RAG + heuristics to a
 | --- | --- |
 | **Telemetry reranker** | After bi-encoder retrieval (top 15), rescore patterns against workload telemetry (top 3). Uses [Voyage rerank-2.5](https://docs.voyageai.com/reference/reranker-api) when `MONGODB_MODEL_KEY` is set; local Xenova cross-encoder offline. |
 | **Performance critic** | Predicts cache-miss and IOPS risk from schema shape + telemetry before ETL. Rejects and regenerates (max 2 loops) with critic notes. ONNX model optional. |
-| **Lessons-learned memory** | Queries `lessons_learned` vector space in parallel with pattern RAG. Injects past failures into LLM prompts under **HISTORICAL LESSONS LEARNED FROM PAST MIGRATIONS**. |
+| **Lessons-learned memory** | Persists lessons in MongoDB (`hvymetl_lessons_learned` when `MONGODB_URI` is set; in-memory otherwise). Retrieves via in-process cosine/BM25 — not Atlas `$vectorSearch` yet. Injects matches into LLM prompts under **HISTORICAL LESSONS LEARNED FROM PAST MIGRATIONS**. |
 | **Feedback loop** | Logs decisions to `hvymetl_migration_logs`, fetches post-migration Atlas metrics, upserts new lessons when performance breaches thresholds. Cron/serverless safe. |
 
 ```typescript
@@ -118,6 +118,12 @@ scheduleReflection(migrationId, { clusterId: 'my-atlas-cluster' });
 HVYMETL_ATLAS_STUB_MODE=degraded npm run build
 HVYMETL_SCHEDULE_REFLECTION=1   # auto-reflect after ML design
 ```
+
+**Lessons-learned storage:** MongoDB is the durable store when `MONGODB_URI` is
+configured (collection `hvymetl_lessons_learned`, default DB `hvymetl_memory`). Without
+it, lessons live in process memory only. Similarity search runs in Node.js (cosine on
+stored embeddings or BM25) — not Atlas Vector Search. Details:
+**[docs/17-ml-engine.md § Lessons-learned memory](docs/17-ml-engine.md#lessons-learned-memory-storage-vs-retrieval)**.
 
 ## Setup
 

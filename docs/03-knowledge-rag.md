@@ -156,6 +156,11 @@ Dual-space retrieval used by the [ML engine](17-ml-engine.md). Runs **in paralle
 
 Returns `{ patternChunks, lessonChunks, historicalLessonsMarkdown }`. The markdown block is passed to `buildPromptBundle({ historicalLessonsMarkdown })` under the heading **HISTORICAL LESSONS LEARNED FROM PAST MIGRATIONS (DO NOT REPEAT THESE MISTAKES)**.
 
+Lessons are **persisted in MongoDB** (`hvymetl_lessons_learned`) when `MONGODB_URI` is
+set; otherwise an in-memory store is used. Retrieval loads documents from that store
+and ranks them in-process (cosine on stored embeddings or BM25) — **not** Atlas
+`$vectorSearch`. See [17-ml-engine.md § storage vs retrieval](17-ml-engine.md#lessons-learned-memory-storage-vs-retrieval).
+
 When `MONGODB_MODEL_KEY` is set, the ML reranker uses [Voyage rerank-2.5](https://docs.voyageai.com/reference/reranker-api) (not Xenova) to rescore the top bi-encoder candidates against telemetry. See [17-ml-engine.md](17-ml-engine.md).
 
 ### `createRetrievalConfigFromEnv(): RetrievalConfig`
