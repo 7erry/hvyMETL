@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { MongoLogo } from './components/MongoLogo';
 import { MigrationArtifactsView } from './components/MigrationArtifactsView';
 import { SchemaCanvas, deleteTableFromModel, duplicateTableInModel } from './components/SchemaCanvas';
@@ -34,6 +34,8 @@ export default function App() {
   const [status, setStatus] = useState('');
   const [exporting, setExporting] = useState(false);
   const [pipelineOpen, setPipelineOpen] = useState(false);
+  const schemaFileInputRef = useRef<HTMLInputElement>(null);
+  const diagramFileInputRef = useRef<HTMLInputElement>(null);
 
   const {
     profileId,
@@ -301,7 +303,7 @@ export default function App() {
             </button>
           ) : (
             <>
-              <button type="button" className="ghost" onClick={() => setPipelineOpen(true)} disabled={!model}>
+              <button type="button" className="primary" onClick={() => setPipelineOpen(true)} disabled={!model}>
                 Run Full Pipeline
               </button>
               <button type="button" className="primary" onClick={() => void handleAiExport()} disabled={!model || exporting}>
@@ -341,23 +343,25 @@ export default function App() {
                     placeholder="Paste one CREATE TABLE query or full DDL script…"
                     rows={8}
                   />
-                  <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem', flexWrap: 'wrap' }}>
+                  <div className="button-row">
                     <button type="button" className="primary" onClick={() => void handleImportQuery()}>
                       Import Query
                     </button>
-                    <label className="ghost" style={{ padding: '0.45rem 0.85rem', cursor: 'pointer' }}>
+                    <button type="button" className="primary" onClick={() => schemaFileInputRef.current?.click()}>
                       Import file
-                      <input
-                        type="file"
-                        accept=".sql,.ddl,.txt,.db,.sqlite,.sqlite3"
-                        hidden
-                        onChange={(e) => {
-                          const f = e.target.files?.[0];
-                          if (f) void handleSchemaFileUpload(f);
-                          e.target.value = '';
-                        }}
-                      />
-                    </label>
+                    </button>
+                    <input
+                      ref={schemaFileInputRef}
+                      type="file"
+                      accept=".sql,.ddl,.txt,.db,.sqlite,.sqlite3"
+                      hidden
+                      aria-hidden
+                      onChange={(e) => {
+                        const f = e.target.files?.[0];
+                        if (f) void handleSchemaFileUpload(f);
+                        e.target.value = '';
+                      }}
+                    />
                   </div>
                 </div>
 
@@ -376,7 +380,12 @@ export default function App() {
                       </option>
                     ))}
                   </select>
-                  <button type="button" onClick={() => void handleTemplateLoad()} disabled={!selectedTemplateId} style={{ width: '100%' }}>
+                  <button
+                    type="button"
+                    className="primary block"
+                    onClick={() => void handleTemplateLoad()}
+                    disabled={!selectedTemplateId}
+                  >
                     Load template
                   </button>
                 </div>
@@ -439,14 +448,25 @@ export default function App() {
 
                 <div className="panel" style={{ marginBottom: '0.75rem' }}>
                   <h3>Share Diagram</h3>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
-                    <button type="button" onClick={handleExportDiagram} disabled={!model}>
+                  <div className="button-row column">
+                    <button type="button" className="primary block" onClick={handleExportDiagram} disabled={!model}>
                       Export diagram JSON
                     </button>
-                    <label style={{ textAlign: 'center', cursor: 'pointer' }}>
+                    <button type="button" className="primary block" onClick={() => diagramFileInputRef.current?.click()}>
                       Import diagram JSON
-                      <input type="file" accept=".json" hidden onChange={(e) => e.target.files?.[0] && handleImportDiagram(e.target.files[0])} />
-                    </label>
+                    </button>
+                    <input
+                      ref={diagramFileInputRef}
+                      type="file"
+                      accept=".json"
+                      hidden
+                      aria-hidden
+                      onChange={(e) => {
+                        const f = e.target.files?.[0];
+                        if (f) handleImportDiagram(f);
+                        e.target.value = '';
+                      }}
+                    />
                   </div>
                 </div>
 
@@ -455,7 +475,7 @@ export default function App() {
                   <p style={{ margin: '0 0 0.5rem', fontSize: '0.75rem', opacity: 0.8 }}>
                     Your work is saved in this browser tab. Refreshing keeps schema, layout, and migration artifacts.
                   </p>
-                  <button type="button" className="ghost" onClick={handleClearSession} style={{ width: '100%' }}>
+                  <button type="button" className="primary block" onClick={handleClearSession}>
                     Clear session
                   </button>
                 </div>

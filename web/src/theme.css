@@ -45,6 +45,39 @@ button.primary {
   font-weight: 600;
 }
 
+button.primary:disabled:hover {
+  background: var(--mdb-green-base);
+  box-shadow: none;
+}
+
+button.block {
+  width: 100%;
+}
+
+button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+button:disabled:hover {
+  box-shadow: none;
+}
+
+button.ghost:disabled:hover {
+  background: transparent;
+}
+
+.button-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.button-row.column {
+  flex-direction: column;
+}
+
 button.ghost {
   background: transparent;
   border-color: var(--mdb-gray-light-2);

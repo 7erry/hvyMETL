@@ -106,7 +106,7 @@ export function MigrationArtifactsView({ artifacts, onChange, onBack }: Migratio
           AI migration artifacts
           {artifacts.retrievalStrategy ? ` · RAG: ${artifacts.retrievalStrategy}` : ''}
         </span>
-        <button type="button" onClick={handleDownloadAll}>
+        <button type="button" className="primary" onClick={handleDownloadAll}>
           Download all
         </button>
       </div>
