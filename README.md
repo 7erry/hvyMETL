@@ -81,7 +81,7 @@ purpose, outputs, commands, and pipeline wiring for all six stages:
 | 3 | Design engine | `migration-plan.json`, `design-report.md` |
 | 4 | Parallel ETL | `csv/*.csv`, `etl-manifest.json` |
 | 5 | csvToAtlas import | Documents in MongoDB Atlas |
-| 6 | Codegen (`repogen`) | Typed `*Repository.ts`, `mongoClient.ts`, `ensureIndexes.ts` |
+| 6 | Codegen (`repogen`) | Typed repositories + connection module + `ensureIndexes` (13 languages) |
 
 Artifact purposes (plan, report, RAG prompts): **[docs/15-migration-artifacts.md](docs/15-migration-artifacts.md)**.
 
@@ -198,8 +198,9 @@ npm run hvymetl -- etl --plan out/iot/migration-plan.json --out out/iot
 # 5. Import the chunked CSVs into Atlas (idempotent upserts by _id).
 npm run import-cli -- out/iot/csv/sensorReadings.chunk0.csv out/iot/csv/sensorReadings.chunk1.csv sensorReadings
 
-# 6. Generate the concurrency-safe repository layer.
-npm run hvymetl -- repogen --plan out/iot/migration-plan.json --out out/iot/repositories
+# 6. Generate the concurrency-safe repository layer (pick your driver language).
+npm run hvymetl -- repogen --plan out/iot/migration-plan.json --out out/iot/repositories --lang node
+# --lang: c, cpp, csharp, go, java, kotlin, node, php, python, ruby, rust, scala, swift
 
 # Optional: emit the three RAG-grounded production prompts for LLM/Cursor use.
 npm run hvymetl -- prompt --source examples/iot.db --profile iot

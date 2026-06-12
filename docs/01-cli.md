@@ -22,7 +22,7 @@ given), and delegates all real work to the stage modules. CSV imports use the ex
 | `design` | Introspect a SQL source and emit `migration-plan.json` + `design-report.md` | `--source <path>` (required), `--out <dir>`, profile flags |
 | `prompt` | Emit the three RAG-grounded production prompts as markdown | `--source <path>` (required), `--out <dir>`, profile flags |
 | `etl` | Run the parallel pattern-aware extraction to CSV chunks | `--plan <path>`, `--out <dir>`, `--dry-run`, `--workers <n>` |
-| `repogen` | Generate the typed repository layer from a plan | `--plan <path>`, `--out <dir>` |
+| `repogen` | Generate the typed repository layer from a plan | `--plan <path>`, `--out <dir>`, `--lang <id>` |
 
 ### Shared profile flags (`design` and `prompt`)
 

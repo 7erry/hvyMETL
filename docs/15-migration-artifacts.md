@@ -15,7 +15,7 @@ hvyMETL produces two kinds of migration outputs:
 | --- | --- | --- |
 | **Deterministic artifacts** | `migration-plan.json` and `design-report.md` | ETL, csvToAtlas import, `repogen`, human reviewers |
 | **RAG production prompts** | Three markdown files filled with your DDL, telemetry, and retrieved pattern docs | Cursor, ChatGPT, or any LLM workflow |
-| **Generated application code** | Typed repository modules from `repogen` | Your Node.js / TypeScript application |
+| **Generated application code** | Typed repository modules from `repogen` (13 MongoDB client languages) | Your application stack |
 
 The **Migration Studio** web UI and the CLI `design` / `prompt` commands emit the same
 artifacts. After **AI Migration Export**, the full-screen artifact editor lets you review,
@@ -242,21 +242,34 @@ The name **repository layer** refers to two related outputs:
 ### 6a. Generated code (`hvymetl repogen`)
 
 **Purpose:** Emit a **typed, concurrency-safe data access layer** your application
-imports at runtime — not a prompt, but production TypeScript.
+imports at runtime — not a prompt, but production code in the MongoDB driver language
+you choose.
 
-`repogen` reads `migration-plan.json` and writes:
+`repogen` reads `migration-plan.json` and writes a connection module, an index
+bootstrap script, and one repository per collection. Supported languages (CLI
+`--lang` / web UI dropdown):
 
-| File | Role |
-| --- | --- |
-| `mongoClient.ts` | Singleton client with profile-tuned pool and write concern |
-| `ensureIndexes.ts` | One-shot index creation from planned specs |
-| `<collection>Repository.ts` | CRUD plus pattern maintainers (`$inc`, capped `$push`, bucket upserts, Extended Reference fan-out) |
+| `--lang` | Language | Driver |
+| --- | --- | --- |
+| `node` | Node.js (TypeScript) | `mongodb` |
+| `python` | Python | `pymongo` |
+| `go` | Go | `mongo-go-driver` |
+| `java` | Java | `mongodb-driver-sync` |
+| `kotlin` | Kotlin | `mongodb-driver-sync` |
+| `csharp` | C# | `MongoDB.Driver` |
+| `ruby` | Ruby | `mongo` gem |
+| `php` | PHP | `mongodb/mongodb` |
+| `rust` | Rust | `mongodb` crate |
+| `scala` | Scala | `mongodb-scala` |
+| `swift` | Swift | `MongoSwift` |
+| `c` | C | `libmongoc` |
+| `cpp` | C++ | `mongocxx` |
 
-Every write path uses **atomic MongoDB modifiers only**. There are no read-modify-write
-loops, so parallel writers cannot corrupt Computed counters or Subset arrays.
+Every write path uses **atomic MongoDB modifiers only** (`$inc`, capped `$push`, bucket
+upserts, Extended Reference fan-out). There are no read-modify-write loops.
 
 ```bash
-npm run hvymetl -- repogen --plan out/iot/migration-plan.json --out out/iot/repositories
+npm run hvymetl -- repogen --plan out/iot/migration-plan.json --out out/iot/repositories --lang java
 ```
 
 Full reference: [08-repogen.md](08-repogen.md).
@@ -265,16 +278,17 @@ Full reference: [08-repogen.md](08-repogen.md).
 
 **Purpose:** **Prompt 3** instructs an LLM to rewrite a legacy SQL repository into
 MongoDB using the native driver, with the same telemetry tuning and atomic modifier
-rules as `repogen`.
+rules as `repogen`. Use when you need custom ORM integration or hand-tuned code beyond
+what the deterministic generators emit.
 
 ### When to use which
 
 | Scenario | Use |
 | --- | --- |
-| Node.js / TypeScript app, plan finalized | `hvymetl repogen` |
-| Java, Go, C#, or another driver | `3-repository-layer.md` prompt |
-| Existing ORM layer that needs a manual port | Prompt, using the migration plan as ground truth |
-| You need compile-time types from `$jsonSchema` | `repogen` |
+| Plan finalized, standard MongoDB driver | `hvymetl repogen --lang <id>` |
+| Web UI review + download | **AI Migration Export** → **Generate repositories** |
+| Existing ORM layer that needs a manual port | `3-repository-layer.md` prompt |
+| Custom framework glue the generators do not cover | Prompt, using the migration plan as ground truth |
 
 The prompt embeds pool sizes, write concern, and retrieved pattern context so generated
 code respects the workload profile even when hvyMETL is not the codegen tool.
@@ -302,7 +316,7 @@ Typical **CLI-first** workflow:
 Typical **Migration Studio** workflow:
 
 1. Import DDL → arrange ER diagram → choose workload profile
-2. **AI Migration Export** → review all five artifacts in the editor; download for your team or Cursor
+2. **AI Migration Export** → review artifacts; optionally **Generate repositories** in your target language
 3. **Run Full Pipeline** (optional) → design + csvToAtlas import from CSV exports in one step
 
 The migration plan and design report are always paired. The three prompts share the
@@ -322,9 +336,11 @@ After **AI Migration Export**, the Migration Studio opens a full-screen view wit
 | Schema design architect | `1-schema-design-architect.md` | Yes |
 | Parallel ETL generator | `2-parallel-etl-generator.md` | Yes |
 | Repository layer | `3-repository-layer.md` | Yes |
+| Generated repositories | one tab per file (after **Generate repositories**) | View / download only |
 
-Artifacts persist in `sessionStorage` across browser refresh. Use **Download** or
-**Download all** to save files for CLI follow-up or LLM sessions.
+After **AI Migration Export**, choose a **Repository language** (13 MongoDB client
+drivers) and click **Generate repositories** to add connection, index, and repository
+source files as tabs. Use **Download repositories** to save the full set.
 
 See [13-web-ui.md](13-web-ui.md) for API endpoints and [web/README.md](../web/README.md)
 for screenshots.

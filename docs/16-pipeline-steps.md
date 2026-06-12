@@ -61,7 +61,7 @@ flowchart TB
 | 3. Design engine | `hvymetl design` | `migration-plan.json`, `design-report.md` | ETL, import, repogen, reviewers |
 | 4. Parallel ETL | `hvymetl etl` | `csv/*.csv`, `etl-manifest.json` | csvToAtlas import |
 | 5. csvToAtlas import | `npm run import-cli` | Documents in Atlas | Your application |
-| 6. Codegen (`repogen`) | `hvymetl repogen` | `*Repository.ts`, `mongoClient.ts`, `ensureIndexes.ts` | Your application |
+| 6. Codegen (`repogen`) | `hvymetl repogen --lang <id>` | Connection module, `ensureIndexes`, per-collection repositories | Your application |
 
 Artifact purposes (plan, report, RAG prompts): [15-migration-artifacts.md](15-migration-artifacts.md).
 
@@ -369,20 +369,41 @@ migration-plan.json ────────────────────
 
 ### Purpose
 
-The **codegen** stage reads `migration-plan.json` and emits a **typed TypeScript data
-access layer** your application imports at runtime — not a prompt, but production
-code. This is the final automated step; it does **not** run ETL or import data.
+The **codegen** stage reads `migration-plan.json` and emits a **typed data access
+layer** in one of **13 MongoDB officially supported client languages** — not a prompt,
+but production code your application imports at runtime. This is the final automated
+step; it does **not** run ETL or import data.
 
 Every write path uses **atomic MongoDB modifiers only** (`$inc`, capped `$push`,
 bucket upserts, Extended Reference fan-out). No read-modify-write loops.
 
+### Supported languages
+
+| `--lang` | Language | Driver |
+| --- | --- | --- |
+| `node` | Node.js (TypeScript) | `mongodb` |
+| `python` | Python | `pymongo` |
+| `go` | Go | `mongo-go-driver` |
+| `java` | Java | `mongodb-driver-sync` |
+| `kotlin` | Kotlin | `mongodb-driver-sync` |
+| `csharp` | C# | `MongoDB.Driver` |
+| `ruby` | Ruby | `mongo` gem |
+| `php` | PHP | `mongodb/mongodb` |
+| `rust` | Rust | `mongodb` crate |
+| `scala` | Scala | `mongodb-scala` |
+| `swift` | Swift | `MongoSwift` |
+| `c` | C | `libmongoc` |
+| `cpp` | C++ | `mongocxx` |
+
+Default: `node`. Full reference: [08-repogen.md](08-repogen.md).
+
 ### What it produces
 
-| File | Role |
+| Module | Role |
 | --- | --- |
-| `mongoClient.ts` | Singleton client with profile-tuned pool + write concern |
-| `ensureIndexes.ts` | One-shot `createIndex` for every planned spec |
-| `<collection>Repository.ts` | Typed `Document` type + CRUD + pattern maintainers per collection |
+| Connection module | Singleton client with profile-tuned pool + write concern |
+| `ensureIndexes` | One-shot `createIndex` for every planned spec |
+| `<collection>Repository` | Typed document shape + CRUD + pattern maintainers |
 
 Generated methods vary by plan patterns:
 
@@ -394,30 +415,34 @@ Generated methods vary by plan patterns:
 | `record*Measurement` | Bucket collections | Upsert by deterministic window `_id` |
 | `fanOut*Update` | Extended References | `updateMany` on duplicated lookup fields |
 
-Types derive from the plan's `$jsonSchema.properties` — compile-time field checking, no loose `Document` intersection.
+Types derive from the plan's `$jsonSchema.properties`.
 
 ### What happens under the hood
 
 1. **Parse plan** — load `migration-plan.json`.
-2. **Emit client module** — snapshot pool, write concern, journal from profile on plan.
-3. **Emit repositories** — walk `jsonSchema` + pattern metadata; one function per pattern maintainer.
-4. **Write files** — log each path; zero runtime dependency on hvyMETL (only `mongodb` driver).
+2. **Select language** — dispatch to the matching generator in `src/repogen/languages/`.
+3. **Emit client module** — snapshot pool, write concern, journal from profile on plan.
+4. **Emit repositories** — walk `jsonSchema` + pattern metadata; one function per pattern maintainer.
+5. **Write files** — log each path; zero runtime dependency on hvyMETL (only the target driver).
 
 ### How to run
 
 ```bash
-npm run hvymetl -- repogen --plan out/iot/migration-plan.json --out out/iot/repositories
+npm run hvymetl -- repogen --plan out/iot/migration-plan.json --out out/iot/repositories --lang node --lang python
 ```
 
-Not included in **Run Full Pipeline** UI (run separately after reviewing the plan).
+Not included in **Run Full Pipeline** (run separately after reviewing the plan).
 
-For non-TypeScript stacks, use RAG prompt `3-repository-layer.md` from **AI Migration Export** instead.
+Web UI: **AI Migration Export** → **Repository language** dropdown → **Generate repositories**.
+
+For custom ORM integration beyond the deterministic generators, use RAG prompt
+`3-repository-layer.md` from **AI Migration Export**.
 
 ### How it fits the pipeline
 
 ```
-migration-plan.json → repogen → repositories/*.ts → your Node.js app
-                              ↘ ensureIndexes.ts (run once at deploy)
+migration-plan.json → repogen --lang <id> → repositories/ → your application
+                              ↘ ensureIndexes (run once at deploy)
 Atlas (Step 5) ← your app calls generated repositories at runtime
 ```
 
@@ -444,7 +469,7 @@ npm run hvymetl -- etl --plan out/iot/migration-plan.json --out out/iot
 npm run import-cli -- out/iot/csv/sensorReadings.chunk0.csv sensorReadings --drop --db hvymetl_iot
 
 # Step 6
-npm run hvymetl -- repogen --plan out/iot/migration-plan.json --out out/iot/repositories
+npm run hvymetl -- repogen --plan out/iot/migration-plan.json --out out/iot/repositories --lang node
 
 # Optional: RAG prompts for LLM workflows
 npm run hvymetl -- prompt --source examples/iot.db --profile iot

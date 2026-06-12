@@ -62,6 +62,7 @@ editable text, per-file download, and **Download all**. Artifacts persist in
 | **Session state** | Auto-saved in `sessionStorage`; use **Clear session** to reset |
 | **Workload profiles** | Header dropdown (catalog, cms, iot, …) |
 | **AI Migration Export** | Generates migration plan JSON, design report, and 3 RAG prompts |
+| **Repository codegen** | After export: pick language (C, C++, C#, Go, Java, Kotlin, Node.js, PHP, Python, Ruby, Rust, Scala, Swift) → generate + download repositories |
 | **Run Full Pipeline** | Header button — design → csvToAtlas import from CSV exports |
 
 See **[docs/15-migration-artifacts.md](../docs/15-migration-artifacts.md)** for what each
@@ -76,7 +77,7 @@ parallel ETL generator prompt, repository layer prompt vs `repogen` code).
 2. **Arrange the ER diagram** — position tables, inspect details, duplicate as needed.
 3. **Choose a workload profile** — e.g. Content Management, IoT, Catalog.
 4. **Run Full Pipeline** (optional) — prompts for missing `.env` values, runs ETL + Atlas import.
-5. **AI Migration Export** — review and edit artifacts; download for Cursor/LLM or CLI follow-up.
+5. **AI Migration Export** — review artifacts; **Generate repositories** in your target language (13 MongoDB drivers).
 6. **Optional: share** — export diagram JSON for collaboration.
 
 ### Full pipeline from the UI

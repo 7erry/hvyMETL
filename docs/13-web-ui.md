@@ -37,6 +37,7 @@ exports, same as CLI).
 | **Workload auto-detect** | Profile dropdown updates after schema import (e.g. E-commerce Catalog for product/order schemas) | `inferWorkloadProfile()` on import |
 | **Table details** | Click table on canvas or sidebar | Column types, PKs, FKs |
 | **AI-Powered DDL Export** | Full-screen artifact editor (editable + per-file download) | `POST /api/export/migration` + prompts |
+| **Repository codegen** | Language dropdown + **Generate repositories** (13 MongoDB client drivers) | `GET /api/repogen/languages`, `POST /api/repogen/generate` |
 | **Full pipeline** | Header → **Run Full Pipeline** (ML design → shaped CSV import → Atlas persistence) | `GET /api/pipeline/config`, `POST /api/pipeline/run`, `GET /api/pipeline/executions` |
 
 Artifact purposes (migration plan, design report, RAG prompts, repository layer):
@@ -59,6 +60,8 @@ All six pipeline steps (Knowledge + RAG, profiles, design, ETL, import, codegen)
 | `POST` | `/api/design` | `{ model, profileId, ddl }` | `{ plan, designReport, retrievalStrategy }` |
 | `POST` | `/api/export/migration` | `{ model, profileId, ddl }` | Downloads: plan JSON, design report, RAG prompts |
 | `POST` | `/api/export/prompts` | `{ ddl, profileId }` | RAG prompt bundle |
+| `GET` | `/api/repogen/languages` | — | Supported client languages (`node`, `python`, `go`, `java`, …) |
+| `POST` | `/api/repogen/generate` | `{ planJson, language }` | Typed repositories for the chosen driver |
 | `GET` | `/api/pipeline/config` | — | Non-secret pipeline status (Mongo URI, csvToAtlas, source DB) |
 | `POST` | `/api/pipeline/run` | `{ model, profileId, ddl, dialect?, csvSourcePath?, mongoUri?, csvToAtlasPath?, targetDb?, drop? }` | ML design + csvToAtlas import + MongoDB execution record |
 | `POST` | `/api/pipeline/run-with-csv` | `multipart csvs` + form fields | Same as run, with uploaded CSV files |

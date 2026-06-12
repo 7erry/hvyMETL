@@ -30,7 +30,7 @@ merge-mode diagrams.
 | [05-design-engine.md](05-design-engine.md) | Introspection-to-pattern decision engine and `migration-plan.json` | `src/design/` |
 | [06-etl.md](06-etl.md) | Parallel worker-thread extraction, range splitting, CSV shaping | `src/etl/` |
 | [07-import-cli.md](07-import-cli.md) | csvToAtlas import via `CSV_TO_ATLAS_PATH` (external [cvsToAtlas](https://github.com/7erry/cvsToAtlas)) | `scripts/import-cli.mjs` |
-| [08-repogen.md](08-repogen.md) | Generated repository layer with atomic modifiers | `src/repogen/` |
+| [08-repogen.md](08-repogen.md) | Generated repository layer (13 MongoDB client languages) | `src/repogen/` |
 | [09-utilities.md](09-utilities.md) | CSV dialect, deterministic ids, naming conversions, DDL parser | `src/utilities/` |
 | [15-migration-artifacts.md](15-migration-artifacts.md) | Migration plan, design report, RAG prompts, and repository layer — purpose and when to use each | `src/design/`, `src/rag/`, `src/repogen/` |
 | [16-pipeline-steps.md](16-pipeline-steps.md) | All six pipeline steps — purpose, outputs, commands, and how each stage connects | full pipeline |

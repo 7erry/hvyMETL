@@ -1,107 +1,141 @@
 # 08 — The Repository Layer Generator
 
-Source: [`src/repogen/generate.ts`](../src/repogen/generate.ts)
+Sources: [`src/repogen/generate.ts`](../src/repogen/generate.ts),
+[`src/repogen/languages/`](../src/repogen/languages/)
 
 ## 1. High-Level Summary
 
 `repogen` is the final stage: it reads `migration-plan.json` and emits a complete,
-strictly-typed TypeScript data access layer — a shared profile-tuned `MongoClient`
-module, an index bootstrap script, and one repository per collection whose write
-methods use only **atomic MongoDB modifiers** (`$inc`, `$push` with `$slice`/`$each`/
-`$position`, `$setOnInsert`, `$set`). Application-side read-modify-write loops are
-structurally impossible because no generated method ever reads a document in order
-to write it back.
+strictly-typed data access layer in any of the **13 client languages MongoDB
+officially supports** — a shared profile-tuned connection module, an index bootstrap
+script, and one repository per collection whose write methods use only **atomic
+MongoDB modifiers** (`$inc`, `$push` with `$slice`/`$each`/`$position`, `$setOnInsert`,
+`$set`). Application-side read-modify-write loops are structurally impossible because
+no generated method ever reads a document in order to write it back.
 
-## 2. Technical Details & Signature
+Generated code follows SOLID principles, strict typing where the language allows,
+explicit error handling, and idiomatic patterns for each driver. Connection URIs and
+database names are always passed in by the caller — no hardcoded secrets.
 
-### `runRepogen(options: RepogenOptions): void`
+## 2. Supported languages
 
-| Name | Type | Required | Description |
+| `--lang` id | Language | MongoDB driver |
+| --- | --- | --- |
+| `node` | Node.js (TypeScript) | `mongodb` |
+| `python` | Python | `pymongo` |
+| `go` | Go | `mongo-go-driver` |
+| `java` | Java | `mongodb-driver-sync` |
+| `kotlin` | Kotlin | `mongodb-driver-sync` |
+| `csharp` | C# | `MongoDB.Driver` |
+| `ruby` | Ruby | `mongo` gem |
+| `php` | PHP | `mongodb/mongodb` |
+| `rust` | Rust | `mongodb` crate |
+| `scala` | Scala | `mongodb-scala` |
+| `swift` | Swift | `MongoSwift` |
+| `c` | C | `libmongoc` |
+| `cpp` | C++ | `mongocxx` |
+
+Default: `node` (TypeScript). Language modules live under
+[`src/repogen/languages/`](../src/repogen/languages/); each implements the same
+repository surface (CRUD + pattern maintainers) using that driver's idioms.
+
+### Generated files (by language)
+
+File naming follows each ecosystem's conventions. Every target emits the same logical
+modules:
+
+| Module | Node.js example | Python example | Java example |
 | --- | --- | --- | --- |
-| `options.planPath` | `string` | required | Path to `migration-plan.json` |
-| `options.outDir` | `string` | required | Destination folder for generated `.ts` files |
+| Connection | `mongoClient.ts` | `mongo_client.py` | `MongoClientFactory.java` |
+| Indexes | `ensureIndexes.ts` | `ensure_indexes.py` | `EnsureIndexes.java` |
+| Repositories | `productsRepository.ts` | `products_repository.py` | `ProductsRepository.java` |
 
-**Returns:** `void` (synchronous file generation); writes files and logs each path.
+C and C++ emit paired `.h`/`.c` or `.hpp`/`.cpp` files.
 
-### Generated files
+## 3. Technical Details & Signature
 
-| File | Contents |
-| --- | --- |
-| `mongoClient.ts` | Singleton `getDb(uri, dbName)` / `closeDb()` with the profile's pool + write concern baked in as constants |
-| `ensureIndexes.ts` | One `createIndex` per planned index spec, runnable as a script |
-| `<collection>Repository.ts` | Typed document type + CRUD + pattern-maintainer functions |
+### `runRepogen(options: RepogenOptions): RepogenGenerateResult`
+
+| Name | Type | Required | Default | Description |
+| --- | --- | --- | --- | --- |
+| `options.planPath` | `string` | required | — | Path to `migration-plan.json` |
+| `options.outDir` | `string` | required | — | Destination folder for generated files |
+| `options.language` | `string` | optional | `node` | One of the 13 `--lang` ids above |
+
+**Returns:** `RepogenGenerateResult` with `files[]`, `language`, `languageLabel`,
+`driverName`, and `collectionCount`. When `outDir` is set, writes files and logs each path.
+
+### `generateFromPlan(options): RepogenGenerateResult`
+
+Same as above but accepts an in-memory `MigrationPlan` (used by the web API).
 
 ### Per-repository surface (varies with the collection's patterns)
 
 | Generated function | Present when | Atomic mechanism |
 | --- | --- | --- |
-| `find<Doc>ById(id)` / `list<Docs>(filter, limit)` | always | point read / paged read |
+| `find<Doc>ById(id)` / `list<Docs>(…)` | always | point read / paged read |
 | `insert<Doc>(doc)` / `update<Doc>Fields(id, fields)` | always | `insertOne` / single `$set` |
 | `increment<Field>(id, delta)` | Computed counters | `$inc` (never read-add-write) |
-| `pushTo<Field>(id, item)` | Subset arrays | `$push: { $each, $position: 0, $slice: n }` — newest-first, hard-capped in one server-side operation |
-| `record<Collection>Measurement(...)` | Bucket collections | upsert by deterministic `(source, window)` `_id`: `$setOnInsert` window metadata + `$push` measurement + `$inc count` |
-| `fanOut<Field>Update(refId, fields)` | Extended References | `updateMany` re-stamping duplicated lookup fields on all referrers |
+| `pushTo<Field>(id, item)` | Subset arrays | `$push: { $each, $position: 0, $slice: n }` |
+| `record<Collection>Measurement(…)` | Bucket collections | upsert by deterministic window `_id` |
+| `fanOut<Field>Update(refId, fields)` | Extended References | `updateMany` on duplicated lookup fields |
 
 ### Type generation
 
-Each repository exports `type <Pascal>Document` derived from the plan's
-`$jsonSchema.properties` via `bsonTypeToTs` (`long`→`number`, `date`→`Date | string`,
-`array`→`<Item>[]`, …). Because the type is precise — no loose `& Document`
-intersection — the driver's generics verify `$push`/`$inc` field compatibility at
-compile time. Verified: generated output compiles clean under `tsc --strict`.
+Each repository exports a typed document shape derived from the plan's
+`$jsonSchema.properties` (field names map to language-native types: `long`→number/int,
+`date`→Date/Instant/time, `array`→list/array, …). In TypeScript, Rust, and Java this
+enables compile-time verification of `$push`/`$inc` field compatibility.
 
 ### Dependencies
 
-Generator: `node:fs`, internal naming utilities. **Generated code:** only the
-`mongodb` driver — the connection URI and database name are passed in by the caller,
-so the generated layer has zero hidden environment dependencies.
+**Generator:** `node:fs`, internal plan spec + language modules. **Generated code:**
+only the target MongoDB driver — zero runtime dependency on hvyMETL.
 
-## 3. Edge Cases & Error Handling
+## 4. Edge Cases & Error Handling
 
-- **One client per process:** `getDb` lazily creates a single `MongoClient` and
-  reuses it; the driver pools connections internally, so repeated calls never leak
-  sockets. `closeDb()` exists for graceful shutdown.
+- **One client per process:** connection modules lazily create a single client and reuse
+  it; the driver pools connections internally. A `close`/`disconnect` helper exists for
+  graceful shutdown.
 - **Subset arrays can never grow unbounded:** the `$slice` cap is part of the same
-  atomic `$push` — there is no window where the array exceeds its limit.
+  atomic `$push`.
 - **Bucket upserts are race-free by key design:** two writers recording into the same
-  device-hour both target the same deterministic `_id`; `$setOnInsert` ensures one
-  creates the window and both `$push` into it.
+  device-hour both target the same deterministic `_id`.
 - **Fan-out is eventually consistent by design** — the Extended Reference trade-off
-  ("data duplication") called out in
-  [Building with Patterns: A Summary](https://www.mongodb.com/company/blog/building-with-patterns-a-summary).
-  Readers may briefly see stale duplicated fields while `updateMany` runs; the
-  source-of-truth lookup collection is updated first.
-- **`fanOut` filter typing** is inferred from the schema, so a numeric `brandId`
-  reference generates a `number`-typed parameter — string/number id mismatches are
-  caught at compile time.
+  documented in MongoDB's Building with Patterns series.
 
-## 4. Code Breakdown
+## 5. Usage Examples
 
-1. **Client module first.** `renderClientModule` snapshots the profile's
-   `maxPoolSize`, `minPoolSize`, `socketTimeoutMS`, `maxIdleTimeMS`, write concern,
-   and journal flag into literal constants — the generated code carries its tuning
-   with it and has no dependency on hvyMETL at runtime.
-2. **Type from schema.** `renderRepositoryModule` walks `jsonSchema.properties`,
-   emitting one field per property with `?` for non-required fields.
-3. **Pattern maintainers from plan metadata.** Each `computedFields`,
-   `embeddedArrays` (with `subsetLimit`), `bucket`, and `extendedReferences` entry
-   produces exactly one purpose-built function; collections without a pattern get
-   only the base CRUD.
-4. **Comment trail.** Every generated function carries a doc comment naming the
-   pattern it maintains and why the modifier shape is safe under concurrency, so the
-   generated code is reviewable on its own.
-
-## 5. Usage Example
+### CLI — TypeScript (default)
 
 ```bash
 npm run hvymetl -- repogen --plan out/catalog/migration-plan.json --out out/catalog/repositories
-# Wrote out/catalog/repositories/mongoClient.ts
-# Wrote out/catalog/repositories/ensureIndexes.ts
-# Wrote out/catalog/repositories/productsRepository.ts
-# ...
 ```
 
-Consuming the generated layer:
+### CLI — other languages
+
+```bash
+npm run hvymetl -- repogen --plan out/iot/migration-plan.json --out out/iot/repositories --lang python
+npm run hvymetl -- repogen --plan out/iot/migration-plan.json --out out/iot/repositories --lang java
+npm run hvymetl -- repogen --plan out/iot/migration-plan.json --out out/iot/repositories --lang go
+```
+
+### Web UI
+
+After **AI Migration Export**, use the **Repository language** dropdown and click
+**Generate repositories**. Generated files appear as tabs; **Download repositories**
+saves all files. See [13-web-ui.md](13-web-ui.md).
+
+### API
+
+```bash
+curl http://localhost:3847/api/repogen/languages
+curl -X POST http://localhost:3847/api/repogen/generate \
+  -H 'content-type: application/json' \
+  -d '{"planJson":"…","language":"kotlin"}'
+```
+
+### Consuming generated TypeScript
 
 ```typescript
 import { getDb } from './out/catalog/repositories/mongoClient.js';
@@ -110,22 +144,15 @@ import { pushToRecentReviews, incrementTotalReviews, findProductsById }
 
 const db = await getDb(process.env.MONGODB_URI ?? '', 'catalog');
 
-// One atomic operation: prepend the review AND cap the array at 10.
 await pushToRecentReviews(db, '42', { id: 9001, rating: 5, title: 'Great' });
 await incrementTotalReviews(db, '42', 1);
 
 const product = await findProductsById(db, '42');
-console.log(product?.totalReviews, product?.recentReviews?.length);
-// -> 318 10   (counter grew; subset stayed capped)
 ```
 
 ## 6. Refactoring / Optimization Suggestions
 
 - `pushToSubset` + `incrementCounter` are two round trips; collections that always
-  pair them could get a combined single-`updateOne` helper (`$push` + `$inc` in one
-  document update is still atomic).
-- Code is emitted via template strings; adopting `ts-morph` would enable
-  syntax-verified generation if the templates grow further.
-- A generated `*.test.ts` smoke suite per repository (against
-  `mongodb-memory-server`) would let teams verify the layer before pointing it at
-  Atlas.
+  pair them could get a combined single-`updateOne` helper.
+- A generated smoke test suite per repository (against an in-memory MongoDB) would let
+  teams verify the layer before pointing it at Atlas.
