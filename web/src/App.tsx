@@ -5,6 +5,8 @@ import { SchemaCanvas, deleteTableFromModel, duplicateTableInModel } from './com
 import { TableDetails } from './components/TableDetails';
 import { ResizableSplit } from './components/ResizableSplit';
 import { PipelinePanel } from './components/PipelinePanel';
+import { CustomTelemetryModal } from './components/CustomTelemetryModal';
+import { profileRequestBody } from './customProfileShared';
 import {
   downloadJson,
   exportMigration,
@@ -36,6 +38,7 @@ export default function App() {
   const [status, setStatus] = useState('');
   const [exporting, setExporting] = useState(false);
   const [pipelineOpen, setPipelineOpen] = useState(false);
+  const [customTelemetryOpen, setCustomTelemetryOpen] = useState(false);
   const schemaFileInputRef = useRef<HTMLInputElement>(null);
   const diagramFileInputRef = useRef<HTMLInputElement>(null);
 
@@ -55,7 +58,14 @@ export default function App() {
     csvSourcePath,
     relationshipConnectionType,
     relationshipNotation,
+    customProfile,
+    customTelemetryInput,
   } = session;
+
+  const profileFields = useMemo(
+    () => profileRequestBody(profileId, customProfile),
+    [profileId, customProfile],
+  );
 
   const setSessionField = useCallback(<K extends keyof SessionState>(key: K, value: SessionState[K]) => {
     setSession((prev) => ({ ...prev, [key]: value }));
@@ -236,8 +246,8 @@ export default function App() {
     try {
       setExporting(true);
       setStatus('Generating AI-powered migration export…');
-      const result = await exportMigration(model, profileId, ddl);
-      const promptsResult = await exportPrompts(ddl, profileId);
+      const result = await exportMigration(model, profileFields, ddl);
+      const promptsResult = await exportPrompts(ddl, profileFields);
       const artifacts: MigrationArtifacts = {
         planJson: JSON.stringify(result.migrationPlanJson ?? result.plan, null, 2),
         designReportMarkdown: result.designReportMarkdown ?? '',
@@ -302,13 +312,27 @@ export default function App() {
       >
         <MongoLogo />
         <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-          <select value={profileId} onChange={(e) => setSessionField('profileId', e.target.value)} aria-label="Workload profile">
+          <select
+            value={profileId}
+            onChange={(e) => {
+              const next = e.target.value;
+              setSessionField('profileId', next);
+              if (next === 'custom' && !customProfile) {
+                setCustomTelemetryOpen(true);
+              }
+            }}
+            aria-label="Workload profile"
+          >
             {profiles.map((p) => (
               <option key={p.id} value={p.id}>
                 {p.label}
               </option>
             ))}
+            <option value="custom">Custom Workload</option>
           </select>
+          <button type="button" className="ghost" onClick={() => setCustomTelemetryOpen(true)}>
+            Custom telemetry
+          </button>
           {view === 'migration' ? (
             <button type="button" className="ghost" onClick={() => setSessionField('view', 'diagram')}>
               ← Diagram
@@ -536,7 +560,7 @@ export default function App() {
           onClose={() => setPipelineOpen(false)}
           model={model}
           ddl={ddl}
-          profileId={profileId}
+          profileFields={profileFields}
           dialect={dialect}
           dialectLabel={dialectLabel}
           csvSourcePath={csvSourcePath}
@@ -544,6 +568,23 @@ export default function App() {
           onComplete={handlePipelineComplete}
         />
       ) : null}
+
+      <CustomTelemetryModal
+        open={customTelemetryOpen}
+        initial={customTelemetryInput}
+        onClose={() => setCustomTelemetryOpen(false)}
+        onApply={(profile, input) => {
+          setSession((prev) => ({
+            ...prev,
+            profileId: 'custom',
+            customProfile: profile,
+            customTelemetryInput: input,
+          }));
+          setStatus(
+            `Custom profile: ${profile.telemetry.readPercent}:${profile.telemetry.writePercent} R:W, readPreference=${profile.readPreference}, compression=${profile.compression}.`,
+          );
+        }}
+      />
     </div>
   );
 }

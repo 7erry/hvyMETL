@@ -12,7 +12,8 @@ import { fileURLToPath } from 'node:url';
 import { createSqliteAdapter } from '../adapters/sqlite.js';
 import { DIALECTS } from '../dialects.js';
 import { designFromModel, writeDesignArtifacts } from '../design/designFromModel.js';
-import { ALL_PROFILES, getProfile } from '../profiles/profiles.js';
+import { ALL_PROFILES, buildCustomProfileFromInput, getProfile } from '../profiles/profiles.js';
+import { resolveWorkloadProfile } from '../profiles/resolveProfile.js';
 import { inferWorkloadProfile } from '../profiles/inferProfile.js';
 import { loadKnowledgeBase } from '../rag/chunker.js';
 import { createRetrievalConfigFromEnv, retrieve } from '../rag/retrieval.js';
@@ -59,8 +60,22 @@ app.get('/api/profiles', (_req, res) => {
       description: p.description,
       telemetry: p.telemetry,
       preferredPatterns: p.preferredPatterns,
+      writeConcern: p.writeConcern,
+      readPreference: p.readPreference,
+      compression: p.compression,
+      pool: p.pool,
     })),
   );
+});
+
+/** Build a custom workload profile from user-supplied telemetry and driver tuning. */
+app.post('/api/profiles/custom', (req, res) => {
+  try {
+    const profile = buildCustomProfileFromInput(req.body);
+    res.json({ profile });
+  } catch (error) {
+    res.status(400).json({ error: String(error) });
+  }
 });
 
 /** Infer workload profile from a structural model (same logic as schema import auto-detect). */
@@ -116,7 +131,6 @@ app.post('/api/schema/import-sqlite', upload.single('database'), (req, res) => {
 /** AI-powered design: RAG + pattern selector → migration plan. */
 app.post('/api/design', async (req, res) => {
   try {
-    const profileId = String(req.body?.profileId ?? 'catalog');
     let model: SqlStructuralModel;
     if (req.body?.ddl) {
       model = parseDdlToModel(String(req.body.ddl), `ddl:${req.body?.dialect ?? 'import'}`);
@@ -126,7 +140,8 @@ app.post('/api/design', async (req, res) => {
       res.status(400).json({ error: 'Provide ddl or model in body' });
       return;
     }
-    const result = await designFromModel(model, profileId, KNOWLEDGE_DIR);
+    const profile = resolveWorkloadProfile(req.body);
+    const result = await designFromModel(model, profile, KNOWLEDGE_DIR);
     res.json(result);
   } catch (error) {
     res.status(500).json({ error: String(error) });
@@ -136,7 +151,6 @@ app.post('/api/design', async (req, res) => {
 /** Export migration artifacts (plan JSON + design report markdown). */
 app.post('/api/export/migration', async (req, res) => {
   try {
-    const profileId = String(req.body?.profileId ?? 'catalog');
     const model = req.body?.model as SqlStructuralModel | undefined;
     const ddl = req.body?.ddl as string | undefined;
     const resolved = model ?? (ddl ? parseDdlToModel(ddl) : null);
@@ -144,7 +158,8 @@ app.post('/api/export/migration', async (req, res) => {
       res.status(400).json({ error: 'model or ddl required' });
       return;
     }
-    const result = await designFromModel(resolved, profileId, KNOWLEDGE_DIR);
+    const profile = resolveWorkloadProfile(req.body);
+    const result = await designFromModel(resolved, profile, KNOWLEDGE_DIR);
     const outDir = join(ROOT, 'out', 'ui-export');
     const paths = writeDesignArtifacts(outDir, result);
     res.json({
@@ -161,13 +176,12 @@ app.post('/api/export/migration', async (req, res) => {
 /** Export RAG-grounded prompt bundle for Cursor / LLM migration workflows. */
 app.post('/api/export/prompts', async (req, res) => {
   try {
-    const profileId = String(req.body?.profileId ?? 'catalog');
+    const profile = resolveWorkloadProfile(req.body);
     const ddl = String(req.body?.ddl ?? '');
     if (!ddl.trim()) {
       res.status(400).json({ error: 'ddl is required' });
       return;
     }
-    const profile = getProfile(profileId);
     const chunks = loadKnowledgeBase(KNOWLEDGE_DIR);
     const config = createRetrievalConfigFromEnv();
     const retrieved = await retrieve(chunks, buildRetrievalQuery(profile), 8, config);
@@ -308,7 +322,7 @@ function pipelineRunResponse(result: Awaited<ReturnType<typeof runFullPipeline>>
  */
 app.post('/api/pipeline/run', async (req, res) => {
   try {
-    const profileId = String(req.body?.profileId ?? 'catalog');
+    const profile = resolveWorkloadProfile(req.body);
     const model = req.body?.model as SqlStructuralModel | undefined;
     const ddl = String(req.body?.ddl ?? '');
     if (!model) {
@@ -317,7 +331,8 @@ app.post('/api/pipeline/run', async (req, res) => {
     }
 
     const pipelineRequest = {
-      profileId,
+      profileId: profile.id,
+      profile,
       model,
       ddl,
       dialect: req.body?.dialect as string | undefined,
@@ -368,7 +383,11 @@ app.post('/api/pipeline/run-with-csv', (req, res) => {
         return;
       }
 
-      const profileId = String(req.body?.profileId ?? 'catalog');
+      const profile = resolveWorkloadProfile({
+        profileId: req.body?.profileId,
+        customProfile: req.body?.customProfile ? JSON.parse(String(req.body.customProfile)) : undefined,
+        customTelemetry: req.body?.customTelemetry ? JSON.parse(String(req.body.customTelemetry)) : undefined,
+      });
       const model = req.body?.model ? (JSON.parse(String(req.body.model)) as SqlStructuralModel) : undefined;
       const ddl = String(req.body?.ddl ?? '');
       if (!model) {
@@ -379,7 +398,8 @@ app.post('/api/pipeline/run-with-csv', (req, res) => {
       const streamProgress = req.body?.stream === 'true' || req.body?.stream === true;
 
       const pipelineRequest = {
-        profileId,
+        profileId: profile.id,
+        profile,
         model,
         ddl,
         dialect: req.body?.dialect as string | undefined,

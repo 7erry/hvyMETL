@@ -917,6 +917,8 @@ export function buildMigrationPlan(model: SqlStructuralModel, profile: WorkloadP
     profileId: profile.id,
     telemetry: profile.telemetry,
     writeConcern: profile.writeConcern,
+    readPreference: profile.readPreference,
+    compression: profile.compression,
     pool: profile.pool,
     generatedAt: new Date().toISOString(),
     collections: finalCollections,

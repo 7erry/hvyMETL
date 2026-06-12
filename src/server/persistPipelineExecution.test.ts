@@ -8,6 +8,8 @@ const samplePlan: MigrationPlan = {
   profileId: 'catalog',
   telemetry: { readPercent: 95, writePercent: 5, peakRpm: 60_000, growthRate: '5GB/month' },
   writeConcern: { w: 1, journal: false },
+  readPreference: 'primary' as const,
+  compression: 'snappy' as const,
   pool: { maxPoolSize: 200, minPoolSize: 20, socketTimeoutMS: 30_000, maxIdleTimeMS: 60_000 },
   generatedAt: new Date().toISOString(),
   collections: [],

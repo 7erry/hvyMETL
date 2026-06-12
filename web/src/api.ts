@@ -1,4 +1,5 @@
 import type { DiagramExport, Dialect, Profile, SqlStructuralModel } from './types';
+import type { ProfileRequestFields, WorkloadProfile } from './customProfileShared';
 
 export type ProfileInference = {
   profileId: string;
@@ -83,8 +84,7 @@ export type PipelineRunResult = {
   designReportMarkdown?: string;
 };
 
-export type PipelineRunRequest = {
-  profileId: string;
+export type PipelineRunRequest = ProfileRequestFields & {
   model: SqlStructuralModel;
   ddl: string;
   dialect?: string;
@@ -93,6 +93,7 @@ export type PipelineRunRequest = {
   drop?: boolean;
   mongoUri?: string;
   csvToAtlasPath?: string;
+  customProfile?: WorkloadProfile;
 };
 
 export type { PipelineProgressEvent, PipelineProgressStage } from './pipelineStages.js';
@@ -180,6 +181,7 @@ export async function runPipelineWithCsv(
   const body = new FormData();
   for (const file of files) body.append('csvs', file);
   body.append('profileId', request.profileId);
+  if (request.customProfile) body.append('customProfile', JSON.stringify(request.customProfile));
   body.append('model', JSON.stringify(request.model));
   body.append('ddl', request.ddl);
   if (request.dialect) body.append('dialect', request.dialect);
@@ -225,11 +227,25 @@ export async function runDesign(model: SqlStructuralModel, profileId: string, dd
   return res.json();
 }
 
-export async function exportMigration(model: SqlStructuralModel, profileId: string, ddl: string) {
+export async function exportMigration(
+  model: SqlStructuralModel,
+  profile: ProfileRequestFields,
+  ddl: string,
+) {
   const res = await fetch(`${base}/api/export/migration`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ model, profileId, ddl }),
+    body: JSON.stringify({ model, ddl, ...profile }),
+  });
+  if (!res.ok) throw new Error((await res.json()).error ?? res.statusText);
+  return res.json();
+}
+
+export async function exportPrompts(ddl: string, profile: ProfileRequestFields) {
+  const res = await fetch(`${base}/api/export/prompts`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ ddl, ...profile }),
   });
   if (!res.ok) throw new Error((await res.json()).error ?? res.statusText);
   return res.json();
@@ -269,16 +285,6 @@ export async function generateRepositories(planJson: string, language: string): 
   const data = await res.json();
   if (!res.ok) throw new Error(data.error ?? res.statusText);
   return data;
-}
-
-export async function exportPrompts(ddl: string, profileId: string) {
-  const res = await fetch(`${base}/api/export/prompts`, {
-    method: 'POST',
-    headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ ddl, profileId }),
-  });
-  if (!res.ok) throw new Error((await res.json()).error ?? res.statusText);
-  return res.json();
 }
 
 export async function fetchTemplates(): Promise<{ id: string; name: string; ddl: string; model: SqlStructuralModel }[]> {

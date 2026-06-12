@@ -10,10 +10,25 @@ const STANDARDS = `/**
  * SOLID · strict typing · atomic MongoDB modifiers only · no read-modify-write loops.
  */`;
 
+const READ_PREFERENCE_BY_SETTING: Record<string, string> = {
+  primary: 'ReadPreference.primary',
+  primaryPreferred: 'ReadPreference.primaryPreferred',
+  secondary: 'ReadPreference.secondary',
+  secondaryPreferred: 'ReadPreference.secondaryPreferred',
+  nearest: 'ReadPreference.nearest',
+};
+
+function compressorsOption(compression: string): string {
+  if (compression === 'none') return '';
+  return `\n      compressors: ['${compression}'],`;
+}
+
 function renderClientModule(plan: MigrationPlan): string {
+  const readPref = READ_PREFERENCE_BY_SETTING[plan.readPreference] ?? 'ReadPreference.primary';
+  const compressors = compressorsOption(plan.compression);
   return `${STANDARDS}
 
-import { MongoClient, type Db } from 'mongodb';
+import { MongoClient, type Db, ReadPreference } from 'mongodb';
 
 let client: MongoClient | null = null;
 
@@ -24,6 +39,7 @@ export async function getDb(uri: string, dbName: string): Promise<Db> {
       minPoolSize: ${plan.pool.minPoolSize},
       socketTimeoutMS: ${plan.pool.socketTimeoutMS},
       maxIdleTimeMS: ${plan.pool.maxIdleTimeMS},
+      readPreference: ${readPref},${compressors}
       writeConcern: { w: ${JSON.stringify(plan.writeConcern.w)}, journal: ${plan.writeConcern.journal} },
     });
     await client.connect();

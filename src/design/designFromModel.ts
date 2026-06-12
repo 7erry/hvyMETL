@@ -49,10 +49,10 @@ function renderDesignReport(
 /** Build migration plan + design report from a structural model (no SQL file required). */
 export async function designFromModel(
   model: SqlStructuralModel,
-  profileId: string,
+  profileOrId: string | WorkloadProfile,
   knowledgeDir: string,
 ): Promise<DesignFromModelResult> {
-  const profile = getProfile(profileId);
+  const profile = typeof profileOrId === 'string' ? getProfile(profileOrId) : profileOrId;
   const chunks = loadKnowledgeBase(knowledgeDir);
   const retrievalConfig = createRetrievalConfigFromEnv();
   const retrieved = await retrieve(chunks, buildRetrievalQuery(profile), REPORT_CHUNK_COUNT, retrievalConfig);

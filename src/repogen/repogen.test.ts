@@ -10,6 +10,8 @@ const samplePlan: MigrationPlan = {
   telemetry: { readPercent: 80, writePercent: 20, peakRpm: 50000, growthRate: '1GB/month' },
   pool: { maxPoolSize: 50, minPoolSize: 5, socketTimeoutMS: 30000, maxIdleTimeMS: 60000 },
   writeConcern: { w: 1, journal: false },
+  readPreference: 'primary' as const,
+  compression: 'snappy' as const,
   collections: [
     {
       name: 'products',

@@ -37,6 +37,22 @@ export type WriteConcernSetting = {
 };
 
 /**
+ * MongoDB read preference for replica set reads.
+ * @see https://www.mongodb.com/docs/manual/core/read-preference/
+ */
+export type ReadPreferenceSetting =
+  | 'primary'
+  | 'primaryPreferred'
+  | 'secondary'
+  | 'secondaryPreferred'
+  | 'nearest';
+
+/**
+ * Wire-protocol compressor for MongoDB driver connections.
+ */
+export type CompressionSetting = 'snappy' | 'zstd' | 'zlib' | 'none';
+
+/**
  * MongoDB driver connection-pool settings tuned per workload so the
  * application can sustain its peak traffic without dropping connections.
  */
@@ -80,6 +96,10 @@ export type WorkloadProfile = {
   /** Patterns this workload prefers, in priority order. */
   preferredPatterns: PatternId[];
   writeConcern: WriteConcernSetting;
+  /** Default read routing for replica set queries. */
+  readPreference: ReadPreferenceSetting;
+  /** Network compression between app and MongoDB. */
+  compression: CompressionSetting;
   pool: PoolSettings;
 };
 
@@ -324,6 +344,8 @@ export type MigrationPlan = {
   profileId: WorkloadProfileId;
   telemetry: WorkloadTelemetry;
   writeConcern: WriteConcernSetting;
+  readPreference: ReadPreferenceSetting;
+  compression: CompressionSetting;
   pool: PoolSettings;
   /** ISO timestamp of when the plan was generated. */
   generatedAt: string;

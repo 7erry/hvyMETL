@@ -12,6 +12,8 @@
  */
 
 import type { WorkloadProfile, WorkloadProfileId, WorkloadTelemetry } from '../types.js';
+import type { CustomProfileInput } from './customProfileInput.js';
+import { validateCustomProfileInput } from './customProfileInput.js';
 
 /**
  * The eight preset profiles, keyed by id. Tuning rationale:
@@ -30,6 +32,8 @@ export const WORKLOAD_PROFILES: Record<Exclude<WorkloadProfileId, 'custom'>, Wor
     telemetry: { readPercent: 95, writePercent: 5, peakRpm: 60000, growthRate: '5GB/month' },
     preferredPatterns: ['extended-reference', 'computed', 'subset', 'attribute', 'outlier', 'archive'],
     writeConcern: { w: 1, journal: false },
+    readPreference: 'primaryPreferred',
+    compression: 'snappy',
     pool: { maxPoolSize: 200, minPoolSize: 20, socketTimeoutMS: 30000, maxIdleTimeMS: 60000 },
   },
   cms: {
@@ -39,6 +43,8 @@ export const WORKLOAD_PROFILES: Record<Exclude<WorkloadProfileId, 'custom'>, Wor
     telemetry: { readPercent: 90, writePercent: 10, peakRpm: 30000, growthRate: '2GB/month' },
     preferredPatterns: ['embed', 'polymorphic', 'schema-versioning', 'tree', 'subset', 'archive'],
     writeConcern: { w: 1, journal: false },
+    readPreference: 'primaryPreferred',
+    compression: 'snappy',
     pool: { maxPoolSize: 150, minPoolSize: 15, socketTimeoutMS: 30000, maxIdleTimeMS: 60000 },
   },
   iot: {
@@ -48,6 +54,8 @@ export const WORKLOAD_PROFILES: Record<Exclude<WorkloadProfileId, 'custom'>, Wor
     telemetry: { readPercent: 10, writePercent: 90, peakRpm: 600000, growthRate: '1TB/week' },
     preferredPatterns: ['bucket', 'computed', 'preallocation', 'reference'],
     writeConcern: { w: 1, journal: false },
+    readPreference: 'primary',
+    compression: 'zstd',
     pool: { maxPoolSize: 300, minPoolSize: 50, socketTimeoutMS: 60000, maxIdleTimeMS: 120000 },
   },
   mobile: {
@@ -57,6 +65,8 @@ export const WORKLOAD_PROFILES: Record<Exclude<WorkloadProfileId, 'custom'>, Wor
     telemetry: { readPercent: 80, writePercent: 20, peakRpm: 120000, growthRate: '50GB/month' },
     preferredPatterns: ['extended-reference', 'subset', 'bucket', 'computed', 'single-collection'],
     writeConcern: { w: 1, journal: false },
+    readPreference: 'primaryPreferred',
+    compression: 'snappy',
     pool: { maxPoolSize: 250, minPoolSize: 25, socketTimeoutMS: 20000, maxIdleTimeMS: 30000 },
   },
   personalization: {
@@ -66,6 +76,8 @@ export const WORKLOAD_PROFILES: Record<Exclude<WorkloadProfileId, 'custom'>, Wor
     telemetry: { readPercent: 70, writePercent: 30, peakRpm: 90000, growthRate: '20GB/month' },
     preferredPatterns: ['computed', 'extended-reference', 'subset', 'attribute'],
     writeConcern: { w: 1, journal: false },
+    readPreference: 'primaryPreferred',
+    compression: 'snappy',
     pool: { maxPoolSize: 200, minPoolSize: 20, socketTimeoutMS: 15000, maxIdleTimeMS: 30000 },
   },
   'realtime-analytics': {
@@ -75,6 +87,8 @@ export const WORKLOAD_PROFILES: Record<Exclude<WorkloadProfileId, 'custom'>, Wor
     telemetry: { readPercent: 30, writePercent: 70, peakRpm: 300000, growthRate: '500GB/month' },
     preferredPatterns: ['bucket', 'computed', 'preallocation', 'reference', 'single-collection'],
     writeConcern: { w: 1, journal: false },
+    readPreference: 'secondaryPreferred',
+    compression: 'zstd',
     pool: { maxPoolSize: 300, minPoolSize: 40, socketTimeoutMS: 60000, maxIdleTimeMS: 120000 },
   },
   'single-view': {
@@ -84,6 +98,8 @@ export const WORKLOAD_PROFILES: Record<Exclude<WorkloadProfileId, 'custom'>, Wor
     telemetry: { readPercent: 85, writePercent: 15, peakRpm: 45000, growthRate: '10GB/month' },
     preferredPatterns: ['extended-reference', 'subset', 'computed', 'schema-versioning', 'outlier', 'archive'],
     writeConcern: { w: 1, journal: false },
+    readPreference: 'primaryPreferred',
+    compression: 'snappy',
     pool: { maxPoolSize: 150, minPoolSize: 15, socketTimeoutMS: 30000, maxIdleTimeMS: 60000 },
   },
   ledger: {
@@ -93,6 +109,8 @@ export const WORKLOAD_PROFILES: Record<Exclude<WorkloadProfileId, 'custom'>, Wor
     telemetry: { readPercent: 50, writePercent: 50, peakRpm: 20000, growthRate: '15GB/month' },
     preferredPatterns: ['reference', 'computed', 'schema-versioning', 'bucket'],
     writeConcern: { w: 'majority', journal: true },
+    readPreference: 'primary',
+    compression: 'zlib',
     pool: { maxPoolSize: 100, minPoolSize: 10, socketTimeoutMS: 45000, maxIdleTimeMS: 60000 },
   },
 };
@@ -134,11 +152,35 @@ export function buildCustomProfile(telemetry: WorkloadTelemetry, isCritical: boo
       ? ['bucket', 'computed', 'reference', 'preallocation']
       : ['extended-reference', 'computed', 'subset', 'attribute', 'archive'],
     writeConcern: isCritical ? { w: 'majority', journal: true } : { w: 1, journal: false },
+    readPreference: 'primary',
+    compression: 'snappy',
     pool: {
       maxPoolSize: isHighRpm ? 300 : 150,
       minPoolSize: isHighRpm ? 40 : 15,
       socketTimeoutMS: isWriteHeavy ? 60000 : 30000,
       maxIdleTimeMS: 60000,
     },
+  };
+}
+
+/**
+ * Build a custom profile from explicit UI/API settings including read preference,
+ * write concern, and wire compression.
+ */
+export function buildCustomProfileFromInput(input: CustomProfileInput): WorkloadProfile {
+  const validated = validateCustomProfileInput(input);
+  const telemetry: WorkloadTelemetry = {
+    readPercent: validated.readPercent,
+    writePercent: validated.writePercent,
+    peakRpm: validated.peakRpm,
+    growthRate: validated.growthRate,
+  };
+  const base = buildCustomProfile(telemetry, validated.writeConcernW === 'majority' && validated.writeConcernJournal);
+  return {
+    ...base,
+    writeConcern: { w: validated.writeConcernW, journal: validated.writeConcernJournal },
+    readPreference: validated.readPreference,
+    compression: validated.compression,
+    description: `Custom telemetry: ${telemetry.readPercent}:${telemetry.writePercent} R:W at ${telemetry.peakRpm} RPM.`,
   };
 }

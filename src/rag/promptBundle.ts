@@ -54,6 +54,8 @@ function renderTelemetry(profile: WorkloadProfile): string {
     `- Peak Throughput: ${telemetry.peakRpm.toLocaleString('en-US')} RPM`,
     `- Data Growth Rate: ${telemetry.growthRate}`,
     `- Write Concern: w: ${JSON.stringify(profile.writeConcern.w)}, journal: ${profile.writeConcern.journal}`,
+    `- Read Preference: ${profile.readPreference}`,
+    `- Wire Compression: ${profile.compression}`,
   ].join('\n');
 }
 

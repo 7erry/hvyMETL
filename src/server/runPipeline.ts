@@ -14,8 +14,8 @@ import {
   setMigrationStore,
   type MigrationStore,
 } from '../ml_engine/migrationStore.js';
-import { getProfile } from '../profiles/profiles.js';
-import type { SqlStructuralModel } from '../types.js';
+import { resolveWorkloadProfile } from '../profiles/resolveProfile.js';
+import type { SqlStructuralModel, WorkloadProfile } from '../types.js';
 import { listCsvFiles, matchCsvFilesForCollection, resolveCsvSourcePath } from '../utilities/csvSource.js';
 import { enrichModelFromCsv } from '../utilities/csvModelEnrichment.js';
 import { collectionNeedsShapedCsv, shapeCollectionCsv } from '../utilities/csvShaper.js';
@@ -35,6 +35,8 @@ export { PIPELINE_PROGRESS_STAGES } from './pipelineProgress.js';
 
 export type PipelineRunRequest = {
   profileId: string;
+  /** Resolved custom profile (when profileId is custom). */
+  profile?: WorkloadProfile;
   model: SqlStructuralModel;
   ddl: string;
   dialect?: string;
@@ -124,7 +126,7 @@ export async function runFullPipeline(request: PipelineRunRequest): Promise<Pipe
     configureMigrationStore({ mongoUri: importEnv.MONGODB_URI, dbName: memoryDb });
   }
 
-  const profile = getProfile(request.profileId);
+  const profile = request.profile ?? resolveWorkloadProfile({ profileId: request.profileId });
   const clusterId = importEnv.HVYMETL_ATLAS_CLUSTER_ID?.trim();
   reportProgress(request, {
     stage: 'designing',

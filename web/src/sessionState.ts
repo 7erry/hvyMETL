@@ -1,5 +1,6 @@
 import type { SqlStructuralModel } from './types';
 import type { RelationshipConnectionType, RelationshipNotation } from './relationshipDisplay';
+import type { CustomProfileInput, WorkloadProfile } from './customProfileShared';
 
 const STORAGE_KEY = 'hvymetl-session-v1';
 
@@ -48,6 +49,8 @@ export type SessionState = {
   csvSourcePath: string | null;
   relationshipConnectionType: RelationshipConnectionType;
   relationshipNotation: RelationshipNotation;
+  customProfile: WorkloadProfile | null;
+  customTelemetryInput: CustomProfileInput | null;
 };
 
 export const defaultSessionState = (): SessionState => ({
@@ -66,6 +69,8 @@ export const defaultSessionState = (): SessionState => ({
   csvSourcePath: null,
   relationshipConnectionType: 'bezier',
   relationshipNotation: 'detailed',
+  customProfile: null,
+  customTelemetryInput: null,
 });
 
 export function loadSessionState(): SessionState {

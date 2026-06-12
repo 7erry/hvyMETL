@@ -13,6 +13,7 @@ import {
   stageStatus,
   type PipelineProgressStage,
 } from '../pipelineStages';
+import type { ProfileRequestFields } from '../customProfileShared';
 import type { SqlStructuralModel } from '../types';
 
 type PipelinePanelProps = {
@@ -20,7 +21,7 @@ type PipelinePanelProps = {
   onClose: () => void;
   model: SqlStructuralModel;
   ddl: string;
-  profileId: string;
+  profileFields: ProfileRequestFields;
   dialect: string;
   dialectLabel: string;
   csvSourcePath: string | null;
@@ -41,7 +42,7 @@ export function PipelinePanel({
   onClose,
   model,
   ddl,
-  profileId,
+  profileFields,
   dialect,
   dialectLabel,
   csvSourcePath,
@@ -181,7 +182,7 @@ export function PipelinePanel({
     setProgress({ stage: 'validating', message: 'Starting pipeline…' });
     try {
       const overrides = {
-        profileId,
+        ...profileFields,
         model,
         ddl,
         dialect,
