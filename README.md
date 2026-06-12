@@ -1,5 +1,5 @@
 <h1>
-  <img src="docs/hvymetl-logo.png" alt="hvyMETL logo" width="52" style="vertical-align: middle; margin-right: 10px;" />
+  <img src="docs/hvymetl-logo.png" alt="hvyMETL logo" width="104" style="vertical-align: middle; margin-right: 10px;" />
   hvyMETL
 </h1>
 
