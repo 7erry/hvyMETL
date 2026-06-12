@@ -64,7 +64,7 @@ diagram without pasting SQL or re-positioning tables.
 | `examples/cms/` | `hvymetl-diagram-CMS.json` |
 | `examples/iot/` | `hvymetl-diagram-IOT.json` |
 | `examples/mobile/` | `hvymetl-diagram-Mobile.json` |
-| `examples/personalization/` | `hvymetl-diagram-Pseronalization.json` |
+| `examples/personalization/` | `hvymetl-diagram-Personalization.json` |
 | `examples/singleview/` | `hvymetl-diagram-SingleView.json` |
 | `examples/oracle/` | `hvymetl-diagram-Oracle.json` |
 

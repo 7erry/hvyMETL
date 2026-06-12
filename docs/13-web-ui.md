@@ -128,7 +128,7 @@ you can load immediately:
 | `examples/cms/hvymetl-diagram-CMS.json` | Content management |
 | `examples/iot/hvymetl-diagram-IOT.json` | IoT telemetry |
 | `examples/mobile/hvymetl-diagram-Mobile.json` | Mobile backend |
-| `examples/personalization/hvymetl-diagram-Pseronalization.json` | Personalization |
+| `examples/personalization/hvymetl-diagram-Personalization.json` | Personalization |
 | `examples/singleview/hvymetl-diagram-SingleView.json` | Single customer view |
 | `examples/oracle/hvymetl-diagram-Oracle.json` | Oracle multi-domain bundle |
 
