@@ -342,8 +342,9 @@ After **AI Migration Export**, choose a **Repository language** (13 MongoDB clie
 drivers) and click **Generate repositories** to add connection, index, and repository
 source files as tabs. Use **Download repositories** to save the full set.
 
-See [13-web-ui.md](13-web-ui.md) for API endpoints and [web/README.md](../web/README.md)
-for screenshots.
+![Repository language picker](../web/docs/screenshots/repository-language-picker.png)
+
+See [13-web-ui.md §8](13-web-ui.md#8-repository-codegen-13-languages) and [web/README.md](../web/README.md) for screenshots.
 
 ---
 

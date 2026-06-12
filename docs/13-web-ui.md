@@ -121,7 +121,35 @@ separate nodes with FK-like relationships when declared).
 The UI uses the official **LeafyGreen** palette (`#001E2B`, `#00ED64`, `#00684A`,
 `#E3FCF7`) per [mongodb.design](https://www.mongodb.design/foundations/palette).
 
-## 8. CLI parity
+## 8. Repository codegen (13 languages)
+
+After **AI Migration Export**, the artifact view shows a **Repository language**
+dropdown and **Generate repositories** button. Pick any MongoDB officially supported
+client driver; generated files open as read-only tabs (connection module, index
+bootstrap, one repository per collection).
+
+![Repository language picker in Migration Studio](../web/docs/screenshots/repository-language-picker.png)
+
+| Language | `--lang` id | Driver |
+| --- | --- | --- |
+| Node.js (TypeScript) | `node` | `mongodb` |
+| Python | `python` | `pymongo` |
+| Go | `go` | `mongo-go-driver` |
+| Java | `java` | `mongodb-driver-sync` |
+| Kotlin | `kotlin` | `mongodb-driver-sync` |
+| C# | `csharp` | `MongoDB.Driver` |
+| Ruby | `ruby` | `mongo` gem |
+| PHP | `php` | `mongodb/mongodb` |
+| Rust | `rust` | `mongodb` crate |
+| Scala | `scala` | `mongodb-scala` |
+| Swift | `swift` | `MongoSwift` |
+| C | `c` | `libmongoc` |
+| C++ | `cpp` | `mongocxx` |
+
+CLI equivalent: `npm run hvymetl -- repogen --plan … --out … --lang python`. Full
+reference: [08-repogen.md](08-repogen.md). Screenshots: [web/README.md § Screenshots](../web/README.md#screenshots).
+
+## 9. CLI parity
 
 Design and export are available in the UI. The **Run Full Pipeline** action runs
 **ML-enhanced design** → **CSV shaping** → **csvToAtlas import** when `MONGODB_URI`,
@@ -140,7 +168,7 @@ Implementation: [`src/server/runPipeline.ts`](../src/server/runPipeline.ts).
 | **CSV shaping** | Embeds, extended references, and computed counters merged into `out/ui-pipeline/csv-shaped/*.csv` ([`csvShaper.ts`](../src/utilities/csvShaper.ts)) |
 | **Import** | Shaped (or flat) CSVs imported via csvToAtlas into `targetDb` |
 | **Feedback loop** | Per-collection decisions logged; post-import reflection upserts lessons when metrics breach thresholds |
-| **Execution archive** | Full run persisted to MongoDB (see §9) |
+| **Execution archive** | Full run persisted to MongoDB (see §10) |
 
 Disk artifacts are still written under `out/ui-pipeline/`:
 
@@ -160,7 +188,7 @@ npm run hvymetl -- etl --plan out/iot/migration-plan.json --out out/iot
 npm run import-cli -- out/iot/csv/*.csv collectionName
 ```
 
-## 9. MongoDB persistence (pipeline runs & ML memory)
+## 10. MongoDB persistence (pipeline runs & ML memory)
 
 When `MONGODB_URI` is set, each **Run Full Pipeline** execution is archived in Atlas
 alongside the ML feedback loop. This is separate from the **import target database**

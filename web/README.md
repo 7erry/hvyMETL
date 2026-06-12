@@ -47,6 +47,31 @@ editable text, per-file download, and **Download all**. Artifacts persist in
 
 ![AI migration artifacts view with RAG prompts](docs/screenshots/ai-migration-artifacts.png)
 
+### Repository language picker
+
+After **AI Migration Export**, choose one of **13 MongoDB officially supported client
+languages** from the **Repository language** dropdown, then click **Generate
+repositories**. Generated connection, index, and repository files appear as tabs;
+use **Download repositories** to save the full set.
+
+![Repository language picker showing 13 MongoDB client drivers](docs/screenshots/repository-language-picker.png)
+
+| Language | `--lang` id | Driver |
+| --- | --- | --- |
+| Node.js (TypeScript) | `node` | `mongodb` |
+| Python | `python` | `pymongo` |
+| Go | `go` | `mongo-go-driver` |
+| Java | `java` | `mongodb-driver-sync` |
+| Kotlin | `kotlin` | `mongodb-driver-sync` |
+| C# | `csharp` | `MongoDB.Driver` |
+| Ruby | `ruby` | `mongo` gem |
+| PHP | `php` | `mongodb/mongodb` |
+| Rust | `rust` | `mongodb` crate |
+| Scala | `scala` | `mongodb-scala` |
+| Swift | `swift` | `MongoSwift` |
+| C | `c` | `libmongoc` |
+| C++ | `cpp` | `mongocxx` |
+
 ## Features
 
 | Feature | How to use |
