@@ -166,8 +166,13 @@ program
   .description('Generate the concurrency-safe repository layer from a migration plan')
   .option('--plan <path>', 'path to migration-plan.json', join(DEFAULT_OUT_DIR, 'migration-plan.json'))
   .option('--out <dir>', 'output folder', join(DEFAULT_OUT_DIR, 'repositories'))
-  .action((flags: { plan: string; out: string }) => {
-    runRepogen({ planPath: flags.plan, outDir: flags.out });
+  .option(
+    '--lang <id>',
+    'client language: c, cpp, csharp, go, java, kotlin, node, php, python, ruby, rust, scala, swift',
+    'node',
+  )
+  .action((flags: { plan: string; out: string; lang: string }) => {
+    runRepogen({ planPath: flags.plan, outDir: flags.out, language: flags.lang });
   });
 
 program.parseAsync(process.argv).catch((error) => {

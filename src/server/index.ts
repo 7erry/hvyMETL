@@ -18,7 +18,7 @@ import { loadKnowledgeBase } from '../rag/chunker.js';
 import { createRetrievalConfigFromEnv, retrieve } from '../rag/retrieval.js';
 import { buildPromptBundle, buildRetrievalQuery } from '../rag/promptBundle.js';
 import { parseDdlToModel } from '../utilities/ddlParser.js';
-import type { SqlStructuralModel } from '../types.js';
+import type { MigrationPlan, SqlStructuralModel } from '../types.js';
 import { getPipelineConfigStatus } from './pipelineConfig.js';
 import { runFullPipeline } from './runPipeline.js';
 import { runFullPipelineWithStream } from './pipelineStream.js';
@@ -28,6 +28,8 @@ import {
   resolveMemoryDbName,
 } from '../ml_engine/migrationStore.js';
 import { PIPELINE_EXECUTIONS_COLLECTION } from './pipelineExecutionTypes.js';
+import { generateFromPlan } from '../repogen/generate.js';
+import { REPOGEN_LANGUAGES } from '../repogen/languages/index.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '../..');
 const KNOWLEDGE_DIR = join(ROOT, 'knowledge');
@@ -173,6 +175,40 @@ app.post('/api/export/prompts', async (req, res) => {
     res.json({ prompts, retrievalStrategy: config.voyageProvider ? 'hybrid' : config.openaiProvider ? 'vector' : 'bm25' });
   } catch (error) {
     res.status(500).json({ error: String(error) });
+  }
+});
+
+/** List MongoDB officially supported client languages for repogen. */
+app.get('/api/repogen/languages', (_req, res) => {
+  res.json(
+    REPOGEN_LANGUAGES.map((language) => ({
+      id: language.id,
+      label: language.label,
+      driverName: language.driverName,
+    })),
+  );
+});
+
+/** Generate typed repository layer source from a migration plan. */
+app.post('/api/repogen/generate', (req, res) => {
+  try {
+    const language = String(req.body?.language ?? 'node');
+    const planBody = req.body?.plan as MigrationPlan | undefined;
+    const planJson = req.body?.planJson as string | undefined;
+
+    let plan: MigrationPlan | null = planBody ?? null;
+    if (!plan && planJson) {
+      plan = JSON.parse(planJson) as MigrationPlan;
+    }
+    if (!plan?.collections?.length) {
+      res.status(400).json({ error: 'plan or planJson with collections is required' });
+      return;
+    }
+
+    const result = generateFromPlan({ plan, language });
+    res.json(result);
+  } catch (error) {
+    res.status(400).json({ error: String(error) });
   }
 });
 

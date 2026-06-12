@@ -8,12 +8,21 @@ export type PromptArtifact = {
   content: string;
 };
 
+export type RepositoryArtifact = {
+  language: string;
+  languageLabel: string;
+  driverName: string;
+  files: { relativePath: string; content: string }[];
+  generatedAt: string;
+};
+
 export type MigrationArtifacts = {
   planJson: string;
   designReportMarkdown: string;
   prompts: PromptArtifact[];
   retrievalStrategy?: string;
   generatedAt: string;
+  repositories?: RepositoryArtifact;
   pipelineResult?: {
     ok: boolean;
     imports: { collection: string; ok: boolean; insertedCount?: number; error?: string }[];

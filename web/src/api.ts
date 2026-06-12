@@ -235,6 +235,42 @@ export async function exportMigration(model: SqlStructuralModel, profileId: stri
   return res.json();
 }
 
+export type RepogenLanguageOption = {
+  id: string;
+  label: string;
+  driverName: string;
+};
+
+export type RepogenGeneratedFile = {
+  relativePath: string;
+  content: string;
+};
+
+export type RepogenGenerateResult = {
+  language: string;
+  languageLabel: string;
+  driverName: string;
+  files: RepogenGeneratedFile[];
+  collectionCount: number;
+};
+
+export async function fetchRepogenLanguages(): Promise<RepogenLanguageOption[]> {
+  const res = await fetch(`${base}/api/repogen/languages`);
+  if (!res.ok) throw new Error((await res.json()).error ?? res.statusText);
+  return res.json();
+}
+
+export async function generateRepositories(planJson: string, language: string): Promise<RepogenGenerateResult> {
+  const res = await fetch(`${base}/api/repogen/generate`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ planJson, language }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error ?? res.statusText);
+  return data;
+}
+
 export async function exportPrompts(ddl: string, profileId: string) {
   const res = await fetch(`${base}/api/export/prompts`, {
     method: 'POST',
