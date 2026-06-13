@@ -35,6 +35,7 @@ merge-mode diagrams.
 | [15-migration-artifacts.md](15-migration-artifacts.md) | Migration plan, design report, RAG prompts, and repository layer — purpose and when to use each | `src/design/`, `src/rag/`, `src/repogen/` |
 | [16-pipeline-steps.md](16-pipeline-steps.md) | All six pipeline steps — purpose, outputs, commands, and how each stage connects | full pipeline |
 | [17-ml-engine.md](17-ml-engine.md) | ML reranker (Voyage rerank-2.5), performance critic, lessons-learned self-reflection | `src/ml_engine/` |
+| [19-llm-and-models.md](19-llm-and-models.md) | Which models hvyMETL uses — embeddings, rerankers, and what is *not* a chat LLM | `src/rag/`, `src/ml_engine/`, `src/design/` |
 | [18-sql-dialects.md](18-sql-dialects.md) | Eleven supported SQL dialects — SQLite live adapter vs DDL paste import | `src/dialects.ts`, `src/utilities/ddlParser.ts` |
 | [10-examples.md](10-examples.md) | The seven example SQL domains and the deterministic seeder | `examples/`, `src/examples/` |
 | [11-run-all-examples.md](11-run-all-examples.md) | End-to-end Atlas run for all seven domains with automated validation | `scripts/run-all-examples.mjs` |

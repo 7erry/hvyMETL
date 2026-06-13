@@ -92,7 +92,8 @@ Artifact purposes (plan, report, RAG prompts): **[docs/15-migration-artifacts.md
 
 The ML engine upgrades the design stage from static RAG + heuristics to a
 **telemetry-aware, self-improving** pipeline. Full reference:
-**[docs/17-ml-engine.md](docs/17-ml-engine.md)**.
+**[docs/17-ml-engine.md](docs/17-ml-engine.md)**. Which models are used (and what is *not* a chat LLM):
+**[docs/19-llm-and-models.md](docs/19-llm-and-models.md)**.
 
 | Capability | What it does |
 | --- | --- |

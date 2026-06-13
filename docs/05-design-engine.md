@@ -18,7 +18,7 @@ diffable, and testable. The pattern semantics follow MongoDB's
 An optional **ML-enhanced path** (`designFromModelWithMlEngine` in
 [`pipelinePatch.ts`](../src/ml_engine/pipelinePatch.ts)) wraps the same
 `buildMigrationPlan()` with telemetry-aware reranking, a performance critic gate, and
-lessons-learned memory injection. See [17-ml-engine.md](17-ml-engine.md).
+lessons-learned memory injection. See [17-ml-engine.md](17-ml-engine.md). For which AI models hvyMETL calls (embeddings, rerankers, and what is *not* a chat LLM), see [19-llm-and-models.md](19-llm-and-models.md).
 
 ## 2. Technical Details & Signature
 
