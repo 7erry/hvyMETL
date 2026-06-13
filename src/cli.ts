@@ -28,6 +28,11 @@ import { createSqliteAdapter } from './adapters/sqlite.js';
 import { loadKnowledgeBase } from './rag/chunker.js';
 import { createRetrievalConfigFromEnv, describeRetrievalStrategy, retrieve } from './rag/retrieval.js';
 import { buildPromptBundle, buildRetrievalQuery } from './rag/promptBundle.js';
+import { maybePhoneHome } from './utilities/phoneHome.js';
+import { readPackageVersion } from './utilities/version.js';
+
+/** Published semver from package.json (also used for CLI --version). */
+const APP_VERSION = readPackageVersion();
 
 /** Repo root (this file compiles to dist/cli.js, so root is one level up). */
 const ROOT_DIR = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -98,7 +103,7 @@ const program = new Command();
 program
   .name('hvymetl')
   .description('RAG-driven SQL-to-MongoDB migration toolkit')
-  .version('0.1.0');
+  .version(APP_VERSION);
 
 program
   .command('profiles')
@@ -174,6 +179,8 @@ program
   .action((flags: { plan: string; out: string; lang: string }) => {
     runRepogen({ planPath: flags.plan, outDir: flags.out, language: flags.lang });
   });
+
+maybePhoneHome(APP_VERSION);
 
 program.parseAsync(process.argv).catch((error) => {
   console.error(String(error));
