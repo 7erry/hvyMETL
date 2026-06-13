@@ -23,6 +23,14 @@ export type MigrationArtifacts = {
   prompts: PromptArtifact[];
   retrievalStrategy?: string;
   generatedAt: string;
+  designMeta?: {
+    sqlTableCount: number;
+    collectionCount: number;
+    foldedTableCount: number;
+    foldedTables: string[];
+    csvEnriched: boolean;
+    hasRowStats: boolean;
+  };
   repositories?: RepositoryArtifact;
   pipelineResult?: {
     ok: boolean;
@@ -33,14 +41,19 @@ export type MigrationArtifacts = {
 
 export type AppView = 'diagram' | 'migration';
 
+export type SchemaPhase = 'before' | 'after';
+
 export type SessionState = {
   profileId: string;
   dialect: string;
   ddl: string;
   model: SqlStructuralModel | null;
   positions: Record<string, { x: number; y: number }>;
+  collectionPositions: Record<string, { x: number; y: number }>;
   snapToGrid: boolean;
   selectedTable: string | null;
+  selectedCollection: string | null;
+  schemaPhase: SchemaPhase;
   view: AppView;
   migrationArtifacts: MigrationArtifacts | null;
   selectedTemplateId: string;
@@ -59,8 +72,11 @@ export const defaultSessionState = (): SessionState => ({
   ddl: '',
   model: null,
   positions: {},
+  collectionPositions: {},
   snapToGrid: true,
   selectedTable: null,
+  selectedCollection: null,
+  schemaPhase: 'before',
   view: 'diagram',
   migrationArtifacts: null,
   selectedTemplateId: '',

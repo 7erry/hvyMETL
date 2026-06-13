@@ -36,6 +36,30 @@ export type DiagramExport = {
   exportedAt: string;
 };
 
+/** After · MongoDB diagram export — migration plan layout for sharing. */
+export type MongoDiagramExport = {
+  version: 1;
+  phase: 'after';
+  name: string;
+  dialect: string;
+  profileId: string;
+  plan: import('./migrationPlanTypes').MigrationPlan;
+  collectionPositions: Record<string, { x: number; y: number }>;
+  designMeta?: {
+    sqlTableCount: number;
+    collectionCount: number;
+    foldedTableCount: number;
+    foldedTables: string[];
+    csvEnriched: boolean;
+    hasRowStats: boolean;
+  };
+  designReportMarkdown?: string;
+  retrievalStrategy?: string;
+  ddl?: string;
+  model?: SqlStructuralModel;
+  exportedAt: string;
+};
+
 export type Profile = {
   id: string;
   label: string;

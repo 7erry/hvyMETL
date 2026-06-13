@@ -11,7 +11,8 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createSqliteAdapter } from '../adapters/sqlite.js';
 import { DIALECTS } from '../dialects.js';
-import { designFromModel, writeDesignArtifacts } from '../design/designFromModel.js';
+import { writeDesignArtifacts } from '../design/designFromModel.js';
+import { runDesignForModel } from './runDesign.js';
 import { ALL_PROFILES, buildCustomProfileFromInput, getProfile } from '../profiles/profiles.js';
 import { resolveWorkloadProfile } from '../profiles/resolveProfile.js';
 import { inferWorkloadProfile } from '../profiles/inferProfile.js';
@@ -128,7 +129,7 @@ app.post('/api/schema/import-sqlite', upload.single('database'), (req, res) => {
   }
 });
 
-/** AI-powered design: RAG + pattern selector → migration plan. */
+/** AI/RAG design preview: CSV enrichment (when available) + ML engine → migration plan. */
 app.post('/api/design', async (req, res) => {
   try {
     let model: SqlStructuralModel;
@@ -141,11 +142,63 @@ app.post('/api/design', async (req, res) => {
       return;
     }
     const profile = resolveWorkloadProfile(req.body);
-    const result = await designFromModel(model, profile, KNOWLEDGE_DIR);
+    const result = await runDesignForModel({
+      model,
+      profile,
+      knowledgeDir: KNOWLEDGE_DIR,
+      csvSourcePath: req.body?.csvSourcePath as string | undefined,
+      dialect: req.body?.dialect as string | undefined,
+    });
     res.json(result);
   } catch (error) {
     res.status(500).json({ error: String(error) });
   }
+});
+
+/** Design preview with CSV files uploaded for row count / cardinality enrichment. */
+app.post('/api/design/with-csv', (req, res) => {
+  const batchDir = join(UPLOAD_DIR, `design-csv-${Date.now()}`);
+  mkdirSync(batchDir, { recursive: true });
+  const csvUpload = multer({
+    storage: multer.diskStorage({
+      destination: (_uploadReq, _file, cb) => cb(null, batchDir),
+      filename: (_uploadReq, file, cb) => cb(null, file.originalname),
+    }),
+  }).array('csvs', 500);
+
+  csvUpload(req, res, async (uploadError: unknown) => {
+    if (uploadError) {
+      res.status(400).json({ error: String(uploadError) });
+      return;
+    }
+    try {
+      const files = req.files as Express.Multer.File[] | undefined;
+      if (!files?.length) {
+        res.status(400).json({ error: 'At least one CSV file is required' });
+        return;
+      }
+      const model = req.body?.model ? (JSON.parse(String(req.body.model)) as SqlStructuralModel) : undefined;
+      if (!model) {
+        res.status(400).json({ error: 'model is required' });
+        return;
+      }
+      const profile = resolveWorkloadProfile({
+        profileId: req.body?.profileId,
+        customProfile: req.body?.customProfile ? JSON.parse(String(req.body.customProfile)) : undefined,
+        customTelemetry: req.body?.customTelemetry ? JSON.parse(String(req.body.customTelemetry)) : undefined,
+      });
+      const result = await runDesignForModel({
+        model,
+        profile,
+        knowledgeDir: KNOWLEDGE_DIR,
+        csvSourcePath: batchDir,
+        dialect: req.body?.dialect as string | undefined,
+      });
+      res.json(result);
+    } catch (error) {
+      res.status(500).json({ error: String(error) });
+    }
+  });
 });
 
 /** Export migration artifacts (plan JSON + design report markdown). */
@@ -159,7 +212,13 @@ app.post('/api/export/migration', async (req, res) => {
       return;
     }
     const profile = resolveWorkloadProfile(req.body);
-    const result = await designFromModel(resolved, profile, KNOWLEDGE_DIR);
+    const result = await runDesignForModel({
+      model: resolved,
+      profile,
+      knowledgeDir: KNOWLEDGE_DIR,
+      csvSourcePath: req.body?.csvSourcePath as string | undefined,
+      dialect: req.body?.dialect as string | undefined,
+    });
     const outDir = join(ROOT, 'out', 'ui-export');
     const paths = writeDesignArtifacts(outDir, result);
     res.json({

@@ -217,25 +217,65 @@ export async function fetchPipelineConfig(options?: {
   return res.json();
 }
 
-export async function runDesign(model: SqlStructuralModel, profileId: string, ddl: string) {
+export type DesignMeta = {
+  sqlTableCount: number;
+  collectionCount: number;
+  foldedTableCount: number;
+  foldedTables: string[];
+  csvEnriched: boolean;
+  hasRowStats: boolean;
+  csvSourcePath?: string;
+};
+
+export type DesignResult = {
+  plan: unknown;
+  designReport: string;
+  retrievalStrategy: string;
+  designMeta: DesignMeta;
+};
+
+export type DesignRequest = ProfileRequestFields & {
+  model: SqlStructuralModel;
+  ddl: string;
+  dialect?: string;
+  csvSourcePath?: string;
+};
+
+export async function runDesign(request: DesignRequest): Promise<DesignResult> {
   const res = await fetch(`${base}/api/design`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ model, profileId, ddl }),
+    body: JSON.stringify(request),
   });
   if (!res.ok) throw new Error((await res.json()).error ?? res.statusText);
   return res.json();
+}
+
+export async function runDesignWithCsv(files: File[], request: DesignRequest): Promise<DesignResult> {
+  const body = new FormData();
+  for (const file of files) body.append('csvs', file);
+  body.append('profileId', request.profileId);
+  if (request.customProfile) body.append('customProfile', JSON.stringify(request.customProfile));
+  body.append('model', JSON.stringify(request.model));
+  body.append('ddl', request.ddl);
+  if (request.dialect) body.append('dialect', request.dialect);
+
+  const res = await fetch(`${base}/api/design/with-csv`, { method: 'POST', body });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error ?? res.statusText);
+  return data;
 }
 
 export async function exportMigration(
   model: SqlStructuralModel,
   profile: ProfileRequestFields,
   ddl: string,
+  options?: { csvSourcePath?: string; dialect?: string },
 ) {
   const res = await fetch(`${base}/api/export/migration`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ model, ddl, ...profile }),
+    body: JSON.stringify({ model, ddl, ...profile, ...options }),
   });
   if (!res.ok) throw new Error((await res.json()).error ?? res.statusText);
   return res.json();
@@ -312,4 +352,4 @@ export function downloadText(filename: string, text: string, mime = 'text/plain'
   URL.revokeObjectURL(url);
 }
 
-export type { DiagramExport };
+export type { DiagramExport, MongoDiagramExport };

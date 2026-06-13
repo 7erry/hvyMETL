@@ -178,6 +178,7 @@ export function SchemaCanvas({
     [model, positions, onDuplicateTable, selectedTable, connectionType, relationshipNotation],
   );
 
+  const tableCount = model?.tables.length ?? 0;
   const relationshipCount = useMemo(
     () => model?.tables.reduce((n, t) => n + t.foreignKeys.length, 0) ?? 0,
     [model],
@@ -249,6 +250,7 @@ export function SchemaCanvas({
         <Panel position="bottom-center" className="schema-canvas-legend">
           <span><span className="legend-dot legend-dot--pk">🔑</span> Primary key</span>
           <span><span className="legend-dot legend-dot--fk">↗</span> Foreign key</span>
+          <span>{tableCount} table{tableCount === 1 ? '' : 's'}</span>
           <span>{relationshipCount} relationship{relationshipCount === 1 ? '' : 's'}</span>
           {selectedTable ? <span className="legend-hint">Click canvas to clear selection</span> : null}
         </Panel>
