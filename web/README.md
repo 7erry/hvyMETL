@@ -4,7 +4,13 @@ Optional MongoDB-branded web UI for visual schema design, ER diagrams, and AI-po
 migration export. The **CLI remains fully available** — every UI action uses the same
 design engine, RAG layer, and artifacts as `npm run hvymetl`.
 
-![ER diagram canvas with table details](docs/screenshots/er-diagram-canvas.png)
+**Before · SQL** — source relational schema (Oracle E-commerce Catalog, 31 tables).
+
+![Before SQL ER diagram — Oracle E-commerce Catalog with 31 tables](docs/screenshots/before-sql-diagram.png)
+
+**After · MongoDB** — AI/RAG migration plan (20 collections, 11 tables folded).
+
+![After MongoDB diagram — 31 SQL tables to 20 MongoDB collections](docs/screenshots/after-mongodb-diagram.png)
 
 ## Quick start
 
@@ -32,12 +38,16 @@ Set `HVYMETL_UI_PORT` in `.env` to change the API port (default `3847`).
 
 ## Screenshots
 
-### ER diagram & table details
+### Before · SQL and After · MongoDB
 
-Import a schema, drag tables on the canvas, click a table for column/PK/FK details,
-duplicate tables, and snap to a 20px grid (hold **Shift** for free positioning).
+Toggle between the source SQL ER diagram and the ML/RAG-driven MongoDB target schema.
+The **Before** view shows tables, primary keys, foreign keys, and relationship cardinality.
+The **After** view shows folded collections, embeds, denormalized fields, and transform
+summary (e.g. `31 SQL tables → 20 MongoDB collections (11 folded)`).
 
-![ER diagram with CMS template loaded](docs/screenshots/er-diagram-canvas.png)
+![Before SQL ER diagram — Oracle E-commerce Catalog](docs/screenshots/before-sql-diagram.png)
+
+![After MongoDB diagram — folded collections and pattern decisions](docs/screenshots/after-mongodb-diagram.png)
 
 ### AI migration artifacts
 
@@ -80,10 +90,11 @@ use **Download repositories** to save the full set.
 | **Broad database support** | Dialect selector: PostgreSQL, MySQL, SQLite, MSSQL, ClickHouse, Oracle, IBM Db2, CockroachDB, Amazon Aurora (PostgreSQL/MySQL), Google Cloud Spanner (DDL paste); **SQLite file** upload is live |
 | **Templates** | Dropdown (Laravel, Django, Twitter, catalog, iot, cms) → **Load template** |
 | **Customizable ER diagrams** | Drag/zoom canvas, FK edges, minimap (React Flow) |
+| **Before / After toggle** | **Before · SQL** source schema vs **After · MongoDB** migration plan canvas |
 | **Table details** | Click a table on the canvas or in the sidebar list |
 | **Duplicate table** | ⧉ on canvas header or sidebar |
 | **Snap to grid** | Checkbox; hold **Shift** while dragging for free move |
-| **Share diagrams** | Export / import diagram JSON (schema + layout) |
+| **Share diagrams** | Export / import diagram JSON (SQL layout or MongoDB plan + positions) |
 | **Example diagrams** | Import bundled `examples/*/hvymetl-diagram-*.json` — see [10-examples.md](../docs/10-examples.md) |
 | **Session state** | Auto-saved in `sessionStorage`; use **Clear session** to reset |
 | **Workload profiles** | Header dropdown (catalog, cms, iot, …) |
@@ -100,11 +111,12 @@ parallel ETL generator prompt, repository layer prompt vs `repogen` code).
 ## Typical workflow
 
 1. **Import schema** — paste `CREATE TABLE` DDL, upload SQLite, load a template, or **import a bundled example diagram** (`examples/<domain>/hvymetl-diagram-*.json`).
-2. **Arrange the ER diagram** — position tables, inspect details, duplicate as needed.
-3. **Choose a workload profile** — e.g. Content Management, IoT, Catalog.
-4. **Run Full Pipeline** (optional) — prompts for missing `.env` values, runs ETL + Atlas import.
-5. **AI Migration Export** — review artifacts; **Generate repositories** in your target language (13 MongoDB drivers).
-6. **Optional: share** — export diagram JSON for collaboration.
+2. **Arrange the ER diagram** — position tables on **Before · SQL**, inspect details, duplicate as needed.
+3. **Switch to After · MongoDB** — run design (CSV enrichment recommended) to see folded collections.
+4. **Choose a workload profile** — e.g. Content Management, IoT, Catalog.
+5. **Run Full Pipeline** (optional) — prompts for missing `.env` values, runs ETL + Atlas import.
+6. **AI Migration Export** — review artifacts; **Generate repositories** in your target language (13 MongoDB drivers).
+7. **Optional: share** — export Before or After diagram JSON for collaboration.
 
 ### Full pipeline from the UI
 
