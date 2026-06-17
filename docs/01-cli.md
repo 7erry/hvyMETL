@@ -5,7 +5,7 @@ Source: [`src/cli.ts`](../src/cli.ts)
 ## 1. High-Level Summary
 
 `src/cli.ts` is the single entry point that wires every pipeline stage into a
-`commander`-based command-line interface with five subcommands (`profiles`, `design`,
+`commander`-based command-line interface with six subcommands (`profiles`, `design`, `explain`,
 `prompt`, `etl`, `repogen`). Architecturally it is a thin orchestration shell: it
 parses flags, resolves the runtime workload profile (interactively when none is
 given), and delegates all real work to the stage modules. CSV imports use the external
