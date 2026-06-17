@@ -1,0 +1,4592 @@
+{
+  "version": 1,
+  "phase": "after",
+  "name": "ddl:oracle",
+  "dialect": "oracle",
+  "profileId": "catalog",
+  "plan": {
+    "source": "ddl:oracle",
+    "profileId": "catalog",
+    "telemetry": {
+      "readPercent": 95,
+      "writePercent": 5,
+      "peakRpm": 60000,
+      "growthRate": "5GB/month"
+    },
+    "writeConcern": {
+      "w": 1,
+      "journal": false
+    },
+    "readPreference": "primaryPreferred",
+    "compression": "snappy",
+    "pool": {
+      "maxPoolSize": 200,
+      "minPoolSize": 20,
+      "socketTimeoutMS": 30000,
+      "maxIdleTimeMS": 60000
+    },
+    "generatedAt": "2026-06-13T04:06:09.302Z",
+    "collections": [
+      {
+        "name": "securityRoles",
+        "sourceTable": "security_roles",
+        "mergedTables": [
+          "security_roles"
+        ],
+        "idDerivation": {
+          "sourceColumns": [
+            "role_id"
+          ],
+          "strategy": "direct"
+        },
+        "patterns": [
+          {
+            "pattern": "reference",
+            "target": "security_roles -> user_accounts",
+            "reason": "user_accounts belongs to multiple parents; it embeds under its primary parent (employees) and is referenced from security_roles to avoid duplicating rows across collections.",
+            "knowledgeSource": "embed-vs-reference.md"
+          },
+          {
+            "pattern": "computed",
+            "target": "security_roles.totalUserAccounts",
+            "reason": "Reads dominate (95:5 R:W at 60,000 RPM); storing the user_accounts count avoids an aggregation on every read.",
+            "knowledgeSource": "computed.md"
+          },
+          {
+            "pattern": "schema-versioning",
+            "target": "security_roles",
+            "reason": "Every document is stamped with schemaVersion: 1 so future shape changes can migrate lazily with zero downtime.",
+            "knowledgeSource": "schema-versioning.md"
+          }
+        ],
+        "jsonSchema": {
+          "bsonType": "object",
+          "required": [
+            "_id",
+            "schemaVersion"
+          ],
+          "properties": {
+            "_id": {
+              "bsonType": "string",
+              "description": "Deterministic id derived from the SQL primary key."
+            },
+            "schemaVersion": {
+              "bsonType": "int",
+              "description": "Document shape version for lazy migrations."
+            },
+            "roleName": {
+              "bsonType": "string",
+              "description": "From SQL column security_roles.role_name (VARCHAR2(50))."
+            },
+            "description": {
+              "bsonType": [
+                "string",
+                "null"
+              ],
+              "description": "From SQL column security_roles.description (VARCHAR2(255))."
+            },
+            "totalUserAccounts": {
+              "bsonType": "long",
+              "description": "Computed pattern counter maintained with $inc."
+            }
+          }
+        },
+        "indexes": [],
+        "embeddedArrays": [],
+        "extendedReferences": [],
+        "computedFields": [
+          {
+            "field": "totalUserAccounts",
+            "description": "Running count of user_accounts rows for this security_role.",
+            "initialExpression": "COUNT(*) FROM user_accounts WHERE role_id = security_roles.role_id"
+          }
+        ]
+      },
+      {
+        "name": "customers",
+        "sourceTable": "customers",
+        "mergedTables": [
+          "customers",
+          "customer_addresses",
+          "customer_loyalty",
+          "customer_reviews"
+        ],
+        "idDerivation": {
+          "sourceColumns": [
+            "customer_id"
+          ],
+          "strategy": "direct"
+        },
+        "patterns": [
+          {
+            "pattern": "embed",
+            "target": "customers.customerAddresses",
+            "reason": "Max 2 children per parent is safely bounded, and the 95:5 R:W at 60,000 RPM workload wants O(1) single-document reads.",
+            "knowledgeSource": "embed-vs-reference.md"
+          },
+          {
+            "pattern": "reference",
+            "target": "customers -> orders",
+            "reason": "orders is an entity in its own right (other tables reference it); it stays its own collection and denormalizes customers fields via Extended Reference instead.",
+            "knowledgeSource": "embed-vs-reference.md"
+          },
+          {
+            "pattern": "computed",
+            "target": "customers.totalOrders",
+            "reason": "Reads dominate (95:5 R:W at 60,000 RPM); storing the orders count avoids an aggregation on every read.",
+            "knowledgeSource": "computed.md"
+          },
+          {
+            "pattern": "embed",
+            "target": "customers.customerLoyalty",
+            "reason": "Max 1 children per parent is safely bounded, and the 95:5 R:W at 60,000 RPM workload wants O(1) single-document reads.",
+            "knowledgeSource": "embed-vs-reference.md"
+          },
+          {
+            "pattern": "reference",
+            "target": "customers -> support_tickets",
+            "reason": "support_tickets is an entity in its own right (other tables reference it); it stays its own collection and denormalizes customers fields via Extended Reference instead.",
+            "knowledgeSource": "embed-vs-reference.md"
+          },
+          {
+            "pattern": "computed",
+            "target": "customers.totalSupportTickets",
+            "reason": "Reads dominate (95:5 R:W at 60,000 RPM); storing the support_tickets count avoids an aggregation on every read.",
+            "knowledgeSource": "computed.md"
+          },
+          {
+            "pattern": "embed",
+            "target": "customers.customerReviews",
+            "reason": "Max 4 children per parent is safely bounded, and the 95:5 R:W at 60,000 RPM workload wants O(1) single-document reads.",
+            "knowledgeSource": "embed-vs-reference.md"
+          },
+          {
+            "pattern": "schema-versioning",
+            "target": "customers",
+            "reason": "Every document is stamped with schemaVersion: 1 so future shape changes can migrate lazily with zero downtime.",
+            "knowledgeSource": "schema-versioning.md"
+          }
+        ],
+        "jsonSchema": {
+          "bsonType": "object",
+          "required": [
+            "_id",
+            "schemaVersion"
+          ],
+          "properties": {
+            "_id": {
+              "bsonType": "string",
+              "description": "Deterministic id derived from the SQL primary key."
+            },
+            "schemaVersion": {
+              "bsonType": "int",
+              "description": "Document shape version for lazy migrations."
+            },
+            "companyName": {
+              "bsonType": [
+                "string",
+                "null"
+              ],
+              "description": "From SQL column customers.company_name (VARCHAR2(100))."
+            },
+            "firstName": {
+              "bsonType": [
+                "string",
+                "null"
+              ],
+              "description": "From SQL column customers.first_name (VARCHAR2(50))."
+            },
+            "lastName": {
+              "bsonType": [
+                "string",
+                "null"
+              ],
+              "description": "From SQL column customers.last_name (VARCHAR2(50))."
+            },
+            "email": {
+              "bsonType": "string",
+              "description": "From SQL column customers.email (VARCHAR2(100))."
+            },
+            "phone": {
+              "bsonType": [
+                "string",
+                "null"
+              ],
+              "description": "From SQL column customers.phone (VARCHAR2(20))."
+            },
+            "creditLimit": {
+              "bsonType": [
+                "string",
+                "null"
+              ],
+              "description": "From SQL column customers.credit_limit (NUMBER(10,2))."
+            },
+            "customerAddresses": {
+              "bsonType": "array",
+              "items": {
+                "bsonType": "object"
+              },
+              "description": "Fully embedded customer_addresses (bounded: max 2 per parent)."
+            },
+            "totalOrders": {
+              "bsonType": "long",
+              "description": "Computed pattern counter maintained with $inc."
+            },
+            "customerLoyalty": {
+              "bsonType": "array",
+              "items": {
+                "bsonType": "object"
+              },
+              "description": "Fully embedded customer_loyalty (bounded: max 1 per parent)."
+            },
+            "totalSupportTickets": {
+              "bsonType": "long",
+              "description": "Computed pattern counter maintained with $inc."
+            },
+            "customerReviews": {
+              "bsonType": "array",
+              "items": {
+                "bsonType": "object"
+              },
+              "description": "Fully embedded customer_reviews (bounded: max 4 per parent)."
+            }
+          }
+        },
+        "indexes": [],
+        "embeddedArrays": [
+          {
+            "field": "customerAddresses",
+            "sourceTable": "customer_addresses",
+            "joinColumn": "customer_id"
+          },
+          {
+            "field": "customerLoyalty",
+            "sourceTable": "customer_loyalty",
+            "joinColumn": "customer_id"
+          },
+          {
+            "field": "customerReviews",
+            "sourceTable": "customer_reviews",
+            "joinColumn": "customer_id"
+          }
+        ],
+        "extendedReferences": [],
+        "computedFields": [
+          {
+            "field": "totalOrders",
+            "description": "Running count of orders rows for this customer.",
+            "initialExpression": "COUNT(*) FROM orders WHERE customer_id = customers.customer_id"
+          },
+          {
+            "field": "totalSupportTickets",
+            "description": "Running count of support_tickets rows for this customer.",
+            "initialExpression": "COUNT(*) FROM support_tickets WHERE customer_id = customers.customer_id"
+          }
+        ]
+      },
+      {
+        "name": "salesChannels",
+        "sourceTable": "sales_channels",
+        "mergedTables": [
+          "sales_channels"
+        ],
+        "idDerivation": {
+          "sourceColumns": [
+            "channel_id"
+          ],
+          "strategy": "direct"
+        },
+        "patterns": [
+          {
+            "pattern": "reference",
+            "target": "sales_channels -> orders",
+            "reason": "orders is an entity in its own right (other tables reference it); it stays its own collection and denormalizes sales_channels fields via Extended Reference instead.",
+            "knowledgeSource": "embed-vs-reference.md"
+          },
+          {
+            "pattern": "computed",
+            "target": "sales_channels.totalOrders",
+            "reason": "Reads dominate (95:5 R:W at 60,000 RPM); storing the orders count avoids an aggregation on every read.",
+            "knowledgeSource": "computed.md"
+          },
+          {
+            "pattern": "schema-versioning",
+            "target": "sales_channels",
+            "reason": "Every document is stamped with schemaVersion: 1 so future shape changes can migrate lazily with zero downtime.",
+            "knowledgeSource": "schema-versioning.md"
+          }
+        ],
+        "jsonSchema": {
+          "bsonType": "object",
+          "required": [
+            "_id",
+            "schemaVersion"
+          ],
+          "properties": {
+            "_id": {
+              "bsonType": "string",
+              "description": "Deterministic id derived from the SQL primary key."
+            },
+            "schemaVersion": {
+              "bsonType": "int",
+              "description": "Document shape version for lazy migrations."
+            },
+            "channelName": {
+              "bsonType": "string",
+              "description": "From SQL column sales_channels.channel_name (VARCHAR2(30))."
+            },
+            "totalOrders": {
+              "bsonType": "long",
+              "description": "Computed pattern counter maintained with $inc."
+            }
+          }
+        },
+        "indexes": [],
+        "embeddedArrays": [],
+        "extendedReferences": [],
+        "computedFields": [
+          {
+            "field": "totalOrders",
+            "description": "Running count of orders rows for this sales_channel.",
+            "initialExpression": "COUNT(*) FROM orders WHERE channel_id = sales_channels.channel_id"
+          }
+        ]
+      },
+      {
+        "name": "loyaltyPrograms",
+        "sourceTable": "loyalty_programs",
+        "mergedTables": [
+          "loyalty_programs"
+        ],
+        "idDerivation": {
+          "sourceColumns": [
+            "program_id"
+          ],
+          "strategy": "direct"
+        },
+        "patterns": [
+          {
+            "pattern": "reference",
+            "target": "loyalty_programs -> customer_loyalty",
+            "reason": "customer_loyalty belongs to multiple parents; it embeds under its primary parent (customers) and is referenced from loyalty_programs to avoid duplicating rows across collections.",
+            "knowledgeSource": "embed-vs-reference.md"
+          },
+          {
+            "pattern": "computed",
+            "target": "loyalty_programs.totalCustomerLoyalty",
+            "reason": "Reads dominate (95:5 R:W at 60,000 RPM); storing the customer_loyalty count avoids an aggregation on every read.",
+            "knowledgeSource": "computed.md"
+          },
+          {
+            "pattern": "schema-versioning",
+            "target": "loyalty_programs",
+            "reason": "Every document is stamped with schemaVersion: 1 so future shape changes can migrate lazily with zero downtime.",
+            "knowledgeSource": "schema-versioning.md"
+          }
+        ],
+        "jsonSchema": {
+          "bsonType": "object",
+          "required": [
+            "_id",
+            "schemaVersion"
+          ],
+          "properties": {
+            "_id": {
+              "bsonType": "string",
+              "description": "Deterministic id derived from the SQL primary key."
+            },
+            "schemaVersion": {
+              "bsonType": "int",
+              "description": "Document shape version for lazy migrations."
+            },
+            "tierName": {
+              "bsonType": "string",
+              "description": "From SQL column loyalty_programs.tier_name (VARCHAR2(30))."
+            },
+            "pointsMultiplier": {
+              "bsonType": "string",
+              "description": "From SQL column loyalty_programs.points_multiplier (NUMBER(3,2))."
+            },
+            "minPointsRequired": {
+              "bsonType": "string",
+              "description": "From SQL column loyalty_programs.min_points_required (NUMBER(8))."
+            },
+            "totalCustomerLoyalty": {
+              "bsonType": "long",
+              "description": "Computed pattern counter maintained with $inc."
+            }
+          }
+        },
+        "indexes": [],
+        "embeddedArrays": [],
+        "extendedReferences": [],
+        "computedFields": [
+          {
+            "field": "totalCustomerLoyalty",
+            "description": "Running count of customer_loyalty rows for this loyalty_program.",
+            "initialExpression": "COUNT(*) FROM customer_loyalty WHERE program_id = loyalty_programs.program_id"
+          }
+        ]
+      },
+      {
+        "name": "regions",
+        "sourceTable": "regions",
+        "mergedTables": [
+          "regions"
+        ],
+        "idDerivation": {
+          "sourceColumns": [
+            "region_id"
+          ],
+          "strategy": "direct"
+        },
+        "patterns": [
+          {
+            "pattern": "reference",
+            "target": "regions -> countries",
+            "reason": "countries is an entity in its own right (other tables reference it); it stays its own collection and denormalizes regions fields via Extended Reference instead.",
+            "knowledgeSource": "embed-vs-reference.md"
+          },
+          {
+            "pattern": "computed",
+            "target": "regions.totalCountries",
+            "reason": "Reads dominate (95:5 R:W at 60,000 RPM); storing the countries count avoids an aggregation on every read.",
+            "knowledgeSource": "computed.md"
+          },
+          {
+            "pattern": "schema-versioning",
+            "target": "regions",
+            "reason": "Every document is stamped with schemaVersion: 1 so future shape changes can migrate lazily with zero downtime.",
+            "knowledgeSource": "schema-versioning.md"
+          }
+        ],
+        "jsonSchema": {
+          "bsonType": "object",
+          "required": [
+            "_id",
+            "schemaVersion"
+          ],
+          "properties": {
+            "_id": {
+              "bsonType": "string",
+              "description": "Deterministic id derived from the SQL primary key."
+            },
+            "schemaVersion": {
+              "bsonType": "int",
+              "description": "Document shape version for lazy migrations."
+            },
+            "regionName": {
+              "bsonType": "string",
+              "description": "From SQL column regions.region_name (VARCHAR2(50))."
+            },
+            "totalCountries": {
+              "bsonType": "long",
+              "description": "Computed pattern counter maintained with $inc."
+            }
+          }
+        },
+        "indexes": [],
+        "embeddedArrays": [],
+        "extendedReferences": [],
+        "computedFields": [
+          {
+            "field": "totalCountries",
+            "description": "Running count of countries rows for this region.",
+            "initialExpression": "COUNT(*) FROM countries WHERE region_id = regions.region_id"
+          }
+        ]
+      },
+      {
+        "name": "jobs",
+        "sourceTable": "jobs",
+        "mergedTables": [
+          "jobs"
+        ],
+        "idDerivation": {
+          "sourceColumns": [
+            "job_id"
+          ],
+          "strategy": "direct"
+        },
+        "patterns": [
+          {
+            "pattern": "reference",
+            "target": "jobs -> employees",
+            "reason": "employees is an entity in its own right (other tables reference it); it stays its own collection and denormalizes jobs fields via Extended Reference instead.",
+            "knowledgeSource": "embed-vs-reference.md"
+          },
+          {
+            "pattern": "computed",
+            "target": "jobs.totalEmployees",
+            "reason": "Reads dominate (95:5 R:W at 60,000 RPM); storing the employees count avoids an aggregation on every read.",
+            "knowledgeSource": "computed.md"
+          },
+          {
+            "pattern": "reference",
+            "target": "jobs -> job_history",
+            "reason": "job_history belongs to multiple parents; it embeds under its primary parent (employees) and is referenced from jobs to avoid duplicating rows across collections.",
+            "knowledgeSource": "embed-vs-reference.md"
+          },
+          {
+            "pattern": "computed",
+            "target": "jobs.totalJobHistory",
+            "reason": "Reads dominate (95:5 R:W at 60,000 RPM); storing the job_history count avoids an aggregation on every read.",
+            "knowledgeSource": "computed.md"
+          },
+          {
+            "pattern": "schema-versioning",
+            "target": "jobs",
+            "reason": "Every document is stamped with schemaVersion: 1 so future shape changes can migrate lazily with zero downtime.",
+            "knowledgeSource": "schema-versioning.md"
+          }
+        ],
+        "jsonSchema": {
+          "bsonType": "object",
+          "required": [
+            "_id",
+            "schemaVersion"
+          ],
+          "properties": {
+            "_id": {
+              "bsonType": "string",
+              "description": "Deterministic id derived from the SQL primary key."
+            },
+            "schemaVersion": {
+              "bsonType": "int",
+              "description": "Document shape version for lazy migrations."
+            },
+            "jobTitle": {
+              "bsonType": "string",
+              "description": "From SQL column jobs.job_title (VARCHAR2(50))."
+            },
+            "minSalary": {
+              "bsonType": [
+                "string",
+                "null"
+              ],
+              "description": "From SQL column jobs.min_salary (NUMBER(8,2))."
+            },
+            "maxSalary": {
+              "bsonType": [
+                "string",
+                "null"
+              ],
+              "description": "From SQL column jobs.max_salary (NUMBER(8,2))."
+            },
+            "totalEmployees": {
+              "bsonType": "long",
+              "description": "Computed pattern counter maintained with $inc."
+            },
+            "totalJobHistory": {
+              "bsonType": "long",
+              "description": "Computed pattern counter maintained with $inc."
+            }
+          }
+        },
+        "indexes": [],
+        "embeddedArrays": [],
+        "extendedReferences": [],
+        "computedFields": [
+          {
+            "field": "totalEmployees",
+            "description": "Running count of employees rows for this job.",
+            "initialExpression": "COUNT(*) FROM employees WHERE job_id = jobs.job_id"
+          },
+          {
+            "field": "totalJobHistory",
+            "description": "Running count of job_history rows for this job.",
+            "initialExpression": "COUNT(*) FROM job_history WHERE job_id = jobs.job_id"
+          }
+        ]
+      },
+      {
+        "name": "paymentMethods",
+        "sourceTable": "payment_methods",
+        "mergedTables": [
+          "payment_methods"
+        ],
+        "idDerivation": {
+          "sourceColumns": [
+            "method_id"
+          ],
+          "strategy": "direct"
+        },
+        "patterns": [
+          {
+            "pattern": "reference",
+            "target": "payment_methods -> payments",
+            "reason": "payments belongs to multiple parents; it embeds under its primary parent (invoices) and is referenced from payment_methods to avoid duplicating rows across collections.",
+            "knowledgeSource": "embed-vs-reference.md"
+          },
+          {
+            "pattern": "computed",
+            "target": "payment_methods.totalPayments",
+            "reason": "Reads dominate (95:5 R:W at 60,000 RPM); storing the payments count avoids an aggregation on every read.",
+            "knowledgeSource": "computed.md"
+          },
+          {
+            "pattern": "schema-versioning",
+            "target": "payment_methods",
+            "reason": "Every document is stamped with schemaVersion: 1 so future shape changes can migrate lazily with zero downtime.",
+            "knowledgeSource": "schema-versioning.md"
+          }
+        ],
+        "jsonSchema": {
+          "bsonType": "object",
+          "required": [
+            "_id",
+            "schemaVersion"
+          ],
+          "properties": {
+            "_id": {
+              "bsonType": "string",
+              "description": "Deterministic id derived from the SQL primary key."
+            },
+            "schemaVersion": {
+              "bsonType": "int",
+              "description": "Document shape version for lazy migrations."
+            },
+            "methodName": {
+              "bsonType": "string",
+              "description": "From SQL column payment_methods.method_name (VARCHAR2(30))."
+            },
+            "totalPayments": {
+              "bsonType": "long",
+              "description": "Computed pattern counter maintained with $inc."
+            }
+          }
+        },
+        "indexes": [],
+        "embeddedArrays": [],
+        "extendedReferences": [],
+        "computedFields": [
+          {
+            "field": "totalPayments",
+            "description": "Running count of payments rows for this payment_method.",
+            "initialExpression": "COUNT(*) FROM payments WHERE method_id = payment_methods.method_id"
+          }
+        ]
+      },
+      {
+        "name": "suppliers",
+        "sourceTable": "suppliers",
+        "mergedTables": [
+          "suppliers"
+        ],
+        "idDerivation": {
+          "sourceColumns": [
+            "supplier_id"
+          ],
+          "strategy": "direct"
+        },
+        "patterns": [
+          {
+            "pattern": "reference",
+            "target": "suppliers -> supply_orders",
+            "reason": "supply_orders is an entity in its own right (other tables reference it); it stays its own collection and denormalizes suppliers fields via Extended Reference instead.",
+            "knowledgeSource": "embed-vs-reference.md"
+          },
+          {
+            "pattern": "computed",
+            "target": "suppliers.totalSupplyOrders",
+            "reason": "Reads dominate (95:5 R:W at 60,000 RPM); storing the supply_orders count avoids an aggregation on every read.",
+            "knowledgeSource": "computed.md"
+          },
+          {
+            "pattern": "schema-versioning",
+            "target": "suppliers",
+            "reason": "Every document is stamped with schemaVersion: 1 so future shape changes can migrate lazily with zero downtime.",
+            "knowledgeSource": "schema-versioning.md"
+          }
+        ],
+        "jsonSchema": {
+          "bsonType": "object",
+          "required": [
+            "_id",
+            "schemaVersion"
+          ],
+          "properties": {
+            "_id": {
+              "bsonType": "string",
+              "description": "Deterministic id derived from the SQL primary key."
+            },
+            "schemaVersion": {
+              "bsonType": "int",
+              "description": "Document shape version for lazy migrations."
+            },
+            "supplierName": {
+              "bsonType": "string",
+              "description": "From SQL column suppliers.supplier_name (VARCHAR2(100))."
+            },
+            "contactName": {
+              "bsonType": [
+                "string",
+                "null"
+              ],
+              "description": "From SQL column suppliers.contact_name (VARCHAR2(100))."
+            },
+            "email": {
+              "bsonType": [
+                "string",
+                "null"
+              ],
+              "description": "From SQL column suppliers.email (VARCHAR2(100))."
+            },
+            "phone": {
+              "bsonType": [
+                "string",
+                "null"
+              ],
+              "description": "From SQL column suppliers.phone (VARCHAR2(20))."
+            },
+            "status": {
+              "bsonType": [
+                "string",
+                "null"
+              ],
+              "description": "From SQL column suppliers.status (VARCHAR2(20))."
+            },
+            "totalSupplyOrders": {
+              "bsonType": "long",
+              "description": "Computed pattern counter maintained with $inc."
+            }
+          }
+        },
+        "indexes": [],
+        "embeddedArrays": [],
+        "extendedReferences": [],
+        "computedFields": [
+          {
+            "field": "totalSupplyOrders",
+            "description": "Running count of supply_orders rows for this supplier.",
+            "initialExpression": "COUNT(*) FROM supply_orders WHERE supplier_id = suppliers.supplier_id"
+          }
+        ]
+      },
+      {
+        "name": "productCategories",
+        "sourceTable": "product_categories",
+        "mergedTables": [
+          "product_categories"
+        ],
+        "idDerivation": {
+          "sourceColumns": [
+            "category_id"
+          ],
+          "strategy": "direct"
+        },
+        "patterns": [
+          {
+            "pattern": "reference",
+            "target": "product_categories -> products",
+            "reason": "products is an entity in its own right (other tables reference it); it stays its own collection and denormalizes product_categories fields via Extended Reference instead.",
+            "knowledgeSource": "embed-vs-reference.md"
+          },
+          {
+            "pattern": "computed",
+            "target": "product_categories.totalProducts",
+            "reason": "Reads dominate (95:5 R:W at 60,000 RPM); storing the products count avoids an aggregation on every read.",
+            "knowledgeSource": "computed.md"
+          },
+          {
+            "pattern": "schema-versioning",
+            "target": "product_categories",
+            "reason": "Every document is stamped with schemaVersion: 1 so future shape changes can migrate lazily with zero downtime.",
+            "knowledgeSource": "schema-versioning.md"
+          }
+        ],
+        "jsonSchema": {
+          "bsonType": "object",
+          "required": [
+            "_id",
+            "schemaVersion"
+          ],
+          "properties": {
+            "_id": {
+              "bsonType": "string",
+              "description": "Deterministic id derived from the SQL primary key."
+            },
+            "schemaVersion": {
+              "bsonType": "int",
+              "description": "Document shape version for lazy migrations."
+            },
+            "categoryName": {
+              "bsonType": "string",
+              "description": "From SQL column product_categories.category_name (VARCHAR2(50))."
+            },
+            "description": {
+              "bsonType": [
+                "string",
+                "null"
+              ],
+              "description": "From SQL column product_categories.description (VARCHAR2(255))."
+            },
+            "totalProducts": {
+              "bsonType": "long",
+              "description": "Computed pattern counter maintained with $inc."
+            }
+          }
+        },
+        "indexes": [],
+        "embeddedArrays": [],
+        "extendedReferences": [],
+        "computedFields": [
+          {
+            "field": "totalProducts",
+            "description": "Running count of products rows for this product_category.",
+            "initialExpression": "COUNT(*) FROM products WHERE category_id = product_categories.category_id"
+          }
+        ]
+      },
+      {
+        "name": "countries",
+        "sourceTable": "countries",
+        "mergedTables": [
+          "countries",
+          "regions"
+        ],
+        "idDerivation": {
+          "sourceColumns": [
+            "country_id"
+          ],
+          "strategy": "direct"
+        },
+        "patterns": [
+          {
+            "pattern": "reference",
+            "target": "countries -> customer_addresses",
+            "reason": "customer_addresses belongs to multiple parents; it embeds under its primary parent (customers) and is referenced from countries to avoid duplicating rows across collections.",
+            "knowledgeSource": "embed-vs-reference.md"
+          },
+          {
+            "pattern": "computed",
+            "target": "countries.totalCustomerAddresses",
+            "reason": "Reads dominate (95:5 R:W at 60,000 RPM); storing the customer_addresses count avoids an aggregation on every read.",
+            "knowledgeSource": "computed.md"
+          },
+          {
+            "pattern": "reference",
+            "target": "countries -> locations",
+            "reason": "locations is an entity in its own right (other tables reference it); it stays its own collection and denormalizes countries fields via Extended Reference instead.",
+            "knowledgeSource": "embed-vs-reference.md"
+          },
+          {
+            "pattern": "computed",
+            "target": "countries.totalLocations",
+            "reason": "Reads dominate (95:5 R:W at 60,000 RPM); storing the locations count avoids an aggregation on every read.",
+            "knowledgeSource": "computed.md"
+          },
+          {
+            "pattern": "extended-reference",
+            "target": "countries.region",
+            "reason": "95% of operations are reads; duplicating region_name from regions removes a $lookup from the hot path. The id (regionId) is kept for fan-out updates.",
+            "knowledgeSource": "extended-reference.md"
+          },
+          {
+            "pattern": "schema-versioning",
+            "target": "countries",
+            "reason": "Every document is stamped with schemaVersion: 1 so future shape changes can migrate lazily with zero downtime.",
+            "knowledgeSource": "schema-versioning.md"
+          }
+        ],
+        "jsonSchema": {
+          "bsonType": "object",
+          "required": [
+            "_id",
+            "schemaVersion"
+          ],
+          "properties": {
+            "_id": {
+              "bsonType": "string",
+              "description": "Deterministic id derived from the SQL primary key."
+            },
+            "schemaVersion": {
+              "bsonType": "int",
+              "description": "Document shape version for lazy migrations."
+            },
+            "countryName": {
+              "bsonType": "string",
+              "description": "From SQL column countries.country_name (VARCHAR2(60))."
+            },
+            "regionId": {
+              "bsonType": [
+                "string",
+                "null"
+              ],
+              "description": "From SQL column countries.region_id (NUMBER)."
+            },
+            "totalCustomerAddresses": {
+              "bsonType": "long",
+              "description": "Computed pattern counter maintained with $inc."
+            },
+            "totalLocations": {
+              "bsonType": "long",
+              "description": "Computed pattern counter maintained with $inc."
+            },
+            "region": {
+              "bsonType": "object",
+              "properties": {
+                "regionName": {
+                  "bsonType": "string"
+                }
+              },
+              "description": "Extended Reference: hot fields duplicated from regions."
+            }
+          }
+        },
+        "indexes": [
+          {
+            "keys": {
+              "regionId": 1
+            },
+            "options": {
+              "name": "idx_countries_regionId"
+            },
+            "reason": "Lookups by regionId replace the SQL join on regions."
+          }
+        ],
+        "embeddedArrays": [],
+        "extendedReferences": [
+          {
+            "field": "region",
+            "sourceTable": "regions",
+            "viaColumn": "region_id",
+            "lookupColumns": [
+              "region_name"
+            ]
+          }
+        ],
+        "computedFields": [
+          {
+            "field": "totalCustomerAddresses",
+            "description": "Running count of customer_addresses rows for this country.",
+            "initialExpression": "COUNT(*) FROM customer_addresses WHERE country_id = countries.country_id"
+          },
+          {
+            "field": "totalLocations",
+            "description": "Running count of locations rows for this country.",
+            "initialExpression": "COUNT(*) FROM locations WHERE country_id = countries.country_id"
+          }
+        ]
+      },
+      {
+        "name": "locations",
+        "sourceTable": "locations",
+        "mergedTables": [
+          "locations",
+          "company_assets"
+        ],
+        "idDerivation": {
+          "sourceColumns": [
+            "location_id"
+          ],
+          "strategy": "direct"
+        },
+        "patterns": [
+          {
+            "pattern": "embed",
+            "target": "locations.companyAssets",
+            "reason": "Max 20 children per parent is safely bounded, and the 95:5 R:W at 60,000 RPM workload wants O(1) single-document reads.",
+            "knowledgeSource": "embed-vs-reference.md"
+          },
+          {
+            "pattern": "reference",
+            "target": "locations -> departments",
+            "reason": "departments is an entity in its own right (other tables reference it); it stays its own collection and denormalizes locations fields via Extended Reference instead.",
+            "knowledgeSource": "embed-vs-reference.md"
+          },
+          {
+            "pattern": "computed",
+            "target": "locations.totalDepartments",
+            "reason": "Reads dominate (95:5 R:W at 60,000 RPM); storing the departments count avoids an aggregation on every read.",
+            "knowledgeSource": "computed.md"
+          },
+          {
+            "pattern": "reference",
+            "target": "locations -> warehouses",
+            "reason": "warehouses is an entity in its own right (other tables reference it); it stays its own collection and denormalizes locations fields via Extended Reference instead.",
+            "knowledgeSource": "embed-vs-reference.md"
+          },
+          {
+            "pattern": "computed",
+            "target": "locations.totalWarehouses",
+            "reason": "Reads dominate (95:5 R:W at 60,000 RPM); storing the warehouses count avoids an aggregation on every read.",
+            "knowledgeSource": "computed.md"
+          },
+          {
+            "pattern": "schema-versioning",
+            "target": "locations",
+            "reason": "Every document is stamped with schemaVersion: 1 so future shape changes can migrate lazily with zero downtime.",
+            "knowledgeSource": "schema-versioning.md"
+          }
+        ],
+        "jsonSchema": {
+          "bsonType": "object",
+          "required": [
+            "_id",
+            "schemaVersion"
+          ],
+          "properties": {
+            "_id": {
+              "bsonType": "string",
+              "description": "Deterministic id derived from the SQL primary key."
+            },
+            "schemaVersion": {
+              "bsonType": "int",
+              "description": "Document shape version for lazy migrations."
+            },
+            "streetAddress": {
+              "bsonType": [
+                "string",
+                "null"
+              ],
+              "description": "From SQL column locations.street_address (VARCHAR2(100))."
+            },
+            "postalCode": {
+              "bsonType": [
+                "string",
+                "null"
+              ],
+              "description": "From SQL column locations.postal_code (VARCHAR2(20))."
+            },
+            "city": {
+              "bsonType": "string",
+              "description": "From SQL column locations.city (VARCHAR2(50))."
+            },
+            "stateProvince": {
+              "bsonType": [
+                "string",
+                "null"
+              ],
+              "description": "From SQL column locations.state_province (VARCHAR2(50))."
+            },
+            "countryId": {
+              "bsonType": [
+                "string",
+                "null"
+              ],
+              "description": "From SQL column locations.country_id (CHAR(2))."
+            },
+            "companyAssets": {
+              "bsonType": "array",
+              "items": {
+                "bsonType": "object"
+              },
+              "description": "Fully embedded company_assets (bounded: max 20 per parent)."
+            },
+            "totalDepartments": {
+              "bsonType": "long",
+              "description": "Computed pattern counter maintained with $inc."
+            },
+            "totalWarehouses": {
+              "bsonType": "long",
+              "description": "Computed pattern counter maintained with $inc."
+            }
+          }
+        },
+        "indexes": [
+          {
+            "keys": {
+              "countryId": 1
+            },
+            "options": {
+              "name": "idx_locations_countryId"
+            },
+            "reason": "Lookups by countryId replace the SQL join on countries."
+          }
+        ],
+        "embeddedArrays": [
+          {
+            "field": "companyAssets",
+            "sourceTable": "company_assets",
+            "joinColumn": "location_id"
+          }
+        ],
+        "extendedReferences": [],
+        "computedFields": [
+          {
+            "field": "totalDepartments",
+            "description": "Running count of departments rows for this location.",
+            "initialExpression": "COUNT(*) FROM departments WHERE location_id = locations.location_id"
+          },
+          {
+            "field": "totalWarehouses",
+            "description": "Running count of warehouses rows for this location.",
+            "initialExpression": "COUNT(*) FROM warehouses WHERE location_id = locations.location_id"
+          }
+        ]
+      },
+      {
+        "name": "departments",
+        "sourceTable": "departments",
+        "mergedTables": [
+          "departments"
+        ],
+        "idDerivation": {
+          "sourceColumns": [
+            "department_id"
+          ],
+          "strategy": "direct"
+        },
+        "patterns": [
+          {
+            "pattern": "reference",
+            "target": "departments -> employees",
+            "reason": "employees is an entity in its own right (other tables reference it); it stays its own collection and denormalizes departments fields via Extended Reference instead.",
+            "knowledgeSource": "embed-vs-reference.md"
+          },
+          {
+            "pattern": "computed",
+            "target": "departments.totalEmployees",
+            "reason": "Reads dominate (95:5 R:W at 60,000 RPM); storing the employees count avoids an aggregation on every read.",
+            "knowledgeSource": "computed.md"
+          },
+          {
+            "pattern": "reference",
+            "target": "departments -> job_history",
+            "reason": "job_history belongs to multiple parents; it embeds under its primary parent (employees) and is referenced from departments to avoid duplicating rows across collections.",
+            "knowledgeSource": "embed-vs-reference.md"
+          },
+          {
+            "pattern": "computed",
+            "target": "departments.totalJobHistory",
+            "reason": "Reads dominate (95:5 R:W at 60,000 RPM); storing the job_history count avoids an aggregation on every read.",
+            "knowledgeSource": "computed.md"
+          },
+          {
+            "pattern": "schema-versioning",
+            "target": "departments",
+            "reason": "Every document is stamped with schemaVersion: 1 so future shape changes can migrate lazily with zero downtime.",
+            "knowledgeSource": "schema-versioning.md"
+          }
+        ],
+        "jsonSchema": {
+          "bsonType": "object",
+          "required": [
+            "_id",
+            "schemaVersion"
+          ],
+          "properties": {
+            "_id": {
+              "bsonType": "string",
+              "description": "Deterministic id derived from the SQL primary key."
+            },
+            "schemaVersion": {
+              "bsonType": "int",
+              "description": "Document shape version for lazy migrations."
+            },
+            "departmentName": {
+              "bsonType": "string",
+              "description": "From SQL column departments.department_name (VARCHAR2(50))."
+            },
+            "managerId": {
+              "bsonType": [
+                "string",
+                "null"
+              ],
+              "description": "From SQL column departments.manager_id (NUMBER)."
+            },
+            "locationId": {
+              "bsonType": [
+                "string",
+                "null"
+              ],
+              "description": "From SQL column departments.location_id (NUMBER)."
+            },
+            "totalEmployees": {
+              "bsonType": "long",
+              "description": "Computed pattern counter maintained with $inc."
+            },
+            "totalJobHistory": {
+              "bsonType": "long",
+              "description": "Computed pattern counter maintained with $inc."
+            }
+          }
+        },
+        "indexes": [
+          {
+            "keys": {
+              "locationId": 1
+            },
+            "options": {
+              "name": "idx_departments_locationId"
+            },
+            "reason": "Lookups by locationId replace the SQL join on locations."
+          }
+        ],
+        "embeddedArrays": [],
+        "extendedReferences": [],
+        "computedFields": [
+          {
+            "field": "totalEmployees",
+            "description": "Running count of employees rows for this department.",
+            "initialExpression": "COUNT(*) FROM employees WHERE department_id = departments.department_id"
+          },
+          {
+            "field": "totalJobHistory",
+            "description": "Running count of job_history rows for this department.",
+            "initialExpression": "COUNT(*) FROM job_history WHERE department_id = departments.department_id"
+          }
+        ]
+      },
+      {
+        "name": "invoices",
+        "sourceTable": "invoices",
+        "mergedTables": [
+          "invoices",
+          "payments"
+        ],
+        "idDerivation": {
+          "sourceColumns": [
+            "invoice_id"
+          ],
+          "strategy": "direct"
+        },
+        "patterns": [
+          {
+            "pattern": "embed",
+            "target": "invoices.payments",
+            "reason": "Max 1 children per parent is safely bounded, and the 95:5 R:W at 60,000 RPM workload wants O(1) single-document reads.",
+            "knowledgeSource": "embed-vs-reference.md"
+          },
+          {
+            "pattern": "schema-versioning",
+            "target": "invoices",
+            "reason": "Every document is stamped with schemaVersion: 1 so future shape changes can migrate lazily with zero downtime.",
+            "knowledgeSource": "schema-versioning.md"
+          }
+        ],
+        "jsonSchema": {
+          "bsonType": "object",
+          "required": [
+            "_id",
+            "schemaVersion"
+          ],
+          "properties": {
+            "_id": {
+              "bsonType": "string",
+              "description": "Deterministic id derived from the SQL primary key."
+            },
+            "schemaVersion": {
+              "bsonType": "int",
+              "description": "Document shape version for lazy migrations."
+            },
+            "orderId": {
+              "bsonType": "string",
+              "description": "From SQL column invoices.order_id (NUMBER)."
+            },
+            "invoiceDate": {
+              "bsonType": "date",
+              "description": "From SQL column invoices.invoice_date (DATE)."
+            },
+            "dueDate": {
+              "bsonType": "date",
+              "description": "From SQL column invoices.due_date (DATE)."
+            },
+            "taxAmount": {
+              "bsonType": [
+                "string",
+                "null"
+              ],
+              "description": "From SQL column invoices.tax_amount (NUMBER(10,2))."
+            },
+            "totalDue": {
+              "bsonType": "string",
+              "description": "From SQL column invoices.total_due (NUMBER(12,2))."
+            },
+            "status": {
+              "bsonType": [
+                "string",
+                "null"
+              ],
+              "description": "From SQL column invoices.status (VARCHAR2(20))."
+            },
+            "payments": {
+              "bsonType": "array",
+              "items": {
+                "bsonType": "object"
+              },
+              "description": "Fully embedded payments (bounded: max 1 per parent)."
+            }
+          }
+        },
+        "indexes": [
+          {
+            "keys": {
+              "orderId": 1
+            },
+            "options": {
+              "name": "idx_invoices_orderId"
+            },
+            "reason": "Lookups by orderId replace the SQL join on orders."
+          }
+        ],
+        "embeddedArrays": [
+          {
+            "field": "payments",
+            "sourceTable": "payments",
+            "joinColumn": "invoice_id"
+          }
+        ],
+        "extendedReferences": [],
+        "computedFields": []
+      },
+      {
+        "name": "products",
+        "sourceTable": "products",
+        "mergedTables": [
+          "products",
+          "product_categories"
+        ],
+        "idDerivation": {
+          "sourceColumns": [
+            "product_id"
+          ],
+          "strategy": "direct"
+        },
+        "patterns": [
+          {
+            "pattern": "reference",
+            "target": "products -> order_items",
+            "reason": "order_items belongs to multiple parents; it embeds under its primary parent (orders) and is referenced from products to avoid duplicating rows across collections.",
+            "knowledgeSource": "embed-vs-reference.md"
+          },
+          {
+            "pattern": "computed",
+            "target": "products.totalOrderItems",
+            "reason": "Reads dominate (95:5 R:W at 60,000 RPM); storing the order_items count avoids an aggregation on every read.",
+            "knowledgeSource": "computed.md"
+          },
+          {
+            "pattern": "reference",
+            "target": "products -> customer_reviews",
+            "reason": "customer_reviews belongs to multiple parents; it embeds under its primary parent (customers) and is referenced from products to avoid duplicating rows across collections.",
+            "knowledgeSource": "embed-vs-reference.md"
+          },
+          {
+            "pattern": "computed",
+            "target": "products.totalCustomerReviews",
+            "reason": "Reads dominate (95:5 R:W at 60,000 RPM); storing the customer_reviews count avoids an aggregation on every read.",
+            "knowledgeSource": "computed.md"
+          },
+          {
+            "pattern": "reference",
+            "target": "products -> inventories",
+            "reason": "inventories belongs to multiple parents; it embeds under its primary parent (warehouses) and is referenced from products to avoid duplicating rows across collections.",
+            "knowledgeSource": "embed-vs-reference.md"
+          },
+          {
+            "pattern": "computed",
+            "target": "products.totalInventories",
+            "reason": "Reads dominate (95:5 R:W at 60,000 RPM); storing the inventories count avoids an aggregation on every read.",
+            "knowledgeSource": "computed.md"
+          },
+          {
+            "pattern": "reference",
+            "target": "products -> supply_order_items",
+            "reason": "supply_order_items belongs to multiple parents; it embeds under its primary parent (supply_orders) and is referenced from products to avoid duplicating rows across collections.",
+            "knowledgeSource": "embed-vs-reference.md"
+          },
+          {
+            "pattern": "computed",
+            "target": "products.totalSupplyOrderItems",
+            "reason": "Reads dominate (95:5 R:W at 60,000 RPM); storing the supply_order_items count avoids an aggregation on every read.",
+            "knowledgeSource": "computed.md"
+          },
+          {
+            "pattern": "extended-reference",
+            "target": "products.productCategory",
+            "reason": "95% of operations are reads; duplicating category_name, description from product_categories removes a $lookup from the hot path. The id (categoryId) is kept for fan-out updates.",
+            "knowledgeSource": "extended-reference.md"
+          },
+          {
+            "pattern": "schema-versioning",
+            "target": "products",
+            "reason": "Every document is stamped with schemaVersion: 1 so future shape changes can migrate lazily with zero downtime.",
+            "knowledgeSource": "schema-versioning.md"
+          }
+        ],
+        "jsonSchema": {
+          "bsonType": "object",
+          "required": [
+            "_id",
+            "schemaVersion"
+          ],
+          "properties": {
+            "_id": {
+              "bsonType": "string",
+              "description": "Deterministic id derived from the SQL primary key."
+            },
+            "schemaVersion": {
+              "bsonType": "int",
+              "description": "Document shape version for lazy migrations."
+            },
+            "productName": {
+              "bsonType": "string",
+              "description": "From SQL column products.product_name (VARCHAR2(100))."
+            },
+            "description": {
+              "bsonType": [
+                "string",
+                "null"
+              ],
+              "description": "From SQL column products.description (VARCHAR2(500))."
+            },
+            "categoryId": {
+              "bsonType": [
+                "string",
+                "null"
+              ],
+              "description": "From SQL column products.category_id (NUMBER)."
+            },
+            "sku": {
+              "bsonType": "string",
+              "description": "From SQL column products.sku (VARCHAR2(30))."
+            },
+            "listPrice": {
+              "bsonType": "string",
+              "description": "From SQL column products.list_price (NUMBER(10,2))."
+            },
+            "costPrice": {
+              "bsonType": "string",
+              "description": "From SQL column products.cost_price (NUMBER(10,2))."
+            },
+            "weightKg": {
+              "bsonType": [
+                "string",
+                "null"
+              ],
+              "description": "From SQL column products.weight_kg (NUMBER(6,2))."
+            },
+            "totalOrderItems": {
+              "bsonType": "long",
+              "description": "Computed pattern counter maintained with $inc."
+            },
+            "totalCustomerReviews": {
+              "bsonType": "long",
+              "description": "Computed pattern counter maintained with $inc."
+            },
+            "totalInventories": {
+              "bsonType": "long",
+              "description": "Computed pattern counter maintained with $inc."
+            },
+            "totalSupplyOrderItems": {
+              "bsonType": "long",
+              "description": "Computed pattern counter maintained with $inc."
+            },
+            "productCategory": {
+              "bsonType": "object",
+              "properties": {
+                "categoryName": {
+                  "bsonType": "string"
+                },
+                "description": {
+                  "bsonType": "string"
+                }
+              },
+              "description": "Extended Reference: hot fields duplicated from product_categories."
+            }
+          }
+        },
+        "indexes": [
+          {
+            "keys": {
+              "categoryId": 1
+            },
+            "options": {
+              "name": "idx_products_categoryId"
+            },
+            "reason": "Lookups by categoryId replace the SQL join on product_categories."
+          }
+        ],
+        "embeddedArrays": [],
+        "extendedReferences": [
+          {
+            "field": "productCategory",
+            "sourceTable": "product_categories",
+            "viaColumn": "category_id",
+            "lookupColumns": [
+              "category_name",
+              "description"
+            ]
+          }
+        ],
+        "computedFields": [
+          {
+            "field": "totalOrderItems",
+            "description": "Running count of order_items rows for this product.",
+            "initialExpression": "COUNT(*) FROM order_items WHERE product_id = products.product_id"
+          },
+          {
+            "field": "totalCustomerReviews",
+            "description": "Running count of customer_reviews rows for this product.",
+            "initialExpression": "COUNT(*) FROM customer_reviews WHERE product_id = products.product_id"
+          },
+          {
+            "field": "totalInventories",
+            "description": "Running count of inventories rows for this product.",
+            "initialExpression": "COUNT(*) FROM inventories WHERE product_id = products.product_id"
+          },
+          {
+            "field": "totalSupplyOrderItems",
+            "description": "Running count of supply_order_items rows for this product.",
+            "initialExpression": "COUNT(*) FROM supply_order_items WHERE product_id = products.product_id"
+          }
+        ]
+      },
+      {
+        "name": "warehouses",
+        "sourceTable": "warehouses",
+        "mergedTables": [
+          "warehouses",
+          "inventories"
+        ],
+        "idDerivation": {
+          "sourceColumns": [
+            "warehouse_id"
+          ],
+          "strategy": "direct"
+        },
+        "patterns": [
+          {
+            "pattern": "subset",
+            "target": "warehouses.recentInventories",
+            "reason": "inventories can reach 194 rows per parent (avg 152.75); capping the embedded array at 10 bounds document size strictly below 16MB while keeping the hot read single-document (95:5 R:W at 60,000 RPM).",
+            "knowledgeSource": "subset.md"
+          },
+          {
+            "pattern": "computed",
+            "target": "warehouses.totalInventories",
+            "reason": "Reads dominate (95:5 R:W at 60,000 RPM); storing the inventories count avoids an aggregation on every read.",
+            "knowledgeSource": "computed.md"
+          },
+          {
+            "pattern": "reference",
+            "target": "warehouses -> supply_orders",
+            "reason": "supply_orders is an entity in its own right (other tables reference it); it stays its own collection and denormalizes warehouses fields via Extended Reference instead.",
+            "knowledgeSource": "embed-vs-reference.md"
+          },
+          {
+            "pattern": "computed",
+            "target": "warehouses.totalSupplyOrders",
+            "reason": "Reads dominate (95:5 R:W at 60,000 RPM); storing the supply_orders count avoids an aggregation on every read.",
+            "knowledgeSource": "computed.md"
+          },
+          {
+            "pattern": "schema-versioning",
+            "target": "warehouses",
+            "reason": "Every document is stamped with schemaVersion: 1 so future shape changes can migrate lazily with zero downtime.",
+            "knowledgeSource": "schema-versioning.md"
+          }
+        ],
+        "jsonSchema": {
+          "bsonType": "object",
+          "required": [
+            "_id",
+            "schemaVersion"
+          ],
+          "properties": {
+            "_id": {
+              "bsonType": "string",
+              "description": "Deterministic id derived from the SQL primary key."
+            },
+            "schemaVersion": {
+              "bsonType": "int",
+              "description": "Document shape version for lazy migrations."
+            },
+            "warehouseName": {
+              "bsonType": "string",
+              "description": "From SQL column warehouses.warehouse_name (VARCHAR2(50))."
+            },
+            "locationId": {
+              "bsonType": [
+                "string",
+                "null"
+              ],
+              "description": "From SQL column warehouses.location_id (NUMBER)."
+            },
+            "capacityM3": {
+              "bsonType": [
+                "string",
+                "null"
+              ],
+              "description": "From SQL column warehouses.capacity_m3 (NUMBER(10,2))."
+            },
+            "recentInventories": {
+              "bsonType": "array",
+              "maxItems": 10,
+              "items": {
+                "bsonType": "object"
+              },
+              "description": "Subset pattern: the 10 newest inventories; full set lives in its own collection."
+            },
+            "totalInventories": {
+              "bsonType": "long",
+              "description": "Computed pattern counter maintained with $inc."
+            },
+            "totalSupplyOrders": {
+              "bsonType": "long",
+              "description": "Computed pattern counter maintained with $inc."
+            }
+          }
+        },
+        "indexes": [
+          {
+            "keys": {
+              "locationId": 1
+            },
+            "options": {
+              "name": "idx_warehouses_locationId"
+            },
+            "reason": "Lookups by locationId replace the SQL join on locations."
+          }
+        ],
+        "embeddedArrays": [
+          {
+            "field": "recentInventories",
+            "sourceTable": "inventories",
+            "joinColumn": "warehouse_id",
+            "subsetLimit": 10,
+            "overflowCollection": "inventories"
+          }
+        ],
+        "extendedReferences": [],
+        "computedFields": [
+          {
+            "field": "totalInventories",
+            "description": "Running count of inventories rows for this warehous.",
+            "initialExpression": "COUNT(*) FROM inventories WHERE warehouse_id = warehouses.warehouse_id"
+          },
+          {
+            "field": "totalSupplyOrders",
+            "description": "Running count of supply_orders rows for this warehous.",
+            "initialExpression": "COUNT(*) FROM supply_orders WHERE warehouse_id = warehouses.warehouse_id"
+          }
+        ]
+      },
+      {
+        "name": "supportTickets",
+        "sourceTable": "support_tickets",
+        "mergedTables": [
+          "support_tickets",
+          "ticket_comments",
+          "customers"
+        ],
+        "idDerivation": {
+          "sourceColumns": [
+            "ticket_id"
+          ],
+          "strategy": "direct"
+        },
+        "patterns": [
+          {
+            "pattern": "embed",
+            "target": "support_tickets.ticketComments",
+            "reason": "Max 3 children per parent is safely bounded, and the 95:5 R:W at 60,000 RPM workload wants O(1) single-document reads.",
+            "knowledgeSource": "embed-vs-reference.md"
+          },
+          {
+            "pattern": "extended-reference",
+            "target": "support_tickets.customer",
+            "reason": "95% of operations are reads; duplicating company_name, first_name, last_name from customers removes a $lookup from the hot path. The id (customerId) is kept for fan-out updates.",
+            "knowledgeSource": "extended-reference.md"
+          },
+          {
+            "pattern": "schema-versioning",
+            "target": "support_tickets",
+            "reason": "Every document is stamped with schemaVersion: 1 so future shape changes can migrate lazily with zero downtime.",
+            "knowledgeSource": "schema-versioning.md"
+          }
+        ],
+        "jsonSchema": {
+          "bsonType": "object",
+          "required": [
+            "_id",
+            "schemaVersion"
+          ],
+          "properties": {
+            "_id": {
+              "bsonType": "string",
+              "description": "Deterministic id derived from the SQL primary key."
+            },
+            "schemaVersion": {
+              "bsonType": "int",
+              "description": "Document shape version for lazy migrations."
+            },
+            "customerId": {
+              "bsonType": "string",
+              "description": "From SQL column support_tickets.customer_id (NUMBER)."
+            },
+            "assignedEmployeeId": {
+              "bsonType": [
+                "string",
+                "null"
+              ],
+              "description": "From SQL column support_tickets.assigned_employee_id (NUMBER)."
+            },
+            "subject": {
+              "bsonType": "string",
+              "description": "From SQL column support_tickets.subject (VARCHAR2(150))."
+            },
+            "status": {
+              "bsonType": [
+                "string",
+                "null"
+              ],
+              "description": "From SQL column support_tickets.status (VARCHAR2(20))."
+            },
+            "priority": {
+              "bsonType": [
+                "string",
+                "null"
+              ],
+              "description": "From SQL column support_tickets.priority (VARCHAR2(10))."
+            },
+            "createdAt": {
+              "bsonType": "date",
+              "description": "From SQL column support_tickets.created_at (TIMESTAMP)."
+            },
+            "ticketComments": {
+              "bsonType": "array",
+              "items": {
+                "bsonType": "object"
+              },
+              "description": "Fully embedded ticket_comments (bounded: max 3 per parent)."
+            },
+            "customer": {
+              "bsonType": "object",
+              "properties": {
+                "companyName": {
+                  "bsonType": "string"
+                },
+                "firstName": {
+                  "bsonType": "string"
+                },
+                "lastName": {
+                  "bsonType": "string"
+                }
+              },
+              "description": "Extended Reference: hot fields duplicated from customers."
+            }
+          }
+        },
+        "indexes": [
+          {
+            "keys": {
+              "customerId": 1
+            },
+            "options": {
+              "name": "idx_supportTickets_customerId"
+            },
+            "reason": "Lookups by customerId replace the SQL join on customers."
+          },
+          {
+            "keys": {
+              "assignedEmployeeId": 1
+            },
+            "options": {
+              "name": "idx_supportTickets_assignedEmployeeId"
+            },
+            "reason": "Lookups by assignedEmployeeId replace the SQL join on employees."
+          }
+        ],
+        "embeddedArrays": [
+          {
+            "field": "ticketComments",
+            "sourceTable": "ticket_comments",
+            "joinColumn": "ticket_id"
+          }
+        ],
+        "extendedReferences": [
+          {
+            "field": "customer",
+            "sourceTable": "customers",
+            "viaColumn": "customer_id",
+            "lookupColumns": [
+              "company_name",
+              "first_name",
+              "last_name"
+            ]
+          }
+        ],
+        "computedFields": []
+      },
+      {
+        "name": "inventories",
+        "sourceTable": "inventories",
+        "mergedTables": [
+          "inventories"
+        ],
+        "idDerivation": {
+          "sourceColumns": [
+            "warehouse_id",
+            "product_id"
+          ],
+          "strategy": "composite"
+        },
+        "patterns": [
+          {
+            "pattern": "schema-versioning",
+            "target": "inventories",
+            "reason": "Every document is stamped with schemaVersion: 1 so future shape changes can migrate lazily with zero downtime.",
+            "knowledgeSource": "schema-versioning.md"
+          }
+        ],
+        "jsonSchema": {
+          "bsonType": "object",
+          "required": [
+            "_id",
+            "schemaVersion"
+          ],
+          "properties": {
+            "_id": {
+              "bsonType": "string",
+              "description": "Deterministic id derived from the SQL primary key."
+            },
+            "schemaVersion": {
+              "bsonType": "int",
+              "description": "Document shape version for lazy migrations."
+            },
+            "warehouseId": {
+              "bsonType": "string",
+              "description": "From SQL column inventories.warehouse_id (NUMBER)."
+            },
+            "productId": {
+              "bsonType": "string",
+              "description": "From SQL column inventories.product_id (NUMBER)."
+            },
+            "quantityOnHand": {
+              "bsonType": "string",
+              "description": "From SQL column inventories.quantity_on_hand (NUMBER(8))."
+            },
+            "reorderLevel": {
+              "bsonType": "string",
+              "description": "From SQL column inventories.reorder_level (NUMBER(8))."
+            }
+          }
+        },
+        "indexes": [
+          {
+            "keys": {
+              "warehouseId": 1
+            },
+            "options": {
+              "name": "idx_inventories_warehouseId"
+            },
+            "reason": "Lookups by warehouseId replace the SQL join on warehouses."
+          },
+          {
+            "keys": {
+              "productId": 1
+            },
+            "options": {
+              "name": "idx_inventories_productId"
+            },
+            "reason": "Lookups by productId replace the SQL join on products."
+          }
+        ],
+        "embeddedArrays": [],
+        "extendedReferences": [],
+        "computedFields": []
+      },
+      {
+        "name": "supplyOrders",
+        "sourceTable": "supply_orders",
+        "mergedTables": [
+          "supply_orders",
+          "supply_order_items",
+          "suppliers"
+        ],
+        "idDerivation": {
+          "sourceColumns": [
+            "supply_order_id"
+          ],
+          "strategy": "direct"
+        },
+        "patterns": [
+          {
+            "pattern": "embed",
+            "target": "supply_orders.supplyOrderItems",
+            "reason": "Max 3 children per parent is safely bounded, and the 95:5 R:W at 60,000 RPM workload wants O(1) single-document reads.",
+            "knowledgeSource": "embed-vs-reference.md"
+          },
+          {
+            "pattern": "extended-reference",
+            "target": "supply_orders.supplier",
+            "reason": "95% of operations are reads; duplicating supplier_name, contact_name, status from suppliers removes a $lookup from the hot path. The id (supplierId) is kept for fan-out updates.",
+            "knowledgeSource": "extended-reference.md"
+          },
+          {
+            "pattern": "schema-versioning",
+            "target": "supply_orders",
+            "reason": "Every document is stamped with schemaVersion: 1 so future shape changes can migrate lazily with zero downtime.",
+            "knowledgeSource": "schema-versioning.md"
+          }
+        ],
+        "jsonSchema": {
+          "bsonType": "object",
+          "required": [
+            "_id",
+            "schemaVersion"
+          ],
+          "properties": {
+            "_id": {
+              "bsonType": "string",
+              "description": "Deterministic id derived from the SQL primary key."
+            },
+            "schemaVersion": {
+              "bsonType": "int",
+              "description": "Document shape version for lazy migrations."
+            },
+            "supplierId": {
+              "bsonType": "string",
+              "description": "From SQL column supply_orders.supplier_id (NUMBER)."
+            },
+            "warehouseId": {
+              "bsonType": "string",
+              "description": "From SQL column supply_orders.warehouse_id (NUMBER)."
+            },
+            "orderDate": {
+              "bsonType": "date",
+              "description": "From SQL column supply_orders.order_date (TIMESTAMP)."
+            },
+            "deliveryDate": {
+              "bsonType": [
+                "date",
+                "null"
+              ],
+              "description": "From SQL column supply_orders.delivery_date (DATE)."
+            },
+            "status": {
+              "bsonType": [
+                "string",
+                "null"
+              ],
+              "description": "From SQL column supply_orders.status (VARCHAR2(20))."
+            },
+            "supplyOrderItems": {
+              "bsonType": "array",
+              "items": {
+                "bsonType": "object"
+              },
+              "description": "Fully embedded supply_order_items (bounded: max 3 per parent)."
+            },
+            "supplier": {
+              "bsonType": "object",
+              "properties": {
+                "supplierName": {
+                  "bsonType": "string"
+                },
+                "contactName": {
+                  "bsonType": "string"
+                },
+                "status": {
+                  "bsonType": "string"
+                }
+              },
+              "description": "Extended Reference: hot fields duplicated from suppliers."
+            }
+          }
+        },
+        "indexes": [
+          {
+            "keys": {
+              "supplierId": 1
+            },
+            "options": {
+              "name": "idx_supplyOrders_supplierId"
+            },
+            "reason": "Lookups by supplierId replace the SQL join on suppliers."
+          },
+          {
+            "keys": {
+              "warehouseId": 1
+            },
+            "options": {
+              "name": "idx_supplyOrders_warehouseId"
+            },
+            "reason": "Lookups by warehouseId replace the SQL join on warehouses."
+          }
+        ],
+        "embeddedArrays": [
+          {
+            "field": "supplyOrderItems",
+            "sourceTable": "supply_order_items",
+            "joinColumn": "supply_order_id"
+          }
+        ],
+        "extendedReferences": [
+          {
+            "field": "supplier",
+            "sourceTable": "suppliers",
+            "viaColumn": "supplier_id",
+            "lookupColumns": [
+              "supplier_name",
+              "contact_name",
+              "status"
+            ]
+          }
+        ],
+        "computedFields": []
+      },
+      {
+        "name": "orders",
+        "sourceTable": "orders",
+        "mergedTables": [
+          "orders",
+          "order_items",
+          "shipments",
+          "customers",
+          "sales_channels"
+        ],
+        "idDerivation": {
+          "sourceColumns": [
+            "order_id"
+          ],
+          "strategy": "direct"
+        },
+        "patterns": [
+          {
+            "pattern": "embed",
+            "target": "orders.orderItems",
+            "reason": "Max 4 children per parent is safely bounded, and the 95:5 R:W at 60,000 RPM workload wants O(1) single-document reads.",
+            "knowledgeSource": "embed-vs-reference.md"
+          },
+          {
+            "pattern": "embed",
+            "target": "orders.shipments",
+            "reason": "Max 1 children per parent is safely bounded, and the 95:5 R:W at 60,000 RPM workload wants O(1) single-document reads.",
+            "knowledgeSource": "embed-vs-reference.md"
+          },
+          {
+            "pattern": "reference",
+            "target": "orders -> invoices",
+            "reason": "invoices is an entity in its own right (other tables reference it); it stays its own collection and denormalizes orders fields via Extended Reference instead.",
+            "knowledgeSource": "embed-vs-reference.md"
+          },
+          {
+            "pattern": "computed",
+            "target": "orders.totalInvoices",
+            "reason": "Reads dominate (95:5 R:W at 60,000 RPM); storing the invoices count avoids an aggregation on every read.",
+            "knowledgeSource": "computed.md"
+          },
+          {
+            "pattern": "extended-reference",
+            "target": "orders.customer",
+            "reason": "95% of operations are reads; duplicating company_name, first_name, last_name from customers removes a $lookup from the hot path. The id (customerId) is kept for fan-out updates.",
+            "knowledgeSource": "extended-reference.md"
+          },
+          {
+            "pattern": "extended-reference",
+            "target": "orders.salesChannel",
+            "reason": "95% of operations are reads; duplicating channel_name from sales_channels removes a $lookup from the hot path. The id (channelId) is kept for fan-out updates.",
+            "knowledgeSource": "extended-reference.md"
+          },
+          {
+            "pattern": "schema-versioning",
+            "target": "orders",
+            "reason": "Every document is stamped with schemaVersion: 1 so future shape changes can migrate lazily with zero downtime.",
+            "knowledgeSource": "schema-versioning.md"
+          }
+        ],
+        "jsonSchema": {
+          "bsonType": "object",
+          "required": [
+            "_id",
+            "schemaVersion"
+          ],
+          "properties": {
+            "_id": {
+              "bsonType": "string",
+              "description": "Deterministic id derived from the SQL primary key."
+            },
+            "schemaVersion": {
+              "bsonType": "int",
+              "description": "Document shape version for lazy migrations."
+            },
+            "customerId": {
+              "bsonType": "string",
+              "description": "From SQL column orders.customer_id (NUMBER)."
+            },
+            "employeeId": {
+              "bsonType": [
+                "string",
+                "null"
+              ],
+              "description": "From SQL column orders.employee_id (NUMBER)."
+            },
+            "channelId": {
+              "bsonType": [
+                "string",
+                "null"
+              ],
+              "description": "From SQL column orders.channel_id (NUMBER)."
+            },
+            "orderDate": {
+              "bsonType": "date",
+              "description": "From SQL column orders.order_date (TIMESTAMP)."
+            },
+            "status": {
+              "bsonType": [
+                "string",
+                "null"
+              ],
+              "description": "From SQL column orders.status (VARCHAR2(20))."
+            },
+            "totalAmount": {
+              "bsonType": [
+                "string",
+                "null"
+              ],
+              "description": "From SQL column orders.total_amount (NUMBER(12,2))."
+            },
+            "orderItems": {
+              "bsonType": "array",
+              "items": {
+                "bsonType": "object"
+              },
+              "description": "Fully embedded order_items (bounded: max 4 per parent)."
+            },
+            "shipments": {
+              "bsonType": "array",
+              "items": {
+                "bsonType": "object"
+              },
+              "description": "Fully embedded shipments (bounded: max 1 per parent)."
+            },
+            "totalInvoices": {
+              "bsonType": "long",
+              "description": "Computed pattern counter maintained with $inc."
+            },
+            "customer": {
+              "bsonType": "object",
+              "properties": {
+                "companyName": {
+                  "bsonType": "string"
+                },
+                "firstName": {
+                  "bsonType": "string"
+                },
+                "lastName": {
+                  "bsonType": "string"
+                }
+              },
+              "description": "Extended Reference: hot fields duplicated from customers."
+            },
+            "salesChannel": {
+              "bsonType": "object",
+              "properties": {
+                "channelName": {
+                  "bsonType": "string"
+                }
+              },
+              "description": "Extended Reference: hot fields duplicated from sales_channels."
+            }
+          }
+        },
+        "indexes": [
+          {
+            "keys": {
+              "customerId": 1
+            },
+            "options": {
+              "name": "idx_orders_customerId"
+            },
+            "reason": "Lookups by customerId replace the SQL join on customers."
+          },
+          {
+            "keys": {
+              "employeeId": 1
+            },
+            "options": {
+              "name": "idx_orders_employeeId"
+            },
+            "reason": "Lookups by employeeId replace the SQL join on employees."
+          },
+          {
+            "keys": {
+              "channelId": 1
+            },
+            "options": {
+              "name": "idx_orders_channelId"
+            },
+            "reason": "Lookups by channelId replace the SQL join on sales_channels."
+          }
+        ],
+        "embeddedArrays": [
+          {
+            "field": "orderItems",
+            "sourceTable": "order_items",
+            "joinColumn": "order_id"
+          },
+          {
+            "field": "shipments",
+            "sourceTable": "shipments",
+            "joinColumn": "order_id"
+          }
+        ],
+        "extendedReferences": [
+          {
+            "field": "customer",
+            "sourceTable": "customers",
+            "viaColumn": "customer_id",
+            "lookupColumns": [
+              "company_name",
+              "first_name",
+              "last_name"
+            ]
+          },
+          {
+            "field": "salesChannel",
+            "sourceTable": "sales_channels",
+            "viaColumn": "channel_id",
+            "lookupColumns": [
+              "channel_name"
+            ]
+          }
+        ],
+        "computedFields": [
+          {
+            "field": "totalInvoices",
+            "description": "Running count of invoices rows for this order.",
+            "initialExpression": "COUNT(*) FROM invoices WHERE order_id = orders.order_id"
+          }
+        ]
+      },
+      {
+        "name": "employees",
+        "sourceTable": "employees",
+        "mergedTables": [
+          "employees",
+          "user_accounts",
+          "job_history",
+          "jobs"
+        ],
+        "idDerivation": {
+          "sourceColumns": [
+            "employee_id"
+          ],
+          "strategy": "direct"
+        },
+        "patterns": [
+          {
+            "pattern": "embed",
+            "target": "employees.userAccounts",
+            "reason": "Max 1 children per parent is safely bounded, and the 95:5 R:W at 60,000 RPM workload wants O(1) single-document reads.",
+            "knowledgeSource": "embed-vs-reference.md"
+          },
+          {
+            "pattern": "reference",
+            "target": "employees -> orders",
+            "reason": "orders is an entity in its own right (other tables reference it); it stays its own collection and denormalizes employees fields via Extended Reference instead.",
+            "knowledgeSource": "embed-vs-reference.md"
+          },
+          {
+            "pattern": "computed",
+            "target": "employees.totalOrders",
+            "reason": "Reads dominate (95:5 R:W at 60,000 RPM); storing the orders count avoids an aggregation on every read.",
+            "knowledgeSource": "computed.md"
+          },
+          {
+            "pattern": "reference",
+            "target": "employees -> support_tickets",
+            "reason": "support_tickets is an entity in its own right (other tables reference it); it stays its own collection and denormalizes employees fields via Extended Reference instead.",
+            "knowledgeSource": "embed-vs-reference.md"
+          },
+          {
+            "pattern": "computed",
+            "target": "employees.totalSupportTickets",
+            "reason": "Reads dominate (95:5 R:W at 60,000 RPM); storing the support_tickets count avoids an aggregation on every read.",
+            "knowledgeSource": "computed.md"
+          },
+          {
+            "pattern": "embed",
+            "target": "employees.jobHistory",
+            "reason": "Max 1 children per parent is safely bounded, and the 95:5 R:W at 60,000 RPM workload wants O(1) single-document reads.",
+            "knowledgeSource": "embed-vs-reference.md"
+          },
+          {
+            "pattern": "extended-reference",
+            "target": "employees.job",
+            "reason": "95% of operations are reads; duplicating job_title, min_salary, max_salary from jobs removes a $lookup from the hot path. The id (jobId) is kept for fan-out updates.",
+            "knowledgeSource": "extended-reference.md"
+          },
+          {
+            "pattern": "tree",
+            "target": "employees",
+            "reason": "employees references itself; keep parentId and index it so subtree and breadcrumb queries avoid recursive joins.",
+            "knowledgeSource": "tree.md"
+          },
+          {
+            "pattern": "schema-versioning",
+            "target": "employees",
+            "reason": "Every document is stamped with schemaVersion: 1 so future shape changes can migrate lazily with zero downtime.",
+            "knowledgeSource": "schema-versioning.md"
+          }
+        ],
+        "jsonSchema": {
+          "bsonType": "object",
+          "required": [
+            "_id",
+            "schemaVersion"
+          ],
+          "properties": {
+            "_id": {
+              "bsonType": "string",
+              "description": "Deterministic id derived from the SQL primary key."
+            },
+            "schemaVersion": {
+              "bsonType": "int",
+              "description": "Document shape version for lazy migrations."
+            },
+            "firstName": {
+              "bsonType": [
+                "string",
+                "null"
+              ],
+              "description": "From SQL column employees.first_name (VARCHAR2(50))."
+            },
+            "lastName": {
+              "bsonType": "string",
+              "description": "From SQL column employees.last_name (VARCHAR2(50))."
+            },
+            "email": {
+              "bsonType": "string",
+              "description": "From SQL column employees.email (VARCHAR2(100))."
+            },
+            "phoneNumber": {
+              "bsonType": [
+                "string",
+                "null"
+              ],
+              "description": "From SQL column employees.phone_number (VARCHAR2(20))."
+            },
+            "hireDate": {
+              "bsonType": "date",
+              "description": "From SQL column employees.hire_date (DATE)."
+            },
+            "jobId": {
+              "bsonType": "string",
+              "description": "From SQL column employees.job_id (VARCHAR2(10))."
+            },
+            "salary": {
+              "bsonType": [
+                "string",
+                "null"
+              ],
+              "description": "From SQL column employees.salary (NUMBER(8,2))."
+            },
+            "commissionPct": {
+              "bsonType": [
+                "string",
+                "null"
+              ],
+              "description": "From SQL column employees.commission_pct (NUMBER(2,2))."
+            },
+            "managerId": {
+              "bsonType": [
+                "string",
+                "null"
+              ],
+              "description": "From SQL column employees.manager_id (NUMBER)."
+            },
+            "departmentId": {
+              "bsonType": [
+                "string",
+                "null"
+              ],
+              "description": "From SQL column employees.department_id (NUMBER)."
+            },
+            "userAccounts": {
+              "bsonType": "array",
+              "items": {
+                "bsonType": "object"
+              },
+              "description": "Fully embedded user_accounts (bounded: max 1 per parent)."
+            },
+            "totalOrders": {
+              "bsonType": "long",
+              "description": "Computed pattern counter maintained with $inc."
+            },
+            "totalSupportTickets": {
+              "bsonType": "long",
+              "description": "Computed pattern counter maintained with $inc."
+            },
+            "jobHistory": {
+              "bsonType": "array",
+              "items": {
+                "bsonType": "object"
+              },
+              "description": "Fully embedded job_history (bounded: max 1 per parent)."
+            },
+            "job": {
+              "bsonType": "object",
+              "properties": {
+                "jobTitle": {
+                  "bsonType": "string"
+                },
+                "minSalary": {
+                  "bsonType": "string"
+                },
+                "maxSalary": {
+                  "bsonType": "string"
+                }
+              },
+              "description": "Extended Reference: hot fields duplicated from jobs."
+            }
+          }
+        },
+        "indexes": [
+          {
+            "keys": {
+              "jobId": 1
+            },
+            "options": {
+              "name": "idx_employees_jobId"
+            },
+            "reason": "Lookups by jobId replace the SQL join on jobs."
+          },
+          {
+            "keys": {
+              "departmentId": 1
+            },
+            "options": {
+              "name": "idx_employees_departmentId"
+            },
+            "reason": "Lookups by departmentId replace the SQL join on departments."
+          },
+          {
+            "keys": {
+              "managerId": 1
+            },
+            "options": {
+              "name": "idx_employees_managerId"
+            },
+            "reason": "Lookups by managerId replace the SQL join on employees."
+          }
+        ],
+        "embeddedArrays": [
+          {
+            "field": "userAccounts",
+            "sourceTable": "user_accounts",
+            "joinColumn": "employee_id"
+          },
+          {
+            "field": "jobHistory",
+            "sourceTable": "job_history",
+            "joinColumn": "employee_id"
+          }
+        ],
+        "extendedReferences": [
+          {
+            "field": "job",
+            "sourceTable": "jobs",
+            "viaColumn": "job_id",
+            "lookupColumns": [
+              "job_title",
+              "min_salary",
+              "max_salary"
+            ]
+          }
+        ],
+        "computedFields": [
+          {
+            "field": "totalOrders",
+            "description": "Running count of orders rows for this employee.",
+            "initialExpression": "COUNT(*) FROM orders WHERE employee_id = employees.employee_id"
+          },
+          {
+            "field": "totalSupportTickets",
+            "description": "Running count of support_tickets rows for this employee.",
+            "initialExpression": "COUNT(*) FROM support_tickets WHERE assigned_employee_id = employees.employee_id"
+          }
+        ]
+      }
+    ]
+  },
+  "collectionPositions": {
+    "securityRoles": {
+      "x": -2640,
+      "y": -3120
+    },
+    "customers": {
+      "x": -1480,
+      "y": -3280
+    },
+    "salesChannels": {
+      "x": -2200,
+      "y": -2280
+    },
+    "loyaltyPrograms": {
+      "x": -2640,
+      "y": -2120
+    },
+    "regions": {
+      "x": -1440,
+      "y": -2260
+    },
+    "jobs": {
+      "x": -660,
+      "y": -3200
+    },
+    "paymentMethods": {
+      "x": -2660,
+      "y": -3360
+    },
+    "suppliers": {
+      "x": -960,
+      "y": -2160
+    },
+    "productCategories": {
+      "x": -1800,
+      "y": -2580
+    },
+    "countries": {
+      "x": -1820,
+      "y": -2260
+    },
+    "locations": {
+      "x": -2640,
+      "y": -2500
+    },
+    "departments": {
+      "x": -2620,
+      "y": -1840
+    },
+    "invoices": {
+      "x": -2660,
+      "y": -2860
+    },
+    "products": {
+      "x": -1460,
+      "y": -2780
+    },
+    "warehouses": {
+      "x": -2220,
+      "y": -1900
+    },
+    "supportTickets": {
+      "x": -2240,
+      "y": -3360
+    },
+    "inventories": {
+      "x": -1640,
+      "y": -1880
+    },
+    "supplyOrders": {
+      "x": -980,
+      "y": -2640
+    },
+    "orders": {
+      "x": -2220,
+      "y": -2860
+    },
+    "employees": {
+      "x": -1060,
+      "y": -3300
+    }
+  },
+  "designMeta": {
+    "sqlTableCount": 31,
+    "collectionCount": 20,
+    "foldedTableCount": 11,
+    "foldedTables": [
+      "company_assets",
+      "user_accounts",
+      "customer_addresses",
+      "order_items",
+      "shipments",
+      "customer_loyalty",
+      "ticket_comments",
+      "job_history",
+      "payments",
+      "customer_reviews",
+      "supply_order_items"
+    ],
+    "csvEnriched": true,
+    "hasRowStats": true,
+    "csvSourcePath": "/Users/terry.walters/Documents/projects/hvyMETL/web-uploads/design-csv-1781323567850"
+  },
+  "designReportMarkdown": "# Migration Design Report (ML-Enhanced)\n\n- Source: `ddl:oracle`\n- Profile: E-commerce Catalog (95:5 R:W)\n- Generated: 2026-06-13T04:06:09.302Z\n\n## ML Engine Trace\n\n- Retrieval strategy: hybrid BM25 + voyage-4 (Reciprocal Rank Fusion)\n- Bi-encoder candidates: 15\n- Cross-encoder shortlist: 3\n- Telemetry context: Workload Profile: | Read-Heavy (95:5) | Moderate Throughput (60,000 RPM) | Growth: Steady Growth (5GB/month, ~5120MB/mo) | Cardinality: Low Cardinality (8,734 rows) | Numeric Features: readWriteRatio=19.00, peakRpm=60000, growthMbPerMonth=5120, cardinality=8734\n- Critic regeneration attempts: 0\n\n### Cross-Encoder Reranked Patterns\n\n#### [extended-reference.md] Extended Reference Pattern > Applicability rules (score 0.652)\n\n- Workload is read-heavy (reads >= 70%).\n- The referencing document is read at high RPM and always needs the same\n  small set of lookup fields.\n- The duplicated fields change rarely relative to how often they are read.\n\n#### [outlier.md] Outlier Pattern > Applicability rules (score 0.523)\n\n- Cardinality statistics show a heavy skew: average children per parent is\n  small but the maximum is orders of magnitude larger.\n- Read-heavy workloads where the common case must stay a single O(1)\n  document read.\n\n#### [embed-vs-reference.md] Embedding vs Referencing > Applicability rules (score 0.512)\n\n- Bounded one-to-few (max children <= ~100) AND read-heavy: embed.\n- Unbounded one-to-many OR write-heavy (writes >= 60%): reference, or use the\n  Bucket pattern for time-series.\n- Large bounded arrays that are mostly read in part: embed a capped subset\n  (see Subset pattern) and reference the rest.\n\n### Performance Critic Evaluations\n\n- **APPROVED** (onnx=false) — cache-miss 2.0%, IOPS 42.2%, storage x1.52\n  Collection `securityRoles` passed critic checks (cache-miss 2.0%, IOPS 42.2%).\n- **APPROVED** (onnx=false) — cache-miss 12.0%, IOPS 42.2%, storage x2.05\n  Collection `customers` passed critic checks (cache-miss 12.0%, IOPS 42.2%).\n- **APPROVED** (onnx=false) — cache-miss 2.0%, IOPS 42.2%, storage x1.52\n  Collection `salesChannels` passed critic checks (cache-miss 2.0%, IOPS 42.2%).\n- **APPROVED** (onnx=false) — cache-miss 2.0%, IOPS 42.2%, storage x1.52\n  Collection `loyaltyPrograms` passed critic checks (cache-miss 2.0%, IOPS 42.2%).\n- **APPROVED** (onnx=false) — cache-miss 2.0%, IOPS 42.2%, storage x1.52\n  Collection `regions` passed critic checks (cache-miss 2.0%, IOPS 42.2%).\n- **APPROVED** (onnx=false) — cache-miss 2.0%, IOPS 42.2%, storage x1.52\n  Collection `jobs` passed critic checks (cache-miss 2.0%, IOPS 42.2%).\n- **APPROVED** (onnx=false) — cache-miss 2.0%, IOPS 42.2%, storage x1.52\n  Collection `paymentMethods` passed critic checks (cache-miss 2.0%, IOPS 42.2%).\n- **APPROVED** (onnx=false) — cache-miss 2.0%, IOPS 42.2%, storage x1.52\n  Collection `suppliers` passed critic checks (cache-miss 2.0%, IOPS 42.2%).\n- **APPROVED** (onnx=false) — cache-miss 2.0%, IOPS 42.2%, storage x1.52\n  Collection `productCategories` passed critic checks (cache-miss 2.0%, IOPS 42.2%).\n- **APPROVED** (onnx=false) — cache-miss 2.0%, IOPS 46.2%, storage x1.52\n  Collection `countries` passed critic checks (cache-miss 2.0%, IOPS 46.2%).\n- **APPROVED** (onnx=false) — cache-miss 12.0%, IOPS 46.2%, storage x2.05\n  Collection `locations` passed critic checks (cache-miss 12.0%, IOPS 46.2%).\n- **APPROVED** (onnx=false) — cache-miss 2.0%, IOPS 46.2%, storage x1.52\n  Collection `departments` passed critic checks (cache-miss 2.0%, IOPS 46.2%).\n- **APPROVED** (onnx=false) — cache-miss 12.0%, IOPS 46.2%, storage x2.05\n  Collection `invoices` passed critic checks (cache-miss 12.0%, IOPS 46.2%).\n- **APPROVED** (onnx=false) — cache-miss 2.0%, IOPS 46.2%, storage x1.52\n  Collection `products` passed critic checks (cache-miss 2.0%, IOPS 46.2%).\n- **APPROVED** (onnx=false) — cache-miss 12.0%, IOPS 46.2%, storage x2.05\n  Collection `warehouses` passed critic checks (cache-miss 12.0%, IOPS 46.2%).\n- **APPROVED** (onnx=false) — cache-miss 12.0%, IOPS 50.2%, storage x2.05\n  Collection `supportTickets` passed critic checks (cache-miss 12.0%, IOPS 50.2%).\n- **APPROVED** (onnx=false) — cache-miss 2.0%, IOPS 50.2%, storage x1.52\n  Collection `inventories` passed critic checks (cache-miss 2.0%, IOPS 50.2%).\n- **APPROVED** (onnx=false) — cache-miss 12.0%, IOPS 50.2%, storage x2.05\n  Collection `supplyOrders` passed critic checks (cache-miss 12.0%, IOPS 50.2%).\n- **APPROVED** (onnx=false) — cache-miss 12.0%, IOPS 54.2%, storage x2.05\n  Collection `orders` passed critic checks (cache-miss 12.0%, IOPS 54.2%).\n- **APPROVED** (onnx=false) — cache-miss 12.0%, IOPS 54.2%, storage x2.05\n  Collection `employees` passed critic checks (cache-miss 12.0%, IOPS 54.2%).\n### HISTORICAL LESSONS LEARNED FROM PAST MIGRATIONS (DO NOT REPEAT THESE MISTAKES)\n\n_No historical migration failures matched this workload yet._\n### Migration Feedback Logs\n- Logged decision `ddl:oracle:securityRoles-44d4dc20-ceef-497a-96e6-84b1270f44c8` → hvymetl_migration_logs\n- Logged decision `ddl:oracle:customers-a89990ec-3002-49aa-b48e-bb85c6715527` → hvymetl_migration_logs\n- Logged decision `ddl:oracle:salesChannels-1a710eee-f9f2-49fe-aec6-c235ab5cea5d` → hvymetl_migration_logs\n- Logged decision `ddl:oracle:loyaltyPrograms-629cf886-209b-4d99-824c-7a10fe0726f6` → hvymetl_migration_logs\n- Logged decision `ddl:oracle:regions-4898a3be-95a3-4409-a2b8-4f1c7182300a` → hvymetl_migration_logs\n- Logged decision `ddl:oracle:jobs-6d325d29-926b-4b0c-a293-06fe5cc53ed5` → hvymetl_migration_logs\n- Logged decision `ddl:oracle:paymentMethods-12458abb-eaba-4057-afa3-d3b7faf122d4` → hvymetl_migration_logs\n- Logged decision `ddl:oracle:suppliers-44695834-d270-4fde-9af6-70f93f035533` → hvymetl_migration_logs\n- Logged decision `ddl:oracle:productCategories-e85c3850-0a97-4c03-90ff-e218bb0895b0` → hvymetl_migration_logs\n- Logged decision `ddl:oracle:countries-61844de0-9302-4419-a3e8-8d21861b7079` → hvymetl_migration_logs\n- Logged decision `ddl:oracle:locations-a9eaba90-28e8-4650-be78-e18dcff50da9` → hvymetl_migration_logs\n- Logged decision `ddl:oracle:departments-c4dd4c62-233b-46dd-8c7c-ea3d66d1ca7a` → hvymetl_migration_logs\n- Logged decision `ddl:oracle:invoices-e8b08e26-315a-4b82-aa56-b0212c15e04b` → hvymetl_migration_logs\n- Logged decision `ddl:oracle:products-83d1f450-3faa-47be-82d5-fa33daa1e6e5` → hvymetl_migration_logs\n- Logged decision `ddl:oracle:warehouses-e4ecee38-4572-4359-a77b-1aed0bd8bc87` → hvymetl_migration_logs\n- Logged decision `ddl:oracle:supportTickets-a6c4f255-6ffb-4231-9615-06960437ff89` → hvymetl_migration_logs\n- Logged decision `ddl:oracle:inventories-78fbdf03-202b-44a1-b69d-5566b6216934` → hvymetl_migration_logs\n- Logged decision `ddl:oracle:supplyOrders-e573ef36-d4e4-4095-a577-e9c429d3ab31` → hvymetl_migration_logs\n- Logged decision `ddl:oracle:orders-54376e70-5de7-485f-9ca7-183ba3feb028` → hvymetl_migration_logs\n- Logged decision `ddl:oracle:employees-ac1e511c-2dd1-4298-9b00-1e7f08d3cdf0` → hvymetl_migration_logs\n\n## Collections\n\n### securityRoles\n\n- **reference** on `security_roles -> user_accounts` — user_accounts belongs to multiple parents; it embeds under its primary parent (employees) and is referenced from security_roles to avoid duplicating rows across collections.\n- **computed** on `security_roles.totalUserAccounts` — Reads dominate (95:5 R:W at 60,000 RPM); storing the user_accounts count avoids an aggregation on every read.\n- **schema-versioning** on `security_roles` — Every document is stamped with schemaVersion: 1 so future shape changes can migrate lazily with zero downtime.\n\n### customers\n\n- **embed** on `customers.customerAddresses` — Max 2 children per parent is safely bounded, and the 95:5 R:W at 60,000 RPM workload wants O(1) single-document reads.\n- **reference** on `customers -> orders` — orders is an entity in its own right (other tables reference it); it stays its own collection and denormalizes customers fields via Extended Reference instead.\n- **computed** on `customers.totalOrders` — Reads dominate (95:5 R:W at 60,000 RPM); storing the orders count avoids an aggregation on every read.\n- **embed** on `customers.customerLoyalty` — Max 1 children per parent is safely bounded, and the 95:5 R:W at 60,000 RPM workload wants O(1) single-document reads.\n- **reference** on `customers -> support_tickets` — support_tickets is an entity in its own right (other tables reference it); it stays its own collection and denormalizes customers fields via Extended Reference instead.\n- **computed** on `customers.totalSupportTickets` — Reads dominate (95:5 R:W at 60,000 RPM); storing the support_tickets count avoids an aggregation on every read.\n- **embed** on `customers.customerReviews` — Max 4 children per parent is safely bounded, and the 95:5 R:W at 60,000 RPM workload wants O(1) single-document reads.\n- **schema-versioning** on `customers` — Every document is stamped with schemaVersion: 1 so future shape changes can migrate lazily with zero downtime.\n\n### salesChannels\n\n- **reference** on `sales_channels -> orders` — orders is an entity in its own right (other tables reference it); it stays its own collection and denormalizes sales_channels fields via Extended Reference instead.\n- **computed** on `sales_channels.totalOrders` — Reads dominate (95:5 R:W at 60,000 RPM); storing the orders count avoids an aggregation on every read.\n- **schema-versioning** on `sales_channels` — Every document is stamped with schemaVersion: 1 so future shape changes can migrate lazily with zero downtime.\n\n### loyaltyPrograms\n\n- **reference** on `loyalty_programs -> customer_loyalty` — customer_loyalty belongs to multiple parents; it embeds under its primary parent (customers) and is referenced from loyalty_programs to avoid duplicating rows across collections.\n- **computed** on `loyalty_programs.totalCustomerLoyalty` — Reads dominate (95:5 R:W at 60,000 RPM); storing the customer_loyalty count avoids an aggregation on every read.\n- **schema-versioning** on `loyalty_programs` — Every document is stamped with schemaVersion: 1 so future shape changes can migrate lazily with zero downtime.\n\n### regions\n\n- **reference** on `regions -> countries` — countries is an entity in its own right (other tables reference it); it stays its own collection and denormalizes regions fields via Extended Reference instead.\n- **computed** on `regions.totalCountries` — Reads dominate (95:5 R:W at 60,000 RPM); storing the countries count avoids an aggregation on every read.\n- **schema-versioning** on `regions` — Every document is stamped with schemaVersion: 1 so future shape changes can migrate lazily with zero downtime.\n\n### jobs\n\n- **reference** on `jobs -> employees` — employees is an entity in its own right (other tables reference it); it stays its own collection and denormalizes jobs fields via Extended Reference instead.\n- **computed** on `jobs.totalEmployees` — Reads dominate (95:5 R:W at 60,000 RPM); storing the employees count avoids an aggregation on every read.\n- **reference** on `jobs -> job_history` — job_history belongs to multiple parents; it embeds under its primary parent (employees) and is referenced from jobs to avoid duplicating rows across collections.\n- **computed** on `jobs.totalJobHistory` — Reads dominate (95:5 R:W at 60,000 RPM); storing the job_history count avoids an aggregation on every read.\n- **schema-versioning** on `jobs` — Every document is stamped with schemaVersion: 1 so future shape changes can migrate lazily with zero downtime.\n\n### paymentMethods\n\n- **reference** on `payment_methods -> payments` — payments belongs to multiple parents; it embeds under its primary parent (invoices) and is referenced from payment_methods to avoid duplicating rows across collections.\n- **computed** on `payment_methods.totalPayments` — Reads dominate (95:5 R:W at 60,000 RPM); storing the payments count avoids an aggregation on every read.\n- **schema-versioning** on `payment_methods` — Every document is stamped with schemaVersion: 1 so future shape changes can migrate lazily with zero downtime.\n\n### suppliers\n\n- **reference** on `suppliers -> supply_orders` — supply_orders is an entity in its own right (other tables reference it); it stays its own collection and denormalizes suppliers fields via Extended Reference instead.\n- **computed** on `suppliers.totalSupplyOrders` — Reads dominate (95:5 R:W at 60,000 RPM); storing the supply_orders count avoids an aggregation on every read.\n- **schema-versioning** on `suppliers` — Every document is stamped with schemaVersion: 1 so future shape changes can migrate lazily with zero downtime.\n\n### productCategories\n\n- **reference** on `product_categories -> products` — products is an entity in its own right (other tables reference it); it stays its own collection and denormalizes product_categories fields via Extended Reference instead.\n- **computed** on `product_categories.totalProducts` — Reads dominate (95:5 R:W at 60,000 RPM); storing the products count avoids an aggregation on every read.\n- **schema-versioning** on `product_categories` — Every document is stamped with schemaVersion: 1 so future shape changes can migrate lazily with zero downtime.\n\n### countries\n\n- **reference** on `countries -> customer_addresses` — customer_addresses belongs to multiple parents; it embeds under its primary parent (customers) and is referenced from countries to avoid duplicating rows across collections.\n- **computed** on `countries.totalCustomerAddresses` — Reads dominate (95:5 R:W at 60,000 RPM); storing the customer_addresses count avoids an aggregation on every read.\n- **reference** on `countries -> locations` — locations is an entity in its own right (other tables reference it); it stays its own collection and denormalizes countries fields via Extended Reference instead.\n- **computed** on `countries.totalLocations` — Reads dominate (95:5 R:W at 60,000 RPM); storing the locations count avoids an aggregation on every read.\n- **extended-reference** on `countries.region` — 95% of operations are reads; duplicating region_name from regions removes a $lookup from the hot path. The id (regionId) is kept for fan-out updates.\n- **schema-versioning** on `countries` — Every document is stamped with schemaVersion: 1 so future shape changes can migrate lazily with zero downtime.\n\n### locations\n\n- **embed** on `locations.companyAssets` — Max 20 children per parent is safely bounded, and the 95:5 R:W at 60,000 RPM workload wants O(1) single-document reads.\n- **reference** on `locations -> departments` — departments is an entity in its own right (other tables reference it); it stays its own collection and denormalizes locations fields via Extended Reference instead.\n- **computed** on `locations.totalDepartments` — Reads dominate (95:5 R:W at 60,000 RPM); storing the departments count avoids an aggregation on every read.\n- **reference** on `locations -> warehouses` — warehouses is an entity in its own right (other tables reference it); it stays its own collection and denormalizes locations fields via Extended Reference instead.\n- **computed** on `locations.totalWarehouses` — Reads dominate (95:5 R:W at 60,000 RPM); storing the warehouses count avoids an aggregation on every read.\n- **schema-versioning** on `locations` — Every document is stamped with schemaVersion: 1 so future shape changes can migrate lazily with zero downtime.\n\n### departments\n\n- **reference** on `departments -> employees` — employees is an entity in its own right (other tables reference it); it stays its own collection and denormalizes departments fields via Extended Reference instead.\n- **computed** on `departments.totalEmployees` — Reads dominate (95:5 R:W at 60,000 RPM); storing the employees count avoids an aggregation on every read.\n- **reference** on `departments -> job_history` — job_history belongs to multiple parents; it embeds under its primary parent (employees) and is referenced from departments to avoid duplicating rows across collections.\n- **computed** on `departments.totalJobHistory` — Reads dominate (95:5 R:W at 60,000 RPM); storing the job_history count avoids an aggregation on every read.\n- **schema-versioning** on `departments` — Every document is stamped with schemaVersion: 1 so future shape changes can migrate lazily with zero downtime.\n\n### invoices\n\n- **embed** on `invoices.payments` — Max 1 children per parent is safely bounded, and the 95:5 R:W at 60,000 RPM workload wants O(1) single-document reads.\n- **schema-versioning** on `invoices` — Every document is stamped with schemaVersion: 1 so future shape changes can migrate lazily with zero downtime.\n\n### products\n\n- **reference** on `products -> order_items` — order_items belongs to multiple parents; it embeds under its primary parent (orders) and is referenced from products to avoid duplicating rows across collections.\n- **computed** on `products.totalOrderItems` — Reads dominate (95:5 R:W at 60,000 RPM); storing the order_items count avoids an aggregation on every read.\n- **reference** on `products -> customer_reviews` — customer_reviews belongs to multiple parents; it embeds under its primary parent (customers) and is referenced from products to avoid duplicating rows across collections.\n- **computed** on `products.totalCustomerReviews` — Reads dominate (95:5 R:W at 60,000 RPM); storing the customer_reviews count avoids an aggregation on every read.\n- **reference** on `products -> inventories` — inventories belongs to multiple parents; it embeds under its primary parent (warehouses) and is referenced from products to avoid duplicating rows across collections.\n- **computed** on `products.totalInventories` — Reads dominate (95:5 R:W at 60,000 RPM); storing the inventories count avoids an aggregation on every read.\n- **reference** on `products -> supply_order_items` — supply_order_items belongs to multiple parents; it embeds under its primary parent (supply_orders) and is referenced from products to avoid duplicating rows across collections.\n- **computed** on `products.totalSupplyOrderItems` — Reads dominate (95:5 R:W at 60,000 RPM); storing the supply_order_items count avoids an aggregation on every read.\n- **extended-reference** on `products.productCategory` — 95% of operations are reads; duplicating category_name, description from product_categories removes a $lookup from the hot path. The id (categoryId) is kept for fan-out updates.\n- **schema-versioning** on `products` — Every document is stamped with schemaVersion: 1 so future shape changes can migrate lazily with zero downtime.\n\n### warehouses\n\n- **subset** on `warehouses.recentInventories` — inventories can reach 194 rows per parent (avg 152.75); capping the embedded array at 10 bounds document size strictly below 16MB while keeping the hot read single-document (95:5 R:W at 60,000 RPM).\n- **computed** on `warehouses.totalInventories` — Reads dominate (95:5 R:W at 60,000 RPM); storing the inventories count avoids an aggregation on every read.\n- **reference** on `warehouses -> supply_orders` — supply_orders is an entity in its own right (other tables reference it); it stays its own collection and denormalizes warehouses fields via Extended Reference instead.\n- **computed** on `warehouses.totalSupplyOrders` — Reads dominate (95:5 R:W at 60,000 RPM); storing the supply_orders count avoids an aggregation on every read.\n- **schema-versioning** on `warehouses` — Every document is stamped with schemaVersion: 1 so future shape changes can migrate lazily with zero downtime.\n\n### supportTickets\n\n- **embed** on `support_tickets.ticketComments` — Max 3 children per parent is safely bounded, and the 95:5 R:W at 60,000 RPM workload wants O(1) single-document reads.\n- **extended-reference** on `support_tickets.customer` — 95% of operations are reads; duplicating company_name, first_name, last_name from customers removes a $lookup from the hot path. The id (customerId) is kept for fan-out updates.\n- **schema-versioning** on `support_tickets` — Every document is stamped with schemaVersion: 1 so future shape changes can migrate lazily with zero downtime.\n\n### inventories\n\n- **schema-versioning** on `inventories` — Every document is stamped with schemaVersion: 1 so future shape changes can migrate lazily with zero downtime.\n\n### supplyOrders\n\n- **embed** on `supply_orders.supplyOrderItems` — Max 3 children per parent is safely bounded, and the 95:5 R:W at 60,000 RPM workload wants O(1) single-document reads.\n- **extended-reference** on `supply_orders.supplier` — 95% of operations are reads; duplicating supplier_name, contact_name, status from suppliers removes a $lookup from the hot path. The id (supplierId) is kept for fan-out updates.\n- **schema-versioning** on `supply_orders` — Every document is stamped with schemaVersion: 1 so future shape changes can migrate lazily with zero downtime.\n\n### orders\n\n- **embed** on `orders.orderItems` — Max 4 children per parent is safely bounded, and the 95:5 R:W at 60,000 RPM workload wants O(1) single-document reads.\n- **embed** on `orders.shipments` — Max 1 children per parent is safely bounded, and the 95:5 R:W at 60,000 RPM workload wants O(1) single-document reads.\n- **reference** on `orders -> invoices` — invoices is an entity in its own right (other tables reference it); it stays its own collection and denormalizes orders fields via Extended Reference instead.\n- **computed** on `orders.totalInvoices` — Reads dominate (95:5 R:W at 60,000 RPM); storing the invoices count avoids an aggregation on every read.\n- **extended-reference** on `orders.customer` — 95% of operations are reads; duplicating company_name, first_name, last_name from customers removes a $lookup from the hot path. The id (customerId) is kept for fan-out updates.\n- **extended-reference** on `orders.salesChannel` — 95% of operations are reads; duplicating channel_name from sales_channels removes a $lookup from the hot path. The id (channelId) is kept for fan-out updates.\n- **schema-versioning** on `orders` — Every document is stamped with schemaVersion: 1 so future shape changes can migrate lazily with zero downtime.\n\n### employees\n\n- **embed** on `employees.userAccounts` — Max 1 children per parent is safely bounded, and the 95:5 R:W at 60,000 RPM workload wants O(1) single-document reads.\n- **reference** on `employees -> orders` — orders is an entity in its own right (other tables reference it); it stays its own collection and denormalizes employees fields via Extended Reference instead.\n- **computed** on `employees.totalOrders` — Reads dominate (95:5 R:W at 60,000 RPM); storing the orders count avoids an aggregation on every read.\n- **reference** on `employees -> support_tickets` — support_tickets is an entity in its own right (other tables reference it); it stays its own collection and denormalizes employees fields via Extended Reference instead.\n- **computed** on `employees.totalSupportTickets` — Reads dominate (95:5 R:W at 60,000 RPM); storing the support_tickets count avoids an aggregation on every read.\n- **embed** on `employees.jobHistory` — Max 1 children per parent is safely bounded, and the 95:5 R:W at 60,000 RPM workload wants O(1) single-document reads.\n- **extended-reference** on `employees.job` — 95% of operations are reads; duplicating job_title, min_salary, max_salary from jobs removes a $lookup from the hot path. The id (jobId) is kept for fan-out updates.\n- **tree** on `employees` — employees references itself; keep parentId and index it so subtree and breadcrumb queries avoid recursive joins.\n- **schema-versioning** on `employees` — Every document is stamped with schemaVersion: 1 so future shape changes can migrate lazily with zero downtime.\n",
+  "retrievalStrategy": "hybrid BM25 + voyage-4 (Reciprocal Rank Fusion)",
+  "ddl": "CREATE TABLE company_assets (\n    asset_id NUMBER GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY,\n    asset_name VARCHAR2(100) NOT NULL,\n    asset_type VARCHAR2(50) NOT NULL,\n    purchase_date DATE,\n    purchase_cost NUMBER(12,2),\n    location_id NUMBER,\n    CONSTRAINT fk_assets_location FOREIGN KEY (location_id) REFERENCES locations(location_id)\n);\n\nCREATE TABLE security_roles (\n    role_id NUMBER GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY,\n    role_name VARCHAR2(50) NOT NULL UNIQUE,\n    description VARCHAR2(255)\n);\n\nCREATE TABLE user_accounts (\n    user_id NUMBER GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY,\n    employee_id NUMBER NOT NULL UNIQUE,\n    username VARCHAR2(50) NOT NULL UNIQUE,\n    password_hash VARCHAR2(256) NOT NULL,\n    role_id NUMBER NOT NULL,\n    is_active NUMBER(1) DEFAULT 1 CHECK (is_active IN (0, 1)),\n    last_login TIMESTAMP,\n    CONSTRAINT fk_users_employee FOREIGN KEY (employee_id) REFERENCES employees(employee_id),\n    CONSTRAINT fk_users_role FOREIGN KEY (role_id) REFERENCES security_roles(role_id)\n);\n\nCREATE TABLE customers (\n    customer_id NUMBER GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY,\n    company_name VARCHAR2(100),\n    first_name VARCHAR2(50),\n    last_name VARCHAR2(50),\n    email VARCHAR2(100) NOT NULL UNIQUE,\n    phone VARCHAR2(20),\n    credit_limit NUMBER(10,2) DEFAULT 1000.00\n);\n\nCREATE TABLE customer_addresses (\n    address_id NUMBER GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY,\n    customer_id NUMBER NOT NULL,\n    address_type VARCHAR2(20) DEFAULT 'BILLING' CHECK (address_type IN ('BILLING', 'SHIPPING')),\n    street_address VARCHAR2(100) NOT NULL,\n    city VARCHAR2(50) NOT NULL,\n    postal_code VARCHAR2(20),\n    country_id CHAR(2),\n    CONSTRAINT fk_cust_addr_cust FOREIGN KEY (customer_id) REFERENCES customers(customer_id),\n    CONSTRAINT fk_cust_addr_country FOREIGN KEY (country_id) REFERENCES countries(country_id)\n);\n\nCREATE TABLE sales_channels (\n    channel_id NUMBER GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY,\n    channel_name VARCHAR2(30) NOT NULL UNIQUE\n);\n\nCREATE TABLE orders (\n    order_id NUMBER GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY,\n    customer_id NUMBER NOT NULL,\n    employee_id NUMBER,\n    channel_id NUMBER,\n    order_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,\n    status VARCHAR2(20) DEFAULT 'PENDING' CHECK (status IN ('PENDING', 'PROCESSING', 'SHIPPED', 'COMPLETED', 'CANCELLED')),\n    total_amount NUMBER(12,2) DEFAULT 0.00,\n    CONSTRAINT fk_orders_customer FOREIGN KEY (customer_id) REFERENCES customers(customer_id),\n    CONSTRAINT fk_orders_employee FOREIGN KEY (employee_id) REFERENCES employees(employee_id),\n    CONSTRAINT fk_orders_channel FOREIGN KEY (channel_id) REFERENCES sales_channels(channel_id)\n);\n\nCREATE TABLE order_items (\n    order_id NUMBER NOT NULL,\n    item_id NUMBER NOT NULL,\n    product_id NUMBER NOT NULL,\n    quantity NUMBER(6) NOT NULL,\n    unit_price NUMBER(10,2) NOT NULL,\n    discount NUMBER(4,2) DEFAULT 0.00,\n    CONSTRAINT pk_order_items PRIMARY KEY (order_id, item_id),\n    CONSTRAINT fk_oi_order FOREIGN KEY (order_id) REFERENCES orders(order_id),\n    CONSTRAINT fk_oi_product FOREIGN KEY (product_id) REFERENCES products(product_id),\n    CONSTRAINT chk_oi_qty CHECK (quantity > 0)\n);\n\nCREATE TABLE shipments (\n    shipment_id NUMBER GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY,\n    order_id NUMBER NOT NULL UNIQUE,\n    shipment_date TIMESTAMP,\n    carrier_name VARCHAR2(50),\n    tracking_number VARCHAR2(50),\n    delivery_status VARCHAR2(20) DEFAULT 'IN_TRANSIT' CHECK (delivery_status IN ('IN_TRANSIT', 'DELIVERED', 'RETURNED')),\n    CONSTRAINT fk_shipments_order FOREIGN KEY (order_id) REFERENCES orders(order_id)\n);\n\nCREATE TABLE loyalty_programs (\n    program_id NUMBER GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY,\n    tier_name VARCHAR2(30) NOT NULL UNIQUE,\n    points_multiplier NUMBER(3,2) DEFAULT 1.00 NOT NULL,\n    min_points_required NUMBER(8) NOT NULL\n);\n\nCREATE TABLE customer_loyalty (\n    customer_id NUMBER PRIMARY KEY,\n    program_id NUMBER NOT NULL,\n    current_points NUMBER(8) DEFAULT 0 NOT NULL,\n    lifetime_points NUMBER(10) DEFAULT 0 NOT NULL,\n    CONSTRAINT fk_loyalty_customer FOREIGN KEY (customer_id) REFERENCES customers(customer_id),\n    CONSTRAINT fk_loyalty_program FOREIGN KEY (program_id) REFERENCES loyalty_programs(program_id)\n);\n\nCREATE TABLE support_tickets (\n    ticket_id NUMBER GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY,\n    customer_id NUMBER NOT NULL,\n    assigned_employee_id NUMBER,\n    subject VARCHAR2(150) NOT NULL,\n    status VARCHAR2(20) DEFAULT 'OPEN' CHECK (status IN ('OPEN', 'IN_PROGRESS', 'RESOLVED', 'CLOSED')),\n    priority VARCHAR2(10) DEFAULT 'MEDIUM' CHECK (priority IN ('LOW', 'MEDIUM', 'HIGH', 'CRITICAL')),\n    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,\n    CONSTRAINT fk_tickets_customer FOREIGN KEY (customer_id) REFERENCES customers(customer_id),\n    CONSTRAINT fk_tickets_employee FOREIGN KEY (assigned_employee_id) REFERENCES employees(employee_id)\n);\n\nCREATE TABLE ticket_comments (\n    comment_id NUMBER GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY,\n    ticket_id NUMBER NOT NULL,\n    author_type VARCHAR2(10) NOT NULL CHECK (author_type IN ('CUSTOMER', 'EMPLOYEE')),\n    comment_text CLOB NOT NULL,\n    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,\n    CONSTRAINT fk_comments_ticket FOREIGN KEY (ticket_id) REFERENCES support_tickets(ticket_id)\n);\n\nCREATE TABLE regions (\n    region_id NUMBER GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY,\n    region_name VARCHAR2(50) NOT NULL UNIQUE\n);\n\nCREATE TABLE countries (\n    country_id CHAR(2) PRIMARY KEY,\n    country_name VARCHAR2(60) NOT NULL,\n    region_id NUMBER,\n    CONSTRAINT fk_countries_regions FOREIGN KEY (region_id) REFERENCES regions(region_id)\n);\n\nCREATE TABLE locations (\n    location_id NUMBER GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY,\n    street_address VARCHAR2(100),\n    postal_code VARCHAR2(20),\n    city VARCHAR2(50) NOT NULL,\n    state_province VARCHAR2(50),\n    country_id CHAR(2),\n    CONSTRAINT fk_locations_countries FOREIGN KEY (country_id) REFERENCES countries(country_id)\n);\n\nCREATE TABLE departments (\n    department_id NUMBER GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY,\n    department_name VARCHAR2(50) NOT NULL,\n    manager_id NUMBER,\n    location_id NUMBER,\n    CONSTRAINT fk_departments_locations FOREIGN KEY (location_id) REFERENCES locations(location_id)\n);\n\nCREATE TABLE jobs (\n    job_id VARCHAR2(10) PRIMARY KEY,\n    job_title VARCHAR2(50) NOT NULL,\n    min_salary NUMBER(8,2),\n    max_salary NUMBER(8,2)\n);\n\nCREATE TABLE employees (\n    employee_id NUMBER GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY,\n    first_name VARCHAR2(50),\n    last_name VARCHAR2(50) NOT NULL,\n    email VARCHAR2(100) NOT NULL UNIQUE,\n    phone_number VARCHAR2(20),\n    hire_date DATE DEFAULT TRUNC NOT NULL,\n    job_id VARCHAR2(10) NOT NULL,\n    salary NUMBER(8,2),\n    commission_pct NUMBER(2,2),\n    manager_id NUMBER,\n    department_id NUMBER,\n    CONSTRAINT fk_employees_jobs FOREIGN KEY (job_id) REFERENCES jobs(job_id),\n    CONSTRAINT fk_employees_dept FOREIGN KEY (department_id) REFERENCES departments(department_id),\n    CONSTRAINT fk_employees_mgr FOREIGN KEY (manager_id) REFERENCES employees(employee_id),\n    CONSTRAINT chk_emp_salary CHECK (salary > 0)\n);\n\nCREATE TABLE job_history (\n    employee_id NUMBER NOT NULL,\n    start_date DATE NOT NULL,\n    end_date DATE NOT NULL,\n    job_id VARCHAR2(10) NOT NULL,\n    department_id NUMBER,\n    CONSTRAINT pk_job_history PRIMARY KEY (employee_id, start_date),\n    CONSTRAINT fk_history_emp FOREIGN KEY (employee_id) REFERENCES employees(employee_id),\n    CONSTRAINT fk_history_jobs FOREIGN KEY (job_id) REFERENCES jobs(job_id),\n    CONSTRAINT fk_history_dept FOREIGN KEY (department_id) REFERENCES departments(department_id),\n    CONSTRAINT chk_hist_dates CHECK (end_date > start_date)\n);\n\nCREATE TABLE payment_methods (\n    method_id NUMBER GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY,\n    method_name VARCHAR2(30) NOT NULL UNIQUE\n);\n\nCREATE TABLE invoices (\n    invoice_id NUMBER GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY,\n    order_id NUMBER NOT NULL UNIQUE,\n    invoice_date DATE DEFAULT TRUNC NOT NULL,\n    due_date DATE NOT NULL,\n    tax_amount NUMBER(10,2) DEFAULT 0.00,\n    total_due NUMBER(12,2) NOT NULL,\n    status VARCHAR2(20) DEFAULT 'UNPAID' CHECK (status IN ('UNPAID', 'PARTIAL', 'PAID', 'OVERDUE')),\n    CONSTRAINT fk_invoices_order FOREIGN KEY (order_id) REFERENCES orders(order_id),\n    CONSTRAINT chk_inv_due CHECK (due_date >= invoice_date)\n);\n\nCREATE TABLE payments (\n    payment_id NUMBER GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY,\n    invoice_id NUMBER NOT NULL,\n    payment_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,\n    amount NUMBER(12,2) NOT NULL,\n    method_id NUMBER NOT NULL,\n    reference_number VARCHAR2(50),\n    CONSTRAINT fk_payments_invoice FOREIGN KEY (invoice_id) REFERENCES invoices(invoice_id),\n    CONSTRAINT fk_payments_method FOREIGN KEY (method_id) REFERENCES payment_methods(method_id)\n);\n\nCREATE TABLE customer_reviews (\n    review_id NUMBER GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY,\n    customer_id NUMBER NOT NULL,\n    product_id NUMBER NOT NULL,\n    rating NUMBER(1) NOT NULL CHECK (rating BETWEEN 1 AND 5),\n    review_text CLOB,\n    review_date DATE DEFAULT TRUNC NOT NULL,\n    CONSTRAINT fk_reviews_cust FOREIGN KEY (customer_id) REFERENCES customers(customer_id),\n    CONSTRAINT fk_reviews_prod FOREIGN KEY (product_id) REFERENCES products(product_id)\n);\n\nCREATE TABLE suppliers (\n    supplier_id NUMBER GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY,\n    supplier_name VARCHAR2(100) NOT NULL,\n    contact_name VARCHAR2(100),\n    email VARCHAR2(100),\n    phone VARCHAR2(20),\n    status VARCHAR2(20) DEFAULT 'ACTIVE' CHECK (status IN ('ACTIVE', 'INACTIVE', 'SUSPENDED'))\n);\n\nCREATE TABLE product_categories (\n    category_id NUMBER GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY,\n    category_name VARCHAR2(50) NOT NULL UNIQUE,\n    description VARCHAR2(255)\n);\n\nCREATE TABLE products (\n    product_id NUMBER GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY,\n    product_name VARCHAR2(100) NOT NULL,\n    description VARCHAR2(500),\n    category_id NUMBER,\n    sku VARCHAR2(30) NOT NULL UNIQUE,\n    list_price NUMBER(10,2) NOT NULL,\n    cost_price NUMBER(10,2) NOT NULL,\n    weight_kg NUMBER(6,2),\n    CONSTRAINT fk_products_cat FOREIGN KEY (category_id) REFERENCES product_categories(category_id)\n);\n\nCREATE TABLE warehouses (\n    warehouse_id NUMBER GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY,\n    warehouse_name VARCHAR2(50) NOT NULL,\n    location_id NUMBER,\n    capacity_m3 NUMBER(10,2),\n    CONSTRAINT fk_warehouses_loc FOREIGN KEY (location_id) REFERENCES locations(location_id)\n);\n\nCREATE TABLE inventories (\n    warehouse_id NUMBER NOT NULL,\n    product_id NUMBER NOT NULL,\n    quantity_on_hand NUMBER(8) DEFAULT 0 NOT NULL,\n    reorder_level NUMBER(8) DEFAULT 10 NOT NULL,\n    CONSTRAINT pk_inventories PRIMARY KEY (warehouse_id, product_id),\n    CONSTRAINT fk_inv_warehouse FOREIGN KEY (warehouse_id) REFERENCES warehouses(warehouse_id),\n    CONSTRAINT fk_inv_product FOREIGN KEY (product_id) REFERENCES products(product_id),\n    CONSTRAINT chk_inv_qty CHECK (quantity_on_hand >= 0)\n);\n\nCREATE TABLE supply_orders (\n    supply_order_id NUMBER GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY,\n    supplier_id NUMBER NOT NULL,\n    warehouse_id NUMBER NOT NULL,\n    order_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,\n    delivery_date DATE,\n    status VARCHAR2(20) DEFAULT 'PENDING' CHECK (status IN ('PENDING', 'SHIPPED', 'DELIVERED', 'CANCELLED')),\n    CONSTRAINT fk_so_supplier FOREIGN KEY (supplier_id) REFERENCES suppliers(supplier_id),\n    CONSTRAINT fk_so_warehouse FOREIGN KEY (warehouse_id) REFERENCES warehouses(warehouse_id)\n);\n\nCREATE TABLE supply_order_items (\n    supply_order_id NUMBER NOT NULL,\n    item_id NUMBER NOT NULL,\n    product_id NUMBER NOT NULL,\n    quantity NUMBER(8) NOT NULL,\n    unit_cost NUMBER(10,2) NOT NULL,\n    CONSTRAINT pk_supply_order_items PRIMARY KEY (supply_order_id, item_id),\n    CONSTRAINT fk_so_items_order FOREIGN KEY (supply_order_id) REFERENCES supply_orders(supply_order_id),\n    CONSTRAINT fk_so_items_prod FOREIGN KEY (product_id) REFERENCES products(product_id),\n    CONSTRAINT chk_so_qty CHECK (quantity > 0)\n);\n\n",
+  "model": {
+    "source": "ddl:postgresql",
+    "tables": [
+      {
+        "name": "company_assets",
+        "columns": [
+          {
+            "name": "asset_id",
+            "sqlType": "NUMBER",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": true
+          },
+          {
+            "name": "asset_name",
+            "sqlType": "VARCHAR2(100)",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "asset_type",
+            "sqlType": "VARCHAR2(50)",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "purchase_date",
+            "sqlType": "DATE",
+            "bsonType": "date",
+            "nullable": true,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "purchase_cost",
+            "sqlType": "NUMBER(12,2)",
+            "bsonType": "string",
+            "nullable": true,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "location_id",
+            "sqlType": "NUMBER",
+            "bsonType": "string",
+            "nullable": true,
+            "isPrimaryKey": false
+          }
+        ],
+        "primaryKey": [
+          "asset_id"
+        ],
+        "foreignKeys": [
+          {
+            "column": "location_id",
+            "referencesTable": "locations",
+            "referencesColumn": "location_id"
+          }
+        ],
+        "rowCount": 0
+      },
+      {
+        "name": "security_roles",
+        "columns": [
+          {
+            "name": "role_id",
+            "sqlType": "NUMBER",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": true
+          },
+          {
+            "name": "role_name",
+            "sqlType": "VARCHAR2(50)",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "description",
+            "sqlType": "VARCHAR2(255)",
+            "bsonType": "string",
+            "nullable": true,
+            "isPrimaryKey": false
+          }
+        ],
+        "primaryKey": [
+          "role_id"
+        ],
+        "foreignKeys": [],
+        "rowCount": 0
+      },
+      {
+        "name": "user_accounts",
+        "columns": [
+          {
+            "name": "user_id",
+            "sqlType": "NUMBER",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": true
+          },
+          {
+            "name": "employee_id",
+            "sqlType": "NUMBER",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "username",
+            "sqlType": "VARCHAR2(50)",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "password_hash",
+            "sqlType": "VARCHAR2(256)",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "role_id",
+            "sqlType": "NUMBER",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "is_active",
+            "sqlType": "NUMBER(1)",
+            "bsonType": "string",
+            "nullable": true,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "last_login",
+            "sqlType": "TIMESTAMP",
+            "bsonType": "date",
+            "nullable": true,
+            "isPrimaryKey": false
+          }
+        ],
+        "primaryKey": [
+          "user_id"
+        ],
+        "foreignKeys": [
+          {
+            "column": "employee_id",
+            "referencesTable": "employees",
+            "referencesColumn": "employee_id"
+          },
+          {
+            "column": "role_id",
+            "referencesTable": "security_roles",
+            "referencesColumn": "role_id"
+          }
+        ],
+        "rowCount": 0
+      },
+      {
+        "name": "customers",
+        "columns": [
+          {
+            "name": "customer_id",
+            "sqlType": "NUMBER",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": true
+          },
+          {
+            "name": "company_name",
+            "sqlType": "VARCHAR2(100)",
+            "bsonType": "string",
+            "nullable": true,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "first_name",
+            "sqlType": "VARCHAR2(50)",
+            "bsonType": "string",
+            "nullable": true,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "last_name",
+            "sqlType": "VARCHAR2(50)",
+            "bsonType": "string",
+            "nullable": true,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "email",
+            "sqlType": "VARCHAR2(100)",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "phone",
+            "sqlType": "VARCHAR2(20)",
+            "bsonType": "string",
+            "nullable": true,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "credit_limit",
+            "sqlType": "NUMBER(10,2)",
+            "bsonType": "string",
+            "nullable": true,
+            "isPrimaryKey": false
+          }
+        ],
+        "primaryKey": [
+          "customer_id"
+        ],
+        "foreignKeys": [],
+        "rowCount": 0
+      },
+      {
+        "name": "customer_addresses",
+        "columns": [
+          {
+            "name": "address_id",
+            "sqlType": "NUMBER",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": true
+          },
+          {
+            "name": "customer_id",
+            "sqlType": "NUMBER",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "address_type",
+            "sqlType": "VARCHAR2(20)",
+            "bsonType": "string",
+            "nullable": true,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "street_address",
+            "sqlType": "VARCHAR2(100)",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "city",
+            "sqlType": "VARCHAR2(50)",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "postal_code",
+            "sqlType": "VARCHAR2(20)",
+            "bsonType": "string",
+            "nullable": true,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "country_id",
+            "sqlType": "CHAR(2)",
+            "bsonType": "string",
+            "nullable": true,
+            "isPrimaryKey": false
+          }
+        ],
+        "primaryKey": [
+          "address_id"
+        ],
+        "foreignKeys": [
+          {
+            "column": "customer_id",
+            "referencesTable": "customers",
+            "referencesColumn": "customer_id"
+          },
+          {
+            "column": "country_id",
+            "referencesTable": "countries",
+            "referencesColumn": "country_id"
+          }
+        ],
+        "rowCount": 0
+      },
+      {
+        "name": "sales_channels",
+        "columns": [
+          {
+            "name": "channel_id",
+            "sqlType": "NUMBER",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": true
+          },
+          {
+            "name": "channel_name",
+            "sqlType": "VARCHAR2(30)",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": false
+          }
+        ],
+        "primaryKey": [
+          "channel_id"
+        ],
+        "foreignKeys": [],
+        "rowCount": 0
+      },
+      {
+        "name": "orders",
+        "columns": [
+          {
+            "name": "order_id",
+            "sqlType": "NUMBER",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": true
+          },
+          {
+            "name": "customer_id",
+            "sqlType": "NUMBER",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "employee_id",
+            "sqlType": "NUMBER",
+            "bsonType": "string",
+            "nullable": true,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "channel_id",
+            "sqlType": "NUMBER",
+            "bsonType": "string",
+            "nullable": true,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "order_date",
+            "sqlType": "TIMESTAMP",
+            "bsonType": "date",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "status",
+            "sqlType": "VARCHAR2(20)",
+            "bsonType": "string",
+            "nullable": true,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "total_amount",
+            "sqlType": "NUMBER(12,2)",
+            "bsonType": "string",
+            "nullable": true,
+            "isPrimaryKey": false
+          }
+        ],
+        "primaryKey": [
+          "order_id"
+        ],
+        "foreignKeys": [
+          {
+            "column": "customer_id",
+            "referencesTable": "customers",
+            "referencesColumn": "customer_id"
+          },
+          {
+            "column": "employee_id",
+            "referencesTable": "employees",
+            "referencesColumn": "employee_id"
+          },
+          {
+            "column": "channel_id",
+            "referencesTable": "sales_channels",
+            "referencesColumn": "channel_id"
+          }
+        ],
+        "rowCount": 0
+      },
+      {
+        "name": "order_items",
+        "columns": [
+          {
+            "name": "order_id",
+            "sqlType": "NUMBER",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "item_id",
+            "sqlType": "NUMBER",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "product_id",
+            "sqlType": "NUMBER",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "quantity",
+            "sqlType": "NUMBER(6)",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "unit_price",
+            "sqlType": "NUMBER(10,2)",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "discount",
+            "sqlType": "NUMBER(4,2)",
+            "bsonType": "string",
+            "nullable": true,
+            "isPrimaryKey": false
+          }
+        ],
+        "primaryKey": [
+          "order_id",
+          "item_id"
+        ],
+        "foreignKeys": [
+          {
+            "column": "order_id",
+            "referencesTable": "orders",
+            "referencesColumn": "order_id"
+          },
+          {
+            "column": "product_id",
+            "referencesTable": "products",
+            "referencesColumn": "product_id"
+          }
+        ],
+        "rowCount": 0
+      },
+      {
+        "name": "shipments",
+        "columns": [
+          {
+            "name": "shipment_id",
+            "sqlType": "NUMBER",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": true
+          },
+          {
+            "name": "order_id",
+            "sqlType": "NUMBER",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "shipment_date",
+            "sqlType": "TIMESTAMP",
+            "bsonType": "date",
+            "nullable": true,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "carrier_name",
+            "sqlType": "VARCHAR2(50)",
+            "bsonType": "string",
+            "nullable": true,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "tracking_number",
+            "sqlType": "VARCHAR2(50)",
+            "bsonType": "string",
+            "nullable": true,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "delivery_status",
+            "sqlType": "VARCHAR2(20)",
+            "bsonType": "string",
+            "nullable": true,
+            "isPrimaryKey": false
+          }
+        ],
+        "primaryKey": [
+          "shipment_id"
+        ],
+        "foreignKeys": [
+          {
+            "column": "order_id",
+            "referencesTable": "orders",
+            "referencesColumn": "order_id"
+          }
+        ],
+        "rowCount": 0
+      },
+      {
+        "name": "loyalty_programs",
+        "columns": [
+          {
+            "name": "program_id",
+            "sqlType": "NUMBER",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": true
+          },
+          {
+            "name": "tier_name",
+            "sqlType": "VARCHAR2(30)",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "points_multiplier",
+            "sqlType": "NUMBER(3,2)",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "min_points_required",
+            "sqlType": "NUMBER(8)",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": false
+          }
+        ],
+        "primaryKey": [
+          "program_id"
+        ],
+        "foreignKeys": [],
+        "rowCount": 0
+      },
+      {
+        "name": "customer_loyalty",
+        "columns": [
+          {
+            "name": "customer_id",
+            "sqlType": "NUMBER",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": true
+          },
+          {
+            "name": "program_id",
+            "sqlType": "NUMBER",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "current_points",
+            "sqlType": "NUMBER(8)",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "lifetime_points",
+            "sqlType": "NUMBER(10)",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": false
+          }
+        ],
+        "primaryKey": [
+          "customer_id"
+        ],
+        "foreignKeys": [
+          {
+            "column": "customer_id",
+            "referencesTable": "customers",
+            "referencesColumn": "customer_id"
+          },
+          {
+            "column": "program_id",
+            "referencesTable": "loyalty_programs",
+            "referencesColumn": "program_id"
+          }
+        ],
+        "rowCount": 0
+      },
+      {
+        "name": "support_tickets",
+        "columns": [
+          {
+            "name": "ticket_id",
+            "sqlType": "NUMBER",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": true
+          },
+          {
+            "name": "customer_id",
+            "sqlType": "NUMBER",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "assigned_employee_id",
+            "sqlType": "NUMBER",
+            "bsonType": "string",
+            "nullable": true,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "subject",
+            "sqlType": "VARCHAR2(150)",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "status",
+            "sqlType": "VARCHAR2(20)",
+            "bsonType": "string",
+            "nullable": true,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "priority",
+            "sqlType": "VARCHAR2(10)",
+            "bsonType": "string",
+            "nullable": true,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "created_at",
+            "sqlType": "TIMESTAMP",
+            "bsonType": "date",
+            "nullable": false,
+            "isPrimaryKey": false
+          }
+        ],
+        "primaryKey": [
+          "ticket_id"
+        ],
+        "foreignKeys": [
+          {
+            "column": "customer_id",
+            "referencesTable": "customers",
+            "referencesColumn": "customer_id"
+          },
+          {
+            "column": "assigned_employee_id",
+            "referencesTable": "employees",
+            "referencesColumn": "employee_id"
+          }
+        ],
+        "rowCount": 0
+      },
+      {
+        "name": "ticket_comments",
+        "columns": [
+          {
+            "name": "comment_id",
+            "sqlType": "NUMBER",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": true
+          },
+          {
+            "name": "ticket_id",
+            "sqlType": "NUMBER",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "author_type",
+            "sqlType": "VARCHAR2(10)",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "comment_text",
+            "sqlType": "CLOB",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "created_at",
+            "sqlType": "TIMESTAMP",
+            "bsonType": "date",
+            "nullable": false,
+            "isPrimaryKey": false
+          }
+        ],
+        "primaryKey": [
+          "comment_id"
+        ],
+        "foreignKeys": [
+          {
+            "column": "ticket_id",
+            "referencesTable": "support_tickets",
+            "referencesColumn": "ticket_id"
+          }
+        ],
+        "rowCount": 0
+      },
+      {
+        "name": "regions",
+        "columns": [
+          {
+            "name": "region_id",
+            "sqlType": "NUMBER",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": true
+          },
+          {
+            "name": "region_name",
+            "sqlType": "VARCHAR2(50)",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": false
+          }
+        ],
+        "primaryKey": [
+          "region_id"
+        ],
+        "foreignKeys": [],
+        "rowCount": 0
+      },
+      {
+        "name": "countries",
+        "columns": [
+          {
+            "name": "country_id",
+            "sqlType": "CHAR(2)",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": true
+          },
+          {
+            "name": "country_name",
+            "sqlType": "VARCHAR2(60)",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "region_id",
+            "sqlType": "NUMBER",
+            "bsonType": "string",
+            "nullable": true,
+            "isPrimaryKey": false
+          }
+        ],
+        "primaryKey": [
+          "country_id"
+        ],
+        "foreignKeys": [
+          {
+            "column": "region_id",
+            "referencesTable": "regions",
+            "referencesColumn": "region_id"
+          }
+        ],
+        "rowCount": 0
+      },
+      {
+        "name": "locations",
+        "columns": [
+          {
+            "name": "location_id",
+            "sqlType": "NUMBER",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": true
+          },
+          {
+            "name": "street_address",
+            "sqlType": "VARCHAR2(100)",
+            "bsonType": "string",
+            "nullable": true,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "postal_code",
+            "sqlType": "VARCHAR2(20)",
+            "bsonType": "string",
+            "nullable": true,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "city",
+            "sqlType": "VARCHAR2(50)",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "state_province",
+            "sqlType": "VARCHAR2(50)",
+            "bsonType": "string",
+            "nullable": true,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "country_id",
+            "sqlType": "CHAR(2)",
+            "bsonType": "string",
+            "nullable": true,
+            "isPrimaryKey": false
+          }
+        ],
+        "primaryKey": [
+          "location_id"
+        ],
+        "foreignKeys": [
+          {
+            "column": "country_id",
+            "referencesTable": "countries",
+            "referencesColumn": "country_id"
+          }
+        ],
+        "rowCount": 0
+      },
+      {
+        "name": "departments",
+        "columns": [
+          {
+            "name": "department_id",
+            "sqlType": "NUMBER",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": true
+          },
+          {
+            "name": "department_name",
+            "sqlType": "VARCHAR2(50)",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "manager_id",
+            "sqlType": "NUMBER",
+            "bsonType": "string",
+            "nullable": true,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "location_id",
+            "sqlType": "NUMBER",
+            "bsonType": "string",
+            "nullable": true,
+            "isPrimaryKey": false
+          }
+        ],
+        "primaryKey": [
+          "department_id"
+        ],
+        "foreignKeys": [
+          {
+            "column": "location_id",
+            "referencesTable": "locations",
+            "referencesColumn": "location_id"
+          }
+        ],
+        "rowCount": 0
+      },
+      {
+        "name": "jobs",
+        "columns": [
+          {
+            "name": "job_id",
+            "sqlType": "VARCHAR2(10)",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": true
+          },
+          {
+            "name": "job_title",
+            "sqlType": "VARCHAR2(50)",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "min_salary",
+            "sqlType": "NUMBER(8,2)",
+            "bsonType": "string",
+            "nullable": true,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "max_salary",
+            "sqlType": "NUMBER(8,2)",
+            "bsonType": "string",
+            "nullable": true,
+            "isPrimaryKey": false
+          }
+        ],
+        "primaryKey": [
+          "job_id"
+        ],
+        "foreignKeys": [],
+        "rowCount": 0
+      },
+      {
+        "name": "employees",
+        "columns": [
+          {
+            "name": "employee_id",
+            "sqlType": "NUMBER",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": true
+          },
+          {
+            "name": "first_name",
+            "sqlType": "VARCHAR2(50)",
+            "bsonType": "string",
+            "nullable": true,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "last_name",
+            "sqlType": "VARCHAR2(50)",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "email",
+            "sqlType": "VARCHAR2(100)",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "phone_number",
+            "sqlType": "VARCHAR2(20)",
+            "bsonType": "string",
+            "nullable": true,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "hire_date",
+            "sqlType": "DATE",
+            "bsonType": "date",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "job_id",
+            "sqlType": "VARCHAR2(10)",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "salary",
+            "sqlType": "NUMBER(8,2)",
+            "bsonType": "string",
+            "nullable": true,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "commission_pct",
+            "sqlType": "NUMBER(2,2)",
+            "bsonType": "string",
+            "nullable": true,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "manager_id",
+            "sqlType": "NUMBER",
+            "bsonType": "string",
+            "nullable": true,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "department_id",
+            "sqlType": "NUMBER",
+            "bsonType": "string",
+            "nullable": true,
+            "isPrimaryKey": false
+          }
+        ],
+        "primaryKey": [
+          "employee_id"
+        ],
+        "foreignKeys": [
+          {
+            "column": "job_id",
+            "referencesTable": "jobs",
+            "referencesColumn": "job_id"
+          },
+          {
+            "column": "department_id",
+            "referencesTable": "departments",
+            "referencesColumn": "department_id"
+          },
+          {
+            "column": "manager_id",
+            "referencesTable": "employees",
+            "referencesColumn": "employee_id"
+          }
+        ],
+        "rowCount": 0
+      },
+      {
+        "name": "job_history",
+        "columns": [
+          {
+            "name": "employee_id",
+            "sqlType": "NUMBER",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "start_date",
+            "sqlType": "DATE",
+            "bsonType": "date",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "end_date",
+            "sqlType": "DATE",
+            "bsonType": "date",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "job_id",
+            "sqlType": "VARCHAR2(10)",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "department_id",
+            "sqlType": "NUMBER",
+            "bsonType": "string",
+            "nullable": true,
+            "isPrimaryKey": false
+          }
+        ],
+        "primaryKey": [
+          "employee_id",
+          "start_date"
+        ],
+        "foreignKeys": [
+          {
+            "column": "employee_id",
+            "referencesTable": "employees",
+            "referencesColumn": "employee_id"
+          },
+          {
+            "column": "job_id",
+            "referencesTable": "jobs",
+            "referencesColumn": "job_id"
+          },
+          {
+            "column": "department_id",
+            "referencesTable": "departments",
+            "referencesColumn": "department_id"
+          }
+        ],
+        "rowCount": 0
+      },
+      {
+        "name": "payment_methods",
+        "columns": [
+          {
+            "name": "method_id",
+            "sqlType": "NUMBER",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": true
+          },
+          {
+            "name": "method_name",
+            "sqlType": "VARCHAR2(30)",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": false
+          }
+        ],
+        "primaryKey": [
+          "method_id"
+        ],
+        "foreignKeys": [],
+        "rowCount": 0
+      },
+      {
+        "name": "invoices",
+        "columns": [
+          {
+            "name": "invoice_id",
+            "sqlType": "NUMBER",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": true
+          },
+          {
+            "name": "order_id",
+            "sqlType": "NUMBER",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "invoice_date",
+            "sqlType": "DATE",
+            "bsonType": "date",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "due_date",
+            "sqlType": "DATE",
+            "bsonType": "date",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "tax_amount",
+            "sqlType": "NUMBER(10,2)",
+            "bsonType": "string",
+            "nullable": true,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "total_due",
+            "sqlType": "NUMBER(12,2)",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "status",
+            "sqlType": "VARCHAR2(20)",
+            "bsonType": "string",
+            "nullable": true,
+            "isPrimaryKey": false
+          }
+        ],
+        "primaryKey": [
+          "invoice_id"
+        ],
+        "foreignKeys": [
+          {
+            "column": "order_id",
+            "referencesTable": "orders",
+            "referencesColumn": "order_id"
+          }
+        ],
+        "rowCount": 0
+      },
+      {
+        "name": "payments",
+        "columns": [
+          {
+            "name": "payment_id",
+            "sqlType": "NUMBER",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": true
+          },
+          {
+            "name": "invoice_id",
+            "sqlType": "NUMBER",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "payment_date",
+            "sqlType": "TIMESTAMP",
+            "bsonType": "date",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "amount",
+            "sqlType": "NUMBER(12,2)",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "method_id",
+            "sqlType": "NUMBER",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "reference_number",
+            "sqlType": "VARCHAR2(50)",
+            "bsonType": "string",
+            "nullable": true,
+            "isPrimaryKey": false
+          }
+        ],
+        "primaryKey": [
+          "payment_id"
+        ],
+        "foreignKeys": [
+          {
+            "column": "invoice_id",
+            "referencesTable": "invoices",
+            "referencesColumn": "invoice_id"
+          },
+          {
+            "column": "method_id",
+            "referencesTable": "payment_methods",
+            "referencesColumn": "method_id"
+          }
+        ],
+        "rowCount": 0
+      },
+      {
+        "name": "customer_reviews",
+        "columns": [
+          {
+            "name": "review_id",
+            "sqlType": "NUMBER",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": true
+          },
+          {
+            "name": "customer_id",
+            "sqlType": "NUMBER",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "product_id",
+            "sqlType": "NUMBER",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "rating",
+            "sqlType": "NUMBER(1)",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "review_text",
+            "sqlType": "CLOB",
+            "bsonType": "string",
+            "nullable": true,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "review_date",
+            "sqlType": "DATE",
+            "bsonType": "date",
+            "nullable": false,
+            "isPrimaryKey": false
+          }
+        ],
+        "primaryKey": [
+          "review_id"
+        ],
+        "foreignKeys": [
+          {
+            "column": "customer_id",
+            "referencesTable": "customers",
+            "referencesColumn": "customer_id"
+          },
+          {
+            "column": "product_id",
+            "referencesTable": "products",
+            "referencesColumn": "product_id"
+          }
+        ],
+        "rowCount": 0
+      },
+      {
+        "name": "suppliers",
+        "columns": [
+          {
+            "name": "supplier_id",
+            "sqlType": "NUMBER",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": true
+          },
+          {
+            "name": "supplier_name",
+            "sqlType": "VARCHAR2(100)",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "contact_name",
+            "sqlType": "VARCHAR2(100)",
+            "bsonType": "string",
+            "nullable": true,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "email",
+            "sqlType": "VARCHAR2(100)",
+            "bsonType": "string",
+            "nullable": true,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "phone",
+            "sqlType": "VARCHAR2(20)",
+            "bsonType": "string",
+            "nullable": true,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "status",
+            "sqlType": "VARCHAR2(20)",
+            "bsonType": "string",
+            "nullable": true,
+            "isPrimaryKey": false
+          }
+        ],
+        "primaryKey": [
+          "supplier_id"
+        ],
+        "foreignKeys": [],
+        "rowCount": 0
+      },
+      {
+        "name": "product_categories",
+        "columns": [
+          {
+            "name": "category_id",
+            "sqlType": "NUMBER",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": true
+          },
+          {
+            "name": "category_name",
+            "sqlType": "VARCHAR2(50)",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "description",
+            "sqlType": "VARCHAR2(255)",
+            "bsonType": "string",
+            "nullable": true,
+            "isPrimaryKey": false
+          }
+        ],
+        "primaryKey": [
+          "category_id"
+        ],
+        "foreignKeys": [],
+        "rowCount": 0
+      },
+      {
+        "name": "products",
+        "columns": [
+          {
+            "name": "product_id",
+            "sqlType": "NUMBER",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": true
+          },
+          {
+            "name": "product_name",
+            "sqlType": "VARCHAR2(100)",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "description",
+            "sqlType": "VARCHAR2(500)",
+            "bsonType": "string",
+            "nullable": true,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "category_id",
+            "sqlType": "NUMBER",
+            "bsonType": "string",
+            "nullable": true,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "sku",
+            "sqlType": "VARCHAR2(30)",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "list_price",
+            "sqlType": "NUMBER(10,2)",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "cost_price",
+            "sqlType": "NUMBER(10,2)",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "weight_kg",
+            "sqlType": "NUMBER(6,2)",
+            "bsonType": "string",
+            "nullable": true,
+            "isPrimaryKey": false
+          }
+        ],
+        "primaryKey": [
+          "product_id"
+        ],
+        "foreignKeys": [
+          {
+            "column": "category_id",
+            "referencesTable": "product_categories",
+            "referencesColumn": "category_id"
+          }
+        ],
+        "rowCount": 0
+      },
+      {
+        "name": "warehouses",
+        "columns": [
+          {
+            "name": "warehouse_id",
+            "sqlType": "NUMBER",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": true
+          },
+          {
+            "name": "warehouse_name",
+            "sqlType": "VARCHAR2(50)",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "location_id",
+            "sqlType": "NUMBER",
+            "bsonType": "string",
+            "nullable": true,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "capacity_m3",
+            "sqlType": "NUMBER(10,2)",
+            "bsonType": "string",
+            "nullable": true,
+            "isPrimaryKey": false
+          }
+        ],
+        "primaryKey": [
+          "warehouse_id"
+        ],
+        "foreignKeys": [
+          {
+            "column": "location_id",
+            "referencesTable": "locations",
+            "referencesColumn": "location_id"
+          }
+        ],
+        "rowCount": 0
+      },
+      {
+        "name": "inventories",
+        "columns": [
+          {
+            "name": "warehouse_id",
+            "sqlType": "NUMBER",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "product_id",
+            "sqlType": "NUMBER",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "quantity_on_hand",
+            "sqlType": "NUMBER(8)",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "reorder_level",
+            "sqlType": "NUMBER(8)",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": false
+          }
+        ],
+        "primaryKey": [
+          "warehouse_id",
+          "product_id"
+        ],
+        "foreignKeys": [
+          {
+            "column": "warehouse_id",
+            "referencesTable": "warehouses",
+            "referencesColumn": "warehouse_id"
+          },
+          {
+            "column": "product_id",
+            "referencesTable": "products",
+            "referencesColumn": "product_id"
+          }
+        ],
+        "rowCount": 0
+      },
+      {
+        "name": "supply_orders",
+        "columns": [
+          {
+            "name": "supply_order_id",
+            "sqlType": "NUMBER",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": true
+          },
+          {
+            "name": "supplier_id",
+            "sqlType": "NUMBER",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "warehouse_id",
+            "sqlType": "NUMBER",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "order_date",
+            "sqlType": "TIMESTAMP",
+            "bsonType": "date",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "delivery_date",
+            "sqlType": "DATE",
+            "bsonType": "date",
+            "nullable": true,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "status",
+            "sqlType": "VARCHAR2(20)",
+            "bsonType": "string",
+            "nullable": true,
+            "isPrimaryKey": false
+          }
+        ],
+        "primaryKey": [
+          "supply_order_id"
+        ],
+        "foreignKeys": [
+          {
+            "column": "supplier_id",
+            "referencesTable": "suppliers",
+            "referencesColumn": "supplier_id"
+          },
+          {
+            "column": "warehouse_id",
+            "referencesTable": "warehouses",
+            "referencesColumn": "warehouse_id"
+          }
+        ],
+        "rowCount": 0
+      },
+      {
+        "name": "supply_order_items",
+        "columns": [
+          {
+            "name": "supply_order_id",
+            "sqlType": "NUMBER",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "item_id",
+            "sqlType": "NUMBER",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "product_id",
+            "sqlType": "NUMBER",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "quantity",
+            "sqlType": "NUMBER(8)",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": false
+          },
+          {
+            "name": "unit_cost",
+            "sqlType": "NUMBER(10,2)",
+            "bsonType": "string",
+            "nullable": false,
+            "isPrimaryKey": false
+          }
+        ],
+        "primaryKey": [
+          "supply_order_id",
+          "item_id"
+        ],
+        "foreignKeys": [
+          {
+            "column": "supply_order_id",
+            "referencesTable": "supply_orders",
+            "referencesColumn": "supply_order_id"
+          },
+          {
+            "column": "product_id",
+            "referencesTable": "products",
+            "referencesColumn": "product_id"
+          }
+        ],
+        "rowCount": 0
+      }
+    ],
+    "relationships": [
+      {
+        "parentTable": "locations",
+        "childTable": "company_assets",
+        "fkColumn": "location_id",
+        "avgChildrenPerParent": 0,
+        "maxChildrenPerParent": 0,
+        "isBounded": false
+      },
+      {
+        "parentTable": "employees",
+        "childTable": "user_accounts",
+        "fkColumn": "employee_id",
+        "avgChildrenPerParent": 0,
+        "maxChildrenPerParent": 0,
+        "isBounded": false
+      },
+      {
+        "parentTable": "security_roles",
+        "childTable": "user_accounts",
+        "fkColumn": "role_id",
+        "avgChildrenPerParent": 0,
+        "maxChildrenPerParent": 0,
+        "isBounded": false
+      },
+      {
+        "parentTable": "customers",
+        "childTable": "customer_addresses",
+        "fkColumn": "customer_id",
+        "avgChildrenPerParent": 0,
+        "maxChildrenPerParent": 0,
+        "isBounded": false
+      },
+      {
+        "parentTable": "countries",
+        "childTable": "customer_addresses",
+        "fkColumn": "country_id",
+        "avgChildrenPerParent": 0,
+        "maxChildrenPerParent": 0,
+        "isBounded": false
+      },
+      {
+        "parentTable": "customers",
+        "childTable": "orders",
+        "fkColumn": "customer_id",
+        "avgChildrenPerParent": 0,
+        "maxChildrenPerParent": 0,
+        "isBounded": false
+      },
+      {
+        "parentTable": "employees",
+        "childTable": "orders",
+        "fkColumn": "employee_id",
+        "avgChildrenPerParent": 0,
+        "maxChildrenPerParent": 0,
+        "isBounded": false
+      },
+      {
+        "parentTable": "sales_channels",
+        "childTable": "orders",
+        "fkColumn": "channel_id",
+        "avgChildrenPerParent": 0,
+        "maxChildrenPerParent": 0,
+        "isBounded": false
+      },
+      {
+        "parentTable": "orders",
+        "childTable": "order_items",
+        "fkColumn": "order_id",
+        "avgChildrenPerParent": 0,
+        "maxChildrenPerParent": 0,
+        "isBounded": false
+      },
+      {
+        "parentTable": "products",
+        "childTable": "order_items",
+        "fkColumn": "product_id",
+        "avgChildrenPerParent": 0,
+        "maxChildrenPerParent": 0,
+        "isBounded": false
+      },
+      {
+        "parentTable": "orders",
+        "childTable": "shipments",
+        "fkColumn": "order_id",
+        "avgChildrenPerParent": 0,
+        "maxChildrenPerParent": 0,
+        "isBounded": false
+      },
+      {
+        "parentTable": "customers",
+        "childTable": "customer_loyalty",
+        "fkColumn": "customer_id",
+        "avgChildrenPerParent": 0,
+        "maxChildrenPerParent": 0,
+        "isBounded": false
+      },
+      {
+        "parentTable": "loyalty_programs",
+        "childTable": "customer_loyalty",
+        "fkColumn": "program_id",
+        "avgChildrenPerParent": 0,
+        "maxChildrenPerParent": 0,
+        "isBounded": false
+      },
+      {
+        "parentTable": "customers",
+        "childTable": "support_tickets",
+        "fkColumn": "customer_id",
+        "avgChildrenPerParent": 0,
+        "maxChildrenPerParent": 0,
+        "isBounded": false
+      },
+      {
+        "parentTable": "employees",
+        "childTable": "support_tickets",
+        "fkColumn": "assigned_employee_id",
+        "avgChildrenPerParent": 0,
+        "maxChildrenPerParent": 0,
+        "isBounded": false
+      },
+      {
+        "parentTable": "support_tickets",
+        "childTable": "ticket_comments",
+        "fkColumn": "ticket_id",
+        "avgChildrenPerParent": 0,
+        "maxChildrenPerParent": 0,
+        "isBounded": false
+      },
+      {
+        "parentTable": "regions",
+        "childTable": "countries",
+        "fkColumn": "region_id",
+        "avgChildrenPerParent": 0,
+        "maxChildrenPerParent": 0,
+        "isBounded": false
+      },
+      {
+        "parentTable": "countries",
+        "childTable": "locations",
+        "fkColumn": "country_id",
+        "avgChildrenPerParent": 0,
+        "maxChildrenPerParent": 0,
+        "isBounded": false
+      },
+      {
+        "parentTable": "locations",
+        "childTable": "departments",
+        "fkColumn": "location_id",
+        "avgChildrenPerParent": 0,
+        "maxChildrenPerParent": 0,
+        "isBounded": false
+      },
+      {
+        "parentTable": "jobs",
+        "childTable": "employees",
+        "fkColumn": "job_id",
+        "avgChildrenPerParent": 0,
+        "maxChildrenPerParent": 0,
+        "isBounded": false
+      },
+      {
+        "parentTable": "departments",
+        "childTable": "employees",
+        "fkColumn": "department_id",
+        "avgChildrenPerParent": 0,
+        "maxChildrenPerParent": 0,
+        "isBounded": false
+      },
+      {
+        "parentTable": "employees",
+        "childTable": "employees",
+        "fkColumn": "manager_id",
+        "avgChildrenPerParent": 0,
+        "maxChildrenPerParent": 0,
+        "isBounded": false
+      },
+      {
+        "parentTable": "employees",
+        "childTable": "job_history",
+        "fkColumn": "employee_id",
+        "avgChildrenPerParent": 0,
+        "maxChildrenPerParent": 0,
+        "isBounded": false
+      },
+      {
+        "parentTable": "jobs",
+        "childTable": "job_history",
+        "fkColumn": "job_id",
+        "avgChildrenPerParent": 0,
+        "maxChildrenPerParent": 0,
+        "isBounded": false
+      },
+      {
+        "parentTable": "departments",
+        "childTable": "job_history",
+        "fkColumn": "department_id",
+        "avgChildrenPerParent": 0,
+        "maxChildrenPerParent": 0,
+        "isBounded": false
+      },
+      {
+        "parentTable": "orders",
+        "childTable": "invoices",
+        "fkColumn": "order_id",
+        "avgChildrenPerParent": 0,
+        "maxChildrenPerParent": 0,
+        "isBounded": false
+      },
+      {
+        "parentTable": "invoices",
+        "childTable": "payments",
+        "fkColumn": "invoice_id",
+        "avgChildrenPerParent": 0,
+        "maxChildrenPerParent": 0,
+        "isBounded": false
+      },
+      {
+        "parentTable": "payment_methods",
+        "childTable": "payments",
+        "fkColumn": "method_id",
+        "avgChildrenPerParent": 0,
+        "maxChildrenPerParent": 0,
+        "isBounded": false
+      },
+      {
+        "parentTable": "customers",
+        "childTable": "customer_reviews",
+        "fkColumn": "customer_id",
+        "avgChildrenPerParent": 0,
+        "maxChildrenPerParent": 0,
+        "isBounded": false
+      },
+      {
+        "parentTable": "products",
+        "childTable": "customer_reviews",
+        "fkColumn": "product_id",
+        "avgChildrenPerParent": 0,
+        "maxChildrenPerParent": 0,
+        "isBounded": false
+      },
+      {
+        "parentTable": "product_categories",
+        "childTable": "products",
+        "fkColumn": "category_id",
+        "avgChildrenPerParent": 0,
+        "maxChildrenPerParent": 0,
+        "isBounded": false
+      },
+      {
+        "parentTable": "locations",
+        "childTable": "warehouses",
+        "fkColumn": "location_id",
+        "avgChildrenPerParent": 0,
+        "maxChildrenPerParent": 0,
+        "isBounded": false
+      },
+      {
+        "parentTable": "warehouses",
+        "childTable": "inventories",
+        "fkColumn": "warehouse_id",
+        "avgChildrenPerParent": 0,
+        "maxChildrenPerParent": 0,
+        "isBounded": false
+      },
+      {
+        "parentTable": "products",
+        "childTable": "inventories",
+        "fkColumn": "product_id",
+        "avgChildrenPerParent": 0,
+        "maxChildrenPerParent": 0,
+        "isBounded": false
+      },
+      {
+        "parentTable": "suppliers",
+        "childTable": "supply_orders",
+        "fkColumn": "supplier_id",
+        "avgChildrenPerParent": 0,
+        "maxChildrenPerParent": 0,
+        "isBounded": false
+      },
+      {
+        "parentTable": "warehouses",
+        "childTable": "supply_orders",
+        "fkColumn": "warehouse_id",
+        "avgChildrenPerParent": 0,
+        "maxChildrenPerParent": 0,
+        "isBounded": false
+      },
+      {
+        "parentTable": "supply_orders",
+        "childTable": "supply_order_items",
+        "fkColumn": "supply_order_id",
+        "avgChildrenPerParent": 0,
+        "maxChildrenPerParent": 0,
+        "isBounded": false
+      },
+      {
+        "parentTable": "products",
+        "childTable": "supply_order_items",
+        "fkColumn": "product_id",
+        "avgChildrenPerParent": 0,
+        "maxChildrenPerParent": 0,
+        "isBounded": false
+      }
+    ]
+  },
+  "exportedAt": "2026-06-13T04:11:02.824Z"
+}

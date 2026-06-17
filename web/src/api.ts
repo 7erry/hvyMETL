@@ -232,7 +232,54 @@ export type DesignResult = {
   designReport: string;
   retrievalStrategy: string;
   designMeta: DesignMeta;
+  transformationSummary: import('./transformationSummaryTypes').TransformationSummary;
 };
+
+export type ExplainDesignRequest = ProfileRequestFields & {
+  model: SqlStructuralModel;
+  ddl?: string;
+  dialect?: string;
+  csvSourcePath?: string;
+  plan?: unknown;
+};
+
+export async function explainDesignTransformation(
+  request: ExplainDesignRequest,
+): Promise<import('./transformationSummaryTypes').TransformationSummary> {
+  const res = await fetch(`${base}/api/design/explain`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(request),
+  });
+  if (!res.ok) throw new Error((await res.json()).error ?? res.statusText);
+  return res.json();
+}
+
+export async function fetchPipelineExecutions(
+  limit = 15,
+  mongoUri?: string,
+): Promise<import('./transformationSummaryTypes').PipelineExecutionsResponse> {
+  const params = new URLSearchParams({ limit: String(limit) });
+  if (mongoUri) params.set('mongoUri', mongoUri);
+  const res = await fetch(`${base}/api/pipeline/executions?${params}`);
+  if (!res.ok) throw new Error((await res.json()).error ?? res.statusText);
+  return res.json();
+}
+
+export async function fetchPipelineExecution(
+  executionId: string,
+  mongoUri?: string,
+): Promise<import('./transformationSummaryTypes').PipelineExecutionDetail> {
+  const params = new URLSearchParams();
+  if (mongoUri) params.set('mongoUri', mongoUri);
+  const query = params.toString();
+  const res = await fetch(
+    `${base}/api/pipeline/executions/${encodeURIComponent(executionId)}${query ? `?${query}` : ''}`,
+  );
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error ?? res.statusText);
+  return data.execution as import('./transformationSummaryTypes').PipelineExecutionDetail;
+}
 
 export type DesignRequest = ProfileRequestFields & {
   model: SqlStructuralModel;

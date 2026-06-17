@@ -91,6 +91,8 @@ use **Download repositories** to save the full set.
 | **Templates** | Dropdown (Laravel, Django, Twitter, catalog, iot, cms) → **Load template** |
 | **Customizable ER diagrams** | Drag/zoom canvas, FK edges, minimap (React Flow) |
 | **Before / After toggle** | **Before · SQL** source schema vs **After · MongoDB** migration plan canvas |
+| **Transformation summary** | After view explains why patterns/embeds were or were not applied (profile gates, CSV stats, hub tables, subset vs fold) |
+| **Pipeline history** | Sidebar lists recent runs from `GET /api/pipeline/executions` (requires `MONGODB_URI` on API server) |
 | **Table details** | Click a table on the canvas or in the sidebar list |
 | **Duplicate table** | ⧉ on canvas header or sidebar |
 | **Snap to grid** | Checkbox; hold **Shift** while dragging for free move |
@@ -204,7 +206,10 @@ During `npm run dev:ui`, Vite proxies `/api/*` to the Express server. Endpoints:
 | `GET` | `/api/templates` | Template DDL + parsed model |
 | `POST` | `/api/schema/import-ddl` | Parse pasted DDL |
 | `POST` | `/api/schema/import-sqlite` | Upload `.db` file |
+| `POST` | `/api/design/explain` | Explain pattern decisions for model + optional plan |
 | `POST` | `/api/design` | Run design engine |
+| `GET` | `/api/pipeline/executions?limit=20` | Recent pipeline runs from memory DB |
+| `GET` | `/api/pipeline/executions/:executionId` | One run (plan, design report, manifest) |
 | `POST` | `/api/export/migration` | Migration plan + design report |
 | `POST` | `/api/export/prompts` | RAG prompt bundle |
 

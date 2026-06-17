@@ -5,7 +5,8 @@ import { SchemaCanvas, deleteTableFromModel, duplicateTableInModel } from './com
 import { MongoSchemaCanvas } from './components/MongoSchemaCanvas';
 import { TableDetails } from './components/TableDetails';
 import { CollectionDetails } from './components/CollectionDetails';
-import { SchemaPhaseToggle } from './components/SchemaPhaseToggle';
+import { TransformationSummaryPanel } from './components/TransformationSummaryPanel';
+import { PipelineHistoryPanel } from './components/PipelineHistoryPanel';
 import type { SchemaPhase } from './components/SchemaPhaseToggle';
 import { ResizableSplit } from './components/ResizableSplit';
 import { PipelinePanel } from './components/PipelinePanel';
@@ -22,6 +23,7 @@ import {
   importSqlite,
   runDesign,
   runDesignWithCsv,
+  explainDesignTransformation,
   type DesignMeta,
   type DiagramExport,
   type MongoDiagramExport,
@@ -45,6 +47,7 @@ import {
 } from './migrationPlanDisplay';
 import { pickCsvDirectory } from './directoryPicker';
 import type { CollectionPlan, MigrationPlan } from './migrationPlanTypes';
+import type { PipelineExecutionDetail } from './transformationSummaryTypes';
 import type { Dialect, Profile, SqlStructuralModel } from './types';
 
 export default function App() {
@@ -55,6 +58,7 @@ export default function App() {
   const [status, setStatus] = useState('');
   const [exporting, setExporting] = useState(false);
   const [designingPlan, setDesigningPlan] = useState(false);
+  const [explainingSummary, setExplainingSummary] = useState(false);
   const [designCsvFiles, setDesignCsvFiles] = useState<File[]>([]);
   const [designCsvLabel, setDesignCsvLabel] = useState<string | null>(null);
   const [pipelineOpen, setPipelineOpen] = useState(false);
@@ -351,6 +355,79 @@ export default function App() {
     reader.readAsText(file);
   };
 
+  const handleRefreshExplanation = async () => {
+    if (!model || !migrationPlan) return;
+    try {
+      setExplainingSummary(true);
+      const summary = await explainDesignTransformation({
+        model,
+        ddl,
+        dialect,
+        ...profileFields,
+        plan: migrationPlan,
+        csvSourcePath:
+          designCsvFiles.length === 0 && csvSourcePath?.trim() ? csvSourcePath.trim() : undefined,
+      });
+      setSession((prev) => ({
+        ...prev,
+        migrationArtifacts: prev.migrationArtifacts
+          ? { ...prev.migrationArtifacts, transformationSummary: summary }
+          : null,
+      }));
+      setStatus('Transformation summary updated.');
+    } catch (e) {
+      setStatus(`Explain failed: ${String(e)}`);
+    } finally {
+      setExplainingSummary(false);
+    }
+  };
+
+  const handleLoadPipelineExecution = (execution: PipelineExecutionDetail) => {
+    const plan = execution.migrationPlan as MigrationPlan;
+    const artifacts: MigrationArtifacts = {
+      planJson: JSON.stringify(plan, null, 2),
+      designReportMarkdown: execution.designReport,
+      prompts: [],
+      retrievalStrategy: execution.retrievalStrategy,
+      generatedAt: execution.completedAt,
+      designMeta: model ? designMetaFromPlan(model, plan) : undefined,
+      pipelineResult: {
+        ok: execution.ok,
+        imports: execution.imports.map((entry) => ({
+          collection: entry.collection,
+          ok: entry.ok,
+          insertedCount: entry.insertedCount,
+          error: entry.error,
+        })),
+        outDir: execution.outDir,
+      },
+    };
+    setSession((prev) => ({
+      ...prev,
+      migrationArtifacts: artifacts,
+      schemaPhase: 'after',
+      selectedCollection: null,
+      collectionPositions: initialCollectionPositions(plan, prev.positions, {}),
+    }));
+    setStatus(`Loaded pipeline run ${execution.executionId}.`);
+    if (model) {
+      void explainDesignTransformation({
+        model,
+        ddl,
+        dialect,
+        ...profileFields,
+        plan,
+      }).then((summary) => {
+        setSession((prev) => ({
+          ...prev,
+          migrationArtifacts: prev.migrationArtifacts
+            ? { ...prev.migrationArtifacts, transformationSummary: summary }
+            : null,
+        }));
+      });
+    }
+  };
+
   const handleGeneratePlan = async () => {
     if (!model) return;
     try {
@@ -378,6 +455,7 @@ export default function App() {
           prompts: prev.migrationArtifacts?.prompts ?? [],
           retrievalStrategy: result.retrievalStrategy ?? prev.migrationArtifacts?.retrievalStrategy,
           designMeta: meta,
+          transformationSummary: result.transformationSummary,
           generatedAt: new Date().toISOString(),
           repositories: prev.migrationArtifacts?.repositories,
           pipelineResult: prev.migrationArtifacts?.pipelineResult,
@@ -657,6 +735,14 @@ export default function App() {
                   </div>
                 )}
 
+                {schemaPhase === 'after' ? (
+                  <TransformationSummaryPanel
+                    summary={migrationArtifacts?.transformationSummary ?? null}
+                    onRefresh={() => void handleRefreshExplanation()}
+                    refreshing={explainingSummary}
+                  />
+                ) : null}
+
                 {schemaPhase === 'before' ? (
                   <div className="panel" style={{ marginBottom: '0.75rem' }}>
                     <h3>Templates</h3>
@@ -830,6 +916,8 @@ export default function App() {
                     </div>
                   </div>
                 )}
+
+                <PipelineHistoryPanel onLoadExecution={handleLoadPipelineExecution} />
 
                 <div className="panel">
                   <h3>Session</h3>

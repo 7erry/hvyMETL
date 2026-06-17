@@ -8,8 +8,10 @@ import type { DesignFromModelResult } from '../design/designFromModel.js';
 import { designFromModelWithMlEngine } from '../ml_engine/pipelinePatch.js';
 import { configureMigrationStore, resolveMemoryDbName } from '../ml_engine/migrationStore.js';
 import type { MigrationPlan, SqlStructuralModel, WorkloadProfile } from '../types.js';
+import { buildMigrationPlan } from '../design/patternSelector.js';
 import { enrichModelFromCsv } from '../utilities/csvModelEnrichment.js';
 import { resolveCsvSourcePath } from '../utilities/csvSource.js';
+import { explainTransformation, type TransformationSummary } from '../design/explainTransformation.js';
 
 /** Summary of SQL → MongoDB transformation for the After diagram. */
 export type DesignMeta = {
@@ -66,11 +68,16 @@ function configureDesignMigrationStore(env: NodeJS.ProcessEnv): void {
   }
 }
 
-/** Run ML-enhanced design with optional CSV enrichment for row/cardinality stats. */
-export async function runDesignForModel(
-  request: DesignRequest,
-): Promise<DesignFromModelResult & { designMeta: DesignMeta }> {
-  const env = request.env ?? process.env;
+export type DesignRunResult = DesignFromModelResult & {
+  designMeta: DesignMeta;
+  transformationSummary: TransformationSummary;
+};
+
+function enrichModelForDesign(request: DesignRequest, env: NodeJS.ProcessEnv): {
+  modelForDesign: SqlStructuralModel;
+  enrichedModel: SqlStructuralModel;
+  resolvedCsvRoot?: string;
+} {
   const modelForDesign: SqlStructuralModel = request.dialect?.trim()
     ? { ...request.model, source: `ddl:${request.dialect.trim()}` }
     : request.model;
@@ -85,6 +92,25 @@ export async function runDesignForModel(
     }
   }
 
+  return { modelForDesign, enrichedModel, resolvedCsvRoot };
+}
+
+/** Explain pattern decisions without running the ML design engine. */
+export function explainDesignRequest(request: DesignRequest, plan?: MigrationPlan): TransformationSummary {
+  const env = request.env ?? process.env;
+  const { enrichedModel, resolvedCsvRoot } = enrichModelForDesign(request, env);
+  const migrationPlan = plan ?? buildMigrationPlan(enrichedModel, request.profile);
+  const designMeta = buildDesignMeta(request.model, enrichedModel, migrationPlan, resolvedCsvRoot);
+  return explainTransformation(request.model, enrichedModel, migrationPlan, request.profile, {
+    csvEnriched: designMeta.csvEnriched,
+  });
+}
+
+/** Run ML-enhanced design with optional CSV enrichment for row/cardinality stats. */
+export async function runDesignForModel(request: DesignRequest): Promise<DesignRunResult> {
+  const env = request.env ?? process.env;
+  const { enrichedModel, resolvedCsvRoot } = enrichModelForDesign(request, env);
+
   configureDesignMigrationStore(env);
 
   const mlDesign = await designFromModelWithMlEngine(enrichedModel, request.profile, request.knowledgeDir, {
@@ -93,11 +119,15 @@ export async function runDesignForModel(
   });
 
   const designMeta = buildDesignMeta(request.model, enrichedModel, mlDesign.plan, resolvedCsvRoot);
+  const transformationSummary = explainTransformation(request.model, enrichedModel, mlDesign.plan, request.profile, {
+    csvEnriched: designMeta.csvEnriched,
+  });
 
   return {
     plan: mlDesign.plan,
     designReport: mlDesign.designReport,
     retrievalStrategy: mlDesign.retrievalStrategy,
     designMeta,
+    transformationSummary,
   };
 }

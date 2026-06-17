@@ -12,7 +12,7 @@ import { fileURLToPath } from 'node:url';
 import { createSqliteAdapter } from '../adapters/sqlite.js';
 import { DIALECTS } from '../dialects.js';
 import { writeDesignArtifacts } from '../design/designFromModel.js';
-import { runDesignForModel } from './runDesign.js';
+import { explainDesignRequest, runDesignForModel } from './runDesign.js';
 import { ALL_PROFILES, buildCustomProfileFromInput, getProfile } from '../profiles/profiles.js';
 import { resolveWorkloadProfile } from '../profiles/resolveProfile.js';
 import { inferWorkloadProfile } from '../profiles/inferProfile.js';
@@ -199,6 +199,36 @@ app.post('/api/design/with-csv', (req, res) => {
       res.status(500).json({ error: String(error) });
     }
   });
+});
+
+/** Explain why patterns/embeds were applied for a model + plan (no ML re-run). */
+app.post('/api/design/explain', (req, res) => {
+  try {
+    let model: SqlStructuralModel;
+    if (req.body?.ddl) {
+      model = parseDdlToModel(String(req.body.ddl), `ddl:${req.body?.dialect ?? 'import'}`);
+    } else if (req.body?.model) {
+      model = req.body.model as SqlStructuralModel;
+    } else {
+      res.status(400).json({ error: 'Provide ddl or model in body' });
+      return;
+    }
+    const profile = resolveWorkloadProfile(req.body);
+    const plan = req.body?.plan as MigrationPlan | undefined;
+    const summary = explainDesignRequest(
+      {
+        model,
+        profile,
+        knowledgeDir: KNOWLEDGE_DIR,
+        csvSourcePath: req.body?.csvSourcePath as string | undefined,
+        dialect: req.body?.dialect as string | undefined,
+      },
+      plan,
+    );
+    res.json(summary);
+  } catch (error) {
+    res.status(500).json({ error: String(error) });
+  }
 });
 
 /** Export migration artifacts (plan JSON + design report markdown). */

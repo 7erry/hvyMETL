@@ -22,6 +22,7 @@ import { fileURLToPath } from 'node:url';
 import { ALL_PROFILES, buildCustomProfile, getProfile } from './profiles/profiles.js';
 import type { WorkloadProfile } from './types.js';
 import { runDesign } from './design/designCommand.js';
+import { runExplain } from './design/explainCommand.js';
 import { runEtl, MAX_PARALLEL_WORKERS } from './etl/runEtl.js';
 import { runRepogen } from './repogen/generate.js';
 import { createSqliteAdapter } from './adapters/sqlite.js';
@@ -123,10 +124,65 @@ withProfileFlags(
     .command('design')
     .description('Introspect a SQL source and emit migration-plan.json + design-report.md')
     .requiredOption('--source <path>', 'path to the source SQLite database')
-    .option('--out <dir>', 'output folder', DEFAULT_OUT_DIR),
-).action(async (flags: ProfileFlags & { source: string; out: string }) => {
+    .option('--out <dir>', 'output folder', DEFAULT_OUT_DIR)
+    .option('--explain', 'also write transformation-summary.md explaining pattern decisions', false)
+    .option('--csv <dir>', 'CSV export directory for row count / cardinality enrichment'),
+).action(async (flags: ProfileFlags & { source: string; out: string; explain: boolean; csv?: string }) => {
   const profile = await resolveProfile(flags);
-  await runDesign({ sourcePath: flags.source, profile, outDir: flags.out, knowledgeDir: KNOWLEDGE_DIR });
+  await runDesign({
+    sourcePath: flags.source,
+    profile,
+    outDir: flags.out,
+    knowledgeDir: KNOWLEDGE_DIR,
+  });
+  if (flags.explain) {
+    runExplain({
+      profile,
+      sourcePath: flags.source,
+      csvSourcePath: flags.csv,
+      outDir: flags.out,
+    });
+    console.log(`Wrote ${join(flags.out, 'transformation-summary.md')}`);
+  }
+});
+
+withProfileFlags(
+  program
+    .command('explain')
+    .description('Explain why MongoDB patterns and embeds were or were not applied')
+    .option('--source <path>', 'path to the source SQLite database')
+    .option('--ddl-file <path>', 'path to a .sql / .ddl file')
+    .option('--plan <path>', 'existing migration-plan.json (optional)')
+    .option('--csv <dir>', 'CSV export directory for enrichment')
+    .option('--dialect <id>', 'SQL dialect label when using --ddl-file', 'mysql')
+    .option('--out <dir>', 'write transformation-summary.md to this folder'),
+).action(async (flags: ProfileFlags & {
+  source?: string;
+  ddlFile?: string;
+  plan?: string;
+  csv?: string;
+  dialect: string;
+  out?: string;
+}) => {
+  const profile = await resolveProfile(flags);
+  const summary = runExplain({
+    profile,
+    sourcePath: flags.source,
+    ddlPath: flags.ddlFile,
+    planPath: flags.plan,
+    csvSourcePath: flags.csv,
+    dialect: flags.dialect,
+    outDir: flags.out,
+  });
+  console.log(summary.headline);
+  for (const insight of summary.insights) {
+    const prefix = insight.severity === 'warn' ? '⚠' : insight.severity === 'success' ? '✓' : '·';
+    console.log(`${prefix} ${insight.title}`);
+    console.log(`  ${insight.body}`);
+  }
+  if (flags.out) {
+    console.log(`Wrote ${join(flags.out, 'transformation-summary.md')}`);
+  }
 });
 
 withProfileFlags(

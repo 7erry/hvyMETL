@@ -1151,3 +1151,131 @@ textarea {
   flex-shrink: 0;
 }
 
+.transformation-summary__header,
+.pipeline-history__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.35rem;
+}
+
+.transformation-summary__headline {
+  margin: 0 0 0.35rem;
+  font-size: 0.85rem;
+  color: var(--mdb-spring-green);
+}
+
+.transformation-summary__meta {
+  margin: 0 0 0.75rem;
+  font-size: 0.72rem;
+  opacity: 0.85;
+}
+
+.transformation-insights {
+  list-style: none;
+  margin: 0 0 0.75rem;
+  padding: 0;
+}
+
+.transformation-insight {
+  margin-bottom: 0.6rem;
+  padding: 0.5rem 0.65rem;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  background: rgba(0, 104, 74, 0.25);
+}
+
+.transformation-insight strong {
+  display: block;
+  margin-bottom: 0.25rem;
+}
+
+.transformation-insight p {
+  margin: 0;
+  opacity: 0.9;
+  line-height: 1.4;
+}
+
+.transformation-insight--warn {
+  background: rgba(255, 179, 71, 0.12);
+  border: 1px solid rgba(255, 179, 71, 0.35);
+}
+
+.transformation-insight--success {
+  background: rgba(0, 237, 100, 0.08);
+  border: 1px solid rgba(0, 237, 100, 0.25);
+}
+
+.transformation-collections summary {
+  cursor: pointer;
+  font-size: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.transformation-collections ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-size: 0.72rem;
+}
+
+.transformation-collections li {
+  margin-bottom: 0.65rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid rgba(0, 104, 74, 0.5);
+}
+
+.transformation-collections__patterns,
+.transformation-collections__embeds {
+  display: block;
+  opacity: 0.8;
+  margin-top: 0.15rem;
+}
+
+.transformation-collections__notes {
+  margin: 0.35rem 0 0;
+  padding-left: 1rem;
+  opacity: 0.85;
+}
+
+.pipeline-history__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.pipeline-history__item {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.75rem;
+  align-items: center;
+  width: 100%;
+  text-align: left;
+  padding: 0.45rem 0.35rem;
+  border: none;
+  background: transparent;
+  color: var(--mdb-spring-green);
+  font-size: 0.72rem;
+  cursor: pointer;
+  border-bottom: 1px solid rgba(0, 104, 74, 0.45);
+}
+
+.pipeline-history__item:hover {
+  background: rgba(0, 104, 74, 0.25);
+}
+
+.pipeline-history__ok {
+  color: #00ed64;
+}
+
+.pipeline-history__fail {
+  color: #ffb347;
+}
+
+.pipeline-history__error {
+  color: #ffb347;
+  font-size: 0.72rem;
+  margin: 0 0 0.5rem;
+}
+

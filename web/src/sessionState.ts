@@ -31,6 +31,7 @@ export type MigrationArtifacts = {
     csvEnriched: boolean;
     hasRowStats: boolean;
   };
+  transformationSummary?: import('./transformationSummaryTypes').TransformationSummary;
   repositories?: RepositoryArtifact;
   pipelineResult?: {
     ok: boolean;
