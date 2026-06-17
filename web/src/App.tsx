@@ -7,6 +7,7 @@ import { TableDetails } from './components/TableDetails';
 import { CollectionDetails } from './components/CollectionDetails';
 import { TransformationSummaryPanel } from './components/TransformationSummaryPanel';
 import { PipelineHistoryPanel } from './components/PipelineHistoryPanel';
+import { SchemaPhaseToggle } from './components/SchemaPhaseToggle';
 import type { SchemaPhase } from './components/SchemaPhaseToggle';
 import { ResizableSplit } from './components/ResizableSplit';
 import { PipelinePanel } from './components/PipelinePanel';
