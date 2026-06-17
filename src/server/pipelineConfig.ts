@@ -30,7 +30,12 @@ export type PipelineConfigStatus = {
 /** Build a UI-safe summary of what is configured vs missing. */
 export function getPipelineConfigStatus(
   env: NodeJS.ProcessEnv = process.env,
-  options?: { schemaDialect?: string; csvSourcePath?: string; csvToAtlasPath?: string },
+  options?: {
+    schemaDialect?: string;
+    csvSourcePath?: string;
+    csvToAtlasPath?: string;
+    generateMockCsv?: boolean;
+  },
 ): PipelineConfigStatus {
   const hasMongoUri = Boolean(env.MONGODB_URI?.trim());
   const csvToAtlasPath =
@@ -51,7 +56,9 @@ export function getPipelineConfigStatus(
   const missing: string[] = [];
   if (!hasMongoUri) missing.push('MONGODB_URI');
   if (!csvToAtlasValidation.ok) missing.push('CSV_TO_ATLAS_PATH');
-  if (!hasCsvSource) missing.push('HVYMETL_CSV_SOURCE or CSV export directory');
+  if (!hasCsvSource && !options?.generateMockCsv) {
+    missing.push('HVYMETL_CSV_SOURCE or CSV export directory (or enable mock CSV generation)');
+  }
 
   return {
     hasMongoUri,

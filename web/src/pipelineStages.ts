@@ -1,6 +1,7 @@
 /** Pipeline progress stages (mirrors server pipelineProgress.ts). */
 export type PipelineProgressStage =
   | 'validating'
+  | 'generating'
   | 'enriching'
   | 'designing'
   | 'artifacts'
@@ -20,6 +21,7 @@ export type PipelineProgressEvent = {
 
 export const PIPELINE_PROGRESS_STAGES: { stage: PipelineProgressStage; label: string }[] = [
   { stage: 'validating', label: 'Validate configuration' },
+  { stage: 'generating', label: 'Generate mock CSV from DDL' },
   { stage: 'enriching', label: 'Enrich schema from CSV' },
   { stage: 'designing', label: 'ML-enhanced design' },
   { stage: 'artifacts', label: 'Write migration artifacts' },

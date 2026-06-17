@@ -5,7 +5,7 @@ Source: [`src/cli.ts`](../src/cli.ts)
 ## 1. High-Level Summary
 
 `src/cli.ts` is the single entry point that wires every pipeline stage into a
-`commander`-based command-line interface with six subcommands (`profiles`, `design`, `explain`,
+`commander`-based command-line interface with seven subcommands (`profiles`, `design`, `mock-csv`, `explain`,
 `prompt`, `etl`, `repogen`). Architecturally it is a thin orchestration shell: it
 parses flags, resolves the runtime workload profile (interactively when none is
 given), and delegates all real work to the stage modules. CSV imports use the external
@@ -20,6 +20,7 @@ given), and delegates all real work to the stage modules. CSV imports use the ex
 | --- | --- | --- |
 | `profiles` | List the eight built-in workload profiles and their tuning | — |
 | `design` | Introspect a SQL source and emit `migration-plan.json` + `design-report.md` | `--source <path>` (required), `--out <dir>`, `--explain`, `--csv <dir>`, profile flags |
+| `mock-csv` | Generate one mock CSV per `CREATE TABLE` from DDL (Python + Faker) | `--ddl-file <path>` (required), `--out <dir>`, `--rows`, `--child-multiplier`, `--min-rows`, `--max-rows`, `--seed` |
 | `explain` | Explain why patterns/embeds were or were not applied | `--source <path>` or `--ddl-file <path>`, `--plan <path>`, `--csv <dir>`, `--out <dir>`, profile flags |
 | `prompt` | Emit the three RAG-grounded production prompts as markdown | `--source <path>` (required), `--out <dir>`, profile flags |
 | `etl` | Run the parallel pattern-aware extraction to CSV chunks | `--plan <path>`, `--out <dir>`, `--dry-run`, `--workers <n>` |

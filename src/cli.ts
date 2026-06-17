@@ -5,6 +5,8 @@
  * Subcommands:
  *   profiles   list the built-in workload profiles
  *   design     introspect a SQL source and emit a pattern-driven migration plan
+ *   mock-csv   generate mock CSV files from DDL (one per CREATE TABLE)
+ *   explain    explain MongoDB pattern decisions for a schema
  *   prompt     assemble the three RAG-grounded production prompts
  *   etl        run the parallel pattern-aware extraction to CSV chunks
  *   repogen    generate the concurrency-safe repository layer from a plan
@@ -23,6 +25,7 @@ import { ALL_PROFILES, buildCustomProfile, getProfile } from './profiles/profile
 import type { WorkloadProfile } from './types.js';
 import { runDesign } from './design/designCommand.js';
 import { runExplain } from './design/explainCommand.js';
+import { runMockCsv } from './utilities/mockCsvCommand.js';
 import { runEtl, MAX_PARALLEL_WORKERS } from './etl/runEtl.js';
 import { runRepogen } from './repogen/generate.js';
 import { createSqliteAdapter } from './adapters/sqlite.js';
@@ -145,6 +148,37 @@ withProfileFlags(
     console.log(`Wrote ${join(flags.out, 'transformation-summary.md')}`);
   }
 });
+
+program
+  .command('mock-csv')
+  .description('Generate mock CSV files from DDL (one file per CREATE TABLE; requires Python + generators/requirements.txt)')
+  .requiredOption('--ddl-file <path>', 'path to a .sql / .ddl file')
+  .option('--out <dir>', 'output directory for CSV files', join(DEFAULT_OUT_DIR, 'mock-csv'))
+  .option('--rows <n>', 'base rows per root table (default 500)', '500')
+  .option('--child-multiplier <n>', 'row multiplier for FK child tables (default 3)', '3')
+  .option('--min-rows <n>', 'minimum rows per table (default 50)', '50')
+  .option('--max-rows <n>', 'maximum rows per table (default 10000)', '10000')
+  .option('--seed <n>', 'random seed (default 42)', '42')
+  .action((flags: {
+    ddlFile: string;
+    out: string;
+    rows: string;
+    childMultiplier: string;
+    minRows: string;
+    maxRows: string;
+    seed: string;
+  }) => {
+    runMockCsv({
+      ddlFile: flags.ddlFile,
+      outDir: flags.out,
+      rootDir: ROOT_DIR,
+      baseRows: Number(flags.rows),
+      childMultiplier: Number(flags.childMultiplier),
+      minRows: Number(flags.minRows),
+      maxRows: Number(flags.maxRows),
+      seed: Number(flags.seed),
+    });
+  });
 
 withProfileFlags(
   program

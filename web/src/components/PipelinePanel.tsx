@@ -35,6 +35,10 @@ type PipelineForm = {
   targetDb: string;
   csvSourcePath: string;
   drop: boolean;
+  generateMockCsv: boolean;
+  mockBaseRows: number;
+  mockChildMultiplier: number;
+  mockSeed: number;
 };
 
 export function PipelinePanel({
@@ -63,6 +67,10 @@ export function PipelinePanel({
     targetDb: 'csv_to_atlas',
     csvSourcePath: csvSourcePath ?? '',
     drop: true,
+    generateMockCsv: false,
+    mockBaseRows: 500,
+    mockChildMultiplier: 3,
+    mockSeed: 42,
   });
 
   const refreshConfig = useCallback(async () => {
@@ -72,6 +80,7 @@ export function PipelinePanel({
         schemaDialect: dialect,
         csvSourcePath: form.csvSourcePath || csvSourcePath || undefined,
         csvToAtlasPath: form.csvToAtlasPath.trim() || undefined,
+        generateMockCsv: form.generateMockCsv,
       });
       setConfig(status);
       setForm((prev) => ({
@@ -90,7 +99,7 @@ export function PipelinePanel({
     } finally {
       setLoadingConfig(false);
     }
-  }, [dialect, csvSourcePath, form.csvSourcePath, form.csvToAtlasPath]);
+  }, [dialect, csvSourcePath, form.csvSourcePath, form.csvToAtlasPath, form.generateMockCsv]);
 
   useEffect(() => {
     if (!open) return;
@@ -99,6 +108,11 @@ export function PipelinePanel({
     setProgress(null);
     setCsvFiles([]);
     setCsvDirectoryLabel(null);
+    const noCsv = !csvSourcePath?.trim();
+    setForm((prev) => ({
+      ...prev,
+      generateMockCsv: noCsv ? true : prev.generateMockCsv,
+    }));
     void refreshConfig();
     // Only re-run when the panel opens — path changes use the debounced validator below.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -120,6 +134,7 @@ export function PipelinePanel({
 
   const effectiveCsvPath = form.csvSourcePath.trim() || csvSourcePath || config?.csvSourcePath || '';
   const hasCsvSource = Boolean(config?.hasCsvSource || effectiveCsvPath || csvFiles.length > 0);
+  const useMockCsv = form.generateMockCsv;
 
   const envMongoUri = Boolean(config?.hasMongoUri);
   const envCsvToAtlas = Boolean(config?.hasCsvToAtlas);
@@ -171,9 +186,9 @@ export function PipelinePanel({
     if (running || !model) return false;
     if (!hasMongoUri) return false;
     if (!hasCsvToAtlas) return false;
-    if (!hasCsvSource) return false;
+    if (!hasCsvSource && !useMockCsv) return false;
     return true;
-  }, [running, model, hasMongoUri, hasCsvToAtlas, hasCsvSource]);
+  }, [running, model, hasMongoUri, hasCsvToAtlas, hasCsvSource, useMockCsv]);
 
   const handleRun = async () => {
     setRunning(true);
@@ -190,13 +205,22 @@ export function PipelinePanel({
         drop: form.drop,
         mongoUri: resolveMongoUriOverride(),
         csvToAtlasPath: form.csvToAtlasPath.trim() || undefined,
-        csvSourcePath: csvFiles.length === 0 && effectiveCsvPath ? effectiveCsvPath : undefined,
+        csvSourcePath:
+          useMockCsv || csvFiles.length > 0 ? undefined : effectiveCsvPath ? effectiveCsvPath : undefined,
+        generateMockCsv: useMockCsv,
+        mockCsvOptions: useMockCsv
+          ? {
+              baseRowsPerTable: form.mockBaseRows,
+              childMultiplier: form.mockChildMultiplier,
+              seed: form.mockSeed,
+            }
+          : undefined,
       };
 
       const onProgress = (event: PipelineProgressEvent) => setProgress(event);
 
       const pipelineResult =
-        csvFiles.length > 0
+        csvFiles.length > 0 && !useMockCsv
           ? await runPipelineWithCsv(csvFiles, overrides, onProgress)
           : await runPipeline(overrides, onProgress);
 
@@ -248,11 +272,13 @@ export function PipelinePanel({
             <li className={config.hasCsvToAtlas ? 'ok' : 'missing'}>
               CSV_TO_ATLAS_PATH {config.hasCsvToAtlas ? `✓ ${config.csvToAtlasLabel ?? ''}` : '— required'}
             </li>
-            <li className={hasCsvSource ? 'ok' : 'missing'}>
+            <li className={hasCsvSource || useMockCsv ? 'ok' : 'missing'}>
               CSV data source{' '}
-              {hasCsvSource
-                ? `✓ ${csvDirectoryLabel && csvFiles.length ? `${csvDirectoryLabel} (${csvFiles.length} CSVs)` : effectiveCsvPath}`
-                : '— choose a CSV folder or enter a server path'}
+              {useMockCsv
+                ? '✓ mock data from DDL'
+                : hasCsvSource
+                  ? `✓ ${csvDirectoryLabel && csvFiles.length ? `${csvDirectoryLabel} (${csvFiles.length} CSVs)` : effectiveCsvPath}`
+                  : '— choose a CSV folder, enter a server path, or enable mock CSV'}
             </li>
           </ul>
         ) : null}
@@ -332,6 +358,61 @@ export function PipelinePanel({
               </span>
             )}
           </label>
+
+          <label style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', marginTop: '0.75rem' }}>
+            <input
+              type="checkbox"
+              checked={form.generateMockCsv}
+              disabled={running}
+              onChange={(e) => setForm((prev) => ({ ...prev, generateMockCsv: e.target.checked }))}
+            />
+            Generate mock CSV from DDL (no export folder required)
+          </label>
+
+          {form.generateMockCsv ? (
+            <div className="pipeline-mock-sizing" style={{ display: 'grid', gap: '0.5rem', marginTop: '0.5rem' }}>
+              <label>
+                Rows per root table
+                <input
+                  type="number"
+                  min={10}
+                  max={50000}
+                  value={form.mockBaseRows}
+                  disabled={running}
+                  onChange={(e) =>
+                    setForm((prev) => ({ ...prev, mockBaseRows: Number(e.target.value) || 500 }))
+                  }
+                />
+              </label>
+              <label>
+                Child table multiplier
+                <input
+                  type="number"
+                  min={1}
+                  max={20}
+                  step={0.5}
+                  value={form.mockChildMultiplier}
+                  disabled={running}
+                  onChange={(e) =>
+                    setForm((prev) => ({ ...prev, mockChildMultiplier: Number(e.target.value) || 3 }))
+                  }
+                />
+              </label>
+              <label>
+                Random seed
+                <input
+                  type="number"
+                  value={form.mockSeed}
+                  disabled={running}
+                  onChange={(e) => setForm((prev) => ({ ...prev, mockSeed: Number(e.target.value) || 42 }))}
+                />
+              </label>
+              <span className="pipeline-hint">
+                One CSV per CREATE TABLE; foreign keys reference parent IDs. Requires Python 3 + pip install -r
+                generators/requirements.txt on the API server.
+              </span>
+            </div>
+          ) : null}
 
           <label>
             Target database

@@ -84,11 +84,21 @@ export type PipelineRunResult = {
   designReportMarkdown?: string;
 };
 
+export type MockCsvOptions = {
+  baseRowsPerTable?: number;
+  childMultiplier?: number;
+  minRows?: number;
+  maxRows?: number;
+  seed?: number;
+};
+
 export type PipelineRunRequest = ProfileRequestFields & {
   model: SqlStructuralModel;
   ddl: string;
   dialect?: string;
   csvSourcePath?: string;
+  generateMockCsv?: boolean;
+  mockCsvOptions?: MockCsvOptions;
   targetDb?: string;
   drop?: boolean;
   mongoUri?: string;
@@ -189,6 +199,8 @@ export async function runPipelineWithCsv(
   if (request.drop === false) body.append('drop', 'false');
   if (request.mongoUri) body.append('mongoUri', request.mongoUri);
   if (request.csvToAtlasPath) body.append('csvToAtlasPath', request.csvToAtlasPath);
+  if (request.generateMockCsv) body.append('generateMockCsv', 'true');
+  if (request.mockCsvOptions) body.append('mockCsvOptions', JSON.stringify(request.mockCsvOptions));
   if (onProgress) body.append('stream', 'true');
 
   const res = await fetch(`${base}/api/pipeline/run-with-csv`, { method: 'POST', body });
@@ -206,11 +218,13 @@ export async function fetchPipelineConfig(options?: {
   schemaDialect?: string;
   csvSourcePath?: string;
   csvToAtlasPath?: string;
+  generateMockCsv?: boolean;
 }): Promise<PipelineConfigStatus> {
   const params = new URLSearchParams();
   if (options?.schemaDialect) params.set('schemaDialect', options.schemaDialect);
   if (options?.csvSourcePath) params.set('csvSourcePath', options.csvSourcePath);
   if (options?.csvToAtlasPath) params.set('csvToAtlasPath', options.csvToAtlasPath);
+  if (options?.generateMockCsv) params.set('generateMockCsv', 'true');
   const query = params.toString();
   const res = await fetch(`${base}/api/pipeline/config${query ? `?${query}` : ''}`);
   if (!res.ok) throw new Error((await res.json()).error ?? res.statusText);

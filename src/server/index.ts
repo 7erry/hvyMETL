@@ -20,6 +20,7 @@ import { loadKnowledgeBase } from '../rag/chunker.js';
 import { createRetrievalConfigFromEnv, retrieve } from '../rag/retrieval.js';
 import { buildPromptBundle, buildRetrievalQuery } from '../rag/promptBundle.js';
 import { parseDdlToModel } from '../utilities/ddlParser.js';
+import { generateMockCsvFromDdl } from '../utilities/mockCsvFromDdl.js';
 import type { MigrationPlan, SqlStructuralModel } from '../types.js';
 import { getPipelineConfigStatus } from './pipelineConfig.js';
 import { runFullPipeline } from './runPipeline.js';
@@ -334,7 +335,8 @@ app.get('/api/pipeline/config', (req, res) => {
   const schemaDialect = String(req.query?.schemaDialect ?? req.query?.dialect ?? '').trim() || undefined;
   const csvSourcePath = String(req.query?.csvSourcePath ?? req.query?.importedSourcePath ?? '').trim() || undefined;
   const csvToAtlasPath = String(req.query?.csvToAtlasPath ?? '').trim() || undefined;
-  res.json(getPipelineConfigStatus(process.env, { schemaDialect, csvSourcePath, csvToAtlasPath }));
+  const generateMockCsv = req.query?.generateMockCsv === 'true' || req.query?.generateMockCsv === '1';
+  res.json(getPipelineConfigStatus(process.env, { schemaDialect, csvSourcePath, csvToAtlasPath, generateMockCsv }));
 });
 
 /** List recent pipeline executions stored in MongoDB (newest first). */
@@ -426,6 +428,8 @@ app.post('/api/pipeline/run', async (req, res) => {
       ddl,
       dialect: req.body?.dialect as string | undefined,
       csvSourcePath: req.body?.csvSourcePath as string | undefined,
+      generateMockCsv: Boolean(req.body?.generateMockCsv),
+      mockCsvOptions: req.body?.mockCsvOptions as import('../utilities/mockCsvFromDdl.js').MockCsvOptions | undefined,
       targetDb: req.body?.targetDb as string | undefined,
       drop: req.body?.drop !== false,
       mongoUri: req.body?.mongoUri as string | undefined,
@@ -493,6 +497,10 @@ app.post('/api/pipeline/run-with-csv', (req, res) => {
         ddl,
         dialect: req.body?.dialect as string | undefined,
         csvSourcePath: batchDir,
+        generateMockCsv: req.body?.generateMockCsv === 'true' || req.body?.generateMockCsv === true,
+        mockCsvOptions: req.body?.mockCsvOptions
+          ? (JSON.parse(String(req.body.mockCsvOptions)) as import('../utilities/mockCsvFromDdl.js').MockCsvOptions)
+          : undefined,
         targetDb: req.body?.targetDb as string | undefined,
         drop: req.body?.drop !== 'false',
         mongoUri: req.body?.mongoUri as string | undefined,
@@ -516,6 +524,28 @@ app.post('/api/pipeline/run-with-csv', (req, res) => {
       res.status(500).json({ error: String(error) });
     }
   });
+});
+
+/** Generate mock CSV files from DDL without running the full pipeline. */
+app.post('/api/mock-csv/generate', (req, res) => {
+  try {
+    const ddl = String(req.body?.ddl ?? '');
+    if (!ddl.trim()) {
+      res.status(400).json({ error: 'ddl is required' });
+      return;
+    }
+    const outDir = String(req.body?.outDir ?? join(UPLOAD_DIR, `mock-csv-${Date.now()}`));
+    const mockCsvOptions = req.body?.mockCsvOptions as import('../utilities/mockCsvFromDdl.js').MockCsvOptions | undefined;
+    const result = generateMockCsvFromDdl(ddl, outDir, ROOT, mockCsvOptions);
+    res.json({
+      ok: true,
+      outputDir: result.outputDir,
+      tables: result.tables,
+      files: result.tables.map((table) => join(result.outputDir, `${table}.csv`)),
+    });
+  } catch (error) {
+    res.status(500).json({ error: String(error) });
+  }
 });
 
 /** Serve built UI (production). Vite dev server proxies /api during development. */

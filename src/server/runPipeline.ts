@@ -19,6 +19,7 @@ import type { SqlStructuralModel, WorkloadProfile } from '../types.js';
 import { listCsvFiles, matchCsvFilesForCollection, resolveCsvSourcePath } from '../utilities/csvSource.js';
 import { enrichModelFromCsv } from '../utilities/csvModelEnrichment.js';
 import { collectionNeedsShapedCsv, shapeCollectionCsv } from '../utilities/csvShaper.js';
+import { generateMockCsvFromDdl, type MockCsvOptions } from '../utilities/mockCsvFromDdl.js';
 import { runImportCli } from '../utilities/runImportCli.js';
 import {
   buildPipelineImportEnv,
@@ -48,6 +49,9 @@ export type PipelineRunRequest = {
   csvToAtlasPath?: string;
   knowledgeDir: string;
   rootDir: string;
+  /** When true (or no CSV path), generate one CSV per CREATE TABLE from `ddl`. */
+  generateMockCsv?: boolean;
+  mockCsvOptions?: MockCsvOptions;
   /** Test hook: inject an in-memory store instead of configuring Atlas persistence. */
   migrationStore?: MigrationStore;
   /** Optional progress callback (web UI SSE stream). */
@@ -84,6 +88,33 @@ function reportProgress(request: PipelineRunRequest, event: PipelineProgressEven
   request.onProgress?.(event);
 }
 
+/** Use uploaded/env CSV when present; otherwise generate mock CSV from DDL when allowed. */
+function resolvePipelineCsvRoot(
+  request: PipelineRunRequest,
+  importEnv: NodeJS.ProcessEnv,
+  outDir: string,
+): string {
+  if (!request.generateMockCsv) {
+    return resolveCsvSourcePath(request.csvSourcePath, importEnv);
+  }
+
+  if (!request.ddl?.trim()) {
+    throw new Error('DDL is required to generate mock CSV data when no CSV export directory is provided.');
+  }
+
+  const mockDir = join(outDir, 'mock-csv');
+  reportProgress(request, {
+    stage: 'generating',
+    message: 'Generating mock CSV files from DDL (one file per table)…',
+  });
+  const generated = generateMockCsvFromDdl(request.ddl, mockDir, request.rootDir, request.mockCsvOptions);
+  reportProgress(request, {
+    stage: 'generating',
+    message: `Generated ${generated.tables.length} CSV file(s) in ${generated.outputDir}`,
+  });
+  return generated.outputDir;
+}
+
 /** Validate inputs, run design, then import CSV exports via csvToAtlas. */
 export async function runFullPipeline(request: PipelineRunRequest): Promise<PipelineRunResult> {
   const startedAt = new Date().toISOString();
@@ -99,6 +130,7 @@ export async function runFullPipeline(request: PipelineRunRequest): Promise<Pipe
   const config = getPipelineConfigStatus(importEnv, {
     schemaDialect,
     csvSourcePath: request.csvSourcePath,
+    generateMockCsv: request.generateMockCsv,
   });
   if (!importEnv.MONGODB_URI?.trim()) {
     throw new Error('MONGODB_URI is required for Atlas import.');
@@ -107,9 +139,10 @@ export async function runFullPipeline(request: PipelineRunRequest): Promise<Pipe
     throw new Error(config.csvToAtlasValidation.errors.join(' ') || 'CSV_TO_ATLAS_PATH is not configured.');
   }
 
-  const csvRoot = resolveCsvSourcePath(request.csvSourcePath, importEnv);
   const outDir = request.outDir ?? join(request.rootDir, 'out', 'ui-pipeline');
   mkdirSync(outDir, { recursive: true });
+
+  const csvRoot = resolvePipelineCsvRoot(request, importEnv, outDir);
 
   reportProgress(request, { stage: 'enriching', message: 'Measuring CSV row counts and relationship cardinality…' });
 
