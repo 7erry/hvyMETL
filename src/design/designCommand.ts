@@ -19,6 +19,7 @@ import { createRetrievalConfigFromEnv, describeRetrievalStrategy, retrieve } fro
 import { buildRetrievalQuery } from '../rag/promptBundle.js';
 import type { MigrationPlan, ScoredChunk, WorkloadProfile } from '../types.js';
 import { buildMigrationPlan } from './patternSelector.js';
+import { writeCollectionApiArtifacts } from '../artifacts/collectionApiSchemas.js';
 
 /** How many knowledge chunks the design report cites. */
 const REPORT_CHUNK_COUNT = 8;
@@ -100,12 +101,16 @@ export async function runDesign(options: DesignOptions): Promise<MigrationPlan> 
     const reportPath = join(options.outDir, 'design-report.md');
     writeFileSync(planPath, `${JSON.stringify(plan, null, 2)}\n`);
     writeFileSync(reportPath, renderDesignReport(plan, options.profile, retrieved));
+    const collectionArtifacts = writeCollectionApiArtifacts(options.outDir, plan);
 
     console.log(`Introspected ${model.tables.length} tables, ${model.relationships.length} relationships.`);
     console.log(`Retrieval strategy: ${describeRetrievalStrategy(retrievalConfig)}.`);
     console.log(`Planned ${plan.collections.length} collections.`);
     console.log(`Wrote ${planPath}`);
     console.log(`Wrote ${reportPath}`);
+    console.log(`Wrote ${collectionArtifacts.perCollection.length} schema file(s) under ${collectionArtifacts.schemasDir}`);
+    console.log(`Wrote ${collectionArtifacts.perCollection.length} OpenAPI file(s) under ${collectionArtifacts.openapiDir}`);
+    console.log(`Wrote ${collectionArtifacts.combinedOpenApiPath}`);
     return plan;
   } finally {
     adapter.close();

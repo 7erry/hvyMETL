@@ -104,6 +104,9 @@ Think of it as a build spec: the design engine writes it once; ETL, csvToAtlas, 
 ```bash
 npm run hvymetl -- design --source examples/iot/iot.db --profile iot --out out/iot
 # → out/iot/migration-plan.json
+# → out/iot/schemas/<collection>.schema.json   (MongoDB $jsonSchema validators)
+# → out/iot/openapi/<collection>.openapi.json (per-collection REST contracts)
+# → out/iot/openapi.json                      (combined OpenAPI 3.0 spec)
 ```
 
 In the web UI: **AI Migration Export** (header) or **Run Full Pipeline** (uses the plan internally).

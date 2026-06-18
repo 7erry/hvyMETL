@@ -4,6 +4,7 @@
 
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { writeCollectionApiArtifacts } from '../artifacts/collectionApiSchemas.js';
 import { loadKnowledgeBase } from '../rag/chunker.js';
 import { createRetrievalConfigFromEnv, describeRetrievalStrategy, retrieve } from '../rag/retrieval.js';
 import { buildRetrievalQuery } from '../rag/promptBundle.js';
@@ -66,11 +67,24 @@ export async function designFromModel(
 export function writeDesignArtifacts(
   outDir: string,
   result: DesignFromModelResult,
-): { planPath: string; reportPath: string } {
+): {
+  planPath: string;
+  reportPath: string;
+  schemasDir: string;
+  openapiDir: string;
+  combinedOpenApiPath: string;
+} {
   mkdirSync(outDir, { recursive: true });
   const planPath = join(outDir, 'migration-plan.json');
   const reportPath = join(outDir, 'design-report.md');
   writeFileSync(planPath, `${JSON.stringify(result.plan, null, 2)}\n`);
   writeFileSync(reportPath, result.designReport);
-  return { planPath, reportPath };
+  const collectionArtifacts = writeCollectionApiArtifacts(outDir, result.plan);
+  return {
+    planPath,
+    reportPath,
+    schemasDir: collectionArtifacts.schemasDir,
+    openapiDir: collectionArtifacts.openapiDir,
+    combinedOpenApiPath: collectionArtifacts.combinedOpenApiPath,
+  };
 }

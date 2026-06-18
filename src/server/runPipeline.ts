@@ -176,7 +176,7 @@ export async function runFullPipeline(request: PipelineRunRequest): Promise<Pipe
   };
   reportProgress(request, {
     stage: 'artifacts',
-    message: `Writing migration plan (${design.plan.collections.length} collections)…`,
+    message: `Writing migration plan, schemas, and OpenAPI docs (${design.plan.collections.length} collections)…`,
   });
   const paths = writeDesignArtifacts(outDir, design);
 
