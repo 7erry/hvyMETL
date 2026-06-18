@@ -7,6 +7,9 @@ import {
   type RepogenLanguageOption,
 } from '../api';
 import type { MigrationArtifacts } from '../sessionState';
+import { ArtifactCodePanel } from './ArtifactCodePanel';
+import { ApiArtifactsExplorer } from './ApiArtifactsExplorer';
+import { ResizableVerticalSplit } from './ResizableVerticalSplit';
 
 type ArtifactTab = {
   id: string;
@@ -16,6 +19,7 @@ type ArtifactTab = {
   content: string;
   isJson?: boolean;
   readOnly?: boolean;
+  group?: 'core' | 'prompt' | 'repo';
 };
 
 type MigrationArtifactsViewProps = {
@@ -23,6 +27,9 @@ type MigrationArtifactsViewProps = {
   onChange: (next: MigrationArtifacts) => void;
   onBack: () => void;
 };
+
+const DEFAULT_API_PANEL_HEIGHT = 300;
+const COLLAPSED_API_PANEL_HEIGHT = 44;
 
 function buildTabs(artifacts: MigrationArtifacts): ArtifactTab[] {
   const tabs: ArtifactTab[] = [
@@ -33,6 +40,7 @@ function buildTabs(artifacts: MigrationArtifacts): ArtifactTab[] {
       mime: 'application/json',
       content: artifacts.planJson,
       isJson: true,
+      group: 'core',
     },
     {
       id: 'report',
@@ -40,6 +48,7 @@ function buildTabs(artifacts: MigrationArtifacts): ArtifactTab[] {
       fileName: 'design-report.md',
       mime: 'text/markdown',
       content: artifacts.designReportMarkdown,
+      group: 'core',
     },
   ];
 
@@ -50,20 +59,8 @@ function buildTabs(artifacts: MigrationArtifacts): ArtifactTab[] {
       fileName: prompt.fileName,
       mime: 'text/markdown',
       content: prompt.content,
+      group: 'prompt',
     });
-  }
-
-  if (artifacts.repositories) {
-    for (const file of artifacts.repositories.files) {
-      tabs.push({
-        id: `repo:${file.relativePath}`,
-        label: file.relativePath,
-        fileName: file.relativePath,
-        mime: 'text/plain',
-        content: file.content,
-        readOnly: true,
-      });
-    }
   }
 
   return tabs;
@@ -71,11 +68,15 @@ function buildTabs(artifacts: MigrationArtifacts): ArtifactTab[] {
 
 export function MigrationArtifactsView({ artifacts, onChange, onBack }: MigrationArtifactsViewProps) {
   const tabs = useMemo(() => buildTabs(artifacts), [artifacts]);
+  const repoFiles = artifacts.repositories?.files ?? [];
   const [activeId, setActiveId] = useState(tabs[0]?.id ?? 'plan');
   const [languages, setLanguages] = useState<RepogenLanguageOption[]>([]);
   const [repogenLanguage, setRepogenLanguage] = useState('node');
   const [generatingRepos, setGeneratingRepos] = useState(false);
   const [repogenError, setRepogenError] = useState('');
+  const [apiPanelHeight, setApiPanelHeight] = useState(DEFAULT_API_PANEL_HEIGHT);
+  const [apiPanelCollapsed, setApiPanelCollapsed] = useState(false);
+  const [savedApiPanelHeight, setSavedApiPanelHeight] = useState(DEFAULT_API_PANEL_HEIGHT);
 
   useEffect(() => {
     void fetchRepogenLanguages()
@@ -89,7 +90,29 @@ export function MigrationArtifactsView({ artifacts, onChange, onBack }: Migratio
     }
   }, [artifacts.repositories?.language]);
 
-  const active = tabs.find((t) => t.id === activeId) ?? tabs[0];
+  const active = useMemo((): ArtifactTab | undefined => {
+    if (activeId.startsWith('repo:')) {
+      const path = activeId.slice(5);
+      const file = repoFiles.find((entry) => entry.relativePath === path);
+      if (file) {
+        return {
+          id: activeId,
+          label: file.relativePath,
+          fileName: file.relativePath,
+          mime: 'text/plain',
+          content: file.content,
+          readOnly: true,
+          group: 'repo',
+        };
+      }
+    }
+    return tabs.find((t) => t.id === activeId) ?? tabs[0];
+  }, [activeId, repoFiles, tabs]);
+
+  const coreTabs = tabs.filter((t) => t.group === 'core');
+  const promptTabs = tabs.filter((t) => t.group === 'prompt');
+  const isRepoView = active?.group === 'repo';
+  const selectedRepoPath = isRepoView ? active.fileName : '';
 
   const updateContent = (content: string) => {
     if (!active || active.readOnly) return;
@@ -132,6 +155,7 @@ export function MigrationArtifactsView({ artifacts, onChange, onBack }: Migratio
         downloadText(tab.fileName, tab.content, tab.mime);
       }
     }
+    handleDownloadRepositories();
   };
 
   const handleDownloadRepositories = () => {
@@ -165,85 +189,166 @@ export function MigrationArtifactsView({ artifacts, onChange, onBack }: Migratio
     }
   }, [artifacts, onChange, repogenLanguage]);
 
+  const toggleApiPanel = () => {
+    if (apiPanelCollapsed) {
+      setApiPanelCollapsed(false);
+      setApiPanelHeight(savedApiPanelHeight);
+    } else {
+      setSavedApiPanelHeight(apiPanelHeight);
+      setApiPanelCollapsed(true);
+      setApiPanelHeight(COLLAPSED_API_PANEL_HEIGHT);
+    }
+  };
+
+  const handleApiPanelHeightChange = (height: number) => {
+    setApiPanelHeight(height);
+    if (!apiPanelCollapsed) {
+      setSavedApiPanelHeight(height);
+    }
+  };
+
+  const metaParts = [
+    artifacts.retrievalStrategy ? `RAG: ${artifacts.retrievalStrategy}` : null,
+    artifacts.repositories
+      ? `Repos: ${artifacts.repositories.languageLabel}`
+      : null,
+  ].filter(Boolean);
+
   return (
     <div className="migration-view">
-      <div className="migration-toolbar">
-        <button type="button" className="ghost" onClick={onBack}>
-          ← Back to diagram
-        </button>
-        <span style={{ fontSize: '0.85rem', opacity: 0.85 }}>
-          AI migration artifacts
-          {artifacts.retrievalStrategy ? ` · RAG: ${artifacts.retrievalStrategy}` : ''}
-          {artifacts.repositories
-            ? ` · Repositories: ${artifacts.repositories.languageLabel} (${artifacts.repositories.driverName})`
-            : ''}
-        </span>
-        <button type="button" className="primary" onClick={handleDownloadAll}>
-          Download all
-        </button>
-      </div>
-
-      <div className="repogen-bar panel">
-        <label style={{ fontSize: '0.85rem' }}>
-          Repository language
-          <select
-            value={repogenLanguage}
-            onChange={(e) => setRepogenLanguage(e.target.value)}
-            disabled={generatingRepos}
-            aria-label="Repository language"
-          >
-            {languages.map((language) => (
-              <option key={language.id} value={language.id}>
-                {language.label} ({language.driverName})
-              </option>
-            ))}
-          </select>
-        </label>
-        <button
-          type="button"
-          className="primary"
-          onClick={() => void handleGenerateRepositories()}
-          disabled={generatingRepos || !artifacts.planJson.trim()}
-        >
-          {generatingRepos ? 'Generating…' : artifacts.repositories ? 'Regenerate repositories' : 'Generate repositories'}
-        </button>
-        {artifacts.repositories ? (
-          <button type="button" className="ghost" onClick={handleDownloadRepositories}>
-            Download repositories
+      <header className="migration-toolbar migration-toolbar--compact">
+        <div className="migration-toolbar__start">
+          <button type="button" className="ghost" onClick={onBack}>
+            ← Back
           </button>
-        ) : null}
-        {repogenError ? <span className="pipeline-error">{repogenError}</span> : null}
-      </div>
-
-      <div className="migration-body">
-        <nav className="artifact-tabs" aria-label="Migration artifacts">
-          {tabs.map((tab) => (
-            <button
-              key={tab.id}
-              type="button"
-              className={tab.id === activeId ? 'active' : ''}
-              onClick={() => setActiveId(tab.id)}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </nav>
-
-        <div className="artifact-editor">
-          <div className="artifact-editor-header">
-            <code>{active?.fileName}</code>
-            <button type="button" className="primary" onClick={handleDownload} disabled={!active}>
-              Download
-            </button>
+          <div className="migration-toolbar__title">
+            <h2>Migration export</h2>
+            {metaParts.length > 0 ? (
+              <span className="migration-toolbar__meta">{metaParts.join(' · ')}</span>
+            ) : null}
           </div>
-          <textarea
-            className="artifact-textarea"
-            value={active?.content ?? ''}
-            onChange={(e) => updateContent(e.target.value)}
-            readOnly={active?.readOnly}
-            spellCheck={false}
-          />
         </div>
+        <div className="migration-toolbar__actions">
+          <label className="migration-toolbar__field">
+            <span>Repository language</span>
+            <select
+              value={repogenLanguage}
+              onChange={(e) => setRepogenLanguage(e.target.value)}
+              disabled={generatingRepos}
+              aria-label="Repository language"
+            >
+              {languages.map((language) => (
+                <option key={language.id} value={language.id}>
+                  {language.label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <button
+            type="button"
+            className="ghost"
+            onClick={() => void handleGenerateRepositories()}
+            disabled={generatingRepos || !artifacts.planJson.trim()}
+          >
+            {generatingRepos ? 'Generating…' : artifacts.repositories ? 'Regenerate repos' : 'Generate repos'}
+          </button>
+          {artifacts.repositories ? (
+            <button type="button" className="ghost" onClick={handleDownloadRepositories}>
+              Download repos
+            </button>
+          ) : null}
+          <button type="button" className="primary" onClick={handleDownloadAll}>
+            Download all
+          </button>
+        </div>
+      </header>
+
+      {repogenError ? <p className="pipeline-error migration-toolbar-error">{repogenError}</p> : null}
+
+      <div className="migration-content">
+        <ResizableVerticalSplit
+          bottomHeight={apiPanelHeight}
+          onBottomHeightChange={handleApiPanelHeightChange}
+          minBottom={apiPanelCollapsed ? COLLAPSED_API_PANEL_HEIGHT : 160}
+          minTop={220}
+          top={
+            <div className="artifact-pane">
+              <nav className="artifact-tabs artifact-tabs--horizontal" aria-label="Source files">
+                {coreTabs.map((tab) => (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    className={tab.id === activeId ? 'active' : ''}
+                    onClick={() => setActiveId(tab.id)}
+                  >
+                    {tab.label}
+                  </button>
+                ))}
+                {promptTabs.length > 0 ? (
+                  <span className="artifact-tabs__divider" aria-hidden="true" />
+                ) : null}
+                {promptTabs.map((tab) => (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    className={`artifact-tab--secondary${tab.id === activeId ? ' active' : ''}`}
+                    onClick={() => setActiveId(tab.id)}
+                  >
+                    {tab.label}
+                  </button>
+                ))}
+              </nav>
+
+              <div className="artifact-editor">
+                <div className="artifact-editor-header">
+                  <div className="artifact-editor-header__left">
+                    {repoFiles.length > 0 ? (
+                      <label className="api-artifacts-inline-field artifact-repo-select">
+                        <span className="api-artifacts-inline-field__label">Generated source</span>
+                        <select
+                          value={selectedRepoPath}
+                          onChange={(e) => {
+                            const path = e.target.value;
+                            if (path) setActiveId(`repo:${path}`);
+                          }}
+                          aria-label="Generated repository source file"
+                        >
+                          <option value="" disabled>
+                            Select file…
+                          </option>
+                          {repoFiles.map((file) => (
+                            <option key={file.relativePath} value={file.relativePath}>
+                              {file.relativePath}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                    ) : null}
+                    {!isRepoView ? <code>{active?.fileName}</code> : null}
+                  </div>
+                  <button type="button" className="ghost" onClick={handleDownload} disabled={!active}>
+                    Download
+                  </button>
+                </div>
+                <ArtifactCodePanel
+                  value={active?.content ?? ''}
+                  fileName={active?.fileName ?? 'artifact.txt'}
+                  mime={active?.mime ?? 'text/plain'}
+                  isJson={active?.isJson}
+                  readOnly={active?.readOnly}
+                  onChange={active?.readOnly ? undefined : updateContent}
+                />
+              </div>
+            </div>
+          }
+          bottom={
+            <ApiArtifactsExplorer
+              initialBundle={artifacts.apiArtifacts}
+              collapsed={apiPanelCollapsed}
+              onToggleCollapse={toggleApiPanel}
+            />
+          }
+        />
       </div>
     </div>
   );

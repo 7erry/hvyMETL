@@ -82,6 +82,7 @@ export type PipelineRunResult = {
   retrievalStrategy?: string;
   migrationPlanJson?: unknown;
   designReportMarkdown?: string;
+  apiArtifacts?: ApiArtifactBundleInfo;
 };
 
 export type MockCsvOptions = {
@@ -247,7 +248,32 @@ export type DesignResult = {
   retrievalStrategy: string;
   designMeta: DesignMeta;
   transformationSummary: import('./transformationSummaryTypes').TransformationSummary;
+  apiArtifacts?: ApiArtifactBundleInfo | null;
 };
+
+export type ApiArtifactBundleInfo = {
+  outDir: string;
+  label: string;
+  registeredAt: string;
+  swaggerUiUrl: string;
+  combinedOpenApiUrl: string;
+  collections: { name: string; schemaUrl: string; openApiUrl: string }[];
+};
+
+export async function fetchApiArtifacts(): Promise<ApiArtifactBundleInfo | null> {
+  const res = await fetch(`${base}/api/artifacts`);
+  if (res.status === 404) return null;
+  if (!res.ok) throw new Error((await res.json()).error ?? res.statusText);
+  return res.json();
+}
+
+export async function fetchApiArtifactJson(urlPath: string): Promise<unknown> {
+  const path = urlPath.startsWith('/') ? urlPath : `/${urlPath}`;
+  const res = await fetch(path);
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error ?? res.statusText);
+  return data;
+}
 
 export type ExplainDesignRequest = ProfileRequestFields & {
   model: SqlStructuralModel;

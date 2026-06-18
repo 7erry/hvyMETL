@@ -460,6 +460,7 @@ export default function App() {
           generatedAt: new Date().toISOString(),
           repositories: prev.migrationArtifacts?.repositories,
           pipelineResult: prev.migrationArtifacts?.pipelineResult,
+          apiArtifacts: result.apiArtifacts ?? prev.migrationArtifacts?.apiArtifacts,
         },
         collectionPositions: initialCollectionPositions(
           result.plan as { collections: CollectionPlan[] },
@@ -534,6 +535,7 @@ export default function App() {
         })),
         retrievalStrategy: promptsResult.retrievalStrategy,
         generatedAt: new Date().toISOString(),
+        apiArtifacts: result.apiArtifacts ?? undefined,
       };
       setSession((prev) => ({ ...prev, migrationArtifacts: artifacts, view: 'migration' }));
       setStatus(`Generated migration plan, design report, and ${artifacts.prompts.length} RAG prompts.`);
@@ -565,6 +567,7 @@ export default function App() {
           })),
           outDir: result.paths.outDir,
         },
+        apiArtifacts: result.apiArtifacts ?? undefined,
       };
       setSession((prev) => ({ ...prev, migrationArtifacts: artifacts }));
     }

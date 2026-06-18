@@ -38,6 +38,7 @@ export type MigrationArtifacts = {
     imports: { collection: string; ok: boolean; insertedCount?: number; error?: string }[];
     outDir: string;
   };
+  apiArtifacts?: import('./api').ApiArtifactBundleInfo;
 };
 
 export type AppView = 'diagram' | 'migration';

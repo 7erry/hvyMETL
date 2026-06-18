@@ -33,6 +33,10 @@ import {
 import { PIPELINE_EXECUTIONS_COLLECTION } from './pipelineExecutionTypes.js';
 import { generateFromPlan } from '../repogen/generate.js';
 import { REPOGEN_LANGUAGES } from '../repogen/languages/index.js';
+import { registerApiArtifactRoutes } from './apiArtifactRoutes.js';
+import { registerApiArtifacts, serializeApiArtifactBundle } from './apiArtifactStore.js';
+import { mountWebUi } from './setupWebUi.js';
+import type { DesignFromModelResult } from '../design/designFromModel.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '../..');
 const KNOWLEDGE_DIR = join(ROOT, 'knowledge');
@@ -45,6 +49,17 @@ const upload = multer({ dest: UPLOAD_DIR });
 const app = express();
 app.use(cors());
 app.use(express.json({ limit: '4mb' }));
+
+registerApiArtifactRoutes(app, ROOT);
+
+function persistDesignApiArtifacts(result: DesignFromModelResult, outDir: string, label: string) {
+  const paths = writeDesignArtifacts(outDir, result);
+  const registered = registerApiArtifacts(outDir, label);
+  return {
+    paths,
+    apiArtifacts: registered ? serializeApiArtifactBundle(registered) : null,
+  };
+}
 
 app.get('/api/health', (_req, res) => {
   res.json({ ok: true, name: 'hvyMETL', cli: 'available' });
@@ -150,7 +165,9 @@ app.post('/api/design', async (req, res) => {
       csvSourcePath: req.body?.csvSourcePath as string | undefined,
       dialect: req.body?.dialect as string | undefined,
     });
-    res.json(result);
+    const outDir = join(ROOT, 'out', 'ui-design');
+    const { apiArtifacts } = persistDesignApiArtifacts(result, outDir, 'ui-design');
+    res.json({ ...result, apiArtifacts });
   } catch (error) {
     res.status(500).json({ error: String(error) });
   }
@@ -195,7 +212,9 @@ app.post('/api/design/with-csv', (req, res) => {
         csvSourcePath: batchDir,
         dialect: req.body?.dialect as string | undefined,
       });
-      res.json(result);
+      const outDir = join(ROOT, 'out', 'ui-design');
+      const { apiArtifacts } = persistDesignApiArtifacts(result, outDir, 'ui-design');
+      res.json({ ...result, apiArtifacts });
     } catch (error) {
       res.status(500).json({ error: String(error) });
     }
@@ -251,10 +270,11 @@ app.post('/api/export/migration', async (req, res) => {
       dialect: req.body?.dialect as string | undefined,
     });
     const outDir = join(ROOT, 'out', 'ui-export');
-    const paths = writeDesignArtifacts(outDir, result);
+    const { paths, apiArtifacts } = persistDesignApiArtifacts(result, outDir, 'ui-export');
     res.json({
       ...result,
       paths,
+      apiArtifacts,
       migrationPlanJson: result.plan,
       designReportMarkdown: result.designReport,
     });
@@ -403,6 +423,7 @@ function pipelineRunResponse(result: Awaited<ReturnType<typeof runFullPipeline>>
     designReportMarkdown: result.design.designReport,
     feedback: result.feedback,
     execution: result.execution,
+    apiArtifacts: result.apiArtifacts,
   };
 }
 
@@ -548,16 +569,41 @@ app.post('/api/mock-csv/generate', (req, res) => {
   }
 });
 
-/** Serve built UI (production). Vite dev server proxies /api during development. */
-const webDist = join(ROOT, 'web', 'dist');
-if (existsSync(webDist)) {
-  app.use(express.static(webDist));
-  app.get(/^(?!\/api).*/, (_req, res) => {
-    res.sendFile(join(webDist, 'index.html'));
+/** Serve built UI (production) or Vite middleware (dev:ui) — same port as API. */
+const devUiMode = process.env.HVYMETL_DEV_PROXY === '1';
+
+async function startServer(): Promise<void> {
+  const uiMode = await mountWebUi(app, ROOT, devUiMode);
+
+  const server = app.listen(PORT);
+
+  server.on('listening', () => {
+    console.log(`hvyMETL Migration Studio http://localhost:${PORT}`);
+    console.log(`Swagger UI http://localhost:${PORT}/api/docs`);
+    if (uiMode === 'vite') {
+      console.log('UI: Vite dev server (hot reload)');
+    } else if (uiMode === 'static') {
+      console.log('UI: serving web/dist');
+    } else {
+      console.log('UI: not built — run npm run dev:ui or npm run start:ui');
+    }
+    console.log('CLI remains available: npm run hvymetl -- <command>');
+  });
+
+  server.on('error', (error: NodeJS.ErrnoException) => {
+    if (error.code === 'EADDRINUSE') {
+      console.error(
+        `Cannot start hvyMETL: port ${PORT} is already in use.\n` +
+          'Stop the other process or set HVYMETL_UI_PORT in .env.',
+      );
+    } else {
+      console.error('Failed to start hvyMETL:', error);
+    }
+    process.exit(1);
   });
 }
 
-app.listen(PORT, () => {
-  console.log(`hvyMETL UI API http://localhost:${PORT}`);
-  console.log('CLI remains available: npm run hvymetl -- <command>');
+startServer().catch((error) => {
+  console.error(error);
+  process.exit(1);
 });

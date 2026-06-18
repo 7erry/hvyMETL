@@ -13,11 +13,11 @@ artifacts as `npm run hvymetl`.
 
 | Command | Purpose |
 | --- | --- |
-| `npm run dev:ui` | API on `:3847` + Vite dev server on `:5173` (hot reload) |
+| `npm run dev:ui` | Single server on `:3847` — API + Vite hot reload |
 | `npm run start:ui` | Production build served from `:3847` |
 | `npm run build:ui` | Build API + static web assets only |
 
-Open **http://localhost:5173** (dev) or **http://localhost:3847** (production).
+Open **http://localhost:3847** (dev and production). Swagger UI: **http://localhost:3847/api/docs**.
 
 Environment: `.env` is loaded by the API server (`MONGODB_MODEL_KEY` for hybrid RAG
 exports, same as CLI).

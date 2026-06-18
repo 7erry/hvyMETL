@@ -19,7 +19,7 @@ From the **repository root** (not this folder alone):
 ```bash
 npm install
 cp .env.example .env   # optional: MONGODB_MODEL_KEY for hybrid RAG exports
-npm run dev:ui         # http://localhost:5173  (API on :3847)
+npm run dev:ui         # http://localhost:3847  (API internal :3848)
 ```
 
 Production (single port):
@@ -30,7 +30,7 @@ npm run start:ui       # http://localhost:3847
 
 | Command | Description |
 | --- | --- |
-| `npm run dev:ui` | Vite dev server + Express API (hot reload) |
+| `npm run dev:ui` | Single server on `:3847` — API + Vite hot reload |
 | `npm run start:ui` | Build web assets and serve from API |
 | `npm run build:ui` | Build API + static `web/dist` only |
 

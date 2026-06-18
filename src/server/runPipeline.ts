@@ -20,6 +20,7 @@ import { listCsvFiles, matchCsvFilesForCollection, resolveCsvSourcePath } from '
 import { enrichModelFromCsv } from '../utilities/csvModelEnrichment.js';
 import { collectionNeedsShapedCsv, shapeCollectionCsv } from '../utilities/csvShaper.js';
 import { generateMockCsvFromDdl, type MockCsvOptions } from '../utilities/mockCsvFromDdl.js';
+import { registerApiArtifacts, serializeApiArtifactBundle } from './apiArtifactStore.js';
 import { runImportCli } from '../utilities/runImportCli.js';
 import {
   buildPipelineImportEnv,
@@ -75,6 +76,7 @@ export type PipelineRunResult = {
     reportPath: string;
     manifestPath: string;
     feedbackPath: string;
+    combinedOpenApiPath?: string;
   };
   csvSource: {
     path: string;
@@ -82,6 +84,7 @@ export type PipelineRunResult = {
   };
   imports: CollectionImportSummary[];
   errors: string[];
+  apiArtifacts?: ReturnType<typeof serializeApiArtifactBundle>;
 };
 
 function reportProgress(request: PipelineRunRequest, event: PipelineProgressEvent): void {
@@ -179,6 +182,8 @@ export async function runFullPipeline(request: PipelineRunRequest): Promise<Pipe
     message: `Writing migration plan, schemas, and OpenAPI docs (${design.plan.collections.length} collections)…`,
   });
   const paths = writeDesignArtifacts(outDir, design);
+  const registeredArtifacts = registerApiArtifacts(outDir, 'pipeline');
+  const apiArtifacts = registeredArtifacts ? serializeApiArtifactBundle(registeredArtifacts) : undefined;
 
   const migrationLogIds = mlDesign.ml.migrationLogIds;
   const feedbackPath = join(outDir, 'feedback-manifest.json');
@@ -300,9 +305,17 @@ export async function runFullPipeline(request: PipelineRunRequest): Promise<Pipe
     design,
     feedback,
     execution,
-    paths: { outDir, planPath: paths.planPath, reportPath: paths.reportPath, manifestPath, feedbackPath },
+    paths: {
+      outDir,
+      planPath: paths.planPath,
+      reportPath: paths.reportPath,
+      manifestPath,
+      feedbackPath,
+      combinedOpenApiPath: paths.combinedOpenApiPath,
+    },
     csvSource: { path: csvRoot, collections: csvCollections },
     imports,
     errors,
+    apiArtifacts,
   };
 }

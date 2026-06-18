@@ -161,7 +161,7 @@ persistence of each run to MongoDB (`hvymetl_pipeline_executions`). The CLI
 remains fully available.
 
 ```bash
-npm run dev:ui      # http://localhost:5173 (API on :3847)
+npm run dev:ui      # http://localhost:3847 (API + Vite hot reload)
 npm run start:ui    # production build on http://localhost:3847
 ```
 

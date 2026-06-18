@@ -26,7 +26,7 @@
     "validate-hybrid-rag": "npm run -s build && node scripts/validate-hybrid-rag.mjs",
     "validate-collection-openapi": "node scripts/validate-collection-openapi.mjs",
     "build:ui": "npm run -s build && npm install --prefix web && npm run -s build --prefix web",
-    "dev:ui": "npm run -s build && concurrently -k \"node dist/server/index.js\" \"npm run dev --prefix web\"",
+    "dev:ui": "npm run -s build && npm install --prefix web --silent && node scripts/dev-ui-server.mjs",
     "start:ui": "npm run -s build:ui && node dist/server/index.js",
     "test": "vitest run"
   },
@@ -40,7 +40,8 @@
     "express": "^5.1.0",
     "mongodb": "^7.3.0",
     "multer": "^2.0.2",
-    "onnxruntime-node": "^1.26.0"
+    "onnxruntime-node": "^1.26.0",
+    "swagger-ui-express": "^5.0.1"
   },
   "devDependencies": {
     "@types/better-sqlite3": "^7.6.13",
@@ -48,8 +49,11 @@
     "@types/express": "^5.0.5",
     "@types/multer": "^2.0.0",
     "@types/node": "^25.9.3",
+    "@types/swagger-ui-express": "^4.1.8",
     "concurrently": "^9.2.1",
+    "cross-env": "^10.1.0",
     "typescript": "^6.0.3",
+    "vite": "^7.3.5",
     "vitest": "^4.1.8"
   }
 }

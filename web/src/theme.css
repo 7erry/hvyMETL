@@ -24,6 +24,37 @@ body,
   color: var(--mdb-spring-green);
 }
 
+a {
+  color: var(--mdb-green-base);
+  text-decoration: none;
+}
+
+a:hover {
+  color: var(--mdb-spring-green);
+  text-decoration: underline;
+}
+
+a.link-button {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.35rem 0.65rem;
+  border: 1px solid var(--mdb-green-dark-2);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--mdb-green-base);
+  font-size: 0.75rem;
+  text-decoration: none;
+  line-height: 1.2;
+}
+
+a.link-button:hover {
+  background: var(--mdb-green-dark-3);
+  border-color: var(--mdb-green-base);
+  color: var(--mdb-green-base);
+  text-decoration: none;
+  box-shadow: 0 0 0 1px var(--mdb-green-base);
+}
+
 button {
   font: inherit;
   cursor: pointer;
@@ -732,6 +763,66 @@ textarea {
   flex-direction: column;
 }
 
+.workspace-split-vertical {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+}
+
+.workspace-split-vertical--dragging {
+  cursor: row-resize;
+  user-select: none;
+}
+
+.workspace-split-vertical__top {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.workspace-split-vertical__bottom {
+  flex-shrink: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  border-top: 1px solid var(--mdb-green-dark-2);
+  background: var(--mdb-gray-dark-4);
+}
+
+.workspace-divider--vertical {
+  width: auto;
+  height: 10px;
+  margin: 0;
+  padding: 0;
+  flex-shrink: 0;
+  cursor: row-resize;
+  border-top: 1px solid var(--mdb-green-dark-2);
+  background: var(--mdb-black);
+}
+
+.workspace-divider--vertical::before {
+  inset: -4px 0;
+  cursor: row-resize;
+}
+
+.workspace-divider__grip--horizontal {
+  width: 40px;
+  height: 5px;
+}
+
+.workspace-divider--vertical:hover .workspace-divider__grip--horizontal,
+.workspace-split-vertical--dragging .workspace-divider--vertical .workspace-divider__grip--horizontal {
+  width: 52px;
+  height: 5px;
+}
+
+.workspace-split-vertical--dragging .workspace-divider--vertical {
+  background: rgba(0, 104, 74, 0.35);
+}
+
 .panel-dropdown {
   padding: 0;
   overflow: hidden;
@@ -804,6 +895,70 @@ textarea {
   background: var(--mdb-gray-dark-4);
 }
 
+.migration-toolbar--compact {
+  padding: 0.6rem 1rem;
+  gap: 0.75rem 1rem;
+}
+
+.migration-toolbar__start {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+.migration-toolbar__title h2 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+.migration-toolbar__meta {
+  display: block;
+  font-size: 0.75rem;
+  opacity: 0.75;
+  margin-top: 0.15rem;
+}
+
+.migration-toolbar__actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.migration-toolbar__field {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8rem;
+}
+
+.migration-toolbar__field span {
+  opacity: 0.85;
+}
+
+.migration-toolbar__field select {
+  min-width: 140px;
+  font-size: 0.8rem;
+}
+
+.migration-toolbar-error {
+  margin: 0;
+  padding: 0.35rem 1rem;
+  font-size: 0.8rem;
+  background: rgba(180, 40, 40, 0.15);
+  border-bottom: 1px solid rgba(220, 80, 80, 0.35);
+}
+
+.migration-content {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+}
+
 .repogen-bar {
   display: flex;
   flex-wrap: wrap;
@@ -853,6 +1008,14 @@ textarea {
   min-height: 0;
 }
 
+.artifact-pane {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  min-width: 0;
+}
+
 .artifact-tabs {
   width: 220px;
   border-right: 1px solid var(--mdb-green-dark-2);
@@ -864,11 +1027,45 @@ textarea {
   background: var(--mdb-gray-dark-4);
 }
 
+.artifact-tabs--horizontal {
+  width: auto;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.5rem 0.75rem;
+  border-right: none;
+  border-bottom: 1px solid var(--mdb-green-dark-2);
+  overflow-x: auto;
+  overflow-y: hidden;
+  flex-shrink: 0;
+}
+
+.artifact-tabs__divider {
+  width: 1px;
+  height: 1.25rem;
+  background: var(--mdb-green-dark-2);
+  margin: 0 0.25rem;
+  flex-shrink: 0;
+}
+
 .artifact-tabs button {
   text-align: left;
   font-size: 0.8rem;
   background: transparent;
   border-color: transparent;
+  white-space: nowrap;
+}
+
+.artifact-tabs--horizontal button {
+  text-align: center;
+  padding: 0.35rem 0.65rem;
+  border-radius: 4px;
+}
+
+.artifact-tabs button.artifact-tab--secondary {
+  opacity: 0.85;
+  font-size: 0.75rem;
 }
 
 .artifact-tabs button.active {
@@ -882,19 +1079,139 @@ textarea {
   display: flex;
   flex-direction: column;
   min-width: 0;
-  padding: 0.75rem 1rem;
+  min-height: 0;
+  padding: 0.5rem 0.75rem 0.75rem;
 }
 
 .artifact-editor-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 0.75rem;
   margin-bottom: 0.5rem;
+}
+
+.artifact-editor-header__left {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 0;
+  flex-wrap: wrap;
+}
+
+.artifact-repo-select select {
+  max-width: 280px;
 }
 
 .artifact-editor-header code {
   font-size: 0.85rem;
   color: var(--mdb-green-base);
+}
+
+/* Syntax-highlighted artifact editor */
+.artifact-code-panel {
+  flex: 1;
+  min-height: 0;
+  border: 1px solid var(--mdb-green-dark-2);
+  border-radius: 6px;
+  background: #0d1117;
+  overflow: auto;
+}
+
+.artifact-code-panel--readonly > div {
+  background: #0d1117 !important;
+}
+
+.artifact-code-editor {
+  min-height: 100%;
+  color: #e6edf3;
+}
+
+/* Let highlighted <pre> show through the transparent textarea overlay */
+.artifact-code-panel--editable textarea,
+.artifact-code-panel--editable .npm__react-simple-code-editor__textarea,
+.artifact-code-panel--editable .artifact-code-textarea {
+  background: transparent !important;
+  border: none !important;
+  color: transparent !important;
+  -webkit-text-fill-color: transparent !important;
+  caret-color: var(--mdb-green-base) !important;
+  min-height: unset !important;
+  padding: 0 !important;
+  border-radius: 0 !important;
+}
+
+.artifact-code-panel--editable pre.artifact-code-pre {
+  margin: 0;
+  background: transparent !important;
+  color: #e6edf3;
+}
+
+.artifact-code-pre,
+.artifact-code-textarea {
+  outline: none !important;
+}
+
+/* Prism / oneDark-style tokens for editable overlay */
+.artifact-code-panel--editable .token.comment,
+.artifact-code-panel--editable .token.prolog,
+.artifact-code-panel--editable .token.doctype,
+.artifact-code-panel--editable .token.cdata {
+  color: #8b949e;
+}
+
+.artifact-code-panel--editable .token.punctuation {
+  color: #e6edf3;
+}
+
+.artifact-code-panel--editable .token.property,
+.artifact-code-panel--editable .token.tag,
+.artifact-code-panel--editable .token.boolean,
+.artifact-code-panel--editable .token.number,
+.artifact-code-panel--editable .token.constant,
+.artifact-code-panel--editable .token.symbol {
+  color: #79c0ff;
+}
+
+.artifact-code-panel--editable .token.selector,
+.artifact-code-panel--editable .token.attr-name,
+.artifact-code-panel--editable .token.string,
+.artifact-code-panel--editable .token.char,
+.artifact-code-panel--editable .token.builtin {
+  color: #a5d6ff;
+}
+
+.artifact-code-panel--editable .token.operator {
+  color: #e6edf3;
+}
+
+.artifact-code-panel--editable .token.atrule,
+.artifact-code-panel--editable .token.attr-value,
+.artifact-code-panel--editable .token.keyword {
+  color: #ff7b72;
+}
+
+/* Syntax tokens — links/urls use MongoDB green instead of default purple/blue */
+.artifact-code-panel--readonly .token.url,
+.artifact-code-panel--readonly .token.selector,
+.artifact-code-panel--readonly .token.entity {
+  color: var(--mdb-green-base) !important;
+}
+
+.artifact-code-panel--editable .token.url,
+.artifact-code-panel--editable .token.selector,
+.artifact-code-panel--editable .token.entity {
+  color: var(--mdb-green-base);
+}
+
+.artifact-code-panel--editable .token.function,
+.artifact-code-panel--editable .token.class-name {
+  color: #d2a8ff;
+}
+
+.artifact-code-panel--editable .token.regex,
+.artifact-code-panel--editable .token.variable {
+  color: #ffa657;
 }
 
 .artifact-textarea {
@@ -905,6 +1222,123 @@ textarea {
   font-family: ui-monospace, monospace;
   font-size: 0.8rem;
   line-height: 1.45;
+}
+
+.api-artifacts-panel {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.api-artifacts-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.4rem 0.75rem;
+  flex-shrink: 0;
+  border-bottom: 1px solid var(--mdb-green-dark-2);
+  background: var(--mdb-gray-dark-4);
+  min-height: 44px;
+}
+
+.api-artifacts-header__title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.api-artifacts-header__label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--mdb-green-base);
+}
+
+.api-artifacts-header__meta {
+  font-size: 0.72rem;
+  opacity: 0.7;
+  white-space: nowrap;
+}
+
+.api-artifacts-header__actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.api-artifacts-collapse {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  padding: 0;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  color: var(--mdb-green-base);
+  cursor: pointer;
+}
+
+.api-artifacts-collapse:hover {
+  border-color: var(--mdb-green-dark-2);
+  background: var(--mdb-green-dark-3);
+}
+
+.api-artifacts-collapse__chevron {
+  font-size: 0.7rem;
+  line-height: 1;
+}
+
+.api-artifacts-inline-field {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.75rem;
+}
+
+.api-artifacts-inline-field__label {
+  opacity: 0.75;
+  white-space: nowrap;
+}
+
+.api-artifacts-inline-field select {
+  font-size: 0.75rem;
+  min-width: 0;
+  max-width: 180px;
+}
+
+.api-artifacts-swagger {
+  font-size: 0.75rem;
+}
+
+.api-artifacts-hint {
+  margin: 0;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.8rem;
+  opacity: 0.85;
+}
+
+.api-artifacts-error {
+  margin: 0;
+  padding: 0.35rem 0.75rem;
+  font-size: 0.8rem;
+}
+
+.api-artifacts-viewer {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 0.35rem 0.5rem 0.5rem;
+}
+
+.api-artifacts-viewer .artifact-code-panel {
+  min-height: 0;
 }
 
 .react-flow__background {
