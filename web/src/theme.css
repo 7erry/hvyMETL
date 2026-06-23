@@ -1125,26 +1125,53 @@ textarea {
 .artifact-code-editor {
   min-height: 100%;
   color: #e6edf3;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 13px;
+  line-height: 19.5px;
+  tab-size: 2;
 }
 
-/* Let highlighted <pre> show through the transparent textarea overlay */
+/* Transparent textarea overlay — padding must match <pre> (set via Editor padding prop) */
 .artifact-code-panel--editable textarea,
 .artifact-code-panel--editable .npm__react-simple-code-editor__textarea,
 .artifact-code-panel--editable .artifact-code-textarea {
   background: transparent !important;
   border: none !important;
+  border-radius: 0 !important;
   color: transparent !important;
   -webkit-text-fill-color: transparent !important;
   caret-color: var(--mdb-green-base) !important;
   min-height: unset !important;
-  padding: 0 !important;
-  border-radius: 0 !important;
+  width: 100% !important;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
+  font-size: 13px !important;
+  line-height: 19.5px !important;
+  letter-spacing: normal !important;
+  tab-size: 2 !important;
+  white-space: pre-wrap !important;
+  word-break: keep-all !important;
+  overflow-wrap: break-word !important;
+}
+
+.artifact-code-panel--editable textarea::selection,
+.artifact-code-panel--editable .artifact-code-textarea::selection {
+  background: rgba(0, 237, 100, 0.35) !important;
+  color: transparent !important;
+  -webkit-text-fill-color: transparent !important;
 }
 
 .artifact-code-panel--editable pre.artifact-code-pre {
   margin: 0;
   background: transparent !important;
   color: #e6edf3;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 13px;
+  line-height: 19.5px;
+  letter-spacing: normal;
+  tab-size: 2;
+  white-space: pre-wrap;
+  word-break: keep-all;
+  overflow-wrap: break-word;
 }
 
 .artifact-code-pre,

@@ -108,10 +108,14 @@ function highlightCode(code: string, language: string): string {
   }
 }
 
+const EDITOR_FONT_FAMILY = 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace';
+const EDITOR_FONT_SIZE = '13px';
+const EDITOR_LINE_HEIGHT = '19.5px';
+
 const editorSurfaceStyle = {
-  fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
-  fontSize: 13,
-  lineHeight: 1.5,
+  fontFamily: EDITOR_FONT_FAMILY,
+  fontSize: EDITOR_FONT_SIZE,
+  lineHeight: EDITOR_LINE_HEIGHT,
   minHeight: '100%',
 };
 
