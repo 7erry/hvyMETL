@@ -1,29 +1,19 @@
 /**
- * Pre-flight checks for MongoDB Atlas imports (csvToAtlas / run-all-examples).
+ * Pre-flight MongoDB checks for import-cli and run-all-examples (no dist build required).
  */
 
 import { MongoClient } from 'mongodb';
 
-export type MongoConnectivityFailure = {
-  ok: false;
-  code: string;
-  message: string;
-  hint: string;
-};
-
-export type MongoConnectivityResult = { ok: true } | MongoConnectivityFailure;
-
 /** Mask credentials in a MongoDB URI for logs. */
-export function maskMongoUri(uri: string): string {
+export function maskMongoUri(uri) {
   return uri.replace(/\/\/[^@]+@/, '//***@').split('?')[0];
 }
 
-function classifyMongoError(error: unknown, uri: string): MongoConnectivityFailure {
-  const err = error as { code?: string; message?: string };
-  const message = String(err.message ?? error);
+function classifyMongoError(error, uri) {
+  const message = String(error?.message ?? error);
   const masked = maskMongoUri(uri);
 
-  if (message.includes('querySrv ENOTFOUND') || err.code === 'ENOTFOUND') {
+  if (message.includes('querySrv ENOTFOUND') || error?.code === 'ENOTFOUND') {
     const hostMatch = message.match(/_mongodb\._tcp\.([^\s'"]+)/) ?? message.match(/ENOTFOUND ([^\s'"]+)/);
     const host = hostMatch?.[1] ?? 'unknown host';
     return {
@@ -48,17 +38,14 @@ function classifyMongoError(error: unknown, uri: string): MongoConnectivityFailu
 
   return {
     ok: false,
-    code: err.code ?? 'CONNECT_FAILED',
+    code: error?.code ?? 'CONNECT_FAILED',
     message: message.split('\n')[0],
     hint: `Could not connect to MongoDB. Check MONGODB_URI and network access.\n  URI: ${masked}`,
   };
 }
 
 /** Verify that MONGODB_URI resolves and accepts a ping before csvToAtlas import. */
-export async function verifyMongoUri(
-  uri: string,
-  options: { timeoutMs?: number } = {},
-): Promise<MongoConnectivityResult> {
+export async function verifyMongoUri(uri, options = {}) {
   const trimmed = uri?.trim();
   if (!trimmed) {
     return {
@@ -90,6 +77,6 @@ export async function verifyMongoUri(
   }
 }
 
-export function formatMongoConnectivityFailure(failure: MongoConnectivityFailure): string {
+export function formatMongoConnectivityFailure(failure) {
   return `${failure.message}\n${failure.hint}`;
 }

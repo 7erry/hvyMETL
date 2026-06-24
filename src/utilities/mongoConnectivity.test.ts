@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { formatMongoConnectivityFailure, maskMongoUri, verifyMongoUri } from './mongoConnectivity.js';
+import {
+  formatMongoConnectivityFailure,
+  maskMongoUri,
+  verifyMongoUri,
+} from '../../scripts/lib/mongoConnectivity.mjs';
 
 describe('mongoConnectivity', () => {
   it('masks credentials in URI', () => {

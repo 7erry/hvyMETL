@@ -9,7 +9,7 @@ import { fileURLToPath } from 'node:url';
 import { execSync } from 'node:child_process';
 import { MongoClient } from 'mongodb';
 import Database from 'better-sqlite3';
-import { formatMongoConnectivityFailure, maskMongoUri, verifyMongoUri } from '../dist/utilities/mongoConnectivity.js';
+import { formatMongoConnectivityFailure, maskMongoUri, verifyMongoUri } from './lib/mongoConnectivity.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 

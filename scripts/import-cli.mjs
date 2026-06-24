@@ -7,7 +7,7 @@ import { spawnSync } from 'node:child_process';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { applyImportDbFlag, buildImportCliInvocation } from '../dist/utilities/csvToAtlas.js';
-import { formatMongoConnectivityFailure, verifyMongoUri } from '../dist/utilities/mongoConnectivity.js';
+import { formatMongoConnectivityFailure, verifyMongoUri } from './lib/mongoConnectivity.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const rawArgs = process.argv.slice(2);
