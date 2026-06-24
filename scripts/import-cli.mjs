@@ -2,14 +2,15 @@
  * Thin wrapper around the external csvToAtlas CLI (CSV_TO_ATLAS_PATH in .env).
  * Translates `--db <name>` into MONGODB_DB for csvToAtlas.
  */
-import 'dotenv/config';
 import { spawnSync } from 'node:child_process';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { applyImportDbFlag, buildImportCliInvocation } from '../dist/utilities/csvToAtlas.js';
-import { formatMongoConnectivityFailure, verifyMongoUri } from './lib/mongoConnectivity.mjs';
+import { formatMongoConnectivityFailure, maskMongoUri, verifyMongoUri } from './lib/mongoConnectivity.mjs';
+import { loadProjectEnv } from './lib/loadProjectEnv.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
+loadProjectEnv(ROOT);
 const rawArgs = process.argv.slice(2);
 
 if (rawArgs.length === 0) {
@@ -35,8 +36,9 @@ if (csvPaths.length === 0) {
 const isAnalyzeOnly = forwardedArgs.includes('--analyze');
 
 if (!isAnalyzeOnly) {
-  const mongoUri = importEnv.MONGODB_URI ?? process.env.MONGODB_URI;
-  const check = await verifyMongoUri(mongoUri ?? '', { timeoutMs: 12_000 });
+  const mongoUri = importEnv.MONGODB_URI ?? process.env.MONGODB_URI ?? '';
+  console.error(`MongoDB preflight: ${maskMongoUri(mongoUri)}`);
+  const check = await verifyMongoUri(mongoUri, { timeoutMs: 12_000 });
   if (!check.ok) {
     console.error('\nMongoDB connectivity check failed:\n');
     console.error(formatMongoConnectivityFailure(check));

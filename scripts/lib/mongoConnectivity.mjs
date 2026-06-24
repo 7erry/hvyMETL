@@ -23,6 +23,7 @@ function classifyMongoError(error, uri) {
       hint:
         `Check MONGODB_URI in .env — the Atlas cluster may be deleted, renamed, or unreachable from this network/VPN.\n` +
         `  URI: ${masked}\n` +
+        `  If .env is correct, a stale shell export may still win — run \`unset MONGODB_URI\` or use the updated import-cli (loads .env with override).\n` +
         `  Design + ETL without Atlas: HVYMETL_SKIP_ATLAS_IMPORT=1 npm run run-all-examples`,
     };
   }

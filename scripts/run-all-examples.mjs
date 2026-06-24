@@ -2,7 +2,6 @@
  * Run design → ETL → Atlas import for all seven example domains, then validate
  * document counts and bucket integrity against the ETL manifest and SQLite source.
  */
-import 'dotenv/config';
 import { readFileSync, existsSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -10,8 +9,10 @@ import { execSync } from 'node:child_process';
 import { MongoClient } from 'mongodb';
 import Database from 'better-sqlite3';
 import { formatMongoConnectivityFailure, maskMongoUri, verifyMongoUri } from './lib/mongoConnectivity.mjs';
+import { loadProjectEnv } from './lib/loadProjectEnv.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
+loadProjectEnv(ROOT);
 
 /** Fail fast with a clear fix when better-sqlite3 was built for another Node version. */
 function assertBetterSqlite3() {
@@ -110,9 +111,10 @@ async function ensureMongoReady() {
     return;
   }
 
-  const result = await verifyMongoUri(process.env.MONGODB_URI, { timeoutMs: 12_000 });
+  const result = await verifyMongoUri(process.env.MONGODB_URI ?? '', { timeoutMs: 12_000 });
   if (!result.ok) {
     console.error('\nMongoDB connectivity check failed:\n');
+    console.error(`Checked URI: ${maskMongoUri(process.env.MONGODB_URI ?? '')}`);
     console.error(formatMongoConnectivityFailure(result));
     console.error('\nFix MONGODB_URI in .env or set HVYMETL_SKIP_ATLAS_IMPORT=1 to run design + ETL only.\n');
     process.exit(1);
