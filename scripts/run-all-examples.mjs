@@ -9,6 +9,7 @@ import { fileURLToPath } from 'node:url';
 import { execSync } from 'node:child_process';
 import { MongoClient } from 'mongodb';
 import Database from 'better-sqlite3';
+import { formatMongoConnectivityFailure, maskMongoUri, verifyMongoUri } from '../dist/utilities/mongoConnectivity.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -103,8 +104,26 @@ async function validateDomain(domain, mongoClient) {
   return { dbName, collections: manifest.collections.length, issues };
 }
 
+async function ensureMongoReady() {
+  if (skipAtlasImport) {
+    console.log('HVYMETL_SKIP_ATLAS_IMPORT=1 — skipping csvToAtlas import and MongoDB validation.\n');
+    return;
+  }
+
+  const result = await verifyMongoUri(process.env.MONGODB_URI, { timeoutMs: 12_000 });
+  if (!result.ok) {
+    console.error('\nMongoDB connectivity check failed:\n');
+    console.error(formatMongoConnectivityFailure(result));
+    console.error('\nFix MONGODB_URI in .env or set HVYMETL_SKIP_ATLAS_IMPORT=1 to run design + ETL only.\n');
+    process.exit(1);
+  }
+}
+
+const skipAtlasImport =
+  process.env.HVYMETL_SKIP_ATLAS_IMPORT === '1' || process.env.HVYMETL_SKIP_ATLAS_IMPORT === 'true';
+
 async function main() {
-  if (!process.env.MONGODB_URI) {
+  if (!process.env.MONGODB_URI && !skipAtlasImport) {
     console.error('MONGODB_URI is not set in .env');
     process.exit(1);
   }
@@ -114,12 +133,15 @@ async function main() {
   }
 
   console.log('=== hvyMETL full example run ===');
-  console.log(`Cluster: ${process.env.MONGODB_URI.replace(/\/\/[^@]+@/, '//***@').split('?')[0]}`);
+  if (process.env.MONGODB_URI) {
+    console.log(`Cluster: ${maskMongoUri(process.env.MONGODB_URI)}`);
+  }
   console.log(`Validation DB prefix: hvymetl_<domain>\n`);
 
   assertBetterSqlite3();
 
   run('npm run -s build');
+  await ensureMongoReady();
   run('npm test');
   run('npm run -s seed-examples');
 
@@ -127,6 +149,8 @@ async function main() {
     const out = `out/${domain.id}`;
     run(`node dist/cli.js design --source ${domain.source} --profile ${domain.profile} --out ${out}`);
     run(`node dist/cli.js etl --plan ${out}/migration-plan.json --out ${out}`);
+
+    if (skipAtlasImport) continue;
 
     const manifest = JSON.parse(readFileSync(join(ROOT, out, 'etl-manifest.json'), 'utf8'));
     const dbName = `hvymetl_${domain.id}`;
@@ -139,6 +163,11 @@ async function main() {
       const fileArgs = actualFiles.join(' ');
       run(`node scripts/import-cli.mjs ${fileArgs} ${coll.name} --drop --db ${dbName}`);
     }
+  }
+
+  if (skipAtlasImport) {
+    console.log('\nSkipped Atlas import — design + ETL completed for all domains.');
+    return;
   }
 
   console.log('\n=== Validating MongoDB imports ===\n');

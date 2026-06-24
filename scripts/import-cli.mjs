@@ -7,6 +7,7 @@ import { spawnSync } from 'node:child_process';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { applyImportDbFlag, buildImportCliInvocation } from '../dist/utilities/csvToAtlas.js';
+import { formatMongoConnectivityFailure, verifyMongoUri } from '../dist/utilities/mongoConnectivity.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const rawArgs = process.argv.slice(2);
@@ -29,6 +30,19 @@ const rest = flagStart === -1 ? forwardedArgs.slice(-1) : forwardedArgs.slice(fl
 if (csvPaths.length === 0) {
   console.error('At least one CSV file is required.');
   process.exit(1);
+}
+
+const isAnalyzeOnly = forwardedArgs.includes('--analyze');
+
+if (!isAnalyzeOnly) {
+  const mongoUri = importEnv.MONGODB_URI ?? process.env.MONGODB_URI;
+  const check = await verifyMongoUri(mongoUri ?? '', { timeoutMs: 12_000 });
+  if (!check.ok) {
+    console.error('\nMongoDB connectivity check failed:\n');
+    console.error(formatMongoConnectivityFailure(check));
+    console.error('\nFix MONGODB_URI in .env before running csvToAtlas import.\n');
+    process.exit(1);
+  }
 }
 
 let invocation;
