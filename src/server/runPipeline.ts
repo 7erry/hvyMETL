@@ -251,9 +251,10 @@ export async function runFullPipeline(request: PipelineRunRequest): Promise<Pipe
   }
 
   const reflectionScheduled = migrationLogIds.length > 0;
+  const memoryStore = request.migrationStore ?? getMigrationStore();
   if (reflectionScheduled) {
     reportProgress(request, { stage: 'reflection', message: 'Scheduling post-import ML feedback reflection…' });
-    triggerPostMigrationReflection(migrationLogIds, { clusterId });
+    triggerPostMigrationReflection(migrationLogIds, { clusterId, store: memoryStore });
   }
 
   const feedback: PipelineFeedbackSummary = {

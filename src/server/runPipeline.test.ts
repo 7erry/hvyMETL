@@ -27,6 +27,21 @@ vi.mock('./pipelineConfig.js', async (importOriginal) => {
 const ORACLE_ROOT = join(process.cwd(), 'examples', 'oracle');
 const ROOT = process.cwd();
 
+/** Poll until async reflection writes lessons (parallel tests must not share an unpinned store). */
+async function waitForLessons(
+  store: InMemoryMigrationStore,
+  minCount = 1,
+  timeoutMs = 10_000,
+): Promise<Awaited<ReturnType<InMemoryMigrationStore['listLessons']>>> {
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() < deadline) {
+    const lessons = await store.listLessons('lessons_learned');
+    if (lessons.length >= minCount) return lessons;
+    await new Promise((resolve) => setTimeout(resolve, 25));
+  }
+  return store.listLessons('lessons_learned');
+}
+
 describe('runFullPipeline feedback memory', () => {
   let store: InMemoryMigrationStore;
 
@@ -77,8 +92,7 @@ describe('runFullPipeline feedback memory', () => {
     );
     expect(logs.every((log) => log?.status === 'pending_reflection' || log?.status === 'reflected' || log?.status === 'healthy')).toBe(true);
 
-    await new Promise((resolve) => setTimeout(resolve, 50));
-    const lessons = await store.listLessons('lessons_learned');
+    const lessons = await waitForLessons(store);
     expect(lessons.length).toBeGreaterThan(0);
   }, 30_000);
 });

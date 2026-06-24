@@ -3,6 +3,7 @@
  */
 
 import { scheduleReflection } from './feedbackCollector.js';
+import type { MigrationStore } from './migrationStore.js';
 
 /**
  * Trigger async post-migration reflection for one or more logged migration IDs.
@@ -10,9 +11,9 @@ import { scheduleReflection } from './feedbackCollector.js';
  */
 export function triggerPostMigrationReflection(
   migrationIds: string[],
-  options: { clusterId?: string } = {},
+  options: { clusterId?: string; store?: MigrationStore } = {},
 ): void {
   for (const migrationId of migrationIds) {
-    scheduleReflection(migrationId, { clusterId: options.clusterId });
+    scheduleReflection(migrationId, { clusterId: options.clusterId, store: options.store });
   }
 }
