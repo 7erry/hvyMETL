@@ -92,7 +92,7 @@ export function ManagerSchemaCanvas({ domains, phase }: ManagerSchemaCanvasProps
   }
 
   return (
-    <div className="manager-canvas">
+    <div className="manager-canvas schema-canvas-wrap">
       <ReactFlow
         nodes={nodes}
         edges={[]}
@@ -106,18 +106,19 @@ export function ManagerSchemaCanvas({ domains, phase }: ManagerSchemaCanvasProps
         elementsSelectable={false}
         panOnScroll
       >
-        <Background variant={BackgroundVariant.Dots} gap={20} size={1} color="rgba(100,116,139,0.35)" />
+        <Background variant={BackgroundVariant.Dots} gap={20} size={1} color="#00684A" />
         <Controls showInteractive={false} />
         <MiniMap
           nodeColor={(node) => {
-            if (node.type === 'managerDomain') return '#cbd5e1';
+            if (node.type === 'managerDomain') return '#023430';
             const entity = (node.data as { entity?: { status: string } }).entity;
-            if (entity?.status === 'ready') return '#22c55e';
-            if (entity?.status === 'review') return '#eab308';
-            if (entity?.status === 'blocked') return '#ef4444';
-            return '#94a3b8';
+            if (entity?.status === 'ready') return '#00ed64';
+            if (entity?.status === 'review') return '#ffb347';
+            if (entity?.status === 'blocked') return '#ff6b6b';
+            return '#6b8f8a';
           }}
-          maskColor="rgba(15,23,42,0.08)"
+          maskColor="rgba(0, 30, 43, 0.8)"
+          style={{ background: '#112733' }}
         />
         <Panel position="top-left" className="manager-canvas-legend">
           <span className="manager-legend__item manager-legend__item--ready">Ready</span>
