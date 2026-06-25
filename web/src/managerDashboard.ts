@@ -3,7 +3,7 @@ import type { CollectionPlan, MigrationPlan } from './migrationPlanTypes';
 import type { TransformationSummary } from './transformationSummaryTypes';
 import type { SqlStructuralModel } from './types';
 import { PIPELINE_PROGRESS_STAGES } from './pipelineStages';
-import { collectionRequiresReview } from './managerReview';
+import { collectionRequiresReview, isTableReviewAccepted } from './managerReview';
 
 /** Migration readiness for a single table or collection in the manager view. */
 export type EntityReadiness = 'ready' | 'review' | 'blocked' | 'pending';
@@ -203,6 +203,9 @@ function statusForTable(
     return { status: 'ready', statusLabel: 'Validated & imported' };
   }
   if (foldedInto) {
+    if (isTableReviewAccepted(tableName, plan, acceptances)) {
+      return { status: 'ready', statusLabel: `Folded into ${foldedInto.sourceTable}` };
+    }
     return { status: 'review', statusLabel: `Folded into ${foldedInto.sourceTable}` };
   }
   if (asSource || asCollection) {

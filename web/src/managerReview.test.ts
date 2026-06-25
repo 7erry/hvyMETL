@@ -7,6 +7,7 @@ import {
   buildRecommendationsForCollection,
   collectionHasReviewFlags,
   collectionRequiresReview,
+  isTableReviewAccepted,
 } from './managerReview';
 
 const planGeneratedAt = '2026-06-11T12:00:00.000Z';
@@ -85,5 +86,12 @@ describe('managerReview', () => {
   it('ignores acceptances from a different plan version', () => {
     const stale = acceptCollectionReview(null, 'old-plan', 'users');
     expect(collectionRequiresReview(embedCollection, undefined, stale, planGeneratedAt)).toBe(true);
+  });
+
+  it('resolves table review via folded parent collection', () => {
+    expect(isTableReviewAccepted('usermeta', simplePlan, null)).toBe(false);
+    const accepted = acceptCollectionReview(null, planGeneratedAt, 'users');
+    expect(isTableReviewAccepted('usermeta', simplePlan, accepted)).toBe(true);
+    expect(isTableReviewAccepted('users', simplePlan, accepted)).toBe(true);
   });
 });

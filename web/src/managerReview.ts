@@ -77,6 +77,32 @@ export function isReviewAccepted(
   return acceptances.acceptedCollectionNames.includes(collectionName);
 }
 
+/** Collection whose review acceptance covers a source SQL table in the before view. */
+export function reviewCollectionForTable(
+  tableName: string,
+  plan: MigrationPlan,
+): CollectionPlan | undefined {
+  const foldedInto = plan.collections.find(
+    (c) => c.mergedTables.includes(tableName) && c.sourceTable !== tableName,
+  );
+  if (foldedInto) return foldedInto;
+
+  const asCollection = plan.collections.find((c) => c.name === tableName);
+  if (asCollection) return asCollection;
+
+  return plan.collections.find((c) => c.sourceTable === tableName);
+}
+
+export function isTableReviewAccepted(
+  tableName: string,
+  plan: MigrationPlan,
+  acceptances?: ManagerReviewAcceptances | null,
+): boolean {
+  const collection = reviewCollectionForTable(tableName, plan);
+  if (!collection) return false;
+  return isReviewAccepted(collection.name, acceptances ?? null, plan.generatedAt);
+}
+
 export function collectionRequiresReview(
   collection: CollectionPlan,
   summary?: TransformationSummary,

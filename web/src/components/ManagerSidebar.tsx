@@ -96,7 +96,7 @@ export function ManagerSidebar({
           </p>
           <ul className="manager-progress-breakdown">
             <li><span className="dot dot--ready" /> {progress.readyCount} ready</li>
-            <li><span className="dot dot--review" /> {progress.reviewCount} need review</li>
+            <li><span className="dot dot--review" /> {reviewCount} need review</li>
             <li><span className="dot dot--blocked" /> {progress.blockedCount} blocked</li>
             <li><span className="dot dot--pending" /> {progress.pendingCount} pending</li>
           </ul>

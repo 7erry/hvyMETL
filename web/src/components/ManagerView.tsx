@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { ResizableSplit } from './ResizableSplit';
 import { SchemaPhaseToggle } from './SchemaPhaseToggle';
 import type { SchemaPhase } from './SchemaPhaseToggle';
@@ -77,6 +77,15 @@ export function ManagerView({
     [reviewItems],
   );
 
+  useEffect(() => {
+    if (schemaPhase !== 'after' || pendingReviewCount === 0) {
+      setReviewOpen(false);
+      setFocusCollection(null);
+    }
+  }, [pendingReviewCount, schemaPhase]);
+
+  const showReviewActions = schemaPhase === 'after' && pendingReviewCount > 0;
+
   const domains = useMemo(
     () =>
       buildBusinessDomains(
@@ -147,7 +156,7 @@ export function ManagerView({
                 hasAfter={Boolean(migrationPlan)}
               />
               <div className="manager-phase-bar__actions">
-                {pendingReviewCount > 0 ? (
+                {showReviewActions ? (
                   <button type="button" className="primary" onClick={() => openReview()}>
                     Review {pendingReviewCount} collection{pendingReviewCount === 1 ? '' : 's'}
                   </button>
@@ -176,10 +185,14 @@ export function ManagerView({
             <ManagerSchemaCanvas
               domains={domains}
               phase={schemaPhase}
-              onReviewEntity={(entityId) => {
-                const entity = domains.flatMap((d) => d.entities).find((e) => e.id === entityId);
-                if (entity?.status === 'review') openReview(entityId);
-              }}
+              onReviewEntity={
+                showReviewActions
+                  ? (entityId) => {
+                      const entity = domains.flatMap((d) => d.entities).find((e) => e.id === entityId);
+                      if (entity?.status === 'review') openReview(entityId);
+                    }
+                  : undefined
+              }
             />
             <ManagerStatusBar milestone={milestone} statusMessage={statusMessage} />
           </div>

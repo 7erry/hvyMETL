@@ -66,7 +66,21 @@ describe('managerDashboard', () => {
     expect(progress.percent).toBe(100);
   });
 
-  it('marks accepted reviews as ready', () => {
+  it('marks accepted reviews as ready on before-phase folded tables', () => {
+    const acceptances = {
+      planGeneratedAt: plan.generatedAt,
+      acceptedCollectionNames: ['users'],
+    };
+    const domains = buildBusinessDomains(model, plan, 'before', null, undefined, acceptances);
+    const usermeta = domains.flatMap((d) => d.entities).find((e) => e.name === 'usermeta');
+    expect(usermeta?.status).toBe('ready');
+    const users = domains.flatMap((d) => d.entities).find((e) => e.name === 'users');
+    expect(users?.status).toBe('ready');
+    const progress = computeMigrationProgress(domains);
+    expect(progress.reviewCount).toBe(0);
+  });
+
+  it('marks accepted reviews as ready on after-phase collections', () => {
     const acceptances = {
       planGeneratedAt: plan.generatedAt,
       acceptedCollectionNames: ['users'],
