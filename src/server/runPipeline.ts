@@ -23,6 +23,10 @@ import { generateMockCsvFromDdl, type MockCsvOptions } from '../utilities/mockCs
 import { registerApiArtifacts, serializeApiArtifactBundle } from './apiArtifactStore.js';
 import { runImportCli } from '../utilities/runImportCli.js';
 import {
+  formatMongoConnectivityFailure,
+  verifyMongoUri,
+} from '../utilities/mongoConnectivity.js';
+import {
   buildPipelineImportEnv,
   getPipelineConfigStatus,
   resolvePipelineSchemaDialect,
@@ -138,6 +142,12 @@ export async function runFullPipeline(request: PipelineRunRequest): Promise<Pipe
   if (!importEnv.MONGODB_URI?.trim()) {
     throw new Error('MONGODB_URI is required for Atlas import.');
   }
+
+  const mongoCheck = await verifyMongoUri(importEnv.MONGODB_URI, { timeoutMs: 12_000 });
+  if (!mongoCheck.ok) {
+    throw new Error(formatMongoConnectivityFailure(mongoCheck));
+  }
+
   if (!config.hasCsvToAtlas) {
     throw new Error(config.csvToAtlasValidation.errors.join(' ') || 'CSV_TO_ATLAS_PATH is not configured.');
   }

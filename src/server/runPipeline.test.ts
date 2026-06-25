@@ -9,6 +9,11 @@ vi.mock('../utilities/runImportCli.js', () => ({
   runImportCli: () => ({ ok: true, parsed: { insertedCount: 10 }, status: 0, stdout: '', stderr: '' }),
 }));
 
+vi.mock('../utilities/mongoConnectivity.js', () => ({
+  verifyMongoUri: async () => ({ ok: true }),
+  formatMongoConnectivityFailure: () => 'MongoDB connectivity check failed',
+}));
+
 vi.mock('./pipelineConfig.js', async (importOriginal) => {
   const actual = await importOriginal<typeof import('./pipelineConfig.js')>();
   return {

@@ -1673,6 +1673,12 @@ textarea {
   white-space: nowrap;
 }
 
+.pipeline-mongo-connectivity pre {
+  white-space: pre-wrap;
+  margin: 0.5rem 0 0;
+  font-family: inherit;
+}
+
 .pipeline-error {
   color: #f5a8a8;
   font-size: 0.85rem;

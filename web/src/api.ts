@@ -67,6 +67,21 @@ export type PipelineConfigStatus = {
   schemaDialectLabel?: string;
   csvToAtlasValidation: { ok: boolean; errors: string[]; warnings: string[] };
   missing: string[];
+  mongoUriMasked?: string;
+  mongoConnectivity?: {
+    ok: boolean;
+    code?: string;
+    message?: string;
+    hint?: string;
+  };
+  mockCsvGenerator?: {
+    ok: boolean;
+    python?: string;
+    version?: string;
+    code?: string;
+    message?: string;
+    hint?: string;
+  };
 };
 
 export type PipelineRunResult = {
@@ -220,12 +235,14 @@ export async function fetchPipelineConfig(options?: {
   csvSourcePath?: string;
   csvToAtlasPath?: string;
   generateMockCsv?: boolean;
+  mongoUri?: string;
 }): Promise<PipelineConfigStatus> {
   const params = new URLSearchParams();
   if (options?.schemaDialect) params.set('schemaDialect', options.schemaDialect);
   if (options?.csvSourcePath) params.set('csvSourcePath', options.csvSourcePath);
   if (options?.csvToAtlasPath) params.set('csvToAtlasPath', options.csvToAtlasPath);
   if (options?.generateMockCsv) params.set('generateMockCsv', 'true');
+  if (options?.mongoUri) params.set('mongoUri', options.mongoUri);
   const query = params.toString();
   const res = await fetch(`${base}/api/pipeline/config${query ? `?${query}` : ''}`);
   if (!res.ok) throw new Error((await res.json()).error ?? res.statusText);

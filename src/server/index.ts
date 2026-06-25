@@ -2,13 +2,16 @@
  * hvyMETL Web API — optional UI backend; CLI remains fully available.
  */
 
-import 'dotenv/config';
-import cors from 'cors';
-import express from 'express';
-import multer from 'multer';
 import { existsSync, mkdirSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import cors from 'cors';
+import express from 'express';
+import multer from 'multer';
+import { loadProjectEnv } from './loadProjectEnv.js';
+
+const ROOT = join(dirname(fileURLToPath(import.meta.url)), '../..');
+loadProjectEnv(ROOT);
 import { createSqliteAdapter } from '../adapters/sqlite.js';
 import { DIALECTS } from '../dialects.js';
 import { writeDesignArtifacts } from '../design/designFromModel.js';
@@ -20,7 +23,7 @@ import { loadKnowledgeBase } from '../rag/chunker.js';
 import { createRetrievalConfigFromEnv, retrieve } from '../rag/retrieval.js';
 import { buildPromptBundle, buildRetrievalQuery } from '../rag/promptBundle.js';
 import { parseDdlToModel } from '../utilities/ddlParser.js';
-import { generateMockCsvFromDdl } from '../utilities/mockCsvFromDdl.js';
+import { generateMockCsvFromDdl, verifyMockCsvGenerator } from '../utilities/mockCsvFromDdl.js';
 import type { MigrationPlan, SqlStructuralModel } from '../types.js';
 import { getPipelineConfigStatus } from './pipelineConfig.js';
 import { runFullPipeline } from './runPipeline.js';
@@ -37,8 +40,12 @@ import { registerApiArtifactRoutes } from './apiArtifactRoutes.js';
 import { registerApiArtifacts, serializeApiArtifactBundle } from './apiArtifactStore.js';
 import { mountWebUi } from './setupWebUi.js';
 import type { DesignFromModelResult } from '../design/designFromModel.js';
+import {
+  formatMongoConnectivityFailure,
+  maskMongoUri,
+  verifyMongoUri,
+} from '../utilities/mongoConnectivity.js';
 
-const ROOT = join(dirname(fileURLToPath(import.meta.url)), '../..');
 const KNOWLEDGE_DIR = join(ROOT, 'knowledge');
 const UPLOAD_DIR = join(ROOT, 'web-uploads');
 const PORT = Number(process.env.HVYMETL_UI_PORT ?? 3847);
@@ -337,12 +344,35 @@ app.post('/api/repogen/generate', (req, res) => {
 });
 
 /** Pipeline config status (non-secret) for the UI. */
-app.get('/api/pipeline/config', (req, res) => {
-  const schemaDialect = String(req.query?.schemaDialect ?? req.query?.dialect ?? '').trim() || undefined;
-  const csvSourcePath = String(req.query?.csvSourcePath ?? req.query?.importedSourcePath ?? '').trim() || undefined;
-  const csvToAtlasPath = String(req.query?.csvToAtlasPath ?? '').trim() || undefined;
-  const generateMockCsv = req.query?.generateMockCsv === 'true' || req.query?.generateMockCsv === '1';
-  res.json(getPipelineConfigStatus(process.env, { schemaDialect, csvSourcePath, csvToAtlasPath, generateMockCsv }));
+app.get('/api/pipeline/config', async (req, res) => {
+  try {
+    const schemaDialect = String(req.query?.schemaDialect ?? req.query?.dialect ?? '').trim() || undefined;
+    const csvSourcePath = String(req.query?.csvSourcePath ?? req.query?.importedSourcePath ?? '').trim() || undefined;
+    const csvToAtlasPath = String(req.query?.csvToAtlasPath ?? '').trim() || undefined;
+    const generateMockCsv = req.query?.generateMockCsv === 'true' || req.query?.generateMockCsv === '1';
+    const mongoUriOverride = String(req.query?.mongoUri ?? '').trim();
+    const effectiveMongoUri = mongoUriOverride || process.env.MONGODB_URI?.trim() || '';
+
+    const status = getPipelineConfigStatus(process.env, {
+      schemaDialect,
+      csvSourcePath,
+      csvToAtlasPath,
+      generateMockCsv,
+    });
+
+    const mongoConnectivity = effectiveMongoUri
+      ? await verifyMongoUri(effectiveMongoUri, { timeoutMs: 12_000 })
+      : { ok: false as const, code: 'MISSING_URI', message: 'MONGODB_URI is not set.', hint: 'Add MONGODB_URI to .env (see .env.example).' };
+
+    res.json({
+      ...status,
+      mongoUriMasked: effectiveMongoUri ? maskMongoUri(effectiveMongoUri) : undefined,
+      mongoConnectivity,
+      mockCsvGenerator: verifyMockCsvGenerator(ROOT),
+    });
+  } catch (error) {
+    res.status(500).json({ error: String(error) });
+  }
 });
 
 /** List recent pipeline executions stored in MongoDB (newest first). */

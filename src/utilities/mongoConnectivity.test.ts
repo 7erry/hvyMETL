@@ -3,7 +3,7 @@ import {
   formatMongoConnectivityFailure,
   maskMongoUri,
   verifyMongoUri,
-} from '../../scripts/lib/mongoConnectivity.mjs';
+} from '../utilities/mongoConnectivity.js';
 
 describe('mongoConnectivity', () => {
   it('masks credentials in URI', () => {

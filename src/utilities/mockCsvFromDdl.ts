@@ -28,9 +28,57 @@ export type MockCsvGenerationResult = {
   tables: string[];
 };
 
+export type MockCsvGeneratorStatus =
+  | { ok: true; python: string; version: string }
+  | { ok: false; code: string; message: string; hint: string };
+
 /** Absolute path to generators/ddl_csv_generator.py under the repo root. */
 export function resolveMockCsvGeneratorScript(rootDir: string): string {
   return join(rootDir, 'generators', 'ddl_csv_generator.py');
+}
+
+/** Check that Python 3 and generator deps (faker, pandas) are available on the API server. */
+export function verifyMockCsvGenerator(
+  rootDir: string,
+  env: NodeJS.ProcessEnv = process.env,
+): MockCsvGeneratorStatus {
+  const script = resolveMockCsvGeneratorScript(rootDir);
+  if (!existsSync(script)) {
+    return {
+      ok: false,
+      code: 'MISSING_SCRIPT',
+      message: 'Mock CSV generator script not found.',
+      hint: `Expected generators/ddl_csv_generator.py under the repo root (${rootDir}).`,
+    };
+  }
+
+  const python = env.HVYMETL_PYTHON?.trim() || 'python3';
+  const versionResult = spawnSync(python, ['--version'], { encoding: 'utf-8' });
+  if (versionResult.error || versionResult.status !== 0) {
+    return {
+      ok: false,
+      code: 'PYTHON_MISSING',
+      message: `Python 3 not found (${python}).`,
+      hint:
+        'Install Python 3 on the machine running the API server, or set HVYMETL_PYTHON to your python executable.',
+    };
+  }
+
+  const depsResult = spawnSync(python, ['-c', 'import faker, pandas'], { encoding: 'utf-8' });
+  if (depsResult.status !== 0) {
+    const detail = (depsResult.stderr || depsResult.stdout || '').trim();
+    return {
+      ok: false,
+      code: 'DEPS_MISSING',
+      message: 'Python mock CSV dependencies are not installed.',
+      hint:
+        `On the API server, run: pip install -r generators/requirements.txt` +
+        (detail ? `\n  ${detail.split('\n')[0]}` : ''),
+    };
+  }
+
+  const version = (versionResult.stdout || versionResult.stderr || 'Python 3').trim();
+  return { ok: true, python, version };
 }
 
 function listTableCsvNames(outputDir: string): string[] {

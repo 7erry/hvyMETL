@@ -15,12 +15,16 @@
  * (requires CSV_TO_ATLAS_PATH in .env).
  */
 
-import 'dotenv/config';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { loadProjectEnv } from './server/loadProjectEnv.js';
+
+const CLI_ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
+loadProjectEnv(CLI_ROOT);
+
 import { Command } from 'commander';
 import { select } from '@inquirer/prompts';
 import { mkdirSync, writeFileSync } from 'node:fs';
-import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { ALL_PROFILES, buildCustomProfile, getProfile } from './profiles/profiles.js';
 import type { WorkloadProfile } from './types.js';
 import { runDesign } from './design/designCommand.js';

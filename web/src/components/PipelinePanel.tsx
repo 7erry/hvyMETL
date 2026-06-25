@@ -79,11 +79,14 @@ export function PipelinePanel({
   const refreshConfig = useCallback(async () => {
     setLoadingConfig(true);
     try {
+      const mongoUriOverride =
+        form.mongoUri.trim() && form.mongoUri !== '(configured in .env)' ? form.mongoUri.trim() : undefined;
       const status = await fetchPipelineConfig({
         schemaDialect: dialect,
         csvSourcePath: form.csvSourcePath || csvSourcePath || undefined,
         csvToAtlasPath: form.csvToAtlasPath.trim() || undefined,
         generateMockCsv: form.generateMockCsv,
+        mongoUri: mongoUriOverride,
       });
       setConfig(status);
       setForm((prev) => ({
@@ -102,7 +105,7 @@ export function PipelinePanel({
     } finally {
       setLoadingConfig(false);
     }
-  }, [dialect, csvSourcePath, form.csvSourcePath, form.csvToAtlasPath, form.generateMockCsv]);
+  }, [dialect, csvSourcePath, form.csvSourcePath, form.csvToAtlasPath, form.generateMockCsv, form.mongoUri]);
 
   useEffect(() => {
     if (!open) return;
@@ -140,12 +143,14 @@ export function PipelinePanel({
   const effectiveCsvPath = form.csvSourcePath.trim() || csvSourcePath || config?.csvSourcePath || '';
   const hasCsvSource = Boolean(config?.hasCsvSource || effectiveCsvPath || csvFiles.length > 0);
   const useMockCsv = form.generateMockCsv;
+  const mockGeneratorReady = Boolean(config?.mockCsvGenerator?.ok);
 
   const envMongoUri = Boolean(config?.hasMongoUri);
   const envCsvToAtlas = Boolean(config?.hasCsvToAtlas);
   const formMongoUri = form.mongoUri.trim();
   const hasMongoUriInput = Boolean(formMongoUri && formMongoUri !== '(configured in .env)');
-  const hasMongoUri = envMongoUri || hasMongoUriInput;
+  const mongoReachable = Boolean(config?.mongoConnectivity?.ok);
+  const hasMongoUri = mongoReachable;
   const hasCsvToAtlasInput = Boolean(form.csvToAtlasPath.trim());
   const hasCsvToAtlas = envCsvToAtlas || hasCsvToAtlasInput;
 
@@ -207,15 +212,33 @@ export function PipelinePanel({
     if (!config) return [];
     return [
       { id: 'dialect', label: `Schema dialect (${dialectLabel})`, ok: true },
-      { id: 'mongo', label: 'MongoDB connection (MONGODB_URI)', ok: hasMongoUri },
-      { id: 'csvToAtlas', label: 'csvToAtlas import tool', ok: hasCsvToAtlas },
       {
-        id: 'data',
-        label: useMockCsv ? 'Mock data from DDL' : 'CSV export folder or server path',
-        ok: useMockCsv || hasCsvSource,
+        id: 'mongo',
+        label: config.mongoUriMasked
+          ? `MongoDB reachable (${config.mongoUriMasked})`
+          : 'MongoDB connection (MONGODB_URI)',
+        ok: mongoReachable,
       },
+      { id: 'csvToAtlas', label: 'csvToAtlas import tool', ok: hasCsvToAtlas },
+      ...(useMockCsv
+        ? [
+            {
+              id: 'mockGenerator',
+              label: config.mockCsvGenerator?.ok
+                ? `Mock CSV generator (${config.mockCsvGenerator.python ?? 'python3'})`
+                : 'Mock CSV generator (Python + deps)',
+              ok: mockGeneratorReady,
+            },
+          ]
+        : [
+            {
+              id: 'data',
+              label: 'CSV export folder or server path',
+              ok: hasCsvSource,
+            },
+          ]),
     ];
-  }, [config, dialectLabel, hasMongoUri, hasCsvToAtlas, useMockCsv, hasCsvSource]);
+  }, [config, dialectLabel, mongoReachable, hasCsvToAtlas, useMockCsv, hasCsvSource, mockGeneratorReady]);
 
   const passedChecks = envChecks.filter((check) => check.ok).length;
   const envReady = envChecks.length > 0 && passedChecks === envChecks.length;
@@ -224,9 +247,10 @@ export function PipelinePanel({
     if (running || !model) return false;
     if (!hasMongoUri) return false;
     if (!hasCsvToAtlas) return false;
+    if (useMockCsv && !mockGeneratorReady) return false;
     if (!hasCsvSource && !useMockCsv) return false;
     return true;
-  }, [running, model, hasMongoUri, hasCsvToAtlas, hasCsvSource, useMockCsv]);
+  }, [running, model, hasMongoUri, hasCsvToAtlas, hasCsvSource, useMockCsv, mockGeneratorReady]);
 
   const handleRun = async () => {
     setRunning(true);
@@ -370,6 +394,15 @@ export function PipelinePanel({
           </div>
         ) : null}
 
+        {config?.mongoConnectivity && !config.mongoConnectivity.ok ? (
+          <div className="pipeline-error pipeline-mongo-connectivity">
+            <p><strong>{config.mongoConnectivity.message}</strong></p>
+            {config.mongoConnectivity.hint ? (
+              <pre className="pipeline-hint">{config.mongoConnectivity.hint}</pre>
+            ) : null}
+          </div>
+        ) : null}
+
         {config?.csvToAtlasValidation.warnings?.length ? (
           <div className="pipeline-warn">
             {config.csvToAtlasValidation.warnings.map((w) => (
@@ -444,15 +477,32 @@ export function PipelinePanel({
                 )}
               </label>
             </div>
+          ) : config?.mockCsvGenerator?.ok ? (
+            <div className="pipeline-card pipeline-mock-ready">
+              <p className="pipeline-hint">
+                Mock CSVs will be generated from your DDL using{' '}
+                <code>{config.mockCsvGenerator.python ?? 'python3'}</code>
+                {config.mockCsvGenerator.version ? ` (${config.mockCsvGenerator.version})` : ''}.
+              </p>
+            </div>
           ) : (
-            <>
-              <div className="pipeline-prereq-banner">
-                <strong>Server prerequisite</strong>
+            <div className="pipeline-prereq-banner">
+              <strong>Server prerequisite</strong>
+              <p>
+                {config?.mockCsvGenerator?.message ??
+                  'Mock CSV generation needs Python 3 on the machine running the API server.'}
+              </p>
+              {config?.mockCsvGenerator?.hint ? (
+                <pre className="pipeline-hint">{config.mockCsvGenerator.hint}</pre>
+              ) : (
                 <p>
-                  Mock CSV generation needs Python 3 and{' '}
-                  <code>pip install -r generators/requirements.txt</code> on the API server.
+                  Install dependencies: <code>pip install -r generators/requirements.txt</code>
                 </p>
-              </div>
+              )}
+            </div>
+          )}
+
+          {dataSourceMode === 'mock' ? (
               <div className="pipeline-card">
                 <h4 className="pipeline-card__title">Mock generation settings</h4>
                 <div className="pipeline-mock-grid">
@@ -500,8 +550,7 @@ export function PipelinePanel({
                   </label>
                 </div>
               </div>
-            </>
-          )}
+          ) : null}
         </section>
 
         <section className="pipeline-section">
