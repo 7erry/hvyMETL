@@ -41,6 +41,8 @@ type PipelineForm = {
   mockSeed: number;
 };
 
+type DataSourceMode = 'real' | 'mock';
+
 export function PipelinePanel({
   open,
   onClose,
@@ -61,6 +63,7 @@ export function PipelinePanel({
   const [result, setResult] = useState<PipelineRunResult | null>(null);
   const [csvFiles, setCsvFiles] = useState<File[]>([]);
   const [csvDirectoryLabel, setCsvDirectoryLabel] = useState<string | null>(null);
+  const [showEnvDetails, setShowEnvDetails] = useState(false);
   const [form, setForm] = useState<PipelineForm>({
     mongoUri: '',
     csvToAtlasPath: '',
@@ -108,6 +111,7 @@ export function PipelinePanel({
     setProgress(null);
     setCsvFiles([]);
     setCsvDirectoryLabel(null);
+    setShowEnvDetails(false);
     const noCsv = !csvSourcePath?.trim();
     setForm((prev) => ({
       ...prev,
@@ -132,6 +136,7 @@ export function PipelinePanel({
     }
   }, [csvSourcePath, open]);
 
+  const dataSourceMode: DataSourceMode = form.generateMockCsv ? 'mock' : 'real';
   const effectiveCsvPath = form.csvSourcePath.trim() || csvSourcePath || config?.csvSourcePath || '';
   const hasCsvSource = Boolean(config?.hasCsvSource || effectiveCsvPath || csvFiles.length > 0);
   const useMockCsv = form.generateMockCsv;
@@ -144,12 +149,28 @@ export function PipelinePanel({
   const hasCsvToAtlasInput = Boolean(form.csvToAtlasPath.trim());
   const hasCsvToAtlas = envCsvToAtlas || hasCsvToAtlasInput;
 
-  const csvSourceHint = `Export tables from ${dialectLabel} as CSV files. Name files after the table or MongoDB collection (e.g. products.csv).`;
+  const csvSourceHint = `Export tables from ${dialectLabel} as CSV files named after the table or collection (e.g. products.csv).`;
 
   const resolveMongoUriOverride = (): string | undefined => {
     if (hasMongoUriInput) return formMongoUri;
     return undefined;
   };
+
+  const setDataSourceMode = (mode: DataSourceMode) => {
+    setForm((prev) => ({
+      ...prev,
+      generateMockCsv: mode === 'mock',
+    }));
+    if (mode === 'mock') {
+      setCsvFiles([]);
+      setCsvDirectoryLabel(null);
+    }
+  };
+
+  useEffect(() => {
+    if (!open) return;
+    void refreshConfig();
+  }, [form.generateMockCsv, open, refreshConfig]);
 
   const handlePickCsvDirectory = async () => {
     try {
@@ -164,7 +185,7 @@ export function PipelinePanel({
       setError('');
       setCsvFiles(picked.files);
       setCsvDirectoryLabel(picked.label);
-      setForm((prev) => ({ ...prev, csvSourcePath: '' }));
+      setForm((prev) => ({ ...prev, csvSourcePath: '', generateMockCsv: false }));
     } catch (e) {
       if (e instanceof DOMException && e.name === 'AbortError') return;
       setError(String(e));
@@ -174,13 +195,30 @@ export function PipelinePanel({
   const handleCsvSourcePathChange = (value: string) => {
     setCsvDirectoryLabel(null);
     setCsvFiles([]);
-    setForm((prev) => ({ ...prev, csvSourcePath: value }));
+    setForm((prev) => ({ ...prev, csvSourcePath: value, generateMockCsv: false }));
   };
 
   const csvSourceDisplay =
     csvDirectoryLabel && csvFiles.length > 0
       ? `${csvDirectoryLabel} (${csvFiles.length} CSV file${csvFiles.length === 1 ? '' : 's'})`
       : form.csvSourcePath;
+
+  const envChecks = useMemo(() => {
+    if (!config) return [];
+    return [
+      { id: 'dialect', label: `Schema dialect (${dialectLabel})`, ok: true },
+      { id: 'mongo', label: 'MongoDB connection (MONGODB_URI)', ok: hasMongoUri },
+      { id: 'csvToAtlas', label: 'csvToAtlas import tool', ok: hasCsvToAtlas },
+      {
+        id: 'data',
+        label: useMockCsv ? 'Mock data from DDL' : 'CSV export folder or server path',
+        ok: useMockCsv || hasCsvSource,
+      },
+    ];
+  }, [config, dialectLabel, hasMongoUri, hasCsvToAtlas, useMockCsv, hasCsvSource]);
+
+  const passedChecks = envChecks.filter((check) => check.ok).length;
+  const envReady = envChecks.length > 0 && passedChecks === envChecks.length;
 
   const canRun = useMemo(() => {
     if (running || !model) return false;
@@ -245,42 +283,91 @@ export function PipelinePanel({
     <div className="pipeline-overlay" role="dialog" aria-modal="true" aria-labelledby="pipeline-title">
       <div className="pipeline-modal panel">
         <header className="pipeline-modal__header">
-          <h2 id="pipeline-title">Run Full Pipeline</h2>
+          <div>
+            <h2 id="pipeline-title">Run Full Pipeline</h2>
+            <p className="pipeline-modal__subtitle">Design your MongoDB schema and import data to Atlas.</p>
+          </div>
           <button type="button" className="ghost" onClick={onClose} disabled={running} aria-label="Close">
             ✕
           </button>
         </header>
 
-        <p style={{ fontSize: '0.85rem', opacity: 0.85, marginTop: 0 }}>
-          Design → Atlas import via csvToAtlas. Schema comes from your import; row data from CSV exports.
-        </p>
-
-        <div className="pipeline-schema-source">
-          <span className="pipeline-schema-source__label">Schema source</span>
-          <strong>{dialectLabel}</strong>
-          <span className="pipeline-schema-source__meta">from schema import</span>
-        </div>
-
         {loadingConfig ? (
-          <p>Loading configuration…</p>
+          <p className="pipeline-hint">Loading configuration…</p>
         ) : config ? (
-          <ul className="pipeline-status">
-            <li className="ok">Schema dialect {dialectLabel} ✓</li>
-            <li className={config.hasMongoUri ? 'ok' : 'missing'}>
-              MONGODB_URI {config.hasMongoUri ? '✓' : '— required'}
-            </li>
-            <li className={config.hasCsvToAtlas ? 'ok' : 'missing'}>
-              CSV_TO_ATLAS_PATH {config.hasCsvToAtlas ? `✓ ${config.csvToAtlasLabel ?? ''}` : '— required'}
-            </li>
-            <li className={hasCsvSource || useMockCsv ? 'ok' : 'missing'}>
-              CSV data source{' '}
-              {useMockCsv
-                ? '✓ mock data from DDL'
-                : hasCsvSource
-                  ? `✓ ${csvDirectoryLabel && csvFiles.length ? `${csvDirectoryLabel} (${csvFiles.length} CSVs)` : effectiveCsvPath}`
-                  : '— choose a CSV folder, enter a server path, or enable mock CSV'}
-            </li>
-          </ul>
+          <div
+            className={[
+              'pipeline-env-banner',
+              envReady ? 'pipeline-env-banner--ok' : 'pipeline-env-banner--warn',
+            ].join(' ')}
+          >
+            <div className="pipeline-env-banner__main">
+              <span className="pipeline-env-banner__icon" aria-hidden="true">{envReady ? '✓' : '!'}</span>
+              <div className="pipeline-env-banner__text">
+                <strong>
+                  {envReady
+                    ? `Environment ready (${dialectLabel} → Atlas)`
+                    : 'Environment needs attention'}
+                </strong>
+                <span>
+                  {passedChecks}/{envChecks.length} pre-flight checks passed
+                </span>
+              </div>
+              <button
+                type="button"
+                className="ghost pipeline-env-banner__toggle"
+                onClick={() => setShowEnvDetails((open) => !open)}
+                aria-expanded={showEnvDetails}
+              >
+                {showEnvDetails ? 'Hide settings' : 'View settings'}
+              </button>
+            </div>
+            {showEnvDetails ? (
+              <div className="pipeline-env-details">
+                <ul className="pipeline-status pipeline-status--compact">
+                  {envChecks.map((check) => (
+                    <li key={check.id} className={check.ok ? 'ok' : 'missing'}>
+                      {check.label} {check.ok ? '✓' : '— required'}
+                    </li>
+                  ))}
+                </ul>
+                <div className="pipeline-env-details__fields">
+                  <label>
+                    MongoDB URI
+                    {envMongoUri ? <span className="pipeline-field-badge">.env configured</span> : null}
+                    <input
+                      type="password"
+                      value={form.mongoUri === '(configured in .env)' ? '' : form.mongoUri}
+                      placeholder={envMongoUri ? 'Leave empty to use .env, or enter to override' : 'mongodb+srv://…'}
+                      onChange={(e) => setForm((prev) => ({ ...prev, mongoUri: e.target.value }))}
+                      disabled={running}
+                      autoComplete="off"
+                    />
+                  </label>
+                  <label>
+                    csvToAtlas path
+                    {envCsvToAtlas ? <span className="pipeline-field-badge">.env configured</span> : null}
+                    <input
+                      type="text"
+                      value={form.csvToAtlasPath}
+                      placeholder="/path/to/csvToAtlas (clone root or dist/)"
+                      onChange={(e) => setForm((prev) => ({ ...prev, csvToAtlasPath: e.target.value }))}
+                      disabled={running}
+                    />
+                    <span className="pipeline-hint">Clone root with package.json, or path to dist/ containing cli.js</span>
+                  </label>
+                </div>
+                <button
+                  type="button"
+                  className="ghost pipeline-env-details__refresh"
+                  onClick={() => void refreshConfig()}
+                  disabled={loadingConfig || running}
+                >
+                  {loadingConfig ? 'Refreshing…' : 'Refresh checks'}
+                </button>
+              </div>
+            ) : null}
+          </div>
         ) : null}
 
         {config?.csvToAtlasValidation.warnings?.length ? (
@@ -299,141 +386,147 @@ export function PipelinePanel({
           </div>
         ) : null}
 
-        <div className="pipeline-form">
-          <label>
-            MongoDB URI
-            {envMongoUri ? <span className="pipeline-field-badge">.env configured</span> : null}
-            <input
-              type="password"
-              value={form.mongoUri === '(configured in .env)' ? '' : form.mongoUri}
-              placeholder={envMongoUri ? 'Leave empty to use .env, or enter to override' : 'mongodb+srv://…'}
-              onChange={(e) => setForm((prev) => ({ ...prev, mongoUri: e.target.value }))}
+        <section className="pipeline-section">
+          <h3 className="pipeline-section__title">Data source</h3>
+          <div className="pipeline-data-toggle" role="radiogroup" aria-label="Data source">
+            <button
+              type="button"
+              role="radio"
+              aria-checked={dataSourceMode === 'real'}
+              className={dataSourceMode === 'real' ? 'active' : ''}
+              onClick={() => setDataSourceMode('real')}
               disabled={running}
-              autoComplete="off"
-            />
-          </label>
-
-          <label>
-            csvToAtlas path
-            {envCsvToAtlas ? <span className="pipeline-field-badge">.env configured</span> : null}
-            <input
-              type="text"
-              value={form.csvToAtlasPath}
-              placeholder="/path/to/cvsToAtlas (clone root or dist/)"
-              onChange={(e) => setForm((prev) => ({ ...prev, csvToAtlasPath: e.target.value }))}
+            >
+              Use real CSV data
+            </button>
+            <button
+              type="button"
+              role="radio"
+              aria-checked={dataSourceMode === 'mock'}
+              className={dataSourceMode === 'mock' ? 'active' : ''}
+              onClick={() => setDataSourceMode('mock')}
               disabled={running}
-            />
-            <span className="pipeline-hint" style={{ marginTop: '0.25rem' }}>
-              Clone root with package.json, or path to dist/ containing cli.js
-            </span>
-          </label>
+            >
+              Generate mock data
+            </button>
+          </div>
 
-          <p className="pipeline-hint">{csvSourceHint}</p>
-          <label>
-            CSV directory
-            <div className="pipeline-path-row">
+          {dataSourceMode === 'real' ? (
+            <div className="pipeline-card">
+              <p className="pipeline-hint">{csvSourceHint}</p>
+              <label>
+                CSV folder
+                <div className="pipeline-path-row">
+                  <input
+                    type="text"
+                    value={csvSourceDisplay}
+                    placeholder="Choose folder… or enter server path"
+                    onChange={(e) => handleCsvSourcePathChange(e.target.value)}
+                    disabled={running}
+                  />
+                  <button
+                    type="button"
+                    className="ghost"
+                    onClick={() => void handlePickCsvDirectory()}
+                    disabled={running}
+                  >
+                    Choose folder
+                  </button>
+                </div>
+                {csvDirectoryLabel && csvFiles.length > 0 ? (
+                  <span className="pipeline-hint">
+                    {csvFiles.length} file(s): {csvFiles.map((f) => f.name).join(', ')}
+                  </span>
+                ) : (
+                  <span className="pipeline-hint">
+                    Upload from this browser, or type a path on the machine running the API server.
+                  </span>
+                )}
+              </label>
+            </div>
+          ) : (
+            <>
+              <div className="pipeline-prereq-banner">
+                <strong>Server prerequisite</strong>
+                <p>
+                  Mock CSV generation needs Python 3 and{' '}
+                  <code>pip install -r generators/requirements.txt</code> on the API server.
+                </p>
+              </div>
+              <div className="pipeline-card">
+                <h4 className="pipeline-card__title">Mock generation settings</h4>
+                <div className="pipeline-mock-grid">
+                  <label>
+                    Sample size (rows)
+                    <input
+                      type="number"
+                      min={10}
+                      max={50000}
+                      value={form.mockBaseRows}
+                      disabled={running}
+                      onChange={(e) =>
+                        setForm((prev) => ({ ...prev, mockBaseRows: Number(e.target.value) || 500 }))
+                      }
+                    />
+                  </label>
+                  <label>
+                    Child rows per parent
+                    <span
+                      className="pipeline-field-tip"
+                      title="Multiplier applied to child tables based on parent row count (e.g. 3× means ~3 child rows per parent row)."
+                    >
+                      ⓘ
+                    </span>
+                    <input
+                      type="number"
+                      min={1}
+                      max={20}
+                      step={0.5}
+                      value={form.mockChildMultiplier}
+                      disabled={running}
+                      onChange={(e) =>
+                        setForm((prev) => ({ ...prev, mockChildMultiplier: Number(e.target.value) || 3 }))
+                      }
+                    />
+                  </label>
+                  <label>
+                    Random seed
+                    <input
+                      type="number"
+                      value={form.mockSeed}
+                      disabled={running}
+                      onChange={(e) => setForm((prev) => ({ ...prev, mockSeed: Number(e.target.value) || 42 }))}
+                    />
+                  </label>
+                </div>
+              </div>
+            </>
+          )}
+        </section>
+
+        <section className="pipeline-section">
+          <h3 className="pipeline-section__title">Destination</h3>
+          <div className="pipeline-card">
+            <label>
+              Target database
               <input
                 type="text"
-                value={csvSourceDisplay}
-                placeholder="Choose folder… or enter server path (e.g. /path/to/csv/exports)"
-                onChange={(e) => handleCsvSourcePathChange(e.target.value)}
+                value={form.targetDb}
+                onChange={(e) => setForm((prev) => ({ ...prev, targetDb: e.target.value }))}
                 disabled={running}
               />
-              <button
-                type="button"
-                className="primary"
-                onClick={() => void handlePickCsvDirectory()}
+            </label>
+            <label className="pipeline-checkbox">
+              <input
+                type="checkbox"
+                checked={form.drop}
                 disabled={running}
-              >
-                Choose folder
-              </button>
-            </div>
-            {csvDirectoryLabel && csvFiles.length > 0 ? (
-              <span className="pipeline-hint" style={{ marginTop: '0.25rem' }}>
-                {csvFiles.length} file(s): {csvFiles.map((f) => f.name).join(', ')}
-              </span>
-            ) : (
-              <span className="pipeline-hint" style={{ marginTop: '0.25rem' }}>
-                Choose a folder to upload CSVs from this browser, or type a path on the machine running the API.
-              </span>
-            )}
-          </label>
-
-          <label style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', marginTop: '0.75rem' }}>
-            <input
-              type="checkbox"
-              checked={form.generateMockCsv}
-              disabled={running}
-              onChange={(e) => setForm((prev) => ({ ...prev, generateMockCsv: e.target.checked }))}
-            />
-            Generate mock CSV from DDL (no export folder required)
-          </label>
-
-          {form.generateMockCsv ? (
-            <div className="pipeline-mock-sizing" style={{ display: 'grid', gap: '0.5rem', marginTop: '0.5rem' }}>
-              <label>
-                Rows per root table
-                <input
-                  type="number"
-                  min={10}
-                  max={50000}
-                  value={form.mockBaseRows}
-                  disabled={running}
-                  onChange={(e) =>
-                    setForm((prev) => ({ ...prev, mockBaseRows: Number(e.target.value) || 500 }))
-                  }
-                />
-              </label>
-              <label>
-                Child table multiplier
-                <input
-                  type="number"
-                  min={1}
-                  max={20}
-                  step={0.5}
-                  value={form.mockChildMultiplier}
-                  disabled={running}
-                  onChange={(e) =>
-                    setForm((prev) => ({ ...prev, mockChildMultiplier: Number(e.target.value) || 3 }))
-                  }
-                />
-              </label>
-              <label>
-                Random seed
-                <input
-                  type="number"
-                  value={form.mockSeed}
-                  disabled={running}
-                  onChange={(e) => setForm((prev) => ({ ...prev, mockSeed: Number(e.target.value) || 42 }))}
-                />
-              </label>
-              <span className="pipeline-hint">
-                One CSV per CREATE TABLE; foreign keys reference parent IDs. Requires Python 3 + pip install -r
-                generators/requirements.txt on the API server.
-              </span>
-            </div>
-          ) : null}
-
-          <label>
-            Target database
-            <input
-              type="text"
-              value={form.targetDb}
-              onChange={(e) => setForm((prev) => ({ ...prev, targetDb: e.target.value }))}
-              disabled={running}
-            />
-          </label>
-
-          <label style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-            <input
-              type="checkbox"
-              checked={form.drop}
-              disabled={running}
-              onChange={(e) => setForm((prev) => ({ ...prev, drop: e.target.checked }))}
-            />
-            Drop collections before import
-          </label>
-        </div>
+                onChange={(e) => setForm((prev) => ({ ...prev, drop: e.target.checked }))}
+              />
+              Wipe existing collections before importing
+            </label>
+          </div>
+        </section>
 
         {error ? <p className="pipeline-error">{error}</p> : null}
 
@@ -482,17 +575,19 @@ export function PipelinePanel({
                 ))}
               </ul>
             ) : null}
-            <p style={{ fontSize: '0.75rem', opacity: 0.7 }}>Output: {result.paths.outDir}</p>
+            <p className="pipeline-hint">Output: {result.paths.outDir}</p>
           </div>
         ) : null}
 
         <footer className="pipeline-modal__footer">
-          <button type="button" className="ghost" onClick={() => void refreshConfig()} disabled={loadingConfig}>
-            Refresh config
+          <button type="button" className="ghost" onClick={onClose} disabled={running}>
+            Cancel
           </button>
-          <button type="button" className="primary" onClick={() => void handleRun()} disabled={!canRun || running}>
-            {running ? 'Running…' : result ? 'Run Again' : 'Run Full Pipeline'}
-          </button>
+          <div className="pipeline-modal__footer-actions">
+            <button type="button" className="primary" onClick={() => void handleRun()} disabled={!canRun || running}>
+              {running ? 'Running…' : result ? 'Run again' : 'Run full pipeline'}
+            </button>
+          </div>
         </footer>
       </div>
     </div>

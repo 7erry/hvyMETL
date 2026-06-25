@@ -1393,10 +1393,215 @@ textarea {
 }
 
 .pipeline-modal {
-  width: min(560px, 100%);
+  width: min(600px, 100%);
   max-height: 90vh;
   overflow: auto;
   margin: 0;
+}
+
+.pipeline-modal__subtitle {
+  margin: 0.25rem 0 0;
+  font-size: 0.8rem;
+  opacity: 0.8;
+}
+
+.pipeline-env-banner {
+  border: 1px solid var(--mdb-green-dark-2);
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  margin-bottom: 1rem;
+  background: rgba(0, 104, 74, 0.12);
+}
+
+.pipeline-env-banner--ok {
+  border-color: var(--mdb-green-dark-2);
+}
+
+.pipeline-env-banner--warn {
+  border-color: #ffb347;
+  background: rgba(255, 179, 71, 0.08);
+}
+
+.pipeline-env-banner__main {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.pipeline-env-banner__icon {
+  font-size: 1.1rem;
+  color: var(--mdb-green-base);
+  flex-shrink: 0;
+}
+
+.pipeline-env-banner--warn .pipeline-env-banner__icon {
+  color: #ffb347;
+}
+
+.pipeline-env-banner__text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  font-size: 0.8rem;
+}
+
+.pipeline-env-banner__text strong {
+  color: var(--mdb-spring-green);
+  font-size: 0.85rem;
+}
+
+.pipeline-env-banner__toggle {
+  flex-shrink: 0;
+  font-size: 0.75rem;
+  padding: 0.3rem 0.6rem;
+}
+
+.pipeline-env-details {
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid rgba(0, 104, 74, 0.45);
+}
+
+.pipeline-env-details__fields {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+}
+
+.pipeline-env-details__refresh {
+  margin-top: 0.5rem;
+  font-size: 0.75rem;
+}
+
+.pipeline-status--compact li {
+  border-bottom: none;
+  padding: 0.2rem 0;
+}
+
+.pipeline-section {
+  margin-bottom: 1rem;
+}
+
+.pipeline-section__title {
+  margin: 0 0 0.5rem;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--mdb-green-base);
+}
+
+.pipeline-data-toggle {
+  display: flex;
+  border: 1px solid var(--mdb-green-dark-2);
+  border-radius: 8px;
+  overflow: hidden;
+  margin-bottom: 0.75rem;
+}
+
+.pipeline-data-toggle button {
+  flex: 1;
+  border: none;
+  background: transparent;
+  color: var(--mdb-spring-green);
+  padding: 0.5rem 0.75rem;
+  font-size: 0.8rem;
+  box-shadow: none;
+}
+
+.pipeline-data-toggle button:hover {
+  background: rgba(0, 104, 74, 0.35);
+  box-shadow: none;
+}
+
+.pipeline-data-toggle button.active {
+  background: var(--mdb-green-base);
+  color: var(--mdb-black);
+  font-weight: 600;
+}
+
+.pipeline-card {
+  background: rgba(17, 39, 51, 0.65);
+  border: 1px solid var(--mdb-green-dark-2);
+  border-radius: 8px;
+  padding: 0.85rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.pipeline-card__title {
+  margin: 0;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--mdb-spring-green);
+}
+
+.pipeline-mock-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.pipeline-mock-grid label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-size: 0.8rem;
+}
+
+.pipeline-field-tip {
+  margin-left: 0.35rem;
+  opacity: 0.75;
+  cursor: help;
+  font-size: 0.75rem;
+}
+
+.pipeline-checkbox {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+}
+
+.pipeline-prereq-banner {
+  border: 1px solid rgba(255, 179, 71, 0.45);
+  background: rgba(255, 179, 71, 0.08);
+  border-radius: 8px;
+  padding: 0.65rem 0.85rem;
+  margin-bottom: 0.75rem;
+  font-size: 0.78rem;
+}
+
+.pipeline-prereq-banner strong {
+  display: block;
+  color: #ffb347;
+  margin-bottom: 0.25rem;
+}
+
+.pipeline-prereq-banner p {
+  margin: 0;
+  opacity: 0.9;
+}
+
+.pipeline-prereq-banner code {
+  font-size: 0.72rem;
+}
+
+.pipeline-modal__footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.pipeline-modal__footer-actions {
+  display: flex;
+  gap: 0.5rem;
 }
 
 .pipeline-modal__header {
@@ -1409,13 +1614,6 @@ textarea {
 .pipeline-modal__header h2 {
   margin: 0;
   font-size: 1.1rem;
-}
-
-.pipeline-modal__footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: 0.5rem;
-  margin-top: 1rem;
 }
 
 .pipeline-status {
