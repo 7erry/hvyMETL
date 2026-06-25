@@ -1740,3 +1740,440 @@ textarea {
   margin: 0 0 0.5rem;
 }
 
+/* —— Role toggle (developer / manager) —— */
+.role-toggle {
+  display: inline-flex;
+  border: 1px solid var(--mdb-green-dark-2);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.role-toggle__btn {
+  padding: 0.35rem 0.75rem;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font-size: 0.8rem;
+  box-shadow: none;
+}
+
+.role-toggle__btn:hover {
+  background: rgba(0, 104, 74, 0.35);
+  box-shadow: none;
+}
+
+.role-toggle__btn.active {
+  background: var(--mdb-green-base);
+  color: var(--mdb-black);
+  font-weight: 600;
+}
+
+
+/* —— Manager dashboard (same palette as developer) —— */
+.app--manager {
+  --status-ready: var(--mdb-green-base);
+  --status-review: #ffb347;
+  --status-blocked: #ff6b6b;
+  --status-pending: #6b8f8a;
+}
+
+.app--manager .manager-sidebar {
+  background: var(--mdb-black);
+}
+
+.app--manager .manager-panel {
+  background: var(--mdb-gray-dark-4);
+  border: 1px solid var(--mdb-green-dark-2);
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 0.75rem;
+}
+
+.app--manager .manager-panel h3 {
+  margin: 0 0 0.75rem;
+  color: var(--mdb-green-base);
+  font-size: 0.95rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.app--manager .manager-panel--alert {
+  border-color: #ffb347;
+  background: rgba(255, 179, 71, 0.08);
+}
+
+.app--manager .manager-panel__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.app--manager .manager-hint {
+  font-size: 0.75rem;
+  opacity: 0.85;
+  margin: 0 0 0.5rem;
+}
+
+.app--manager .manager-progress-block {
+  text-align: center;
+}
+
+.app--manager .manager-progress-summary {
+  margin: 0.5rem 0;
+  font-size: 0.85rem;
+  opacity: 0.85;
+}
+
+.app--manager .manager-progress-breakdown {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  text-align: left;
+  font-size: 0.8rem;
+}
+
+.app--manager .manager-progress-breakdown li {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.25rem 0;
+  opacity: 0.9;
+}
+
+.app--manager .dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.app--manager .dot--ready { background: var(--status-ready); }
+.app--manager .dot--review { background: var(--status-review); }
+.app--manager .dot--blocked { background: var(--status-blocked); }
+.app--manager .dot--pending { background: var(--status-pending); }
+
+.app--manager .manager-progress-ring {
+  position: relative;
+  display: inline-block;
+}
+
+.app--manager .manager-progress-ring__track {
+  fill: none;
+  stroke: var(--mdb-green-dark-2);
+  stroke-width: 10;
+}
+
+.app--manager .manager-progress-ring__fill {
+  fill: none;
+  stroke: var(--mdb-green-base);
+  stroke-width: 10;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 0.4s ease;
+}
+
+.app--manager .manager-progress-ring__label {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  opacity: 0.85;
+}
+
+.app--manager .manager-progress-ring__label strong {
+  font-size: 1.5rem;
+  color: var(--mdb-green-base);
+  line-height: 1.1;
+}
+
+.app--manager .manager-metrics {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+  margin: 0;
+}
+
+.app--manager .manager-metrics dt {
+  font-size: 0.7rem;
+  opacity: 0.75;
+  margin: 0;
+}
+
+.app--manager .manager-metrics dd {
+  margin: 0.15rem 0 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--mdb-spring-green);
+}
+
+.app--manager .manager-activity {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.app--manager .manager-activity__item {
+  padding: 0.5rem 0;
+  border-bottom: 1px solid rgba(0, 104, 74, 0.45);
+  font-size: 0.8rem;
+}
+
+.app--manager .manager-activity__time {
+  font-size: 0.7rem;
+  opacity: 0.7;
+}
+
+.app--manager .manager-refresh {
+  font-size: 0.72rem;
+  padding: 0.2rem 0.5rem;
+}
+
+.app--manager .manager-main {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+}
+
+.app--manager .manager-phase-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.5rem 1rem;
+  background: var(--mdb-gray-dark-4);
+  border-bottom: 1px solid var(--mdb-green-dark-2);
+  flex-wrap: wrap;
+}
+
+.app--manager .manager-phase-bar__actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.app--manager .manager-canvas {
+  flex: 1;
+  min-height: 0;
+  background: var(--mdb-black);
+}
+
+.app--manager .manager-canvas-empty {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  text-align: center;
+  opacity: 0.85;
+}
+
+.app--manager .manager-canvas-legend {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  padding: 0.5rem 0.75rem;
+  background: var(--mdb-gray-dark-4);
+  border: 1px solid var(--mdb-green-dark-2);
+  border-radius: 8px;
+  font-size: 0.72rem;
+}
+
+.app--manager .manager-legend__item {
+  padding: 0.15rem 0.5rem;
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+.app--manager .manager-legend__item--ready {
+  background: rgba(0, 237, 100, 0.15);
+  color: var(--mdb-green-base);
+}
+.app--manager .manager-legend__item--review {
+  background: rgba(255, 179, 71, 0.15);
+  color: #ffb347;
+}
+.app--manager .manager-legend__item--blocked {
+  background: rgba(255, 107, 107, 0.15);
+  color: #ff6b6b;
+}
+.app--manager .manager-legend__item--pending {
+  background: rgba(107, 143, 138, 0.2);
+  color: var(--status-pending);
+}
+
+.app--manager .manager-canvas-legend__phase {
+  opacity: 0.75;
+  margin-left: 0.5rem;
+}
+
+.app--manager .manager-domain {
+  width: 100%;
+  height: 100%;
+  border: 2px dashed var(--mdb-green-dark-2);
+  border-radius: 12px;
+  background: rgba(17, 39, 51, 0.92);
+  box-sizing: border-box;
+  pointer-events: none;
+}
+
+.app--manager .manager-domain__header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: 0.65rem 1rem;
+  border-bottom: 1px solid var(--mdb-green-dark-2);
+  background: var(--mdb-gray-dark-4);
+  border-radius: 10px 10px 0 0;
+}
+
+.app--manager .manager-domain__title {
+  margin: 0;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--mdb-green-base);
+}
+
+.app--manager .manager-domain__count {
+  font-size: 0.7rem;
+  opacity: 0.75;
+}
+
+.app--manager .manager-domain__stats {
+  display: flex;
+  gap: 0.35rem;
+  padding: 0.35rem 1rem;
+  flex-wrap: wrap;
+}
+
+.app--manager .manager-domain__stat {
+  font-size: 0.65rem;
+  padding: 0.1rem 0.4rem;
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+.app--manager .manager-domain__stat--ready {
+  background: rgba(0, 237, 100, 0.15);
+  color: var(--mdb-green-base);
+}
+.app--manager .manager-domain__stat--review {
+  background: rgba(255, 179, 71, 0.15);
+  color: #ffb347;
+}
+.app--manager .manager-domain__stat--blocked {
+  background: rgba(255, 107, 107, 0.15);
+  color: #ff6b6b;
+}
+
+.app--manager .manager-entity {
+  width: 148px;
+  padding: 0.5rem 0.6rem;
+  border-radius: 8px;
+  border: 2px solid var(--mdb-green-dark-2);
+  background: var(--mdb-gray-dark-4);
+  box-sizing: border-box;
+}
+
+.app--manager .manager-entity--ready { border-color: var(--status-ready); }
+.app--manager .manager-entity--review { border-color: var(--status-review); }
+.app--manager .manager-entity--blocked { border-color: var(--status-blocked); }
+.app--manager .manager-entity--pending { border-color: var(--status-pending); }
+
+.app--manager .manager-entity__status-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  margin-right: 0.35rem;
+  vertical-align: middle;
+}
+
+.app--manager .manager-entity--ready .manager-entity__status-dot { background: var(--status-ready); }
+.app--manager .manager-entity--review .manager-entity__status-dot { background: var(--status-review); }
+.app--manager .manager-entity--blocked .manager-entity__status-dot { background: var(--status-blocked); }
+.app--manager .manager-entity--pending .manager-entity__status-dot { background: var(--status-pending); }
+
+.app--manager .manager-entity__name {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--mdb-spring-green);
+  line-height: 1.2;
+}
+
+.app--manager .manager-entity__kind {
+  display: block;
+  font-size: 0.65rem;
+  opacity: 0.75;
+  margin-top: 0.15rem;
+}
+
+.app--manager .manager-entity__status-label {
+  display: block;
+  font-size: 0.62rem;
+  opacity: 0.7;
+  margin-top: 0.2rem;
+}
+
+.app--manager .manager-status-bar {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.65rem 1.25rem;
+  background: #112733;
+  border-top: 1px solid var(--mdb-green-dark-2);
+  font-size: 0.8rem;
+  flex-wrap: wrap;
+}
+
+.app--manager .manager-status-bar__milestones {
+  display: flex;
+  gap: 0.35rem;
+  align-items: center;
+}
+
+.app--manager .manager-milestone-step {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--mdb-green-dark-2);
+}
+
+.app--manager .manager-milestone-step.done {
+  background: var(--mdb-green-base);
+}
+
+.app--manager .manager-milestone-step.active {
+  background: var(--mdb-green-base);
+  box-shadow: 0 0 0 3px rgba(0, 237, 100, 0.25);
+}
+
+.app--manager .manager-status-bar__text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  opacity: 0.85;
+  flex: 1;
+  min-width: 200px;
+}
+
+.app--manager .manager-status-bar__text strong {
+  color: var(--mdb-spring-green);
+}
+
+.app--manager .manager-status-bar__eta {
+  font-size: 0.72rem;
+  color: var(--mdb-green-base);
+}
+
+.app--manager .manager-status-bar__status {
+  font-size: 0.75rem;
+  opacity: 0.75;
+  max-width: 280px;
+}

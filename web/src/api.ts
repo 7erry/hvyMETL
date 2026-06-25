@@ -414,11 +414,6 @@ export async function generateRepositories(planJson: string, language: string): 
   return data;
 }
 
-export async function fetchTemplates(): Promise<{ id: string; name: string; ddl: string; model: SqlStructuralModel }[]> {
-  const res = await fetch(`${base}/api/templates`);
-  return res.json();
-}
-
 export function downloadJson(filename: string, data: unknown) {
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);

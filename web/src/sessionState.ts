@@ -45,6 +45,9 @@ export type AppView = 'diagram' | 'migration';
 
 export type SchemaPhase = 'before' | 'after';
 
+/** Developer keeps the full engineering UI; manager shows a simplified executive dashboard. */
+export type UiRole = 'developer' | 'manager';
+
 export type SessionState = {
   profileId: string;
   dialect: string;
@@ -58,7 +61,6 @@ export type SessionState = {
   schemaPhase: SchemaPhase;
   view: AppView;
   migrationArtifacts: MigrationArtifacts | null;
-  selectedTemplateId: string;
   sidebarWidth: number;
   canvasPanelOpen: boolean;
   csvSourcePath: string | null;
@@ -66,6 +68,7 @@ export type SessionState = {
   relationshipNotation: RelationshipNotation;
   customProfile: WorkloadProfile | null;
   customTelemetryInput: CustomProfileInput | null;
+  uiRole: UiRole;
 };
 
 export const defaultSessionState = (): SessionState => ({
@@ -81,7 +84,6 @@ export const defaultSessionState = (): SessionState => ({
   schemaPhase: 'before',
   view: 'diagram',
   migrationArtifacts: null,
-  selectedTemplateId: '',
   sidebarWidth: 320,
   canvasPanelOpen: true,
   csvSourcePath: null,
@@ -89,6 +91,7 @@ export const defaultSessionState = (): SessionState => ({
   relationshipNotation: 'detailed',
   customProfile: null,
   customTelemetryInput: null,
+  uiRole: 'developer',
 });
 
 export function loadSessionState(): SessionState {

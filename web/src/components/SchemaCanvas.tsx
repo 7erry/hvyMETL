@@ -17,6 +17,7 @@ import { useCallback, useEffect, useMemo } from 'react';
 import { RelationshipEdge } from './RelationshipEdge';
 import { RelationshipDisplayControls } from './RelationshipDisplayControls';
 import { TableNode, type TableNodeData } from './TableNode';
+import { layoutSqlModel } from '../graphLayout';
 import {
   formatRelationshipLabel,
   type RelationshipConnectionType,
@@ -88,11 +89,10 @@ function modelToFlow(
   const referencedByColumn = buildReferencedColumns(model);
   const related = relatedTableNames(model, selectedTable);
   const hasSelection = Boolean(selectedTable);
+  const autoLayout = layoutSqlModel(model);
 
-  const nodes: Node<TableNodeData>[] = model.tables.map((table, index) => {
-    const col = index % 4;
-    const row = Math.floor(index / 4);
-    const pos = positions[table.name] ?? { x: col * 300 + 40, y: row * 240 + 40 };
+  const nodes: Node<TableNodeData>[] = model.tables.map((table) => {
+    const pos = positions[table.name] ?? autoLayout[table.name] ?? { x: 40, y: 40 };
     const fkColumns = table.foreignKeys.map((fk) => fk.column);
     const referencedColumns = [...(referencedByColumn.get(table.name) ?? [])];
 
@@ -207,7 +207,7 @@ export function SchemaCanvas({
   if (!model) {
     return (
       <div className="schema-canvas-empty">
-        Import a schema query or choose a template to visualize your ER diagram.
+        Import a schema query or file to visualize your ER diagram.
       </div>
     );
   }

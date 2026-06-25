@@ -23,6 +23,7 @@ import {
   relatedCollectionNames,
   type MongoCollectionEdge,
 } from '../migrationPlanDisplay';
+import { layoutMigrationPlan } from '../graphLayout';
 import type { RelationshipConnectionType, RelationshipNotation } from '../relationshipDisplay';
 import type { MigrationPlan } from '../migrationPlanTypes';
 
@@ -66,6 +67,7 @@ function planToFlow(
   const planEdges = edgesForPlan(plan);
   const related = relatedCollectionNames(plan, selectedCollection);
   const hasSelection = Boolean(selectedCollection);
+  const autoLayout = layoutMigrationPlan(plan);
 
   const incomingTargets = new Set(planEdges.map((e) => e.target));
   const outgoingSources = new Set(planEdges.map((e) => e.source));
@@ -79,10 +81,8 @@ function planToFlow(
     linkFieldsByCollection.set(edge.source, list);
   }
 
-  const nodes: Node<CollectionNodeData>[] = plan.collections.map((collection, index) => {
-    const col = index % 4;
-    const row = Math.floor(index / 4);
-    const pos = positions[collection.name] ?? { x: col * 300 + 40, y: row * 260 + 40 };
+  const nodes: Node<CollectionNodeData>[] = plan.collections.map((collection) => {
+    const pos = positions[collection.name] ?? autoLayout[collection.name] ?? { x: 40, y: 40 };
 
     return {
       id: collection.name,

@@ -1,5 +1,6 @@
 import type { CollectionPlan, MigrationPlan } from './migrationPlanTypes';
 import type { SqlStructuralModel } from './types';
+import { layoutMigrationPlan } from './graphLayout';
 
 type JsonSchemaProperty = {
   bsonType?: string | string[];
@@ -222,23 +223,15 @@ export function relatedCollectionNames(plan: MigrationPlan, selected: string | n
   return related;
 }
 
-/** Initial canvas positions: inherit from SQL table layout when sourceTable matches. */
+/** Initial canvas positions: relationship-aware layout when not manually placed. */
 export function initialCollectionPositions(
   plan: MigrationPlan,
-  sqlPositions: Record<string, { x: number; y: number }>,
+  _sqlPositions: Record<string, { x: number; y: number }>,
   saved: Record<string, { x: number; y: number }>,
 ): Record<string, { x: number; y: number }> {
-  const positions: Record<string, { x: number; y: number }> = { ...saved };
-  plan.collections.forEach((collection, index) => {
-    if (positions[collection.name]) return;
-    const fromSql = sqlPositions[collection.sourceTable];
-    if (fromSql) {
-      positions[collection.name] = { x: fromSql.x + 20, y: fromSql.y + 20 };
-      return;
-    }
-    const col = index % 4;
-    const row = Math.floor(index / 4);
-    positions[collection.name] = { x: col * 300 + 40, y: row * 260 + 40 };
-  });
-  return positions;
+  if (plan.collections.every((collection) => saved[collection.name])) {
+    return { ...saved };
+  }
+  const auto = layoutMigrationPlan(plan);
+  return { ...auto, ...saved };
 }

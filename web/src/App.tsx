@@ -12,14 +12,16 @@ import type { SchemaPhase } from './components/SchemaPhaseToggle';
 import { ResizableSplit } from './components/ResizableSplit';
 import { PipelinePanel } from './components/PipelinePanel';
 import { CustomTelemetryModal } from './components/CustomTelemetryModal';
+import { ManagerView } from './components/ManagerView';
+import { RoleToggle } from './components/RoleToggle';
 import { profileRequestBody } from './customProfileShared';
 import {
   downloadJson,
+  downloadText,
   exportMigration,
   exportPrompts,
   fetchDialects,
   fetchProfiles,
-  fetchTemplates,
   importDdl,
   importSqlite,
   runDesign,
@@ -30,7 +32,6 @@ import {
   type MongoDiagramExport,
   type PipelineRunResult,
   inferProfile,
-  type ProfileInference,
 } from './api';
 import {
   defaultSessionState,
@@ -46,6 +47,7 @@ import {
   initialCollectionPositions,
   parseMigrationPlan,
 } from './migrationPlanDisplay';
+import { layoutSqlModel } from './graphLayout';
 import { pickCsvDirectory } from './directoryPicker';
 import type { CollectionPlan, MigrationPlan } from './migrationPlanTypes';
 import type { PipelineExecutionDetail } from './transformationSummaryTypes';
@@ -54,7 +56,6 @@ import type { Dialect, Profile, SqlStructuralModel } from './types';
 export default function App() {
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [dialects, setDialects] = useState<Dialect[]>([]);
-  const [templates, setTemplates] = useState<{ id: string; name: string; ddl: string; model: SqlStructuralModel; inferred?: ProfileInference }[]>([]);
   const [session, setSession] = useState<SessionState>(loadSessionState);
   const [status, setStatus] = useState('');
   const [exporting, setExporting] = useState(false);
@@ -81,7 +82,6 @@ export default function App() {
     schemaPhase,
     view,
     migrationArtifacts,
-    selectedTemplateId,
     sidebarWidth,
     canvasPanelOpen,
     csvSourcePath,
@@ -89,6 +89,7 @@ export default function App() {
     relationshipNotation,
     customProfile,
     customTelemetryInput,
+    uiRole,
   } = session;
 
   const profileFields = useMemo(
@@ -105,10 +106,9 @@ export default function App() {
   }, [session]);
 
   useEffect(() => {
-    void Promise.all([fetchProfiles(), fetchDialects(), fetchTemplates()]).then(([p, d, t]) => {
+    void Promise.all([fetchProfiles(), fetchDialects()]).then(([p, d]) => {
       setProfiles(p);
       setDialects(d);
-      setTemplates(t);
     });
   }, []);
 
@@ -160,7 +160,7 @@ export default function App() {
       ddl: nextDdl,
       model: nextModel,
       profileId: inferredProfileId ?? prev.profileId,
-      positions: {},
+      positions: layoutSqlModel(nextModel),
       collectionPositions: {},
       selectedTable: null,
       selectedCollection: null,
@@ -217,12 +217,22 @@ export default function App() {
     await handleDdlFileUpload(file);
   };
 
-  const handleTemplateLoad = async () => {
-    const t = templates.find((x) => x.id === selectedTemplateId);
-    if (!t) return;
-    await applySchema(t.ddl, t.model, t.inferred?.profileId);
-    setStatus(`Loaded ${t.name} template.`);
-  };
+  const profileInfo = useMemo(() => {
+    if (profileId === 'custom' && customProfile) {
+      return {
+        label: customProfile.label,
+        readPercent: customProfile.telemetry.readPercent,
+        writePercent: customProfile.telemetry.writePercent,
+      };
+    }
+    const profile = profiles.find((p) => p.id === profileId);
+    if (!profile) return null;
+    return {
+      label: profile.label,
+      readPercent: profile.telemetry.readPercent,
+      writePercent: profile.telemetry.writePercent,
+    };
+  }, [profileId, customProfile, profiles]);
 
   const dialectLabel = useMemo(
     () => dialects.find((d) => d.id === dialect)?.label ?? dialect,
@@ -574,6 +584,15 @@ export default function App() {
     setStatus(result.ok ? 'Full pipeline completed.' : `Pipeline finished with errors: ${result.errors.join('; ')}`);
   };
 
+  const handleSignOffExport = () => {
+    if (!migrationArtifacts?.planJson) return;
+    downloadJson('migration-plan.json', JSON.parse(migrationArtifacts.planJson));
+    if (migrationArtifacts.designReportMarkdown?.trim()) {
+      downloadText('design-report.md', migrationArtifacts.designReportMarkdown, 'text/markdown');
+    }
+    setStatus('Migration blueprint exported (plan + design report).');
+  };
+
   const handleClearSession = () => {
     const next = defaultSessionState();
     setSession(next);
@@ -582,8 +601,12 @@ export default function App() {
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+    <div
+      className={uiRole === 'manager' ? 'app-root app--manager' : 'app-root'}
+      style={{ display: 'flex', flexDirection: 'column', height: '100%' }}
+    >
       <header
+        className="app-header"
         style={{
           display: 'flex',
           alignItems: 'center',
@@ -595,32 +618,37 @@ export default function App() {
       >
         <MongoLogo />
         <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-          <select
-            value={profileId}
-            onChange={(e) => {
-              const next = e.target.value;
-              setSessionField('profileId', next);
-              if (next === 'custom' && !customProfile) {
-                setCustomTelemetryOpen(true);
-              }
-            }}
-            aria-label="Workload profile"
-          >
-            {profiles.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.label}
-              </option>
-            ))}
-            <option value="custom">Custom Workload</option>
-          </select>
-          <button type="button" className="ghost" onClick={() => setCustomTelemetryOpen(true)}>
-            Custom telemetry
-          </button>
+          <RoleToggle role={uiRole} onChange={(role) => setSessionField('uiRole', role)} />
+          {uiRole === 'developer' ? (
+            <>
+              <select
+                value={profileId}
+                onChange={(e) => {
+                  const next = e.target.value;
+                  setSessionField('profileId', next);
+                  if (next === 'custom' && !customProfile) {
+                    setCustomTelemetryOpen(true);
+                  }
+                }}
+                aria-label="Workload profile"
+              >
+                {profiles.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.label}
+                  </option>
+                ))}
+                <option value="custom">Custom Workload</option>
+              </select>
+              <button type="button" className="ghost" onClick={() => setCustomTelemetryOpen(true)}>
+                Custom telemetry
+              </button>
+            </>
+          ) : null}
           {view === 'migration' ? (
             <button type="button" className="ghost" onClick={() => setSessionField('view', 'diagram')}>
-              ← Diagram
+              ← Dashboard
             </button>
-          ) : (
+          ) : uiRole === 'developer' ? (
             <>
               <button type="button" className="primary" onClick={() => setPipelineOpen(true)} disabled={!model}>
                 Run Full Pipeline
@@ -629,13 +657,34 @@ export default function App() {
                 {exporting ? 'Generating…' : 'AI Migration Export'}
               </button>
             </>
-          )}
-          <span style={{ fontSize: '0.75rem', opacity: 0.7 }}>CLI: npm run hvymetl</span>
+          ) : null}
+          {uiRole === 'developer' ? (
+            <span style={{ fontSize: '0.75rem', opacity: 0.7 }}>CLI: npm run hvymetl</span>
+          ) : null}
         </div>
       </header>
 
       <div style={{ display: 'flex', flex: 1, minHeight: 0 }}>
         {view === 'diagram' ? (
+          uiRole === 'manager' ? (
+            <ManagerView
+              model={model}
+              migrationPlan={migrationPlan}
+              migrationArtifacts={migrationArtifacts}
+              schemaPhase={schemaPhase}
+              sidebarWidth={sidebarWidth}
+              onSidebarWidthChange={(width) => setSessionField('sidebarWidth', width)}
+              onSchemaPhaseChange={handleSchemaPhaseChange}
+              onRunPipeline={() => setPipelineOpen(true)}
+              onGenerateReport={() => void handleAiExport()}
+              onSignOffExport={handleSignOffExport}
+              onOpenMigrationView={() => setSessionField('view', 'migration')}
+              exporting={exporting}
+              statusMessage={status}
+              pipelineOpen={pipelineOpen}
+              profileInfo={profileInfo}
+            />
+          ) : (
           <ResizableSplit
             sidebarWidth={sidebarWidth}
             onSidebarWidthChange={(width) => setSessionField('sidebarWidth', width)}
@@ -745,33 +794,6 @@ export default function App() {
                     onRefresh={() => void handleRefreshExplanation()}
                     refreshing={explainingSummary}
                   />
-                ) : null}
-
-                {schemaPhase === 'before' ? (
-                  <div className="panel" style={{ marginBottom: '0.75rem' }}>
-                    <h3>Templates</h3>
-                    <select
-                      value={selectedTemplateId}
-                      onChange={(e) => setSessionField('selectedTemplateId', e.target.value)}
-                      style={{ width: '100%', marginBottom: '0.5rem' }}
-                      aria-label="Schema template"
-                    >
-                      <option value="">Choose a template…</option>
-                      {templates.map((t) => (
-                        <option key={t.id} value={t.id}>
-                          {t.name}
-                        </option>
-                      ))}
-                    </select>
-                    <button
-                      type="button"
-                      className="primary block"
-                      onClick={() => void handleTemplateLoad()}
-                      disabled={!selectedTemplateId}
-                    >
-                      Load template
-                    </button>
-                  </div>
                 ) : null}
 
                 {schemaPhase === 'before' && selectedTableModel && (
@@ -991,6 +1013,7 @@ export default function App() {
               </>
             }
           />
+          )
         ) : (
           <main style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
             {migrationArtifacts ? (

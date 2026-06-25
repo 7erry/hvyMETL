@@ -336,20 +336,6 @@ app.post('/api/repogen/generate', (req, res) => {
   }
 });
 
-/** Schema templates (Laravel, Django, Twitter, hvyMETL examples). */
-app.get('/api/templates', (_req, res) => {
-  const templatesDir = join(ROOT, 'web', 'public', 'templates');
-  const ids = ['laravel', 'django', 'twitter', 'catalog', 'iot', 'cms'];
-  const templates = ids.map((id) => {
-    const path = join(templatesDir, `${id}.sql`);
-    const ddl = readFileSync(path, 'utf8');
-    const model = parseDdlToModel(ddl, `template:${id}`);
-    const inferred = inferWorkloadProfile(model);
-    return { id, name: id.charAt(0).toUpperCase() + id.slice(1), ddl, model, inferred };
-  });
-  res.json(templates);
-});
-
 /** Pipeline config status (non-secret) for the UI. */
 app.get('/api/pipeline/config', (req, res) => {
   const schemaDialect = String(req.query?.schemaDialect ?? req.query?.dialect ?? '').trim() || undefined;
