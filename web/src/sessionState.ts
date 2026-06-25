@@ -48,6 +48,11 @@ export type SchemaPhase = 'before' | 'after';
 /** Developer keeps the full engineering UI; manager shows a simplified executive dashboard. */
 export type UiRole = 'developer' | 'manager';
 
+export type ManagerReviewAcceptances = {
+  planGeneratedAt: string;
+  acceptedCollectionNames: string[];
+};
+
 export type SessionState = {
   profileId: string;
   dialect: string;
@@ -69,6 +74,7 @@ export type SessionState = {
   customProfile: WorkloadProfile | null;
   customTelemetryInput: CustomProfileInput | null;
   uiRole: UiRole;
+  managerReviewAcceptances: ManagerReviewAcceptances | null;
 };
 
 export const defaultSessionState = (): SessionState => ({
@@ -92,6 +98,7 @@ export const defaultSessionState = (): SessionState => ({
   customProfile: null,
   customTelemetryInput: null,
   uiRole: 'developer',
+  managerReviewAcceptances: null,
 });
 
 export function loadSessionState(): SessionState {

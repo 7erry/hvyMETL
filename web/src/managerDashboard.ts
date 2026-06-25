@@ -1,8 +1,9 @@
-import type { MigrationArtifacts } from './sessionState';
+import type { ManagerReviewAcceptances, MigrationArtifacts } from './sessionState';
 import type { CollectionPlan, MigrationPlan } from './migrationPlanTypes';
 import type { TransformationSummary } from './transformationSummaryTypes';
 import type { SqlStructuralModel } from './types';
 import { PIPELINE_PROGRESS_STAGES } from './pipelineStages';
+import { collectionRequiresReview } from './managerReview';
 
 /** Migration readiness for a single table or collection in the manager view. */
 export type EntityReadiness = 'ready' | 'review' | 'blocked' | 'pending';
@@ -121,8 +122,6 @@ export function buildCloudResourceSummary(
   };
 }
 
-const COMPLEX_PATTERNS = new Set(['embed', 'bucket', 'subset', 'archive', 'extended-reference', 'polymorphic', 'tree']);
-
 function capitalize(word: string): string {
   if (!word) return word;
   return word.charAt(0).toUpperCase() + word.slice(1);
@@ -145,17 +144,6 @@ function domainLabelForKey(key: string): string {
   return `${capitalize(key)} Module`;
 }
 
-function collectionNeedsReview(collection: CollectionPlan, summary?: TransformationSummary): boolean {
-  const patternIds = collection.patterns.map((p) => p.pattern);
-  if (patternIds.some((id) => COMPLEX_PATTERNS.has(id))) return true;
-  if (collection.embeddedArrays.length > 0 || collection.extendedReferences.length > 0) return true;
-  if (collection.mergedTables.length > 1) return true;
-  if (collection.archive) return true;
-  const note = summary?.collections.find((c) => c.name === collection.name);
-  if (note && note.notes.length > 0) return true;
-  return false;
-}
-
 function importStatusForCollection(
   name: string,
   artifacts?: MigrationArtifacts | null,
@@ -171,6 +159,8 @@ function statusForCollection(
   collection: CollectionPlan,
   artifacts?: MigrationArtifacts | null,
   summary?: TransformationSummary,
+  acceptances?: ManagerReviewAcceptances | null,
+  planGeneratedAt?: string,
 ): { status: EntityReadiness; statusLabel: string } {
   const importStatus = importStatusForCollection(collection.name, artifacts);
   if (importStatus === 'failed') {
@@ -179,8 +169,14 @@ function statusForCollection(
   if (importStatus === 'ok') {
     return { status: 'ready', statusLabel: 'Validated & imported' };
   }
-  if (collectionNeedsReview(collection, summary)) {
+  if (collectionRequiresReview(collection, summary, acceptances, planGeneratedAt)) {
     return { status: 'review', statusLabel: 'Needs review' };
+  }
+  const wasReviewed =
+    acceptances?.planGeneratedAt === planGeneratedAt &&
+    acceptances.acceptedCollectionNames.includes(collection.name);
+  if (wasReviewed) {
+    return { status: 'ready', statusLabel: 'Approved' };
   }
   return { status: 'ready', statusLabel: 'Mapped & validated' };
 }
@@ -189,6 +185,8 @@ function statusForTable(
   tableName: string,
   plan: MigrationPlan | null,
   artifacts?: MigrationArtifacts | null,
+  summary?: TransformationSummary,
+  acceptances?: ManagerReviewAcceptances | null,
 ): { status: EntityReadiness; statusLabel: string } {
   if (!plan) {
     return { status: 'pending', statusLabel: 'Not mapped yet' };
@@ -209,7 +207,10 @@ function statusForTable(
   }
   if (asSource || asCollection) {
     const collection = asCollection ?? plan.collections.find((c) => c.sourceTable === tableName);
-    if (collection && collectionNeedsReview(collection)) {
+    if (
+      collection &&
+      collectionRequiresReview(collection, summary, acceptances, plan.generatedAt)
+    ) {
       return { status: 'review', statusLabel: 'Complex mapping' };
     }
     return { status: 'ready', statusLabel: 'Mapped' };
@@ -223,13 +224,20 @@ export function buildBusinessDomains(
   phase: 'before' | 'after',
   artifacts?: MigrationArtifacts | null,
   summary?: TransformationSummary,
+  acceptances?: ManagerReviewAcceptances | null,
 ): BusinessDomain[] {
   const domainMap = new Map<string, ManagerEntity[]>();
 
   if (phase === 'after' && plan) {
     for (const collection of plan.collections) {
       const key = domainKeyForName(collection.sourceTable || collection.name);
-      const { status, statusLabel } = statusForCollection(collection, artifacts, summary);
+      const { status, statusLabel } = statusForCollection(
+        collection,
+        artifacts,
+        summary,
+        acceptances,
+        plan.generatedAt,
+      );
       const entity: ManagerEntity = {
         id: collection.name,
         name: collection.name,
@@ -244,7 +252,13 @@ export function buildBusinessDomains(
   } else if (model) {
     for (const table of model.tables) {
       const key = domainKeyForName(table.name);
-      const { status, statusLabel } = statusForTable(table.name, plan, artifacts);
+      const { status, statusLabel } = statusForTable(
+        table.name,
+        plan,
+        artifacts,
+        summary,
+        acceptances,
+      );
       const entity: ManagerEntity = {
         id: table.name,
         name: table.name,
@@ -297,6 +311,7 @@ export function computeManagerMilestone(
   plan: MigrationPlan | null,
   artifacts?: MigrationArtifacts | null,
   pipelineRunning?: boolean,
+  acceptances?: ManagerReviewAcceptances | null,
 ): ManagerMilestone {
   if (!model) {
     return {
@@ -315,7 +330,9 @@ export function computeManagerMilestone(
       etaHint: pipelineRunning ? 'Design in progress…' : 'Typically 1–3 minutes',
     };
   }
-  const progress = computeMigrationProgress(buildBusinessDomains(model, plan, 'after', artifacts));
+  const progress = computeMigrationProgress(
+    buildBusinessDomains(model, plan, 'after', artifacts, artifacts?.transformationSummary, acceptances),
+  );
   if (!artifacts?.pipelineResult) {
     return {
       step: 3,

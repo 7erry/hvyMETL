@@ -20,6 +20,7 @@ const model: SqlStructuralModel = {
 const plan: MigrationPlan = {
   source: 'test',
   profileId: 'catalog',
+  generatedAt: '2026-01-01T00:00:00.000Z',
   collections: [
     {
       name: 'users',
@@ -63,6 +64,20 @@ describe('managerDashboard', () => {
     const progress = computeMigrationProgress(domains);
     expect(progress.totalCount).toBe(2);
     expect(progress.percent).toBe(100);
+  });
+
+  it('marks accepted reviews as ready', () => {
+    const acceptances = {
+      planGeneratedAt: plan.generatedAt,
+      acceptedCollectionNames: ['users'],
+    };
+    const domains = buildBusinessDomains(model, plan, 'after', null, undefined, acceptances);
+    const users = domains.flatMap((d) => d.entities).find((e) => e.name === 'users');
+    expect(users?.status).toBe('ready');
+    expect(users?.statusLabel).toBe('Approved');
+    const progress = computeMigrationProgress(domains);
+    expect(progress.reviewCount).toBe(0);
+    expect(progress.readyCount).toBe(2);
   });
 
   it('builds cloud summary from real pipeline import counts', () => {

@@ -11,6 +11,7 @@ type ManagerSidebarProps = {
   blockerCount: number;
   reviewCount: number;
   profileInfo: { label: string; readPercent: number; writePercent: number } | null;
+  onOpenReview: () => void;
 };
 
 function ProgressRing({ percent }: { percent: number }) {
@@ -59,6 +60,7 @@ export function ManagerSidebar({
   blockerCount,
   reviewCount,
   profileInfo,
+  onOpenReview,
 }: ManagerSidebarProps) {
   const [activity, setActivity] = useState<ActivityFeedItem[]>([]);
   const [executions, setExecutions] = useState<PipelineExecutionListItem[]>([]);
@@ -105,7 +107,14 @@ export function ManagerSidebar({
         <section className="manager-panel manager-panel--alert">
           <h3>Attention needed</h3>
           {reviewCount > 0 ? (
-            <p>{reviewCount} entity(ies) have complex nesting or folding — schedule a technical review.</p>
+            <>
+              <p>
+                {reviewCount} collection(s) have recommended design changes — review and accept before sign-off.
+              </p>
+              <button type="button" className="primary manager-review-cta" onClick={onOpenReview}>
+                Review recommended changes
+              </button>
+            </>
           ) : null}
           {blockerCount > 0 ? (
             <p>{blockerCount} entity(ies) are blocked and must be resolved before sign-off.</p>

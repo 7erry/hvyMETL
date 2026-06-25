@@ -2285,7 +2285,7 @@ textarea {
 }
 
 .app--manager .manager-entity--ready { border-color: var(--status-ready); }
-.app--manager .manager-entity--review { border-color: var(--status-review); }
+.app--manager .manager-entity--review { border-color: var(--status-review); cursor: pointer; }
 .app--manager .manager-entity--blocked { border-color: var(--status-blocked); }
 .app--manager .manager-entity--pending { border-color: var(--status-pending); }
 
@@ -2380,4 +2380,144 @@ textarea {
   font-size: 0.75rem;
   opacity: 0.75;
   max-width: 280px;
+}
+
+.app--manager .manager-review-cta {
+  margin-top: 0.5rem;
+  width: 100%;
+}
+
+.app--manager .manager-review-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: rgba(0, 30, 43, 0.72);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+}
+
+.app--manager .manager-review-modal {
+  width: min(720px, 100%);
+  max-height: min(85vh, 900px);
+  background: var(--mdb-gray-dark-4);
+  border: 1px solid var(--mdb-green-dark-2);
+  border-radius: 12px;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.45);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.app--manager .manager-review-modal__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--mdb-green-dark-2);
+}
+
+.app--manager .manager-review-modal__header h2 {
+  margin: 0;
+  font-size: 1.1rem;
+  color: var(--mdb-spring-green);
+}
+
+.app--manager .manager-review-modal__subtitle {
+  margin: 0.35rem 0 0;
+  font-size: 0.8rem;
+  opacity: 0.85;
+}
+
+.app--manager .manager-review-modal__actions {
+  padding: 0.75rem 1.25rem;
+  border-bottom: 1px solid rgba(0, 104, 74, 0.35);
+}
+
+.app--manager .manager-review-list {
+  list-style: none;
+  margin: 0;
+  padding: 0.75rem 1.25rem 1.25rem;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.app--manager .manager-review-card {
+  border: 1px solid var(--mdb-green-dark-2);
+  border-radius: 10px;
+  padding: 0.85rem 1rem;
+  margin-bottom: 0.75rem;
+  background: rgba(0, 30, 43, 0.35);
+}
+
+.app--manager .manager-review-card--accepted {
+  border-color: rgba(0, 237, 100, 0.45);
+  background: rgba(0, 237, 100, 0.06);
+}
+
+.app--manager .manager-review-card--focus {
+  box-shadow: 0 0 0 2px rgba(255, 179, 71, 0.5);
+}
+
+.app--manager .manager-review-card__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.65rem;
+}
+
+.app--manager .manager-review-card__header h3 {
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+.app--manager .manager-review-card__meta {
+  margin: 0.25rem 0 0;
+  font-size: 0.75rem;
+  opacity: 0.8;
+}
+
+.app--manager .manager-review-badge {
+  font-size: 0.72rem;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  font-weight: 600;
+}
+
+.app--manager .manager-review-badge--accepted {
+  background: rgba(0, 237, 100, 0.15);
+  color: var(--mdb-green-base);
+}
+
+.app--manager .manager-review-recommendations {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.app--manager .manager-review-rec {
+  padding: 0.5rem 0;
+  border-top: 1px solid rgba(0, 104, 74, 0.35);
+  font-size: 0.78rem;
+}
+
+.app--manager .manager-review-rec:first-child {
+  border-top: none;
+  padding-top: 0;
+}
+
+.app--manager .manager-review-rec strong {
+  display: block;
+  color: var(--mdb-spring-green);
+  font-size: 0.75rem;
+  margin-bottom: 0.2rem;
+}
+
+.app--manager .manager-review-rec p {
+  margin: 0;
+  opacity: 0.9;
+  line-height: 1.45;
 }

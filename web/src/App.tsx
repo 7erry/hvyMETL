@@ -90,6 +90,7 @@ export default function App() {
     customProfile,
     customTelemetryInput,
     uiRole,
+    managerReviewAcceptances,
   } = session;
 
   const profileFields = useMemo(
@@ -165,6 +166,7 @@ export default function App() {
       selectedTable: null,
       selectedCollection: null,
       migrationArtifacts: null,
+      managerReviewAcceptances: null,
       schemaPhase: 'before',
       view: 'diagram',
     }));
@@ -683,6 +685,10 @@ export default function App() {
               statusMessage={status}
               pipelineOpen={pipelineOpen}
               profileInfo={profileInfo}
+              managerReviewAcceptances={managerReviewAcceptances}
+              onReviewAcceptancesChange={(acceptances) =>
+                setSessionField('managerReviewAcceptances', acceptances)
+              }
             />
           ) : (
           <ResizableSplit

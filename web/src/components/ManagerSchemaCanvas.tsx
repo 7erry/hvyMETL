@@ -28,6 +28,7 @@ const DOMAIN_GAP = 32;
 type ManagerSchemaCanvasProps = {
   domains: BusinessDomain[];
   phase: SchemaPhase;
+  onReviewEntity?: (entityId: string) => void;
 };
 
 function layoutDomains(domains: BusinessDomain[]): Node[] {
@@ -79,7 +80,7 @@ function layoutDomains(domains: BusinessDomain[]): Node[] {
   return nodes;
 }
 
-export function ManagerSchemaCanvas({ domains, phase }: ManagerSchemaCanvasProps) {
+export function ManagerSchemaCanvas({ domains, phase, onReviewEntity }: ManagerSchemaCanvasProps) {
   const nodes = useMemo(() => layoutDomains(domains), [domains]);
 
   if (domains.length === 0) {
@@ -103,7 +104,11 @@ export function ManagerSchemaCanvas({ domains, phase }: ManagerSchemaCanvasProps
         maxZoom={1.2}
         nodesDraggable={false}
         nodesConnectable={false}
-        elementsSelectable={false}
+        elementsSelectable={Boolean(onReviewEntity)}
+        onNodeClick={(_, node) => {
+          if (node.type !== 'managerEntity' || !onReviewEntity) return;
+          onReviewEntity(node.id);
+        }}
         panOnScroll
       >
         <Background variant={BackgroundVariant.Dots} gap={20} size={1} color="#00684A" />
