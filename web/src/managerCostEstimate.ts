@@ -1,0 +1,254 @@
+import type { MigrationPlan } from './migrationPlanTypes';
+import type { SqlStructuralModel, TableModel } from './types';
+
+/** Manager-friendly workload preset (maps to read/write ratios). */
+export type ManagerWorkloadType = 'read-heavy' | 'balanced' | 'write-heavy';
+
+export type ManagerCostInputs = {
+  estimatedTotalRows: number;
+  workloadType: ManagerWorkloadType;
+  growthRatePercent: number;
+};
+
+export type AtlasTierSpec = {
+  id: string;
+  label: string;
+  ramGb: number;
+  storageGb: number;
+  monthlyUsd: number;
+};
+
+export type ManagerCostProjection = {
+  hasSchema: boolean;
+  workloadLabel: string;
+  readPercent: number;
+  writePercent: number;
+  estimatedTotalRows: number;
+  averageDocumentBytes: number;
+  rawDataGb: number;
+  totalStorageGb: number;
+  indexCount: number;
+  requiredRamGb: number;
+  recommendedTier: AtlasTierSpec;
+  workingSetPercent: number;
+  monthlyComputeUsd: number;
+  monthlyBackupUsd: number;
+  monthlyTotalUsd: number;
+  oneTimeEgressUsd: number;
+  growthRatePercent: number;
+  projectedMonthlyNextYearUsd: number;
+};
+
+export const DEFAULT_MANAGER_COST_INPUTS: ManagerCostInputs = {
+  estimatedTotalRows: 10_000_000,
+  workloadType: 'read-heavy',
+  growthRatePercent: 15,
+};
+
+/** Representative MongoDB Atlas dedicated cluster tiers (USD/month, illustrative). */
+export const ATLAS_CLUSTER_TIERS: AtlasTierSpec[] = [
+  { id: 'M10', label: 'M10', ramGb: 2, storageGb: 10, monthlyUsd: 57 },
+  { id: 'M20', label: 'M20', ramGb: 4, storageGb: 20, monthlyUsd: 140 },
+  { id: 'M30', label: 'M30', ramGb: 8, storageGb: 40, monthlyUsd: 182.5 },
+  { id: 'M40', label: 'M40', ramGb: 16, storageGb: 80, monthlyUsd: 280 },
+  { id: 'M50', label: 'M50', ramGb: 32, storageGb: 128, monthlyUsd: 570 },
+];
+
+const BSON_OVERHEAD = 1.25;
+const INDEX_OVERHEAD_FACTOR = 0.08;
+const BACKUP_USD_PER_GB = 0.6;
+const EGRESS_USD_PER_GB = 0.09;
+
+const WORKLOAD_PRESETS: Record<
+  ManagerWorkloadType,
+  { label: string; readPercent: number; writePercent: number; ramRatio: number }
+> = {
+  'read-heavy': {
+    label: 'Read-heavy (80/20)',
+    readPercent: 80,
+    writePercent: 20,
+    ramRatio: 0.2,
+  },
+  balanced: {
+    label: 'Balanced (50/50)',
+    readPercent: 50,
+    writePercent: 50,
+    ramRatio: 0.3,
+  },
+  'write-heavy': {
+    label: 'Write-heavy (50/50)',
+    readPercent: 50,
+    writePercent: 50,
+    ramRatio: 0.4,
+  },
+};
+
+/** Heuristic byte width from SQL column type for storage sizing. */
+export function estimateColumnBytes(sqlType: string): number {
+  const t = sqlType.toLowerCase().trim();
+  if (t.includes('bigint')) return 8;
+  if (t.includes('smallint')) return 2;
+  if (t.includes('int') || t.includes('serial')) return 4;
+  if (t.includes('bool')) return 1;
+  if (t.includes('uuid')) return 16;
+  if (t.includes('decimal') || t.includes('numeric')) return 16;
+  if (t.includes('double') || t.includes('float') || t.includes('real')) return 8;
+  if (t.includes('timestamp') || t.includes('datetime')) return 8;
+  if (t.includes('date') && !t.includes('datetime')) return 4;
+  if (t.includes('char') || t.includes('varchar')) {
+    const match = t.match(/\((\d+)\)/);
+    return match ? Math.min(parseInt(match[1], 10), 256) : 64;
+  }
+  if (t.includes('text') || t.includes('json') || t.includes('clob')) return 256;
+  if (t.includes('blob') || t.includes('bytea') || t.includes('binary')) return 512;
+  return 32;
+}
+
+export function estimateTableRowBytes(table: TableModel): number {
+  const columnBytes = table.columns.reduce((sum, col) => sum + estimateColumnBytes(col.sqlType), 0);
+  return columnBytes + 24;
+}
+
+function sqlRowSum(model: SqlStructuralModel): number {
+  return model.tables.reduce((sum, table) => sum + (table.rowCount > 0 ? table.rowCount : 0), 0);
+}
+
+function resolveEstimatedRows(model: SqlStructuralModel | null, inputs: ManagerCostInputs): number {
+  if (model) {
+    const fromStats = sqlRowSum(model);
+    if (fromStats > 0) return fromStats;
+  }
+  return Math.max(1, inputs.estimatedTotalRows);
+}
+
+function collectionDocumentBytes(collection: MigrationPlan['collections'][number], model: SqlStructuralModel): number {
+  const tableNames =
+    collection.mergedTables.length > 0 ? collection.mergedTables : [collection.sourceTable];
+  let bytes = 0;
+  for (const name of tableNames) {
+    const table = model.tables.find((t) => t.name === name);
+    if (table) bytes += estimateTableRowBytes(table);
+  }
+  const embedFactor = 1 + collection.embeddedArrays.length * 0.12 + collection.extendedReferences.length * 0.08;
+  return Math.max(64, Math.round(bytes * embedFactor));
+}
+
+function rowsForCollection(
+  collection: MigrationPlan['collections'][number],
+  model: SqlStructuralModel,
+  totalRows: number,
+  collectionCount: number,
+): number {
+  const source = model.tables.find((t) => t.name === collection.sourceTable);
+  const sqlSum = sqlRowSum(model);
+  if (source && source.rowCount > 0 && sqlSum > 0) {
+    return Math.max(1, Math.round(totalRows * (source.rowCount / sqlSum)));
+  }
+  return Math.max(1, Math.round(totalRows / collectionCount));
+}
+
+function averageDocumentBytes(
+  model: SqlStructuralModel | null,
+  plan: MigrationPlan | null,
+): number {
+  if (!model?.tables.length) return 512;
+  if (plan?.collections.length) {
+    const sizes = plan.collections.map((c) => collectionDocumentBytes(c, model));
+    return Math.round(sizes.reduce((a, b) => a + b, 0) / sizes.length);
+  }
+  const tableSizes = model.tables.map(estimateTableRowBytes);
+  return Math.round(tableSizes.reduce((a, b) => a + b, 0) / tableSizes.length);
+}
+
+function countPlannedIndexes(plan: MigrationPlan | null, model: SqlStructuralModel | null): number {
+  if (plan?.collections.length) {
+    return plan.collections.reduce((sum, c) => sum + c.indexes.length + 1, 0);
+  }
+  if (!model) return 4;
+  return model.tables.reduce((sum, t) => sum + t.primaryKey.length + t.foreignKeys.length + 1, 0);
+}
+
+export function selectAtlasTier(requiredRamGb: number, requiredStorageGb: number): AtlasTierSpec {
+  const ram = Math.max(0.5, requiredRamGb);
+  const storage = Math.max(1, requiredStorageGb);
+  const match = ATLAS_CLUSTER_TIERS.find((tier) => tier.ramGb >= ram && tier.storageGb >= storage);
+  return match ?? ATLAS_CLUSTER_TIERS[ATLAS_CLUSTER_TIERS.length - 1];
+}
+
+export function computeManagerCostProjection(
+  model: SqlStructuralModel | null,
+  plan: MigrationPlan | null,
+  inputs: ManagerCostInputs,
+): ManagerCostProjection {
+  const preset = WORKLOAD_PRESETS[inputs.workloadType];
+  const hasSchema = Boolean(model?.tables.length);
+  const estimatedTotalRows = resolveEstimatedRows(model, inputs);
+  const avgDocBytes = averageDocumentBytes(model, plan);
+
+  let rawBytes = avgDocBytes * estimatedTotalRows;
+  if (model && plan?.collections.length) {
+    rawBytes = 0;
+    for (const collection of plan.collections) {
+      const docBytes = collectionDocumentBytes(collection, model);
+      const docs = rowsForCollection(collection, model, estimatedTotalRows, plan.collections.length);
+      rawBytes += docBytes * docs;
+    }
+  }
+
+  const indexCount = countPlannedIndexes(plan, model);
+  const totalStorageBytes = rawBytes * BSON_OVERHEAD * (1 + indexCount * INDEX_OVERHEAD_FACTOR);
+  const totalStorageGb = totalStorageBytes / (1024 ** 3);
+  const rawDataGb = rawBytes / (1024 ** 3);
+
+  const requiredRamGb = Math.max(2, totalStorageGb * preset.ramRatio);
+  const recommendedTier = selectAtlasTier(requiredRamGb, totalStorageGb);
+
+  const workingSetPercent = Math.min(
+    100,
+    Math.round(((recommendedTier.ramGb * 1024 ** 3) / totalStorageBytes) * 100),
+  );
+
+  const monthlyComputeUsd = recommendedTier.monthlyUsd;
+  const monthlyBackupUsd = totalStorageGb * BACKUP_USD_PER_GB;
+  const monthlyTotalUsd = monthlyComputeUsd + monthlyBackupUsd;
+  const oneTimeEgressUsd = rawDataGb * EGRESS_USD_PER_GB;
+  const growth = Math.max(0, inputs.growthRatePercent);
+  const projectedMonthlyNextYearUsd = monthlyTotalUsd * (1 + growth / 100);
+
+  return {
+    hasSchema,
+    workloadLabel: preset.label,
+    readPercent: preset.readPercent,
+    writePercent: preset.writePercent,
+    estimatedTotalRows,
+    averageDocumentBytes: avgDocBytes,
+    rawDataGb,
+    totalStorageGb,
+    indexCount,
+    requiredRamGb,
+    recommendedTier,
+    workingSetPercent,
+    monthlyComputeUsd,
+    monthlyBackupUsd,
+    monthlyTotalUsd,
+    oneTimeEgressUsd,
+    growthRatePercent: growth,
+    projectedMonthlyNextYearUsd,
+  };
+}
+
+export function formatUsd(amount: number): string {
+  return `$${amount.toFixed(2)}`;
+}
+
+export function formatRowCount(rows: number): string {
+  if (rows >= 1_000_000) return `${(rows / 1_000_000).toFixed(rows % 1_000_000 === 0 ? 0 : 1)}M`;
+  if (rows >= 1_000) return `${(rows / 1_000).toFixed(rows % 1_000 === 0 ? 0 : 1)}K`;
+  return rows.toLocaleString();
+}
+
+export function formatGb(gb: number): string {
+  if (gb >= 100) return `${gb.toFixed(0)} GB`;
+  if (gb >= 10) return `${gb.toFixed(1)} GB`;
+  return `${gb.toFixed(2)} GB`;
+}

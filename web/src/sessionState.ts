@@ -1,6 +1,7 @@
 import type { SqlStructuralModel } from './types';
 import type { RelationshipConnectionType, RelationshipNotation } from './relationshipDisplay';
 import type { CustomProfileInput, WorkloadProfile } from './customProfileShared';
+import { DEFAULT_MANAGER_COST_INPUTS, type ManagerCostInputs } from './managerCostEstimate';
 
 const STORAGE_KEY = 'hvymetl-session-v1';
 
@@ -75,6 +76,7 @@ export type SessionState = {
   customTelemetryInput: CustomProfileInput | null;
   uiRole: UiRole;
   managerReviewAcceptances: ManagerReviewAcceptances | null;
+  managerCostInputs: ManagerCostInputs;
 };
 
 export const defaultSessionState = (): SessionState => ({
@@ -99,6 +101,7 @@ export const defaultSessionState = (): SessionState => ({
   customTelemetryInput: null,
   uiRole: 'developer',
   managerReviewAcceptances: null,
+  managerCostInputs: { ...DEFAULT_MANAGER_COST_INPUTS },
 });
 
 export function loadSessionState(): SessionState {
@@ -111,6 +114,10 @@ export function loadSessionState(): SessionState {
       ...defaultSessionState(),
       ...rest,
       csvSourcePath: rest.csvSourcePath ?? _legacy ?? null,
+      managerCostInputs: {
+        ...DEFAULT_MANAGER_COST_INPUTS,
+        ...(rest.managerCostInputs ?? {}),
+      },
     };
   } catch {
     return defaultSessionState();

@@ -13,6 +13,8 @@
  *   EAV-shaped child table                      -> Attribute
  *   Timestamped firehose child + write-heavy    -> Bucket
  *   Junction table (two FKs, no payload)        -> embedded id array
+ *   Meta / *meta extension tables               -> nested object or Attribute (Rule 1)
+ *   Strict line-item children (orders_items)    -> embed by default (checklist)
  *   Bounded 1:N child + read-heavy              -> embed
  *   Unbounded 1:N child + read-heavy            -> Subset (+ overflow ref)
  *   Unbounded 1:N child + write-heavy           -> reference
@@ -71,6 +73,9 @@ const BUCKET_WINDOW_MINUTES = 60;
 const ARCHIVE_MIN_ROWS = 5000;
 /** Default cold-data retention before archive sweep (matches MongoDB doc example). */
 const ARCHIVE_AFTER_DAYS_DEFAULT = 365 * 5;
+/** Max children per parent treated as safely embeddable for line-item tables without stats. */
+const LINE_ITEMS_EMBED_MAX = 100;
+
 /** Peak RPM at which Single Collection is considered without an explicit preference. */
 const SINGLE_COLLECTION_MIN_RPM = 100_000;
 
@@ -106,6 +111,48 @@ export function isJunctionTable(table: TableModel): boolean {
   if (table.foreignKeys.length !== 2) return false;
   const payload = payloadColumns(table);
   return payload.every((column) => column.bsonType === 'date');
+}
+
+/**
+ * Detect SQL meta/extension tables (e.g. usermeta, postmeta) that hang off a
+ * single parent and should not become standalone collections.
+ */
+export function isMetaTable(table: TableModel): boolean {
+  if (!/meta(?:data)?$/i.test(table.name)) return false;
+  return table.foreignKeys.length >= 1 && table.foreignKeys.length <= 2;
+}
+
+/**
+ * Detect strict dependent line-item children (orders -> order_items) that the
+ * migration checklist defaults to embedding inside the parent document.
+ */
+export function isLineItemsChild(parentTable: string, childTable: TableModel): boolean {
+  const child = childTable.name.toLowerCase();
+  const parent = parentTable.toLowerCase();
+  const singular = singularize(parent);
+  if (child === `${parent}_items` || child === `${singular}_items`) return true;
+  if (/_items$/i.test(child) && childTable.foreignKeys.length === 1) return true;
+  if (/_lines$/i.test(child) && childTable.foreignKeys.length === 1) return true;
+  return false;
+}
+
+/** Whether a line-item child should embed by default (bounded or unknown small cardinality). */
+export function shouldDefaultEmbedLineItems(
+  relationship: RelationshipModel,
+  childTable: TableModel,
+  parentTable: string,
+): boolean {
+  if (!isLineItemsChild(parentTable, childTable)) return false;
+  if (relationship.isBounded) return true;
+  if (relationship.maxChildrenPerParent === 0) return true;
+  return relationship.maxChildrenPerParent <= LINE_ITEMS_EMBED_MAX;
+}
+
+/** CamelCase field name for folding a meta table into its parent document. */
+function metaTableFieldName(table: TableModel): string {
+  const stripped = table.name.replace(/_?(meta|metadata)$/i, '');
+  if (!stripped || stripped === table.name) return 'metadata';
+  return toCamelCase(`${stripped}Meta`);
 }
 
 /**
@@ -420,8 +467,31 @@ function planChildRelationships(
       patterns.push({
         pattern: 'attribute',
         target: `${table.name}.attributes`,
-        reason: `${childTable.name} is an entity-attribute-value table; folding it into a k/v array lets one compound index serve every characteristic query.`,
-        knowledgeSource: 'attribute.md',
+        reason: `${childTable.name} is an entity-attribute-value table; folding it into a k/v array lets one compound index serve every characteristic query (migration-principles Rule 1).`,
+        knowledgeSource: isMetaTable(childTable) ? 'migration-principles.md' : 'attribute.md',
+      });
+      absorbedTables.add(childTable.name);
+      continue;
+    }
+
+    // Meta/extension tables (usermeta, postmeta) collapse into the parent.
+    if (isMetaTable(childTable)) {
+      const field = metaTableFieldName(childTable);
+      embeddedArrays.push({
+        field,
+        sourceTable: childTable.name,
+        joinColumn: relationship.fkColumn,
+      });
+      properties[field] = {
+        bsonType: 'array',
+        items: { bsonType: 'object' },
+        description: `Meta rows from ${childTable.name} folded into parent ${table.name}.`,
+      };
+      patterns.push({
+        pattern: 'embed',
+        target: `${table.name}.${field}`,
+        reason: `${childTable.name} is a meta/extension table; collapse into ${table.name} instead of a 1-to-1 collection (migration-principles checklist).`,
+        knowledgeSource: 'migration-principles.md',
       });
       absorbedTables.add(childTable.name);
       continue;
@@ -510,6 +580,34 @@ function planChildRelationships(
     }
 
     const skewed = isOutlierSkewed(relationship);
+
+    // Checklist: strict line-item children (orders -> order_items) embed by default.
+    if (
+      shouldDefaultEmbedLineItems(relationship, childTable, table.name) &&
+      !childHasDependents &&
+      isReadHeavy &&
+      !skewed
+    ) {
+      const field = toCamelCase(childTable.name);
+      embeddedArrays.push({ field, sourceTable: childTable.name, joinColumn: relationship.fkColumn });
+      properties[field] = {
+        bsonType: 'array',
+        items: { bsonType: 'object' },
+        description: `Embedded line items from ${childTable.name} (strict dependent child).`,
+      };
+      const boundHint =
+        relationship.maxChildrenPerParent > 0
+          ? `max ${relationship.maxChildrenPerParent} per parent`
+          : 'assumed bounded line-item cardinality';
+      patterns.push({
+        pattern: 'embed',
+        target: `${table.name}.${field}`,
+        reason: `${childTable.name} is a strict dependent line-item child of ${table.name} (${boundHint}); embed as an array for atomic single-document reads (migration-principles checklist, ${ratioLabel}).`,
+        knowledgeSource: 'migration-principles.md',
+      });
+      absorbedTables.add(childTable.name);
+      continue;
+    }
 
     // Rule 4: bounded children on read-heavy workloads embed fully.
     if (relationship.isBounded && isReadHeavy && !skewed) {

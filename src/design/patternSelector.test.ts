@@ -7,7 +7,7 @@
 import { describe, expect, it } from 'vitest';
 import type { RelationshipModel, SqlStructuralModel, TableModel } from '../types.js';
 import { WORKLOAD_PROFILES } from '../profiles/profiles.js';
-import { buildMigrationPlan } from './patternSelector.js';
+import { buildMigrationPlan, isLineItemsChild, isMetaTable, shouldDefaultEmbedLineItems } from './patternSelector.js';
 
 /** Build a minimal TableModel with sensible defaults. */
 function table(partial: Partial<TableModel> & { name: string }): TableModel {
@@ -295,5 +295,107 @@ describe('buildMigrationPlan', () => {
           collection.name !== hub?.name && (collection.sourceTable === 'students' || collection.sourceTable === 'classes'),
       ),
     ).toHaveLength(0);
+  });
+
+  it('collapses usermeta-style tables into the parent per migration-principles checklist', () => {
+    const model: SqlStructuralModel = {
+      source: 'synthetic.db',
+      tables: [
+        table({ name: 'users', rowCount: 1000 }),
+        table({
+          name: 'usermeta',
+          rowCount: 3000,
+          columns: [
+            { name: 'id', sqlType: 'INTEGER', bsonType: 'long', nullable: false, isPrimaryKey: true },
+            { name: 'user_id', sqlType: 'INTEGER', bsonType: 'long', nullable: false, isPrimaryKey: false },
+            { name: 'setting_key', sqlType: 'VARCHAR(60)', bsonType: 'string', nullable: false, isPrimaryKey: false },
+            { name: 'setting_value', sqlType: 'VARCHAR(255)', bsonType: 'string', nullable: false, isPrimaryKey: false },
+          ],
+          foreignKeys: [{ column: 'user_id', referencesTable: 'users', referencesColumn: 'id' }],
+        }),
+      ],
+      relationships: [
+        relationship({ parentTable: 'users', childTable: 'usermeta', fkColumn: 'user_id' }),
+      ],
+    };
+
+    const plan = buildMigrationPlan(model, WORKLOAD_PROFILES.catalog);
+    const users = plan.collections.find((collection) => collection.sourceTable === 'users');
+
+    expect(users?.embeddedArrays.some((array) => array.sourceTable === 'usermeta')).toBe(true);
+    expect(users?.patterns.some((decision) => decision.knowledgeSource === 'migration-principles.md')).toBe(true);
+    expect(plan.collections.some((collection) => collection.sourceTable === 'usermeta')).toBe(false);
+  });
+
+  it('embeds order_items line-item children by default on read-heavy workloads', () => {
+    const model: SqlStructuralModel = {
+      source: 'synthetic.db',
+      tables: [
+        table({ name: 'orders', rowCount: 50000 }),
+        table({
+          name: 'order_items',
+          rowCount: 200000,
+          columns: [
+            { name: 'id', sqlType: 'INTEGER', bsonType: 'long', nullable: false, isPrimaryKey: true },
+            { name: 'order_id', sqlType: 'INTEGER', bsonType: 'long', nullable: false, isPrimaryKey: false },
+            { name: 'sku', sqlType: 'VARCHAR(40)', bsonType: 'string', nullable: false, isPrimaryKey: false },
+            { name: 'qty', sqlType: 'INTEGER', bsonType: 'int', nullable: false, isPrimaryKey: false },
+          ],
+          foreignKeys: [{ column: 'order_id', referencesTable: 'orders', referencesColumn: 'id' }],
+        }),
+      ],
+      relationships: [
+        relationship({
+          parentTable: 'orders',
+          childTable: 'order_items',
+          fkColumn: 'order_id',
+          avgChildrenPerParent: 0,
+          maxChildrenPerParent: 0,
+          isBounded: false,
+        }),
+      ],
+    };
+
+    const plan = buildMigrationPlan(model, WORKLOAD_PROFILES.catalog);
+    const orders = plan.collections.find((collection) => collection.sourceTable === 'orders');
+
+    expect(orders?.embeddedArrays.some((array) => array.sourceTable === 'order_items')).toBe(true);
+    expect(
+      orders?.patterns.some(
+        (decision) => decision.pattern === 'embed' && decision.knowledgeSource === 'migration-principles.md',
+      ),
+    ).toBe(true);
+    expect(plan.collections.some((collection) => collection.sourceTable === 'order_items')).toBe(false);
+  });
+});
+
+describe('migration-principles helpers', () => {
+  it('detects meta and line-item table names', () => {
+    const userMeta = table({
+      name: 'usermeta',
+      foreignKeys: [{ column: 'user_id', referencesTable: 'users', referencesColumn: 'id' }],
+    });
+    expect(isMetaTable(userMeta)).toBe(true);
+    expect(isMetaTable(table({ name: 'postmeta', foreignKeys: [{ column: 'post_id', referencesTable: 'posts', referencesColumn: 'id' }] }))).toBe(true);
+    expect(isMetaTable(table({ name: 'users' }))).toBe(false);
+
+    const orderItems = table({
+      name: 'order_items',
+      foreignKeys: [{ column: 'order_id', referencesTable: 'orders', referencesColumn: 'id' }],
+    });
+    expect(isLineItemsChild('orders', orderItems)).toBe(true);
+    expect(
+      shouldDefaultEmbedLineItems(
+        relationship({
+          parentTable: 'orders',
+          childTable: 'order_items',
+          fkColumn: 'order_id',
+          maxChildrenPerParent: 0,
+          isBounded: false,
+        }),
+        orderItems,
+        'orders',
+      ),
+    ).toBe(true);
   });
 });

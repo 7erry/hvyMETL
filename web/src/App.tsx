@@ -91,6 +91,7 @@ export default function App() {
     customTelemetryInput,
     uiRole,
     managerReviewAcceptances,
+    managerCostInputs,
   } = session;
 
   const profileFields = useMemo(
@@ -689,6 +690,8 @@ export default function App() {
               onReviewAcceptancesChange={(acceptances) =>
                 setSessionField('managerReviewAcceptances', acceptances)
               }
+              managerCostInputs={managerCostInputs}
+              onManagerCostInputsChange={(inputs) => setSessionField('managerCostInputs', inputs)}
             />
           ) : (
           <ResizableSplit

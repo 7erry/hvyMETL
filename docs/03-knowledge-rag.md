@@ -12,7 +12,7 @@ Sources: [`knowledge/`](../knowledge/), [`src/rag/chunker.ts`](../src/rag/chunke
 ## 1. High-Level Summary
 
 The RAG layer grounds the toolkit's schema decisions in concrete source material
-instead of generic LLM training data. Thirteen curated markdown documents covering
+instead of generic LLM training data. Fourteen curated markdown documents covering
 the [MongoDB Manual Schema Design Patterns](https://www.mongodb.com/docs/manual/data-modeling/design-patterns/)
 and the Building with Patterns series, each with applicability thresholds and
 verified code blocks, are chunked at heading boundaries and ranked against a

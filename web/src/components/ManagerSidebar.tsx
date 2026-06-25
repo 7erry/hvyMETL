@@ -2,15 +2,22 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { fetchPipelineExecutions } from '../api';
 import type { ActivityFeedItem, MigrationProgress } from '../managerDashboard';
 import { buildActivityFeed, buildCloudResourceSummary } from '../managerDashboard';
-import type { MigrationArtifacts } from '../sessionState';
+import type { MigrationArtifacts, ManagerCostInputs } from '../sessionState';
 import type { PipelineExecutionListItem } from '../transformationSummaryTypes';
+import { ManagerCostPanel } from './ManagerCostPanel';
+import type { MigrationPlan } from '../migrationPlanTypes';
+import type { SqlStructuralModel } from '../types';
 
 type ManagerSidebarProps = {
+  model: SqlStructuralModel | null;
+  migrationPlan: MigrationPlan | null;
   progress: MigrationProgress;
   artifacts: MigrationArtifacts | null;
   blockerCount: number;
   reviewCount: number;
   profileInfo: { label: string; readPercent: number; writePercent: number } | null;
+  managerCostInputs: ManagerCostInputs;
+  onManagerCostInputsChange: (inputs: ManagerCostInputs) => void;
   onOpenReview: () => void;
 };
 
@@ -55,11 +62,15 @@ function formatWhen(timestamp: string): string {
 }
 
 export function ManagerSidebar({
+  model,
+  migrationPlan,
   progress,
   artifacts,
   blockerCount,
   reviewCount,
   profileInfo,
+  managerCostInputs,
+  onManagerCostInputsChange,
   onOpenReview,
 }: ManagerSidebarProps) {
   const [activity, setActivity] = useState<ActivityFeedItem[]>([]);
@@ -121,6 +132,13 @@ export function ManagerSidebar({
           ) : null}
         </section>
       )}
+
+      <ManagerCostPanel
+        model={model}
+        migrationPlan={migrationPlan}
+        inputs={managerCostInputs}
+        onChange={onManagerCostInputsChange}
+      />
 
       <section className="manager-panel">
         <h3>Workload & Atlas imports</h3>

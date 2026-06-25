@@ -16,7 +16,7 @@ import {
   acceptCollectionReview,
   buildCollectionReviewItems,
 } from '../managerReview';
-import type { ManagerReviewAcceptances, MigrationArtifacts } from '../sessionState';
+import type { ManagerReviewAcceptances, ManagerCostInputs, MigrationArtifacts } from '../sessionState';
 import type { MigrationPlan } from '../migrationPlanTypes';
 import type { SqlStructuralModel } from '../types';
 
@@ -34,6 +34,8 @@ type ManagerViewProps = {
   onOpenMigrationView: () => void;
   onReviewAcceptancesChange: (acceptances: ManagerReviewAcceptances) => void;
   managerReviewAcceptances: ManagerReviewAcceptances | null;
+  managerCostInputs: ManagerCostInputs;
+  onManagerCostInputsChange: (inputs: ManagerCostInputs) => void;
   exporting: boolean;
   statusMessage: string;
   pipelineOpen: boolean;
@@ -54,6 +56,8 @@ export function ManagerView({
   onOpenMigrationView,
   onReviewAcceptancesChange,
   managerReviewAcceptances,
+  managerCostInputs,
+  onManagerCostInputsChange,
   exporting,
   statusMessage,
   pipelineOpen,
@@ -139,11 +143,15 @@ export function ManagerView({
         onSidebarWidthChange={onSidebarWidthChange}
         sidebar={
           <ManagerSidebar
+            model={model}
+            migrationPlan={migrationPlan}
             progress={progress}
             artifacts={migrationArtifacts}
             blockerCount={progress.blockedCount}
             reviewCount={pendingReviewCount}
             profileInfo={profileInfo}
+            managerCostInputs={managerCostInputs}
+            onManagerCostInputsChange={onManagerCostInputsChange}
             onOpenReview={() => openReview()}
           />
         }
