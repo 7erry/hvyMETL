@@ -11,6 +11,7 @@
  */
 
 import type { EmbeddingProvider } from '../types.js';
+import { parseApiUsage, recordEmbeddingUsage } from '../modelUsage.js';
 
 /** Default embedding model when MONGODB_MODEL_EMBEDDING_MODEL is unset. */
 const DEFAULT_MODEL = 'voyage-4';
@@ -79,7 +80,8 @@ async function voyageEmbed(
   if (!response.ok) {
     throw new Error(`Model embedding API returned ${response.status}: ${await response.text()}`);
   }
-  const payload = (await response.json()) as { data: VoyageEmbeddingItem[] };
+  const payload = (await response.json()) as { data: VoyageEmbeddingItem[]; usage?: Record<string, number> };
+  recordEmbeddingUsage(parseApiUsage(payload), texts.join(''));
   return payload.data.sort((a, b) => a.index - b.index).map((item) => item.embedding);
 }
 

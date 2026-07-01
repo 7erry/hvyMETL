@@ -18,7 +18,7 @@ import {
 } from '../managerReview';
 import type { ManagerReviewAcceptances, ManagerCostInputs, MigrationArtifacts } from '../sessionState';
 import type { MigrationPlan } from '../migrationPlanTypes';
-import type { SqlStructuralModel } from '../types';
+import type { Dialect, SqlStructuralModel } from '../types';
 
 type ManagerViewProps = {
   model: SqlStructuralModel | null;
@@ -36,6 +36,14 @@ type ManagerViewProps = {
   managerReviewAcceptances: ManagerReviewAcceptances | null;
   managerCostInputs: ManagerCostInputs;
   onManagerCostInputsChange: (inputs: ManagerCostInputs) => void;
+  dialects: Dialect[];
+  dialect: string;
+  ddl: string;
+  apiConnected: boolean;
+  onDialectChange: (dialect: string) => void;
+  onDdlChange: (ddl: string) => void;
+  onImportQuery: () => void;
+  onSchemaFile: (file: File) => void;
   exporting: boolean;
   statusMessage: string;
   pipelineOpen: boolean;
@@ -58,6 +66,14 @@ export function ManagerView({
   managerReviewAcceptances,
   managerCostInputs,
   onManagerCostInputsChange,
+  dialects,
+  dialect,
+  ddl,
+  apiConnected,
+  onDialectChange,
+  onDdlChange,
+  onImportQuery,
+  onSchemaFile,
   exporting,
   statusMessage,
   pipelineOpen,
@@ -152,6 +168,14 @@ export function ManagerView({
             profileInfo={profileInfo}
             managerCostInputs={managerCostInputs}
             onManagerCostInputsChange={onManagerCostInputsChange}
+            dialects={dialects}
+            dialect={dialect}
+            ddl={ddl}
+            apiConnected={apiConnected}
+            onDialectChange={onDialectChange}
+            onDdlChange={onDdlChange}
+            onImportQuery={onImportQuery}
+            onSchemaFile={onSchemaFile}
             onOpenReview={() => openReview()}
           />
         }
@@ -166,26 +190,26 @@ export function ManagerView({
               <div className="manager-phase-bar__actions">
                 {showReviewActions ? (
                   <button type="button" className="primary" onClick={() => openReview()}>
-                    Review {pendingReviewCount} collection{pendingReviewCount === 1 ? '' : 's'}
+                    Review {pendingReviewCount} change{pendingReviewCount === 1 ? '' : 's'}
                   </button>
                 ) : null}
-                <button type="button" className="ghost" onClick={onRunPipeline} disabled={!model}>
-                  Run full pipeline
+                <button type="button" className="secondary" onClick={onRunPipeline} disabled={!model}>
+                  Run pipeline
                 </button>
-                <button type="button" className="primary" onClick={onGenerateReport} disabled={!model || exporting}>
-                  {exporting ? 'Generating…' : 'Generate migration report'}
+                <button type="button" className="secondary" onClick={onGenerateReport} disabled={!model || exporting}>
+                  {exporting ? 'Generating…' : 'Generate report'}
                 </button>
                 <button
                   type="button"
-                  className="primary"
+                  className={showReviewActions ? 'secondary' : 'primary'}
                   onClick={onSignOffExport}
                   disabled={!migrationPlan}
                 >
-                  Sign off & export blueprint
+                  Sign off export
                 </button>
                 {migrationArtifacts ? (
-                  <button type="button" className="ghost" onClick={onOpenMigrationView}>
-                    Open full report
+                  <button type="button" className="tertiary" onClick={onOpenMigrationView}>
+                    View full report
                   </button>
                 ) : null}
               </div>

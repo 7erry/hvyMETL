@@ -13,11 +13,15 @@ import { ResizableSplit } from './components/ResizableSplit';
 import { PipelinePanel } from './components/PipelinePanel';
 import { CustomTelemetryModal } from './components/CustomTelemetryModal';
 import { ManagerView } from './components/ManagerView';
+import { SchemaImportPanel } from './components/SchemaImportPanel';
+import { FALLBACK_DIALECTS } from './dialectConstants';
 import { RoleToggle } from './components/RoleToggle';
 import { profileRequestBody } from './customProfileShared';
+import { emptyModelTokenUsage, mergeModelTokenUsage } from './modelUsage';
 import {
   downloadJson,
   downloadText,
+  checkApiHealth,
   exportMigration,
   exportPrompts,
   fetchDialects,
@@ -55,7 +59,8 @@ import type { Dialect, Profile, SqlStructuralModel } from './types';
 
 export default function App() {
   const [profiles, setProfiles] = useState<Profile[]>([]);
-  const [dialects, setDialects] = useState<Dialect[]>([]);
+  const [dialects, setDialects] = useState<Dialect[]>(FALLBACK_DIALECTS);
+  const [apiConnected, setApiConnected] = useState(true);
   const [session, setSession] = useState<SessionState>(loadSessionState);
   const [status, setStatus] = useState('');
   const [exporting, setExporting] = useState(false);
@@ -65,7 +70,6 @@ export default function App() {
   const [designCsvLabel, setDesignCsvLabel] = useState<string | null>(null);
   const [pipelineOpen, setPipelineOpen] = useState(false);
   const [customTelemetryOpen, setCustomTelemetryOpen] = useState(false);
-  const schemaFileInputRef = useRef<HTMLInputElement>(null);
   const diagramFileInputRef = useRef<HTMLInputElement>(null);
   const mongoDiagramFileInputRef = useRef<HTMLInputElement>(null);
 
@@ -108,10 +112,24 @@ export default function App() {
   }, [session]);
 
   useEffect(() => {
-    void Promise.all([fetchProfiles(), fetchDialects()]).then(([p, d]) => {
-      setProfiles(p);
-      setDialects(d);
-    });
+    void (async () => {
+      const healthy = await checkApiHealth();
+      setApiConnected(healthy);
+      try {
+        const [p, d] = await Promise.all([fetchProfiles(), fetchDialects()]);
+        setProfiles(p);
+        setDialects(d);
+        if (!healthy) {
+          setStatus('API health check failed — using offline dialect list. Run npm run dev:ui from the repo root.');
+        }
+      } catch (e) {
+        setDialects(FALLBACK_DIALECTS);
+        setApiConnected(false);
+        setStatus(
+          `Cannot reach hvyMETL API (${String(e)}). Run npm run dev:ui from the repo root and open http://localhost:3847`,
+        );
+      }
+    })();
   }, []);
 
   const migrationPlan = useMemo(
@@ -470,6 +488,9 @@ export default function App() {
           retrievalStrategy: result.retrievalStrategy ?? prev.migrationArtifacts?.retrievalStrategy,
           designMeta: meta,
           transformationSummary: result.transformationSummary,
+          modelTokenUsage: result.modelTokenUsage
+            ? mergeModelTokenUsage(prev.migrationArtifacts?.modelTokenUsage ?? emptyModelTokenUsage(), result.modelTokenUsage)
+            : prev.migrationArtifacts?.modelTokenUsage,
           generatedAt: new Date().toISOString(),
           repositories: prev.migrationArtifacts?.repositories,
           pipelineResult: prev.migrationArtifacts?.pipelineResult,
@@ -563,26 +584,31 @@ export default function App() {
     if (result.migrationPlanJson && result.designReportMarkdown) {
       const plan = result.migrationPlanJson as MigrationPlan;
       const meta = model ? designMetaFromPlan(model, plan) : undefined;
-      const artifacts: MigrationArtifacts = {
-        planJson: JSON.stringify(result.migrationPlanJson, null, 2),
-        designReportMarkdown: result.designReportMarkdown,
-        prompts: [],
-        retrievalStrategy: result.retrievalStrategy,
-        designMeta: meta,
-        generatedAt: new Date().toISOString(),
-        pipelineResult: {
-          ok: result.ok,
-          imports: result.imports.map((i) => ({
-            collection: i.collection,
-            ok: i.ok,
-            insertedCount: i.insertedCount,
-            error: i.error,
-          })),
-          outDir: result.paths.outDir,
+      setSession((prev) => ({
+        ...prev,
+        migrationArtifacts: {
+          planJson: JSON.stringify(result.migrationPlanJson, null, 2),
+          designReportMarkdown: result.designReportMarkdown,
+          prompts: [],
+          retrievalStrategy: result.retrievalStrategy,
+          designMeta: meta,
+          modelTokenUsage: result.modelTokenUsage
+            ? mergeModelTokenUsage(prev.migrationArtifacts?.modelTokenUsage ?? emptyModelTokenUsage(), result.modelTokenUsage)
+            : prev.migrationArtifacts?.modelTokenUsage,
+          generatedAt: new Date().toISOString(),
+          pipelineResult: {
+            ok: result.ok,
+            imports: result.imports.map((i) => ({
+              collection: i.collection,
+              ok: i.ok,
+              insertedCount: i.insertedCount,
+              error: i.error,
+            })),
+            outDir: result.paths.outDir,
+          },
+          apiArtifacts: result.apiArtifacts ?? undefined,
         },
-        apiArtifacts: result.apiArtifacts ?? undefined,
-      };
-      setSession((prev) => ({ ...prev, migrationArtifacts: artifacts }));
+      }));
     }
     setStatus(result.ok ? 'Full pipeline completed.' : `Pipeline finished with errors: ${result.errors.join('; ')}`);
   };
@@ -642,22 +668,22 @@ export default function App() {
                 ))}
                 <option value="custom">Custom Workload</option>
               </select>
-              <button type="button" className="ghost" onClick={() => setCustomTelemetryOpen(true)}>
-                Custom telemetry
+              <button type="button" className="tertiary" onClick={() => setCustomTelemetryOpen(true)}>
+                Custom workload
               </button>
             </>
           ) : null}
           {view === 'migration' ? (
-            <button type="button" className="ghost" onClick={() => setSessionField('view', 'diagram')}>
-              ← Dashboard
+            <button type="button" className="tertiary" onClick={() => setSessionField('view', 'diagram')}>
+              Back to dashboard
             </button>
           ) : uiRole === 'developer' ? (
             <>
               <button type="button" className="primary" onClick={() => setPipelineOpen(true)} disabled={!model}>
-                Run Full Pipeline
+                Run pipeline
               </button>
-              <button type="button" className="primary" onClick={() => void handleAiExport()} disabled={!model || exporting}>
-                {exporting ? 'Generating…' : 'AI Migration Export'}
+              <button type="button" className="secondary" onClick={() => void handleAiExport()} disabled={!model || exporting}>
+                {exporting ? 'Exporting…' : 'Export migration'}
               </button>
             </>
           ) : null}
@@ -692,6 +718,14 @@ export default function App() {
               }
               managerCostInputs={managerCostInputs}
               onManagerCostInputsChange={(inputs) => setSessionField('managerCostInputs', inputs)}
+              dialects={dialects}
+              dialect={dialect}
+              ddl={ddl}
+              apiConnected={apiConnected}
+              onDialectChange={(value) => setSessionField('dialect', value)}
+              onDdlChange={(value) => setSessionField('ddl', value)}
+              onImportQuery={() => void handleImportQuery()}
+              onSchemaFile={(file) => void handleSchemaFileUpload(file)}
             />
           ) : (
           <ResizableSplit
@@ -700,48 +734,16 @@ export default function App() {
             sidebar={
               <div className="sidebar-scroll">
                 {schemaPhase === 'before' ? (
-                  <div className="panel" style={{ marginBottom: '0.75rem' }}>
-                    <h3>Instant Schema Import</h3>
-                    <label style={{ fontSize: '0.8rem' }}>Database dialect</label>
-                    <select
-                      value={dialect}
-                      onChange={(e) => setSessionField('dialect', e.target.value)}
-                      style={{ width: '100%', marginBottom: '0.5rem' }}
-                    >
-                      {dialects.map((d) => (
-                        <option key={d.id} value={d.id}>
-                          {d.label}
-                          {!d.live ? ' (DDL paste)' : ''}
-                        </option>
-                      ))}
-                    </select>
-                    <textarea
-                      value={ddl}
-                      onChange={(e) => setSessionField('ddl', e.target.value)}
-                      placeholder="Paste one CREATE TABLE query or full DDL script…"
-                      rows={8}
-                    />
-                    <div className="button-row">
-                      <button type="button" className="primary" onClick={() => void handleImportQuery()}>
-                        Import Query
-                      </button>
-                      <button type="button" className="primary" onClick={() => schemaFileInputRef.current?.click()}>
-                        Import file
-                      </button>
-                      <input
-                        ref={schemaFileInputRef}
-                        type="file"
-                        accept=".sql,.ddl,.txt,.db,.sqlite,.sqlite3"
-                        hidden
-                        aria-hidden
-                        onChange={(e) => {
-                          const f = e.target.files?.[0];
-                          if (f) void handleSchemaFileUpload(f);
-                          e.target.value = '';
-                        }}
-                      />
-                    </div>
-                  </div>
+                  <SchemaImportPanel
+                    dialects={dialects}
+                    dialect={dialect}
+                    ddl={ddl}
+                    apiConnected={apiConnected}
+                    onDialectChange={(value) => setSessionField('dialect', value)}
+                    onDdlChange={(value) => setSessionField('ddl', value)}
+                    onImportQuery={() => void handleImportQuery()}
+                    onSchemaFile={(file) => void handleSchemaFileUpload(file)}
+                  />
                 ) : (
                   <div className="panel" style={{ marginBottom: '0.75rem' }}>
                     <h3>MongoDB Target Schema</h3>
@@ -753,8 +755,8 @@ export default function App() {
                       bucket folding. SQLite .db imports include stats automatically.
                     </p>
                     <div className="button-row" style={{ marginBottom: '0.5rem' }}>
-                      <button type="button" className="ghost" onClick={() => void handlePickDesignCsv()}>
-                        Choose CSV folder
+                      <button type="button" className="secondary" onClick={() => void handlePickDesignCsv()}>
+                        Choose CSVs
                       </button>
                     </div>
                     {designCsvLabel && designCsvFiles.length > 0 ? (
@@ -785,7 +787,7 @@ export default function App() {
                       {migrationPlan ? (
                         <button
                           type="button"
-                          className="ghost"
+                          className="secondary"
                           onClick={() =>
                             downloadJson('migration-plan.json', JSON.parse(migrationArtifacts!.planJson))
                           }
@@ -856,13 +858,13 @@ export default function App() {
                             <span>{t.name}</span>
                             <button
                               type="button"
-                              className="ghost"
-                              style={{ padding: '0 0.35rem' }}
+                              className="btn-icon"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 handleDuplicate(t.name);
                               }}
-                              title="Duplicate"
+                              title="Duplicate table"
+                              aria-label={`Duplicate ${t.name}`}
                             >
                               ⧉
                             </button>
@@ -894,11 +896,11 @@ export default function App() {
                       Export or import SQL table layout and positions.
                     </p>
                     <div className="button-row column">
-                      <button type="button" className="primary block" onClick={handleExportDiagram} disabled={!model}>
-                        Export diagram JSON
+                      <button type="button" className="secondary block" onClick={handleExportDiagram} disabled={!model}>
+                        Export diagram
                       </button>
-                      <button type="button" className="primary block" onClick={() => diagramFileInputRef.current?.click()}>
-                        Import diagram JSON
+                      <button type="button" className="secondary block" onClick={() => diagramFileInputRef.current?.click()}>
+                        Import diagram
                       </button>
                       <input
                         ref={diagramFileInputRef}
@@ -923,18 +925,18 @@ export default function App() {
                     <div className="button-row column">
                       <button
                         type="button"
-                        className="primary block"
+                        className="secondary block"
                         onClick={handleExportMongoDiagram}
                         disabled={!migrationPlan}
                       >
-                        Export diagram JSON
+                        Export diagram
                       </button>
                       <button
                         type="button"
-                        className="primary block"
+                        className="secondary block"
                         onClick={() => mongoDiagramFileInputRef.current?.click()}
                       >
-                        Import diagram JSON
+                        Import diagram
                       </button>
                       <input
                         ref={mongoDiagramFileInputRef}
@@ -959,7 +961,7 @@ export default function App() {
                   <p style={{ margin: '0 0 0.5rem', fontSize: '0.75rem', opacity: 0.8 }}>
                     Your work is saved in this browser tab. Refreshing keeps schema, layout, and migration artifacts.
                   </p>
-                  <button type="button" className="primary block" onClick={handleClearSession}>
+                  <button type="button" className="danger secondary block" onClick={handleClearSession}>
                     Clear session
                   </button>
                 </div>

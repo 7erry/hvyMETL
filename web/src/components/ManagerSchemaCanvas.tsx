@@ -87,7 +87,7 @@ export function ManagerSchemaCanvas({ domains, phase, onReviewEntity }: ManagerS
     return (
       <div className="manager-canvas-empty">
         <h3>No schema loaded</h3>
-        <p>Import a source schema to see the high-level migration map.</p>
+        <p>Import a DDL script or SQLite database using the panel in the sidebar, then run design to see the migration map.</p>
       </div>
     );
   }

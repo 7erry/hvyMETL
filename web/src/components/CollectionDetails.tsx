@@ -14,7 +14,7 @@ export function CollectionDetails({ collection, fields, onClose }: CollectionDet
     <div className="panel table-details collection-details">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
         <h3 style={{ margin: 0 }}>{collection.name}</h3>
-        <button type="button" className="ghost" style={{ padding: '0.25rem 0.5rem' }} onClick={onClose} aria-label="Close details">
+        <button type="button" className="btn-icon" onClick={onClose} aria-label="Close collection details">
           ✕
         </button>
       </div>

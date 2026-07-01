@@ -34,7 +34,7 @@ const WORKLOAD_OPTIONS: { id: ManagerWorkloadType; title: string; hint: string }
   },
   {
     id: 'write-heavy',
-    title: 'Write-heavy (50/50)',
+    title: 'Write-heavy (20/80)',
     hint: 'IoT logging, chat, financial ledgers',
   },
 ];

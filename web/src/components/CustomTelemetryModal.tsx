@@ -56,7 +56,7 @@ export function CustomTelemetryModal({ open, initial, onClose, onApply }: Custom
       <div className="pipeline-modal panel custom-telemetry-modal">
         <header className="pipeline-modal__header">
           <h2 id="custom-telemetry-title">Custom workload telemetry</h2>
-          <button type="button" className="ghost" onClick={onClose} aria-label="Close">
+          <button type="button" className="btn-icon" onClick={onClose} aria-label="Close custom workload dialog">
             ✕
           </button>
         </header>
@@ -178,11 +178,11 @@ export function CustomTelemetryModal({ open, initial, onClose, onApply }: Custom
         {error ? <p className="pipeline-error">{error}</p> : null}
 
         <footer className="pipeline-modal__footer">
-          <button type="button" className="ghost" onClick={onClose}>
+          <button type="button" className="secondary" onClick={onClose}>
             Cancel
           </button>
           <button type="button" className="primary" onClick={() => void handleApply()}>
-            Apply custom profile
+            Apply profile
           </button>
         </footer>
       </div>

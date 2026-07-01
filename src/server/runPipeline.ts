@@ -186,6 +186,7 @@ export async function runFullPipeline(request: PipelineRunRequest): Promise<Pipe
     plan: mlDesign.plan,
     designReport: mlDesign.designReport,
     retrievalStrategy: mlDesign.retrievalStrategy,
+    modelTokenUsage: mlDesign.modelTokenUsage,
   };
   reportProgress(request, {
     stage: 'artifacts',

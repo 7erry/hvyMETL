@@ -12,6 +12,7 @@ import { buildMigrationPlan } from '../design/patternSelector.js';
 import { enrichModelFromCsv } from '../utilities/csvModelEnrichment.js';
 import { resolveCsvSourcePath } from '../utilities/csvSource.js';
 import { explainTransformation, type TransformationSummary } from '../design/explainTransformation.js';
+import type { ModelTokenUsage } from '../modelUsage.js';
 
 /** Summary of SQL → MongoDB transformation for the After diagram. */
 export type DesignMeta = {
@@ -71,6 +72,7 @@ function configureDesignMigrationStore(env: NodeJS.ProcessEnv): void {
 export type DesignRunResult = DesignFromModelResult & {
   designMeta: DesignMeta;
   transformationSummary: TransformationSummary;
+  modelTokenUsage: ModelTokenUsage;
 };
 
 function enrichModelForDesign(request: DesignRequest, env: NodeJS.ProcessEnv): {
@@ -129,5 +131,6 @@ export async function runDesignForModel(request: DesignRequest): Promise<DesignR
     retrievalStrategy: mlDesign.retrievalStrategy,
     designMeta,
     transformationSummary,
+    modelTokenUsage: mlDesign.modelTokenUsage,
   };
 }

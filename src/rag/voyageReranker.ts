@@ -8,6 +8,7 @@
  */
 
 import { readMongoDbModelKeyFromEnv, resolveModelApiBaseUrl } from './voyage.js';
+import { parseApiUsage, recordRerankUsage } from '../modelUsage.js';
 
 /** Recommended reranker when MONGODB_MODEL_KEY is configured. */
 export const DEFAULT_VOYAGE_RERANK_MODEL = 'rerank-2.5';
@@ -78,7 +79,8 @@ export async function voyageRerank(
     throw new Error(`Voyage rerank API returned ${response.status}: ${await response.text()}`);
   }
 
-  const payload = (await response.json()) as { data: VoyageRerankResponseItem[] };
+  const payload = (await response.json()) as { data: VoyageRerankResponseItem[]; usage?: Record<string, number> };
+  recordRerankUsage(parseApiUsage(payload), `${query}\n${documents.join('\n')}`);
   return payload.data.map((item) => ({
     index: item.index,
     relevanceScore: item.relevance_score,

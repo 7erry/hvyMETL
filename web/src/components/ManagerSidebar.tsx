@@ -2,11 +2,13 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { fetchPipelineExecutions } from '../api';
 import type { ActivityFeedItem, MigrationProgress } from '../managerDashboard';
 import { buildActivityFeed, buildCloudResourceSummary } from '../managerDashboard';
+import { formatTokenCount, tokenUsageSourceLabel } from '../modelUsage';
 import type { MigrationArtifacts, ManagerCostInputs } from '../sessionState';
 import type { PipelineExecutionListItem } from '../transformationSummaryTypes';
 import { ManagerCostPanel } from './ManagerCostPanel';
+import { SchemaImportPanel } from './SchemaImportPanel';
 import type { MigrationPlan } from '../migrationPlanTypes';
-import type { SqlStructuralModel } from '../types';
+import type { Dialect, SqlStructuralModel } from '../types';
 
 type ManagerSidebarProps = {
   model: SqlStructuralModel | null;
@@ -18,6 +20,14 @@ type ManagerSidebarProps = {
   profileInfo: { label: string; readPercent: number; writePercent: number } | null;
   managerCostInputs: ManagerCostInputs;
   onManagerCostInputsChange: (inputs: ManagerCostInputs) => void;
+  dialects: Dialect[];
+  dialect: string;
+  ddl: string;
+  apiConnected: boolean;
+  onDialectChange: (dialect: string) => void;
+  onDdlChange: (ddl: string) => void;
+  onImportQuery: () => void;
+  onSchemaFile: (file: File) => void;
   onOpenReview: () => void;
 };
 
@@ -71,6 +81,14 @@ export function ManagerSidebar({
   profileInfo,
   managerCostInputs,
   onManagerCostInputsChange,
+  dialects,
+  dialect,
+  ddl,
+  apiConnected,
+  onDialectChange,
+  onDdlChange,
+  onImportQuery,
+  onSchemaFile,
   onOpenReview,
 }: ManagerSidebarProps) {
   const [activity, setActivity] = useState<ActivityFeedItem[]>([]);
@@ -98,6 +116,20 @@ export function ManagerSidebar({
 
   return (
     <div className="manager-sidebar sidebar-scroll">
+      {!model ? (
+        <SchemaImportPanel
+          dialects={dialects}
+          dialect={dialect}
+          ddl={ddl}
+          apiConnected={apiConnected}
+          onDialectChange={onDialectChange}
+          onDdlChange={onDdlChange}
+          onImportQuery={onImportQuery}
+          onSchemaFile={onSchemaFile}
+          compact
+        />
+      ) : null}
+
       <section className="manager-panel">
         <h3>Migration progress</h3>
         <div className="manager-progress-block">
@@ -139,6 +171,51 @@ export function ManagerSidebar({
         inputs={managerCostInputs}
         onChange={onManagerCostInputsChange}
       />
+
+      <section className="manager-panel manager-token-panel">
+        <h3>Model API usage</h3>
+        {!cloudSummary.modelTokenUsage || cloudSummary.modelTokenUsage.totalTokens === 0 ? (
+          <p className="manager-hint">
+            Run design or the full pipeline with <code>MONGODB_MODEL_KEY</code> or{' '}
+            <code>OPENAI_API_KEY</code> to track embedding and rerank tokens. BM25-only runs report zero tokens.
+          </p>
+        ) : (
+          <>
+            <dl className="manager-metrics manager-token-metrics">
+              <div>
+                <dt>Session total</dt>
+                <dd className="manager-token-total">
+                  {formatTokenCount(cloudSummary.modelTokenUsage.totalTokens)} tokens
+                  {cloudSummary.modelTokenUsage.estimated ? (
+                    <span className="manager-token-estimated" title="Some values were estimated from text length">
+                      est.
+                    </span>
+                  ) : null}
+                </dd>
+              </div>
+              <div>
+                <dt>Embeddings</dt>
+                <dd>{formatTokenCount(cloudSummary.modelTokenUsage.embeddingTokens)}</dd>
+              </div>
+              <div>
+                <dt>Rerank</dt>
+                <dd>{formatTokenCount(cloudSummary.modelTokenUsage.rerankTokens)}</dd>
+              </div>
+              <div>
+                <dt>API calls</dt>
+                <dd>{cloudSummary.modelTokenUsage.apiCalls.toLocaleString()}</dd>
+              </div>
+              {cloudSummary.retrievalStrategy ? (
+                <div>
+                  <dt>Retrieval mode</dt>
+                  <dd className="manager-token-strategy">{cloudSummary.retrievalStrategy}</dd>
+                </div>
+              ) : null}
+            </dl>
+            <p className="manager-hint manager-token-footnote">{tokenUsageSourceLabel(cloudSummary.modelTokenUsage)}</p>
+          </>
+        )}
+      </section>
 
       <section className="manager-panel">
         <h3>Workload & Atlas imports</h3>
@@ -208,8 +285,8 @@ export function ManagerSidebar({
       <section className="manager-panel">
         <div className="manager-panel__header">
           <h3>Activity</h3>
-          <button type="button" className="ghost manager-refresh" onClick={() => void refreshActivity()}>
-            Refresh
+          <button type="button" className="tertiary manager-refresh" onClick={() => void refreshActivity()}>
+            Refresh activity
           </button>
         </div>
         {activity.length === 0 ? (

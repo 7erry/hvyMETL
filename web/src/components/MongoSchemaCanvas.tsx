@@ -180,7 +180,7 @@ export function MongoSchemaCanvas({
         <p>Generate a migration plan to preview MongoDB collections.</p>
         {onGeneratePlan ? (
           <button type="button" className="primary" onClick={onGeneratePlan} disabled={generating}>
-            {generating ? 'Designing…' : 'Generate MongoDB schema'}
+            {generating ? 'Designing…' : 'Generate schema'}
           </button>
         ) : null}
       </div>

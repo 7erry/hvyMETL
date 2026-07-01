@@ -24,6 +24,7 @@ export type MigrationArtifacts = {
   prompts: PromptArtifact[];
   retrievalStrategy?: string;
   generatedAt: string;
+  modelTokenUsage?: import('./modelUsage').ModelTokenUsage;
   designMeta?: {
     sqlTableCount: number;
     collectionCount: number;

@@ -218,8 +218,8 @@ export function MigrationArtifactsView({ artifacts, onChange, onBack }: Migratio
     <div className="migration-view">
       <header className="migration-toolbar migration-toolbar--compact">
         <div className="migration-toolbar__start">
-          <button type="button" className="ghost" onClick={onBack}>
-            ← Back
+          <button type="button" className="tertiary" onClick={onBack}>
+            Back to dashboard
           </button>
           <div className="migration-toolbar__title">
             <h2>Migration export</h2>
@@ -246,14 +246,14 @@ export function MigrationArtifactsView({ artifacts, onChange, onBack }: Migratio
           </label>
           <button
             type="button"
-            className="ghost"
+            className="secondary"
             onClick={() => void handleGenerateRepositories()}
             disabled={generatingRepos || !artifacts.planJson.trim()}
           >
             {generatingRepos ? 'Generating…' : artifacts.repositories ? 'Regenerate repos' : 'Generate repos'}
           </button>
           {artifacts.repositories ? (
-            <button type="button" className="ghost" onClick={handleDownloadRepositories}>
+            <button type="button" className="secondary" onClick={handleDownloadRepositories}>
               Download repos
             </button>
           ) : null}
@@ -326,8 +326,8 @@ export function MigrationArtifactsView({ artifacts, onChange, onBack }: Migratio
                     ) : null}
                     {!isRepoView ? <code>{active?.fileName}</code> : null}
                   </div>
-                  <button type="button" className="ghost" onClick={handleDownload} disabled={!active}>
-                    Download
+                  <button type="button" className="tertiary" onClick={handleDownload} disabled={!active}>
+                    Download file
                   </button>
                 </div>
                 <ArtifactCodePanel

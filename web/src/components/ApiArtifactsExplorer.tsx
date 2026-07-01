@@ -150,10 +150,10 @@ export function ApiArtifactsExplorer({
                 ) : null}
               </>
             ) : null}
-            <button type="button" className="ghost" onClick={() => void refreshBundle()}>Refresh</button>
+            <button type="button" className="tertiary" onClick={() => void refreshBundle()}>Refresh APIs</button>
           </>
         ) : (
-          <button type="button" className="ghost" onClick={() => void refreshBundle()}>Refresh</button>
+          <button type="button" className="tertiary" onClick={() => void refreshBundle()}>Refresh APIs</button>
         )}
       </div>
     </div>

@@ -3,6 +3,7 @@ import type { CollectionPlan, MigrationPlan } from './migrationPlanTypes';
 import type { TransformationSummary } from './transformationSummaryTypes';
 import type { SqlStructuralModel } from './types';
 import { PIPELINE_PROGRESS_STAGES } from './pipelineStages';
+import { mergeModelTokenUsage, type ModelTokenUsage } from './modelUsage';
 import { collectionRequiresReview, isTableReviewAccepted } from './managerReview';
 
 /** Migration readiness for a single table or collection in the manager view. */
@@ -59,6 +60,7 @@ export type CloudResourceSummary = {
   profileLabel: string | null;
   readWriteRatio: string | null;
   retrievalStrategy: string | null;
+  modelTokenUsage: ModelTokenUsage | null;
 };
 
 function sumInsertedCounts(imports: Array<{ ok: boolean; insertedCount?: number }>): number | null {
@@ -119,6 +121,7 @@ export function buildCloudResourceSummary(
       ? `${profileInfo.readPercent}:${profileInfo.writePercent} read:write`
       : null,
     retrievalStrategy: artifacts?.retrievalStrategy ?? null,
+    modelTokenUsage: artifacts?.modelTokenUsage ?? null,
   };
 }
 

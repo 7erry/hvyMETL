@@ -1,6 +1,8 @@
 import type { DiagramExport, Dialect, Profile, SqlStructuralModel } from './types';
 import type { ProfileRequestFields, WorkloadProfile } from './customProfileShared';
 
+const base = '';
+
 export type ProfileInference = {
   profileId: string;
   label: string;
@@ -19,16 +21,39 @@ export async function inferProfile(model: SqlStructuralModel): Promise<ProfileIn
   return data.inferred;
 }
 
-const base = '';
+async function readApiError(res: Response): Promise<string> {
+  try {
+    const data = await res.json();
+    if (data && typeof data.error === 'string') return data.error;
+  } catch {
+    // ignore
+  }
+  return res.statusText || `HTTP ${res.status}`;
+}
+
+export async function checkApiHealth(): Promise<boolean> {
+  try {
+    const res = await fetch(`${base}/api/health`);
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
 
 export async function fetchProfiles(): Promise<Profile[]> {
   const res = await fetch(`${base}/api/profiles`);
-  return res.json();
+  if (!res.ok) throw new Error(await readApiError(res));
+  const data = await res.json();
+  if (!Array.isArray(data)) throw new Error('Profiles API returned invalid data');
+  return data;
 }
 
 export async function fetchDialects(): Promise<Dialect[]> {
   const res = await fetch(`${base}/api/dialects`);
-  return res.json();
+  if (!res.ok) throw new Error(await readApiError(res));
+  const data = await res.json();
+  if (!Array.isArray(data)) throw new Error('Dialects API returned invalid data');
+  return data;
 }
 
 export async function importDdl(
@@ -95,6 +120,7 @@ export type PipelineRunResult = {
   imports: { collection: string; files: string[]; ok: boolean; insertedCount?: number; error?: string }[];
   csvSourcePath?: string;
   retrievalStrategy?: string;
+  modelTokenUsage?: import('./modelUsage').ModelTokenUsage;
   migrationPlanJson?: unknown;
   designReportMarkdown?: string;
   apiArtifacts?: ApiArtifactBundleInfo;
@@ -265,6 +291,7 @@ export type DesignResult = {
   retrievalStrategy: string;
   designMeta: DesignMeta;
   transformationSummary: import('./transformationSummaryTypes').TransformationSummary;
+  modelTokenUsage?: import('./modelUsage').ModelTokenUsage;
   apiArtifacts?: ApiArtifactBundleInfo | null;
 };
 

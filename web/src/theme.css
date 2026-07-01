@@ -9,6 +9,26 @@
   --mdb-gray-light-2: #e8edeb;
   --grid-size: 20px;
   font-family: 'Euclid Circular A', 'Segoe UI', system-ui, sans-serif;
+
+  /* Button design tokens (WCAG touch target ≥ 48px) */
+  --btn-min-height: 3rem;
+  --btn-padding-y: 0.625rem;
+  --btn-padding-x: 1.25rem;
+  --btn-font-size: 0.875rem;
+  --btn-border-radius: 8px;
+  --btn-focus-ring: 0 0 0 2px var(--mdb-black), 0 0 0 4px var(--mdb-green-base);
+  --btn-primary-bg: var(--mdb-green-base);
+  --btn-primary-bg-hover: #00d95a;
+  --btn-primary-bg-active: #00c24f;
+  --btn-primary-text: var(--mdb-black);
+  --btn-secondary-border: var(--mdb-green-dark-2);
+  --btn-secondary-bg-hover: rgba(0, 237, 100, 0.1);
+  --btn-secondary-text: var(--mdb-spring-green);
+  --btn-tertiary-text: var(--mdb-green-base);
+  --btn-tertiary-text-hover: var(--mdb-spring-green);
+  --btn-danger-border: #b44;
+  --btn-danger-text: #f5a8a8;
+  --btn-danger-bg-hover: rgba(180, 68, 68, 0.2);
 }
 
 * {
@@ -37,47 +57,176 @@ a:hover {
 a.link-button {
   display: inline-flex;
   align-items: center;
-  padding: 0.35rem 0.65rem;
-  border: 1px solid var(--mdb-green-dark-2);
-  border-radius: 6px;
+  justify-content: center;
+  gap: 0.35rem;
+  min-height: var(--btn-min-height);
+  padding: var(--btn-padding-y) var(--btn-padding-x);
+  border: 1px solid var(--btn-secondary-border);
+  border-radius: var(--btn-border-radius);
   background: transparent;
-  color: var(--mdb-green-base);
-  font-size: 0.75rem;
+  color: var(--btn-secondary-text);
+  font-size: var(--btn-font-size);
+  font-weight: 500;
   text-decoration: none;
   line-height: 1.2;
+  white-space: nowrap;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease,
+    box-shadow 0.15s ease;
 }
 
 a.link-button:hover {
-  background: var(--mdb-green-dark-3);
+  background: var(--btn-secondary-bg-hover);
   border-color: var(--mdb-green-base);
   color: var(--mdb-green-base);
   text-decoration: none;
-  box-shadow: 0 0 0 1px var(--mdb-green-base);
 }
 
+a.link-button:focus {
+  outline: none;
+}
+
+a.link-button:focus-visible {
+  box-shadow: var(--btn-focus-ring);
+}
+
+/* —— Button hierarchy: primary · secondary (.ghost) · tertiary —— */
 button {
   font: inherit;
   cursor: pointer;
-  border: 1px solid var(--mdb-green-base);
-  background: var(--mdb-green-dark-2);
-  color: var(--mdb-spring-green);
-  border-radius: 6px;
-  padding: 0.45rem 0.85rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  min-height: var(--btn-min-height);
+  min-width: var(--btn-min-height);
+  padding: var(--btn-padding-y) var(--btn-padding-x);
+  border-radius: var(--btn-border-radius);
+  border: 1px solid transparent;
+  background: transparent;
+  color: inherit;
+  font-size: var(--btn-font-size);
+  font-weight: 500;
+  line-height: 1.2;
+  text-decoration: none;
+  white-space: nowrap;
+  box-shadow: none;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease,
+    box-shadow 0.15s ease,
+    transform 0.1s ease;
 }
 
-button:hover {
-  background: var(--mdb-green-dark-3);
-  box-shadow: 0 0 0 1px var(--mdb-green-base);
+button:focus {
+  outline: none;
 }
 
+button:focus-visible {
+  box-shadow: var(--btn-focus-ring);
+}
+
+button:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+/* Primary — one main action per view */
 button.primary {
-  background: var(--mdb-green-base);
-  color: var(--mdb-black);
+  background: var(--btn-primary-bg);
+  border-color: var(--btn-primary-bg);
+  color: var(--btn-primary-text);
   font-weight: 600;
 }
 
-button.primary:disabled:hover {
-  background: var(--mdb-green-base);
+button.primary:hover:not(:disabled) {
+  background: var(--btn-primary-bg-hover);
+  border-color: var(--btn-primary-bg-hover);
+  box-shadow: none;
+}
+
+button.primary:active:not(:disabled) {
+  background: var(--btn-primary-bg-active);
+  border-color: var(--btn-primary-bg-active);
+}
+
+/* Secondary — outline / ghost alternative actions */
+button.secondary,
+button.ghost {
+  background: transparent;
+  border-color: var(--btn-secondary-border);
+  color: var(--btn-secondary-text);
+  font-weight: 500;
+}
+
+button.secondary:hover:not(:disabled),
+button.ghost:hover:not(:disabled) {
+  background: var(--btn-secondary-bg-hover);
+  border-color: var(--mdb-green-base);
+  color: var(--mdb-green-base);
+  box-shadow: none;
+}
+
+button.secondary:active:not(:disabled),
+button.ghost:active:not(:disabled) {
+  background: rgba(0, 104, 74, 0.35);
+}
+
+/* Tertiary — low-priority, link-like with button padding */
+button.tertiary {
+  background: transparent;
+  border-color: transparent;
+  color: var(--btn-tertiary-text);
+  font-weight: 500;
+  min-width: auto;
+  padding: var(--btn-padding-y) 0.75rem;
+}
+
+button.tertiary:hover:not(:disabled) {
+  background: rgba(0, 237, 100, 0.08);
+  border-color: transparent;
+  color: var(--btn-tertiary-text-hover);
+  text-decoration: underline;
+  box-shadow: none;
+}
+
+button.tertiary:active:not(:disabled) {
+  background: rgba(0, 104, 74, 0.25);
+  text-decoration: underline;
+}
+
+/* Icon-only compact tertiary (still 48px hit target) */
+button.btn-icon {
+  min-width: var(--btn-min-height);
+  padding: 0;
+  border-color: transparent;
+  color: var(--btn-tertiary-text);
+  font-size: 0.85rem;
+}
+
+button.btn-icon:hover:not(:disabled) {
+  background: rgba(0, 237, 100, 0.1);
+  border-color: var(--btn-secondary-border);
+  color: var(--mdb-green-base);
+  text-decoration: none;
+  box-shadow: none;
+}
+
+button.danger.secondary,
+button.danger.ghost,
+button.ghost.danger {
+  border-color: var(--btn-danger-border);
+  color: var(--btn-danger-text);
+}
+
+button.danger.secondary:hover:not(:disabled),
+button.danger.ghost:hover:not(:disabled),
+button.ghost.danger:hover:not(:disabled) {
+  background: var(--btn-danger-bg-hover);
+  border-color: var(--btn-danger-border);
+  color: var(--btn-danger-text);
   box-shadow: none;
 }
 
@@ -88,40 +237,32 @@ button.block {
 button:disabled {
   opacity: 0.45;
   cursor: not-allowed;
+  transform: none;
 }
 
 button:disabled:hover {
   box-shadow: none;
 }
 
-button.ghost:disabled:hover {
+button.ghost:disabled:hover,
+button.secondary:disabled:hover {
   background: transparent;
+}
+
+button.tertiary:disabled:hover {
+  background: transparent;
+  text-decoration: none;
 }
 
 .button-row {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.5rem;
-  margin-top: 0.5rem;
+  gap: 0.75rem;
+  margin-top: 0.75rem;
 }
 
 .button-row.column {
   flex-direction: column;
-}
-
-button.ghost {
-  background: transparent;
-  border-color: var(--mdb-gray-light-2);
-}
-
-button.ghost.danger {
-  border-color: #b44;
-  color: #f5a8a8;
-}
-
-button.ghost.danger:hover {
-  background: rgba(180, 68, 68, 0.2);
-  box-shadow: 0 0 0 1px #b44;
 }
 
 input,
@@ -433,28 +574,41 @@ textarea {
 
 .schema-phase-toggle {
   display: inline-flex;
-  border: 1px solid #00684a;
-  border-radius: 8px;
+  border: 1px solid var(--mdb-green-dark-2);
+  border-radius: var(--btn-border-radius);
   overflow: hidden;
 }
 
 .schema-phase-toggle button {
+  min-height: var(--btn-min-height);
+  min-width: auto;
   border: none;
   background: transparent;
   color: var(--mdb-spring-green);
-  padding: 0.4rem 0.85rem;
+  padding: var(--btn-padding-y) 1rem;
   font-size: 0.8rem;
+  font-weight: 500;
   cursor: pointer;
+  box-shadow: none;
+}
+
+.schema-phase-toggle button:hover:not(:disabled) {
+  background: rgba(0, 104, 74, 0.35);
+  box-shadow: none;
+}
+
+.schema-phase-toggle button:focus-visible {
+  box-shadow: inset var(--btn-focus-ring);
 }
 
 .schema-phase-toggle button.active {
-  background: #00684a;
-  color: #e3fcf7;
+  background: var(--mdb-green-base);
+  color: var(--mdb-black);
   font-weight: 600;
 }
 
-.schema-phase-toggle button:not(.active):hover {
-  background: rgba(0, 104, 74, 0.35);
+.schema-phase-toggle button.active:hover:not(:disabled) {
+  background: var(--btn-primary-bg-hover);
 }
 
 .schema-canvas-empty button {
@@ -499,6 +653,8 @@ textarea {
 }
 
 .schema-canvas-wrap .react-flow__controls-button {
+  min-width: var(--btn-min-height);
+  min-height: var(--btn-min-height);
   background: var(--mdb-gray-dark-4);
   border-color: var(--mdb-green-dark-2);
   fill: var(--mdb-spring-green);
@@ -507,6 +663,11 @@ textarea {
 
 .schema-canvas-wrap .react-flow__controls-button:hover {
   background: var(--mdb-green-dark-3);
+  border-color: var(--mdb-green-base);
+}
+
+.schema-canvas-wrap .react-flow__controls-button:focus-visible {
+  box-shadow: var(--btn-focus-ring);
 }
 
 .schema-canvas-toolbar-panel {
@@ -1050,28 +1211,42 @@ textarea {
 }
 
 .artifact-tabs button {
+  min-height: var(--btn-min-height);
+  min-width: auto;
   text-align: left;
   font-size: 0.8rem;
+  font-weight: 500;
   background: transparent;
   border-color: transparent;
+  color: var(--btn-tertiary-text);
   white-space: nowrap;
+  padding: var(--btn-padding-y) 0.75rem;
 }
 
 .artifact-tabs--horizontal button {
   text-align: center;
-  padding: 0.35rem 0.65rem;
-  border-radius: 4px;
+  padding: var(--btn-padding-y) 0.85rem;
+  border-radius: 6px;
 }
 
 .artifact-tabs button.artifact-tab--secondary {
-  opacity: 0.85;
+  opacity: 0.9;
   font-size: 0.75rem;
+}
+
+.artifact-tabs button:hover:not(:disabled) {
+  background: rgba(0, 237, 100, 0.08);
+  border-color: transparent;
+  color: var(--btn-tertiary-text-hover);
+  box-shadow: none;
 }
 
 .artifact-tabs button.active {
   background: var(--mdb-green-dark-3);
   border-color: var(--mdb-green-base);
   color: var(--mdb-green-base);
+  font-weight: 600;
+  text-decoration: none;
 }
 
 .artifact-editor {
@@ -1301,19 +1476,25 @@ textarea {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 1.5rem;
-  height: 1.5rem;
+  min-width: var(--btn-min-height);
+  min-height: var(--btn-min-height);
   padding: 0;
   background: transparent;
   border: 1px solid transparent;
-  border-radius: 4px;
-  color: var(--mdb-green-base);
+  border-radius: var(--btn-border-radius);
+  color: var(--btn-tertiary-text);
   cursor: pointer;
 }
 
-.api-artifacts-collapse:hover {
-  border-color: var(--mdb-green-dark-2);
-  background: var(--mdb-green-dark-3);
+.api-artifacts-collapse:hover:not(:disabled) {
+  border-color: var(--btn-secondary-border);
+  background: rgba(0, 237, 100, 0.1);
+  color: var(--mdb-green-base);
+  box-shadow: none;
+}
+
+.api-artifacts-collapse:focus-visible {
+  box-shadow: var(--btn-focus-ring);
 }
 
 .api-artifacts-collapse__chevron {
@@ -1454,8 +1635,7 @@ textarea {
 
 .pipeline-env-banner__toggle {
   flex-shrink: 0;
-  font-size: 0.75rem;
-  padding: 0.3rem 0.6rem;
+  font-size: 0.8rem;
 }
 
 .pipeline-env-details {
@@ -1473,7 +1653,7 @@ textarea {
 
 .pipeline-env-details__refresh {
   margin-top: 0.5rem;
-  font-size: 0.75rem;
+  font-size: 0.8rem;
 }
 
 .pipeline-status--compact li {
@@ -1496,30 +1676,41 @@ textarea {
 .pipeline-data-toggle {
   display: flex;
   border: 1px solid var(--mdb-green-dark-2);
-  border-radius: 8px;
+  border-radius: var(--btn-border-radius);
   overflow: hidden;
   margin-bottom: 0.75rem;
 }
 
 .pipeline-data-toggle button {
   flex: 1;
+  min-height: var(--btn-min-height);
+  min-width: auto;
   border: none;
   background: transparent;
   color: var(--mdb-spring-green);
-  padding: 0.5rem 0.75rem;
+  padding: var(--btn-padding-y) 0.85rem;
   font-size: 0.8rem;
+  font-weight: 500;
   box-shadow: none;
 }
 
-.pipeline-data-toggle button:hover {
+.pipeline-data-toggle button:hover:not(:disabled) {
   background: rgba(0, 104, 74, 0.35);
   box-shadow: none;
+}
+
+.pipeline-data-toggle button:focus-visible {
+  box-shadow: inset var(--btn-focus-ring);
 }
 
 .pipeline-data-toggle button.active {
   background: var(--mdb-green-base);
   color: var(--mdb-black);
   font-weight: 600;
+}
+
+.pipeline-data-toggle button.active:hover:not(:disabled) {
+  background: var(--btn-primary-bg-hover);
 }
 
 .pipeline-card {
@@ -1916,18 +2107,26 @@ textarea {
   gap: 0.35rem 0.75rem;
   align-items: center;
   width: 100%;
+  min-height: var(--btn-min-height);
   text-align: left;
-  padding: 0.45rem 0.35rem;
+  padding: 0.5rem 0.65rem;
   border: none;
+  border-radius: 6px;
   background: transparent;
   color: var(--mdb-spring-green);
   font-size: 0.72rem;
+  font-weight: 500;
   cursor: pointer;
-  border-bottom: 1px solid rgba(0, 104, 74, 0.45);
+  box-shadow: none;
 }
 
-.pipeline-history__item:hover {
+.pipeline-history__item:hover:not(:disabled) {
   background: rgba(0, 104, 74, 0.25);
+  box-shadow: none;
+}
+
+.pipeline-history__item:focus-visible {
+  box-shadow: var(--btn-focus-ring);
 }
 
 .pipeline-history__ok {
@@ -1948,28 +2147,39 @@ textarea {
 .role-toggle {
   display: inline-flex;
   border: 1px solid var(--mdb-green-dark-2);
-  border-radius: 8px;
+  border-radius: var(--btn-border-radius);
   overflow: hidden;
 }
 
 .role-toggle__btn {
-  padding: 0.35rem 0.75rem;
+  min-height: var(--btn-min-height);
+  min-width: auto;
+  padding: var(--btn-padding-y) 1rem;
   border: none;
   background: transparent;
   color: inherit;
   font-size: 0.8rem;
+  font-weight: 500;
   box-shadow: none;
 }
 
-.role-toggle__btn:hover {
+.role-toggle__btn:hover:not(:disabled) {
   background: rgba(0, 104, 74, 0.35);
   box-shadow: none;
+}
+
+.role-toggle__btn:focus-visible {
+  box-shadow: inset var(--btn-focus-ring);
 }
 
 .role-toggle__btn.active {
   background: var(--mdb-green-base);
   color: var(--mdb-black);
   font-weight: 600;
+}
+
+.role-toggle__btn.active:hover:not(:disabled) {
+  background: var(--btn-primary-bg-hover);
 }
 
 
@@ -1983,6 +2193,12 @@ textarea {
 
 .app--manager .manager-sidebar {
   background: var(--mdb-black);
+  min-width: 0;
+}
+
+.app--manager .manager-sidebar.sidebar-scroll {
+  min-width: 0;
+  overflow-x: hidden;
 }
 
 .app--manager .manager-panel {
@@ -2100,6 +2316,10 @@ textarea {
   margin: 0;
 }
 
+.app--manager .manager-metrics > div {
+  min-width: 0;
+}
+
 .app--manager .manager-metrics dt {
   font-size: 0.7rem;
   opacity: 0.75;
@@ -2111,6 +2331,13 @@ textarea {
   font-size: 0.95rem;
   font-weight: 600;
   color: var(--mdb-spring-green);
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  line-height: 1.35;
+}
+
+.app--manager .manager-token-metrics {
+  grid-template-columns: 1fr;
 }
 
 .app--manager .manager-activity {
@@ -2158,6 +2385,14 @@ textarea {
   display: flex;
   gap: 0.5rem;
   flex-wrap: wrap;
+  justify-content: flex-end;
+  min-width: 0;
+}
+
+.app--manager .manager-phase-bar__actions button {
+  white-space: normal;
+  text-align: center;
+  min-width: auto;
 }
 
 .app--manager .manager-canvas {
@@ -2531,6 +2766,11 @@ textarea {
   flex-direction: column;
   gap: 0.85rem;
   margin-bottom: 0.85rem;
+  min-width: 0;
+}
+
+.app--manager .manager-cost-workload {
+  min-width: 0;
 }
 
 .app--manager .manager-cost-field {
@@ -2562,33 +2802,95 @@ textarea {
   display: flex;
   flex-direction: column;
   gap: 0.4rem;
+  width: 100%;
+  min-width: 0;
 }
 
 .app--manager .manager-cost-workload__grid button {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  min-height: auto;
   text-align: left;
-  padding: 0.5rem 0.65rem;
-  border-radius: 8px;
+  white-space: normal;
+  overflow: visible;
+  padding: 0.65rem 0.85rem;
+  border-radius: var(--btn-border-radius);
   border: 1px solid var(--mdb-green-dark-2);
   background: rgba(0, 30, 43, 0.35);
   color: inherit;
   cursor: pointer;
   font-size: 0.72rem;
+  font-weight: 500;
+  box-shadow: none;
+  line-height: 1.4;
 }
 
-.app--manager .manager-cost-workload__grid button strong {
-  display: block;
-  font-size: 0.78rem;
-  color: var(--mdb-spring-green);
-  margin-bottom: 0.15rem;
+.app--manager .manager-cost-workload__grid button:hover:not(:disabled) {
+  background: rgba(0, 104, 74, 0.35);
+  border-color: var(--mdb-green-base);
+  box-shadow: none;
 }
 
-.app--manager .manager-cost-workload__grid button span {
-  opacity: 0.8;
+.app--manager .manager-cost-workload__grid button:focus-visible {
+  box-shadow: var(--btn-focus-ring);
 }
 
 .app--manager .manager-cost-workload__grid button.active {
   border-color: var(--mdb-green-base);
-  background: rgba(0, 237, 100, 0.1);
+  background: rgba(0, 237, 100, 0.12);
+}
+
+.app--manager .manager-cost-workload__grid button strong {
+  display: block;
+  width: 100%;
+  font-size: 0.78rem;
+  color: var(--mdb-spring-green);
+  margin-bottom: 0.2rem;
+  white-space: normal;
+}
+
+.app--manager .manager-cost-workload__grid button span {
+  display: block;
+  width: 100%;
+  opacity: 0.85;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  line-height: 1.4;
+}
+
+.app--manager .manager-token-panel {
+  border-color: rgba(0, 237, 100, 0.35);
+}
+
+.app--manager .manager-token-total {
+  color: var(--mdb-green-base);
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.app--manager .manager-token-estimated {
+  margin-left: 0.35rem;
+  font-size: 0.65rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #ffb347;
+  vertical-align: super;
+}
+
+.app--manager .manager-token-strategy {
+  font-size: 0.72rem;
+  line-height: 1.35;
+}
+
+.app--manager .manager-token-footnote {
+  margin: 0.65rem 0 0;
+  font-size: 0.7rem;
 }
 
 .app--manager .manager-cost-card {
@@ -2633,6 +2935,8 @@ textarea {
 .app--manager .manager-cost-card__metrics dd {
   margin: 0;
   font-size: 0.78rem;
+  overflow-wrap: anywhere;
+  line-height: 1.35;
 }
 
 .app--manager .manager-cost-working-set {
@@ -2669,8 +2973,15 @@ textarea {
 .app--manager .manager-cost-totals__row {
   display: flex;
   justify-content: space-between;
-  gap: 0.5rem;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.5rem;
   padding: 0.2rem 0;
+}
+
+.app--manager .manager-cost-totals__row span,
+.app--manager .manager-cost-totals__row strong {
+  min-width: 0;
 }
 
 .app--manager .manager-cost-totals__row--total {
@@ -2699,4 +3010,44 @@ textarea {
   margin: 0.5rem 0 0;
   font-size: 0.7rem;
   opacity: 0.8;
+}
+
+.schema-import-panel {
+  margin-bottom: 0.75rem;
+}
+
+.schema-import-panel__label {
+  display: block;
+  font-size: 0.8rem;
+  margin-bottom: 0.35rem;
+}
+
+.schema-import-panel__select {
+  width: 100%;
+  margin-bottom: 0.5rem;
+}
+
+.schema-import-panel__textarea {
+  width: 100%;
+  margin-bottom: 0.5rem;
+}
+
+.schema-import-panel__warn {
+  margin: 0 0 0.65rem;
+  padding: 0.5rem 0.65rem;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 179, 71, 0.45);
+  background: rgba(255, 179, 71, 0.1);
+  font-size: 0.75rem;
+  line-height: 1.45;
+}
+
+.schema-import-panel__hint {
+  margin: 0.5rem 0 0;
+  font-size: 0.72rem;
+  opacity: 0.75;
+}
+
+.schema-import-panel--compact {
+  margin-bottom: 0;
 }

@@ -21,8 +21,8 @@ export function TransformationSummaryPanel({ summary, onRefresh, refreshing }: T
       <div className="transformation-summary__header">
         <h3>Transformation summary</h3>
         {onRefresh ? (
-          <button type="button" className="ghost" onClick={onRefresh} disabled={refreshing}>
-            {refreshing ? 'Updating…' : 'Refresh'}
+          <button type="button" className="tertiary" onClick={onRefresh} disabled={refreshing}>
+            {refreshing ? 'Updating…' : 'Refresh summary'}
           </button>
         ) : null}
       </div>

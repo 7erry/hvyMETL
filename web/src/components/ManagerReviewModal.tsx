@@ -48,7 +48,7 @@ export function ManagerReviewModal({
               {pending.length > 0 ? ` · ${pending.length} remaining` : ' · all collections approved'}
             </p>
           </div>
-          <button type="button" className="ghost" onClick={onClose} aria-label="Close review">
+          <button type="button" className="secondary" onClick={onClose} aria-label="Close review">
             Close
           </button>
         </header>
@@ -60,7 +60,7 @@ export function ManagerReviewModal({
             {pending.length > 0 ? (
               <div className="manager-review-modal__actions">
                 <button type="button" className="primary" onClick={onAcceptAll}>
-                  Accept all {pending.length} recommendation(s)
+                  Accept all changes
                 </button>
               </div>
             ) : null}
@@ -85,10 +85,10 @@ export function ManagerReviewModal({
                     ) : (
                       <button
                         type="button"
-                        className="primary"
+                        className="secondary"
                         onClick={() => onAccept(item.collectionName)}
                       >
-                        Accept recommendations
+                        Accept changes
                       </button>
                     )}
                   </div>

@@ -8,6 +8,7 @@
  */
 
 import type { EmbeddingProvider } from '../types.js';
+import { parseApiUsage, recordEmbeddingUsage } from '../modelUsage.js';
 
 /** Default model used when EMBEDDING_MODEL is not set. */
 const DEFAULT_EMBEDDING_MODEL = 'text-embedding-3-small';
@@ -42,7 +43,8 @@ export function createEmbeddingProviderFromEnv(): EmbeddingProvider | null {
       if (!response.ok) {
         throw new Error(`Embedding API returned ${response.status}: ${await response.text()}`);
       }
-      const payload = (await response.json()) as { data: EmbeddingResponseItem[] };
+      const payload = (await response.json()) as { data: EmbeddingResponseItem[]; usage?: Record<string, number> };
+      recordEmbeddingUsage(parseApiUsage(payload), texts.join(''));
       // The API may return items out of order; sort by index to be safe.
       return payload.data.sort((a, b) => a.index - b.index).map((item) => item.embedding);
     },

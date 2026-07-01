@@ -47,8 +47,8 @@ export function PipelineHistoryPanel({ onLoadExecution }: PipelineHistoryPanelPr
     <div className="panel pipeline-history" style={{ marginBottom: '0.75rem' }}>
       <div className="pipeline-history__header">
         <h3>Pipeline history</h3>
-        <button type="button" className="ghost" onClick={() => void refresh()} disabled={loading}>
-          {loading ? 'Loading…' : 'Refresh'}
+        <button type="button" className="tertiary" onClick={() => void refresh()} disabled={loading}>
+          {loading ? 'Loading…' : 'Refresh list'}
         </button>
       </div>
       <p className="pipeline-hint">Recent runs from Atlas memory DB (requires MONGODB_URI on the API server).</p>

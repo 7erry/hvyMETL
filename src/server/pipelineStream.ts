@@ -17,6 +17,7 @@ export type PipelineStreamCompletePayload = {
   retrievalStrategy: string;
   migrationPlanJson: PipelineRunResult['design']['plan'];
   designReportMarkdown: string;
+  modelTokenUsage?: PipelineRunResult['design']['modelTokenUsage'];
   feedback: PipelineRunResult['feedback'];
   execution: PipelineRunResult['execution'];
 };
@@ -39,6 +40,7 @@ export function pipelineResultToStreamPayload(result: PipelineRunResult): Pipeli
     retrievalStrategy: result.design.retrievalStrategy,
     migrationPlanJson: result.design.plan,
     designReportMarkdown: result.design.designReport,
+    modelTokenUsage: result.design.modelTokenUsage,
     feedback: result.feedback,
     execution: result.execution,
   };

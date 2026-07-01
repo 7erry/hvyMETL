@@ -9,6 +9,7 @@ import { loadKnowledgeBase } from '../rag/chunker.js';
 import { createRetrievalConfigFromEnv, describeRetrievalStrategy, retrieve } from '../rag/retrieval.js';
 import { buildRetrievalQuery } from '../rag/promptBundle.js';
 import type { MigrationPlan, SqlStructuralModel, WorkloadProfile } from '../types.js';
+import type { ModelTokenUsage } from '../modelUsage.js';
 import { getProfile } from '../profiles/profiles.js';
 import { buildMigrationPlan } from './patternSelector.js';
 
@@ -18,6 +19,7 @@ export type DesignFromModelResult = {
   plan: MigrationPlan;
   designReport: string;
   retrievalStrategy: string;
+  modelTokenUsage?: ModelTokenUsage;
 };
 
 function renderDesignReport(

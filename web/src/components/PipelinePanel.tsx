@@ -311,7 +311,7 @@ export function PipelinePanel({
             <h2 id="pipeline-title">Run Full Pipeline</h2>
             <p className="pipeline-modal__subtitle">Design your MongoDB schema and import data to Atlas.</p>
           </div>
-          <button type="button" className="ghost" onClick={onClose} disabled={running} aria-label="Close">
+          <button type="button" className="btn-icon" onClick={onClose} disabled={running} aria-label="Close pipeline dialog">
             ✕
           </button>
         </header>
@@ -339,7 +339,7 @@ export function PipelinePanel({
               </div>
               <button
                 type="button"
-                className="ghost pipeline-env-banner__toggle"
+                className="tertiary pipeline-env-banner__toggle"
                 onClick={() => setShowEnvDetails((open) => !open)}
                 aria-expanded={showEnvDetails}
               >
@@ -383,7 +383,7 @@ export function PipelinePanel({
                 </div>
                 <button
                   type="button"
-                  className="ghost pipeline-env-details__refresh"
+                  className="tertiary pipeline-env-details__refresh"
                   onClick={() => void refreshConfig()}
                   disabled={loadingConfig || running}
                 >
@@ -459,7 +459,7 @@ export function PipelinePanel({
                   />
                   <button
                     type="button"
-                    className="ghost"
+                    className="secondary"
                     onClick={() => void handlePickCsvDirectory()}
                     disabled={running}
                   >
@@ -629,12 +629,12 @@ export function PipelinePanel({
         ) : null}
 
         <footer className="pipeline-modal__footer">
-          <button type="button" className="ghost" onClick={onClose} disabled={running}>
+          <button type="button" className="secondary" onClick={onClose} disabled={running}>
             Cancel
           </button>
           <div className="pipeline-modal__footer-actions">
             <button type="button" className="primary" onClick={() => void handleRun()} disabled={!canRun || running}>
-              {running ? 'Running…' : result ? 'Run again' : 'Run full pipeline'}
+              {running ? 'Running…' : result ? 'Run again' : 'Run pipeline'}
             </button>
           </div>
         </footer>

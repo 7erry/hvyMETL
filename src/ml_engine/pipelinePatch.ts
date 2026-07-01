@@ -35,6 +35,7 @@ import type {
   SchemaGenerationContext,
   SchemaGenerator,
 } from './types.js';
+import { runWithModelUsageTracking, type ModelTokenUsage } from '../modelUsage.js';
 
 /** Bi-encoder candidate pool size before cross-encoder reranking. */
 export const BI_ENCODER_TOP_K = 15;
@@ -275,40 +276,45 @@ export async function designFromModelWithMlEngine(
   designReport: string;
   retrievalStrategy: string;
   ml: MlEnhancedDesignResult;
+  modelTokenUsage: ModelTokenUsage;
 }> {
-  const ml = await runMlEnhancedDesign({
-    model,
-    profile,
-    knowledgeDir,
-    schemaGenerator: options.schemaGenerator,
-    schedulePostMigrationReflection: options.schedulePostMigrationReflection,
-    clusterId: options.clusterId,
-  });
-  const designReport = [
-    '# Migration Design Report (ML-Enhanced)',
-    '',
-    `- Source: \`${ml.plan.source}\``,
-    `- Profile: ${profile.label} (${profile.telemetry.readPercent}:${profile.telemetry.writePercent} R:W)`,
-    `- Generated: ${ml.plan.generatedAt}`,
-    '',
-    ml.designReportExtras,
-    '',
-    '## Collections',
-    '',
-    ...ml.plan.collections.flatMap((collection) => [
-      `### ${collection.name}`,
+  const { result, usage } = await runWithModelUsageTracking(async () => {
+    const ml = await runMlEnhancedDesign({
+      model,
+      profile,
+      knowledgeDir,
+      schemaGenerator: options.schemaGenerator,
+      schedulePostMigrationReflection: options.schedulePostMigrationReflection,
+      clusterId: options.clusterId,
+    });
+    const designReport = [
+      '# Migration Design Report (ML-Enhanced)',
       '',
-      ...collection.patterns.map(
-        (decision) => `- **${decision.pattern}** on \`${decision.target}\` — ${decision.reason}`,
-      ),
+      `- Source: \`${ml.plan.source}\``,
+      `- Profile: ${profile.label} (${profile.telemetry.readPercent}:${profile.telemetry.writePercent} R:W)`,
+      `- Generated: ${ml.plan.generatedAt}`,
       '',
-    ]),
-  ].join('\n');
+      ml.designReportExtras,
+      '',
+      '## Collections',
+      '',
+      ...ml.plan.collections.flatMap((collection) => [
+        `### ${collection.name}`,
+        '',
+        ...collection.patterns.map(
+          (decision) => `- **${decision.pattern}** on \`${decision.target}\` — ${decision.reason}`,
+        ),
+        '',
+      ]),
+    ].join('\n');
 
-  return {
-    plan: ml.plan,
-    designReport,
-    retrievalStrategy: describeRetrievalStrategy(createRetrievalConfigFromEnv()),
-    ml,
-  };
+    return {
+      plan: ml.plan,
+      designReport,
+      retrievalStrategy: describeRetrievalStrategy(createRetrievalConfigFromEnv()),
+      ml,
+    };
+  });
+
+  return { ...result, modelTokenUsage: usage };
 }

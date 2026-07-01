@@ -22,19 +22,18 @@ export function TableDetails({ table, incoming = [], onClose, onDuplicate, onDel
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
         <h3 style={{ margin: 0 }}>{table.name}</h3>
         <div style={{ display: 'flex', gap: '0.35rem' }}>
-          <button type="button" className="ghost" style={{ padding: '0.25rem 0.5rem' }} onClick={() => onDuplicate(table.name)} title="Duplicate table">
-            ⧉ Duplicate
+          <button type="button" className="tertiary" onClick={() => onDuplicate(table.name)} title="Duplicate table">
+            Duplicate
           </button>
           <button
             type="button"
-            className="ghost danger"
-            style={{ padding: '0.25rem 0.5rem' }}
+            className="danger secondary"
             onClick={() => onDelete(table.name)}
             title="Delete table"
           >
-            ✕ Delete
+            Delete
           </button>
-          <button type="button" className="ghost" style={{ padding: '0.25rem 0.5rem' }} onClick={onClose} aria-label="Close details">
+          <button type="button" className="btn-icon" onClick={onClose} aria-label="Close table details">
             ✕
           </button>
         </div>

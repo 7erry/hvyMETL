@@ -33,13 +33,13 @@ function TableNodeComponent({ data }: NodeProps & { data: TableNodeData }) {
         {onDuplicate && (
           <button
             type="button"
-            className="ghost"
-            style={{ float: 'right', padding: '0 0.35rem', fontSize: '0.7rem' }}
+            className="btn-icon"
             onClick={(e) => {
               e.stopPropagation();
               onDuplicate(table.name);
             }}
             title="Duplicate table"
+            aria-label={`Duplicate ${table.name}`}
           >
             ⧉
           </button>
