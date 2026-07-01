@@ -435,6 +435,7 @@ function pipelineRunResponse(result: Awaited<ReturnType<typeof runFullPipeline>>
     imports: result.imports,
     csvSourcePath: result.csvSource.path,
     retrievalStrategy: result.design.retrievalStrategy,
+    modelTokenUsage: result.design.modelTokenUsage,
     migrationPlanJson: result.design.plan,
     designReportMarkdown: result.design.designReport,
     feedback: result.feedback,

@@ -126,6 +126,36 @@ def find_create_table_blocks(ddl: str) -> List[Tuple[str, str]]:
     return blocks
 
 
+def strip_sql_line_comment(text: str) -> str:
+    """Remove a trailing SQL line comment (--) outside quoted string literals."""
+    in_single = False
+    in_double = False
+    index = 0
+    while index < len(text):
+        char = text[index]
+        if char == "'" and not in_double:
+            in_single = not in_single
+        elif char == '"' and not in_single:
+            in_double = not in_double
+        elif (
+            char == "-"
+            and index + 1 < len(text)
+            and text[index + 1] == "-"
+            and not in_single
+            and not in_double
+        ):
+            return text[:index].rstrip()
+        index += 1
+    return text
+
+
+def is_valid_column_name(name: str) -> bool:
+    """True when the token is a usable SQL identifier (matches hvyMETL ddlParser)."""
+    if not name or name.startswith("--"):
+        return False
+    return bool(re.match(r"^[\w$#@]+$", name, re.ASCII))
+
+
 def split_column_definitions(body: str) -> List[str]:
     parts: List[str] = []
     depth = 0
@@ -150,7 +180,13 @@ def parse_enum_values(sql_type: str) -> List[str]:
     if not match:
         return []
     inner = match.group(1)
-    return [unquote(v.strip()) for v in re.findall(r"'([^']*)'|\"([^\"]*)\"", inner)]
+    values: List[str] = []
+    for quoted in re.finditer(r"'([^']*)'|\"([^\"]*)\"", inner):
+        raw = quoted.group(1) if quoted.group(1) is not None else quoted.group(2)
+        if raw is None:
+            continue
+        values.append(unquote(raw.strip()))
+    return values
 
 
 def parse_reference_target(ref_clause: str) -> Optional[Tuple[str, str]]:
@@ -195,15 +231,17 @@ def parse_foreign_key_line(line: str) -> Optional[ForeignKey]:
 
 
 def parse_column_line(line: str) -> Optional[Column]:
-    trimmed = line.strip()
+    trimmed = strip_sql_line_comment(line.strip())
     if not trimmed or trimmed.upper().startswith(("PRIMARY KEY", "UNIQUE", "CHECK", "CONSTRAINT", "FOREIGN KEY")):
         return None
 
-    name_match = re.match(r"^(\S+)\s+(.+)$", trimmed, re.S)
+    name_match = re.match(r'^["\']?([\w$#@]+)["\']?\s+(.+)$', trimmed, re.S)
     if not name_match:
         return None
 
     name = unquote(name_match.group(1))
+    if not is_valid_column_name(name):
+        return None
     rest = name_match.group(2).strip()
     type_end = CONSTRAINT_KEYWORD.search(rest)
     sql_type = rest[: type_end.start()].strip() if type_end else rest.split()[0]
@@ -224,6 +262,16 @@ def parse_column_line(line: str) -> Optional[Column]:
     )
 
 
+def preprocess_table_body(body: str) -> str:
+    """Remove SQL line comments so comma splits do not treat '--' as column names."""
+    cleaned_lines: List[str] = []
+    for raw_line in body.splitlines():
+        line = strip_sql_line_comment(raw_line.rstrip())
+        if line:
+            cleaned_lines.append(line)
+    return "\n".join(cleaned_lines)
+
+
 def parse_ddl(ddl: str) -> List[Table]:
     tables: List[Table] = []
     for table_name, body in find_create_table_blocks(ddl):
@@ -231,7 +279,7 @@ def parse_ddl(ddl: str) -> List[Table]:
         foreign_keys: List[ForeignKey] = []
         primary_key: List[str] = []
 
-        for line in split_column_definitions(body):
+        for line in split_column_definitions(preprocess_table_body(body)):
             trimmed = line.strip()
             upper = trimmed.upper()
             if upper.startswith("CONSTRAINT") or upper.startswith("FOREIGN KEY"):
@@ -353,6 +401,14 @@ def column_value_hint(name: str) -> Optional[str]:
     return None
 
 
+def parse_string_max_length(sql_type: str) -> Optional[int]:
+    """Return declared CHAR/VARCHAR length from types like VARCHAR(10) or CHAR(2)."""
+    match = re.search(r"\((\d+)\)", sql_type)
+    if not match:
+        return None
+    return int(match.group(1))
+
+
 class DataGenerator:
     def __init__(self, seed: int) -> None:
         self.fake = Faker()
@@ -363,6 +419,21 @@ class DataGenerator:
         random.seed(random_seed)
         self._random = random
         self.parent_ids: Dict[Tuple[str, str], List[Any]] = {}
+
+    def _string_max_len(self, col: Column) -> Optional[int]:
+        return parse_string_max_length(col.sql_type)
+
+    def _fit_string(self, col: Column, value: str) -> str:
+        max_len = self._string_max_len(col)
+        if max_len is not None and len(value) > max_len:
+            return value[:max_len]
+        return value
+
+    def _random_string(self, col: Column) -> str:
+        max_len = self._string_max_len(col) or 32
+        max_len = max(1, min(max_len, 255))
+        min_chars = min(4, max_len)
+        return self.fake.pystr(min_chars=min_chars, max_chars=max_len)
 
     def store_ids(self, table: str, column: str, values: List[Any]) -> None:
         self.parent_ids[(table, column)] = values
@@ -381,7 +452,7 @@ class DataGenerator:
             if family == "int":
                 return row_index + 1
             if family == "string":
-                return self.fake.uuid4()
+                return self._fit_string(col, str(self.fake.uuid4()))
             return row_index + 1
 
         if col.foreign_key:
@@ -397,33 +468,33 @@ class DataGenerator:
             return self._random.choice(col.enum_values)
 
         if hint == "email":
-            return self.fake.email()
+            return self._fit_string(col, self.fake.email())
         if hint == "phone":
-            return self.fake.phone_number()
+            return self._fit_string(col, self.fake.phone_number())
         if hint == "first_name":
-            return self.fake.first_name()
+            return self._fit_string(col, self.fake.first_name())
         if hint == "last_name":
-            return self.fake.last_name()
+            return self._fit_string(col, self.fake.last_name())
         if hint == "name":
-            return self.fake.name()
+            return self._fit_string(col, self.fake.name())
         if hint == "address":
-            return self.fake.address().replace("\n", ", ")
+            return self._fit_string(col, self.fake.address().replace("\n", ", "))
         if hint == "city":
-            return self.fake.city()
+            return self._fit_string(col, self.fake.city())
         if hint == "country":
-            return self.fake.country()
+            return self._fit_string(col, self.fake.country())
         if hint == "postcode":
-            return self.fake.postcode()
+            return self._fit_string(col, self.fake.postcode())
         if hint == "url":
-            return self.fake.url()
+            return self._fit_string(col, self.fake.url())
         if hint == "company":
-            return self.fake.company()
+            return self._fit_string(col, self.fake.company())
         if hint == "job":
-            return self.fake.job()
+            return self._fit_string(col, self.fake.job())
         if hint == "text":
-            return self.fake.sentence(nb_words=8)
+            return self._fit_string(col, self.fake.sentence(nb_words=8))
         if hint == "uuid":
-            return str(self.fake.uuid4())
+            return self._fit_string(col, str(self.fake.uuid4()))
         if hint == "datetime" or family == "datetime":
             return self.fake.date_time_between(start_date="-3y", end_date="now").strftime("%Y-%m-%d %H:%M:%S")
         if hint == "date" or family == "date":
@@ -435,11 +506,7 @@ class DataGenerator:
         if family == "bool":
             return self._random.choice([0, 1])
 
-        max_len = 255
-        len_match = re.search(r"\((\d+)\)", col.sql_type)
-        if len_match:
-            max_len = min(int(len_match.group(1)), 255)
-        return self.fake.pystr(min_chars=4, max_chars=min(max_len, 32))
+        return self._random_string(col)
 
 
 def row_count_for_table(table: Table, base_rows: int, child_multiplier: float, min_rows: int, max_rows: int) -> int:

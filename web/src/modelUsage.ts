@@ -36,6 +36,27 @@ export function formatTokenCount(value: number): string {
   return value.toLocaleString();
 }
 
+/** True when design ran without embedding/rerank API keys (lexical BM25 only). */
+export function isBm25OnlyRetrieval(strategy: string | null | undefined): boolean {
+  if (!strategy?.trim()) return true;
+  const lower = strategy.toLowerCase();
+  if (lower.includes('hybrid') || lower.includes('vector') || lower.includes('voyage')) {
+    return false;
+  }
+  return lower.includes('bm25');
+}
+
+/** Hint for the manager token panel when no usage is recorded yet. */
+export function modelTokenUsageEmptyHint(strategy: string | null | undefined): string {
+  if (isBm25OnlyRetrieval(strategy)) {
+    return 'Design used lexical BM25 only — no embedding or rerank API calls. Add MONGODB_MODEL_KEY or OPENAI_API_KEY to .env on the API server to enable hybrid retrieval and token tracking.';
+  }
+  if (strategy?.trim()) {
+    return `Last design run used ${strategy}, but token counts were not recorded. Run design or the full pipeline again to populate this panel.`;
+  }
+  return 'Run design or the full pipeline to record embedding and rerank token usage for this session.';
+}
+
 /** Short label explaining whether usage came from live API metadata or estimates. */
 export function tokenUsageSourceLabel(usage: ModelTokenUsage | null | undefined): string {
   if (!usage || usage.totalTokens === 0) {

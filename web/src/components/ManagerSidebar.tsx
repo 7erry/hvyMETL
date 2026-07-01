@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { fetchPipelineExecutions } from '../api';
 import type { ActivityFeedItem, MigrationProgress } from '../managerDashboard';
 import { buildActivityFeed, buildCloudResourceSummary } from '../managerDashboard';
-import { formatTokenCount, tokenUsageSourceLabel } from '../modelUsage';
+import { formatTokenCount, modelTokenUsageEmptyHint, tokenUsageSourceLabel } from '../modelUsage';
 import type { MigrationArtifacts, ManagerCostInputs } from '../sessionState';
 import type { PipelineExecutionListItem } from '../transformationSummaryTypes';
 import { ManagerCostPanel } from './ManagerCostPanel';
@@ -175,10 +175,17 @@ export function ManagerSidebar({
       <section className="manager-panel manager-token-panel">
         <h3>Model API usage</h3>
         {!cloudSummary.modelTokenUsage || cloudSummary.modelTokenUsage.totalTokens === 0 ? (
-          <p className="manager-hint">
-            Run design or the full pipeline with <code>MONGODB_MODEL_KEY</code> or{' '}
-            <code>OPENAI_API_KEY</code> to track embedding and rerank tokens. BM25-only runs report zero tokens.
-          </p>
+          <>
+            <p className="manager-hint">{modelTokenUsageEmptyHint(cloudSummary.retrievalStrategy)}</p>
+            {cloudSummary.retrievalStrategy ? (
+              <dl className="manager-metrics manager-token-metrics">
+                <div>
+                  <dt>Retrieval mode</dt>
+                  <dd className="manager-token-strategy">{cloudSummary.retrievalStrategy}</dd>
+                </div>
+              </dl>
+            ) : null}
+          </>
         ) : (
           <>
             <dl className="manager-metrics manager-token-metrics">
