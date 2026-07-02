@@ -11,6 +11,7 @@ type SchemaImportPanelProps = {
   onImportQuery: () => void;
   onSchemaFile: (file: File) => void;
   compact?: boolean;
+  framed?: boolean;
 };
 
 export function SchemaImportPanel({
@@ -23,12 +24,11 @@ export function SchemaImportPanel({
   onImportQuery,
   onSchemaFile,
   compact = false,
+  framed = true,
 }: SchemaImportPanelProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  return (
-    <div className={`panel schema-import-panel${compact ? ' schema-import-panel--compact' : ''}`}>
-      <h3>Instant Schema Import</h3>
+  const content = (
+    <>
       {!apiConnected ? (
         <p className="schema-import-panel__warn">
           API not reachable. From the repo root run <code>npm run dev:ui</code> and open{' '}
@@ -88,6 +88,17 @@ export function SchemaImportPanel({
       <p className="schema-import-panel__hint">
         Use <code>.sql</code> / <code>.ddl</code> for scripts, or <code>.db</code> for SQLite uploads.
       </p>
+    </>
+  );
+
+  if (!framed) {
+    return <div className={`schema-import-panel${compact ? ' schema-import-panel--compact' : ''}`}>{content}</div>;
+  }
+
+  return (
+    <div className={`panel schema-import-panel${compact ? ' schema-import-panel--compact' : ''}`}>
+      <h3>Instant Schema Import</h3>
+      {content}
     </div>
   );
 }

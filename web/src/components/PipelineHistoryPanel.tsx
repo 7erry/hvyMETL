@@ -4,9 +4,10 @@ import type { PipelineExecutionDetail, PipelineExecutionListItem } from '../tran
 
 type PipelineHistoryPanelProps = {
   onLoadExecution: (execution: PipelineExecutionDetail) => void;
+  framed?: boolean;
 };
 
-export function PipelineHistoryPanel({ onLoadExecution }: PipelineHistoryPanelProps) {
+export function PipelineHistoryPanel({ onLoadExecution, framed = true }: PipelineHistoryPanelProps) {
   const [executions, setExecutions] = useState<PipelineExecutionListItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -43,10 +44,10 @@ export function PipelineHistoryPanel({ onLoadExecution }: PipelineHistoryPanelPr
     }
   };
 
-  return (
-    <div className="panel pipeline-history" style={{ marginBottom: '0.75rem' }}>
+  const content = (
+    <>
       <div className="pipeline-history__header">
-        <h3>Pipeline history</h3>
+        {framed ? <h3>Pipeline history</h3> : null}
         <button type="button" className="tertiary" onClick={() => void refresh()} disabled={loading}>
           {loading ? 'Loading…' : 'Refresh list'}
         </button>
@@ -77,6 +78,16 @@ export function PipelineHistoryPanel({ onLoadExecution }: PipelineHistoryPanelPr
           </li>
         ))}
       </ul>
+    </>
+  );
+
+  if (!framed) {
+    return <div className="pipeline-history">{content}</div>;
+  }
+
+  return (
+    <div className="panel pipeline-history" style={{ marginBottom: '0.75rem' }}>
+      {content}
     </div>
   );
 }

@@ -14,6 +14,8 @@ import { PipelinePanel } from './components/PipelinePanel';
 import { CustomTelemetryModal } from './components/CustomTelemetryModal';
 import { ManagerView } from './components/ManagerView';
 import { SchemaImportPanel } from './components/SchemaImportPanel';
+import { SchemaImportModal } from './components/SchemaImportModal';
+import { CollapsiblePanel } from './components/CollapsiblePanel';
 import { FALLBACK_DIALECTS } from './dialectConstants';
 import { RoleToggle } from './components/RoleToggle';
 import { profileRequestBody } from './customProfileShared';
@@ -70,6 +72,7 @@ export default function App() {
   const [designCsvLabel, setDesignCsvLabel] = useState<string | null>(null);
   const [pipelineOpen, setPipelineOpen] = useState(false);
   const [customTelemetryOpen, setCustomTelemetryOpen] = useState(false);
+  const [schemaImportModalOpen, setSchemaImportModalOpen] = useState(() => !session.model);
   const diagramFileInputRef = useRef<HTMLInputElement>(null);
   const mongoDiagramFileInputRef = useRef<HTMLInputElement>(null);
 
@@ -195,6 +198,7 @@ export default function App() {
     } else {
       setStatus(`Imported ${nextModel.tables.length} tables.`);
     }
+    setSchemaImportModalOpen(false);
   }, [profiles]);
 
   const handleImportQuery = async (ddlText = ddl) => {
@@ -626,6 +630,7 @@ export default function App() {
     const next = defaultSessionState();
     setSession(next);
     saveSessionState(next);
+    setSchemaImportModalOpen(true);
     setStatus('Session cleared.');
   };
 
@@ -734,19 +739,21 @@ export default function App() {
             sidebar={
               <div className="sidebar-scroll">
                 {schemaPhase === 'before' ? (
-                  <SchemaImportPanel
-                    dialects={dialects}
-                    dialect={dialect}
-                    ddl={ddl}
-                    apiConnected={apiConnected}
-                    onDialectChange={(value) => setSessionField('dialect', value)}
-                    onDdlChange={(value) => setSessionField('ddl', value)}
-                    onImportQuery={() => void handleImportQuery()}
-                    onSchemaFile={(file) => void handleSchemaFileUpload(file)}
-                  />
+                  <CollapsiblePanel title="Instant Schema Import">
+                    <SchemaImportPanel
+                      dialects={dialects}
+                      dialect={dialect}
+                      ddl={ddl}
+                      apiConnected={apiConnected}
+                      onDialectChange={(value) => setSessionField('dialect', value)}
+                      onDdlChange={(value) => setSessionField('ddl', value)}
+                      onImportQuery={() => void handleImportQuery()}
+                      onSchemaFile={(file) => void handleSchemaFileUpload(file)}
+                      framed={false}
+                    />
+                  </CollapsiblePanel>
                 ) : (
-                  <div className="panel" style={{ marginBottom: '0.75rem' }}>
-                    <h3>MongoDB Target Schema</h3>
+                  <CollapsiblePanel title="MongoDB Target Schema" defaultOpen>
                     <p style={{ margin: '0 0 0.5rem', fontSize: '0.75rem', opacity: 0.85 }}>
                       AI/RAG migration plan — collections, embeds, indexes, and pattern decisions before Atlas import.
                     </p>
@@ -796,15 +803,18 @@ export default function App() {
                         </button>
                       ) : null}
                     </div>
-                  </div>
+                  </CollapsiblePanel>
                 )}
 
                 {schemaPhase === 'after' ? (
-                  <TransformationSummaryPanel
-                    summary={migrationArtifacts?.transformationSummary ?? null}
-                    onRefresh={() => void handleRefreshExplanation()}
-                    refreshing={explainingSummary}
-                  />
+                  <CollapsiblePanel title="Transformation Summary" defaultOpen>
+                    <TransformationSummaryPanel
+                      summary={migrationArtifacts?.transformationSummary ?? null}
+                      onRefresh={() => void handleRefreshExplanation()}
+                      refreshing={explainingSummary}
+                      framed={false}
+                    />
+                  </CollapsiblePanel>
                 ) : null}
 
                 {schemaPhase === 'before' && selectedTableModel && (
@@ -833,7 +843,6 @@ export default function App() {
                   className="panel panel-dropdown"
                   open={canvasPanelOpen}
                   onToggle={(e) => setSessionField('canvasPanelOpen', e.currentTarget.open)}
-                  style={{ marginBottom: '0.75rem' }}
                 >
                   <summary className="panel-dropdown__summary">
                     Canvas · {schemaPhase === 'before' ? 'SQL tables' : 'MongoDB collections'}
@@ -890,8 +899,7 @@ export default function App() {
                 </details>
 
                 {schemaPhase === 'before' ? (
-                  <div className="panel" style={{ marginBottom: '0.75rem' }}>
-                    <h3>Share Diagram</h3>
+                  <CollapsiblePanel title="Share Diagram">
                     <p style={{ margin: '0 0 0.5rem', fontSize: '0.75rem', opacity: 0.85 }}>
                       Export or import SQL table layout and positions.
                     </p>
@@ -915,10 +923,9 @@ export default function App() {
                         }}
                       />
                     </div>
-                  </div>
+                  </CollapsiblePanel>
                 ) : (
-                  <div className="panel" style={{ marginBottom: '0.75rem' }}>
-                    <h3>Share Diagram</h3>
+                  <CollapsiblePanel title="Share Diagram">
                     <p style={{ margin: '0 0 0.5rem', fontSize: '0.75rem', opacity: 0.85 }}>
                       Export or import MongoDB collection layout, migration plan, and canvas positions.
                     </p>
@@ -951,20 +958,21 @@ export default function App() {
                         }}
                       />
                     </div>
-                  </div>
+                  </CollapsiblePanel>
                 )}
 
-                <PipelineHistoryPanel onLoadExecution={handleLoadPipelineExecution} />
+                <CollapsiblePanel title="Pipeline History">
+                  <PipelineHistoryPanel onLoadExecution={handleLoadPipelineExecution} framed={false} />
+                </CollapsiblePanel>
 
-                <div className="panel">
-                  <h3>Session</h3>
+                <CollapsiblePanel title="Session">
                   <p style={{ margin: '0 0 0.5rem', fontSize: '0.75rem', opacity: 0.8 }}>
                     Your work is saved in this browser tab. Refreshing keeps schema, layout, and migration artifacts.
                   </p>
                   <button type="button" className="danger secondary block" onClick={handleClearSession}>
                     Clear session
                   </button>
-                </div>
+                </CollapsiblePanel>
               </div>
             }
             main={
@@ -1055,6 +1063,19 @@ export default function App() {
           onComplete={handlePipelineComplete}
         />
       ) : null}
+
+      <SchemaImportModal
+        open={uiRole === 'developer' && !model && schemaImportModalOpen}
+        dialects={dialects}
+        dialect={dialect}
+        ddl={ddl}
+        apiConnected={apiConnected}
+        onDialectChange={(value) => setSessionField('dialect', value)}
+        onDdlChange={(value) => setSessionField('ddl', value)}
+        onImportQuery={() => void handleImportQuery()}
+        onSchemaFile={(file) => void handleSchemaFileUpload(file)}
+        onClose={() => setSchemaImportModalOpen(false)}
+      />
 
       <CustomTelemetryModal
         open={customTelemetryOpen}

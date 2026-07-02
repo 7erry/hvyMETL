@@ -987,6 +987,7 @@ textarea {
 .panel-dropdown {
   padding: 0;
   overflow: hidden;
+  margin-bottom: 0.75rem;
 }
 
 .panel-dropdown__summary {
@@ -999,6 +1000,10 @@ textarea {
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.04em;
+}
+
+.panel-dropdown__summary:hover {
+  background: rgba(0, 237, 100, 0.06);
 }
 
 .panel-dropdown__summary::-webkit-details-marker {
@@ -1017,6 +1022,10 @@ textarea {
 
 .panel-dropdown__body {
   padding: 0 1rem 1rem;
+}
+
+.schema-import-modal {
+  width: min(760px, calc(100vw - 2rem));
 }
 
 .canvas-table-list {

@@ -4,22 +4,35 @@ type TransformationSummaryPanelProps = {
   summary: TransformationSummary | null;
   onRefresh?: () => void;
   refreshing?: boolean;
+  framed?: boolean;
 };
 
-export function TransformationSummaryPanel({ summary, onRefresh, refreshing }: TransformationSummaryPanelProps) {
+export function TransformationSummaryPanel({
+  summary,
+  onRefresh,
+  refreshing,
+  framed = true,
+}: TransformationSummaryPanelProps) {
   if (!summary) {
-    return (
-      <div className="panel transformation-summary" style={{ marginBottom: '0.75rem' }}>
-        <h3>Transformation summary</h3>
+    const empty = (
+      <>
+        {framed ? <h3>Transformation summary</h3> : null}
         <p className="pipeline-hint">Run design to see why patterns and embeds were or were not applied.</p>
+      </>
+    );
+    return framed ? (
+      <div className="panel transformation-summary" style={{ marginBottom: '0.75rem' }}>
+        {empty}
       </div>
+    ) : (
+      <div className="transformation-summary">{empty}</div>
     );
   }
 
-  return (
-    <div className="panel transformation-summary" style={{ marginBottom: '0.75rem' }}>
+  const content = (
+    <>
       <div className="transformation-summary__header">
-        <h3>Transformation summary</h3>
+        {framed ? <h3>Transformation summary</h3> : null}
         {onRefresh ? (
           <button type="button" className="tertiary" onClick={onRefresh} disabled={refreshing}>
             {refreshing ? 'Updating…' : 'Refresh summary'}
@@ -63,6 +76,14 @@ export function TransformationSummaryPanel({ summary, onRefresh, refreshing }: T
           ))}
         </ul>
       </details>
+    </>
+  );
+
+  return framed ? (
+    <div className="panel transformation-summary" style={{ marginBottom: '0.75rem' }}>
+      {content}
     </div>
+  ) : (
+    <div className="transformation-summary">{content}</div>
   );
 }
