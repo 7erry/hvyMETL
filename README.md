@@ -168,6 +168,13 @@ npm run start:ui    # production build on http://localhost:3847
 See **[web/README.md](web/README.md)** (screenshots & how-to) and
 **[docs/13-web-ui.md](docs/13-web-ui.md)** (API reference, MongoDB persistence).
 
+Managers and finance stakeholders can use the Manager View to compare migration cost
+scenarios before production cutover: Atlas tier sizing, RAM fit, hot vs archived
+storage, per-collection retention years, growth projections, and review sign-off for
+high-impact design patterns. See **[docs/20-manager.md](docs/20-manager.md)** for the
+cost-control workflow and how hvyMETL prevents expensive SQL-to-MongoDB architecture
+mistakes.
+
 ## Run all examples against Atlas
 
 With `MONGODB_URI` and `CSV_TO_ATLAS_PATH` set in `.env`, one command seeds, designs, extracts, imports, and
