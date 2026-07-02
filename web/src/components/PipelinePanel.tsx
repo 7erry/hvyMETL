@@ -115,9 +115,12 @@ export function PipelinePanel({
     setCsvFiles([]);
     setCsvDirectoryLabel(null);
     setShowEnvDetails(false);
-    const noCsv = !csvSourcePath?.trim();
+    const savedCsvPath = csvSourcePath?.trim() ?? '';
+    const savedCsvIsGeneratedMock = /(?:^|[/\\])mock-csv(?:[/\\])?$/i.test(savedCsvPath);
+    const noCsv = !savedCsvPath || savedCsvIsGeneratedMock;
     setForm((prev) => ({
       ...prev,
+      csvSourcePath: savedCsvIsGeneratedMock ? '' : prev.csvSourcePath,
       generateMockCsv: noCsv ? true : prev.generateMockCsv,
     }));
     void refreshConfig();
@@ -134,7 +137,7 @@ export function PipelinePanel({
   }, [open, form.csvToAtlasPath, refreshConfig]);
 
   useEffect(() => {
-    if (csvSourcePath && open) {
+    if (csvSourcePath && open && !/(?:^|[/\\])mock-csv(?:[/\\])?$/i.test(csvSourcePath)) {
       setForm((prev) => (prev.csvSourcePath ? prev : { ...prev, csvSourcePath }));
     }
   }, [csvSourcePath, open]);
@@ -287,8 +290,10 @@ export function PipelinePanel({
           : await runPipeline(overrides, onProgress);
 
       setResult(pipelineResult);
-      if (pipelineResult.csvSourcePath) {
+      if (pipelineResult.csvSourcePath && !useMockCsv) {
         onCsvSourcePathChange(pipelineResult.csvSourcePath);
+      } else if (useMockCsv) {
+        onCsvSourcePathChange('');
       }
       onComplete(pipelineResult);
     } catch (e) {

@@ -16,6 +16,8 @@ working sets, `$lookup`-heavy reads, and oversized Atlas tiers. hvyMETL analyzes
 constraints, row statistics, foreign keys, and workload telemetry, then recommends
 MongoDB-native document structures that keep hot reads local and infrastructure right-sized.
 
+![Manager dashboard showing migration review and cost projection](../web/docs/screenshots/manager-review-cost.png)
+
 ```mermaid
 flowchart LR
     SQL[(SQL schema + row stats)]

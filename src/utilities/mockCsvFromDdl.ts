@@ -3,7 +3,7 @@
  */
 
 import { spawnSync } from 'node:child_process';
-import { existsSync, readdirSync } from 'node:fs';
+import { existsSync, readdirSync, rmSync } from 'node:fs';
 import { extname, join } from 'node:path';
 
 /** Sizing knobs passed to generators/ddl_csv_generator.py */
@@ -106,6 +106,14 @@ export function generateMockCsvFromDdl(
 
   const python = process.env.HVYMETL_PYTHON?.trim() || 'python3';
   const sizing = { ...MOCK_CSV_DEFAULTS, ...options };
+
+  if (existsSync(outputDir)) {
+    for (const name of readdirSync(outputDir)) {
+      if (extname(name).toLowerCase() === '.csv') {
+        rmSync(join(outputDir, name), { force: true });
+      }
+    }
+  }
 
   const args = [
     script,

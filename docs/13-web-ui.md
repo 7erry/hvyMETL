@@ -24,6 +24,20 @@ exports, same as CLI).
 
 ## 3. Features
 
+### Current UI Screenshots
+
+![Start with schema import modal](../web/docs/screenshots/schema-import-modal.png)
+
+![Before SQL ER diagram with collapsible developer sidebar](../web/docs/screenshots/before-sql-diagram.png)
+
+![Run Full Pipeline dialog with mock data settings](../web/docs/screenshots/pipeline-mock-data.png)
+
+![Run Full Pipeline progress state](../web/docs/screenshots/pipeline-progress.png)
+
+![After MongoDB target schema and transformation summary](../web/docs/screenshots/after-mongodb-diagram.png)
+
+![Manager dashboard showing migration review and cost projection](../web/docs/screenshots/manager-review-cost.png)
+
 | Feature | UI location | Backend |
 | --- | --- | --- |
 | **Instant Schema Import** | Sidebar → paste DDL → Import Query, or **Import file** (DDL auto-imports on select) | `POST /api/schema/import-ddl` |

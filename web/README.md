@@ -4,11 +4,11 @@ Optional MongoDB-branded web UI for visual schema design, ER diagrams, and AI-po
 migration export. The **CLI remains fully available** — every UI action uses the same
 design engine, RAG layer, and artifacts as `npm run hvymetl`.
 
-**Before · SQL** — source relational schema (Oracle E-commerce Catalog, 31 tables).
+**Before · SQL** — source relational schema with the new developer wizard sidebar.
 
 ![Before SQL ER diagram — Oracle E-commerce Catalog with 31 tables](docs/screenshots/before-sql-diagram.png)
 
-**After · MongoDB** — AI/RAG migration plan (20 collections, 11 tables folded).
+**After · MongoDB** — AI/RAG migration plan with collapsible controls and transformation summary.
 
 ![After MongoDB diagram — 31 SQL tables to 20 MongoDB collections](docs/screenshots/after-mongodb-diagram.png)
 
@@ -38,6 +38,14 @@ Set `HVYMETL_UI_PORT` in `.env` to change the API port (default `3847`).
 
 ## Screenshots
 
+### Schema import wizard
+
+Every developer workflow starts with source schema import. Paste DDL or upload a
+`.sql`, `.ddl`, `.txt`, `.db`, `.sqlite`, or `.sqlite3` file before design, cost, or
+pipeline actions.
+
+![Start with schema import modal](docs/screenshots/schema-import-modal.png)
+
 ### Before · SQL and After · MongoDB
 
 Toggle between the source SQL ER diagram and the ML/RAG-driven MongoDB target schema.
@@ -48,6 +56,26 @@ summary (e.g. `31 SQL tables → 20 MongoDB collections (11 folded)`).
 ![Before SQL ER diagram — Oracle E-commerce Catalog](docs/screenshots/before-sql-diagram.png)
 
 ![After MongoDB diagram — folded collections and pattern decisions](docs/screenshots/after-mongodb-diagram.png)
+
+### Full pipeline with mock data
+
+The pipeline dialog validates MongoDB, csvToAtlas, dialect, and mock CSV generation
+before running design → CSV shaping → Atlas import.
+
+![Run Full Pipeline dialog with mock data settings](docs/screenshots/pipeline-mock-data.png)
+
+During execution, the modal shows each pipeline stage so teams can see whether the run
+is validating, generating mock CSVs, designing, shaping, importing, reflecting, or
+persisting execution history.
+
+![Run Full Pipeline progress state](docs/screenshots/pipeline-progress.png)
+
+### Manager review and cost visibility
+
+Manager View highlights migration readiness, blocked collections, and cost-projection
+controls so business owners can review architecture and savings before cutover.
+
+![Manager dashboard showing migration review and cost projection](docs/screenshots/manager-review-cost.png)
 
 ### AI migration artifacts
 

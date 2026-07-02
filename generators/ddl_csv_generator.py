@@ -313,7 +313,33 @@ def parse_ddl(ddl: str) -> List[Table]:
             primary_key = [columns[0].name]
 
         tables.append(Table(name=table_name, columns=columns, primary_key=primary_key))
-    return tables
+    return ensure_referenced_tables(tables)
+
+
+def ensure_referenced_tables(tables: List[Table]) -> List[Table]:
+    """Add minimal parent CSV tables for FK targets referenced but not defined in the pasted DDL."""
+    by_name = {table.name.lower(): table for table in tables}
+    stubs: List[Table] = []
+
+    for table in tables:
+        for column in table.columns:
+            fk = column.foreign_key
+            if not fk:
+                continue
+            ref_key = fk.ref_table.lower()
+            if ref_key in by_name:
+                continue
+            pk_column = Column(
+                name=fk.ref_column,
+                sql_type=column.sql_type,
+                nullable=False,
+                is_primary=True,
+            )
+            stub = Table(name=fk.ref_table, columns=[pk_column], primary_key=[fk.ref_column])
+            by_name[ref_key] = stub
+            stubs.append(stub)
+
+    return [*tables, *stubs]
 
 
 def topological_sort_tables(tables: List[Table]) -> List[Table]:
@@ -371,10 +397,10 @@ def column_value_hint(name: str) -> Optional[str]:
         "first_name": "first_name",
         "lastname": "last_name",
         "last_name": "last_name",
+        "country": "country",
         "name": "name",
         "address": "address",
         "city": "city",
-        "country": "country",
         "zip": "postcode",
         "postal": "postcode",
         "url": "url",
@@ -407,6 +433,49 @@ def parse_string_max_length(sql_type: str) -> Optional[int]:
     if not match:
         return None
     return int(match.group(1))
+
+
+BASE62_ALPHABET = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
+LETTER_PREFIX_ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
+
+
+def encode_base62(value: int, min_width: int = 1) -> str:
+    """Encode a non-negative integer into compact base62 for deterministic mock keys."""
+    if value < 0:
+        raise ValueError("Base62 encoding only supports non-negative integers.")
+    if value == 0:
+        encoded = BASE62_ALPHABET[0]
+    else:
+        chars: List[str] = []
+        current = value
+        while current > 0:
+            current, remainder = divmod(current, len(BASE62_ALPHABET))
+            chars.append(BASE62_ALPHABET[remainder])
+        encoded = "".join(reversed(chars))
+    return encoded.rjust(min_width, BASE62_ALPHABET[0])
+
+
+def unique_string_primary_key(row_index: int, max_len: Optional[int]) -> str:
+    """Return a stable unique string key that still fits short CHAR/VARCHAR columns when possible."""
+    if max_len is None:
+        return f"pk_{encode_base62(row_index, 8)}"
+
+    width = max(1, max_len)
+    if width == 1:
+        if row_index < len(LETTER_PREFIX_ALPHABET):
+            return LETTER_PREFIX_ALPHABET[row_index]
+        return encode_base62(row_index)
+
+    suffix_capacity = len(BASE62_ALPHABET) ** (width - 1)
+    total_capacity = len(LETTER_PREFIX_ALPHABET) * suffix_capacity
+    if row_index < total_capacity:
+        prefix = LETTER_PREFIX_ALPHABET[row_index // suffix_capacity]
+        suffix = encode_base62(row_index % suffix_capacity, width - 1)
+        return f"{prefix}{suffix}"
+
+    # A declared key width this small cannot represent the requested row count.
+    # Prefer uniqueness over truncation so downstream MongoDB _id imports remain valid.
+    return f"{LETTER_PREFIX_ALPHABET[-1]}{encode_base62(row_index)}"
 
 
 class DataGenerator:
@@ -452,7 +521,7 @@ class DataGenerator:
             if family == "int":
                 return row_index + 1
             if family == "string":
-                return self._fit_string(col, str(self.fake.uuid4()))
+                return unique_string_primary_key(row_index, self._string_max_len(col))
             return row_index + 1
 
         if col.foreign_key:
