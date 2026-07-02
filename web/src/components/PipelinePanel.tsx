@@ -512,7 +512,7 @@ export function PipelinePanel({
                 <h4 className="pipeline-card__title">Mock generation settings</h4>
                 <div className="pipeline-mock-grid">
                   <label>
-                    Sample size (rows)
+                    <span className="pipeline-field-label">Sample size (rows)</span>
                     <input
                       type="number"
                       min={10}
@@ -525,12 +525,14 @@ export function PipelinePanel({
                     />
                   </label>
                   <label>
-                    Child rows per parent
-                    <span
-                      className="pipeline-field-tip"
-                      title="Multiplier applied to child tables based on parent row count (e.g. 3× means ~3 child rows per parent row)."
-                    >
-                      ⓘ
+                    <span className="pipeline-field-label">
+                      Child rows per parent
+                      <span
+                        className="pipeline-field-tip"
+                        title="Multiplier applied to child tables based on parent row count (e.g. 3× means ~3 child rows per parent row)."
+                      >
+                        ⓘ
+                      </span>
                     </span>
                     <input
                       type="number"
@@ -545,7 +547,7 @@ export function PipelinePanel({
                     />
                   </label>
                   <label>
-                    Random seed
+                    <span className="pipeline-field-label">Random seed</span>
                     <input
                       type="number"
                       value={form.mockSeed}

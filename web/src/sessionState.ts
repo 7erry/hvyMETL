@@ -53,6 +53,20 @@ export type UiRole = 'developer' | 'manager';
 export type ManagerReviewAcceptances = {
   planGeneratedAt: string;
   acceptedCollectionNames: string[];
+  rejectedTables?: {
+    collectionName: string;
+    tableName: string;
+    reason: string;
+    decidedAt: string;
+  }[];
+  auditEntries?: {
+    id: string;
+    action: 'accepted_collection' | 'accepted_all' | 'rejected_table';
+    collectionName: string;
+    tableName?: string;
+    reason?: string;
+    decidedAt: string;
+  }[];
 };
 
 export type SessionState = {

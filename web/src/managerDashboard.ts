@@ -4,7 +4,12 @@ import type { TransformationSummary } from './transformationSummaryTypes';
 import type { SqlStructuralModel } from './types';
 import { PIPELINE_PROGRESS_STAGES } from './pipelineStages';
 import { mergeModelTokenUsage, type ModelTokenUsage } from './modelUsage';
-import { collectionRequiresReview, isTableReviewAccepted } from './managerReview';
+import {
+  collectionRequiresReview,
+  isTableReviewAccepted,
+  isTableReviewRejected,
+  rejectedTablesForCollection,
+} from './managerReview';
 
 /** Migration readiness for a single table or collection in the manager view. */
 export type EntityReadiness = 'ready' | 'review' | 'blocked' | 'pending';
@@ -206,6 +211,9 @@ function statusForTable(
     return { status: 'ready', statusLabel: 'Validated & imported' };
   }
   if (foldedInto) {
+    if (isTableReviewRejected(tableName, plan, acceptances)) {
+      return { status: 'ready', statusLabel: 'Kept as collection' };
+    }
     if (isTableReviewAccepted(tableName, plan, acceptances)) {
       return { status: 'ready', statusLabel: `Folded into ${foldedInto.sourceTable}` };
     }
@@ -253,6 +261,15 @@ export function buildBusinessDomains(
       };
       const list = domainMap.get(key) ?? [];
       list.push(entity);
+      for (const rejection of rejectedTablesForCollection(collection.name, acceptances ?? null, plan.generatedAt)) {
+        list.push({
+          id: rejection.tableName,
+          name: rejection.tableName,
+          kind: 'mongo-collection',
+          status: 'ready',
+          statusLabel: 'Kept as collection',
+        });
+      }
       domainMap.set(key, list);
     }
   } else if (model) {

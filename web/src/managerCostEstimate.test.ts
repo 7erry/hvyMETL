@@ -116,10 +116,25 @@ describe('managerCostEstimate', () => {
     const options = buildArchiveCollectionOptions(model, plan, DEFAULT_MANAGER_COST_INPUTS);
     expect(options.map((option) => option.collectionName)).toEqual(['posts']);
     expect(options[0].timeField).toBe('publishedAt');
+    expect(options[0].isEnabled).toBe(true);
+    expect(options[0].retentionYears).toBe(5);
+  });
+
+  it('shows non-zero savings for the default optimized archive scenario', () => {
+    const projection = computeManagerCostProjection(model, plan, DEFAULT_MANAGER_COST_INPUTS);
+
+    expect(projection.archiveCollectionCount).toBe(1);
+    expect(projection.archiveStorageGb).toBeGreaterThan(0);
+    expect(projection.baselineMonthlyTotalUsd).toBeGreaterThan(projection.monthlyTotalUsd);
+    expect(projection.monthlySavingsUsd).toBeGreaterThan(0);
+    expect(projection.savingsPercent).toBeGreaterThan(0);
   });
 
   it('moves older collection bytes into archive storage when retention is enabled', () => {
-    const baseline = computeManagerCostProjection(model, plan, DEFAULT_MANAGER_COST_INPUTS);
+    const baseline = computeManagerCostProjection(model, plan, {
+      ...DEFAULT_MANAGER_COST_INPUTS,
+      collectionRetentionYears: { posts: 0 },
+    });
     const archived = computeManagerCostProjection(model, plan, {
       ...DEFAULT_MANAGER_COST_INPUTS,
       collectionRetentionYears: { posts: 2 },

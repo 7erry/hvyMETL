@@ -7,6 +7,7 @@ import {
 } from './managerDashboard';
 import type { MigrationPlan } from './migrationPlanTypes';
 import type { SqlStructuralModel } from './types';
+import { rejectTableReview } from './managerReview';
 
 const model: SqlStructuralModel = {
   source: 'test',
@@ -92,6 +93,23 @@ describe('managerDashboard', () => {
     const progress = computeMigrationProgress(domains);
     expect(progress.reviewCount).toBe(0);
     expect(progress.readyCount).toBe(2);
+  });
+
+  it('shows rejected folded tables as standalone collections in the manager after view', () => {
+    const rejected = rejectTableReview(
+      null,
+      plan.generatedAt,
+      'users',
+      'usermeta',
+      'Keep user metadata independently queryable for audit reviews.',
+    );
+    const domains = buildBusinessDomains(model, plan, 'after', null, undefined, rejected);
+    const usermeta = domains.flatMap((d) => d.entities).find((e) => e.name === 'usermeta');
+
+    expect(usermeta?.kind).toBe('mongo-collection');
+    expect(usermeta?.status).toBe('ready');
+    expect(usermeta?.statusLabel).toBe('Kept as collection');
+    expect(computeMigrationProgress(domains).reviewCount).toBe(0);
   });
 
   it('builds cloud summary from real pipeline import counts', () => {

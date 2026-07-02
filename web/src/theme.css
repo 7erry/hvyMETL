@@ -1752,11 +1752,19 @@ textarea {
   font-size: 0.8rem;
 }
 
+.pipeline-field-label {
+  min-height: 1rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  line-height: 1;
+}
+
 .pipeline-field-tip {
-  margin-left: 0.35rem;
   opacity: 0.75;
   cursor: help;
   font-size: 0.75rem;
+  line-height: 1;
 }
 
 .pipeline-checkbox {
@@ -2701,6 +2709,11 @@ textarea {
   background: rgba(0, 237, 100, 0.06);
 }
 
+.app--manager .manager-review-card--rejected {
+  border-color: rgba(255, 179, 71, 0.55);
+  background: rgba(255, 179, 71, 0.08);
+}
+
 .app--manager .manager-review-card--focus {
   box-shadow: 0 0 0 2px rgba(255, 179, 71, 0.5);
 }
@@ -2736,6 +2749,11 @@ textarea {
   color: var(--mdb-green-base);
 }
 
+.app--manager .manager-review-badge--rejected {
+  background: rgba(255, 179, 71, 0.15);
+  color: #ffb347;
+}
+
 .app--manager .manager-review-recommendations {
   list-style: none;
   margin: 0;
@@ -2764,6 +2782,59 @@ textarea {
   margin: 0;
   opacity: 0.9;
   line-height: 1.45;
+}
+
+.app--manager .manager-review-rejections {
+  margin-top: 0.8rem;
+  padding-top: 0.8rem;
+  border-top: 1px solid rgba(0, 104, 74, 0.35);
+}
+
+.app--manager .manager-review-rejections h4 {
+  margin: 0;
+  font-size: 0.78rem;
+  color: #ffb347;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.app--manager .manager-review-rejection {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.75rem;
+  align-items: end;
+  margin-top: 0.75rem;
+  padding: 0.75rem;
+  border: 1px solid rgba(255, 179, 71, 0.35);
+  border-radius: 8px;
+  background: rgba(0, 30, 43, 0.28);
+}
+
+.app--manager .manager-review-rejection--done {
+  align-items: start;
+}
+
+.app--manager .manager-review-rejection label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-size: 0.75rem;
+  color: var(--mdb-spring-green);
+}
+
+.app--manager .manager-review-rejection textarea {
+  min-height: 72px;
+  resize: vertical;
+}
+
+.app--manager .manager-review-rejection p {
+  margin: 0.25rem 0 0;
+  font-size: 0.76rem;
+  opacity: 0.85;
+}
+
+.app--manager .manager-review-audit {
+  color: #ffb347;
 }
 
 .app--manager .manager-cost-panel__intro {

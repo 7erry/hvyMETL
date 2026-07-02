@@ -619,7 +619,10 @@ export default function App() {
 
   const handleSignOffExport = () => {
     if (!migrationArtifacts?.planJson) return;
-    downloadJson('migration-plan.json', JSON.parse(migrationArtifacts.planJson));
+    downloadJson('migration-plan.json', {
+      ...(migrationPlan ?? JSON.parse(migrationArtifacts.planJson)),
+      managerReview: managerReviewAcceptances ?? undefined,
+    });
     if (migrationArtifacts.designReportMarkdown?.trim()) {
       downloadText('design-report.md', migrationArtifacts.designReportMarkdown, 'text/markdown');
     }
@@ -796,7 +799,10 @@ export default function App() {
                           type="button"
                           className="secondary"
                           onClick={() =>
-                            downloadJson('migration-plan.json', JSON.parse(migrationArtifacts!.planJson))
+                            downloadJson('migration-plan.json', {
+                              ...(migrationPlan ?? JSON.parse(migrationArtifacts!.planJson)),
+                              managerReview: managerReviewAcceptances ?? undefined,
+                            })
                           }
                         >
                           Download plan

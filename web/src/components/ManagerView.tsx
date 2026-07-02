@@ -15,10 +15,14 @@ import {
   acceptAllCollectionReviews,
   acceptCollectionReview,
   buildCollectionReviewItems,
+  rejectTableReview,
 } from '../managerReview';
 import type { ManagerReviewAcceptances, ManagerCostInputs, MigrationArtifacts } from '../sessionState';
 import type { MigrationPlan } from '../migrationPlanTypes';
 import type { Dialect, SqlStructuralModel } from '../types';
+
+const MANAGER_SIDEBAR_MIN_WIDTH = 460;
+const MANAGER_SIDEBAR_MAX_WIDTH = 780;
 
 type ManagerViewProps = {
   model: SqlStructuralModel | null;
@@ -93,7 +97,7 @@ export function ManagerView({
   );
 
   const pendingReviewCount = useMemo(
-    () => reviewItems.filter((item) => !item.accepted).length,
+    () => reviewItems.filter((item) => !item.resolved).length,
     [reviewItems],
   );
 
@@ -146,16 +150,25 @@ export function ManagerView({
 
   const handleAcceptAllReviews = () => {
     if (!migrationPlan?.generatedAt) return;
-    const pendingNames = reviewItems.filter((item) => !item.accepted).map((item) => item.collectionName);
+    const pendingNames = reviewItems.filter((item) => !item.resolved).map((item) => item.collectionName);
     onReviewAcceptancesChange(
       acceptAllCollectionReviews(managerReviewAcceptances, migrationPlan.generatedAt, pendingNames),
+    );
+  };
+
+  const handleRejectTableReview = (collectionName: string, tableName: string, reason: string) => {
+    if (!migrationPlan?.generatedAt) return;
+    onReviewAcceptancesChange(
+      rejectTableReview(managerReviewAcceptances, migrationPlan.generatedAt, collectionName, tableName, reason),
     );
   };
 
   return (
     <>
       <ResizableSplit
-        sidebarWidth={sidebarWidth}
+        sidebarWidth={Math.max(sidebarWidth, MANAGER_SIDEBAR_MIN_WIDTH)}
+        minWidth={MANAGER_SIDEBAR_MIN_WIDTH}
+        maxWidth={MANAGER_SIDEBAR_MAX_WIDTH}
         onSidebarWidthChange={onSidebarWidthChange}
         sidebar={
           <ManagerSidebar
@@ -240,6 +253,7 @@ export function ManagerView({
         }}
         onAccept={handleAcceptReview}
         onAcceptAll={handleAcceptAllReviews}
+        onRejectTable={handleRejectTableReview}
         focusCollectionName={focusCollection}
       />
     </>

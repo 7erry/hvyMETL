@@ -8,6 +8,8 @@ import {
   collectionHasReviewFlags,
   collectionRequiresReview,
   isTableReviewAccepted,
+  isTableReviewRejected,
+  rejectTableReview,
 } from './managerReview';
 
 const planGeneratedAt = '2026-06-11T12:00:00.000Z';
@@ -76,6 +78,7 @@ describe('managerReview', () => {
 
     const afterAccept = buildCollectionReviewItems(simplePlan, undefined, accepted);
     expect(afterAccept[0].accepted).toBe(true);
+    expect(afterAccept[0].resolved).toBe(true);
   });
 
   it('accepts all pending collections', () => {
@@ -93,5 +96,44 @@ describe('managerReview', () => {
     const accepted = acceptCollectionReview(null, planGeneratedAt, 'users');
     expect(isTableReviewAccepted('usermeta', simplePlan, accepted)).toBe(true);
     expect(isTableReviewAccepted('users', simplePlan, accepted)).toBe(true);
+  });
+
+  it('rejects a folded table with an audit reason', () => {
+    const rejected = rejectTableReview(
+      null,
+      planGeneratedAt,
+      'users',
+      'usermeta',
+      'Compliance requires independent review of user metadata.',
+    );
+
+    expect(rejected.rejectedTables?.[0]).toMatchObject({
+      collectionName: 'users',
+      tableName: 'usermeta',
+      reason: 'Compliance requires independent review of user metadata.',
+    });
+    expect(rejected.auditEntries?.[0]).toMatchObject({
+      action: 'rejected_table',
+      collectionName: 'users',
+      tableName: 'usermeta',
+    });
+    expect(isTableReviewRejected('usermeta', simplePlan, rejected)).toBe(true);
+    expect(collectionRequiresReview(embedCollection, undefined, rejected, planGeneratedAt)).toBe(false);
+    expect(buildCollectionReviewItems(simplePlan, undefined, rejected)[0].resolved).toBe(true);
+  });
+
+  it('requires a reason when rejecting a table change', () => {
+    expect(() => rejectTableReview(null, planGeneratedAt, 'users', 'usermeta', '  ')).toThrow(
+      'A manager rejection reason is required.',
+    );
+  });
+
+  it('clears rejected table overrides when a collection is later accepted', () => {
+    const rejected = rejectTableReview(null, planGeneratedAt, 'users', 'usermeta', 'Keep separate.');
+    const accepted = acceptCollectionReview(rejected, planGeneratedAt, 'users');
+
+    expect(accepted.rejectedTables).toEqual([]);
+    expect(isTableReviewRejected('usermeta', simplePlan, accepted)).toBe(false);
+    expect(isTableReviewAccepted('usermeta', simplePlan, accepted)).toBe(true);
   });
 });

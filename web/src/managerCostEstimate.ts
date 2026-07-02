@@ -174,10 +174,12 @@ function archiveMirrorNames(plan: MigrationPlan | null): Set<string> {
 function retentionYearsForCollection(
   collection: MigrationPlan['collections'][number],
   inputs: ManagerCostInputs,
+  useDefaultForEligibleCollection = false,
 ): number {
   const explicit = inputs.collectionRetentionYears?.[collection.name];
   if (explicit !== undefined) return explicit > 0 ? clampRetentionYears(explicit) : 0;
   if (collection.archive?.retentionYears) return clampRetentionYears(collection.archive.retentionYears);
+  if (useDefaultForEligibleCollection) return DEFAULT_ARCHIVE_RETENTION_YEARS;
   return 0;
 }
 
@@ -193,7 +195,7 @@ export function buildArchiveCollectionOptions(
     .map((collection): ArchiveCollectionOption | null => {
       const timeField = findArchiveTimeField(model, collection);
       if (!timeField) return null;
-      const retentionYears = retentionYearsForCollection(collection, inputs);
+      const retentionYears = retentionYearsForCollection(collection, inputs, true);
       return {
         collectionName: collection.name,
         sourceTable: collection.sourceTable,
@@ -312,8 +314,9 @@ export function computeManagerCostProjection(
       const collectionRawBytes = docBytes * docs;
       rawBytes += collectionRawBytes;
 
-      const retentionYears = retentionYearsForCollection(collection, inputs);
-      const canArchive = retentionYears > 0 && findArchiveTimeField(model, collection);
+      const timeField = findArchiveTimeField(model, collection);
+      const retentionYears = retentionYearsForCollection(collection, inputs, Boolean(timeField));
+      const canArchive = !collection.bucket && retentionYears > 0 && Boolean(timeField);
       if (canArchive) {
         archiveCollectionCount += 1;
         const activeFraction = Math.min(1, retentionYears / ARCHIVE_ASSUMED_HISTORY_YEARS);
@@ -360,7 +363,9 @@ export function computeManagerCostProjection(
   const baselineMonthlyTotalUsd = baselineTier.monthlyUsd + baselineHotStorageGb * BACKUP_USD_PER_GB;
   const monthlySavingsUsd = Math.max(0, baselineMonthlyTotalUsd - monthlyTotalUsd);
   const savingsPercent =
-    baselineMonthlyTotalUsd > 0 ? Math.round((monthlySavingsUsd / baselineMonthlyTotalUsd) * 100) : 0;
+    baselineMonthlyTotalUsd > 0 && monthlySavingsUsd > 0
+      ? Math.max(0.1, Math.round((monthlySavingsUsd / baselineMonthlyTotalUsd) * 1000) / 10)
+      : 0;
   const oneTimeEgressUsd = rawDataGb * EGRESS_USD_PER_GB;
   const growth = Math.max(0, inputs.growthRatePercent);
   const projectedMonthlyNextYearUsd = monthlyTotalUsd * (1 + growth / 100);
