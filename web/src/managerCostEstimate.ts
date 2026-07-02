@@ -41,6 +41,9 @@ export type ManagerCostProjection = {
   monthlyBackupUsd: number;
   monthlyArchiveUsd: number;
   monthlyTotalUsd: number;
+  baselineMonthlyTotalUsd: number;
+  monthlySavingsUsd: number;
+  savingsPercent: number;
   oneTimeEgressUsd: number;
   growthRatePercent: number;
   projectedMonthlyNextYearUsd: number;
@@ -350,6 +353,14 @@ export function computeManagerCostProjection(
   const monthlyBackupUsd = activeStorageGb * BACKUP_USD_PER_GB;
   const monthlyArchiveUsd = archiveStorageGb * ARCHIVE_STORAGE_USD_PER_GB;
   const monthlyTotalUsd = monthlyComputeUsd + monthlyBackupUsd + monthlyArchiveUsd;
+  const baselineHotStorageBytes = rawBytes * BSON_OVERHEAD * (1 + indexCount * INDEX_OVERHEAD_FACTOR);
+  const baselineHotStorageGb = baselineHotStorageBytes / BYTES_PER_GB;
+  const baselineRequiredRamGb = Math.max(2, baselineHotStorageGb * preset.ramRatio);
+  const baselineTier = selectAtlasTier(baselineRequiredRamGb, baselineHotStorageGb);
+  const baselineMonthlyTotalUsd = baselineTier.monthlyUsd + baselineHotStorageGb * BACKUP_USD_PER_GB;
+  const monthlySavingsUsd = Math.max(0, baselineMonthlyTotalUsd - monthlyTotalUsd);
+  const savingsPercent =
+    baselineMonthlyTotalUsd > 0 ? Math.round((monthlySavingsUsd / baselineMonthlyTotalUsd) * 100) : 0;
   const oneTimeEgressUsd = rawDataGb * EGRESS_USD_PER_GB;
   const growth = Math.max(0, inputs.growthRatePercent);
   const projectedMonthlyNextYearUsd = monthlyTotalUsd * (1 + growth / 100);
@@ -374,6 +385,9 @@ export function computeManagerCostProjection(
     monthlyBackupUsd,
     monthlyArchiveUsd,
     monthlyTotalUsd,
+    baselineMonthlyTotalUsd,
+    monthlySavingsUsd,
+    savingsPercent,
     oneTimeEgressUsd,
     growthRatePercent: growth,
     projectedMonthlyNextYearUsd,

@@ -219,6 +219,20 @@ export function ManagerCostPanel({
           </div>
         </div>
 
+        <div className="manager-cost-savings" aria-label="Estimated MongoDB optimization savings">
+          <div className="manager-cost-savings__primary">
+            <span>Estimated monthly savings</span>
+            <strong>{formatUsd(projection.monthlySavingsUsd)}</strong>
+          </div>
+          <div className="manager-cost-savings__meta">
+            <span>{projection.savingsPercent}% lower than all-hot storage baseline</span>
+            <span>
+              Baseline {formatUsd(projection.baselineMonthlyTotalUsd)} / mo → optimized{' '}
+              {formatUsd(projection.monthlyTotalUsd)} / mo
+            </span>
+          </div>
+        </div>
+
         <dl className="manager-cost-card__metrics">
           <div>
             <dt>Recommended tier</dt>
@@ -295,6 +309,10 @@ export function ManagerCostPanel({
             Avoid updates at the archive threshold; use TTL indexes instead for logs or sessions that can be deleted.
           </p>
         ) : null}
+      </div>
+      <div className="manager-cost-legal" role="note">
+        Estimates only. Not a quote, invoice, legal commitment, SLA, or financial advice. Actual MongoDB Atlas pricing,
+        credits, taxes, usage, data transfer, support, and regional charges may vary.
       </div>
     </section>
   );

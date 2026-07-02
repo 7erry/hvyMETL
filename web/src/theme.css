@@ -2768,6 +2768,11 @@ textarea {
 
 .app--manager .manager-cost-panel__intro {
   margin-bottom: 0.75rem;
+  color: var(--mdb-spring-green);
+  font-size: 0.9rem;
+  font-weight: 600;
+  line-height: 1.45;
+  opacity: 0.95;
 }
 
 .app--manager .manager-cost-inputs {
@@ -3042,6 +3047,49 @@ textarea {
   line-height: 1;
 }
 
+.app--manager .manager-cost-savings {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.55rem;
+  margin: 0 0 0.8rem;
+  padding: 0.85rem;
+  border: 1px solid rgba(0, 237, 100, 0.45);
+  border-radius: 12px;
+  background:
+    radial-gradient(circle at top left, rgba(0, 237, 100, 0.2), transparent 56%),
+    rgba(0, 104, 74, 0.28);
+}
+
+.app--manager .manager-cost-savings__primary {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.app--manager .manager-cost-savings__primary span {
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  opacity: 0.82;
+}
+
+.app--manager .manager-cost-savings__primary strong {
+  color: var(--mdb-green-base);
+  font-size: clamp(1.75rem, 6vw, 2.6rem);
+  line-height: 1;
+  letter-spacing: -0.04em;
+}
+
+.app--manager .manager-cost-savings__meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  font-size: 0.74rem;
+  line-height: 1.35;
+  opacity: 0.9;
+}
+
 .app--manager .manager-cost-card__metrics {
   margin: 0 0 0.65rem;
 }
@@ -3057,7 +3105,8 @@ textarea {
 
 .app--manager .manager-cost-card__metrics dd {
   margin: 0;
-  font-size: 0.78rem;
+  font-size: 0.85rem;
+  font-weight: 600;
   overflow-wrap: anywhere;
   line-height: 1.35;
 }
@@ -3107,15 +3156,21 @@ textarea {
   min-width: 0;
 }
 
+.app--manager .manager-cost-totals__row strong {
+  color: var(--mdb-spring-green);
+  font-size: 0.95rem;
+}
+
 .app--manager .manager-cost-totals__row--total {
   margin-top: 0.25rem;
   padding-top: 0.35rem;
   border-top: 1px dashed rgba(0, 104, 74, 0.45);
-  font-size: 0.85rem;
+  font-size: 0.95rem;
 }
 
 .app--manager .manager-cost-totals__row--total strong {
   color: var(--mdb-spring-green);
+  font-size: 1.25rem;
 }
 
 .app--manager .manager-cost-egress {
@@ -3133,6 +3188,18 @@ textarea {
   margin: 0.5rem 0 0;
   font-size: 0.7rem;
   opacity: 0.8;
+}
+
+.app--manager .manager-cost-legal {
+  margin-top: 0.75rem;
+  border: 1px solid rgba(255, 179, 71, 0.38);
+  border-radius: 10px;
+  padding: 0.45rem 0.9rem;
+  background: rgba(255, 179, 71, 0.08);
+  color: var(--mdb-gray-light-2);
+  font-size: 0.68rem;
+  line-height: 1.35;
+  text-align: left;
 }
 
 .schema-import-panel {

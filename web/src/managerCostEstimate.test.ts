@@ -129,6 +129,9 @@ describe('managerCostEstimate', () => {
     expect(archived.archiveStorageGb).toBeGreaterThan(0);
     expect(archived.activeStorageGb).toBeLessThan(baseline.activeStorageGb);
     expect(archived.monthlyArchiveUsd).toBeGreaterThan(0);
+    expect(archived.baselineMonthlyTotalUsd).toBeGreaterThan(archived.monthlyTotalUsd);
+    expect(archived.monthlySavingsUsd).toBeGreaterThan(0);
+    expect(archived.savingsPercent).toBeGreaterThan(0);
   });
 
   it('scales projections from a raw data-size override up to 21 TB', () => {
