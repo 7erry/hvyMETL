@@ -29,6 +29,215 @@ function relationship(partial: Partial<RelationshipModel> & { parentTable: strin
 }
 
 describe('buildMigrationPlan', () => {
+  it('embeds a developer-bounded DDL relationship at max cardinality 100', () => {
+    const model: SqlStructuralModel = {
+      source: 'ddl:oracle',
+      tables: [
+        table({ name: 'locations', rowCount: 0 }),
+        table({
+          name: 'company_assets',
+          rowCount: 0,
+          columns: [
+            { name: 'asset_id', sqlType: 'INT', bsonType: 'int', nullable: false, isPrimaryKey: true },
+            { name: 'asset_name', sqlType: 'VARCHAR(100)', bsonType: 'string', nullable: false, isPrimaryKey: false },
+            { name: 'location_id', sqlType: 'INT', bsonType: 'int', nullable: true, isPrimaryKey: false },
+          ],
+          primaryKey: ['asset_id'],
+          foreignKeys: [{ column: 'location_id', referencesTable: 'locations', referencesColumn: 'location_id' }],
+        }),
+      ],
+      relationships: [
+        relationship({
+          parentTable: 'locations',
+          childTable: 'company_assets',
+          fkColumn: 'location_id',
+          avgChildrenPerParent: 50,
+          maxChildrenPerParent: 100,
+          isBounded: true,
+        }),
+      ],
+    };
+
+    const plan = buildMigrationPlan(model, WORKLOAD_PROFILES.catalog);
+    const locations = plan.collections.find((collection) => collection.sourceTable === 'locations');
+
+    expect(locations?.embeddedArrays).toContainEqual(
+      expect.objectContaining({ sourceTable: 'company_assets', joinColumn: 'location_id' }),
+    );
+    expect(locations?.patterns.some((decision) => decision.pattern === 'embed')).toBe(true);
+    expect(plan.collections.some((collection) => collection.sourceTable === 'company_assets')).toBe(false);
+  });
+
+  it('uses developer bounded cardinality to embed even on non-read-heavy profiles', () => {
+    const model: SqlStructuralModel = {
+      source: 'ddl:oracle',
+      tables: [
+        table({ name: 'locations', rowCount: 0 }),
+        table({
+          name: 'company_assets',
+          rowCount: 0,
+          primaryKey: ['asset_id'],
+          foreignKeys: [{ column: 'location_id', referencesTable: 'locations', referencesColumn: 'location_id' }],
+        }),
+      ],
+      relationships: [
+        relationship({
+          parentTable: 'locations',
+          childTable: 'company_assets',
+          fkColumn: 'location_id',
+          avgChildrenPerParent: 10,
+          maxChildrenPerParent: 20,
+          isBounded: true,
+          cardinalitySource: 'developer',
+        }),
+      ],
+    };
+
+    const plan = buildMigrationPlan(model, WORKLOAD_PROFILES.ledger);
+    const locations = plan.collections.find((collection) => collection.sourceTable === 'locations');
+
+    expect(locations?.embeddedArrays).toContainEqual(
+      expect.objectContaining({ sourceTable: 'company_assets', joinColumn: 'location_id' }),
+    );
+    expect(locations?.patterns.find((decision) => decision.pattern === 'embed')?.reason).toContain(
+      'Developer supplied max 20',
+    );
+  });
+
+  it('uses developer max cardinality 5 to force embedding', () => {
+    const model: SqlStructuralModel = {
+      source: 'ddl:oracle',
+      tables: [
+        table({ name: 'locations', rowCount: 0 }),
+        table({
+          name: 'company_assets',
+          rowCount: 0,
+          primaryKey: ['asset_id'],
+          foreignKeys: [{ column: 'location_id', referencesTable: 'locations', referencesColumn: 'location_id' }],
+        }),
+      ],
+      relationships: [
+        relationship({
+          parentTable: 'locations',
+          childTable: 'company_assets',
+          fkColumn: 'location_id',
+          avgChildrenPerParent: 3,
+          maxChildrenPerParent: 5,
+          isBounded: true,
+          cardinalitySource: 'developer',
+        }),
+      ],
+    };
+
+    const plan = buildMigrationPlan(model, WORKLOAD_PROFILES.ledger);
+    const locations = plan.collections.find((collection) => collection.sourceTable === 'locations');
+
+    expect(locations?.embeddedArrays).toContainEqual(
+      expect.objectContaining({ sourceTable: 'company_assets', joinColumn: 'location_id' }),
+    );
+  });
+
+  it('uses developer max cardinality 5000 as the bounded embed limit', () => {
+    const model: SqlStructuralModel = {
+      source: 'ddl:oracle',
+      tables: [
+        table({ name: 'locations', rowCount: 0 }),
+        table({
+          name: 'company_assets',
+          rowCount: 0,
+          primaryKey: ['asset_id'],
+          foreignKeys: [{ column: 'location_id', referencesTable: 'locations', referencesColumn: 'location_id' }],
+        }),
+      ],
+      relationships: [
+        relationship({
+          parentTable: 'locations',
+          childTable: 'company_assets',
+          fkColumn: 'location_id',
+          avgChildrenPerParent: 2500,
+          maxChildrenPerParent: 5000,
+          isBounded: true,
+          cardinalitySource: 'developer',
+        }),
+      ],
+    };
+
+    const plan = buildMigrationPlan(model, WORKLOAD_PROFILES.ledger);
+    const locations = plan.collections.find((collection) => collection.sourceTable === 'locations');
+
+    expect(locations?.embeddedArrays).toContainEqual(
+      expect.objectContaining({ sourceTable: 'company_assets', joinColumn: 'location_id' }),
+    );
+  });
+
+  it('does not force full embed above the developer override max limit', () => {
+    const model: SqlStructuralModel = {
+      source: 'ddl:oracle',
+      tables: [
+        table({ name: 'locations', rowCount: 0 }),
+        table({
+          name: 'company_assets',
+          rowCount: 0,
+          primaryKey: ['asset_id'],
+          foreignKeys: [{ column: 'location_id', referencesTable: 'locations', referencesColumn: 'location_id' }],
+        }),
+      ],
+      relationships: [
+        relationship({
+          parentTable: 'locations',
+          childTable: 'company_assets',
+          fkColumn: 'location_id',
+          avgChildrenPerParent: 2501,
+          maxChildrenPerParent: 5001,
+          isBounded: false,
+          cardinalitySource: 'developer',
+        }),
+      ],
+    };
+
+    const plan = buildMigrationPlan(model, WORKLOAD_PROFILES.ledger);
+    const locations = plan.collections.find((collection) => collection.sourceTable === 'locations');
+
+    expect(locations?.embeddedArrays.some((array) => array.sourceTable === 'company_assets')).toBe(false);
+  });
+
+  it('uses developer bounded cardinality to embed a selected multi-parent relationship', () => {
+    const model: SqlStructuralModel = {
+      source: 'ddl:oracle',
+      tables: [
+        table({ name: 'employees', rowCount: 0 }),
+        table({ name: 'security_roles', rowCount: 0 }),
+        table({
+          name: 'user_accounts',
+          rowCount: 0,
+          primaryKey: ['user_id'],
+          foreignKeys: [
+            { column: 'employee_id', referencesTable: 'employees', referencesColumn: 'employee_id' },
+            { column: 'role_id', referencesTable: 'security_roles', referencesColumn: 'role_id' },
+          ],
+        }),
+      ],
+      relationships: [
+        relationship({
+          parentTable: 'security_roles',
+          childTable: 'user_accounts',
+          fkColumn: 'role_id',
+          avgChildrenPerParent: 10,
+          maxChildrenPerParent: 20,
+          isBounded: true,
+          cardinalitySource: 'developer',
+        }),
+      ],
+    };
+
+    const plan = buildMigrationPlan(model, WORKLOAD_PROFILES.ledger);
+    const roles = plan.collections.find((collection) => collection.sourceTable === 'security_roles');
+
+    expect(roles?.embeddedArrays).toContainEqual(
+      expect.objectContaining({ sourceTable: 'user_accounts', joinColumn: 'role_id' }),
+    );
+  });
+
   it('applies the Bucket pattern to timestamped firehose tables on write-heavy workloads', () => {
     const model: SqlStructuralModel = {
       source: 'synthetic.db',

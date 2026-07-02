@@ -139,6 +139,7 @@ export type PipelineRunRequest = ProfileRequestFields & {
   ddl: string;
   dialect?: string;
   csvSourcePath?: string;
+  cardinalityOverrides?: Record<string, number>;
   generateMockCsv?: boolean;
   mockCsvOptions?: MockCsvOptions;
   targetDb?: string;
@@ -324,6 +325,7 @@ export type ExplainDesignRequest = ProfileRequestFields & {
   ddl?: string;
   dialect?: string;
   csvSourcePath?: string;
+  cardinalityOverrides?: Record<string, number>;
   plan?: unknown;
 };
 
@@ -370,6 +372,7 @@ export type DesignRequest = ProfileRequestFields & {
   ddl: string;
   dialect?: string;
   csvSourcePath?: string;
+  cardinalityOverrides?: Record<string, number>;
 };
 
 export async function runDesign(request: DesignRequest): Promise<DesignResult> {
@@ -390,6 +393,7 @@ export async function runDesignWithCsv(files: File[], request: DesignRequest): P
   body.append('model', JSON.stringify(request.model));
   body.append('ddl', request.ddl);
   if (request.dialect) body.append('dialect', request.dialect);
+  if (request.cardinalityOverrides) body.append('cardinalityOverrides', JSON.stringify(request.cardinalityOverrides));
 
   const res = await fetch(`${base}/api/design/with-csv`, { method: 'POST', body });
   const data = await res.json();
@@ -401,7 +405,7 @@ export async function exportMigration(
   model: SqlStructuralModel,
   profile: ProfileRequestFields,
   ddl: string,
-  options?: { csvSourcePath?: string; dialect?: string },
+  options?: { csvSourcePath?: string; dialect?: string; cardinalityOverrides?: Record<string, number> },
 ) {
   const res = await fetch(`${base}/api/export/migration`, {
     method: 'POST',

@@ -170,6 +170,7 @@ app.post('/api/design', async (req, res) => {
       profile,
       knowledgeDir: KNOWLEDGE_DIR,
       csvSourcePath: req.body?.csvSourcePath as string | undefined,
+      cardinalityOverrides: req.body?.cardinalityOverrides as Record<string, number> | undefined,
       dialect: req.body?.dialect as string | undefined,
     });
     const outDir = join(ROOT, 'out', 'ui-design');
@@ -217,6 +218,9 @@ app.post('/api/design/with-csv', (req, res) => {
         profile,
         knowledgeDir: KNOWLEDGE_DIR,
         csvSourcePath: batchDir,
+        cardinalityOverrides: req.body?.cardinalityOverrides
+          ? JSON.parse(String(req.body.cardinalityOverrides)) as Record<string, number>
+          : undefined,
         dialect: req.body?.dialect as string | undefined,
       });
       const outDir = join(ROOT, 'out', 'ui-design');
@@ -248,6 +252,7 @@ app.post('/api/design/explain', (req, res) => {
         profile,
         knowledgeDir: KNOWLEDGE_DIR,
         csvSourcePath: req.body?.csvSourcePath as string | undefined,
+        cardinalityOverrides: req.body?.cardinalityOverrides as Record<string, number> | undefined,
         dialect: req.body?.dialect as string | undefined,
       },
       plan,
@@ -274,6 +279,7 @@ app.post('/api/export/migration', async (req, res) => {
       profile,
       knowledgeDir: KNOWLEDGE_DIR,
       csvSourcePath: req.body?.csvSourcePath as string | undefined,
+      cardinalityOverrides: req.body?.cardinalityOverrides as Record<string, number> | undefined,
       dialect: req.body?.dialect as string | undefined,
     });
     const outDir = join(ROOT, 'out', 'ui-export');
@@ -466,6 +472,7 @@ app.post('/api/pipeline/run', async (req, res) => {
       ddl,
       dialect: req.body?.dialect as string | undefined,
       csvSourcePath: req.body?.csvSourcePath as string | undefined,
+      cardinalityOverrides: req.body?.cardinalityOverrides as Record<string, number> | undefined,
       generateMockCsv: Boolean(req.body?.generateMockCsv),
       mockCsvOptions: req.body?.mockCsvOptions as import('../utilities/mockCsvFromDdl.js').MockCsvOptions | undefined,
       targetDb: req.body?.targetDb as string | undefined,
@@ -535,6 +542,9 @@ app.post('/api/pipeline/run-with-csv', (req, res) => {
         ddl,
         dialect: req.body?.dialect as string | undefined,
         csvSourcePath: batchDir,
+        cardinalityOverrides: req.body?.cardinalityOverrides
+          ? JSON.parse(String(req.body.cardinalityOverrides)) as Record<string, number>
+          : undefined,
         generateMockCsv: req.body?.generateMockCsv === 'true' || req.body?.generateMockCsv === true,
         mockCsvOptions: req.body?.mockCsvOptions
           ? (JSON.parse(String(req.body.mockCsvOptions)) as import('../utilities/mockCsvFromDdl.js').MockCsvOptions)

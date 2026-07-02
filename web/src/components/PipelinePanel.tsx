@@ -22,6 +22,7 @@ type PipelinePanelProps = {
   model: SqlStructuralModel;
   ddl: string;
   profileFields: ProfileRequestFields;
+  cardinalityOverrides?: Record<string, number>;
   dialect: string;
   dialectLabel: string;
   csvSourcePath: string | null;
@@ -49,6 +50,7 @@ export function PipelinePanel({
   model,
   ddl,
   profileFields,
+  cardinalityOverrides,
   dialect,
   dialectLabel,
   csvSourcePath,
@@ -265,6 +267,7 @@ export function PipelinePanel({
         ...profileFields,
         model,
         ddl,
+        cardinalityOverrides,
         dialect,
         targetDb: form.targetDb.trim() || undefined,
         drop: form.drop,

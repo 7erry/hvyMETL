@@ -12,6 +12,16 @@ export type ForeignKeyModel = {
   referencesColumn: string;
 };
 
+export type RelationshipModel = {
+  parentTable: string;
+  childTable: string;
+  fkColumn: string;
+  avgChildrenPerParent: number;
+  maxChildrenPerParent: number;
+  isBounded: boolean;
+  cardinalitySource?: 'csv' | 'database' | 'developer';
+};
+
 export type TableModel = {
   name: string;
   columns: ColumnModel[];
@@ -23,7 +33,7 @@ export type TableModel = {
 export type SqlStructuralModel = {
   source: string;
   tables: TableModel[];
-  relationships: unknown[];
+  relationships: RelationshipModel[];
 };
 
 export type DiagramExport = {

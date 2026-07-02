@@ -58,6 +58,7 @@ export type DesignRequest = {
   profile: WorkloadProfile;
   knowledgeDir: string;
   csvSourcePath?: string;
+  cardinalityOverrides?: Record<string, number>;
   dialect?: string;
   env?: NodeJS.ProcessEnv;
 };
@@ -67,6 +68,31 @@ function configureDesignMigrationStore(env: NodeJS.ProcessEnv): void {
   if (mongoUri) {
     configureMigrationStore({ mongoUri, dbName: resolveMemoryDbName(env) });
   }
+}
+
+function relationshipOverrideKey(relationship: SqlStructuralModel['relationships'][number]): string {
+  return `${relationship.parentTable}::${relationship.childTable}::${relationship.fkColumn}`;
+}
+
+function applyCardinalityOverrides(
+  model: SqlStructuralModel,
+  overrides?: Record<string, number>,
+): SqlStructuralModel {
+  if (!overrides || Object.keys(overrides).length === 0) return model;
+  return {
+    ...model,
+    relationships: model.relationships.map((relationship) => {
+      const maxChildrenPerParent = overrides[relationshipOverrideKey(relationship)];
+      if (!Number.isFinite(maxChildrenPerParent) || maxChildrenPerParent <= 0) return relationship;
+      return {
+        ...relationship,
+        avgChildrenPerParent: Math.max(1, Math.ceil(maxChildrenPerParent / 2)),
+        maxChildrenPerParent,
+        isBounded: maxChildrenPerParent <= 5000,
+        cardinalitySource: 'developer' as const,
+      };
+    }),
+  };
 }
 
 export type DesignRunResult = DesignFromModelResult & {
@@ -93,6 +119,8 @@ function enrichModelForDesign(request: DesignRequest, env: NodeJS.ProcessEnv): {
       enrichedModel = enrichModelFromCsv(modelForDesign, resolvedCsvRoot);
     }
   }
+
+  enrichedModel = applyCardinalityOverrides(enrichedModel, request.cardinalityOverrides);
 
   return { modelForDesign, enrichedModel, resolvedCsvRoot };
 }

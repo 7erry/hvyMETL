@@ -47,6 +47,7 @@ export type PipelineRunRequest = {
   ddl: string;
   dialect?: string;
   csvSourcePath?: string;
+  cardinalityOverrides?: Record<string, number>;
   targetDb?: string;
   outDir?: string;
   drop?: boolean;
@@ -93,6 +94,31 @@ export type PipelineRunResult = {
 
 function reportProgress(request: PipelineRunRequest, event: PipelineProgressEvent): void {
   request.onProgress?.(event);
+}
+
+function relationshipOverrideKey(relationship: SqlStructuralModel['relationships'][number]): string {
+  return `${relationship.parentTable}::${relationship.childTable}::${relationship.fkColumn}`;
+}
+
+function applyCardinalityOverrides(
+  model: SqlStructuralModel,
+  overrides?: Record<string, number>,
+): SqlStructuralModel {
+  if (!overrides || Object.keys(overrides).length === 0) return model;
+  return {
+    ...model,
+    relationships: model.relationships.map((relationship) => {
+      const maxChildrenPerParent = overrides[relationshipOverrideKey(relationship)];
+      if (!Number.isFinite(maxChildrenPerParent) || maxChildrenPerParent <= 0) return relationship;
+      return {
+        ...relationship,
+        avgChildrenPerParent: Math.max(1, Math.ceil(maxChildrenPerParent / 2)),
+        maxChildrenPerParent,
+        isBounded: maxChildrenPerParent <= 5000,
+        cardinalitySource: 'developer' as const,
+      };
+    }),
+  };
 }
 
 /** Use uploaded/env CSV when present; otherwise generate mock CSV from DDL when allowed. */
@@ -163,7 +189,10 @@ export async function runFullPipeline(request: PipelineRunRequest): Promise<Pipe
     ? { ...request.model, source: `ddl:${request.dialect.trim()}` }
     : request.model;
 
-  const enrichedModel = enrichModelFromCsv(modelForDesign, csvRoot);
+  const enrichedModel = applyCardinalityOverrides(
+    enrichModelFromCsv(modelForDesign, csvRoot),
+    request.cardinalityOverrides,
+  );
 
   const memoryDb = resolveMemoryDbName(importEnv);
   if (request.migrationStore) {

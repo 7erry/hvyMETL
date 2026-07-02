@@ -184,6 +184,8 @@ export type RelationshipModel = {
    * makes embedding safe. False means the array could grow without limit.
    */
   isBounded: boolean;
+  /** Where relationship cardinality came from; developer means an explicit UI override. */
+  cardinalitySource?: 'csv' | 'database' | 'developer';
 };
 
 /** The full structural picture of a SQL source database. */

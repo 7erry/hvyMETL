@@ -77,8 +77,9 @@ describe('managerCostEstimate', () => {
   });
 
   it('selects atlas tier by RAM and storage needs', () => {
-    expect(selectAtlasTier(6, 30).id).toBe('M30');
-    expect(selectAtlasTier(20, 100).id).toBe('M50');
+    expect(selectAtlasTier(1, 30).id).toBe('M30');
+    expect(selectAtlasTier(6, 30).id).toBe('M40');
+    expect(selectAtlasTier(100, 1000).id).toBe('M200');
   });
 
   it('projects monthly and egress costs from schema stats', () => {
@@ -158,5 +159,7 @@ describe('managerCostEstimate', () => {
     expect(projection.rawDataGb).toBeCloseTo(21 * 1024, 1);
     expect(projection.totalStorageGb).toBeGreaterThan(projection.rawDataGb);
     expect(projection.estimatedTotalRows).toBeGreaterThan(DEFAULT_MANAGER_COST_INPUTS.estimatedTotalRows);
+    expect(projection.recommendedTier.id).not.toBe('M50');
+    expect(['M300', 'M400', 'M700']).toContain(projection.recommendedTier.id);
   });
 });

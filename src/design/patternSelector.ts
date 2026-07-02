@@ -55,6 +55,8 @@ import { singularize, toCamelCase, toPascalCase } from '../utilities/naming.js';
 const WRITE_HEAVY_PERCENT = 60;
 /** A workload reading at least this percentage is treated as read-heavy. */
 const READ_HEAVY_PERCENT = 70;
+/** Developer-provided max cardinality at or below this value can force embedding. */
+const DEVELOPER_OVERRIDE_EMBED_MAX_CHILDREN = 5000;
 /** Tables at or below this row count can be duplicated as lookups. */
 const LOOKUP_TABLE_MAX_ROWS = 5000;
 /** Child tables with at least this many rows are "firehose" candidates. */
@@ -560,6 +562,30 @@ function planChildRelationships(
       continue;
     }
 
+    const skewed = isOutlierSkewed(relationship);
+    const developerForcedBoundedEmbed =
+      relationship.cardinalitySource === 'developer' &&
+      relationship.maxChildrenPerParent > 0 &&
+      relationship.maxChildrenPerParent <= DEVELOPER_OVERRIDE_EMBED_MAX_CHILDREN;
+
+    if (developerForcedBoundedEmbed && !skewed) {
+      const field = toCamelCase(childTable.name);
+      embeddedArrays.push({ field, sourceTable: childTable.name, joinColumn: relationship.fkColumn });
+      properties[field] = {
+        bsonType: 'array',
+        items: { bsonType: 'object' },
+        description: `Embedded ${childTable.name} from developer-provided max cardinality ${relationship.maxChildrenPerParent}.`,
+      };
+      patterns.push({
+        pattern: 'embed',
+        target: `${table.name}.${field}`,
+        reason: `Developer supplied max ${relationship.maxChildrenPerParent} ${childTable.name} row(s) per ${table.name}; treating the relationship as bounded and embedding without CSV cardinality stats.`,
+        knowledgeSource: 'embed-vs-reference.md',
+      });
+      absorbedTables.add(childTable.name);
+      continue;
+    }
+
     // Guard: never embed a "hub" child (a table other tables hang off of,
     // like products under brands). Embedding it would duplicate an entire
     // entity graph into a lookup parent; the right shape is a reference,
@@ -606,8 +632,6 @@ function planChildRelationships(
       }
       continue;
     }
-
-    const skewed = isOutlierSkewed(relationship);
 
     // Checklist: strict line-item children (orders -> order_items) embed by default.
     if (
