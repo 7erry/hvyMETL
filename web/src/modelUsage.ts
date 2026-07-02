@@ -7,6 +7,31 @@ export type ModelTokenUsage = {
   estimated: boolean;
 };
 
+export type ModelTokenPricing = {
+  embeddingModel: 'voyage-4';
+  rerankModel: 'rerank-2.5';
+  embeddingUsdPerMillionTokens: number;
+  rerankUsdPerMillionTokens: number;
+  freeTokensPerModel: number;
+  sourceUrl: string;
+};
+
+export type ModelTokenCostEstimate = {
+  embeddingUsd: number;
+  rerankUsd: number;
+  totalUsd: number;
+};
+
+/** MongoDB Voyage AI public preview list pricing, billed through Atlas model API keys. */
+export const MODEL_TOKEN_PRICING: ModelTokenPricing = {
+  embeddingModel: 'voyage-4',
+  rerankModel: 'rerank-2.5',
+  embeddingUsdPerMillionTokens: 0.06,
+  rerankUsdPerMillionTokens: 0.05,
+  freeTokensPerModel: 200_000_000,
+  sourceUrl: 'https://www.mongodb.com/docs/voyageai/management/billing/',
+};
+
 export function emptyModelTokenUsage(): ModelTokenUsage {
   return {
     embeddingTokens: 0,
@@ -34,6 +59,24 @@ export function formatTokenCount(value: number): string {
   if (value >= 10_000) return `${Math.round(value / 1000)}K`;
   if (value >= 1_000) return `${(value / 1000).toFixed(1)}K`;
   return value.toLocaleString();
+}
+
+/** Estimate Atlas model API list-price spend before organization-level free tier credits. */
+export function estimateModelTokenCost(usage: ModelTokenUsage | null | undefined): ModelTokenCostEstimate {
+  const embeddingTokens = usage?.embeddingTokens ?? 0;
+  const rerankTokens = usage?.rerankTokens ?? 0;
+  const embeddingUsd = (embeddingTokens / 1_000_000) * MODEL_TOKEN_PRICING.embeddingUsdPerMillionTokens;
+  const rerankUsd = (rerankTokens / 1_000_000) * MODEL_TOKEN_PRICING.rerankUsdPerMillionTokens;
+  return {
+    embeddingUsd,
+    rerankUsd,
+    totalUsd: embeddingUsd + rerankUsd,
+  };
+}
+
+export function formatModelTokenCost(amount: number): string {
+  if (amount > 0 && amount < 0.01) return '<$0.01';
+  return `$${amount.toFixed(2)}`;
 }
 
 /** True when design ran without embedding/rerank API keys (lexical BM25 only). */

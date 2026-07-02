@@ -6,6 +6,8 @@ export type ManagerWorkloadType = 'read-heavy' | 'balanced' | 'write-heavy';
 
 export type ManagerCostInputs = {
   estimatedTotalRows: number;
+  /** Optional raw data-size override in GB for manager scenario modeling. */
+  estimatedDataGb: number;
   workloadType: ManagerWorkloadType;
   growthRatePercent: number;
   /** Per-collection hot retention before Online Archive moves older documents cold. */
@@ -58,6 +60,7 @@ export type ArchiveCollectionOption = {
 
 export const DEFAULT_MANAGER_COST_INPUTS: ManagerCostInputs = {
   estimatedTotalRows: 10_000_000,
+  estimatedDataGb: 0,
   workloadType: 'read-heavy',
   growthRatePercent: 15,
   collectionRetentionYears: {},
@@ -81,6 +84,7 @@ const ARCHIVE_ASSUMED_HISTORY_YEARS = 7;
 const DEFAULT_ARCHIVE_RETENTION_YEARS = 5;
 const MIN_ARCHIVE_RETENTION_YEARS = 1;
 const MAX_ARCHIVE_RETENTION_YEARS = 10;
+const BYTES_PER_GB = 1024 ** 3;
 
 const WORKLOAD_PRESETS: Record<
   ManagerWorkloadType,
@@ -205,11 +209,17 @@ function sqlRowSum(model: SqlStructuralModel): number {
 }
 
 function resolveEstimatedRows(model: SqlStructuralModel | null, inputs: ManagerCostInputs): number {
+  if (inputs.estimatedDataGb > 0) return Math.max(1, inputs.estimatedTotalRows);
   if (model) {
     const fromStats = sqlRowSum(model);
     if (fromStats > 0) return fromStats;
   }
   return Math.max(1, inputs.estimatedTotalRows);
+}
+
+function resolveTargetRawBytes(inputs: ManagerCostInputs): number | null {
+  if (!Number.isFinite(inputs.estimatedDataGb) || inputs.estimatedDataGb <= 0) return null;
+  return inputs.estimatedDataGb * BYTES_PER_GB;
 }
 
 function collectionDocumentBytes(collection: MigrationPlan['collections'][number], model: SqlStructuralModel): number {
@@ -277,8 +287,10 @@ export function computeManagerCostProjection(
 ): ManagerCostProjection {
   const preset = WORKLOAD_PRESETS[inputs.workloadType];
   const hasSchema = Boolean(model?.tables.length);
-  const estimatedTotalRows = resolveEstimatedRows(model, inputs);
   const avgDocBytes = averageDocumentBytes(model, plan);
+  const targetRawBytes = resolveTargetRawBytes(inputs);
+  const estimatedTotalRows =
+    targetRawBytes !== null ? Math.max(1, Math.round(targetRawBytes / Math.max(1, avgDocBytes))) : resolveEstimatedRows(model, inputs);
 
   let rawBytes = avgDocBytes * estimatedTotalRows;
   let activeRawBytes = rawBytes;
@@ -310,6 +322,13 @@ export function computeManagerCostProjection(
     }
   }
 
+  if (targetRawBytes !== null && rawBytes > 0) {
+    const scaleFactor = targetRawBytes / rawBytes;
+    rawBytes *= scaleFactor;
+    activeRawBytes *= scaleFactor;
+    archiveRawBytes *= scaleFactor;
+  }
+
   const indexCount = countPlannedIndexes(plan, model);
   const activeStorageBytes = activeRawBytes * BSON_OVERHEAD * (1 + indexCount * INDEX_OVERHEAD_FACTOR);
   const archiveStorageBytes = archiveRawBytes * BSON_OVERHEAD;
@@ -317,7 +336,7 @@ export function computeManagerCostProjection(
   const activeStorageGb = activeStorageBytes / (1024 ** 3);
   const archiveStorageGb = archiveStorageBytes / (1024 ** 3);
   const totalStorageGb = activeStorageGb + archiveStorageGb;
-  const rawDataGb = rawBytes / (1024 ** 3);
+  const rawDataGb = rawBytes / BYTES_PER_GB;
 
   const requiredRamGb = Math.max(2, activeStorageGb * preset.ramRatio);
   const recommendedTier = selectAtlasTier(requiredRamGb, activeStorageGb);
@@ -374,6 +393,7 @@ export function formatRowCount(rows: number): string {
 }
 
 export function formatGb(gb: number): string {
+  if (gb >= 1024) return `${(gb / 1024).toFixed(gb % 1024 === 0 ? 0 : 1)} TB`;
   if (gb >= 100) return `${gb.toFixed(0)} GB`;
   if (gb >= 10) return `${gb.toFixed(1)} GB`;
   return `${gb.toFixed(2)} GB`;

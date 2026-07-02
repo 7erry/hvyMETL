@@ -2868,6 +2868,40 @@ textarea {
   flex-direction: column;
   gap: 0.55rem;
   min-width: 0;
+  border: 1px solid rgba(0, 104, 74, 0.45);
+  border-radius: 10px;
+  padding: 0.65rem;
+  background: rgba(0, 30, 43, 0.24);
+}
+
+.app--manager .manager-archive-controls__summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  cursor: pointer;
+  min-height: 40px;
+  list-style-position: inside;
+  color: var(--mdb-spring-green);
+}
+
+.app--manager .manager-archive-controls__summary span {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.app--manager .manager-archive-controls__summary small {
+  color: var(--text);
+  font-size: 0.68rem;
+  font-weight: 400;
+  line-height: 1.35;
+  opacity: 0.75;
+}
+
+.app--manager .manager-archive-controls[open] .manager-archive-controls__summary {
+  margin-bottom: 0.45rem;
 }
 
 .app--manager .manager-archive-controls__list {

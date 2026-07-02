@@ -19,8 +19,9 @@ type ManagerCostPanelProps = {
   onChange: (inputs: ManagerCostInputs) => void;
 };
 
-const ROW_SLIDER_MAX = 50_000_000;
-const ROW_SLIDER_STEP = 500_000;
+const DATASET_SLIDER_MIN_GB = 1;
+const DATASET_SLIDER_MAX_GB = 21 * 1024;
+const DATASET_SLIDER_STEP_GB = 64;
 
 const WORKLOAD_OPTIONS: { id: ManagerWorkloadType; title: string; hint: string }[] = [
   {
@@ -59,8 +60,8 @@ export function ManagerCostPanel({
     onChange({ ...inputs, workloadType });
   };
 
-  const setRows = (estimatedTotalRows: number) => {
-    onChange({ ...inputs, estimatedTotalRows: Math.max(10_000, estimatedTotalRows) });
+  const setDataSize = (estimatedDataGb: number) => {
+    onChange({ ...inputs, estimatedDataGb: Math.max(DATASET_SLIDER_MIN_GB, estimatedDataGb) });
   };
 
   const setGrowth = (growthRatePercent: number) => {
@@ -87,6 +88,10 @@ export function ManagerCostPanel({
   }
 
   const hasSchemaRowStats = model.tables.some((t) => t.rowCount > 0);
+  const datasetScaleGb = Math.max(
+    DATASET_SLIDER_MIN_GB,
+    Math.min(DATASET_SLIDER_MAX_GB, inputs.estimatedDataGb > 0 ? inputs.estimatedDataGb : projection.rawDataGb),
+  );
 
   return (
     <section className="manager-panel manager-cost-panel">
@@ -98,18 +103,21 @@ export function ManagerCostPanel({
       <div className="manager-cost-inputs">
         <label className="manager-cost-field">
           <span className="manager-cost-field__label">
-            Dataset scale — total estimated rows: <strong>{formatRowCount(inputs.estimatedTotalRows)}</strong>
+            Dataset scale — raw data: <strong>{formatGb(datasetScaleGb)}</strong>
           </span>
           <input
             type="range"
-            min={100_000}
-            max={ROW_SLIDER_MAX}
-            step={ROW_SLIDER_STEP}
-            value={inputs.estimatedTotalRows}
-            onChange={(e) => setRows(Number(e.target.value))}
+            min={DATASET_SLIDER_MIN_GB}
+            max={DATASET_SLIDER_MAX_GB}
+            step={DATASET_SLIDER_STEP_GB}
+            value={datasetScaleGb}
+            onChange={(e) => setDataSize(Number(e.target.value))}
           />
           {hasSchemaRowStats ? (
-            <span className="manager-cost-field__note">Row totals use statistics from the imported schema.</span>
+            <span className="manager-cost-field__note">
+              Schema statistics estimate document shape; slider scenarios scale raw data up to 21 TB. Approximate
+              documents: {formatRowCount(projection.estimatedTotalRows)}.
+            </span>
           ) : null}
         </label>
 
@@ -145,13 +153,21 @@ export function ManagerCostPanel({
         </label>
 
         {archiveOptions.length > 0 ? (
-          <div className="manager-archive-controls">
-            <div>
-              <span className="manager-cost-field__label">Archive pattern by collection</span>
-              <p className="manager-cost-field__note">
-                Retain recent data on the hot Atlas cluster, then route older dated documents to Online Archive.
-              </p>
-            </div>
+          <details className="manager-archive-controls">
+            <summary className="manager-archive-controls__summary">
+              <span>
+                <strong>Archive pattern by collection</strong>
+                <small>
+                  {archiveOptions.length} eligible collection{archiveOptions.length === 1 ? '' : 's'}
+                  {projection.archiveStorageGb > 0
+                    ? ` · ${formatGb(projection.archiveStorageGb)} archived for ${formatUsd(projection.monthlyArchiveUsd)} / mo`
+                    : ''}
+                </small>
+              </span>
+            </summary>
+            <p className="manager-cost-field__note">
+              Retain recent data on the hot Atlas cluster, then route older dated documents to Online Archive.
+            </p>
             <div className="manager-archive-controls__list">
               {archiveOptions.map((option) => (
                 <div className="manager-archive-control" key={option.collectionName}>
@@ -190,7 +206,7 @@ export function ManagerCostPanel({
                 </div>
               ))}
             </div>
-          </div>
+          </details>
         ) : null}
       </div>
 
@@ -243,14 +259,14 @@ export function ManagerCostPanel({
             <strong>{formatUsd(projection.monthlyComputeUsd)} / mo</strong>
           </div>
           <div className="manager-cost-totals__row">
-            <span>Backup &amp; storage</span>
+            <span>Hot backup &amp; storage ({formatGb(projection.activeStorageGb)})</span>
             <strong>{formatUsd(projection.monthlyBackupUsd)} / mo</strong>
           </div>
           {projection.archiveCollectionCount > 0 ? (
             <div className="manager-cost-totals__row">
               <span>
                 Online Archive ({projection.archiveCollectionCount} collection
-                {projection.archiveCollectionCount === 1 ? '' : 's'})
+                {projection.archiveCollectionCount === 1 ? '' : 's'}, {formatGb(projection.archiveStorageGb)})
               </span>
               <strong>{formatUsd(projection.monthlyArchiveUsd)} / mo</strong>
             </div>

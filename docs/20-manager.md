@@ -59,6 +59,12 @@ flowchart LR
 | **Model API usage** | Manager sidebar | Did this run use hybrid/vector retrieval or BM25-only design, and what token volume was consumed? |
 | **Cloud resource summary** | Manager sidebar | Which collection/index/archive choices affect Atlas infrastructure sizing? |
 
+The **Model API usage** panel also estimates list-price token spend using MongoDB
+Voyage AI billing rates: `voyage-4` embeddings at **$0.06 / 1M tokens** and
+`rerank-2.5` at **$0.05 / 1M tokens**. MongoDB lists 200M free tokens for each model
+in the public preview billing table; hvyMETL shows list price before organization-level
+free tier credits are applied in Atlas billing.
+
 ## 4. Dynamic Cost Projections
 
 The **Migration Cost Projection** panel estimates cloud cost from three inputs:

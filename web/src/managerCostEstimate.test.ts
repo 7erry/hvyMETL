@@ -130,4 +130,15 @@ describe('managerCostEstimate', () => {
     expect(archived.activeStorageGb).toBeLessThan(baseline.activeStorageGb);
     expect(archived.monthlyArchiveUsd).toBeGreaterThan(0);
   });
+
+  it('scales projections from a raw data-size override up to 21 TB', () => {
+    const projection = computeManagerCostProjection(model, plan, {
+      ...DEFAULT_MANAGER_COST_INPUTS,
+      estimatedDataGb: 21 * 1024,
+    });
+
+    expect(projection.rawDataGb).toBeCloseTo(21 * 1024, 1);
+    expect(projection.totalStorageGb).toBeGreaterThan(projection.rawDataGb);
+    expect(projection.estimatedTotalRows).toBeGreaterThan(DEFAULT_MANAGER_COST_INPUTS.estimatedTotalRows);
+  });
 });

@@ -2,7 +2,14 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { fetchPipelineExecutions } from '../api';
 import type { ActivityFeedItem, MigrationProgress } from '../managerDashboard';
 import { buildActivityFeed, buildCloudResourceSummary } from '../managerDashboard';
-import { formatTokenCount, modelTokenUsageEmptyHint, tokenUsageSourceLabel } from '../modelUsage';
+import {
+  estimateModelTokenCost,
+  formatModelTokenCost,
+  formatTokenCount,
+  MODEL_TOKEN_PRICING,
+  modelTokenUsageEmptyHint,
+  tokenUsageSourceLabel,
+} from '../modelUsage';
 import type { MigrationArtifacts, ManagerCostInputs } from '../sessionState';
 import type { PipelineExecutionListItem } from '../transformationSummaryTypes';
 import { ManagerCostPanel } from './ManagerCostPanel';
@@ -113,6 +120,10 @@ export function ManagerSidebar({
     () => buildCloudResourceSummary(artifacts, executions, profileInfo),
     [artifacts, executions, profileInfo],
   );
+  const modelTokenCost = useMemo(
+    () => estimateModelTokenCost(cloudSummary.modelTokenUsage),
+    [cloudSummary.modelTokenUsage],
+  );
 
   return (
     <div className="manager-sidebar sidebar-scroll">
@@ -201,12 +212,22 @@ export function ManagerSidebar({
                 </dd>
               </div>
               <div>
-                <dt>Embeddings</dt>
-                <dd>{formatTokenCount(cloudSummary.modelTokenUsage.embeddingTokens)}</dd>
+                <dt>Estimated token cost</dt>
+                <dd className="manager-token-total">{formatModelTokenCost(modelTokenCost.totalUsd)}</dd>
               </div>
               <div>
-                <dt>Rerank</dt>
-                <dd>{formatTokenCount(cloudSummary.modelTokenUsage.rerankTokens)}</dd>
+                <dt>Embeddings ({MODEL_TOKEN_PRICING.embeddingModel})</dt>
+                <dd>
+                  {formatTokenCount(cloudSummary.modelTokenUsage.embeddingTokens)} ·{' '}
+                  {formatModelTokenCost(modelTokenCost.embeddingUsd)}
+                </dd>
+              </div>
+              <div>
+                <dt>Rerank ({MODEL_TOKEN_PRICING.rerankModel})</dt>
+                <dd>
+                  {formatTokenCount(cloudSummary.modelTokenUsage.rerankTokens)} ·{' '}
+                  {formatModelTokenCost(modelTokenCost.rerankUsd)}
+                </dd>
               </div>
               <div>
                 <dt>API calls</dt>
@@ -220,6 +241,13 @@ export function ManagerSidebar({
               ) : null}
             </dl>
             <p className="manager-hint manager-token-footnote">{tokenUsageSourceLabel(cloudSummary.modelTokenUsage)}</p>
+            <p className="manager-hint manager-token-footnote">
+              Pricing: {MODEL_TOKEN_PRICING.embeddingModel} $
+              {MODEL_TOKEN_PRICING.embeddingUsdPerMillionTokens.toFixed(2)} / 1M tokens;{' '}
+              {MODEL_TOKEN_PRICING.rerankModel} ${MODEL_TOKEN_PRICING.rerankUsdPerMillionTokens.toFixed(2)} / 1M
+              tokens. MongoDB lists {formatTokenCount(MODEL_TOKEN_PRICING.freeTokensPerModel)} free tokens for each
+              model; estimates show list price before Atlas organization-level free tier credits.
+            </p>
           </>
         )}
       </section>
