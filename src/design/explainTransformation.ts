@@ -226,7 +226,9 @@ function buildCollectionNotes(
       notes.push(`Bucket pattern on ${collection.bucket.measurementsField} (${collection.bucket.windowMinutes}m windows).`);
     }
     if (collection.archive) {
-      notes.push(`Archive mirror → ${collection.archive.archiveCollection} after ${collection.archive.archiveAfterDays} days.`);
+      notes.push(
+        `Archive mirror -> ${collection.archive.archiveCollection} after ${collection.archive.retentionYears} year${collection.archive.retentionYears === 1 ? '' : 's'}; partitions: ${collection.archive.partitionFields.join(', ')}.`,
+      );
     }
 
     return {

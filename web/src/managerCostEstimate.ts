@@ -8,6 +8,8 @@ export type ManagerCostInputs = {
   estimatedTotalRows: number;
   workloadType: ManagerWorkloadType;
   growthRatePercent: number;
+  /** Per-collection hot retention before Online Archive moves older documents cold. */
+  collectionRetentionYears: Record<string, number>;
 };
 
 export type AtlasTierSpec = {
@@ -26,6 +28,8 @@ export type ManagerCostProjection = {
   estimatedTotalRows: number;
   averageDocumentBytes: number;
   rawDataGb: number;
+  activeStorageGb: number;
+  archiveStorageGb: number;
   totalStorageGb: number;
   indexCount: number;
   requiredRamGb: number;
@@ -33,16 +37,30 @@ export type ManagerCostProjection = {
   workingSetPercent: number;
   monthlyComputeUsd: number;
   monthlyBackupUsd: number;
+  monthlyArchiveUsd: number;
   monthlyTotalUsd: number;
   oneTimeEgressUsd: number;
   growthRatePercent: number;
   projectedMonthlyNextYearUsd: number;
+  archiveCollectionCount: number;
+  archiveHotDataPercent: number;
+};
+
+export type ArchiveCollectionOption = {
+  collectionName: string;
+  sourceTable: string;
+  timeField: string;
+  retentionYears: number;
+  isEnabled: boolean;
+  isPlanned: boolean;
+  partitionFields: string[];
 };
 
 export const DEFAULT_MANAGER_COST_INPUTS: ManagerCostInputs = {
   estimatedTotalRows: 10_000_000,
   workloadType: 'read-heavy',
   growthRatePercent: 15,
+  collectionRetentionYears: {},
 };
 
 /** Representative MongoDB Atlas dedicated cluster tiers (USD/month, illustrative). */
@@ -58,6 +76,11 @@ const BSON_OVERHEAD = 1.25;
 const INDEX_OVERHEAD_FACTOR = 0.08;
 const BACKUP_USD_PER_GB = 0.6;
 const EGRESS_USD_PER_GB = 0.09;
+const ARCHIVE_STORAGE_USD_PER_GB = 0.025;
+const ARCHIVE_ASSUMED_HISTORY_YEARS = 7;
+const DEFAULT_ARCHIVE_RETENTION_YEARS = 5;
+const MIN_ARCHIVE_RETENTION_YEARS = 1;
+const MAX_ARCHIVE_RETENTION_YEARS = 10;
 
 const WORKLOAD_PRESETS: Record<
   ManagerWorkloadType,
@@ -109,6 +132,74 @@ export function estimateTableRowBytes(table: TableModel): number {
   return columnBytes + 24;
 }
 
+function toCamelCase(value: string): string {
+  return value
+    .replace(/[_\-\s]+(.)?/g, (_, char: string | undefined) => (char ? char.toUpperCase() : ''))
+    .replace(/^[A-Z]/, (char) => char.toLowerCase());
+}
+
+function clampRetentionYears(value: number): number {
+  return Math.max(MIN_ARCHIVE_RETENTION_YEARS, Math.min(MAX_ARCHIVE_RETENTION_YEARS, Math.round(value)));
+}
+
+function findSourceTable(model: SqlStructuralModel | null, collection: MigrationPlan['collections'][number]): TableModel | undefined {
+  return model?.tables.find((table) => table.name === collection.sourceTable);
+}
+
+function findArchiveTimeField(
+  model: SqlStructuralModel | null,
+  collection: MigrationPlan['collections'][number],
+): string | null {
+  if (collection.archive?.timeColumn) return toCamelCase(collection.archive.timeColumn);
+  const source = findSourceTable(model, collection);
+  const dateColumn = source?.columns.find((column) => column.bsonType === 'date');
+  return dateColumn ? toCamelCase(dateColumn.name) : null;
+}
+
+function archiveMirrorNames(plan: MigrationPlan | null): Set<string> {
+  return new Set(
+    (plan?.collections ?? [])
+      .map((collection) => collection.archive?.archiveCollection)
+      .filter((name): name is string => Boolean(name)),
+  );
+}
+
+function retentionYearsForCollection(
+  collection: MigrationPlan['collections'][number],
+  inputs: ManagerCostInputs,
+): number {
+  const explicit = inputs.collectionRetentionYears?.[collection.name];
+  if (explicit !== undefined) return explicit > 0 ? clampRetentionYears(explicit) : 0;
+  if (collection.archive?.retentionYears) return clampRetentionYears(collection.archive.retentionYears);
+  return 0;
+}
+
+export function buildArchiveCollectionOptions(
+  model: SqlStructuralModel | null,
+  plan: MigrationPlan | null,
+  inputs: ManagerCostInputs,
+): ArchiveCollectionOption[] {
+  if (!model || !plan?.collections.length) return [];
+  const mirrorNames = archiveMirrorNames(plan);
+  return plan.collections
+    .filter((collection) => !mirrorNames.has(collection.name) && !collection.bucket)
+    .map((collection): ArchiveCollectionOption | null => {
+      const timeField = findArchiveTimeField(model, collection);
+      if (!timeField) return null;
+      const retentionYears = retentionYearsForCollection(collection, inputs);
+      return {
+        collectionName: collection.name,
+        sourceTable: collection.sourceTable,
+        timeField,
+        retentionYears: retentionYears > 0 ? retentionYears : DEFAULT_ARCHIVE_RETENTION_YEARS,
+        isEnabled: retentionYears > 0,
+        isPlanned: Boolean(collection.archive),
+        partitionFields: collection.archive?.partitionFields ?? [timeField],
+      };
+    })
+    .filter((option): option is ArchiveCollectionOption => option !== null);
+}
+
 function sqlRowSum(model: SqlStructuralModel): number {
   return model.tables.reduce((sum, table) => sum + (table.rowCount > 0 ? table.rowCount : 0), 0);
 }
@@ -153,7 +244,10 @@ function averageDocumentBytes(
 ): number {
   if (!model?.tables.length) return 512;
   if (plan?.collections.length) {
-    const sizes = plan.collections.map((c) => collectionDocumentBytes(c, model));
+    const mirrors = archiveMirrorNames(plan);
+    const activeCollections = plan.collections.filter((collection) => !mirrors.has(collection.name));
+    const sizes = activeCollections.map((c) => collectionDocumentBytes(c, model));
+    if (sizes.length === 0) return 512;
     return Math.round(sizes.reduce((a, b) => a + b, 0) / sizes.length);
   }
   const tableSizes = model.tables.map(estimateTableRowBytes);
@@ -162,7 +256,8 @@ function averageDocumentBytes(
 
 function countPlannedIndexes(plan: MigrationPlan | null, model: SqlStructuralModel | null): number {
   if (plan?.collections.length) {
-    return plan.collections.reduce((sum, c) => sum + c.indexes.length + 1, 0);
+    const mirrors = archiveMirrorNames(plan);
+    return plan.collections.reduce((sum, c) => (mirrors.has(c.name) ? sum : sum + c.indexes.length + 1), 0);
   }
   if (!model) return 4;
   return model.tables.reduce((sum, t) => sum + t.primaryKey.length + t.foreignKeys.length + 1, 0);
@@ -186,34 +281,60 @@ export function computeManagerCostProjection(
   const avgDocBytes = averageDocumentBytes(model, plan);
 
   let rawBytes = avgDocBytes * estimatedTotalRows;
+  let activeRawBytes = rawBytes;
+  let archiveRawBytes = 0;
+  let archiveCollectionCount = 0;
   if (model && plan?.collections.length) {
     rawBytes = 0;
+    activeRawBytes = 0;
+    archiveRawBytes = 0;
+    const mirrorNames = archiveMirrorNames(plan);
+    const collectionCount = Math.max(1, plan.collections.length - mirrorNames.size);
     for (const collection of plan.collections) {
+      if (mirrorNames.has(collection.name)) continue;
       const docBytes = collectionDocumentBytes(collection, model);
-      const docs = rowsForCollection(collection, model, estimatedTotalRows, plan.collections.length);
-      rawBytes += docBytes * docs;
+      const docs = rowsForCollection(collection, model, estimatedTotalRows, collectionCount);
+      const collectionRawBytes = docBytes * docs;
+      rawBytes += collectionRawBytes;
+
+      const retentionYears = retentionYearsForCollection(collection, inputs);
+      const canArchive = retentionYears > 0 && findArchiveTimeField(model, collection);
+      if (canArchive) {
+        archiveCollectionCount += 1;
+        const activeFraction = Math.min(1, retentionYears / ARCHIVE_ASSUMED_HISTORY_YEARS);
+        activeRawBytes += collectionRawBytes * activeFraction;
+        archiveRawBytes += collectionRawBytes * (1 - activeFraction);
+      } else {
+        activeRawBytes += collectionRawBytes;
+      }
     }
   }
 
   const indexCount = countPlannedIndexes(plan, model);
-  const totalStorageBytes = rawBytes * BSON_OVERHEAD * (1 + indexCount * INDEX_OVERHEAD_FACTOR);
-  const totalStorageGb = totalStorageBytes / (1024 ** 3);
+  const activeStorageBytes = activeRawBytes * BSON_OVERHEAD * (1 + indexCount * INDEX_OVERHEAD_FACTOR);
+  const archiveStorageBytes = archiveRawBytes * BSON_OVERHEAD;
+  const totalStorageBytes = activeStorageBytes + archiveStorageBytes;
+  const activeStorageGb = activeStorageBytes / (1024 ** 3);
+  const archiveStorageGb = archiveStorageBytes / (1024 ** 3);
+  const totalStorageGb = activeStorageGb + archiveStorageGb;
   const rawDataGb = rawBytes / (1024 ** 3);
 
-  const requiredRamGb = Math.max(2, totalStorageGb * preset.ramRatio);
-  const recommendedTier = selectAtlasTier(requiredRamGb, totalStorageGb);
+  const requiredRamGb = Math.max(2, activeStorageGb * preset.ramRatio);
+  const recommendedTier = selectAtlasTier(requiredRamGb, activeStorageGb);
 
   const workingSetPercent = Math.min(
     100,
-    Math.round(((recommendedTier.ramGb * 1024 ** 3) / totalStorageBytes) * 100),
+    Math.round(((recommendedTier.ramGb * 1024 ** 3) / Math.max(1, activeStorageBytes)) * 100),
   );
 
   const monthlyComputeUsd = recommendedTier.monthlyUsd;
-  const monthlyBackupUsd = totalStorageGb * BACKUP_USD_PER_GB;
-  const monthlyTotalUsd = monthlyComputeUsd + monthlyBackupUsd;
+  const monthlyBackupUsd = activeStorageGb * BACKUP_USD_PER_GB;
+  const monthlyArchiveUsd = archiveStorageGb * ARCHIVE_STORAGE_USD_PER_GB;
+  const monthlyTotalUsd = monthlyComputeUsd + monthlyBackupUsd + monthlyArchiveUsd;
   const oneTimeEgressUsd = rawDataGb * EGRESS_USD_PER_GB;
   const growth = Math.max(0, inputs.growthRatePercent);
   const projectedMonthlyNextYearUsd = monthlyTotalUsd * (1 + growth / 100);
+  const archiveHotDataPercent = rawBytes > 0 ? Math.round((activeRawBytes / rawBytes) * 100) : 100;
 
   return {
     hasSchema,
@@ -223,6 +344,8 @@ export function computeManagerCostProjection(
     estimatedTotalRows,
     averageDocumentBytes: avgDocBytes,
     rawDataGb,
+    activeStorageGb,
+    archiveStorageGb,
     totalStorageGb,
     indexCount,
     requiredRamGb,
@@ -230,10 +353,13 @@ export function computeManagerCostProjection(
     workingSetPercent,
     monthlyComputeUsd,
     monthlyBackupUsd,
+    monthlyArchiveUsd,
     monthlyTotalUsd,
     oneTimeEgressUsd,
     growthRatePercent: growth,
     projectedMonthlyNextYearUsd,
+    archiveCollectionCount,
+    archiveHotDataPercent,
   };
 }
 

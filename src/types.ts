@@ -292,8 +292,16 @@ export type BucketPlan = {
 export type ArchivePlan = {
   /** Timestamp column used to decide when a document is eligible to move. */
   timeColumn: string;
+  /** Years of hot data to retain on the primary Atlas cluster before archive routing. */
+  retentionYears: number;
   /** Move documents older than this many days to the archive collection. */
   archiveAfterDays: number;
+  /** Minimum active-data window recommended before archival begins. */
+  activeDataMinimumDays: number;
+  /** Archive partition fields in query order; the date partition must be first. */
+  partitionFields: string[];
+  /** Optional extra filter for non-age archive rules, e.g. status = completed. */
+  customFilterDescription?: string;
   /** Target collection name for archived documents (same schema, embedded shape). */
   archiveCollection: string;
 };

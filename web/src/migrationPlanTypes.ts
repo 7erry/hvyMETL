@@ -64,7 +64,11 @@ export type BucketPlan = {
 
 export type ArchivePlan = {
   timeColumn: string;
+  retentionYears: number;
   archiveAfterDays: number;
+  activeDataMinimumDays: number;
+  partitionFields: string[];
+  customFilterDescription?: string;
   archiveCollection: string;
 };
 

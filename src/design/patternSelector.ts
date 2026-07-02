@@ -73,6 +73,8 @@ const BUCKET_WINDOW_MINUTES = 60;
 const ARCHIVE_MIN_ROWS = 5000;
 /** Default cold-data retention before archive sweep (matches MongoDB doc example). */
 const ARCHIVE_AFTER_DAYS_DEFAULT = 365 * 5;
+/** Atlas Online Archive should keep a recent active window on the primary cluster. */
+const ARCHIVE_ACTIVE_DATA_MINIMUM_DAYS = 90;
 /** Max children per parent treated as safely embeddable for line-item tables without stats. */
 const LINE_ITEMS_EMBED_MAX = 100;
 
@@ -221,6 +223,32 @@ export function archiveRetentionDays(profile: WorkloadProfile): number {
   return ARCHIVE_AFTER_DAYS_DEFAULT;
 }
 
+/** Retention window in years, rounded for manager-facing Archive controls. */
+export function archiveRetentionYears(profile: WorkloadProfile): number {
+  return Math.max(1, Math.round(archiveRetentionDays(profile) / 365));
+}
+
+/** Archive partitions start with the date field, followed by common query filters. */
+export function archivePartitionFields(table: TableModel, dateColumn: ColumnModel): string[] {
+  const partitions = [toCamelCase(dateColumn.name)];
+  for (const column of table.columns) {
+    const field = toCamelCase(column.name);
+    if (field === partitions[0]) continue;
+    if (/(^tenantId$|^accountId$|^customerId$|^userId$|region|status|type$)/i.test(field)) {
+      partitions.push(field);
+    }
+    if (partitions.length >= 3) break;
+  }
+  return partitions;
+}
+
+/** Optional non-age filter hint for Online Archive rules. */
+function archiveCustomFilterDescription(table: TableModel): string | undefined {
+  const statusColumn = table.columns.find((column) => /(^|_)status$/i.test(column.name));
+  if (!statusColumn) return undefined;
+  return `If only terminal records should leave the hot cluster, add a custom archive filter on ${toCamelCase(statusColumn.name)} (for example completed/closed).`;
+}
+
 /** Whether the profile favors merging junction-linked entities into one collection. */
 export function shouldUseSingleCollection(profile: WorkloadProfile): boolean {
   return (
@@ -349,7 +377,7 @@ function planArchiveMirror(hot: CollectionPlan): CollectionPlan {
       {
         pattern: 'archive',
         target: archiveName,
-        reason: `Cold-storage mirror of ${hot.name}; documents older than ${archive.archiveAfterDays} days move here with the same embedded shape.`,
+        reason: `Cold-storage mirror of ${hot.name}; documents older than ${archive.archiveAfterDays} days move here with the same embedded shape and archive partitions ${archive.partitionFields.join(' + ')}.`,
         knowledgeSource: 'archive.md',
       },
       ...hot.patterns.filter((decision) => decision.pattern === 'schema-versioning'),
@@ -910,21 +938,26 @@ export function buildMigrationPlan(model: SqlStructuralModel, profile: WorkloadP
     if (isArchiveCandidate(table, profile, bucketedTables)) {
       const dateColumn = findDateColumn(table)!;
       const ratioLabel = `${profile.telemetry.readPercent}:${profile.telemetry.writePercent} R:W at ${profile.telemetry.peakRpm.toLocaleString('en-US')} RPM`;
+      const retentionYears = archiveRetentionYears(profile);
       archive = {
         timeColumn: dateColumn.name,
+        retentionYears,
         archiveAfterDays: archiveRetentionDays(profile),
+        activeDataMinimumDays: ARCHIVE_ACTIVE_DATA_MINIMUM_DAYS,
+        partitionFields: archivePartitionFields(table, dateColumn),
+        customFilterDescription: archiveCustomFilterDescription(table),
         archiveCollection: `${collectionName}_archive`,
       };
       patterns.push({
         pattern: 'archive',
         target: collectionName,
-        reason: `${table.name} holds ${table.rowCount.toLocaleString('en-US')} dated rows under ${ratioLabel}; cold documents move to ${archive.archiveCollection} after ${archive.archiveAfterDays} days per the MongoDB Archive pattern.`,
+        reason: `${table.name} holds ${table.rowCount.toLocaleString('en-US')} dated rows under ${ratioLabel}; retain ${retentionYears} year${retentionYears === 1 ? '' : 's'} hot on Atlas, then route older documents to ${archive.archiveCollection}. Partition archived data by ${archive.partitionFields.join(' + ')} so federated archive queries avoid full scans.`,
         knowledgeSource: 'archive.md',
       });
       indexes.push({
         keys: { [toCamelCase(dateColumn.name)]: -1 },
         options: { name: `idx_${collectionName}_${toCamelCase(dateColumn.name)}` },
-        reason: 'Active reads and archive sweeps filter on document age.',
+        reason: 'Active reads and archive sweeps filter on a top-level document age field.',
       });
     }
 

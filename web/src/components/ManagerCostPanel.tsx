@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import {
+  buildArchiveCollectionOptions,
   computeManagerCostProjection,
   DEFAULT_MANAGER_COST_INPUTS,
   formatGb,
@@ -49,6 +50,10 @@ export function ManagerCostPanel({
     () => computeManagerCostProjection(model, migrationPlan, inputs),
     [model, migrationPlan, inputs],
   );
+  const archiveOptions = useMemo(
+    () => buildArchiveCollectionOptions(model, migrationPlan, inputs),
+    [model, migrationPlan, inputs],
+  );
 
   const setWorkload = (workloadType: ManagerWorkloadType) => {
     onChange({ ...inputs, workloadType });
@@ -60,6 +65,16 @@ export function ManagerCostPanel({
 
   const setGrowth = (growthRatePercent: number) => {
     onChange({ ...inputs, growthRatePercent: Math.max(0, Math.min(100, growthRatePercent)) });
+  };
+
+  const setArchiveRetention = (collectionName: string, retentionYears: number) => {
+    onChange({
+      ...inputs,
+      collectionRetentionYears: {
+        ...(inputs.collectionRetentionYears ?? {}),
+        [collectionName]: Math.max(0, Math.min(10, Math.round(retentionYears))),
+      },
+    });
   };
 
   if (!model) {
@@ -128,6 +143,55 @@ export function ManagerCostPanel({
             onChange={(e) => setGrowth(Number(e.target.value))}
           />
         </label>
+
+        {archiveOptions.length > 0 ? (
+          <div className="manager-archive-controls">
+            <div>
+              <span className="manager-cost-field__label">Archive pattern by collection</span>
+              <p className="manager-cost-field__note">
+                Retain recent data on the hot Atlas cluster, then route older dated documents to Online Archive.
+              </p>
+            </div>
+            <div className="manager-archive-controls__list">
+              {archiveOptions.map((option) => (
+                <div className="manager-archive-control" key={option.collectionName}>
+                  <label className="manager-archive-control__toggle">
+                    <input
+                      type="checkbox"
+                      checked={option.isEnabled}
+                      onChange={(e) =>
+                        setArchiveRetention(option.collectionName, e.target.checked ? option.retentionYears : 0)
+                      }
+                    />
+                    <span>
+                      <strong>{option.collectionName}</strong>
+                      <small>
+                        {option.isPlanned ? 'Recommended' : 'Available'} · date field {option.timeField}
+                      </small>
+                    </span>
+                  </label>
+                  <label className="manager-archive-control__years">
+                    <span>Hot retention</span>
+                    <input
+                      type="number"
+                      min={1}
+                      max={10}
+                      step={1}
+                      value={option.retentionYears}
+                      disabled={!option.isEnabled}
+                      onChange={(e) => setArchiveRetention(option.collectionName, Number(e.target.value))}
+                    />
+                    <span>years</span>
+                  </label>
+                  <p className="manager-archive-control__hint">
+                    Partition: {option.partitionFields.join(' -> ')}. Use Atlas Data Federation's unified
+                    connection string for hot + archived queries.
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : null}
       </div>
 
       <div className="manager-cost-card">
@@ -150,8 +214,9 @@ export function ManagerCostPanel({
           <div>
             <dt>Dataset size (est.)</dt>
             <dd>
-              {formatGb(projection.rawDataGb)} raw · {formatGb(projection.totalStorageGb)} with BSON + indexes (
-              {projection.indexCount} indexes)
+              {formatGb(projection.rawDataGb)} raw · {formatGb(projection.activeStorageGb)} hot
+              {projection.archiveStorageGb > 0 ? ` · ${formatGb(projection.archiveStorageGb)} archived` : ''} (
+              {projection.indexCount} hot indexes)
             </dd>
           </div>
           <div>
@@ -181,6 +246,15 @@ export function ManagerCostPanel({
             <span>Backup &amp; storage</span>
             <strong>{formatUsd(projection.monthlyBackupUsd)} / mo</strong>
           </div>
+          {projection.archiveCollectionCount > 0 ? (
+            <div className="manager-cost-totals__row">
+              <span>
+                Online Archive ({projection.archiveCollectionCount} collection
+                {projection.archiveCollectionCount === 1 ? '' : 's'})
+              </span>
+              <strong>{formatUsd(projection.monthlyArchiveUsd)} / mo</strong>
+            </div>
+          ) : null}
           <div className="manager-cost-totals__row manager-cost-totals__row--total">
             <span>Projected total Opex</span>
             <strong>{formatUsd(projection.monthlyTotalUsd)} / mo</strong>
@@ -197,6 +271,12 @@ export function ManagerCostPanel({
           <p className="manager-cost-footnote">
             At {projection.growthRatePercent}% YoY growth, projected monthly cost next year:{' '}
             <strong>{formatUsd(projection.projectedMonthlyNextYearUsd)}</strong>.
+          </p>
+        ) : null}
+        {projection.archiveCollectionCount > 0 ? (
+          <p className="manager-cost-footnote">
+            Archive model keeps about <strong>{projection.archiveHotDataPercent}%</strong> of collection bytes hot.
+            Avoid updates at the archive threshold; use TTL indexes instead for logs or sessions that can be deleted.
           </p>
         ) : null}
       </div>

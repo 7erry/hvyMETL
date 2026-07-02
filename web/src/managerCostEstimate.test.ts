@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { MigrationPlan } from './migrationPlanTypes';
 import type { SqlStructuralModel } from './types';
 import {
+  buildArchiveCollectionOptions,
   computeManagerCostProjection,
   DEFAULT_MANAGER_COST_INPUTS,
   estimateColumnBytes,
@@ -26,6 +27,7 @@ const model: SqlStructuralModel = {
       columns: [
         { name: 'id', sqlType: 'BIGINT', bsonType: 'long', nullable: false, isPrimaryKey: true },
         { name: 'body', sqlType: 'TEXT', bsonType: 'string', nullable: false, isPrimaryKey: false },
+        { name: 'published_at', sqlType: 'TIMESTAMP', bsonType: 'date', nullable: false, isPrimaryKey: false },
       ],
       primaryKey: ['id'],
       foreignKeys: [],
@@ -108,5 +110,24 @@ describe('managerCostEstimate', () => {
       estimatedTotalRows: 5_000_000,
     });
     expect(projection.estimatedTotalRows).toBe(5_000_000);
+  });
+
+  it('offers date-bearing collections for archive cost modeling', () => {
+    const options = buildArchiveCollectionOptions(model, plan, DEFAULT_MANAGER_COST_INPUTS);
+    expect(options.map((option) => option.collectionName)).toEqual(['posts']);
+    expect(options[0].timeField).toBe('publishedAt');
+  });
+
+  it('moves older collection bytes into archive storage when retention is enabled', () => {
+    const baseline = computeManagerCostProjection(model, plan, DEFAULT_MANAGER_COST_INPUTS);
+    const archived = computeManagerCostProjection(model, plan, {
+      ...DEFAULT_MANAGER_COST_INPUTS,
+      collectionRetentionYears: { posts: 2 },
+    });
+
+    expect(archived.archiveCollectionCount).toBe(1);
+    expect(archived.archiveStorageGb).toBeGreaterThan(0);
+    expect(archived.activeStorageGb).toBeLessThan(baseline.activeStorageGb);
+    expect(archived.monthlyArchiveUsd).toBeGreaterThan(0);
   });
 });

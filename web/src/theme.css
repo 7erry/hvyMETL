@@ -2863,6 +2863,86 @@ textarea {
   line-height: 1.4;
 }
 
+.app--manager .manager-archive-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  min-width: 0;
+}
+
+.app--manager .manager-archive-controls__list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.app--manager .manager-archive-control {
+  border: 1px solid rgba(0, 104, 74, 0.5);
+  border-radius: 10px;
+  padding: 0.65rem;
+  background: rgba(0, 30, 43, 0.32);
+}
+
+.app--manager .manager-archive-control__toggle,
+.app--manager .manager-archive-control__years {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.app--manager .manager-archive-control__toggle {
+  justify-content: flex-start;
+  font-size: 0.75rem;
+}
+
+.app--manager .manager-archive-control__toggle input {
+  accent-color: var(--mdb-green-base);
+}
+
+.app--manager .manager-archive-control__toggle span {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.app--manager .manager-archive-control__toggle strong {
+  color: var(--mdb-spring-green);
+  overflow-wrap: anywhere;
+}
+
+.app--manager .manager-archive-control__toggle small {
+  opacity: 0.75;
+  line-height: 1.35;
+}
+
+.app--manager .manager-archive-control__years {
+  flex-wrap: wrap;
+  margin-top: 0.55rem;
+  font-size: 0.72rem;
+  opacity: 0.9;
+}
+
+.app--manager .manager-archive-control__years input {
+  width: 4.25rem;
+  min-height: 36px;
+  padding: 0.25rem 0.4rem;
+  border-radius: 8px;
+  border: 1px solid var(--mdb-green-dark-2);
+  background: rgba(0, 30, 43, 0.65);
+  color: inherit;
+}
+
+.app--manager .manager-archive-control__years input:disabled {
+  opacity: 0.45;
+}
+
+.app--manager .manager-archive-control__hint {
+  margin: 0.45rem 0 0;
+  font-size: 0.68rem;
+  line-height: 1.35;
+  opacity: 0.75;
+}
+
 .app--manager .manager-token-panel {
   border-color: rgba(0, 237, 100, 0.35);
 }
