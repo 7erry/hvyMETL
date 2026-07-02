@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { readFileSync, rmSync } from 'node:fs';
+import { readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -36,6 +36,49 @@ describe('csvShaper', () => {
       const parsed = JSON.parse(firstDataRow[embedIndex]);
       expect(Array.isArray(parsed)).toBe(true);
       expect(parsed.length).toBeGreaterThan(0);
+    } finally {
+      rmSync(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  it('matches embedded child rows when mock CSV integer FKs are written as decimals', () => {
+    const tempDir = mkdtempSync(join(tmpdir(), 'hvymetl-shape-decimal-fk-'));
+    try {
+      writeFileSync(join(tempDir, 'locations.csv'), 'location_id\n1\n2\n', 'utf8');
+      writeFileSync(
+        join(tempDir, 'company_assets.csv'),
+        'asset_id,asset_name,location_id\n1,Laptop,1.0\n2,Desk,2.0\n',
+        'utf8',
+      );
+
+      const model = parseDdlToModel(
+        `CREATE TABLE company_assets (
+          asset_id INT PRIMARY KEY,
+          asset_name VARCHAR(100),
+          location_id INT,
+          CONSTRAINT fk_assets_location FOREIGN KEY (location_id) REFERENCES locations(location_id)
+        );`,
+        'ddl:oracle',
+      );
+      for (const relationship of model.relationships) {
+        relationship.maxChildrenPerParent = 5;
+        relationship.avgChildrenPerParent = 3;
+        relationship.isBounded = true;
+        relationship.cardinalitySource = 'developer';
+      }
+      const plan = buildMigrationPlan(model, getProfile('catalog'));
+      const locations = plan.collections.find((collection) => collection.sourceTable === 'locations');
+      expect(locations).toBeDefined();
+
+      const shapedPath = join(tempDir, 'locations-shaped.csv');
+      shapeCollectionCsv(locations!, model, tempDir, shapedPath);
+
+      const rows = parseCsv(readFileSync(shapedPath, 'utf8'));
+      const headers = rows[0];
+      const embedIndex = headers.indexOf('companyAssets[]');
+      expect(embedIndex).toBeGreaterThan(-1);
+      expect(JSON.parse(rows[1][embedIndex])).toHaveLength(1);
+      expect(JSON.parse(rows[2][embedIndex])).toHaveLength(1);
     } finally {
       rmSync(tempDir, { recursive: true, force: true });
     }

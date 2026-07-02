@@ -51,11 +51,17 @@ function findEavColumns(child: TableModel): { keyColumn: string; valueColumn: st
 }
 
 /** Group child CSV rows by the foreign-key column pointing at the parent. */
+function normalizeJoinKey(value: string | undefined): string {
+  const trimmed = (value ?? '').trim();
+  if (/^-?\d+\.0+$/.test(trimmed)) return trimmed.replace(/\.0+$/, '');
+  return trimmed;
+}
+
 function indexChildRows(childRows: Record<string, string>[], joinColumn: string): Map<string, Record<string, string>[]> {
   const byParent = new Map<string, Record<string, string>[]>();
   for (const row of childRows) {
-    const parentKey = row[joinColumn];
-    if (parentKey === undefined || parentKey === '') continue;
+    const parentKey = normalizeJoinKey(row[joinColumn]);
+    if (parentKey === '') continue;
     const bucket = byParent.get(parentKey) ?? [];
     bucket.push(row);
     byParent.set(parentKey, bucket);
@@ -78,7 +84,7 @@ function buildEmbeddedArrayValue(
   childIndex: Map<string, Record<string, string>[]>,
 ): string {
   const parentPk = parentTable.primaryKey[0] ?? parentTable.columns[0]?.name;
-  const parentKey = parentPk ? parentRow[parentPk] : '';
+  const parentKey = normalizeJoinKey(parentPk ? parentRow[parentPk] : '');
   let children = childIndex.get(parentKey) ?? [];
 
   if (isEavTable(child)) {
@@ -137,7 +143,7 @@ export function shapeCollectionCsv(
     const lookupTable = requireTable(model, reference.sourceTable);
     const lookupKey = lookupTable.primaryKey[0] ?? lookupTable.columns[0]?.name ?? 'id';
     const lookupRows = loadTableCsvRows(csvRoot, lookupTable.name);
-    const byKey = new Map(lookupRows.map((row) => [row[lookupKey] ?? '', row]));
+    const byKey = new Map(lookupRows.map((row) => [normalizeJoinKey(row[lookupKey]), row]));
     for (const lookupColumn of reference.lookupColumns) {
       extendedHeaders.push(`${reference.field}.${toCamelCase(lookupColumn)}`);
     }
@@ -175,7 +181,7 @@ export function shapeCollectionCsv(
     }
 
     for (const lookup of lookupIndexes) {
-      const viaValue = parentRow[lookup.reference.viaColumn] ?? '';
+      const viaValue = normalizeJoinKey(parentRow[lookup.reference.viaColumn]);
       const lookupRow = lookup.byKey.get(viaValue);
       for (const lookupColumn of lookup.reference.lookupColumns) {
         values.push(lookupRow?.[lookupColumn] ?? '');
@@ -183,7 +189,7 @@ export function shapeCollectionCsv(
     }
 
     const parentPk = parentTable.primaryKey[0] ?? parentTable.columns[0]?.name;
-    const parentKey = parentPk ? parentRow[parentPk] : '';
+    const parentKey = normalizeJoinKey(parentPk ? parentRow[parentPk] : '');
 
     for (const computed of collection.computedFields) {
       const parsed = parseComputedCountExpression(computed.initialExpression);

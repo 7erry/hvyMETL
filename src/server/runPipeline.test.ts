@@ -5,13 +5,19 @@ import { parseDdlToModel } from '../utilities/ddlParser.js';
 import { InMemoryMigrationStore, resetMigrationStoreSingleton, setMigrationStore } from '../ml_engine/migrationStore.js';
 import { runFullPipeline } from './runPipeline.js';
 
+const mocks = vi.hoisted(() => ({
+  runImportCli: vi.fn(() => ({ ok: true, parsed: { insertedCount: 10 }, status: 0, stdout: '', stderr: '' })),
+  resolveMongoDatabaseNameCasing: vi.fn(async (_uri: string, requestedDbName: string) => requestedDbName),
+}));
+
 vi.mock('../utilities/runImportCli.js', () => ({
-  runImportCli: () => ({ ok: true, parsed: { insertedCount: 10 }, status: 0, stdout: '', stderr: '' }),
+  runImportCli: mocks.runImportCli,
 }));
 
 vi.mock('../utilities/mongoConnectivity.js', () => ({
   verifyMongoUri: async () => ({ ok: true }),
   formatMongoConnectivityFailure: () => 'MongoDB connectivity check failed',
+  resolveMongoDatabaseNameCasing: mocks.resolveMongoDatabaseNameCasing,
 }));
 
 vi.mock('./pipelineConfig.js', async (importOriginal) => {
@@ -51,6 +57,9 @@ describe('runFullPipeline feedback memory', () => {
   let store: InMemoryMigrationStore;
 
   beforeEach(() => {
+    vi.clearAllMocks();
+    mocks.runImportCli.mockReturnValue({ ok: true, parsed: { insertedCount: 10 }, status: 0, stdout: '', stderr: '' });
+    mocks.resolveMongoDatabaseNameCasing.mockImplementation(async (_uri: string, requestedDbName: string) => requestedDbName);
     store = new InMemoryMigrationStore();
     setMigrationStore(store);
     process.env.HVYMETL_ATLAS_STUB_MODE = 'degraded';
@@ -99,5 +108,35 @@ describe('runFullPipeline feedback memory', () => {
 
     const lessons = await waitForLessons(store);
     expect(lessons.length).toBeGreaterThan(0);
+  }, 30_000);
+
+  it('uses existing MongoDB database casing for csvToAtlas imports', async () => {
+    mocks.resolveMongoDatabaseNameCasing.mockResolvedValue('Ass');
+    const ddl = readFileSync(join(ORACLE_ROOT, 'oracle-all.ddl'), 'utf8');
+    const model = parseDdlToModel(ddl, 'ddl:oracle');
+
+    await runFullPipeline({
+      profileId: 'catalog',
+      model,
+      ddl,
+      dialect: 'oracle',
+      csvSourcePath: ORACLE_ROOT,
+      targetDb: 'ASS',
+      mongoUri: 'mongodb://stub-for-validation',
+      csvToAtlasPath: process.env.CSV_TO_ATLAS_PATH,
+      knowledgeDir: join(ROOT, 'knowledge'),
+      rootDir: ROOT,
+      outDir: join(ROOT, 'out', 'ui-pipeline-test'),
+      migrationStore: store,
+    });
+
+    expect(mocks.resolveMongoDatabaseNameCasing).toHaveBeenCalledWith(
+      'mongodb://stub-for-validation',
+      'ASS',
+      { timeoutMs: 12_000 },
+    );
+    expect(mocks.runImportCli).toHaveBeenCalled();
+    const importEnv = mocks.runImportCli.mock.calls[0][3] as NodeJS.ProcessEnv;
+    expect(importEnv.MONGODB_DB).toBe('Ass');
   }, 30_000);
 });

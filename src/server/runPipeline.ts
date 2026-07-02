@@ -24,6 +24,7 @@ import { registerApiArtifacts, serializeApiArtifactBundle } from './apiArtifactS
 import { runImportCli } from '../utilities/runImportCli.js';
 import {
   formatMongoConnectivityFailure,
+  resolveMongoDatabaseNameCasing,
   verifyMongoUri,
 } from '../utilities/mongoConnectivity.js';
 import {
@@ -250,7 +251,10 @@ export async function runFullPipeline(request: PipelineRunRequest): Promise<Pipe
   const csvImportManifest = { csvSource: csvRoot, schemaDialect, collections: csvCollections };
   writeFileSync(manifestPath, `${JSON.stringify(csvImportManifest, null, 2)}\n`);
 
-  const targetDb = request.targetDb ?? importEnv.MONGODB_DB ?? 'csv_to_atlas';
+  const requestedTargetDb = request.targetDb ?? importEnv.MONGODB_DB ?? 'csv_to_atlas';
+  const targetDb = importEnv.MONGODB_URI?.trim()
+    ? await resolveMongoDatabaseNameCasing(importEnv.MONGODB_URI, requestedTargetDb, { timeoutMs: 12_000 })
+    : requestedTargetDb;
   importEnv.MONGODB_DB = targetDb;
   const imports: CollectionImportSummary[] = [];
   const importTotal = csvCollections.length;

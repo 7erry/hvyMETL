@@ -111,3 +111,33 @@ export async function verifyMongoUri(
 export function formatMongoConnectivityFailure(failure: { message: string; hint?: string }): string {
   return `${failure.message}\n${failure.hint ?? ''}`;
 }
+
+/** MongoDB rejects creating a DB whose name only differs by case from an existing DB. */
+export async function resolveMongoDatabaseNameCasing(
+  uri: string,
+  requestedDbName: string,
+  options: { timeoutMs?: number } = {},
+): Promise<string> {
+  const trimmedUri = uri?.trim();
+  const requested = requestedDbName.trim();
+  if (!trimmedUri || !requested) return requested;
+
+  const timeoutMs = options.timeoutMs ?? 10_000;
+  const client = new MongoClient(trimmedUri, {
+    serverSelectionTimeoutMS: timeoutMs,
+    connectTimeoutMS: timeoutMs,
+  });
+
+  try {
+    await client.connect();
+    const databases = await client.db('admin').admin().listDatabases({ nameOnly: true });
+    const existing = databases.databases.find((database) => database.name.toLowerCase() === requested.toLowerCase());
+    return existing?.name ?? requested;
+  } finally {
+    try {
+      await client.close();
+    } catch {
+      // ignore close errors after failed connect
+    }
+  }
+}
