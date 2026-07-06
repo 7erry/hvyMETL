@@ -4,6 +4,7 @@ import {
   computeManagerCostProjection,
   DEFAULT_MANAGER_COST_INPUTS,
   formatGb,
+  formatPersonWeeks,
   formatRowCount,
   formatUsd,
   type ManagerCostInputs,
@@ -225,11 +226,41 @@ export function ManagerCostPanel({
             <strong>{formatUsd(projection.monthlySavingsUsd)}</strong>
           </div>
           <div className="manager-cost-savings__meta">
-            <span>{projection.savingsPercent}% lower than all-hot storage baseline</span>
+            <span>{projection.savingsPercent}% lower than manual migration + all-hot storage baseline</span>
             <span>
               Baseline {formatUsd(projection.baselineMonthlyTotalUsd)} / mo → optimized{' '}
               {formatUsd(projection.monthlyTotalUsd)} / mo
             </span>
+            <span>
+              Includes {formatUsd(projection.monthlyManpowerSavingsUsd)} / mo monthlyized manpower avoided
+              {projection.infrastructureMonthlySavingsUsd > 0
+                ? ` and ${formatUsd(projection.infrastructureMonthlySavingsUsd)} / mo Atlas storage optimization`
+                : ''}
+              .
+            </span>
+          </div>
+        </div>
+
+        <div className="manager-cost-manpower" aria-label="Estimated manpower eliminated">
+          <div className="manager-cost-manpower__primary">
+            <span>Estimated manpower eliminated</span>
+            <strong>{formatPersonWeeks(projection.personWeeksEliminated)}</strong>
+          </div>
+          <p>
+            {projection.manpowerReductionPercent}% less migration labor than a manual redesign, leaving about{' '}
+            <strong>{formatPersonWeeks(projection.hvyMetlAssistedPersonWeeks)}</strong> for architectural review,
+            validation, and cutover execution.
+          </p>
+          <div className="manager-cost-manpower__breakdown" aria-label="Manpower estimate breakdown">
+            {projection.manpowerCategoryBreakdown.map((category) => (
+              <div className="manager-cost-manpower__category" key={category.label}>
+                <div>
+                  <strong>{category.label}</strong>
+                  <span>{category.description}</span>
+                </div>
+                <em>{formatPersonWeeks(category.personWeeksEliminated)}</em>
+              </div>
+            ))}
           </div>
         </div>
 

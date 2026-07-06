@@ -43,6 +43,9 @@ export type ManagerCostProjection = {
   monthlyBackupUsd: number;
   monthlyArchiveUsd: number;
   monthlyTotalUsd: number;
+  baselineInfrastructureMonthlyTotalUsd: number;
+  infrastructureMonthlySavingsUsd: number;
+  monthlyManpowerSavingsUsd: number;
   baselineMonthlyTotalUsd: number;
   monthlySavingsUsd: number;
   savingsPercent: number;
@@ -51,6 +54,17 @@ export type ManagerCostProjection = {
   projectedMonthlyNextYearUsd: number;
   archiveCollectionCount: number;
   archiveHotDataPercent: number;
+  baselineManualPersonWeeks: number;
+  hvyMetlAssistedPersonWeeks: number;
+  personWeeksEliminated: number;
+  manpowerReductionPercent: number;
+  manpowerCategoryBreakdown: ManpowerSavingsCategory[];
+};
+
+export type ManpowerSavingsCategory = {
+  label: string;
+  personWeeksEliminated: number;
+  description: string;
 };
 
 export type ArchiveCollectionOption = {
@@ -98,6 +112,23 @@ const MIN_ARCHIVE_RETENTION_YEARS = 1;
 const MAX_ARCHIVE_RETENTION_YEARS = 10;
 const BYTES_PER_GB = 1024 ** 3;
 const ATLAS_PRODUCTION_MIN_TIER = 'M30';
+const BASELINE_DISCOVERY_WEEKS = 1.5;
+const MANUAL_TABLE_WEEKS = 0.35;
+const MANUAL_RELATIONSHIP_WEEKS = 0.25;
+const MANUAL_COLLECTION_WEEKS = 0.3;
+const MANUAL_COMPLEX_PATTERN_WEEKS = 0.5;
+const MANUAL_DATA_SCALE_WEEKS_PER_TB = 0.4;
+const ASSISTED_REVIEW_RATIO = 0.25;
+const ASSISTED_MINIMUM_WEEKS = 1;
+const FULLY_LOADED_ENGINEER_WEEK_USD = 4_500;
+const MANPOWER_SAVINGS_AMORTIZATION_MONTHS = 12;
+
+const MANPOWER_CATEGORY_DESCRIPTIONS: Record<string, string> = {
+  'Automates Architecture & Design': 'Pattern selection, schema review, relationship analysis, and target model decisions.',
+  'Reduces Prototyping Time': 'Working MongoDB models, indexes, diagrams, and explainable alternatives without hand-built spikes.',
+  'Automates Application Code Rewrites': 'Repository scaffolding, API contracts, validation models, and query rewrite guidance.',
+  'Eliminates Tedious ETL Tasks': 'CSV shaping, mock generation, import orchestration, archive routing, and repeatable pipeline steps.',
+};
 
 const WORKLOAD_PRESETS: Record<
   ManagerWorkloadType,
@@ -288,6 +319,85 @@ function countPlannedIndexes(plan: MigrationPlan | null, model: SqlStructuralMod
   return model.tables.reduce((sum, t) => sum + t.primaryKey.length + t.foreignKeys.length + 1, 0);
 }
 
+function countComplexPatternDecisions(plan: MigrationPlan | null): number {
+  const complexPatterns = new Set(['embed', 'subset', 'bucket', 'archive', 'extended-reference', 'single-collection']);
+  return (plan?.collections ?? []).reduce(
+    (sum, collection) => sum + collection.patterns.filter((pattern) => complexPatterns.has(pattern.pattern)).length,
+    0,
+  );
+}
+
+function estimateManpowerReduction(
+  model: SqlStructuralModel | null,
+  plan: MigrationPlan | null,
+  rawDataGb: number,
+): {
+  baselineManualPersonWeeks: number;
+  hvyMetlAssistedPersonWeeks: number;
+  personWeeksEliminated: number;
+  manpowerReductionPercent: number;
+  manpowerCategoryBreakdown: ManpowerSavingsCategory[];
+} {
+  const tableCount = model?.tables.length ?? 0;
+  const relationshipCount = model?.relationships.length ?? 0;
+  const collectionCount = plan?.collections.length ?? Math.max(1, tableCount);
+  const complexPatternCount = countComplexPatternDecisions(plan);
+  const dataScaleWeeks = (rawDataGb / 1024) * MANUAL_DATA_SCALE_WEEKS_PER_TB;
+  const categoryBaselineWeeks = [
+    {
+      label: 'Automates Architecture & Design',
+      weeks:
+        BASELINE_DISCOVERY_WEEKS +
+        tableCount * (MANUAL_TABLE_WEEKS * 0.35) +
+        relationshipCount * (MANUAL_RELATIONSHIP_WEEKS * 0.6) +
+        complexPatternCount * (MANUAL_COMPLEX_PATTERN_WEEKS * 0.55),
+    },
+    {
+      label: 'Reduces Prototyping Time',
+      weeks:
+        collectionCount * (MANUAL_COLLECTION_WEEKS * 0.45) +
+        relationshipCount * (MANUAL_RELATIONSHIP_WEEKS * 0.2) +
+        complexPatternCount * (MANUAL_COMPLEX_PATTERN_WEEKS * 0.2),
+    },
+    {
+      label: 'Automates Application Code Rewrites',
+      weeks:
+        tableCount * (MANUAL_TABLE_WEEKS * 0.4) +
+        collectionCount * (MANUAL_COLLECTION_WEEKS * 0.35) +
+        relationshipCount * (MANUAL_RELATIONSHIP_WEEKS * 0.2),
+    },
+    {
+      label: 'Eliminates Tedious ETL Tasks',
+      weeks:
+        tableCount * (MANUAL_TABLE_WEEKS * 0.25) +
+        collectionCount * (MANUAL_COLLECTION_WEEKS * 0.2) +
+        complexPatternCount * (MANUAL_COMPLEX_PATTERN_WEEKS * 0.25) +
+        dataScaleWeeks,
+    },
+  ];
+  const baselineManualPersonWeeks = categoryBaselineWeeks.reduce((sum, category) => sum + category.weeks, 0);
+  const hvyMetlAssistedPersonWeeks = Math.max(
+    ASSISTED_MINIMUM_WEEKS,
+    baselineManualPersonWeeks * ASSISTED_REVIEW_RATIO,
+  );
+  const personWeeksEliminated = Math.max(0, baselineManualPersonWeeks - hvyMetlAssistedPersonWeeks);
+  const manpowerReductionPercent =
+    baselineManualPersonWeeks > 0 ? Math.round((personWeeksEliminated / baselineManualPersonWeeks) * 100) : 0;
+  const manpowerCategoryBreakdown = categoryBaselineWeeks.map((category) => ({
+    label: category.label,
+    personWeeksEliminated:
+      baselineManualPersonWeeks > 0 ? personWeeksEliminated * (category.weeks / baselineManualPersonWeeks) : 0,
+    description: MANPOWER_CATEGORY_DESCRIPTIONS[category.label] ?? '',
+  }));
+  return {
+    baselineManualPersonWeeks,
+    hvyMetlAssistedPersonWeeks,
+    personWeeksEliminated,
+    manpowerReductionPercent,
+    manpowerCategoryBreakdown,
+  };
+}
+
 function wiredTigerCacheGb(tier: AtlasTierSpec): number {
   return tier.ramGb * (tier.ramGb <= 8 ? 0.25 : 0.5);
 }
@@ -363,6 +473,7 @@ export function computeManagerCostProjection(
   const archiveStorageGb = archiveStorageBytes / (1024 ** 3);
   const totalStorageGb = activeStorageGb + archiveStorageGb;
   const rawDataGb = rawBytes / BYTES_PER_GB;
+  const manpower = estimateManpowerReduction(model, plan, rawDataGb);
 
   const requiredWorkingSetGb = atlasWorkingSetRequirementGb(activeStorageGb, preset.ramRatio);
   const recommendedTier = selectAtlasTier(requiredWorkingSetGb, activeStorageGb);
@@ -381,8 +492,12 @@ export function computeManagerCostProjection(
   const baselineHotStorageGb = baselineHotStorageBytes / BYTES_PER_GB;
   const baselineRequiredWorkingSetGb = atlasWorkingSetRequirementGb(baselineHotStorageGb, preset.ramRatio);
   const baselineTier = selectAtlasTier(baselineRequiredWorkingSetGb, baselineHotStorageGb);
-  const baselineMonthlyTotalUsd = baselineTier.monthlyUsd + baselineHotStorageGb * BACKUP_USD_PER_GB;
-  const monthlySavingsUsd = Math.max(0, baselineMonthlyTotalUsd - monthlyTotalUsd);
+  const baselineInfrastructureMonthlyTotalUsd = baselineTier.monthlyUsd + baselineHotStorageGb * BACKUP_USD_PER_GB;
+  const infrastructureMonthlySavingsUsd = Math.max(0, baselineInfrastructureMonthlyTotalUsd - monthlyTotalUsd);
+  const monthlyManpowerSavingsUsd =
+    (manpower.personWeeksEliminated * FULLY_LOADED_ENGINEER_WEEK_USD) / MANPOWER_SAVINGS_AMORTIZATION_MONTHS;
+  const baselineMonthlyTotalUsd = baselineInfrastructureMonthlyTotalUsd + monthlyManpowerSavingsUsd;
+  const monthlySavingsUsd = infrastructureMonthlySavingsUsd + monthlyManpowerSavingsUsd;
   const savingsPercent =
     baselineMonthlyTotalUsd > 0 && monthlySavingsUsd > 0
       ? Math.max(0.1, Math.round((monthlySavingsUsd / baselineMonthlyTotalUsd) * 1000) / 10)
@@ -411,6 +526,9 @@ export function computeManagerCostProjection(
     monthlyBackupUsd,
     monthlyArchiveUsd,
     monthlyTotalUsd,
+    baselineInfrastructureMonthlyTotalUsd,
+    infrastructureMonthlySavingsUsd,
+    monthlyManpowerSavingsUsd,
     baselineMonthlyTotalUsd,
     monthlySavingsUsd,
     savingsPercent,
@@ -419,6 +537,7 @@ export function computeManagerCostProjection(
     projectedMonthlyNextYearUsd,
     archiveCollectionCount,
     archiveHotDataPercent,
+    ...manpower,
   };
 }
 
@@ -437,4 +556,9 @@ export function formatGb(gb: number): string {
   if (gb >= 100) return `${gb.toFixed(0)} GB`;
   if (gb >= 10) return `${gb.toFixed(1)} GB`;
   return `${gb.toFixed(2)} GB`;
+}
+
+export function formatPersonWeeks(weeks: number): string {
+  if (weeks >= 52) return `${(weeks / 52).toFixed(weeks % 52 === 0 ? 0 : 1)} engineer-years`;
+  return `${weeks.toFixed(1)} person-weeks`;
 }

@@ -3214,6 +3214,89 @@ textarea {
   opacity: 0.9;
 }
 
+.app--manager .manager-cost-manpower {
+  display: grid;
+  gap: 0.35rem;
+  margin: 0 0 0.8rem;
+  padding: 0.75rem;
+  border: 1px solid rgba(1, 107, 248, 0.35);
+  border-radius: 12px;
+  background:
+    radial-gradient(circle at top left, rgba(1, 107, 248, 0.18), transparent 56%),
+    rgba(0, 30, 43, 0.56);
+}
+
+.app--manager .manager-cost-manpower__primary {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.app--manager .manager-cost-manpower__primary span {
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  opacity: 0.82;
+}
+
+.app--manager .manager-cost-manpower__primary strong {
+  color: var(--mdb-blue-base);
+  font-size: clamp(1.45rem, 5vw, 2.15rem);
+  line-height: 1;
+  letter-spacing: -0.04em;
+}
+
+.app--manager .manager-cost-manpower p {
+  margin: 0;
+  font-size: 0.74rem;
+  line-height: 1.4;
+  opacity: 0.9;
+}
+
+.app--manager .manager-cost-manpower__breakdown {
+  display: grid;
+  gap: 0.45rem;
+  margin-top: 0.25rem;
+}
+
+.app--manager .manager-cost-manpower__category {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.6rem;
+  align-items: start;
+  padding: 0.55rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 9px;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.app--manager .manager-cost-manpower__category div {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.app--manager .manager-cost-manpower__category strong {
+  font-size: 0.74rem;
+  line-height: 1.25;
+}
+
+.app--manager .manager-cost-manpower__category span {
+  font-size: 0.68rem;
+  line-height: 1.35;
+  opacity: 0.72;
+}
+
+.app--manager .manager-cost-manpower__category em {
+  color: var(--mdb-blue-light-2);
+  font-size: 0.72rem;
+  font-style: normal;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
 .app--manager .manager-cost-card__metrics {
   margin: 0 0 0.65rem;
 }

@@ -6,6 +6,7 @@ import {
   computeManagerCostProjection,
   DEFAULT_MANAGER_COST_INPUTS,
   estimateColumnBytes,
+  formatPersonWeeks,
   selectAtlasTier,
 } from './managerCostEstimate';
 
@@ -92,6 +93,26 @@ describe('managerCostEstimate', () => {
     expect(projection.workloadLabel).toContain('Read-heavy');
   });
 
+  it('estimates migration manpower eliminated by hvyMETL assistance', () => {
+    const projection = computeManagerCostProjection(model, plan, DEFAULT_MANAGER_COST_INPUTS);
+    const categoryTotal = projection.manpowerCategoryBreakdown.reduce(
+      (sum, category) => sum + category.personWeeksEliminated,
+      0,
+    );
+
+    expect(projection.baselineManualPersonWeeks).toBeGreaterThan(projection.hvyMetlAssistedPersonWeeks);
+    expect(projection.personWeeksEliminated).toBeGreaterThan(0);
+    expect(projection.manpowerReductionPercent).toBeGreaterThanOrEqual(50);
+    expect(projection.manpowerCategoryBreakdown.map((category) => category.label)).toEqual([
+      'Automates Architecture & Design',
+      'Reduces Prototyping Time',
+      'Automates Application Code Rewrites',
+      'Eliminates Tedious ETL Tasks',
+    ]);
+    expect(categoryTotal).toBeCloseTo(projection.personWeeksEliminated, 5);
+    expect(formatPersonWeeks(projection.personWeeksEliminated)).toContain('person-weeks');
+  });
+
   it('uses user row estimate when schema has no row stats', () => {
     const noStats: SqlStructuralModel = {
       source: 'test',
@@ -127,7 +148,21 @@ describe('managerCostEstimate', () => {
     expect(projection.archiveCollectionCount).toBe(1);
     expect(projection.archiveStorageGb).toBeGreaterThan(0);
     expect(projection.baselineMonthlyTotalUsd).toBeGreaterThan(projection.monthlyTotalUsd);
+    expect(projection.monthlyManpowerSavingsUsd).toBeGreaterThan(0);
     expect(projection.monthlySavingsUsd).toBeGreaterThan(0);
+    expect(projection.savingsPercent).toBeGreaterThan(0);
+  });
+
+  it('keeps estimated monthly savings non-zero when only manpower savings apply', () => {
+    const projection = computeManagerCostProjection(model, plan, {
+      ...DEFAULT_MANAGER_COST_INPUTS,
+      collectionRetentionYears: { posts: 0 },
+    });
+
+    expect(projection.archiveCollectionCount).toBe(0);
+    expect(projection.infrastructureMonthlySavingsUsd).toBe(0);
+    expect(projection.monthlyManpowerSavingsUsd).toBeGreaterThan(0);
+    expect(projection.monthlySavingsUsd).toBe(projection.monthlyManpowerSavingsUsd);
     expect(projection.savingsPercent).toBeGreaterThan(0);
   });
 
