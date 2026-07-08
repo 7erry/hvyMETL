@@ -9,6 +9,8 @@ every schema decision in a retrievable knowledge base of MongoDB design patterns
 your workload telemetry (read:write ratio, peak RPM, data growth), then runs a
 parallel, pattern-aware ETL into MongoDB Atlas.
 
+**Release:** `1.0.0`
+
 An optional **ML engine** (`src/ml_engine/`) adds telemetry-aware reranking
 ([Voyage rerank-2.5](https://docs.voyageai.com/reference/reranker-api) when
 `MONGODB_MODEL_KEY` is set), a predictive performance critic before ETL handoff, and
@@ -159,6 +161,11 @@ templates (Laravel, Django, Twitter, …), and **Run Full Pipeline** — ML-enha
 design, CSV shaping with embedded arrays, csvToAtlas import, and automatic
 persistence of each run to MongoDB (`hvymetl_pipeline_executions`). The CLI
 remains fully available.
+
+Developer **Embed Overrides** let teams provide DDL-only design intent before CSV or
+live stats are available: enter max child cardinality for FK relationships or
+explicitly force linked tables to embed into one collection. The same override map is
+honored by design, explain, export, and full pipeline APIs.
 
 ```bash
 npm run dev:ui      # http://localhost:3847 (API + Vite hot reload)

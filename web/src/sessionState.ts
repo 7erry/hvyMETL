@@ -1,5 +1,5 @@
 import type { SqlStructuralModel } from './types';
-import type { CardinalityOverrides } from './cardinalityOverrides';
+import type { CardinalityOverrides, ForceEmbedOverrides } from './cardinalityOverrides';
 import type { RelationshipConnectionType, RelationshipNotation } from './relationshipDisplay';
 import type { CustomProfileInput, WorkloadProfile } from './customProfileShared';
 import { DEFAULT_MANAGER_COST_INPUTS, type ManagerCostInputs } from './managerCostEstimate';
@@ -94,6 +94,7 @@ export type SessionState = {
   managerReviewAcceptances: ManagerReviewAcceptances | null;
   managerCostInputs: ManagerCostInputs;
   cardinalityOverrides: CardinalityOverrides;
+  forceEmbedOverrides: ForceEmbedOverrides;
 };
 
 export const defaultSessionState = (): SessionState => ({
@@ -120,6 +121,7 @@ export const defaultSessionState = (): SessionState => ({
   managerReviewAcceptances: null,
   managerCostInputs: { ...DEFAULT_MANAGER_COST_INPUTS },
   cardinalityOverrides: {},
+  forceEmbedOverrides: {},
 });
 
 export function loadSessionState(): SessionState {

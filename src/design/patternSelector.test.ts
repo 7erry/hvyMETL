@@ -137,6 +137,43 @@ describe('buildMigrationPlan', () => {
     );
   });
 
+  it('uses explicit force-embed override to fold linked tables without max cardinality', () => {
+    const model: SqlStructuralModel = {
+      source: 'ddl:oracle',
+      tables: [
+        table({ name: 'locations', rowCount: 0 }),
+        table({
+          name: 'company_assets',
+          rowCount: 0,
+          primaryKey: ['asset_id'],
+          foreignKeys: [{ column: 'location_id', referencesTable: 'locations', referencesColumn: 'location_id' }],
+        }),
+      ],
+      relationships: [
+        relationship({
+          parentTable: 'locations',
+          childTable: 'company_assets',
+          fkColumn: 'location_id',
+          avgChildrenPerParent: 0,
+          maxChildrenPerParent: 0,
+          isBounded: false,
+          forceEmbed: true,
+        }),
+      ],
+    };
+
+    const plan = buildMigrationPlan(model, WORKLOAD_PROFILES.ledger);
+    const locations = plan.collections.find((collection) => collection.sourceTable === 'locations');
+
+    expect(locations?.embeddedArrays).toContainEqual(
+      expect.objectContaining({ sourceTable: 'company_assets', joinColumn: 'location_id' }),
+    );
+    expect(locations?.patterns.find((decision) => decision.pattern === 'embed')?.reason).toContain(
+      'Developer forced company_assets',
+    );
+    expect(plan.collections.some((collection) => collection.sourceTable === 'company_assets')).toBe(false);
+  });
+
   it('uses developer max cardinality 5000 as the bounded embed limit', () => {
     const model: SqlStructuralModel = {
       source: 'ddl:oracle',

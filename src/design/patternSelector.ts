@@ -549,6 +549,26 @@ function planChildRelationships(
       continue;
     }
 
+    const skewed = isOutlierSkewed(relationship);
+
+    if (relationship.forceEmbed === true) {
+      const field = toCamelCase(childTable.name);
+      embeddedArrays.push({ field, sourceTable: childTable.name, joinColumn: relationship.fkColumn });
+      properties[field] = {
+        bsonType: 'array',
+        items: { bsonType: 'object' },
+        description: `Embedded ${childTable.name} because the developer explicitly forced this linked relationship.`,
+      };
+      patterns.push({
+        pattern: 'embed',
+        target: `${table.name}.${field}`,
+        reason: `Developer forced ${childTable.name} to embed into ${table.name} through FK ${relationship.fkColumn}; this override intentionally bypasses the default workload/cardinality heuristic for linked tables.`,
+        knowledgeSource: 'embed-vs-reference.md',
+      });
+      absorbedTables.add(childTable.name);
+      continue;
+    }
+
     // Rule 3: timestamped firehose children on bucket-friendly workloads
     // become their own bucketed collection (handled when the child table is
     // planned); the parent just gets a computed counter.
@@ -562,7 +582,6 @@ function planChildRelationships(
       continue;
     }
 
-    const skewed = isOutlierSkewed(relationship);
     const developerForcedBoundedEmbed =
       relationship.cardinalitySource === 'developer' &&
       relationship.maxChildrenPerParent > 0 &&

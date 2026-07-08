@@ -23,6 +23,7 @@ type PipelinePanelProps = {
   ddl: string;
   profileFields: ProfileRequestFields;
   cardinalityOverrides?: Record<string, number>;
+  forceEmbedOverrides?: Record<string, boolean>;
   dialect: string;
   dialectLabel: string;
   csvSourcePath: string | null;
@@ -51,6 +52,7 @@ export function PipelinePanel({
   ddl,
   profileFields,
   cardinalityOverrides,
+  forceEmbedOverrides,
   dialect,
   dialectLabel,
   csvSourcePath,
@@ -268,6 +270,7 @@ export function PipelinePanel({
         model,
         ddl,
         cardinalityOverrides,
+        forceEmbedOverrides,
         dialect,
         targetDb: form.targetDb.trim() || undefined,
         drop: form.drop,

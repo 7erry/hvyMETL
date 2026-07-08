@@ -49,6 +49,7 @@ export type PipelineRunRequest = {
   dialect?: string;
   csvSourcePath?: string;
   cardinalityOverrides?: Record<string, number>;
+  forceEmbedOverrides?: Record<string, boolean>;
   targetDb?: string;
   outDir?: string;
   drop?: boolean;
@@ -104,19 +105,34 @@ function relationshipOverrideKey(relationship: SqlStructuralModel['relationships
 function applyCardinalityOverrides(
   model: SqlStructuralModel,
   overrides?: Record<string, number>,
+  forceEmbedOverrides?: Record<string, boolean>,
 ): SqlStructuralModel {
-  if (!overrides || Object.keys(overrides).length === 0) return model;
+  if (
+    (!overrides || Object.keys(overrides).length === 0) &&
+    (!forceEmbedOverrides || Object.keys(forceEmbedOverrides).length === 0)
+  ) {
+    return model;
+  }
   return {
     ...model,
     relationships: model.relationships.map((relationship) => {
-      const maxChildrenPerParent = overrides[relationshipOverrideKey(relationship)];
-      if (!Number.isFinite(maxChildrenPerParent) || maxChildrenPerParent <= 0) return relationship;
+      const key = relationshipOverrideKey(relationship);
+      const maxChildrenPerParent = overrides?.[key];
+      const hasMaxOverride =
+        typeof maxChildrenPerParent === 'number' && Number.isFinite(maxChildrenPerParent) && maxChildrenPerParent > 0;
+      const forceEmbed = forceEmbedOverrides?.[key] === true;
+      if (!forceEmbed && !hasMaxOverride) return relationship;
       return {
         ...relationship,
-        avgChildrenPerParent: Math.max(1, Math.ceil(maxChildrenPerParent / 2)),
-        maxChildrenPerParent,
-        isBounded: maxChildrenPerParent <= 5000,
-        cardinalitySource: 'developer' as const,
+        ...(hasMaxOverride
+          ? {
+              avgChildrenPerParent: Math.max(1, Math.ceil(maxChildrenPerParent / 2)),
+              maxChildrenPerParent,
+              isBounded: maxChildrenPerParent <= 5000,
+              cardinalitySource: 'developer' as const,
+            }
+          : {}),
+        forceEmbed,
       };
     }),
   };
@@ -193,6 +209,7 @@ export async function runFullPipeline(request: PipelineRunRequest): Promise<Pipe
   const enrichedModel = applyCardinalityOverrides(
     enrichModelFromCsv(modelForDesign, csvRoot),
     request.cardinalityOverrides,
+    request.forceEmbedOverrides,
   );
 
   const memoryDb = resolveMemoryDbName(importEnv);

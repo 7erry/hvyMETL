@@ -55,6 +55,7 @@ Orchestrates introspect → retrieve → plan → write, and always closes the a
 | Timestamped child ≥ 10,000 rows | write-heavy or profile prefers bucket | **Bucket** collection + parent Computed counter | `bucket.md` |
 | Child is a "hub" (other tables reference it) | always | reference (never embedded) | `embed-vs-reference.md` |
 | Child has multiple parents | non-primary parent | reference + Computed counter | `embed-vs-reference.md` |
+| Developer force-embed override | explicit UI/API override on a linked FK | full **embed** for that relationship | `embed-vs-reference.md` |
 | Bounded child from measured stats (max ≤ 100/parent) | reads ≥ 70% | full **embed** (child collection dropped) | `embed-vs-reference.md` |
 | Developer cardinality override (max 1–5000/parent) | explicit UI/API override | full **embed** for that relationship | `embed-vs-reference.md` |
 | Unbounded or skewed child | reads ≥ 70% | **Subset** (newest 10) + overflow collection | `subset.md` |
@@ -85,11 +86,13 @@ Internal: `src/adapters/sqlite.ts`, `src/rag/*` (for the report's cited context)
 - **The 16MB guard.** No rule can produce an unbounded embedded array: unbounded
   children either become Subset (hard-capped at 10), a Bucket collection
   (window-bounded), or a reference. This is the "Avoid the Monolith" constraint.
-- **Developer override guard.** Migration Studio can send `cardinalityOverrides` for
-  DDL-only relationships when CSV/live stats are unavailable. Overrides with max
-  `1-5000` are treated as explicit bounded developer intent and can force a full
-  embed for that relationship; values above `5000` remain unbounded. CSV and SQLite
-  introspection remain preferred because they measure actual fan-out.
+- **Developer override guard.** Migration Studio can send `cardinalityOverrides` and
+  `forceEmbedOverrides` for DDL-only relationships when CSV/live stats are
+  unavailable. Cardinality overrides with max `1-5000` are treated as explicit
+  bounded developer intent and can force a full embed for that relationship; values
+  above `5000` remain unbounded. Force-embed overrides fold only schema-linked FK
+  child tables into their parent collection. CSV and SQLite introspection remain
+  preferred because they measure actual fan-out.
 - **Double-embedding prevention.** A child with two required parents (e.g.
   `affinities` → `profiles` *and* `items`) embeds only under its primary parent
   (first FK); other parents get a counter — the same rows are never duplicated into

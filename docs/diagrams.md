@@ -191,6 +191,7 @@ flowchart TD
 
     CHILD -->|hub table referenced elsewhere| REF1[Reference only]
     CHILD -->|multiple parents| REF2[Reference + Computed counter]
+    CHILD -->|developer force embed<br/>on linked FK| EMBED
     CHILD -->|measured bounded max ≤100/parent<br/>+ read-heavy| EMBED[Full embed<br/>drop child collection]
     CHILD -->|developer override max 1-5000/parent| EMBED
     CHILD -->|unbounded + skew<br/>+ read-heavy| SUBSET[Subset cap 10<br/>+ overflow collection]

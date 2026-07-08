@@ -171,6 +171,7 @@ app.post('/api/design', async (req, res) => {
       knowledgeDir: KNOWLEDGE_DIR,
       csvSourcePath: req.body?.csvSourcePath as string | undefined,
       cardinalityOverrides: req.body?.cardinalityOverrides as Record<string, number> | undefined,
+      forceEmbedOverrides: req.body?.forceEmbedOverrides as Record<string, boolean> | undefined,
       dialect: req.body?.dialect as string | undefined,
     });
     const outDir = join(ROOT, 'out', 'ui-design');
@@ -221,6 +222,9 @@ app.post('/api/design/with-csv', (req, res) => {
         cardinalityOverrides: req.body?.cardinalityOverrides
           ? JSON.parse(String(req.body.cardinalityOverrides)) as Record<string, number>
           : undefined,
+        forceEmbedOverrides: req.body?.forceEmbedOverrides
+          ? JSON.parse(String(req.body.forceEmbedOverrides)) as Record<string, boolean>
+          : undefined,
         dialect: req.body?.dialect as string | undefined,
       });
       const outDir = join(ROOT, 'out', 'ui-design');
@@ -253,6 +257,7 @@ app.post('/api/design/explain', (req, res) => {
         knowledgeDir: KNOWLEDGE_DIR,
         csvSourcePath: req.body?.csvSourcePath as string | undefined,
         cardinalityOverrides: req.body?.cardinalityOverrides as Record<string, number> | undefined,
+        forceEmbedOverrides: req.body?.forceEmbedOverrides as Record<string, boolean> | undefined,
         dialect: req.body?.dialect as string | undefined,
       },
       plan,
@@ -280,6 +285,7 @@ app.post('/api/export/migration', async (req, res) => {
       knowledgeDir: KNOWLEDGE_DIR,
       csvSourcePath: req.body?.csvSourcePath as string | undefined,
       cardinalityOverrides: req.body?.cardinalityOverrides as Record<string, number> | undefined,
+      forceEmbedOverrides: req.body?.forceEmbedOverrides as Record<string, boolean> | undefined,
       dialect: req.body?.dialect as string | undefined,
     });
     const outDir = join(ROOT, 'out', 'ui-export');
@@ -473,6 +479,7 @@ app.post('/api/pipeline/run', async (req, res) => {
       dialect: req.body?.dialect as string | undefined,
       csvSourcePath: req.body?.csvSourcePath as string | undefined,
       cardinalityOverrides: req.body?.cardinalityOverrides as Record<string, number> | undefined,
+      forceEmbedOverrides: req.body?.forceEmbedOverrides as Record<string, boolean> | undefined,
       generateMockCsv: Boolean(req.body?.generateMockCsv),
       mockCsvOptions: req.body?.mockCsvOptions as import('../utilities/mockCsvFromDdl.js').MockCsvOptions | undefined,
       targetDb: req.body?.targetDb as string | undefined,
@@ -544,6 +551,9 @@ app.post('/api/pipeline/run-with-csv', (req, res) => {
         csvSourcePath: batchDir,
         cardinalityOverrides: req.body?.cardinalityOverrides
           ? JSON.parse(String(req.body.cardinalityOverrides)) as Record<string, number>
+          : undefined,
+        forceEmbedOverrides: req.body?.forceEmbedOverrides
+          ? JSON.parse(String(req.body.forceEmbedOverrides)) as Record<string, boolean>
           : undefined,
         generateMockCsv: req.body?.generateMockCsv === 'true' || req.body?.generateMockCsv === true,
         mockCsvOptions: req.body?.mockCsvOptions

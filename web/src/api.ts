@@ -140,6 +140,7 @@ export type PipelineRunRequest = ProfileRequestFields & {
   dialect?: string;
   csvSourcePath?: string;
   cardinalityOverrides?: Record<string, number>;
+  forceEmbedOverrides?: Record<string, boolean>;
   generateMockCsv?: boolean;
   mockCsvOptions?: MockCsvOptions;
   targetDb?: string;
@@ -242,6 +243,8 @@ export async function runPipelineWithCsv(
   if (request.drop === false) body.append('drop', 'false');
   if (request.mongoUri) body.append('mongoUri', request.mongoUri);
   if (request.csvToAtlasPath) body.append('csvToAtlasPath', request.csvToAtlasPath);
+  if (request.cardinalityOverrides) body.append('cardinalityOverrides', JSON.stringify(request.cardinalityOverrides));
+  if (request.forceEmbedOverrides) body.append('forceEmbedOverrides', JSON.stringify(request.forceEmbedOverrides));
   if (request.generateMockCsv) body.append('generateMockCsv', 'true');
   if (request.mockCsvOptions) body.append('mockCsvOptions', JSON.stringify(request.mockCsvOptions));
   if (onProgress) body.append('stream', 'true');
@@ -326,6 +329,7 @@ export type ExplainDesignRequest = ProfileRequestFields & {
   dialect?: string;
   csvSourcePath?: string;
   cardinalityOverrides?: Record<string, number>;
+  forceEmbedOverrides?: Record<string, boolean>;
   plan?: unknown;
 };
 
@@ -373,6 +377,7 @@ export type DesignRequest = ProfileRequestFields & {
   dialect?: string;
   csvSourcePath?: string;
   cardinalityOverrides?: Record<string, number>;
+  forceEmbedOverrides?: Record<string, boolean>;
 };
 
 export async function runDesign(request: DesignRequest): Promise<DesignResult> {
@@ -394,6 +399,7 @@ export async function runDesignWithCsv(files: File[], request: DesignRequest): P
   body.append('ddl', request.ddl);
   if (request.dialect) body.append('dialect', request.dialect);
   if (request.cardinalityOverrides) body.append('cardinalityOverrides', JSON.stringify(request.cardinalityOverrides));
+  if (request.forceEmbedOverrides) body.append('forceEmbedOverrides', JSON.stringify(request.forceEmbedOverrides));
 
   const res = await fetch(`${base}/api/design/with-csv`, { method: 'POST', body });
   const data = await res.json();
@@ -405,7 +411,12 @@ export async function exportMigration(
   model: SqlStructuralModel,
   profile: ProfileRequestFields,
   ddl: string,
-  options?: { csvSourcePath?: string; dialect?: string; cardinalityOverrides?: Record<string, number> },
+  options?: {
+    csvSourcePath?: string;
+    dialect?: string;
+    cardinalityOverrides?: Record<string, number>;
+    forceEmbedOverrides?: Record<string, boolean>;
+  },
 ) {
   const res = await fetch(`${base}/api/export/migration`, {
     method: 'POST',

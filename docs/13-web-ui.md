@@ -42,7 +42,7 @@ exports, same as CLI).
 | --- | --- | --- |
 | **Instant Schema Import** | Sidebar → paste DDL → Import Query, or **Import file** (DDL auto-imports on select) | `POST /api/schema/import-ddl` |
 | **Broad Database Support** | Dialect selector (PostgreSQL, MySQL, SQLite, MSSQL, ClickHouse, Oracle, IBM Db2, CockroachDB, Amazon Aurora, Google Cloud Spanner) | DDL parser; SQLite file upload live |
-| **Cardinality Overrides** | Before view → **Cardinality Overrides** → enter max child rows per parent for FK relationships when CSV/live stats are unavailable | `cardinalityOverrides` applied by design, explain, export, and pipeline APIs |
+| **Embed Overrides** | Before view → **Embed Overrides** → enter max child rows per parent and/or check **Force embed** for linked FK relationships when CSV/live stats are unavailable | `cardinalityOverrides` and `forceEmbedOverrides` applied by design, explain, export, and pipeline APIs |
 | **Customizable ER Diagrams** | Main canvas (drag tables, zoom, minimap) | React Flow + `SqlStructuralModel` |
 | **Sharing** | Export / Import diagram JSON | Client-side + full model in file |
 | **Duplicate table** | Canvas header ⧉ or sidebar list | `duplicateTableInModel` |
@@ -72,13 +72,13 @@ All six pipeline steps (Knowledge + RAG, profiles, design, ETL, import, codegen)
 | `GET` | `/api/templates` | — | Template DDL + parsed model |
 | `POST` | `/api/schema/import-ddl` | `{ ddl, dialect }` | `{ model }` |
 | `POST` | `/api/schema/import-sqlite` | `multipart database` | `{ model, ddl, sourcePath }` |
-| `POST` | `/api/design` | `{ model, profileId, ddl, cardinalityOverrides? }` | `{ plan, designReport, retrievalStrategy }` |
-| `POST` | `/api/export/migration` | `{ model, profileId, ddl, cardinalityOverrides? }` | Downloads: plan JSON, design report, RAG prompts |
+| `POST` | `/api/design` | `{ model, profileId, ddl, cardinalityOverrides?, forceEmbedOverrides? }` | `{ plan, designReport, retrievalStrategy }` |
+| `POST` | `/api/export/migration` | `{ model, profileId, ddl, cardinalityOverrides?, forceEmbedOverrides? }` | Downloads: plan JSON, design report, RAG prompts |
 | `POST` | `/api/export/prompts` | `{ ddl, profileId }` | RAG prompt bundle |
 | `GET` | `/api/repogen/languages` | — | Supported client languages (`node`, `python`, `go`, `java`, …) |
 | `POST` | `/api/repogen/generate` | `{ planJson, language }` | Typed repositories for the chosen driver |
 | `GET` | `/api/pipeline/config` | — | Non-secret pipeline status (Mongo URI, csvToAtlas, source DB) |
-| `POST` | `/api/pipeline/run` | `{ model, profileId, ddl, dialect?, csvSourcePath?, cardinalityOverrides?, mongoUri?, csvToAtlasPath?, targetDb?, drop? }` | ML design + csvToAtlas import + MongoDB execution record |
+| `POST` | `/api/pipeline/run` | `{ model, profileId, ddl, dialect?, csvSourcePath?, cardinalityOverrides?, forceEmbedOverrides?, mongoUri?, csvToAtlasPath?, targetDb?, drop? }` | ML design + csvToAtlas import + MongoDB execution record |
 | `POST` | `/api/pipeline/run-with-csv` | `multipart csvs` + form fields | Same as run, with uploaded CSV files |
 | `GET` | `/api/pipeline/executions?limit=20` | — | Recent pipeline runs from `hvymetl_pipeline_executions` |
 | `GET` | `/api/pipeline/executions/:executionId` | — | One run (includes migration plan, design report, csv manifest) |
@@ -112,12 +112,12 @@ The dialect selector sets the `source` label on the structural model (e.g.
 across dialects with targeted handling for qualified names, quoted FK targets, and
 Spanner-style primary keys.
 
-### Developer cardinality overrides
+### Developer embed overrides
 
 DDL-only imports do not know row counts or relationship fan-out, so every relationship
 starts with `maxChildrenPerParent: 0` and `isBounded: false`. If a developer already
-knows a relationship is bounded, use **Before → Cardinality Overrides** to enter a max
-child count for that FK, for example:
+knows a relationship is bounded, use **Before → Embed Overrides** to enter a max child
+count for that FK, for example:
 
 ```text
 locations -> company_assets (location_id) = 5
@@ -134,9 +134,25 @@ The UI sends this as a `cardinalityOverrides` object keyed by
 
 Values from `1` through `5000` are treated as bounded developer intent and can force
 full embedding for that relationship. Values above `5000` remain unbounded, so design
-falls back to subset/reference behavior. Changing overrides clears the old migration
-plan and returns to the Before view so the next **Refresh design** run cannot reuse a
-stale After-view result.
+falls back to subset/reference behavior.
+
+If the developer wants a linked child table folded into the parent collection without
+providing a max cardinality, check **Force embed** for that FK. The UI sends a
+`forceEmbedOverrides` object using the same `parent::child::fkColumn` key:
+
+```json
+{
+  "locations::company_assets::location_id": true,
+  "employees::user_accounts::employee_id": true
+}
+```
+
+Force embed intentionally bypasses normal workload/cardinality heuristics for that
+linked relationship and drops the standalone child collection. It is scoped to FK
+relationships discovered in the schema; unrelated tables cannot be forced into one
+collection through this control. Changing overrides clears the old migration plan and
+returns to the Before view so the next **Refresh design** run cannot reuse a stale
+After-view result.
 
 Overrides are honored by `/api/design`, `/api/design/with-csv`, `/api/design/explain`,
 `/api/export/migration`, and the full pipeline. CSV exports or SQLite introspection

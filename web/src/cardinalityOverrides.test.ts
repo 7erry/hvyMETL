@@ -2,8 +2,10 @@ import { describe, expect, it } from 'vitest';
 import {
   applyCardinalityOverrides,
   pruneCardinalityOverrides,
+  pruneForceEmbedOverrides,
   relationshipOverrideKey,
   type CardinalityOverrides,
+  type ForceEmbedOverrides,
 } from './cardinalityOverrides';
 import type { SqlStructuralModel } from './types';
 
@@ -44,6 +46,17 @@ describe('cardinalityOverrides', () => {
     });
   });
 
+  it('applies a force-embed developer override without cardinality stats', () => {
+    const key = relationshipOverrideKey(model.relationships[0]);
+    const adjusted = applyCardinalityOverrides(model, {}, { [key]: true });
+
+    expect(adjusted.relationships[0]).toMatchObject({
+      maxChildrenPerParent: 0,
+      isBounded: false,
+      forceEmbed: true,
+    });
+  });
+
   it('treats developer max cardinality up to 5000 as bounded', () => {
     const key = relationshipOverrideKey(model.relationships[0]);
     const adjusted = applyCardinalityOverrides(model, { [key]: 500 });
@@ -73,5 +86,12 @@ describe('cardinalityOverrides', () => {
     const overrides: CardinalityOverrides = { [key]: 10, stale: 99 };
 
     expect(pruneCardinalityOverrides(model, overrides)).toEqual({ [key]: 10 });
+  });
+
+  it('prunes stale force-embed relationship override keys', () => {
+    const key = relationshipOverrideKey(model.relationships[0]);
+    const overrides: ForceEmbedOverrides = { [key]: true, stale: true, disabled: false };
+
+    expect(pruneForceEmbedOverrides(model, overrides)).toEqual({ [key]: true });
   });
 });

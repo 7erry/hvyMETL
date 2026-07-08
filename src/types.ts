@@ -186,6 +186,8 @@ export type RelationshipModel = {
   isBounded: boolean;
   /** Where relationship cardinality came from; developer means an explicit UI override. */
   cardinalitySource?: 'csv' | 'database' | 'developer';
+  /** Developer explicitly requested this linked child table to embed into its parent collection. */
+  forceEmbed?: boolean;
 };
 
 /** The full structural picture of a SQL source database. */

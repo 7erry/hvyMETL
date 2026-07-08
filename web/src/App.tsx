@@ -24,6 +24,7 @@ import { emptyModelTokenUsage, mergeModelTokenUsage } from './modelUsage';
 import {
   applyCardinalityOverrides,
   pruneCardinalityOverrides,
+  pruneForceEmbedOverrides,
 } from './cardinalityOverrides';
 import {
   downloadJson,
@@ -105,6 +106,7 @@ export default function App() {
     managerReviewAcceptances,
     managerCostInputs,
     cardinalityOverrides,
+    forceEmbedOverrides,
   } = session;
 
   const profileFields = useMemo(
@@ -117,29 +119,33 @@ export default function App() {
   }, []);
 
   const designModel = useMemo(
-    () => (model ? applyCardinalityOverrides(model, cardinalityOverrides) : null),
-    [model, cardinalityOverrides],
+    () => (model ? applyCardinalityOverrides(model, cardinalityOverrides, forceEmbedOverrides) : null),
+    [model, cardinalityOverrides, forceEmbedOverrides],
   );
   const hasCardinalityOverrides = useMemo(
-    () => Object.keys(cardinalityOverrides).length > 0,
-    [cardinalityOverrides],
+    () => Object.keys(cardinalityOverrides).length > 0 || Object.keys(forceEmbedOverrides).length > 0,
+    [cardinalityOverrides, forceEmbedOverrides],
   );
 
-  const handleCardinalityOverridesChange = (overrides: SessionState['cardinalityOverrides']) => {
+  const handleCardinalityOverridesChange = (
+    overrides: SessionState['cardinalityOverrides'],
+    nextForceEmbedOverrides = forceEmbedOverrides,
+  ) => {
     setSession((prev) => ({
       ...prev,
       cardinalityOverrides: overrides,
+      forceEmbedOverrides: nextForceEmbedOverrides,
       migrationArtifacts: null,
       collectionPositions: {},
       selectedCollection: null,
       managerReviewAcceptances: null,
       schemaPhase: 'before',
     }));
-    const count = Object.keys(overrides).length;
+    const count = Object.keys(overrides).length + Object.keys(nextForceEmbedOverrides).length;
     setStatus(
       count > 0
-        ? `Applied ${count} cardinality override${count === 1 ? '' : 's'}. Run design to regenerate embeds.`
-        : 'Cleared cardinality overrides. Run design to regenerate the migration plan.',
+        ? `Applied ${count} developer embed override${count === 1 ? '' : 's'}. Run design to regenerate embeds.`
+        : 'Cleared developer embed overrides. Run design to regenerate the migration plan.',
     );
   };
 
@@ -223,6 +229,7 @@ export default function App() {
       migrationArtifacts: null,
       managerReviewAcceptances: null,
       cardinalityOverrides: {},
+      forceEmbedOverrides: {},
       schemaPhase: 'before',
       view: 'diagram',
     }));
@@ -306,6 +313,7 @@ export default function App() {
       model: next,
       positions: nextPos,
       cardinalityOverrides: pruneCardinalityOverrides(next, prev.cardinalityOverrides),
+      forceEmbedOverrides: pruneForceEmbedOverrides(next, prev.forceEmbedOverrides),
       selectedTable: next.tables.find((t) => t.name.startsWith(`${tableName}_copy`))?.name ?? tableName,
     }));
     setStatus(`Duplicated table ${tableName}.`);
@@ -319,6 +327,7 @@ export default function App() {
       model: next,
       positions: nextPos,
       cardinalityOverrides: pruneCardinalityOverrides(next, prev.cardinalityOverrides),
+      forceEmbedOverrides: pruneForceEmbedOverrides(next, prev.forceEmbedOverrides),
       selectedTable: prev.selectedTable === tableName ? null : prev.selectedTable,
     }));
     setStatus(`Deleted table ${tableName}.`);
@@ -375,6 +384,7 @@ export default function App() {
             profileId: inferred.profileId,
             positions: data.positions ?? {},
             cardinalityOverrides: {},
+            forceEmbedOverrides: {},
             selectedTable: null,
             view: 'diagram',
           }));
@@ -402,6 +412,7 @@ export default function App() {
           ddl: data.ddl ?? prev.ddl,
           model: data.model ?? prev.model,
           cardinalityOverrides: pruneCardinalityOverrides(data.model ?? prev.model, prev.cardinalityOverrides),
+          forceEmbedOverrides: pruneForceEmbedOverrides(data.model ?? prev.model, prev.forceEmbedOverrides),
           profileId: data.profileId ?? data.plan.profileId ?? prev.profileId,
           collectionPositions: data.collectionPositions ?? {},
           selectedCollection: null,
@@ -439,6 +450,7 @@ export default function App() {
         dialect,
         ...profileFields,
         cardinalityOverrides,
+        forceEmbedOverrides,
         plan: migrationPlan,
         csvSourcePath:
           designCsvFiles.length === 0 && csvSourcePath?.trim() ? csvSourcePath.trim() : undefined,
@@ -492,6 +504,7 @@ export default function App() {
         dialect,
         ...profileFields,
         cardinalityOverrides,
+        forceEmbedOverrides,
         plan,
       }).then((summary) => {
         setSession((prev) => ({
@@ -515,6 +528,7 @@ export default function App() {
         dialect,
         ...profileFields,
         cardinalityOverrides,
+        forceEmbedOverrides,
         csvSourcePath:
           designCsvFiles.length === 0 && csvSourcePath?.trim() ? csvSourcePath.trim() : undefined,
       };
@@ -552,7 +566,7 @@ export default function App() {
       const summary = formatTransformSummary(meta);
       if (!meta.hasRowStats) {
         setStatus(hasCardinalityOverrides
-          ? `${summary}. Cardinality overrides applied where provided; add CSV or a .db file for measured row counts.`
+          ? `${summary}. Developer embed overrides applied where provided; add CSV or a .db file for measured row counts.`
           : `${summary}. Add CSV exports (or import a .db file) so embed/subset/bucket patterns can fold tables.`);
       } else {
         setStatus(`${summary}. ${meta.csvEnriched ? 'CSV-enriched' : 'Introspection stats'} · ${result.retrievalStrategy ?? 'RAG'}.`);
@@ -603,7 +617,11 @@ export default function App() {
     try {
       setExporting(true);
       setStatus('Generating AI-powered migration export…');
-      const result = await exportMigration(designModel, profileFields, ddl, { dialect, cardinalityOverrides });
+      const result = await exportMigration(designModel, profileFields, ddl, {
+        dialect,
+        cardinalityOverrides,
+        forceEmbedOverrides,
+      });
       const promptsResult = await exportPrompts(ddl, profileFields);
       const artifacts: MigrationArtifacts = {
         planJson: JSON.stringify(result.migrationPlanJson ?? result.plan, null, 2),
@@ -798,10 +816,11 @@ export default function App() {
                       />
                     </CollapsiblePanel>
                     {model ? (
-                      <CollapsiblePanel title="Cardinality Overrides">
+                      <CollapsiblePanel title="Embed Overrides">
                         <CardinalityOverridesPanel
                           model={model}
                           overrides={cardinalityOverrides}
+                          forceEmbedOverrides={forceEmbedOverrides}
                           onChange={handleCardinalityOverridesChange}
                         />
                       </CollapsiblePanel>
@@ -1051,7 +1070,7 @@ export default function App() {
                       {migrationArtifacts?.designMeta && !migrationArtifacts.designMeta.hasRowStats ? (
                         <span className="schema-phase-bar__warn">
                           {' · '}
-                          {hasCardinalityOverrides ? 'cardinality overrides applied' : 'add CSV for folding'}
+                          {hasCardinalityOverrides ? 'developer overrides applied' : 'add CSV for folding'}
                         </span>
                       ) : null}
                     </span>
@@ -1118,6 +1137,7 @@ export default function App() {
           ddl={ddl}
           profileFields={profileFields}
           cardinalityOverrides={cardinalityOverrides}
+          forceEmbedOverrides={forceEmbedOverrides}
           dialect={dialect}
           dialectLabel={dialectLabel}
           csvSourcePath={csvSourcePath}

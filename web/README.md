@@ -116,7 +116,7 @@ use **Download repositories** to save the full set.
 | --- | --- |
 | **Instant Schema Import** | Paste DDL in the sidebar → **Import Query**, or **Import file** (`.sql`, `.ddl`, `.txt` auto-imports; `.db` for SQLite) |
 | **Broad database support** | Dialect selector: PostgreSQL, MySQL, SQLite, MSSQL, ClickHouse, Oracle, IBM Db2, CockroachDB, Amazon Aurora (PostgreSQL/MySQL), Google Cloud Spanner (DDL paste); **SQLite file** upload is live |
-| **Cardinality overrides** | Before view → **Cardinality Overrides** → enter max child rows per parent for FK relationships when CSV/live stats are unavailable; values `1-5000` are treated as bounded and can force embeds |
+| **Embed Overrides** | Before view → **Embed Overrides** → enter max child rows per parent and/or check **Force embed** for linked FK relationships when CSV/live stats are unavailable |
 | **Templates** | Dropdown (Laravel, Django, Twitter, catalog, iot, cms) → **Load template** |
 | **Customizable ER diagrams** | Drag/zoom canvas, FK edges, minimap (React Flow) |
 | **Before / After toggle** | **Before · SQL** source schema vs **After · MongoDB** migration plan canvas |
@@ -143,22 +143,30 @@ parallel ETL generator prompt, repository layer prompt vs `repogen` code).
 
 1. **Import schema** — paste `CREATE TABLE` DDL, upload SQLite, load a template, or **import a bundled example diagram** (`examples/<domain>/hvymetl-diagram-*.json`).
 2. **Arrange the ER diagram** — position tables on **Before · SQL**, inspect details, duplicate as needed.
-3. **Optional: suggest cardinality** — if you do not have CSV/live stats yet, open **Cardinality Overrides** and enter the max child rows per parent for relationships you know are bounded.
+3. **Optional: guide embedding** — if you do not have CSV/live stats yet, open **Embed Overrides** and either enter max child rows per parent or check **Force embed** for linked tables you intentionally want folded into one collection.
 4. **Switch to After · MongoDB** — run design (CSV enrichment recommended) to see folded collections.
 5. **Choose a workload profile** — e.g. Content Management, IoT, Catalog.
 6. **Run Full Pipeline** (optional) — prompts for missing `.env` values, runs ETL + Atlas import.
 7. **AI Migration Export** — review artifacts; **Generate repositories** in your target language (13 MongoDB drivers).
 8. **Optional: share** — export Before or After diagram JSON for collaboration.
 
-### Cardinality overrides without CSV
+### Embed overrides without CSV
 
 Pasted DDL does not include row counts or `max children per parent`, so hvyMETL defaults
-to conservative reference/subset choices. In the Before view, use **Cardinality
-Overrides** to supply a developer-known max for a relationship, such as
+to conservative reference/subset choices. In the Before view, use **Embed Overrides**
+to supply a developer-known max for a relationship, such as
 `locations -> company_assets (location_id) = 5`. Values from `1` through `5000` are
 treated as bounded developer intent and can force full embedding for that relationship
-when you refresh design. Changing overrides clears the old migration plan so stale
-After-view results are not reused.
+when you refresh design.
+
+When the design intent is known but row counts are not, check **Force embed** on one or
+more linked FK relationships. hvyMETL will fold each selected child table into its
+parent collection and drop the standalone child collection from the generated plan.
+Force embed is only offered for relationships discovered from actual foreign keys, so
+it cannot create unrelated table merges.
+
+Changing overrides clears the old migration plan so stale After-view results are not
+reused.
 
 CSV exports or SQLite introspection are still preferred for production validation
 because they measure row counts and fan-out directly.

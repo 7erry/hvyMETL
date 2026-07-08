@@ -20,6 +20,7 @@ export type RelationshipModel = {
   maxChildrenPerParent: number;
   isBounded: boolean;
   cardinalitySource?: 'csv' | 'database' | 'developer';
+  forceEmbed?: boolean;
 };
 
 export type TableModel = {
