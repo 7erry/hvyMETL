@@ -92,7 +92,89 @@ That distinction matters because the expensive tier is the data serving operatio
 reads and writes. Older data can remain queryable through Atlas Data Federation without
 forcing the primary cluster to carry the full historical footprint.
 
-## 5. Data Pruning and Archival
+## 5. Estimated Monthly Savings Formula
+
+The **Estimated monthly savings** headline is an all-in directional estimate. It
+combines infrastructure savings from a better Atlas storage design with monthlyized
+labor savings from hvyMETL automating migration work.
+
+```text
+monthlySavings =
+  Atlas infrastructure savings
+  + monthlyized manpower savings
+```
+
+Infrastructure savings compare an all-hot baseline to the optimized plan:
+
+```text
+Atlas infrastructure savings =
+  max(0, all-hot Atlas baseline - optimized Atlas monthly cost)
+```
+
+Manpower savings convert eliminated migration effort into a monthly value:
+
+```text
+monthlyized manpower savings =
+  personWeeksEliminated * $4,500 / 12
+```
+
+The displayed percent compares the combined savings against the combined baseline:
+
+```text
+savingsPercent =
+  monthlySavings / (all-hot Atlas baseline + monthlyized manpower savings)
+```
+
+### Atlas Cost Assumptions
+
+| Assumption | Value |
+| --- | --- |
+| Atlas tier prices | Representative dedicated-cluster monthly estimates, not a quote |
+| Minimum production tier | `M30` |
+| BSON document overhead | `1.25x` raw data |
+| Index overhead | `8%` per planned hot index |
+| Backup/storage rate | `$0.60 / GB / month` |
+| Online Archive storage rate | `$0.025 / GB / month` |
+| One-time migration egress | `$0.09 / GB` |
+| Archive history window | `7` years |
+| Default hot retention for eligible date-bearing collections | `5` years |
+
+Working-set RAM requirement depends on workload type:
+
+| Workload | Hot storage assumed active in RAM |
+| --- | --- |
+| Read-heavy | `20%` |
+| Balanced | `30%` |
+| Write-heavy | `40%` |
+
+### Manpower Savings Assumptions
+
+| Assumption | Value |
+| --- | --- |
+| Fully loaded engineer cost | `$4,500 / person-week` |
+| Amortization window | `12` months |
+| hvyMETL-assisted effort | `25%` of estimated manual migration effort |
+| Minimum assisted effort | `1` person-week |
+
+Manual migration effort scales with:
+
+- SQL table count.
+- Relationship count.
+- Generated MongoDB collection count.
+- Complex pattern decisions: Embed, Subset, Bucket, Archive, Extended Reference, and Single Collection.
+- Raw data scale in TB.
+
+The estimated eliminated effort is broken into four manager-facing categories:
+
+- **Automates Architecture & Design** — pattern selection, schema review, relationship analysis, and target model decisions.
+- **Reduces Prototyping Time** — working MongoDB models, indexes, diagrams, and explainable alternatives without hand-built spikes.
+- **Automates Application Code Rewrites** — repository scaffolding, API contracts, validation models, and query rewrite guidance.
+- **Eliminates Tedious ETL Tasks** — CSV shaping, mock generation, import orchestration, archive routing, and repeatable pipeline steps.
+
+This section is intentionally a planning heuristic. It is not a MongoDB Atlas quote,
+invoice, legal commitment, staffing guarantee, or financial advice.
+
+## 6. Data Pruning and Archival
 
 Archive is offered on a **collection basis** for date-bearing collections. Each eligible
 collection shows:
@@ -116,7 +198,7 @@ Practical cost workflows:
   temporary tokens, use TTL indexes rather than Online Archive so data is deleted instead
   of retained.
 
-## 6. Archive Rule Guidance
+## 7. Archive Rule Guidance
 
 hvyMETL encodes the operational guardrails for MongoDB Atlas Online Archive into the
 generated plan metadata:
@@ -140,7 +222,7 @@ Recommended operational practice:
 - Partition archives by the date trigger first, then by fields that match frequent
   filters, so archive queries avoid broad scans.
 
-## 7. Preventing Inefficient Architectures
+## 8. Preventing Inefficient Architectures
 
 The biggest cost savings often come from avoiding the wrong data model. hvyMETL prevents
 the common "SQL tables copied 1-to-1 into MongoDB" mistake by applying MongoDB design
@@ -161,7 +243,7 @@ cardinality, date columns, row counts, table names, and workload telemetry. The 
 View exposes the result in business terms: what changed, why it matters, and how it
 affects cloud cost.
 
-## 8. Suggested Manager Workflow
+## 9. Suggested Manager Workflow
 
 1. Import DDL or a SQLite database in Migration Studio.
 2. Select or infer the workload profile.
@@ -174,7 +256,7 @@ affects cloud cost.
    latency.
 8. Record the target retention policy before engineering starts the production migration.
 
-## 9. Implementation Notes
+## 10. Implementation Notes
 
 | Area | Source |
 | --- | --- |
