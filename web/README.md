@@ -12,14 +12,41 @@ design engine, RAG layer, and artifacts as `npm run hvymetl`.
 
 ![After MongoDB diagram — 31 SQL tables to 20 MongoDB collections](docs/screenshots/after-mongodb-diagram.png)
 
+## Prerequisites
+
+Run Migration Studio from the **repository root**. Install these first:
+
+| Requirement | Version / Notes | Needed for |
+| --- | --- | --- |
+| **Node.js** | `20` or newer | API server, Vite UI, TypeScript build |
+| **npm** | Installed with Node.js | Dependency install and scripts |
+| **Git** | Any current version | Clone/update the project |
+| **MongoDB Atlas URI** | Set `MONGODB_URI` in `.env` | Full pipeline import, execution history, ML feedback persistence |
+| **csvToAtlas clone** | Set `CSV_TO_ATLAS_PATH` in `.env` | Full pipeline CSV import into Atlas |
+| **MongoDB Model Key or OpenAI key** | Optional | Hybrid/vector RAG; UI still works offline with BM25 |
+
+Minimum local UI workflow:
+
+```bash
+node --version      # must be 20+
+npm --version
+npm install
+```
+
+After upgrading Node.js, rebuild the native SQLite dependency:
+
+```bash
+npm rebuild better-sqlite3
+```
+
 ## Quick start
 
-From the **repository root** (not this folder alone):
+From the **repository root**:
 
 ```bash
 npm install
-cp .env.example .env   # optional: MONGODB_MODEL_KEY for hybrid RAG exports
-npm run dev:ui         # http://localhost:3847  (API internal :3848)
+cp .env.example .env   # optional for design; required values depend on pipeline features
+npm run dev:ui         # http://localhost:3847
 ```
 
 Production (single port):

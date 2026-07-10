@@ -131,13 +131,51 @@ it, lessons live in process memory only. Similarity search runs in Node.js (cosi
 stored embeddings or BM25) — not Atlas Vector Search. Details:
 **[docs/17-ml-engine.md § Lessons-learned memory](docs/17-ml-engine.md#lessons-learned-memory-storage-vs-retrieval)**.
 
-## Setup
+## Prerequisites
+
+Install these first:
+
+| Requirement | Version / Notes | How to check |
+| --- | --- | --- |
+| **Node.js** | `20` or newer | `node --version` |
+| **npm** | Comes with Node.js | `npm --version` |
+| **Git** | Needed to clone this repository | `git --version` |
+| **Python 3** | Optional, only needed for example/mock CSV generators | `python3 --version` |
+| **MongoDB Atlas URI** | Optional for local design; required for Atlas import and pipeline persistence | Set `MONGODB_URI` in `.env` |
+| **csvToAtlas clone** | Optional for design; required for ETL/import/full pipeline | Set `CSV_TO_ATLAS_PATH` in `.env` |
+| **MongoDB Model Key or OpenAI key** | Optional; design works offline with BM25 when no key is set | Set `MONGODB_MODEL_KEY` or `OPENAI_API_KEY` in `.env` |
+
+The fastest local experience only needs Node.js, npm, and Git. Schema import, ER
+diagrams, rule-based design, unit tests, and most documentation workflows run offline.
+Atlas import, full pipeline runs, and feedback persistence require `MONGODB_URI` and
+`CSV_TO_ATLAS_PATH`.
+
+If Node.js was upgraded after dependencies were installed, rebuild native packages:
 
 ```bash
+npm rebuild better-sqlite3
+```
+
+## Quick Start
+
+```bash
+# 1. Install dependencies
 npm install
+
+# 2. Build the TypeScript project
 npm run build
+
+# 3. Create local environment file
 cp .env.example .env
 ```
+
+Start the Migration Studio web UI:
+
+```bash
+npm run dev:ui
+```
+
+Then open **http://localhost:3847**.
 
 | Variable | Required for | Description |
 | --- | --- | --- |
@@ -149,10 +187,6 @@ cp .env.example .env
 | `HVYMETL_ATLAS_STUB_MODE` | ML local testing (optional) | `healthy` or `degraded` stub Atlas metrics |
 | `HVYMETL_MEMORY_DB` | ML memory + pipeline archive (optional) | Database for `hvymetl_migration_logs`, `hvymetl_lessons_learned`, `hvymetl_pipeline_executions` (default: `hvymetl_memory`) |
 | `HVYMETL_CSV_SOURCE` | Web UI full pipeline (optional) | Default directory of per-table CSV exports |
-
-Requires Node.js 20+. Design and unit tests run offline; ETL needs `CSV_TO_ATLAS_PATH` set (validated at runtime).
-
-After upgrading Node.js, recompile native dependencies: `npm rebuild better-sqlite3` (or re-run `npm install` — the `postinstall` script rebuilds automatically).
 
 ## Web UI (optional)
 
