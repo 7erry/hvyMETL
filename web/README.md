@@ -22,7 +22,7 @@ Run Migration Studio from the **repository root**. Install these first:
 | **npm** | Installed with Node.js | Dependency install and scripts |
 | **Git** | Any current version | Clone/update the project |
 | **MongoDB Atlas URI** | Set `MONGODB_URI` in `.env` | Full pipeline import, execution history, ML feedback persistence |
-| **csvToAtlas clone** | Set `CSV_TO_ATLAS_PATH` in `.env` | Full pipeline CSV import into Atlas |
+| **[csvToAtlas](https://github.com/7erry/cvsToAtlas) clone** | Set `CSV_TO_ATLAS_PATH` in `.env` | Full pipeline CSV import into Atlas |
 | **MongoDB Model Key or OpenAI key** | Optional | Hybrid/vector RAG; UI still works offline with BM25 |
 
 Minimum local UI workflow:

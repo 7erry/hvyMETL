@@ -142,7 +142,7 @@ Install these first:
 | **Git** | Needed to clone this repository | `git --version` |
 | **Python 3** | Optional, only needed for example/mock CSV generators | `python3 --version` |
 | **MongoDB Atlas URI** | Optional for local design; required for Atlas import and pipeline persistence | Set `MONGODB_URI` in `.env` |
-| **csvToAtlas clone** | Optional for design; required for ETL/import/full pipeline | Set `CSV_TO_ATLAS_PATH` in `.env` |
+| **[csvToAtlas](https://github.com/7erry/cvsToAtlas) clone** | Optional for design; required for ETL/import/full pipeline | Set `CSV_TO_ATLAS_PATH` in `.env` |
 | **MongoDB Model Key or OpenAI key** | Optional; design works offline with BM25 when no key is set | Set `MONGODB_MODEL_KEY` or `OPENAI_API_KEY` in `.env` |
 
 The fastest local experience only needs Node.js, npm, and Git. Schema import, ER
