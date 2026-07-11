@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   fetchPipelineConfig,
   runPipeline,
@@ -8,6 +8,12 @@ import {
   type PipelineRunResult,
 } from '../api';
 import { pickCsvDirectory } from '../directoryPicker';
+import {
+  hydratePipelineSettingsFromConfig,
+  isEnvMongoPlaceholder,
+  mongoUriInputValue,
+  mongoUriOverrideForFetch,
+} from '../pipelineFormHelpers';
 import {
   PIPELINE_PROGRESS_STAGES,
   stageStatus,
@@ -79,37 +85,27 @@ export function PipelinePanel({
     mockChildMultiplier: 3,
     mockSeed: 42,
   });
+  const formRef = useRef(form);
+  formRef.current = form;
 
   const refreshConfig = useCallback(async () => {
+    const current = formRef.current;
     setLoadingConfig(true);
     try {
-      const mongoUriOverride =
-        form.mongoUri.trim() && form.mongoUri !== '(configured in .env)' ? form.mongoUri.trim() : undefined;
       const status = await fetchPipelineConfig({
         schemaDialect: dialect,
-        csvSourcePath: form.csvSourcePath || csvSourcePath || undefined,
-        csvToAtlasPath: form.csvToAtlasPath.trim() || undefined,
-        generateMockCsv: form.generateMockCsv,
-        mongoUri: mongoUriOverride,
+        csvSourcePath: current.csvSourcePath || csvSourcePath || undefined,
+        csvToAtlasPath: current.csvToAtlasPath.trim() || undefined,
+        generateMockCsv: current.generateMockCsv,
+        mongoUri: mongoUriOverrideForFetch(current.mongoUri),
       });
       setConfig(status);
-      setForm((prev) => ({
-        ...prev,
-        targetDb: prev.targetDb || status.defaultTargetDb,
-        csvSourcePath: prev.csvSourcePath || csvSourcePath || status.csvSourcePath || '',
-        mongoUri:
-          prev.mongoUri && prev.mongoUri !== '(configured in .env)'
-            ? prev.mongoUri
-            : prev.mongoUri || (status.hasMongoUri ? '(configured in .env)' : ''),
-        csvToAtlasPath:
-          prev.csvToAtlasPath || status.csvToAtlasResolvedPath || status.csvToAtlasLabel || '',
-      }));
     } catch (e) {
       setError(String(e));
     } finally {
       setLoadingConfig(false);
     }
-  }, [dialect, csvSourcePath, form.csvSourcePath, form.csvToAtlasPath, form.generateMockCsv, form.mongoUri]);
+  }, [dialect, csvSourcePath]);
 
   useEffect(() => {
     if (!open) return;
@@ -124,27 +120,45 @@ export function PipelinePanel({
     const noCsv = !savedCsvPath || savedCsvIsGeneratedMock;
     setForm((prev) => ({
       ...prev,
-      csvSourcePath: savedCsvIsGeneratedMock ? '' : prev.csvSourcePath,
+      csvSourcePath: savedCsvIsGeneratedMock ? '' : prev.csvSourcePath || savedCsvPath,
       generateMockCsv: noCsv ? true : prev.generateMockCsv,
     }));
-    void refreshConfig();
-    // Only re-run when the panel opens — path changes use the debounced validator below.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open]);
+
+    void (async () => {
+      setLoadingConfig(true);
+      try {
+        const status = await fetchPipelineConfig({
+          schemaDialect: dialect,
+          csvSourcePath: savedCsvIsGeneratedMock ? undefined : savedCsvPath || undefined,
+          generateMockCsv: noCsv ? true : undefined,
+        });
+        setConfig(status);
+        setForm((prev) => ({
+          ...prev,
+          ...hydratePipelineSettingsFromConfig(prev, status, savedCsvIsGeneratedMock ? '' : savedCsvPath),
+        }));
+      } catch (e) {
+        setError(String(e));
+      } finally {
+        setLoadingConfig(false);
+      }
+    })();
+  }, [open, csvSourcePath, dialect]);
 
   useEffect(() => {
-    if (!open || !form.csvToAtlasPath.trim()) return;
+    if (!open) return;
     const timer = window.setTimeout(() => {
       void refreshConfig();
     }, 500);
     return () => window.clearTimeout(timer);
-  }, [open, form.csvToAtlasPath, refreshConfig]);
-
-  useEffect(() => {
-    if (csvSourcePath && open && !/(?:^|[/\\])mock-csv(?:[/\\])?$/i.test(csvSourcePath)) {
-      setForm((prev) => (prev.csvSourcePath ? prev : { ...prev, csvSourcePath }));
-    }
-  }, [csvSourcePath, open]);
+  }, [
+    open,
+    form.mongoUri,
+    form.csvToAtlasPath,
+    form.csvSourcePath,
+    form.generateMockCsv,
+    refreshConfig,
+  ]);
 
   const dataSourceMode: DataSourceMode = form.generateMockCsv ? 'mock' : 'real';
   const effectiveCsvPath = form.csvSourcePath.trim() || csvSourcePath || config?.csvSourcePath || '';
@@ -155,7 +169,7 @@ export function PipelinePanel({
   const envMongoUri = Boolean(config?.hasMongoUri);
   const envCsvToAtlas = Boolean(config?.hasCsvToAtlas);
   const formMongoUri = form.mongoUri.trim();
-  const hasMongoUriInput = Boolean(formMongoUri && formMongoUri !== '(configured in .env)');
+  const hasMongoUriInput = Boolean(formMongoUri && !isEnvMongoPlaceholder(formMongoUri));
   const mongoReachable = Boolean(config?.mongoConnectivity?.ok);
   const hasMongoUri = mongoReachable;
   const hasCsvToAtlasInput = Boolean(form.csvToAtlasPath.trim());
@@ -180,9 +194,10 @@ export function PipelinePanel({
   };
 
   useEffect(() => {
-    if (!open) return;
-    void refreshConfig();
-  }, [form.generateMockCsv, open, refreshConfig]);
+    if (csvSourcePath && open && !/(?:^|[/\\])mock-csv(?:[/\\])?$/i.test(csvSourcePath)) {
+      setForm((prev) => (prev.csvSourcePath ? prev : { ...prev, csvSourcePath }));
+    }
+  }, [csvSourcePath, open]);
 
   const handlePickCsvDirectory = async () => {
     try {
@@ -372,7 +387,7 @@ export function PipelinePanel({
                     {envMongoUri ? <span className="pipeline-field-badge">.env configured</span> : null}
                     <input
                       type="password"
-                      value={form.mongoUri === '(configured in .env)' ? '' : form.mongoUri}
+                      value={mongoUriInputValue(form.mongoUri)}
                       placeholder={envMongoUri ? 'Leave empty to use .env, or enter to override' : 'mongodb+srv://…'}
                       onChange={(e) => setForm((prev) => ({ ...prev, mongoUri: e.target.value }))}
                       disabled={running}
