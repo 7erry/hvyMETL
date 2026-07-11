@@ -46,6 +46,10 @@ export function AuthGate({ children }: AuthGateProps) {
         <section className="auth-gate__card">
           <strong>Access pending</strong>
           <p>Your account is signed in, but it does not have the admin, developer, or manager role yet.</p>
+          <p>
+            In Auth0: enable <strong>RBAC</strong> on the hvyMETL API, assign the role named exactly{' '}
+            <code>admin</code> (lowercase), deploy the Login Action, then sign out and sign in again.
+          </p>
           <a href="/terms">Terms and Conditions</a>
           <button type="button" className="secondary" onClick={access.logout}>
             Sign out

@@ -110,6 +110,7 @@ login on local dev and [https://hvymetl.studio](https://hvymetl.studio).
 - Name: `hvyMETL API`
 - Identifier: `https://api.hvymetl.studio` (use this exact string)
 - Signing algorithm: RS256
+- Under **RBAC Settings**, enable **Enable RBAC** → **Save** (required so Login Actions see assigned roles)
 - Copy the identifier into root `.env` as `AUTH0_AUDIENCE` and into `web/.env.local` as
   `VITE_AUTH0_AUDIENCE`
 
@@ -127,7 +128,26 @@ login on local dev and [https://hvymetl.studio](https://hvymetl.studio).
 - Set **Allowed Logout URLs** (same as above)
 - Set **Allowed Web Origins** (same as above)
 
-**3. Configure the server issuer**
+**3. Authorize the SPA to call the API**
+
+Without this step, login fails with *Client "…" is not authorized to access resource server
+"https://api.hvymetl.studio"*.
+
+- **Applications → APIs → hvyMETL API → Settings**
+- Under **Application Access Policy**, set **User-Delegated Access** to **All apps allowed**
+  (simplest), or **Per-app authorization** if you prefer explicit grants
+- Enable **Allow Skipping User Consent** (recommended for your own first-party SPA)
+- Save
+
+If you chose **Per-app authorization**:
+
+- Open the **Application Access** tab on the same API
+- Find **hvyMETL Studio** (`VITE_AUTH0_CLIENT_ID` / `AUTH0_SPA_CLIENT_ID`)
+- **Grant Access** for **User-Delegated Access** (scopes can be empty — hvyMETL uses custom role
+  claims, not API scopes)
+- Save
+
+**4. Configure the server issuer**
 
 In the repo root `.env`:
 
@@ -140,7 +160,7 @@ AUTH0_ROLES_CLAIM=https://hvymetl.studio/roles
 `AUTH0_ISSUER_BASE_URL` is the tenant URL **with** `https://` and a trailing `/`.
 `VITE_AUTH0_DOMAIN` is the same tenant **without** `https://`.
 
-**4. Configure the web build**
+**5. Configure the web build**
 
 Create `web/.env.local`:
 
@@ -153,16 +173,21 @@ VITE_AUTH0_ROLES_CLAIM=https://hvymetl.studio/roles
 
 Rebuild or restart after changing Vite env vars (`npm run dev:ui` or redeploy hosted UI).
 
-**5. Enable social logins (optional)**
+**6. Enable social logins (optional)**
 
 - **Authentication → Social** → enable Google, Facebook, GitHub, etc.
 - Each provider needs its own OAuth app credentials in Auth0
 
-**6. Add roles and inject them into tokens**
+**7. Add roles and inject them into tokens**
 
-- **User Management → Roles** → create `admin`, `developer`, `manager`
-- Assign roles to users under **User Management → Users**
-- **Actions → Flows → Login → Add Action** (or use a post-login Action):
+Role names must match **exactly** (lowercase): `admin`, `developer`, `manager`.
+
+1. **User Management → Roles → Create Role** — create all three (or at least one for your user).
+   The role **name** must be exactly `admin`, `developer`, or `manager` (lowercase — not `Admin` or
+   `adming`).
+2. **User Management → Users** → open your user → **Roles** tab → assign **`admin`** (full access) or
+   `developer` / `manager` as needed
+3. **Actions → Library → Build Custom** → trigger **Login / Post Login** → name e.g. `Add hvyMETL roles`
 
 ```javascript
 exports.onExecutePostLogin = async (event, api) => {
@@ -173,9 +198,15 @@ exports.onExecutePostLogin = async (event, api) => {
 };
 ```
 
-- Deploy the Action and add it to the Login flow
+4. **Deploy** the Action
+5. **Actions → Flows → Login** → drag your Action into the flow → **Apply**
+6. **Sign out** of hvymetl.studio and **sign in again** (roles are baked in at login; refreshing is not enough)
 
-**7. Verify**
+If you still see *Access pending*, decode your ID token at [jwt.io](https://jwt.io) and confirm it
+contains `"https://hvymetl.studio/roles": ["admin"]` (or `developer` / `manager`). Missing claim
+→ Action not in the Login flow or no role assigned to the user.
+
+**8. Verify**
 
 | Check | Expected |
 | --- | --- |

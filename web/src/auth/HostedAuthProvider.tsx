@@ -3,7 +3,6 @@ import {
   useContext,
   useEffect,
   useLayoutEffect,
-  useMemo,
   useState,
   type ReactNode,
 } from 'react';
@@ -122,16 +121,53 @@ function Auth0Bridge({
   const {
     error,
     getAccessTokenSilently,
+    getIdTokenClaims,
     isAuthenticated,
     isLoading,
     loginWithRedirect,
     logout: auth0Logout,
     user,
   } = useAuth0();
-  const roles = useMemo(
-    () => rolesFromClaims(user as Record<string, unknown> | undefined, rolesClaim),
-    [rolesClaim, user],
-  );
+  const [roles, setRoles] = useState<HvyRole[]>([]);
+  const [claimsLoading, setClaimsLoading] = useState(true);
+
+  useEffect(() => {
+    if (!isAuthenticated || isLoading) {
+      if (!isAuthenticated) {
+        setRoles([]);
+        setClaimsLoading(false);
+      }
+      return;
+    }
+
+    let cancelled = false;
+    setClaimsLoading(true);
+    void getIdTokenClaims()
+      .then((claims) => {
+        if (cancelled) return;
+        const fromIdToken = rolesFromClaims(
+          (claims ?? undefined) as Record<string, unknown> | undefined,
+          rolesClaim,
+        );
+        if (fromIdToken.length > 0) {
+          setRoles(fromIdToken);
+          return;
+        }
+        setRoles(rolesFromClaims(user as Record<string, unknown> | undefined, rolesClaim));
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setRoles(rolesFromClaims(user as Record<string, unknown> | undefined, rolesClaim));
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setClaimsLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [getIdTokenClaims, isAuthenticated, isLoading, rolesClaim, user]);
 
   useLayoutEffect(() => {
     if (!isAuthenticated) {
@@ -142,12 +178,14 @@ function Auth0Bridge({
     return () => setAccessTokenProvider(undefined);
   }, [getAccessTokenSilently, isAuthenticated]);
 
+  const sessionLoading = isLoading || claimsLoading;
+
   const value: AuthState = {
     enabled: true,
     serverAuthRequired,
-    isLoading,
+    isLoading: sessionLoading,
     isAuthenticated,
-    apiReady: !isLoading && isAuthenticated,
+    apiReady: !sessionLoading && isAuthenticated,
     userId: typeof user?.sub === 'string' && user.sub.trim() ? user.sub : 'authenticated-user',
     userName: user?.name ?? user?.nickname ?? user?.email ?? 'Authenticated user',
     userEmail: user?.email ?? '',
@@ -211,6 +249,7 @@ export function HostedAuthProvider({ children }: { children: ReactNode }) {
       clientId={clientAuth.clientId}
       authorizationParams={{
         redirect_uri: window.location.origin,
+        scope: 'openid profile email',
         ...(clientAuth.audience ? { audience: clientAuth.audience } : {}),
       }}
       cacheLocation="localstorage"
