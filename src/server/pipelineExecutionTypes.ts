@@ -32,6 +32,8 @@ export type PipelineFeedbackSummary = {
 export type PipelineExecutionDocument = {
   /** Unique id for this pipeline run. */
   executionId: string;
+  /** Auth0 `sub` (or local-dev) that owns this execution. */
+  tenantId?: string;
   startedAt: string;
   completedAt: string;
   ok: boolean;

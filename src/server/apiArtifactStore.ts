@@ -22,6 +22,7 @@ export type ApiArtifactBundle = {
 };
 
 let activeBundle: ApiArtifactBundle | null = null;
+const activeBundlesByTenant = new Map<string, ApiArtifactBundle>();
 
 function listCollectionArtifacts(outDir: string): ApiArtifactCollection[] {
   const schemasDir = join(outDir, 'schemas');
@@ -42,7 +43,11 @@ function listCollectionArtifacts(outDir: string): ApiArtifactCollection[] {
 }
 
 /** Register an output directory that contains openapi.json and schemas/. */
-export function registerApiArtifacts(outDir: string, label = 'artifacts'): ApiArtifactBundle | null {
+export function registerApiArtifacts(
+  outDir: string,
+  label = 'artifacts',
+  tenantId?: string,
+): ApiArtifactBundle | null {
   const combinedOpenApiPath = join(outDir, 'openapi.json');
   if (!existsSync(combinedOpenApiPath)) return null;
 
@@ -56,12 +61,27 @@ export function registerApiArtifacts(outDir: string, label = 'artifacts'): ApiAr
     collections: listCollectionArtifacts(outDir),
   };
 
-  activeBundle = bundle;
+  if (tenantId) {
+    activeBundlesByTenant.set(tenantId, bundle);
+  } else {
+    activeBundle = bundle;
+  }
   return bundle;
 }
 
 /** Active bundle, or the default ui-export folder when present. */
-export function getActiveApiArtifacts(defaultOutDir?: string): ApiArtifactBundle | null {
+export function getActiveApiArtifacts(defaultOutDir?: string, tenantId?: string): ApiArtifactBundle | null {
+  if (tenantId) {
+    const cached = activeBundlesByTenant.get(tenantId);
+    if (cached && existsSync(cached.combinedOpenApiPath)) {
+      return cached;
+    }
+    if (defaultOutDir) {
+      return registerApiArtifacts(defaultOutDir, 'default', tenantId) ?? null;
+    }
+    return null;
+  }
+
   if (activeBundle && existsSync(activeBundle.combinedOpenApiPath)) {
     return activeBundle;
   }
@@ -100,4 +120,10 @@ export function serializeApiArtifactBundle(bundle: ApiArtifactBundle): {
       openApiUrl: `/api/artifacts/openapi/${encodeURIComponent(collection.name)}`,
     })),
   };
+}
+
+/** Clear tenant-scoped artifact cache (tests). */
+export function resetApiArtifactStore(): void {
+  activeBundle = null;
+  activeBundlesByTenant.clear();
 }

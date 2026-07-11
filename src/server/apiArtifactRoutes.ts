@@ -9,18 +9,15 @@ import swaggerUi from 'swagger-ui-express';
 import {
   getActiveApiArtifacts,
   readJsonArtifact,
-  registerApiArtifacts,
   serializeApiArtifactBundle,
   type ApiArtifactBundle,
 } from './apiArtifactStore.js';
+import { getRequestTenantId } from './tenant.js';
 
-function resolveBundle(req: Request, defaultOutDir: string): ApiArtifactBundle | null {
-  const requested = String(req.query?.outDir ?? '').trim();
-  if (requested) {
-    const registered = registerApiArtifacts(requested, 'query');
-    if (registered) return registered;
-  }
-  return getActiveApiArtifacts(defaultOutDir);
+function resolveBundle(req: Request, rootDir: string): ApiArtifactBundle | null {
+  const tenantId = getRequestTenantId(req);
+  const defaultOutDir = join(rootDir, 'out', 'tenants', tenantId, 'ui-export');
+  return getActiveApiArtifacts(defaultOutDir, tenantId);
 }
 
 function findCollection(bundle: ApiArtifactBundle, name: string) {
@@ -28,10 +25,8 @@ function findCollection(bundle: ApiArtifactBundle, name: string) {
 }
 
 export function registerApiArtifactRoutes(app: Express, rootDir: string): void {
-  const defaultOutDir = join(rootDir, 'out', 'ui-export');
-
   app.get('/api/artifacts', (req, res) => {
-    const bundle = resolveBundle(req, defaultOutDir);
+    const bundle = resolveBundle(req, rootDir);
     if (!bundle) {
       res.status(404).json({
         error: 'No API artifacts found. Run design, AI Migration Export, or the full pipeline first.',
@@ -42,7 +37,7 @@ export function registerApiArtifactRoutes(app: Express, rootDir: string): void {
   });
 
   app.get('/api/artifacts/openapi.json', (req, res) => {
-    const bundle = resolveBundle(req, defaultOutDir);
+    const bundle = resolveBundle(req, rootDir);
     if (!bundle) {
       res.status(404).json({ error: 'Combined OpenAPI spec not found.' });
       return;
@@ -51,7 +46,7 @@ export function registerApiArtifactRoutes(app: Express, rootDir: string): void {
   });
 
   app.get('/api/artifacts/openapi/:collectionName', (req, res) => {
-    const bundle = resolveBundle(req, defaultOutDir);
+    const bundle = resolveBundle(req, rootDir);
     if (!bundle) {
       res.status(404).json({ error: 'OpenAPI artifacts not found.' });
       return;
@@ -65,7 +60,7 @@ export function registerApiArtifactRoutes(app: Express, rootDir: string): void {
   });
 
   app.get('/api/artifacts/schemas/:collectionName', (req, res) => {
-    const bundle = resolveBundle(req, defaultOutDir);
+    const bundle = resolveBundle(req, rootDir);
     if (!bundle) {
       res.status(404).json({ error: 'Schema artifacts not found.' });
       return;

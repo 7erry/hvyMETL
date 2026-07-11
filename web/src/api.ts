@@ -498,6 +498,26 @@ export function downloadJson(filename: string, data: unknown) {
   URL.revokeObjectURL(url);
 }
 
+import type { TenantWorkspace } from './workspaceSync';
+
+export async function fetchWorkspace(): Promise<TenantWorkspace> {
+  const res = await apiFetch(`${base}/api/workspace`);
+  if (!res.ok) throw new Error(await readApiError(res));
+  const data = await res.json();
+  return (data.workspace ?? {}) as TenantWorkspace;
+}
+
+export async function saveWorkspace(workspace: TenantWorkspace): Promise<TenantWorkspace> {
+  const res = await apiFetch(`${base}/api/workspace`, {
+    method: 'PUT',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(workspace),
+  });
+  if (!res.ok) throw new Error(await readApiError(res));
+  const data = await res.json();
+  return (data.workspace ?? {}) as TenantWorkspace;
+}
+
 export function downloadText(filename: string, text: string, mime = 'text/plain') {
   const blob = new Blob([text], { type: mime });
   const url = URL.createObjectURL(blob);

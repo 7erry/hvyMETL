@@ -12,6 +12,7 @@ type AuthState = {
   enabled: boolean;
   isLoading: boolean;
   isAuthenticated: boolean;
+  userId: string;
   userName: string;
   userEmail: string;
   roles: HvyRole[];
@@ -28,6 +29,7 @@ const disabledAuthState: AuthState = {
   enabled: false,
   isLoading: false,
   isAuthenticated: true,
+  userId: 'local-dev',
   userName: 'Local developer',
   userEmail: '',
   roles: ['admin', 'developer', 'manager'],
@@ -78,6 +80,7 @@ function Auth0Bridge({ children }: { children: ReactNode }) {
     enabled: true,
     isLoading,
     isAuthenticated,
+    userId: typeof user?.sub === 'string' && user.sub.trim() ? user.sub : 'authenticated-user',
     userName: user?.name ?? user?.nickname ?? user?.email ?? 'Authenticated user',
     userEmail: user?.email ?? '',
     roles,

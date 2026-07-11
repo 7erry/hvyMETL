@@ -16,6 +16,7 @@ import { PIPELINE_EXECUTIONS_COLLECTION } from './pipelineExecutionTypes.js';
 export type PersistPipelineExecutionInput = {
   startedAt: string;
   ok: boolean;
+  tenantId?: string;
   profileId: string;
   dialect?: string;
   schemaDialect: string;
@@ -39,6 +40,7 @@ export async function persistPipelineExecution(
   const executionId = randomUUID();
   const document: PipelineExecutionDocument = {
     executionId,
+    tenantId: input.tenantId,
     startedAt: input.startedAt,
     completedAt: new Date().toISOString(),
     ok: input.ok,

@@ -58,6 +58,7 @@ export type DesignRequest = {
   profile: WorkloadProfile;
   knowledgeDir: string;
   csvSourcePath?: string;
+  csvAllowedRoots?: string[];
   cardinalityOverrides?: Record<string, number>;
   forceEmbedOverrides?: Record<string, boolean>;
   dialect?: string;
@@ -130,7 +131,7 @@ function enrichModelForDesign(request: DesignRequest, env: NodeJS.ProcessEnv): {
   let resolvedCsvRoot: string | undefined;
 
   if (request.csvSourcePath?.trim()) {
-    resolvedCsvRoot = resolveCsvSourcePath(request.csvSourcePath, env);
+    resolvedCsvRoot = resolveCsvSourcePath(request.csvSourcePath, env, request.csvAllowedRoots);
     if (existsSync(resolvedCsvRoot)) {
       enrichedModel = enrichModelFromCsv(modelForDesign, resolvedCsvRoot);
     }

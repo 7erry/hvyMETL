@@ -4,7 +4,11 @@ import type { RelationshipConnectionType, RelationshipNotation } from './relatio
 import type { CustomProfileInput, WorkloadProfile } from './customProfileShared';
 import { DEFAULT_MANAGER_COST_INPUTS, type ManagerCostInputs } from './managerCostEstimate';
 
-const STORAGE_KEY = 'hvymetl-session-v1';
+const STORAGE_KEY_PREFIX = 'hvymetl-session-v1';
+
+function sessionStorageKey(userId?: string): string {
+  return userId ? `${STORAGE_KEY_PREFIX}:${userId}` : STORAGE_KEY_PREFIX;
+}
 
 export type PromptArtifact = {
   fileName: string;
@@ -124,9 +128,9 @@ export const defaultSessionState = (): SessionState => ({
   forceEmbedOverrides: {},
 });
 
-export function loadSessionState(): SessionState {
+export function loadSessionState(userId?: string): SessionState {
   try {
-    const raw = sessionStorage.getItem(STORAGE_KEY);
+    const raw = sessionStorage.getItem(sessionStorageKey(userId));
     if (!raw) return defaultSessionState();
     const parsed = JSON.parse(raw) as Partial<SessionState> & { sourceDbPath?: string | null };
     const { sourceDbPath: _legacy, ...rest } = parsed;
@@ -144,9 +148,13 @@ export function loadSessionState(): SessionState {
   }
 }
 
-export function saveSessionState(state: SessionState): void {
+export function sessionStorageUserKey(userId?: string): string {
+  return sessionStorageKey(userId);
+}
+
+export function saveSessionState(state: SessionState, userId?: string): void {
   try {
-    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    sessionStorage.setItem(sessionStorageKey(userId), JSON.stringify(state));
   } catch {
     // Quota exceeded or private browsing — ignore.
   }

@@ -98,6 +98,13 @@ development skips login when Auth0 env vars are unset.
 Configure Auth0 **Allowed Callback URLs** and **Allowed Logout URLs** for
 `http://localhost:3847` and `https://hvymetl.studio`.
 
+**Multi-tenant isolation:** Each authenticated user is scoped by Auth0 `sub`. Uploads,
+design/pipeline artifacts, and workspace settings live under
+`web-uploads/tenants/{user}/` and `out/tenants/{user}/`. Pipeline execution history
+and Atlas import defaults are filtered per user so tenants cannot read each other's
+files or settings. Local development uses the shared `local-dev` tenant when Auth0
+env vars are unset.
+
 **Terms and Conditions:** [https://hvymetl.studio/terms](/terms) — also linked from the
 app header and login screen.
 

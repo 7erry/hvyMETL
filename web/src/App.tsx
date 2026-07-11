@@ -46,6 +46,8 @@ import {
   type MongoDiagramExport,
   type PipelineRunResult,
   inferProfile,
+  fetchWorkspace,
+  saveWorkspace,
 } from './api';
 import {
   defaultSessionState,
@@ -54,6 +56,7 @@ import {
   type MigrationArtifacts,
   type SessionState,
 } from './sessionState';
+import { mergeWorkspaceIntoSession, sessionToWorkspace } from './workspaceSync';
 import {
   fieldsForCollection,
   designMetaFromPlan,
@@ -153,8 +156,31 @@ export default function App() {
   };
 
   useEffect(() => {
-    saveSessionState(session);
-  }, [session]);
+    if (access.isLoading) return;
+    let cancelled = false;
+    const local = loadSessionState(access.userId);
+    setSession(local);
+    if (access.enabled && access.isAuthenticated) {
+      void fetchWorkspace()
+        .then((workspace) => {
+          if (cancelled || !workspace || Object.keys(workspace).length === 0) return;
+          setSession((prev) => mergeWorkspaceIntoSession(prev, workspace));
+        })
+        .catch(() => undefined);
+    }
+    return () => {
+      cancelled = true;
+    };
+  }, [access.userId, access.enabled, access.isAuthenticated, access.isLoading]);
+
+  useEffect(() => {
+    saveSessionState(session, access.userId);
+    if (!access.enabled || !access.isAuthenticated || access.isLoading) return;
+    const handle = window.setTimeout(() => {
+      void saveWorkspace(sessionToWorkspace(session)).catch(() => undefined);
+    }, 900);
+    return () => window.clearTimeout(handle);
+  }, [session, access.userId, access.enabled, access.isAuthenticated, access.isLoading]);
 
   useEffect(() => {
     if (!access.enabled || access.isLoading || !access.isAuthenticated) return;

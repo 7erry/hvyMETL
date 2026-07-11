@@ -6,7 +6,7 @@ import { existsSync, mkdirSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import cors from 'cors';
-import express from 'express';
+import express, { type Request } from 'express';
 import multer from 'multer';
 import { loadProjectEnv } from './loadProjectEnv.js';
 
@@ -40,6 +40,19 @@ import { registerApiArtifactRoutes } from './apiArtifactRoutes.js';
 import { registerApiArtifacts, serializeApiArtifactBundle } from './apiArtifactStore.js';
 import { authErrorHandler, isAuthConfigured, requireRole } from './auth.js';
 import { loadTermsPageHtml } from './termsPage.js';
+import {
+  assertPathWithinTenantStorage,
+  ensureTenantDirs,
+  getRequestTenantId,
+  readTenantWorkspace,
+  tenantArtifactDir,
+  tenantCsvBatchDir,
+  tenantDefaultTargetDb,
+  tenantOutRoot,
+  tenantSqliteUploadDir,
+  tenantUploadRoot,
+  writeTenantWorkspace,
+} from './tenant.js';
 import { mountWebUi } from './setupWebUi.js';
 import type { DesignFromModelResult } from '../design/designFromModel.js';
 import {
@@ -53,15 +66,44 @@ const UPLOAD_DIR = join(ROOT, 'web-uploads');
 const PORT = Number(process.env.HVYMETL_UI_PORT ?? 3847);
 
 mkdirSync(UPLOAD_DIR, { recursive: true });
-const upload = multer({ dest: UPLOAD_DIR });
+
+type TenantContext = {
+  tenantId: string;
+  csvAllowedRoots: string[] | undefined;
+};
+
+function tenantContextFromRequest(req: Request): TenantContext {
+  const tenantId = getRequestTenantId(req);
+  ensureTenantDirs(ROOT, tenantId);
+  const csvAllowedRoots = isAuthConfigured()
+    ? [tenantUploadRoot(ROOT, tenantId), tenantOutRoot(ROOT, tenantId)]
+    : undefined;
+  return { tenantId, csvAllowedRoots };
+}
+
+function scopedCsvSourcePath(req: Request, requestedPath?: string): string | undefined {
+  const path = requestedPath?.trim();
+  if (!path) return undefined;
+  if (isAuthConfigured()) {
+    const { tenantId } = tenantContextFromRequest(req);
+    assertPathWithinTenantStorage(ROOT, tenantId, path);
+  }
+  return path;
+}
 
 const app = express();
 app.use(cors());
 app.use(express.json({ limit: '4mb' }));
 
-function persistDesignApiArtifacts(result: DesignFromModelResult, outDir: string, label: string) {
+function persistDesignApiArtifacts(
+  result: DesignFromModelResult,
+  tenantId: string,
+  kind: 'ui-design' | 'ui-export',
+  label: string,
+) {
+  const outDir = tenantArtifactDir(ROOT, tenantId, kind);
   const paths = writeDesignArtifacts(outDir, result);
-  const registered = registerApiArtifacts(outDir, label);
+  const registered = registerApiArtifacts(outDir, label, tenantId);
   return {
     paths,
     apiArtifacts: registered ? serializeApiArtifactBundle(registered) : null,
@@ -97,8 +139,28 @@ app.use('/api/export', ...requireRole(['admin', 'developer']));
 app.use('/api/repogen', ...requireRole(['admin', 'developer']));
 app.use('/api/pipeline', ...requireRole(['admin', 'developer']));
 app.use('/api/mock-csv', ...requireRole(['admin', 'developer']));
+app.use('/api/workspace', ...requireRole(['admin', 'developer', 'manager']));
 
 registerApiArtifactRoutes(app, ROOT);
+
+app.get('/api/workspace', (req, res) => {
+  try {
+    const { tenantId } = tenantContextFromRequest(req);
+    res.json({ workspace: readTenantWorkspace(ROOT, tenantId) ?? {} });
+  } catch (error) {
+    res.status(401).json({ error: String(error) });
+  }
+});
+
+app.put('/api/workspace', (req, res) => {
+  try {
+    const { tenantId } = tenantContextFromRequest(req);
+    const workspace = writeTenantWorkspace(ROOT, tenantId, req.body ?? {});
+    res.json({ workspace });
+  } catch (error) {
+    res.status(400).json({ error: String(error) });
+  }
+});
 
 app.get('/api/dialects', (_req, res) => {
   res.json(DIALECTS);
@@ -163,26 +225,42 @@ app.post('/api/schema/import-ddl', (req, res) => {
 });
 
 /** Import schema from uploaded SQLite database. */
-app.post('/api/schema/import-sqlite', upload.single('database'), (req, res) => {
-  if (!req.file) {
-    res.status(400).json({ error: 'database file is required' });
+app.post('/api/schema/import-sqlite', (req, res) => {
+  let tenantId: string;
+  try {
+    tenantId = tenantContextFromRequest(req).tenantId;
+  } catch (error) {
+    res.status(401).json({ error: String(error) });
     return;
   }
-  try {
-    const adapter = createSqliteAdapter(req.file.path);
-    const model = adapter.introspect();
-    const ddl = adapter.dumpDdl();
-    adapter.close();
-    const inferred = inferWorkloadProfile(model);
-    res.json({ model, ddl, dialect: 'sqlite', sourcePath: req.file.path, inferred });
-  } catch (error) {
-    res.status(400).json({ error: String(error) });
-  }
+
+  const sqliteUpload = multer({ dest: tenantSqliteUploadDir(ROOT, tenantId) }).single('database');
+  sqliteUpload(req, res, (uploadError: unknown) => {
+    if (uploadError) {
+      res.status(400).json({ error: String(uploadError) });
+      return;
+    }
+    if (!req.file) {
+      res.status(400).json({ error: 'database file is required' });
+      return;
+    }
+    try {
+      const adapter = createSqliteAdapter(req.file.path);
+      const model = adapter.introspect();
+      const ddl = adapter.dumpDdl();
+      adapter.close();
+      const inferred = inferWorkloadProfile(model);
+      res.json({ model, ddl, dialect: 'sqlite', sourcePath: req.file.path, inferred });
+    } catch (error) {
+      res.status(400).json({ error: String(error) });
+    }
+  });
 });
 
 /** AI/RAG design preview: CSV enrichment (when available) + ML engine → migration plan. */
 app.post('/api/design', async (req, res) => {
   try {
+    const { tenantId, csvAllowedRoots } = tenantContextFromRequest(req);
     let model: SqlStructuralModel;
     if (req.body?.ddl) {
       model = parseDdlToModel(String(req.body.ddl), `ddl:${req.body?.dialect ?? 'import'}`);
@@ -193,17 +271,18 @@ app.post('/api/design', async (req, res) => {
       return;
     }
     const profile = resolveWorkloadProfile(req.body);
+    const csvSourcePath = scopedCsvSourcePath(req, req.body?.csvSourcePath as string | undefined);
     const result = await runDesignForModel({
       model,
       profile,
       knowledgeDir: KNOWLEDGE_DIR,
-      csvSourcePath: req.body?.csvSourcePath as string | undefined,
+      csvSourcePath,
+      csvAllowedRoots,
       cardinalityOverrides: req.body?.cardinalityOverrides as Record<string, number> | undefined,
       forceEmbedOverrides: req.body?.forceEmbedOverrides as Record<string, boolean> | undefined,
       dialect: req.body?.dialect as string | undefined,
     });
-    const outDir = join(ROOT, 'out', 'ui-design');
-    const { apiArtifacts } = persistDesignApiArtifacts(result, outDir, 'ui-design');
+    const { apiArtifacts } = persistDesignApiArtifacts(result, tenantId, 'ui-design', 'ui-design');
     res.json({ ...result, apiArtifacts });
   } catch (error) {
     res.status(500).json({ error: String(error) });
@@ -212,8 +291,16 @@ app.post('/api/design', async (req, res) => {
 
 /** Design preview with CSV files uploaded for row count / cardinality enrichment. */
 app.post('/api/design/with-csv', (req, res) => {
-  const batchDir = join(UPLOAD_DIR, `design-csv-${Date.now()}`);
-  mkdirSync(batchDir, { recursive: true });
+  let tenantId: string;
+  let csvAllowedRoots: string[] | undefined;
+  try {
+    ({ tenantId, csvAllowedRoots } = tenantContextFromRequest(req));
+  } catch (error) {
+    res.status(401).json({ error: String(error) });
+    return;
+  }
+
+  const batchDir = tenantCsvBatchDir(ROOT, tenantId, 'design-csv');
   const csvUpload = multer({
     storage: multer.diskStorage({
       destination: (_uploadReq, _file, cb) => cb(null, batchDir),
@@ -247,6 +334,7 @@ app.post('/api/design/with-csv', (req, res) => {
         profile,
         knowledgeDir: KNOWLEDGE_DIR,
         csvSourcePath: batchDir,
+        csvAllowedRoots,
         cardinalityOverrides: req.body?.cardinalityOverrides
           ? JSON.parse(String(req.body.cardinalityOverrides)) as Record<string, number>
           : undefined,
@@ -255,8 +343,7 @@ app.post('/api/design/with-csv', (req, res) => {
           : undefined,
         dialect: req.body?.dialect as string | undefined,
       });
-      const outDir = join(ROOT, 'out', 'ui-design');
-      const { apiArtifacts } = persistDesignApiArtifacts(result, outDir, 'ui-design');
+      const { apiArtifacts } = persistDesignApiArtifacts(result, tenantId, 'ui-design', 'ui-design');
       res.json({ ...result, apiArtifacts });
     } catch (error) {
       res.status(500).json({ error: String(error) });
@@ -278,12 +365,15 @@ app.post('/api/design/explain', (req, res) => {
     }
     const profile = resolveWorkloadProfile(req.body);
     const plan = req.body?.plan as MigrationPlan | undefined;
+    const csvSourcePath = scopedCsvSourcePath(req, req.body?.csvSourcePath as string | undefined);
+    const { csvAllowedRoots } = tenantContextFromRequest(req);
     const summary = explainDesignRequest(
       {
         model,
         profile,
         knowledgeDir: KNOWLEDGE_DIR,
-        csvSourcePath: req.body?.csvSourcePath as string | undefined,
+        csvSourcePath,
+        csvAllowedRoots,
         cardinalityOverrides: req.body?.cardinalityOverrides as Record<string, number> | undefined,
         forceEmbedOverrides: req.body?.forceEmbedOverrides as Record<string, boolean> | undefined,
         dialect: req.body?.dialect as string | undefined,
@@ -299,6 +389,7 @@ app.post('/api/design/explain', (req, res) => {
 /** Export migration artifacts (plan JSON + design report markdown). */
 app.post('/api/export/migration', async (req, res) => {
   try {
+    const { tenantId, csvAllowedRoots } = tenantContextFromRequest(req);
     const model = req.body?.model as SqlStructuralModel | undefined;
     const ddl = req.body?.ddl as string | undefined;
     const resolved = model ?? (ddl ? parseDdlToModel(ddl) : null);
@@ -307,17 +398,18 @@ app.post('/api/export/migration', async (req, res) => {
       return;
     }
     const profile = resolveWorkloadProfile(req.body);
+    const csvSourcePath = scopedCsvSourcePath(req, req.body?.csvSourcePath as string | undefined);
     const result = await runDesignForModel({
       model: resolved,
       profile,
       knowledgeDir: KNOWLEDGE_DIR,
-      csvSourcePath: req.body?.csvSourcePath as string | undefined,
+      csvSourcePath,
+      csvAllowedRoots,
       cardinalityOverrides: req.body?.cardinalityOverrides as Record<string, number> | undefined,
       forceEmbedOverrides: req.body?.forceEmbedOverrides as Record<string, boolean> | undefined,
       dialect: req.body?.dialect as string | undefined,
     });
-    const outDir = join(ROOT, 'out', 'ui-export');
-    const { paths, apiArtifacts } = persistDesignApiArtifacts(result, outDir, 'ui-export');
+    const { paths, apiArtifacts } = persistDesignApiArtifacts(result, tenantId, 'ui-export', 'ui-export');
     res.json({
       ...result,
       paths,
@@ -387,7 +479,16 @@ app.post('/api/repogen/generate', (req, res) => {
 app.get('/api/pipeline/config', async (req, res) => {
   try {
     const schemaDialect = String(req.query?.schemaDialect ?? req.query?.dialect ?? '').trim() || undefined;
-    const csvSourcePath = String(req.query?.csvSourcePath ?? req.query?.importedSourcePath ?? '').trim() || undefined;
+    const rawCsvSourcePath = String(req.query?.csvSourcePath ?? req.query?.importedSourcePath ?? '').trim() || undefined;
+    let csvSourcePath = rawCsvSourcePath;
+    if (rawCsvSourcePath) {
+      try {
+        csvSourcePath = scopedCsvSourcePath(req, rawCsvSourcePath);
+      } catch (error) {
+        res.status(403).json({ error: String(error) });
+        return;
+      }
+    }
     const csvToAtlasPath = String(req.query?.csvToAtlasPath ?? '').trim() || undefined;
     const generateMockCsv = req.query?.generateMockCsv === 'true' || req.query?.generateMockCsv === '1';
     const mongoUriOverride = String(req.query?.mongoUri ?? '').trim();
@@ -418,6 +519,7 @@ app.get('/api/pipeline/config', async (req, res) => {
 /** List recent pipeline executions stored in MongoDB (newest first). */
 app.get('/api/pipeline/executions', async (req, res) => {
   try {
+    const { tenantId } = tenantContextFromRequest(req);
     const mongoUri = String(req.query?.mongoUri ?? process.env.MONGODB_URI ?? '').trim();
     if (!mongoUri) {
       res.status(400).json({ error: 'MONGODB_URI is required to list pipeline executions.' });
@@ -429,7 +531,7 @@ app.get('/api/pipeline/executions', async (req, res) => {
     });
     const limit = Math.min(Math.max(Number(req.query?.limit ?? 20), 1), 100);
     const store = getMigrationStore();
-    const executions = await store.listPipelineExecutions(limit);
+    const executions = await store.listPipelineExecutions(limit, isAuthConfigured() ? tenantId : undefined);
     res.json({
       memoryDb: resolveMemoryDbName(process.env),
       collection: PIPELINE_EXECUTIONS_COLLECTION,
@@ -444,6 +546,7 @@ app.get('/api/pipeline/executions', async (req, res) => {
 /** Fetch one pipeline execution by id (includes migration plan, design report, csv manifest). */
 app.get('/api/pipeline/executions/:executionId', async (req, res) => {
   try {
+    const { tenantId } = tenantContextFromRequest(req);
     const mongoUri = String(req.query?.mongoUri ?? process.env.MONGODB_URI ?? '').trim();
     if (!mongoUri) {
       res.status(400).json({ error: 'MONGODB_URI is required to fetch pipeline executions.' });
@@ -454,7 +557,10 @@ app.get('/api/pipeline/executions/:executionId', async (req, res) => {
       dbName: resolveMemoryDbName(process.env),
     });
     const store = getMigrationStore();
-    const execution = await store.findPipelineExecution(String(req.params.executionId));
+    const execution = await store.findPipelineExecution(
+      String(req.params.executionId),
+      isAuthConfigured() ? tenantId : undefined,
+    );
     if (!execution) {
       res.status(404).json({ error: 'Pipeline execution not found.' });
       return;
@@ -491,6 +597,7 @@ function pipelineRunResponse(result: Awaited<ReturnType<typeof runFullPipeline>>
  */
 app.post('/api/pipeline/run', async (req, res) => {
   try {
+    const { tenantId, csvAllowedRoots } = tenantContextFromRequest(req);
     const profile = resolveWorkloadProfile(req.body);
     const model = req.body?.model as SqlStructuralModel | undefined;
     const ddl = String(req.body?.ddl ?? '');
@@ -499,23 +606,31 @@ app.post('/api/pipeline/run', async (req, res) => {
       return;
     }
 
+    const csvSourcePath = scopedCsvSourcePath(req, req.body?.csvSourcePath as string | undefined);
+    const targetDb =
+      (req.body?.targetDb as string | undefined) ??
+      (isAuthConfigured() ? tenantDefaultTargetDb(tenantId) : undefined);
+
     const pipelineRequest = {
       profileId: profile.id,
       profile,
       model,
       ddl,
       dialect: req.body?.dialect as string | undefined,
-      csvSourcePath: req.body?.csvSourcePath as string | undefined,
+      csvSourcePath,
+      csvAllowedRoots,
+      tenantId,
       cardinalityOverrides: req.body?.cardinalityOverrides as Record<string, number> | undefined,
       forceEmbedOverrides: req.body?.forceEmbedOverrides as Record<string, boolean> | undefined,
       generateMockCsv: Boolean(req.body?.generateMockCsv),
       mockCsvOptions: req.body?.mockCsvOptions as import('../utilities/mockCsvFromDdl.js').MockCsvOptions | undefined,
-      targetDb: req.body?.targetDb as string | undefined,
+      targetDb,
       drop: req.body?.drop !== false,
       mongoUri: req.body?.mongoUri as string | undefined,
       csvToAtlasPath: req.body?.csvToAtlasPath as string | undefined,
       knowledgeDir: KNOWLEDGE_DIR,
       rootDir: ROOT,
+      outDir: tenantArtifactDir(ROOT, tenantId, 'ui-pipeline'),
     };
 
     if (req.body?.stream === true) {
@@ -535,8 +650,16 @@ app.post('/api/pipeline/run', async (req, res) => {
 
 /** Run pipeline with CSV files uploaded in the same request. */
 app.post('/api/pipeline/run-with-csv', (req, res) => {
-  const batchDir = join(UPLOAD_DIR, `csv-batch-${Date.now()}`);
-  mkdirSync(batchDir, { recursive: true });
+  let tenantId: string;
+  let csvAllowedRoots: string[] | undefined;
+  try {
+    ({ tenantId, csvAllowedRoots } = tenantContextFromRequest(req));
+  } catch (error) {
+    res.status(401).json({ error: String(error) });
+    return;
+  }
+
+  const batchDir = tenantCsvBatchDir(ROOT, tenantId, 'csv-batch');
   const csvUpload = multer({
     storage: multer.diskStorage({
       destination: (_uploadReq, _file, cb) => cb(null, batchDir),
@@ -577,6 +700,8 @@ app.post('/api/pipeline/run-with-csv', (req, res) => {
         ddl,
         dialect: req.body?.dialect as string | undefined,
         csvSourcePath: batchDir,
+        csvAllowedRoots,
+        tenantId,
         cardinalityOverrides: req.body?.cardinalityOverrides
           ? JSON.parse(String(req.body.cardinalityOverrides)) as Record<string, number>
           : undefined,
@@ -587,12 +712,15 @@ app.post('/api/pipeline/run-with-csv', (req, res) => {
         mockCsvOptions: req.body?.mockCsvOptions
           ? (JSON.parse(String(req.body.mockCsvOptions)) as import('../utilities/mockCsvFromDdl.js').MockCsvOptions)
           : undefined,
-        targetDb: req.body?.targetDb as string | undefined,
+        targetDb:
+          (req.body?.targetDb as string | undefined) ??
+          (isAuthConfigured() ? tenantDefaultTargetDb(tenantId) : undefined),
         drop: req.body?.drop !== 'false',
         mongoUri: req.body?.mongoUri as string | undefined,
         csvToAtlasPath: req.body?.csvToAtlasPath as string | undefined,
         knowledgeDir: KNOWLEDGE_DIR,
         rootDir: ROOT,
+        outDir: tenantArtifactDir(ROOT, tenantId, 'ui-pipeline'),
       };
 
       if (streamProgress) {
@@ -615,12 +743,13 @@ app.post('/api/pipeline/run-with-csv', (req, res) => {
 /** Generate mock CSV files from DDL without running the full pipeline. */
 app.post('/api/mock-csv/generate', (req, res) => {
   try {
+    const { tenantId } = tenantContextFromRequest(req);
     const ddl = String(req.body?.ddl ?? '');
     if (!ddl.trim()) {
       res.status(400).json({ error: 'ddl is required' });
       return;
     }
-    const outDir = String(req.body?.outDir ?? join(UPLOAD_DIR, `mock-csv-${Date.now()}`));
+    const outDir = tenantCsvBatchDir(ROOT, tenantId, 'mock-csv');
     const mockCsvOptions = req.body?.mockCsvOptions as import('../utilities/mockCsvFromDdl.js').MockCsvOptions | undefined;
     const result = generateMockCsvFromDdl(ddl, outDir, ROOT, mockCsvOptions);
     res.json({

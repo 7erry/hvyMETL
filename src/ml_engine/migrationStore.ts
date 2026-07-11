@@ -23,8 +23,8 @@ export type MigrationStore = {
   upsertLesson(lesson: LessonLearnedDocument): Promise<void>;
   listLessons(namespace?: string): Promise<LessonLearnedDocument[]>;
   insertPipelineExecution(document: PipelineExecutionDocument): Promise<void>;
-  findPipelineExecution(executionId: string): Promise<PipelineExecutionDocument | null>;
-  listPipelineExecutions(limit?: number): Promise<PipelineExecutionDocument[]>;
+  findPipelineExecution(executionId: string, tenantId?: string): Promise<PipelineExecutionDocument | null>;
+  listPipelineExecutions(limit?: number, tenantId?: string): Promise<PipelineExecutionDocument[]>;
 };
 
 /** In-memory store for tests and offline CLI runs without MONGODB_URI. */
@@ -62,13 +62,16 @@ export class InMemoryMigrationStore implements MigrationStore {
     this.executions.set(document.executionId, structuredClone(document));
   }
 
-  async findPipelineExecution(executionId: string): Promise<PipelineExecutionDocument | null> {
+  async findPipelineExecution(executionId: string, tenantId?: string): Promise<PipelineExecutionDocument | null> {
     const found = this.executions.get(executionId);
-    return found ? structuredClone(found) : null;
+    if (!found) return null;
+    if (tenantId && found.tenantId !== tenantId) return null;
+    return structuredClone(found);
   }
 
-  async listPipelineExecutions(limit = 50): Promise<PipelineExecutionDocument[]> {
+  async listPipelineExecutions(limit = 50, tenantId?: string): Promise<PipelineExecutionDocument[]> {
     return [...this.executions.values()]
+      .filter((execution) => !tenantId || execution.tenantId === tenantId)
       .sort((left, right) => right.completedAt.localeCompare(left.completedAt))
       .slice(0, limit)
       .map((execution) => structuredClone(execution));
@@ -138,6 +141,7 @@ const mongoStoreSingleton = createModelSingleton(async (): Promise<MongoStoreCon
   await lessons.createIndex({ namespace: 1, createdAt: -1 });
   await executions.createIndex({ executionId: 1 }, { unique: true });
   await executions.createIndex({ completedAt: -1 });
+  await executions.createIndex({ tenantId: 1, completedAt: -1 });
   return { client, db, logs, lessons, executions };
 });
 
@@ -182,14 +186,16 @@ class MongoMigrationStore implements MigrationStore {
     await executions.insertOne(document);
   }
 
-  async findPipelineExecution(executionId: string): Promise<PipelineExecutionDocument | null> {
+  async findPipelineExecution(executionId: string, tenantId?: string): Promise<PipelineExecutionDocument | null> {
     const { executions } = await this.ctx();
-    return executions.findOne({ executionId });
+    const query = tenantId ? { executionId, tenantId } : { executionId };
+    return executions.findOne(query);
   }
 
-  async listPipelineExecutions(limit = 50): Promise<PipelineExecutionDocument[]> {
+  async listPipelineExecutions(limit = 50, tenantId?: string): Promise<PipelineExecutionDocument[]> {
     const { executions } = await this.ctx();
-    return executions.find({}).sort({ completedAt: -1 }).limit(limit).toArray();
+    const query = tenantId ? { tenantId } : {};
+    return executions.find(query).sort({ completedAt: -1 }).limit(limit).toArray();
   }
 }
 

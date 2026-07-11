@@ -4,6 +4,7 @@
 
 import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { tenantArtifactDir } from './tenant.js';
 import { writeDesignArtifacts, type DesignFromModelResult } from '../design/designFromModel.js';
 import { designFromModelWithMlEngine } from '../ml_engine/pipelinePatch.js';
 import { triggerPostMigrationReflection } from '../ml_engine/feedbackHooks.js';
@@ -48,6 +49,9 @@ export type PipelineRunRequest = {
   ddl: string;
   dialect?: string;
   csvSourcePath?: string;
+  /** When set (hosted multi-tenant), CSV paths must fall under these roots. */
+  csvAllowedRoots?: string[];
+  tenantId?: string;
   cardinalityOverrides?: Record<string, number>;
   forceEmbedOverrides?: Record<string, boolean>;
   targetDb?: string;
@@ -145,7 +149,7 @@ function resolvePipelineCsvRoot(
   outDir: string,
 ): string {
   if (!request.generateMockCsv) {
-    return resolveCsvSourcePath(request.csvSourcePath, importEnv);
+    return resolveCsvSourcePath(request.csvSourcePath, importEnv, request.csvAllowedRoots);
   }
 
   if (!request.ddl?.trim()) {
@@ -195,7 +199,11 @@ export async function runFullPipeline(request: PipelineRunRequest): Promise<Pipe
     throw new Error(config.csvToAtlasValidation.errors.join(' ') || 'CSV_TO_ATLAS_PATH is not configured.');
   }
 
-  const outDir = request.outDir ?? join(request.rootDir, 'out', 'ui-pipeline');
+  const outDir =
+    request.outDir ??
+    (request.tenantId
+      ? tenantArtifactDir(request.rootDir, request.tenantId, 'ui-pipeline')
+      : join(request.rootDir, 'out', 'ui-pipeline'));
   mkdirSync(outDir, { recursive: true });
 
   const csvRoot = resolvePipelineCsvRoot(request, importEnv, outDir);
@@ -240,7 +248,7 @@ export async function runFullPipeline(request: PipelineRunRequest): Promise<Pipe
     message: `Writing migration plan, schemas, and OpenAPI docs (${design.plan.collections.length} collections)…`,
   });
   const paths = writeDesignArtifacts(outDir, design);
-  const registeredArtifacts = registerApiArtifacts(outDir, 'pipeline');
+  const registeredArtifacts = registerApiArtifacts(outDir, 'pipeline', request.tenantId);
   const apiArtifacts = registeredArtifacts ? serializeApiArtifactBundle(registeredArtifacts) : undefined;
 
   const migrationLogIds = mlDesign.ml.migrationLogIds;
@@ -268,7 +276,11 @@ export async function runFullPipeline(request: PipelineRunRequest): Promise<Pipe
   const csvImportManifest = { csvSource: csvRoot, schemaDialect, collections: csvCollections };
   writeFileSync(manifestPath, `${JSON.stringify(csvImportManifest, null, 2)}\n`);
 
-  const requestedTargetDb = request.targetDb ?? importEnv.MONGODB_DB ?? 'csv_to_atlas';
+  const requestedTargetDb =
+    request.targetDb ??
+    (request.tenantId ? `hvymetl_${request.tenantId}`.slice(0, 63) : undefined) ??
+    importEnv.MONGODB_DB ??
+    'csv_to_atlas';
   const targetDb = importEnv.MONGODB_URI?.trim()
     ? await resolveMongoDatabaseNameCasing(importEnv.MONGODB_URI, requestedTargetDb, { timeoutMs: 12_000 })
     : requestedTargetDb;
@@ -330,6 +342,7 @@ export async function runFullPipeline(request: PipelineRunRequest): Promise<Pipe
   const execution = await persistPipelineExecution({
     startedAt,
     ok: errors.length === 0,
+    tenantId: request.tenantId,
     profileId: request.profileId,
     dialect: request.dialect,
     schemaDialect,

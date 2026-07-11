@@ -3,7 +3,7 @@
  */
 
 import { existsSync, readdirSync, statSync } from 'node:fs';
-import { basename, extname, join, resolve } from 'node:path';
+import { basename, extname, join, relative, resolve, isAbsolute } from 'node:path';
 import type { CollectionPlan } from '../types.js';
 
 /** Read default CSV source directory from the environment. */
@@ -13,7 +13,11 @@ export function readCsvSourceFromEnv(env: NodeJS.ProcessEnv = process.env): stri
 }
 
 /** Resolve and validate a CSV file or directory path. */
-export function resolveCsvSourcePath(requestedPath: string | undefined, env: NodeJS.ProcessEnv = process.env): string {
+export function resolveCsvSourcePath(
+  requestedPath: string | undefined,
+  env: NodeJS.ProcessEnv = process.env,
+  allowedRoots?: string[],
+): string {
   const candidate = (requestedPath ?? readCsvSourceFromEnv(env))?.trim();
   if (!candidate) {
     throw new Error(
@@ -23,6 +27,19 @@ export function resolveCsvSourcePath(requestedPath: string | undefined, env: Nod
   const resolved = resolve(candidate);
   if (!existsSync(resolved)) {
     throw new Error(`CSV source not found: ${resolved}`);
+  }
+  if (allowedRoots?.length) {
+    const allowed = allowedRoots.some((root) => {
+      try {
+        const rel = relative(resolve(root), resolved);
+        return !rel.startsWith('..') && !isAbsolute(rel);
+      } catch {
+        return false;
+      }
+    });
+    if (!allowed) {
+      throw new Error('Access denied: CSV source must be inside your workspace upload directory.');
+    }
   }
   return resolved;
 }
