@@ -21,6 +21,38 @@ export function isAuthConfigured(): boolean {
   return Boolean(env('AUTH0_ISSUER_BASE_URL') && env('AUTH0_AUDIENCE'));
 }
 
+export type PublicAuthConfig = {
+  authEnabled: boolean;
+  domain?: string;
+  clientId?: string;
+  audience?: string;
+  rolesClaim: string;
+  hostedUrl: string;
+};
+
+/** Auth0 tenant domain from issuer URL, e.g. `https://tenant.us.auth0.com/` → `tenant.us.auth0.com`. */
+export function issuerUrlToDomain(issuerBaseUrl: string): string {
+  return issuerBaseUrl.replace(/^https:\/\//i, '').replace(/\/+$/, '');
+}
+
+/** Public Auth0 SPA settings for the web UI (client ID is not secret for SPAs). */
+export function getPublicAuthConfig(hostedUrl = 'https://hvymetl.studio'): PublicAuthConfig {
+  const rolesClaim = env('AUTH0_ROLES_CLAIM') || DEFAULT_AUTH0_ROLES_CLAIM;
+  if (!isAuthConfigured()) {
+    return { authEnabled: false, rolesClaim, hostedUrl };
+  }
+  const issuer = env('AUTH0_ISSUER_BASE_URL');
+  const clientId = env('AUTH0_SPA_CLIENT_ID') || env('AUTH0_CLIENT_ID');
+  return {
+    authEnabled: true,
+    domain: issuer ? issuerUrlToDomain(issuer) : undefined,
+    clientId: clientId || undefined,
+    audience: env('AUTH0_AUDIENCE') || undefined,
+    rolesClaim,
+    hostedUrl,
+  };
+}
+
 function stringValues(value: unknown): string[] {
   if (Array.isArray(value)) return value.filter((entry): entry is string => typeof entry === 'string');
   if (typeof value === 'string') return [value];

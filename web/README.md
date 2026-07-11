@@ -83,6 +83,7 @@ development skips login when Auth0 env vars are unset.
 | --- | --- |
 | `AUTH0_ISSUER_BASE_URL` | Auth0 tenant URL, e.g. `https://YOUR_TENANT.us.auth0.com/` |
 | `AUTH0_AUDIENCE` | API identifier, e.g. `https://api.hvymetl.studio` |
+| `AUTH0_SPA_CLIENT_ID` | Auth0 SPA client ID (served to the web UI via `/api/auth/config`) |
 | `AUTH0_ROLES_CLAIM` | JWT claim for roles (default `https://hvymetl.studio/roles`) |
 | `HVYMETL_AUTH_DISABLED` | Set to `1` to bypass JWT checks locally |
 
@@ -185,9 +186,16 @@ exports.onExecutePostLogin = async (event, api) => {
 | User with `admin` role | Can switch Developer / Manager |
 | `GET /api/auth/config` | `{ "authEnabled": true, ... }` when server Auth0 vars are set |
 
-For hosted deploys, set the same variables in the hosting platform (API server env for
-`AUTH0_*`, build env for `VITE_AUTH0_*`). Set `HVYMETL_AUTH_DISABLED=1` only for local
+For hosted deploys, set `AUTH0_*` on the API server (including `AUTH0_SPA_CLIENT_ID` so the
+UI can load Auth0 settings from `GET /api/auth/config` without build-time `VITE_AUTH0_*`).
+Optionally set `VITE_AUTH0_*` at web build time instead. Set `HVYMETL_AUTH_DISABLED=1` only for local
 testing without JWT checks.
+
+**Production deploy (https://hvymetl.studio):** use `npm run start:ui` so the server
+serves static `web/dist`. Do **not** run `npm run dev:ui` or set `HVYMETL_DEV_PROXY=1` in
+production — that serves the Vite dev client and requires `VITE_AUTH0_*` in the **runtime**
+environment instead of at build time. If `/` references `/@vite/client`, the site is in dev
+mode and Auth0 login will not work unless those runtime vars are set.
 
 **Multi-tenant isolation:** Each authenticated user is scoped by Auth0 `sub`. Uploads,
 design/pipeline artifacts, and workspace settings live under

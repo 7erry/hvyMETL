@@ -55,6 +55,21 @@ export async function checkApiHealth(): Promise<boolean> {
   }
 }
 
+export type AuthConfigResponse = {
+  authEnabled: boolean;
+  rolesClaim: string;
+  hostedUrl: string;
+  domain?: string;
+  clientId?: string;
+  audience?: string;
+};
+
+export async function fetchAuthConfig(): Promise<AuthConfigResponse> {
+  const res = await fetch(`${base}/api/auth/config`);
+  if (!res.ok) throw new Error(await readApiError(res));
+  return res.json() as Promise<AuthConfigResponse>;
+}
+
 export async function fetchProfiles(): Promise<Profile[]> {
   const res = await apiFetch(`${base}/api/profiles`);
   if (!res.ok) throw new Error(await readApiError(res));

@@ -38,6 +38,8 @@ export function SchemaImportPanel({
               API not reachable. Confirm you are signed in and the hvyMETL server at{' '}
               <code>{window.location.origin}</code> is running with matching Auth0 API settings.
             </>
+          ) : access.serverAuthRequired ? (
+            <>API not reachable. Sign in is required — reload after Auth0 web env vars are configured.</>
           ) : (
             <>
               API not reachable. From the repo root run <code>npm run dev:ui</code> and open{' '}

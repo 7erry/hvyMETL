@@ -38,7 +38,7 @@ import { generateFromPlan } from '../repogen/generate.js';
 import { REPOGEN_LANGUAGES } from '../repogen/languages/index.js';
 import { registerApiArtifactRoutes } from './apiArtifactRoutes.js';
 import { registerApiArtifacts, serializeApiArtifactBundle } from './apiArtifactStore.js';
-import { authErrorHandler, isAuthConfigured, requireRole } from './auth.js';
+import { authErrorHandler, getPublicAuthConfig, isAuthConfigured, requireRole } from './auth.js';
 import { loadTermsPageHtml } from './termsPage.js';
 import {
   assertPathWithinTenantStorage,
@@ -116,11 +116,7 @@ app.get('/api/health', (_req, res) => {
 });
 
 app.get('/api/auth/config', (_req, res) => {
-  res.json({
-    authEnabled: isAuthConfigured(),
-    rolesClaim: process.env.AUTH0_ROLES_CLAIM ?? 'https://hvymetl.studio/roles',
-    hostedUrl: 'https://hvymetl.studio',
-  });
+  res.json(getPublicAuthConfig());
 });
 
 app.get('/terms', (_req, res) => {

@@ -189,6 +189,7 @@ Then open **http://localhost:3847**.
 | `HVYMETL_CSV_SOURCE` | Web UI full pipeline (optional) | Default directory of per-table CSV exports |
 | `AUTH0_ISSUER_BASE_URL` | Hosted Studio auth (optional) | Auth0 tenant URL for JWT validation |
 | `AUTH0_AUDIENCE` | Hosted Studio auth (optional) | Auth0 API audience |
+| `AUTH0_SPA_CLIENT_ID` | Hosted Studio auth (optional) | Auth0 SPA client ID (exposed via `/api/auth/config` for the web UI) |
 | `AUTH0_ROLES_CLAIM` | Hosted Studio auth (optional) | JWT roles claim (default `https://hvymetl.studio/roles`) |
 | `HVYMETL_AUTH_DISABLED` | Local dev (optional) | Set to `1` to skip JWT middleware |
 

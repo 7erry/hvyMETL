@@ -203,7 +203,8 @@ export default function App() {
   ]);
 
   useEffect(() => {
-    if (access.enabled && !access.apiReady) return;
+    const needsAuth = access.serverAuthRequired || access.enabled;
+    if (needsAuth && !access.apiReady) return;
 
     void (async () => {
       const healthy = await checkApiHealth();
@@ -225,20 +226,20 @@ export default function App() {
         setDialects(FALLBACK_DIALECTS);
         const message = String(e);
         const authFailure = /401|403|authentication required|forbidden/i.test(message);
-        if (authFailure && access.enabled) {
+        if (authFailure && needsAuth) {
           setApiConnected(true);
           setStatus('Sign in required to load server profiles and dialects.');
           return;
         }
         setApiConnected(false);
         setStatus(
-          access.enabled
+          needsAuth
             ? `Cannot reach hvyMETL API (${message}).`
             : `Cannot reach hvyMETL API (${message}). Run npm run dev:ui from the repo root and open http://localhost:3847`,
         );
       }
     })();
-  }, [access.apiReady, access.enabled]);
+  }, [access.apiReady, access.enabled, access.serverAuthRequired]);
 
   const migrationPlan = useMemo(
     () => parseMigrationPlan(migrationArtifacts?.planJson),
