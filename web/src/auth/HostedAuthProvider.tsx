@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useMemo, type ReactNode } from 'react';
+import { createContext, useContext, useLayoutEffect, useMemo, type ReactNode } from 'react';
 import { Auth0Provider, useAuth0 } from '@auth0/auth0-react';
 import { setAccessTokenProvider } from '../api';
 import {
@@ -20,6 +20,8 @@ type AuthState = {
   canUseDeveloper: boolean;
   canUseManager: boolean;
   preferredRole: 'developer' | 'manager';
+  /** True when Bearer tokens are available for protected API routes. */
+  apiReady: boolean;
   error?: string;
   login: () => Promise<void>;
   logout: () => void;
@@ -37,6 +39,7 @@ const disabledAuthState: AuthState = {
   canUseDeveloper: true,
   canUseManager: true,
   preferredRole: 'developer',
+  apiReady: true,
   login: async () => undefined,
   logout: () => undefined,
 };
@@ -67,7 +70,7 @@ function Auth0Bridge({ children }: { children: ReactNode }) {
     [rolesClaim, user],
   );
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!isAuthenticated) {
       setAccessTokenProvider(undefined);
       return;
@@ -80,6 +83,7 @@ function Auth0Bridge({ children }: { children: ReactNode }) {
     enabled: true,
     isLoading,
     isAuthenticated,
+    apiReady: !isLoading && isAuthenticated,
     userId: typeof user?.sub === 'string' && user.sub.trim() ? user.sub : 'authenticated-user',
     userName: user?.name ?? user?.nickname ?? user?.email ?? 'Authenticated user',
     userEmail: user?.email ?? '',

@@ -1,4 +1,5 @@
 import { useRef } from 'react';
+import { useAccess } from '../auth/HostedAuthProvider';
 import type { Dialect } from '../types';
 
 type SchemaImportPanelProps = {
@@ -26,13 +27,23 @@ export function SchemaImportPanel({
   compact = false,
   framed = true,
 }: SchemaImportPanelProps) {
+  const access = useAccess();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const content = (
     <>
       {!apiConnected ? (
         <p className="schema-import-panel__warn">
-          API not reachable. From the repo root run <code>npm run dev:ui</code> and open{' '}
-          <code>http://localhost:3847</code> (not the Vite port alone unless the API is running).
+          {access.enabled ? (
+            <>
+              API not reachable. Confirm you are signed in and the hvyMETL server at{' '}
+              <code>{window.location.origin}</code> is running with matching Auth0 API settings.
+            </>
+          ) : (
+            <>
+              API not reachable. From the repo root run <code>npm run dev:ui</code> and open{' '}
+              <code>http://localhost:3847</code> (not the Vite port alone unless the API is running).
+            </>
+          )}
         </p>
       ) : null}
       <label className="schema-import-panel__label">Database dialect</label>

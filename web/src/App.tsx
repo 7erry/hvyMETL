@@ -203,25 +203,42 @@ export default function App() {
   ]);
 
   useEffect(() => {
+    if (access.enabled && !access.apiReady) return;
+
     void (async () => {
       const healthy = await checkApiHealth();
       setApiConnected(healthy);
+      if (!healthy) {
+        setDialects(FALLBACK_DIALECTS);
+        setStatus(
+          access.enabled
+            ? 'API health check failed. Confirm the hvyMETL server is running.'
+            : 'API health check failed — using offline dialect list. Run npm run dev:ui from the repo root.',
+        );
+        return;
+      }
       try {
         const [p, d] = await Promise.all([fetchProfiles(), fetchDialects()]);
         setProfiles(p);
         setDialects(d);
-        if (!healthy) {
-          setStatus('API health check failed — using offline dialect list. Run npm run dev:ui from the repo root.');
-        }
       } catch (e) {
         setDialects(FALLBACK_DIALECTS);
+        const message = String(e);
+        const authFailure = /401|403|authentication required|forbidden/i.test(message);
+        if (authFailure && access.enabled) {
+          setApiConnected(true);
+          setStatus('Sign in required to load server profiles and dialects.');
+          return;
+        }
         setApiConnected(false);
         setStatus(
-          `Cannot reach hvyMETL API (${String(e)}). Run npm run dev:ui from the repo root and open http://localhost:3847`,
+          access.enabled
+            ? `Cannot reach hvyMETL API (${message}).`
+            : `Cannot reach hvyMETL API (${message}). Run npm run dev:ui from the repo root and open http://localhost:3847`,
         );
       }
     })();
-  }, []);
+  }, [access.apiReady, access.enabled]);
 
   const migrationPlan = useMemo(
     () => parseMigrationPlan(migrationArtifacts?.planJson),
