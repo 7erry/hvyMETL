@@ -45,6 +45,7 @@ import {
   requireAuth,
   requireRole,
   rolesFromPayload,
+  effectiveRolesFromPayload,
 } from './auth.js';
 import { loadTermsPageHtml } from './termsPage.js';
 import {
@@ -132,9 +133,12 @@ app.get('/api/auth/me', requireAuth, (req, res) => {
     return;
   }
   const payload = (req as Request & { auth?: { payload?: Record<string, unknown> } }).auth?.payload;
+  const tokenRoles = rolesFromPayload(payload);
+  const roles = effectiveRolesFromPayload(payload);
   res.json({
     userId: typeof payload?.sub === 'string' ? payload.sub : '',
-    roles: rolesFromPayload(payload),
+    roles,
+    rolesSource: tokenRoles.length > 0 ? 'token' : roles.length > 0 ? 'default' : 'none',
   });
 });
 

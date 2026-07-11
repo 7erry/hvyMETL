@@ -252,9 +252,11 @@ Management API** with scopes `read:roles` and `update:users`.
    - Older tenants: **Actions → Flows → Login** → drag → **Apply**
 6. **Sign out** of hvymetl.studio and **sign in again** (roles are baked in at login; refreshing is not enough)
 
-If you still see *Access pending*, decode your ID token at [jwt.io](https://jwt.io) and confirm it
-contains `"https://hvymetl.studio/roles": ["admin"]` (or `developer` / `manager`). Missing claim
-→ Action not in the Login flow or no role assigned to the user.
+If you still see *Access pending*, check **DevTools → Network → `/api/auth/me`** while signed in.
+Empty `roles` with `rolesSource: "none"` means the server has `HVYMETL_DEFAULT_ROLE=none` and the
+Login Action did not add role claims. By default (Auth0 enabled, no override), the API assigns
+**`developer`** to any signed-in user without explicit roles — redeploy the latest server if
+`/api/auth/me` still returns empty roles after sign-in.
 
 **8. Verify**
 

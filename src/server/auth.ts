@@ -76,6 +76,25 @@ export function rolesFromPayload(
   return [...new Set(roles.filter(isHvyRole))];
 }
 
+/**
+ * Roles from the JWT, with a hosted-studio fallback when Auth0 login succeeds but no role claim
+ * is present (e.g. post-login Action not wired yet). Set HVYMETL_DEFAULT_ROLE=none to disable.
+ */
+export function effectiveRolesFromPayload(
+  payload: Record<string, unknown> | undefined,
+  rolesClaim = env('AUTH0_ROLES_CLAIM') || DEFAULT_AUTH0_ROLES_CLAIM,
+): HvyRole[] {
+  const roles = rolesFromPayload(payload, rolesClaim);
+  if (roles.length > 0) return roles;
+  if (!isAuthConfigured()) return [];
+
+  const configuredDefault = env('HVYMETL_DEFAULT_ROLE');
+  if (configuredDefault.toLowerCase() === 'none') return [];
+
+  const fallback = configuredDefault || 'developer';
+  return isHvyRole(fallback) ? [fallback] : [];
+}
+
 let cachedAuthMiddleware: RequestHandler | undefined;
 
 function getAuthMiddleware(): RequestHandler {
@@ -99,7 +118,7 @@ export function requireRole(allowedRoles: HvyRole[]): RequestHandler[] {
     requireAuth,
     (req: RequestWithAuth, res: Response, next: NextFunction) => {
       if (!isAuthConfigured()) return next();
-      const roles = rolesFromPayload(req.auth?.payload);
+      const roles = effectiveRolesFromPayload(req.auth?.payload);
       if (allowedRoles.some((role) => roles.includes(role))) return next();
       res.status(403).json({
         error: `Forbidden: requires one of ${allowedRoles.join(', ')}`,
