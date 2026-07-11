@@ -98,12 +98,110 @@ development skips login when Auth0 env vars are unset.
 Configure Auth0 **Allowed Callback URLs** and **Allowed Logout URLs** for
 `http://localhost:3847` and `https://hvymetl.studio`.
 
+### Auth0 setup walkthrough
+
+Follow these steps once in the [Auth0 Dashboard](https://manage.auth0.com/) to enable
+login on local dev and [https://hvymetl.studio](https://hvymetl.studio).
+
+**1. Create the API (server audience)**
+
+- **Applications → APIs → Create API**
+- Name: `hvyMETL API`
+- Identifier: `https://api.hvymetl.studio` (use this exact string)
+- Signing algorithm: RS256
+- Copy the identifier into root `.env` as `AUTH0_AUDIENCE` and into `web/.env.local` as
+  `VITE_AUTH0_AUDIENCE`
+
+**2. Create the SPA application (web login)**
+
+- **Applications → Applications → Create Application**
+- Name: `hvyMETL Studio`
+- Type: **Single Page Application**
+- Copy **Domain** → `VITE_AUTH0_DOMAIN` (domain only, e.g. `dev-xxxxx.us.auth0.com`)
+- Copy **Client ID** → `VITE_AUTH0_CLIENT_ID`
+- Set **Allowed Callback URLs**:
+  ```
+  http://localhost:3847, https://hvymetl.studio
+  ```
+- Set **Allowed Logout URLs** (same as above)
+- Set **Allowed Web Origins** (same as above)
+
+**3. Configure the server issuer**
+
+In the repo root `.env`:
+
+```bash
+AUTH0_ISSUER_BASE_URL=https://YOUR_TENANT.us.auth0.com/
+AUTH0_AUDIENCE=https://api.hvymetl.studio
+AUTH0_ROLES_CLAIM=https://hvymetl.studio/roles
+```
+
+`AUTH0_ISSUER_BASE_URL` is the tenant URL **with** `https://` and a trailing `/`.
+`VITE_AUTH0_DOMAIN` is the same tenant **without** `https://`.
+
+**4. Configure the web build**
+
+Create `web/.env.local`:
+
+```bash
+VITE_AUTH0_DOMAIN=YOUR_TENANT.us.auth0.com
+VITE_AUTH0_CLIENT_ID=your_spa_client_id
+VITE_AUTH0_AUDIENCE=https://api.hvymetl.studio
+VITE_AUTH0_ROLES_CLAIM=https://hvymetl.studio/roles
+```
+
+Rebuild or restart after changing Vite env vars (`npm run dev:ui` or redeploy hosted UI).
+
+**5. Enable social logins (optional)**
+
+- **Authentication → Social** → enable Google, Facebook, GitHub, etc.
+- Each provider needs its own OAuth app credentials in Auth0
+
+**6. Add roles and inject them into tokens**
+
+- **User Management → Roles** → create `admin`, `developer`, `manager`
+- Assign roles to users under **User Management → Users**
+- **Actions → Flows → Login → Add Action** (or use a post-login Action):
+
+```javascript
+exports.onExecutePostLogin = async (event, api) => {
+  const namespace = 'https://hvymetl.studio/roles';
+  const roles = event.authorization?.roles ?? [];
+  api.accessToken.setCustomClaim(namespace, roles);
+  api.idToken.setCustomClaim(namespace, roles);
+};
+```
+
+- Deploy the Action and add it to the Login flow
+
+**7. Verify**
+
+| Check | Expected |
+| --- | --- |
+| Local with Auth0 env unset | No login gate; full access as `local-dev` tenant |
+| Local with Auth0 configured | Sign-in screen; API calls include Bearer token |
+| User with `developer` role | Developer UI only |
+| User with `manager` role | Manager UI only |
+| User with `admin` role | Can switch Developer / Manager |
+| `GET /api/auth/config` | `{ "authEnabled": true, ... }` when server Auth0 vars are set |
+
+For hosted deploys, set the same variables in the hosting platform (API server env for
+`AUTH0_*`, build env for `VITE_AUTH0_*`). Set `HVYMETL_AUTH_DISABLED=1` only for local
+testing without JWT checks.
+
 **Multi-tenant isolation:** Each authenticated user is scoped by Auth0 `sub`. Uploads,
 design/pipeline artifacts, and workspace settings live under
 `web-uploads/tenants/{user}/` and `out/tenants/{user}/`. Pipeline execution history
 and Atlas import defaults are filtered per user so tenants cannot read each other's
 files or settings. Local development uses the shared `local-dev` tenant when Auth0
 env vars are unset.
+
+**MongoDB from hvymetl.studio:** The pipeline connects to Atlas from the **hosted
+server**, not your laptop. If the URI works locally but fails on
+[https://hvymetl.studio](https://hvymetl.studio), open Atlas → **Network Access** and
+allow the studio server's egress IP (shown in the pipeline dialog when the check
+fails), or add **Allow Access from Anywhere** (`0.0.0.0/0`) while testing. Your
+home/office IP being allowed is not enough.
 
 **Terms and Conditions:** [https://hvymetl.studio/terms](/terms) — also linked from the
 app header and login screen.

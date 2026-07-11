@@ -56,7 +56,8 @@ import {
 import { mountWebUi } from './setupWebUi.js';
 import type { DesignFromModelResult } from '../design/designFromModel.js';
 import {
-  formatMongoConnectivityFailure,
+  enrichHostedMongoHint,
+  getServerEgressIp,
   maskMongoUri,
   verifyMongoUri,
 } from '../utilities/mongoConnectivity.js';
@@ -501,14 +502,27 @@ app.get('/api/pipeline/config', async (req, res) => {
       generateMockCsv,
     });
 
-    const mongoConnectivity = effectiveMongoUri
+    let mongoConnectivity = effectiveMongoUri
       ? await verifyMongoUri(effectiveMongoUri, { timeoutMs: 12_000 })
       : { ok: false as const, code: 'MISSING_URI', message: 'MONGODB_URI is not set.', hint: 'Add MONGODB_URI to .env (see .env.example).' };
+
+    const hostedUrl = process.env.HVYMETL_HOSTED_URL?.trim() || 'https://hvymetl.studio';
+    const requestHost = String(req.get('host') ?? '').toLowerCase();
+    const treatAsHosted =
+      process.env.HVYMETL_HOSTED === '1' ||
+      Boolean(process.env.HVYMETL_HOSTED_URL?.trim()) ||
+      requestHost.includes('hvymetl.studio');
+    const serverEgressIp = treatAsHosted ? await getServerEgressIp() : null;
+    if (!mongoConnectivity.ok && treatAsHosted) {
+      mongoConnectivity = enrichHostedMongoHint(mongoConnectivity, { hostedUrl, serverEgressIp });
+    }
 
     res.json({
       ...status,
       mongoUriMasked: effectiveMongoUri ? maskMongoUri(effectiveMongoUri) : undefined,
       mongoConnectivity,
+      serverEgressIp: serverEgressIp ?? undefined,
+      hostedUrl: treatAsHosted ? hostedUrl : undefined,
       mockCsvGenerator: verifyMockCsvGenerator(ROOT),
     });
   } catch (error) {

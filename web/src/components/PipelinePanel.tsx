@@ -408,6 +408,11 @@ export function PipelinePanel({
         {config?.mongoConnectivity && !config.mongoConnectivity.ok ? (
           <div className="pipeline-error pipeline-mongo-connectivity">
             <p><strong>{config.mongoConnectivity.message}</strong></p>
+            {config.hostedUrl && config.serverEgressIp ? (
+              <p className="pipeline-hint">
+                Allow Atlas Network Access for the studio server IP: <strong>{config.serverEgressIp}</strong>
+              </p>
+            ) : null}
             {config.mongoConnectivity.hint ? (
               <pre className="pipeline-hint">{config.mongoConnectivity.hint}</pre>
             ) : null}

@@ -114,6 +114,8 @@ export type PipelineConfigStatus = {
     message?: string;
     hint?: string;
   };
+  serverEgressIp?: string;
+  hostedUrl?: string;
   mockCsvGenerator?: {
     ok: boolean;
     python?: string;

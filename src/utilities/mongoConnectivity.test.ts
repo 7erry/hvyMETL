@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  enrichHostedMongoHint,
   formatMongoConnectivityFailure,
   maskMongoUri,
   verifyMongoUri,
@@ -29,5 +30,20 @@ describe('mongoConnectivity', () => {
       expect(result.code).toBe('ENOTFOUND');
       expect(formatMongoConnectivityFailure(result)).toContain('HVYMETL_SKIP_ATLAS_IMPORT');
     }
+  });
+
+  it('adds hosted studio guidance for TLS failures', () => {
+    const enriched = enrichHostedMongoHint(
+      {
+        ok: false,
+        code: 'TLS_OR_SELECTION',
+        message: 'MongoDB connection failed during TLS or server selection.',
+        hint: 'Base hint.',
+      },
+      { hostedUrl: 'https://hvymetl.studio', serverEgressIp: '203.0.113.10' },
+    );
+    expect(enriched.hint).toContain('hvymetl.studio');
+    expect(enriched.hint).toContain('203.0.113.10');
+    expect(enriched.hint).toContain('not your browser');
   });
 });

@@ -112,6 +112,57 @@ export function formatMongoConnectivityFailure(failure: { message: string; hint?
   return `${failure.message}\n${failure.hint ?? ''}`;
 }
 
+let cachedServerEgressIp: string | null | undefined;
+
+/** Best-effort public egress IP for hosted deployments (Atlas Network Access allow-list). */
+export async function getServerEgressIp(): Promise<string | null> {
+  if (cachedServerEgressIp !== undefined) return cachedServerEgressIp;
+  try {
+    const response = await fetch('https://api.ipify.org?format=json', {
+      signal: AbortSignal.timeout(5_000),
+    });
+    if (!response.ok) {
+      cachedServerEgressIp = null;
+      return null;
+    }
+    const data = (await response.json()) as { ip?: string };
+    cachedServerEgressIp = typeof data.ip === 'string' && data.ip.trim() ? data.ip.trim() : null;
+  } catch {
+    cachedServerEgressIp = null;
+  }
+  return cachedServerEgressIp;
+}
+
+/** Reset cached egress IP (tests). */
+export function resetServerEgressIpCache(): void {
+  cachedServerEgressIp = undefined;
+}
+
+/** Append hosted-app guidance when Atlas rejects the server, not the user's laptop. */
+export function enrichHostedMongoHint(
+  failure: MongoConnectivityFailure,
+  options: { hostedUrl?: string; serverEgressIp?: string | null } = {},
+): MongoConnectivityFailure {
+  if (failure.ok !== false || failure.code !== 'TLS_OR_SELECTION') return failure;
+
+  const hostedUrl = options.hostedUrl?.trim() || 'https://hvymetl.studio';
+  const egress = options.serverEgressIp?.trim();
+  const hostedLines = [
+    '',
+    `Hosted app note (${hostedUrl}): MongoDB is contacted from the studio server, not your browser.`,
+    'In Atlas → Network Access, allow the studio server — not just your laptop IP.',
+    egress
+      ? `  Allow this egress IP: ${egress}`
+      : '  For quick testing, add Allow Access from Anywhere (0.0.0.0/0).',
+    '  Each Atlas cluster you connect must allow this server.',
+  ];
+
+  return {
+    ...failure,
+    hint: `${failure.hint ?? ''}${hostedLines.join('\n')}`,
+  };
+}
+
 /** MongoDB rejects creating a DB whose name only differs by case from an existing DB. */
 export async function resolveMongoDatabaseNameCasing(
   uri: string,
