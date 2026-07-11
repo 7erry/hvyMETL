@@ -3,6 +3,21 @@ import type { ProfileRequestFields, WorkloadProfile } from './customProfileShare
 
 const base = '';
 
+type AccessTokenProvider = () => Promise<string>;
+
+let accessTokenProvider: AccessTokenProvider | undefined;
+
+export function setAccessTokenProvider(provider: AccessTokenProvider | undefined): void {
+  accessTokenProvider = provider;
+}
+
+async function apiFetch(input: RequestInfo | URL, init: RequestInit = {}): Promise<Response> {
+  const token = accessTokenProvider ? await accessTokenProvider() : '';
+  const headers = new Headers(init.headers);
+  if (token) headers.set('authorization', `Bearer ${token}`);
+  return fetch(input, { ...init, headers });
+}
+
 export type ProfileInference = {
   profileId: string;
   label: string;
@@ -11,7 +26,7 @@ export type ProfileInference = {
 };
 
 export async function inferProfile(model: SqlStructuralModel): Promise<ProfileInference> {
-  const res = await fetch(`${base}/api/profiles/infer`, {
+  const res = await apiFetch(`${base}/api/profiles/infer`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ model }),
@@ -33,7 +48,7 @@ async function readApiError(res: Response): Promise<string> {
 
 export async function checkApiHealth(): Promise<boolean> {
   try {
-    const res = await fetch(`${base}/api/health`);
+    const res = await apiFetch(`${base}/api/health`);
     return res.ok;
   } catch {
     return false;
@@ -41,7 +56,7 @@ export async function checkApiHealth(): Promise<boolean> {
 }
 
 export async function fetchProfiles(): Promise<Profile[]> {
-  const res = await fetch(`${base}/api/profiles`);
+  const res = await apiFetch(`${base}/api/profiles`);
   if (!res.ok) throw new Error(await readApiError(res));
   const data = await res.json();
   if (!Array.isArray(data)) throw new Error('Profiles API returned invalid data');
@@ -49,7 +64,7 @@ export async function fetchProfiles(): Promise<Profile[]> {
 }
 
 export async function fetchDialects(): Promise<Dialect[]> {
-  const res = await fetch(`${base}/api/dialects`);
+  const res = await apiFetch(`${base}/api/dialects`);
   if (!res.ok) throw new Error(await readApiError(res));
   const data = await res.json();
   if (!Array.isArray(data)) throw new Error('Dialects API returned invalid data');
@@ -60,7 +75,7 @@ export async function importDdl(
   ddl: string,
   dialect: string,
 ): Promise<{ model: SqlStructuralModel; ddl: string; inferred?: ProfileInference }> {
-  const res = await fetch(`${base}/api/schema/import-ddl`, {
+  const res = await apiFetch(`${base}/api/schema/import-ddl`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ ddl, dialect }),
@@ -75,7 +90,7 @@ export async function importSqlite(
 ): Promise<{ model: SqlStructuralModel; ddl: string; sourcePath?: string; inferred?: ProfileInference }> {
   const body = new FormData();
   body.append('database', file);
-  const res = await fetch(`${base}/api/schema/import-sqlite`, { method: 'POST', body });
+  const res = await apiFetch(`${base}/api/schema/import-sqlite`, { method: 'POST', body });
   if (!res.ok) throw new Error((await res.json()).error ?? res.statusText);
   return res.json();
 }
@@ -212,7 +227,7 @@ export async function runPipeline(
   request: PipelineRunRequest,
   onProgress?: (event: import('./pipelineStages.js').PipelineProgressEvent) => void,
 ): Promise<PipelineRunResult> {
-  const res = await fetch(`${base}/api/pipeline/run`, {
+  const res = await apiFetch(`${base}/api/pipeline/run`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ ...request, stream: Boolean(onProgress) }),
@@ -249,7 +264,7 @@ export async function runPipelineWithCsv(
   if (request.mockCsvOptions) body.append('mockCsvOptions', JSON.stringify(request.mockCsvOptions));
   if (onProgress) body.append('stream', 'true');
 
-  const res = await fetch(`${base}/api/pipeline/run-with-csv`, { method: 'POST', body });
+  const res = await apiFetch(`${base}/api/pipeline/run-with-csv`, { method: 'POST', body });
 
   if (onProgress) {
     return consumePipelineStream(res, onProgress);
@@ -274,7 +289,7 @@ export async function fetchPipelineConfig(options?: {
   if (options?.generateMockCsv) params.set('generateMockCsv', 'true');
   if (options?.mongoUri) params.set('mongoUri', options.mongoUri);
   const query = params.toString();
-  const res = await fetch(`${base}/api/pipeline/config${query ? `?${query}` : ''}`);
+  const res = await apiFetch(`${base}/api/pipeline/config${query ? `?${query}` : ''}`);
   if (!res.ok) throw new Error((await res.json()).error ?? res.statusText);
   return res.json();
 }
@@ -309,7 +324,7 @@ export type ApiArtifactBundleInfo = {
 };
 
 export async function fetchApiArtifacts(): Promise<ApiArtifactBundleInfo | null> {
-  const res = await fetch(`${base}/api/artifacts`);
+  const res = await apiFetch(`${base}/api/artifacts`);
   if (res.status === 404) return null;
   if (!res.ok) throw new Error((await res.json()).error ?? res.statusText);
   return res.json();
@@ -317,7 +332,7 @@ export async function fetchApiArtifacts(): Promise<ApiArtifactBundleInfo | null>
 
 export async function fetchApiArtifactJson(urlPath: string): Promise<unknown> {
   const path = urlPath.startsWith('/') ? urlPath : `/${urlPath}`;
-  const res = await fetch(path);
+  const res = await apiFetch(path);
   const data = await res.json();
   if (!res.ok) throw new Error(data.error ?? res.statusText);
   return data;
@@ -336,7 +351,7 @@ export type ExplainDesignRequest = ProfileRequestFields & {
 export async function explainDesignTransformation(
   request: ExplainDesignRequest,
 ): Promise<import('./transformationSummaryTypes').TransformationSummary> {
-  const res = await fetch(`${base}/api/design/explain`, {
+  const res = await apiFetch(`${base}/api/design/explain`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify(request),
@@ -351,7 +366,7 @@ export async function fetchPipelineExecutions(
 ): Promise<import('./transformationSummaryTypes').PipelineExecutionsResponse> {
   const params = new URLSearchParams({ limit: String(limit) });
   if (mongoUri) params.set('mongoUri', mongoUri);
-  const res = await fetch(`${base}/api/pipeline/executions?${params}`);
+  const res = await apiFetch(`${base}/api/pipeline/executions?${params}`);
   if (!res.ok) throw new Error((await res.json()).error ?? res.statusText);
   return res.json();
 }
@@ -363,7 +378,7 @@ export async function fetchPipelineExecution(
   const params = new URLSearchParams();
   if (mongoUri) params.set('mongoUri', mongoUri);
   const query = params.toString();
-  const res = await fetch(
+  const res = await apiFetch(
     `${base}/api/pipeline/executions/${encodeURIComponent(executionId)}${query ? `?${query}` : ''}`,
   );
   const data = await res.json();
@@ -381,7 +396,7 @@ export type DesignRequest = ProfileRequestFields & {
 };
 
 export async function runDesign(request: DesignRequest): Promise<DesignResult> {
-  const res = await fetch(`${base}/api/design`, {
+  const res = await apiFetch(`${base}/api/design`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify(request),
@@ -401,7 +416,7 @@ export async function runDesignWithCsv(files: File[], request: DesignRequest): P
   if (request.cardinalityOverrides) body.append('cardinalityOverrides', JSON.stringify(request.cardinalityOverrides));
   if (request.forceEmbedOverrides) body.append('forceEmbedOverrides', JSON.stringify(request.forceEmbedOverrides));
 
-  const res = await fetch(`${base}/api/design/with-csv`, { method: 'POST', body });
+  const res = await apiFetch(`${base}/api/design/with-csv`, { method: 'POST', body });
   const data = await res.json();
   if (!res.ok) throw new Error(data.error ?? res.statusText);
   return data;
@@ -418,7 +433,7 @@ export async function exportMigration(
     forceEmbedOverrides?: Record<string, boolean>;
   },
 ) {
-  const res = await fetch(`${base}/api/export/migration`, {
+  const res = await apiFetch(`${base}/api/export/migration`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ model, ddl, ...profile, ...options }),
@@ -428,7 +443,7 @@ export async function exportMigration(
 }
 
 export async function exportPrompts(ddl: string, profile: ProfileRequestFields) {
-  const res = await fetch(`${base}/api/export/prompts`, {
+  const res = await apiFetch(`${base}/api/export/prompts`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ ddl, ...profile }),
@@ -457,13 +472,13 @@ export type RepogenGenerateResult = {
 };
 
 export async function fetchRepogenLanguages(): Promise<RepogenLanguageOption[]> {
-  const res = await fetch(`${base}/api/repogen/languages`);
+  const res = await apiFetch(`${base}/api/repogen/languages`);
   if (!res.ok) throw new Error((await res.json()).error ?? res.statusText);
   return res.json();
 }
 
 export async function generateRepositories(planJson: string, language: string): Promise<RepogenGenerateResult> {
-  const res = await fetch(`${base}/api/repogen/generate`, {
+  const res = await apiFetch(`${base}/api/repogen/generate`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ planJson, language }),

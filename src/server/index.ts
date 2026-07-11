@@ -38,6 +38,8 @@ import { generateFromPlan } from '../repogen/generate.js';
 import { REPOGEN_LANGUAGES } from '../repogen/languages/index.js';
 import { registerApiArtifactRoutes } from './apiArtifactRoutes.js';
 import { registerApiArtifacts, serializeApiArtifactBundle } from './apiArtifactStore.js';
+import { authErrorHandler, isAuthConfigured, requireRole } from './auth.js';
+import { loadTermsPageHtml } from './termsPage.js';
 import { mountWebUi } from './setupWebUi.js';
 import type { DesignFromModelResult } from '../design/designFromModel.js';
 import {
@@ -57,8 +59,6 @@ const app = express();
 app.use(cors());
 app.use(express.json({ limit: '4mb' }));
 
-registerApiArtifactRoutes(app, ROOT);
-
 function persistDesignApiArtifacts(result: DesignFromModelResult, outDir: string, label: string) {
   const paths = writeDesignArtifacts(outDir, result);
   const registered = registerApiArtifacts(outDir, label);
@@ -71,6 +71,34 @@ function persistDesignApiArtifacts(result: DesignFromModelResult, outDir: string
 app.get('/api/health', (_req, res) => {
   res.json({ ok: true, name: 'hvyMETL', cli: 'available' });
 });
+
+app.get('/api/auth/config', (_req, res) => {
+  res.json({
+    authEnabled: isAuthConfigured(),
+    rolesClaim: process.env.AUTH0_ROLES_CLAIM ?? 'https://hvymetl.studio/roles',
+    hostedUrl: 'https://hvymetl.studio',
+  });
+});
+
+app.get('/terms', (_req, res) => {
+  try {
+    res.type('html').send(loadTermsPageHtml(ROOT));
+  } catch (error) {
+    res.status(500).type('text/plain').send(String(error));
+  }
+});
+
+app.use('/api/dialects', ...requireRole(['admin', 'developer', 'manager']));
+app.use('/api/profiles', ...requireRole(['admin', 'developer', 'manager']));
+app.use('/api/artifacts', ...requireRole(['admin', 'developer', 'manager']));
+app.use('/api/schema', ...requireRole(['admin', 'developer']));
+app.use('/api/design', ...requireRole(['admin', 'developer']));
+app.use('/api/export', ...requireRole(['admin', 'developer']));
+app.use('/api/repogen', ...requireRole(['admin', 'developer']));
+app.use('/api/pipeline', ...requireRole(['admin', 'developer']));
+app.use('/api/mock-csv', ...requireRole(['admin', 'developer']));
+
+registerApiArtifactRoutes(app, ROOT);
 
 app.get('/api/dialects', (_req, res) => {
   res.json(DIALECTS);
@@ -605,6 +633,8 @@ app.post('/api/mock-csv/generate', (req, res) => {
     res.status(500).json({ error: String(error) });
   }
 });
+
+app.use(authErrorHandler);
 
 /** Serve built UI (production) or Vite middleware (dev:ui) — same port as API. */
 const devUiMode = process.env.HVYMETL_DEV_PROXY === '1';

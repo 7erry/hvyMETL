@@ -17,8 +17,10 @@ import { SchemaImportPanel } from './components/SchemaImportPanel';
 import { SchemaImportModal } from './components/SchemaImportModal';
 import { CollapsiblePanel } from './components/CollapsiblePanel';
 import { CardinalityOverridesPanel } from './components/CardinalityOverridesPanel';
+import { AuthGate } from './components/AuthGate';
 import { FALLBACK_DIALECTS } from './dialectConstants';
 import { RoleToggle } from './components/RoleToggle';
+import { useAccess } from './auth/HostedAuthProvider';
 import { profileRequestBody } from './customProfileShared';
 import { emptyModelTokenUsage, mergeModelTokenUsage } from './modelUsage';
 import {
@@ -66,6 +68,7 @@ import type { PipelineExecutionDetail } from './transformationSummaryTypes';
 import type { Dialect, Profile, SqlStructuralModel } from './types';
 
 export default function App() {
+  const access = useAccess();
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [dialects, setDialects] = useState<Dialect[]>(FALLBACK_DIALECTS);
   const [apiConnected, setApiConnected] = useState(true);
@@ -152,6 +155,26 @@ export default function App() {
   useEffect(() => {
     saveSessionState(session);
   }, [session]);
+
+  useEffect(() => {
+    if (!access.enabled || access.isLoading || !access.isAuthenticated) return;
+    if (access.isAdmin) return;
+    if (uiRole === 'developer' && !access.canUseDeveloper) {
+      setSessionField('uiRole', access.preferredRole);
+    } else if (uiRole === 'manager' && !access.canUseManager) {
+      setSessionField('uiRole', access.preferredRole);
+    }
+  }, [
+    access.canUseDeveloper,
+    access.canUseManager,
+    access.enabled,
+    access.isAdmin,
+    access.isAuthenticated,
+    access.isLoading,
+    access.preferredRole,
+    setSessionField,
+    uiRole,
+  ]);
 
   useEffect(() => {
     void (async () => {
@@ -697,24 +720,21 @@ export default function App() {
   };
 
   return (
+    <AuthGate>
     <div
       className={uiRole === 'manager' ? 'app-root app--manager' : 'app-root'}
       style={{ display: 'flex', flexDirection: 'column', height: '100%' }}
     >
-      <header
-        className="app-header"
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          padding: '0.75rem 1.25rem',
-          borderBottom: '1px solid #00684A',
-          background: '#112733',
-        }}
-      >
+      <header className="app-header">
         <MongoLogo />
-        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-          <RoleToggle role={uiRole} onChange={(role) => setSessionField('uiRole', role)} />
+        <div className="app-header__actions">
+          {access.isAdmin ? (
+            <RoleToggle role={uiRole} onChange={(role) => setSessionField('uiRole', role)} />
+          ) : (
+            <span className="role-toggle role-toggle--locked" aria-label="Assigned role">
+              {uiRole === 'manager' ? 'Manager' : 'Developer'}
+            </span>
+          )}
           {uiRole === 'developer' ? (
             <>
               <select
@@ -755,12 +775,23 @@ export default function App() {
             </>
           ) : null}
           {uiRole === 'developer' ? (
-            <span style={{ fontSize: '0.75rem', opacity: 0.7 }}>CLI: npm run hvymetl</span>
+            <span className="app-header__cli-hint">CLI: npm run hvymetl</span>
           ) : null}
+          {access.enabled ? (
+            <div className="auth-user">
+              <span>{access.userName}</span>
+              <button type="button" className="tertiary" onClick={access.logout}>
+                Sign out
+              </button>
+            </div>
+          ) : null}
+          <a className="terms-link" href="/terms">
+            Terms
+          </a>
         </div>
       </header>
 
-      <div style={{ display: 'flex', flex: 1, minHeight: 0 }}>
+      <div className="app-body">
         {view === 'diagram' ? (
           uiRole === 'manager' ? (
             <ManagerView
@@ -1176,5 +1207,6 @@ export default function App() {
         }}
       />
     </div>
+    </AuthGate>
   );
 }

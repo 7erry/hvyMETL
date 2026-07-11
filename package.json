@@ -38,6 +38,7 @@
     "cors": "^2.8.5",
     "dotenv": "^17.4.2",
     "express": "^5.1.0",
+    "express-oauth2-jwt-bearer": "^1.9.1",
     "mongodb": "^7.3.0",
     "multer": "^2.0.2",
     "onnxruntime-node": "^1.26.0",

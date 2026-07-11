@@ -187,6 +187,10 @@ Then open **http://localhost:3847**.
 | `HVYMETL_ATLAS_STUB_MODE` | ML local testing (optional) | `healthy` or `degraded` stub Atlas metrics |
 | `HVYMETL_MEMORY_DB` | ML memory + pipeline archive (optional) | Database for `hvymetl_migration_logs`, `hvymetl_lessons_learned`, `hvymetl_pipeline_executions` (default: `hvymetl_memory`) |
 | `HVYMETL_CSV_SOURCE` | Web UI full pipeline (optional) | Default directory of per-table CSV exports |
+| `AUTH0_ISSUER_BASE_URL` | Hosted Studio auth (optional) | Auth0 tenant URL for JWT validation |
+| `AUTH0_AUDIENCE` | Hosted Studio auth (optional) | Auth0 API audience |
+| `AUTH0_ROLES_CLAIM` | Hosted Studio auth (optional) | JWT roles claim (default `https://hvymetl.studio/roles`) |
+| `HVYMETL_AUTH_DISABLED` | Local dev (optional) | Set to `1` to skip JWT middleware |
 
 ## Web UI (optional)
 
@@ -205,6 +209,12 @@ honored by design, explain, export, and full pipeline APIs.
 npm run dev:ui      # http://localhost:3847 (API + Vite hot reload)
 npm run start:ui    # production build on http://localhost:3847
 ```
+
+**Hosted:** [https://hvymetl.studio](https://hvymetl.studio) — Auth0 social login,
+role-based access (`admin`, `developer`, `manager`), and
+[Terms and Conditions](https://hvymetl.studio/terms). Configure Auth0 env vars as
+documented in **[web/README.md](web/README.md)**; local dev works without login when
+those vars are unset.
 
 See **[web/README.md](web/README.md)** (screenshots & how-to) and
 **[docs/13-web-ui.md](docs/13-web-ui.md)** (API reference, MongoDB persistence).

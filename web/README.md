@@ -63,6 +63,47 @@ npm run start:ui       # http://localhost:3847
 
 Set `HVYMETL_UI_PORT` in `.env` to change the API port (default `3847`).
 
+## Hosted Studio (https://hvymetl.studio)
+
+The public hosted Migration Studio uses **Auth0 Universal Login** (Google, Facebook,
+and other social/enterprise connections configured in your Auth0 tenant).
+
+| Role | Access |
+| --- | --- |
+| **admin** | Developer + Manager views; can switch interface role |
+| **developer** | Schema import, design, export, pipeline, repogen |
+| **manager** | Manager review dashboard and cost projections |
+
+Assign roles in Auth0 (custom claim `https://hvymetl.studio/roles` by default). Local
+development skips login when Auth0 env vars are unset.
+
+**API (server `.env`):**
+
+| Variable | Description |
+| --- | --- |
+| `AUTH0_ISSUER_BASE_URL` | Auth0 tenant URL, e.g. `https://YOUR_TENANT.us.auth0.com/` |
+| `AUTH0_AUDIENCE` | API identifier, e.g. `https://api.hvymetl.studio` |
+| `AUTH0_ROLES_CLAIM` | JWT claim for roles (default `https://hvymetl.studio/roles`) |
+| `HVYMETL_AUTH_DISABLED` | Set to `1` to bypass JWT checks locally |
+
+**Web (Vite build env, e.g. `web/.env.local`):**
+
+| Variable | Description |
+| --- | --- |
+| `VITE_AUTH0_DOMAIN` | Auth0 tenant domain |
+| `VITE_AUTH0_CLIENT_ID` | SPA client ID |
+| `VITE_AUTH0_AUDIENCE` | Same API audience as the server |
+| `VITE_AUTH0_ROLES_CLAIM` | Optional; defaults to `https://hvymetl.studio/roles` |
+
+Configure Auth0 **Allowed Callback URLs** and **Allowed Logout URLs** for
+`http://localhost:3847` and `https://hvymetl.studio`.
+
+**Terms and Conditions:** [https://hvymetl.studio/terms](/terms) — also linked from the
+app header and login screen.
+
+The UI layout is responsive for phone-sized screens: header controls wrap, sidebars
+stack above the canvas, and modals expand to full screen on narrow viewports.
+
 ## Screenshots
 
 ### Schema import wizard

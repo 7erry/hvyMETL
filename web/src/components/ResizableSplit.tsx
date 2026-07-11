@@ -1,4 +1,29 @@
-import { useCallback, useEffect, useRef, useState, type PointerEvent as ReactPointerEvent, type ReactNode } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type PointerEvent as ReactPointerEvent,
+  type ReactNode,
+} from 'react';
+
+const MOBILE_STACK_QUERY = '(max-width: 768px)';
+
+function useStackedLayout(): boolean {
+  const [stacked, setStacked] = useState(() =>
+    typeof window !== 'undefined' ? window.matchMedia(MOBILE_STACK_QUERY).matches : false,
+  );
+
+  useEffect(() => {
+    const media = window.matchMedia(MOBILE_STACK_QUERY);
+    const onChange = (event: MediaQueryListEvent) => setStacked(event.matches);
+    media.addEventListener('change', onChange);
+    setStacked(media.matches);
+    return () => media.removeEventListener('change', onChange);
+  }, []);
+
+  return stacked;
+}
 
 type ResizableSplitProps = {
   sidebarWidth: number;
@@ -18,6 +43,7 @@ export function ResizableSplit({
   sidebar,
   main,
 }: ResizableSplitProps) {
+  const stacked = useStackedLayout();
   const dragging = useRef(false);
   const [isDragging, setIsDragging] = useState(false);
 
@@ -36,12 +62,12 @@ export function ResizableSplit({
   }, []);
 
   const startDrag = useCallback((event: ReactPointerEvent<HTMLDivElement>) => {
-    if (event.button !== 0) return;
+    if (stacked || event.button !== 0) return;
     dragging.current = true;
     setIsDragging(true);
     event.currentTarget.setPointerCapture(event.pointerId);
     event.preventDefault();
-  }, []);
+  }, [stacked]);
 
   useEffect(() => {
     window.addEventListener('pointermove', onPointerMove);
@@ -55,32 +81,36 @@ export function ResizableSplit({
   }, [onPointerMove, stopDrag]);
 
   return (
-    <div className={`workspace-split${isDragging ? ' workspace-split--dragging' : ''}`}>
-      <aside className="workspace-sidebar" style={{ width: sidebarWidth }}>
+    <div
+      className={`workspace-split${isDragging ? ' workspace-split--dragging' : ''}${stacked ? ' workspace-split--stacked' : ''}`}
+    >
+      <aside className="workspace-sidebar" style={stacked ? undefined : { width: sidebarWidth }}>
         {sidebar}
       </aside>
-      <div
-        className="workspace-divider"
-        role="separator"
-        aria-orientation="vertical"
-        aria-label="Resize sidebar"
-        aria-valuemin={minWidth}
-        aria-valuemax={maxWidth}
-        aria-valuenow={sidebarWidth}
-        tabIndex={0}
-        onPointerDown={startDrag}
-        onPointerUp={stopDrag}
-        onLostPointerCapture={stopDrag}
-        onKeyDown={(event) => {
-          if (event.key === 'ArrowLeft') onSidebarWidthChange(Math.max(minWidth, sidebarWidth - 16));
-          if (event.key === 'ArrowRight') onSidebarWidthChange(Math.min(maxWidth, sidebarWidth + 16));
-          if (event.key === 'Home') onSidebarWidthChange(minWidth);
-          if (event.key === 'End') onSidebarWidthChange(maxWidth);
-        }}
-        title="Drag to resize sidebar"
-      >
-        <span className="workspace-divider__grip" aria-hidden="true" />
-      </div>
+      {stacked ? null : (
+        <div
+          className="workspace-divider"
+          role="separator"
+          aria-orientation="vertical"
+          aria-label="Resize sidebar"
+          aria-valuemin={minWidth}
+          aria-valuemax={maxWidth}
+          aria-valuenow={sidebarWidth}
+          tabIndex={0}
+          onPointerDown={startDrag}
+          onPointerUp={stopDrag}
+          onLostPointerCapture={stopDrag}
+          onKeyDown={(event) => {
+            if (event.key === 'ArrowLeft') onSidebarWidthChange(Math.max(minWidth, sidebarWidth - 16));
+            if (event.key === 'ArrowRight') onSidebarWidthChange(Math.min(maxWidth, sidebarWidth + 16));
+            if (event.key === 'Home') onSidebarWidthChange(minWidth);
+            if (event.key === 'End') onSidebarWidthChange(maxWidth);
+          }}
+          title="Drag to resize sidebar"
+        >
+          <span className="workspace-divider__grip" aria-hidden="true" />
+        </div>
+      )}
       <div className="workspace-main">{main}</div>
     </div>
   );

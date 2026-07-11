@@ -9,6 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@auth0/auth0-react": "^2.21.0",
     "@xyflow/react": "^12.10.0",
     "prismjs": "^1.30.0",
     "react": "^19.2.0",
