@@ -30,3 +30,16 @@ export function preferredUiRole(roles: HvyRole[]): 'developer' | 'manager' {
   if (roles.includes('developer') || roles.includes('admin')) return 'developer';
   return 'manager';
 }
+
+/** Decode a JWT payload segment (browser-safe; no signature verification). */
+export function parseJwtPayload(token: string): Record<string, unknown> | undefined {
+  const segments = token.split('.');
+  if (segments.length < 2) return undefined;
+  try {
+    const base64 = segments[1].replace(/-/g, '+').replace(/_/g, '/');
+    const padded = base64.padEnd(base64.length + ((4 - (base64.length % 4)) % 4), '=');
+    return JSON.parse(atob(padded)) as Record<string, unknown>;
+  } catch {
+    return undefined;
+  }
+}

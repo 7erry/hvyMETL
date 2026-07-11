@@ -189,17 +189,67 @@ Role names must match **exactly** (lowercase): `admin`, `developer`, `manager`.
    `developer` / `manager` as needed
 3. **Actions → Library → Build Custom** → trigger **Login / Post Login** → name e.g. `Add hvyMETL roles`
 
+Use this Action to inject roles into tokens. It also grants **`developer`** automatically when a user
+has no roles yet (first Google/social login):
+
 ```javascript
 exports.onExecutePostLogin = async (event, api) => {
   const namespace = 'https://hvymetl.studio/roles';
-  const roles = event.authorization?.roles ?? [];
+  const defaultRole = 'developer';
+  let roles = event.authorization?.roles ?? [];
+
+  if (roles.length === 0) {
+    roles = [defaultRole];
+  }
+
   api.accessToken.setCustomClaim(namespace, roles);
   api.idToken.setCustomClaim(namespace, roles);
 };
 ```
 
+This works on the **first login** without a separate post-registration Action. Roles are written
+directly into the token; you do not need to manually assign `developer` in the dashboard for each
+new user.
+
+Optional — also persist the role in Auth0 (visible under **Users → Roles**): add Action secrets
+`AUTH0_DOMAIN`, `M2M_CLIENT_ID`, `M2M_CLIENT_SECRET`, and `DEVELOPER_ROLE_ID` (from
+**User Management → Roles → developer**), then extend the Action:
+
+```javascript
+exports.onExecutePostLogin = async (event, api) => {
+  const namespace = 'https://hvymetl.studio/roles';
+  const defaultRole = 'developer';
+  let roles = event.authorization?.roles ?? [];
+
+  if (roles.length === 0) {
+    roles = [defaultRole];
+    if (event.secrets.DEVELOPER_ROLE_ID) {
+      const { ManagementClient } = require('auth0');
+      const management = new ManagementClient({
+        domain: event.secrets.AUTH0_DOMAIN,
+        clientId: event.secrets.M2M_CLIENT_ID,
+        clientSecret: event.secrets.M2M_CLIENT_SECRET,
+      });
+      await management.users.assignRoles(
+        { id: event.user.user_id },
+        { roles: [event.secrets.DEVELOPER_ROLE_ID] },
+      );
+    }
+  }
+
+  api.accessToken.setCustomClaim(namespace, roles);
+  api.idToken.setCustomClaim(namespace, roles);
+};
+```
+
+Create the M2M app under **Applications → Create → Machine to Machine** → authorize **Auth0
+Management API** with scopes `read:roles` and `update:users`.
+
 4. **Deploy** the Action
-5. **Actions → Flows → Login** → drag your Action into the flow → **Apply**
+5. Attach the Action to the **post-login** trigger (Auth0 moved this; there is no separate **Flows** menu in newer tenants):
+   - **Option A:** After **Deploy**, click **Add to flow** on the success banner (if shown)
+   - **Option B:** **Actions → Triggers** → under **Signup and Login**, open **post-login** (or **Login / Post Login**) → drag your Action from **Custom** into the pipeline → **Apply**
+   - Older tenants: **Actions → Flows → Login** → drag → **Apply**
 6. **Sign out** of hvymetl.studio and **sign in again** (roles are baked in at login; refreshing is not enough)
 
 If you still see *Access pending*, decode your ID token at [jwt.io](https://jwt.io) and confirm it

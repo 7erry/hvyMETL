@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { preferredUiRole, rolesFromClaims } from './access';
+import { parseJwtPayload, preferredUiRole, rolesFromClaims } from './access';
+
+describe('parseJwtPayload', () => {
+  it('decodes a JWT payload segment', () => {
+    const payload = { 'https://hvymetl.studio/roles': ['developer'], sub: 'auth0|1' };
+    const token = `hdr.${btoa(JSON.stringify(payload))}.sig`;
+    expect(parseJwtPayload(token)).toEqual(payload);
+  });
+});
 
 describe('rolesFromClaims', () => {
   it('parses Auth0 role claims from the hosted app namespace', () => {

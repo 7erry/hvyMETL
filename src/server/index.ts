@@ -38,7 +38,14 @@ import { generateFromPlan } from '../repogen/generate.js';
 import { REPOGEN_LANGUAGES } from '../repogen/languages/index.js';
 import { registerApiArtifactRoutes } from './apiArtifactRoutes.js';
 import { registerApiArtifacts, serializeApiArtifactBundle } from './apiArtifactStore.js';
-import { authErrorHandler, getPublicAuthConfig, isAuthConfigured, requireRole } from './auth.js';
+import {
+  authErrorHandler,
+  getPublicAuthConfig,
+  isAuthConfigured,
+  requireAuth,
+  requireRole,
+  rolesFromPayload,
+} from './auth.js';
 import { loadTermsPageHtml } from './termsPage.js';
 import {
   assertPathWithinTenantStorage,
@@ -117,6 +124,18 @@ app.get('/api/health', (_req, res) => {
 
 app.get('/api/auth/config', (_req, res) => {
   res.json(getPublicAuthConfig());
+});
+
+app.get('/api/auth/me', requireAuth, (req, res) => {
+  if (!isAuthConfigured()) {
+    res.json({ userId: 'local-dev', roles: ['admin', 'developer', 'manager'] });
+    return;
+  }
+  const payload = (req as Request & { auth?: { payload?: Record<string, unknown> } }).auth?.payload;
+  res.json({
+    userId: typeof payload?.sub === 'string' ? payload.sub : '',
+    roles: rolesFromPayload(payload),
+  });
 });
 
 app.get('/terms', (_req, res) => {

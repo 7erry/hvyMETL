@@ -47,8 +47,13 @@ export function AuthGate({ children }: AuthGateProps) {
           <strong>Access pending</strong>
           <p>Your account is signed in, but it does not have the admin, developer, or manager role yet.</p>
           <p>
-            In Auth0: enable <strong>RBAC</strong> on the hvyMETL API, assign the role named exactly{' '}
-            <code>admin</code> (lowercase), deploy the Login Action, then sign out and sign in again.
+            In Auth0: enable <strong>RBAC</strong> on the hvyMETL API, deploy the <strong>post-login</strong>{' '}
+            Action, then sign out and sign in again. Clear site data if you changed the Action recently.
+          </p>
+          <p>
+            Debug: DevTools → Network → <code>/api/auth/me</code> should return{' '}
+            <code>{'"roles":["developer"]'}</code> or similar. Empty <code>roles</code> means the Login Action
+            did not add <code>https://hvymetl.studio/roles</code> to your access token.
           </p>
           <a href="/terms">Terms and Conditions</a>
           <button type="button" className="secondary" onClick={access.logout}>

@@ -70,6 +70,17 @@ export async function fetchAuthConfig(): Promise<AuthConfigResponse> {
   return res.json() as Promise<AuthConfigResponse>;
 }
 
+export type AuthSessionResponse = {
+  userId: string;
+  roles: string[];
+};
+
+export async function fetchAuthSession(): Promise<AuthSessionResponse> {
+  const res = await apiFetch(`${base}/api/auth/me`);
+  if (!res.ok) throw new Error(await readApiError(res));
+  return res.json() as Promise<AuthSessionResponse>;
+}
+
 export async function fetchProfiles(): Promise<Profile[]> {
   const res = await apiFetch(`${base}/api/profiles`);
   if (!res.ok) throw new Error(await readApiError(res));

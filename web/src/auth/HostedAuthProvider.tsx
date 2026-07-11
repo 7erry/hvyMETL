@@ -7,9 +7,10 @@ import {
   type ReactNode,
 } from 'react';
 import { Auth0Provider, useAuth0 } from '@auth0/auth0-react';
-import { fetchAuthConfig, setAccessTokenProvider, type AuthConfigResponse } from '../api';
+import { fetchAuthConfig, fetchAuthSession, setAccessTokenProvider, type AuthConfigResponse } from '../api';
 import {
   DEFAULT_AUTH0_ROLES_CLAIM,
+  parseJwtPayload,
   preferredUiRole,
   rolesFromClaims,
   type HvyRole,
@@ -84,6 +85,10 @@ function resolveClientAuthSettings(config: AuthConfigResponse | null): {
   };
 }
 
+function normalizeRoles(values: string[], rolesClaim: string): HvyRole[] {
+  return rolesFromClaims({ [rolesClaim]: values, roles: values }, rolesClaim);
+}
+
 function AuthMisconfigScreen(): ReactNode {
   return (
     <main className="auth-gate">
@@ -110,10 +115,12 @@ function AuthMisconfigScreen(): ReactNode {
 }
 
 function Auth0Bridge({
+  audience,
   children,
   rolesClaim,
   serverAuthRequired,
 }: {
+  audience: string;
   children: ReactNode;
   rolesClaim: string;
   serverAuthRequired: boolean;
@@ -131,6 +138,20 @@ function Auth0Bridge({
   const [roles, setRoles] = useState<HvyRole[]>([]);
   const [claimsLoading, setClaimsLoading] = useState(true);
 
+  const getApiAccessToken = (): Promise<string> =>
+    audience
+      ? getAccessTokenSilently({ authorizationParams: { audience } })
+      : getAccessTokenSilently();
+
+  useLayoutEffect(() => {
+    if (!isAuthenticated) {
+      setAccessTokenProvider(undefined);
+      return;
+    }
+    setAccessTokenProvider(() => getApiAccessToken());
+    return () => setAccessTokenProvider(undefined);
+  }, [audience, getAccessTokenSilently, isAuthenticated]);
+
   useEffect(() => {
     if (!isAuthenticated || isLoading) {
       if (!isAuthenticated) {
@@ -142,19 +163,44 @@ function Auth0Bridge({
 
     let cancelled = false;
     setClaimsLoading(true);
-    void getIdTokenClaims()
-      .then((claims) => {
-        if (cancelled) return;
-        const fromIdToken = rolesFromClaims(
-          (claims ?? undefined) as Record<string, unknown> | undefined,
-          rolesClaim,
-        );
-        if (fromIdToken.length > 0) {
-          setRoles(fromIdToken);
-          return;
+
+    void (async () => {
+      const resolved: HvyRole[] = [];
+
+      try {
+        const session = await fetchAuthSession();
+        resolved.push(...normalizeRoles(session.roles, rolesClaim));
+      } catch {
+        // fall through to token claim parsing
+      }
+
+      if (resolved.length === 0) {
+        try {
+          const accessToken = await getApiAccessToken();
+          resolved.push(...rolesFromClaims(parseJwtPayload(accessToken), rolesClaim));
+        } catch {
+          // fall through
         }
-        setRoles(rolesFromClaims(user as Record<string, unknown> | undefined, rolesClaim));
-      })
+      }
+
+      if (resolved.length === 0) {
+        const idClaims = await getIdTokenClaims();
+        resolved.push(
+          ...rolesFromClaims(
+            (idClaims ?? undefined) as Record<string, unknown> | undefined,
+            rolesClaim,
+          ),
+        );
+      }
+
+      if (resolved.length === 0) {
+        resolved.push(...rolesFromClaims(user as Record<string, unknown> | undefined, rolesClaim));
+      }
+
+      if (!cancelled) {
+        setRoles([...new Set(resolved)]);
+      }
+    })()
       .catch(() => {
         if (!cancelled) {
           setRoles(rolesFromClaims(user as Record<string, unknown> | undefined, rolesClaim));
@@ -167,16 +213,7 @@ function Auth0Bridge({
     return () => {
       cancelled = true;
     };
-  }, [getIdTokenClaims, isAuthenticated, isLoading, rolesClaim, user]);
-
-  useLayoutEffect(() => {
-    if (!isAuthenticated) {
-      setAccessTokenProvider(undefined);
-      return;
-    }
-    setAccessTokenProvider(() => getAccessTokenSilently());
-    return () => setAccessTokenProvider(undefined);
-  }, [getAccessTokenSilently, isAuthenticated]);
+  }, [audience, getAccessTokenSilently, getIdTokenClaims, isAuthenticated, isLoading, rolesClaim, user]);
 
   const sessionLoading = isLoading || claimsLoading;
 
@@ -255,7 +292,11 @@ export function HostedAuthProvider({ children }: { children: ReactNode }) {
       cacheLocation="localstorage"
       useRefreshTokens
     >
-      <Auth0Bridge rolesClaim={clientAuth.rolesClaim} serverAuthRequired={serverAuthRequired}>
+      <Auth0Bridge
+        audience={clientAuth.audience}
+        rolesClaim={clientAuth.rolesClaim}
+        serverAuthRequired={serverAuthRequired}
+      >
         {children}
       </Auth0Bridge>
     </Auth0Provider>
