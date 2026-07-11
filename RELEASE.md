@@ -1,3 +1,24 @@
+## hvyMETL 1.7.0
+
+Hosted Migration Studio release: Auth0 login on [hvymetl.studio](https://hvymetl.studio), per-user tenant isolation, and production auth fallbacks when Auth0 Login Actions are still being wired up.
+
+### Highlights
+
+- Auth0 SPA login with developer/manager/admin roles, Terms page, and mobile-friendly layout.
+- Multi-tenant isolation: per-user uploads, artifacts, workspace settings, and pipeline history scoped by Auth0 `sub`.
+- Hosted auth config via `GET /api/auth/config` and `GET /api/auth/me` (no build-time `VITE_AUTH0_*` required when `AUTH0_SPA_CLIENT_ID` is set on the server).
+- Server role fallbacks: default `developer` for signed-in users without JWT role claims; `HVYMETL_ADMIN_SUBS` bootstrap for admins.
+- Auth0 setup walkthrough in `web/README.md`; Atlas egress IP guidance for hosted pipeline runs.
+- Fix pipeline settings inputs (MongoDB URI, csvToAtlas path) resetting after each keystroke.
+
+### Verification
+
+- `npm test`
+- `npm run build`
+- `npm run build --prefix web`
+
+---
+
 ## hvyMETL 1.0.0
 
 The 1.0 release formalizes hvyMETL Migration Studio as a complete SQL-to-MongoDB migration planning and execution workflow.
