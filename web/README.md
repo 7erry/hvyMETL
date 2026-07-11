@@ -255,8 +255,9 @@ Management API** with scopes `read:roles` and `update:users`.
 If you still see *Access pending*, check **DevTools → Network → `/api/auth/me`** while signed in.
 Empty `roles` with `rolesSource: "none"` means the server has `HVYMETL_DEFAULT_ROLE=none` and the
 Login Action did not add role claims. By default (Auth0 enabled, no override), the API assigns
-**`developer`** to any signed-in user without explicit roles — redeploy the latest server if
-`/api/auth/me` still returns empty roles after sign-in.
+**`developer`** to any signed-in user without explicit roles. Set **`HVYMETL_ADMIN_SUBS`** to a
+comma-separated list of Auth0 user IDs (`sub` from `/api/auth/me`) to grant **admin** until the
+post-login Action injects roles from Auth0. Redeploy the server after changing env vars.
 
 **8. Verify**
 

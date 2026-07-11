@@ -76,23 +76,58 @@ export function rolesFromPayload(
   return [...new Set(roles.filter(isHvyRole))];
 }
 
+function adminSubsFromEnv(): Set<string> {
+  const raw = env('HVYMETL_ADMIN_SUBS');
+  if (!raw) return new Set();
+  return new Set(
+    raw
+      .split(',')
+      .map((entry) => entry.trim())
+      .filter(Boolean),
+  );
+}
+
+export type RolesResolutionSource = 'token' | 'admin_allowlist' | 'default' | 'none';
+
+export function resolveEffectiveRoles(
+  payload: Record<string, unknown> | undefined,
+  rolesClaim = env('AUTH0_ROLES_CLAIM') || DEFAULT_AUTH0_ROLES_CLAIM,
+): { roles: HvyRole[]; source: RolesResolutionSource } {
+  const tokenRoles = rolesFromPayload(payload, rolesClaim);
+  if (tokenRoles.length > 0) {
+    return { roles: tokenRoles, source: 'token' };
+  }
+  if (!isAuthConfigured()) {
+    return { roles: [], source: 'none' };
+  }
+
+  const sub = typeof payload?.sub === 'string' ? payload.sub.trim() : '';
+  if (sub && adminSubsFromEnv().has(sub)) {
+    return { roles: ['admin'], source: 'admin_allowlist' };
+  }
+
+  const configuredDefault = env('HVYMETL_DEFAULT_ROLE');
+  if (configuredDefault.toLowerCase() === 'none') {
+    return { roles: [], source: 'none' };
+  }
+
+  const fallback = configuredDefault || 'developer';
+  if (isHvyRole(fallback)) {
+    return { roles: [fallback], source: 'default' };
+  }
+  return { roles: [], source: 'none' };
+}
+
 /**
  * Roles from the JWT, with a hosted-studio fallback when Auth0 login succeeds but no role claim
  * is present (e.g. post-login Action not wired yet). Set HVYMETL_DEFAULT_ROLE=none to disable.
+ * Set HVYMETL_ADMIN_SUBS to comma-separated Auth0 user IDs (JWT sub) for bootstrap admins.
  */
 export function effectiveRolesFromPayload(
   payload: Record<string, unknown> | undefined,
   rolesClaim = env('AUTH0_ROLES_CLAIM') || DEFAULT_AUTH0_ROLES_CLAIM,
 ): HvyRole[] {
-  const roles = rolesFromPayload(payload, rolesClaim);
-  if (roles.length > 0) return roles;
-  if (!isAuthConfigured()) return [];
-
-  const configuredDefault = env('HVYMETL_DEFAULT_ROLE');
-  if (configuredDefault.toLowerCase() === 'none') return [];
-
-  const fallback = configuredDefault || 'developer';
-  return isHvyRole(fallback) ? [fallback] : [];
+  return resolveEffectiveRoles(payload, rolesClaim).roles;
 }
 
 let cachedAuthMiddleware: RequestHandler | undefined;
