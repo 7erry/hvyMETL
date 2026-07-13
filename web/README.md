@@ -458,7 +458,7 @@ The **schema source dialect** is taken from your schema import automatically.
 | Dialect | Import |
 | --- | --- |
 | SQLite | **File upload** or DDL paste |
-| PostgreSQL, MySQL, MSSQL, ClickHouse, Oracle | DDL paste |
+| PostgreSQL, MySQL, MSSQL, SAP ASE (Sybase), ClickHouse, Oracle | DDL paste |
 | IBM Db2 | DDL paste — schema-qualified tables (`SALES.ORDERS`), quoted FKs |
 | CockroachDB | DDL paste — PostgreSQL-compatible (`IF NOT EXISTS`, `INT8`) |
 | Amazon Aurora (PostgreSQL / MySQL) | DDL paste — same rules as PostgreSQL or MySQL |

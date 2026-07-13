@@ -123,6 +123,29 @@ CREATE TABLE IF NOT EXISTS orders (
 );
 `;
 
+const SYBASE_DDL = `
+CREATE TABLE dbo.customers (
+  customer_id INT IDENTITY NOT NULL,
+  name VARCHAR(80) NOT NULL,
+  PRIMARY KEY (customer_id)
+);
+
+CREATE TABLE inventory..products (
+  product_id INT IDENTITY NOT NULL,
+  sku VARCHAR(40) NOT NULL,
+  PRIMARY KEY (product_id)
+);
+
+CREATE TABLE inventory..orders (
+  order_id INT IDENTITY NOT NULL,
+  customer_id INT NOT NULL,
+  product_id INT NOT NULL,
+  order_date DATETIME NOT NULL,
+  CONSTRAINT FK_orders_customer FOREIGN KEY (customer_id) REFERENCES dbo.customers(customer_id),
+  CONSTRAINT FK_orders_product FOREIGN KEY (product_id) REFERENCES inventory..products(product_id)
+);
+`;
+
 const SPANNER_DDL = `
 CREATE TABLE Singers (
   SingerId INT64 NOT NULL,
@@ -166,6 +189,27 @@ describe('parseDdlToModel — additional dialects', () => {
     expect(albums?.primaryKey).toEqual(['SingerId', 'AlbumId']);
     expect(singers?.columns[0]).toMatchObject({ name: 'SingerId', sqlType: 'INT64', bsonType: 'long' });
     expect(singers?.columns[3]).toMatchObject({ name: 'SingerInfo', sqlType: 'BYTES(MAX)', bsonType: 'binData' });
+  });
+
+  it('parses SAP ASE (Sybase) IDENTITY columns, dbo prefixes, and database..table shorthand', () => {
+    const model = parseDdlToModel(SYBASE_DDL, 'sybase');
+    expect(model.tables.map((t) => t.name)).toContain('dbo.customers');
+    expect(model.tables.map((t) => t.name)).toContain('inventory.dbo.products');
+    expect(model.tables.map((t) => t.name)).toContain('inventory.dbo.orders');
+
+    const customers = model.tables.find((t) => t.name === 'dbo.customers');
+    expect(customers?.columns[0]).toMatchObject({
+      name: 'customer_id',
+      sqlType: 'INT',
+      isPrimaryKey: true,
+      nullable: false,
+    });
+
+    const orders = model.tables.find((t) => t.name === 'inventory.dbo.orders');
+    expect(orders?.foreignKeys).toEqual([
+      { column: 'customer_id', referencesTable: 'customers', referencesColumn: 'customer_id' },
+      { column: 'product_id', referencesTable: 'products', referencesColumn: 'product_id' },
+    ]);
   });
 
   it('parses Amazon Aurora PostgreSQL DDL (PostgreSQL-compatible)', () => {

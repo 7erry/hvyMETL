@@ -6,6 +6,7 @@ export const FALLBACK_DIALECTS: Dialect[] = [
   { id: 'postgresql', label: 'PostgreSQL', live: false },
   { id: 'mysql', label: 'MySQL', live: false },
   { id: 'mssql', label: 'Microsoft SQL Server', live: false },
+  { id: 'sybase', label: 'SAP ASE (Sybase)', live: false },
   { id: 'clickhouse', label: 'ClickHouse', live: false },
   { id: 'oracle', label: 'Oracle', live: false },
   { id: 'db2', label: 'IBM Db2', live: false },

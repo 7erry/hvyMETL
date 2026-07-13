@@ -7,12 +7,12 @@ Sources: [`src/dialects.ts`](../src/dialects.ts),
 
 ## 1. High-Level Summary
 
-hvyMETL supports **eleven SQL dialects** for schema import. They fall into two
+hvyMETL supports **twelve SQL dialects** for schema import. They fall into two
 capability tiers:
 
 1. **Live database** — **SQLite only** (`better-sqlite3` adapter): real row counts,
    FK cardinality, range splits, and direct CLI ETL from the `.db` file.
-2. **DDL paste** — **all eleven dialects**: paste `CREATE TABLE` scripts; a shared
+2. **DDL paste** — **all twelve dialects**: paste `CREATE TABLE` scripts; a shared
    parser builds the same `SqlStructuralModel` the design engine consumes. Row counts
    default to zero; relationship stats use conservative defaults.
 
@@ -32,6 +32,7 @@ Definitions: [`src/dialects.ts`](../src/dialects.ts) · UI/API: `GET /api/dialec
 | `postgresql` | PostgreSQL | DDL paste | No | `CREATE TABLE`, inline and table-level FKs |
 | `mysql` | MySQL | DDL paste | No | Backtick-quoted identifiers |
 | `mssql` | Microsoft SQL Server | DDL paste | No | T-SQL `CREATE TABLE` |
+| `sybase` | SAP ASE (Sybase) | DDL paste | No | T-SQL-like DDL; `IDENTITY` columns, `dbo.` prefixes, `database..table` shorthand |
 | `clickhouse` | ClickHouse | DDL paste | No | Column-oriented DDL subset |
 | `oracle` | Oracle | DDL paste | No | `VARCHAR2`, `NUMBER`, identity columns, `CONSTRAINT … FOREIGN KEY` |
 | `db2` | IBM Db2 | DDL paste | No | Schema-qualified names (`"SALES"."ORDERS"`) |
@@ -52,7 +53,7 @@ flowchart TB
         FILE[(.db file)] --> ADAPTER[sqlite adapter]
         ADAPTER --> MODEL[SqlStructuralModel<br/>row counts + FK stats]
     end
-    subgraph ddl [DDL paste — all 11 dialects]
+    subgraph ddl [DDL paste — all 12 dialects]
         PASTE[Pasted CREATE TABLE] --> PARSER[ddlParser.ts]
         PARSER --> MODEL2[SqlStructuralModel<br/>rowCount = 0]
     end

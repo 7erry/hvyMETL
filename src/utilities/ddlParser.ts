@@ -1,8 +1,8 @@
 /**
  * Lightweight DDL parser for instant schema import from pasted SQL.
  *
- * Extracts CREATE TABLE definitions (PostgreSQL, MySQL, SQLite, MSSQL, Oracle,
- * IBM Db2, CockroachDB, Amazon Aurora, Google Cloud Spanner) into the same
+ * Extracts CREATE TABLE definitions (PostgreSQL, MySQL, SQLite, MSSQL, Sybase ASE,
+ * Oracle, IBM Db2, CockroachDB, Amazon Aurora, Google Cloud Spanner) into the same
  * SqlStructuralModel shape the design engine consumes.
  * Row counts default to 0; relationship stats use conservative defaults.
  */
@@ -12,7 +12,7 @@ import { sqlTypeToBsonType } from '../adapters/sqlite.js';
 
 /** Words that begin table/column constraint clauses (not part of the SQL type). */
 const CONSTRAINT_KEYWORD =
-  /\s+(?:GENERATED|DEFAULT|NOT\s+NULL|NULL|PRIMARY\s+KEY|UNIQUE|CHECK|CONSTRAINT|REFERENCES|OPTIONS)\b/i;
+  /\s+(?:GENERATED|IDENTITY|DEFAULT|NOT\s+NULL|NULL|PRIMARY\s+KEY|UNIQUE|CHECK|CONSTRAINT|REFERENCES|OPTIONS)\b/i;
 
 /** Parse one SQL identifier (quoted or bare) starting at pos. */
 function parseIdentifierAt(text: string, pos: number): { value: string; next: number } | null {
@@ -55,6 +55,18 @@ function parseQualifiedTableName(text: string, pos: number): { name: string; nex
     while (index < text.length && /\s/.test(text[index]!)) index += 1;
     if (text[index] !== '.') break;
     index += 1;
+    while (index < text.length && /\s/.test(text[index]!)) index += 1;
+    // Sybase / T-SQL database..table shorthand (default dbo owner).
+    if (text[index] === '.') {
+      name = `${name}.dbo`;
+      index += 1;
+      while (index < text.length && /\s/.test(text[index]!)) index += 1;
+      const nextPart = parseIdentifierAt(text, index);
+      if (!nextPart) break;
+      name = `${name}.${nextPart.value}`;
+      index = nextPart.next;
+      continue;
+    }
     const nextPart = parseIdentifierAt(text, index);
     if (!nextPart) break;
     name = `${name}.${nextPart.value}`;
@@ -305,6 +317,10 @@ export function parseDdlToModel(ddl: string, sourceLabel = 'ddl:import'): SqlStr
       });
       if (isPk && !pkCols.includes(parsed.name)) pkCols.push(parsed.name);
       if (parsed.foreignKey) foreignKeys.push(parsed.foreignKey);
+    }
+
+    for (const column of columns) {
+      if (pkCols.includes(column.name)) column.isPrimaryKey = true;
     }
 
     tables.push({

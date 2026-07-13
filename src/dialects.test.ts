@@ -5,6 +5,7 @@ describe('dialects', () => {
   it('infers dialect from ddl: source labels', () => {
     expect(inferSchemaDialect({ source: 'ddl:postgresql' }, '')).toBe('postgresql');
     expect(inferSchemaDialect({ source: 'ddl:db2' }, '')).toBe('db2');
+    expect(inferSchemaDialect({ source: 'ddl:sybase' }, '')).toBe('sybase');
   });
 
   it('prefers session dialect when set', () => {
@@ -19,5 +20,6 @@ describe('dialects', () => {
   it('marks only sqlite as a live source dialect', () => {
     expect(isLiveSourceDialect('sqlite')).toBe(true);
     expect(isLiveSourceDialect('postgresql')).toBe(false);
+    expect(isLiveSourceDialect('sybase')).toBe(false);
   });
 });

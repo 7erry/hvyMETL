@@ -99,6 +99,7 @@ via **Import Query** (paste `CREATE TABLE` scripts).
 | `postgresql` | PostgreSQL | DDL paste | Standard `CREATE TABLE`, inline and table-level FKs |
 | `mysql` | MySQL | DDL paste | Backtick-quoted identifiers |
 | `mssql` | Microsoft SQL Server | DDL paste | T-SQL `CREATE TABLE` |
+| `sybase` | SAP ASE (Sybase) | DDL paste | T-SQL-like DDL; `IDENTITY`, `dbo.` prefixes, `database..table` shorthand |
 | `clickhouse` | ClickHouse | DDL paste | Column-oriented DDL subset |
 | `oracle` | Oracle | DDL paste | `CONSTRAINT … FOREIGN KEY`, `VARCHAR2`, `NUMBER`, identity columns |
 | `db2` | IBM Db2 | DDL paste | Schema-qualified names (`"SALES"."ORDERS"`), quoted FK references |
