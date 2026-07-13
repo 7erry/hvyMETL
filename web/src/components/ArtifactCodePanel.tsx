@@ -112,6 +112,24 @@ const EDITOR_FONT_FAMILY = 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consola
 const EDITOR_FONT_SIZE = '13px';
 const EDITOR_LINE_HEIGHT = '19.5px';
 
+function lineNumberCount(value: string): number {
+  if (!value) return 1;
+  return value.split('\n').length;
+}
+
+function CodeLineNumbers({ value }: { value: string }) {
+  const lines = lineNumberCount(value);
+  return (
+    <div className="artifact-code-lines" aria-hidden="true">
+      {Array.from({ length: lines }, (_, index) => (
+        <div key={index + 1} className="artifact-code-lines__row">
+          {index + 1}
+        </div>
+      ))}
+    </div>
+  );
+}
+
 const editorSurfaceStyle = {
   fontFamily: EDITOR_FONT_FAMILY,
   fontSize: EDITOR_FONT_SIZE,
@@ -153,42 +171,48 @@ export function ArtifactCodePanel({
 
   if (readOnly) {
     return (
-      <div className="artifact-code-panel artifact-code-panel--readonly" data-language={language}>
-        <SyntaxHighlighter
-          language={displayLanguage}
-          style={highlighterStyle}
-          customStyle={{
-            margin: 0,
-            padding: 12,
-            background: '#0d1117',
-            fontSize: editorSurfaceStyle.fontSize,
-            lineHeight: editorSurfaceStyle.lineHeight,
-          }}
-          showLineNumbers={false}
-          wrapLongLines
-          PreTag="div"
-        >
-          {value}
-        </SyntaxHighlighter>
+      <div className="artifact-code-panel artifact-code-panel--readonly artifact-code-panel--with-lines" data-language={language}>
+        <CodeLineNumbers value={value} />
+        <div className="artifact-code-panel__body">
+          <SyntaxHighlighter
+            language={displayLanguage}
+            style={highlighterStyle}
+            customStyle={{
+              margin: 0,
+              padding: 12,
+              background: '#0d1117',
+              fontSize: editorSurfaceStyle.fontSize,
+              lineHeight: editorSurfaceStyle.lineHeight,
+            }}
+            showLineNumbers={false}
+            wrapLongLines
+            PreTag="div"
+          >
+            {value}
+          </SyntaxHighlighter>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="artifact-code-panel artifact-code-panel--editable" data-language={language}>
-      <Editor
-        value={value}
-        onValueChange={(next) => onChange?.(next)}
-        highlight={(code) => highlightCode(code, language)}
-        readOnly={false}
-        tabSize={2}
-        insertSpaces
-        padding={12}
-        className="artifact-code-editor"
-        preClassName={`artifact-code-pre language-${language}`}
-        textareaClassName="artifact-code-textarea"
-        style={editorSurfaceStyle}
-      />
+    <div className="artifact-code-panel artifact-code-panel--editable artifact-code-panel--with-lines" data-language={language}>
+      <CodeLineNumbers value={value} />
+      <div className="artifact-code-panel__body">
+        <Editor
+          value={value}
+          onValueChange={(next) => onChange?.(next)}
+          highlight={(code) => highlightCode(code, language)}
+          readOnly={false}
+          tabSize={2}
+          insertSpaces
+          padding={12}
+          className="artifact-code-editor"
+          preClassName={`artifact-code-pre language-${language}`}
+          textareaClassName="artifact-code-textarea"
+          style={editorSurfaceStyle}
+        />
+      </div>
     </div>
   );
 }

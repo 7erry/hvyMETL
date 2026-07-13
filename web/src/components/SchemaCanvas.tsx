@@ -190,6 +190,12 @@ export function SchemaCanvas({
     [model],
   );
 
+  const handleAutoLayout = useCallback(() => {
+    if (!model) return;
+    const autoLayout = layoutSqlModel(model, compactLayout ? COMPACT_GRAPH_LAYOUT_OPTIONS : undefined);
+    onPositionsChange(autoLayout);
+  }, [model, compactLayout, onPositionsChange]);
+
   const [nodes, setNodes, onNodesChange] = useNodesState(flow.nodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(flow.edges);
 
@@ -245,14 +251,6 @@ export function SchemaCanvas({
         />
         <Background variant={BackgroundVariant.Dots} gap={GRID} size={1} color="#00684A" />
         <Controls />
-        <Panel position="top-right" className="schema-canvas-toolbar-panel">
-          <RelationshipDisplayControls
-            connectionType={connectionType}
-            relationshipNotation={relationshipNotation}
-            onConnectionTypeChange={onConnectionTypeChange}
-            onRelationshipNotationChange={onRelationshipNotationChange}
-          />
-        </Panel>
         {!compactLayout ? (
           <MiniMap
             nodeColor="#023430"
@@ -260,12 +258,22 @@ export function SchemaCanvas({
             style={{ background: '#112733' }}
           />
         ) : null}
-        <Panel position="bottom-center" className="schema-canvas-legend">
-          <span><span className="legend-dot legend-dot--pk">🔑</span> Primary key</span>
-          <span><span className="legend-dot legend-dot--fk">↗</span> Foreign key</span>
-          <span>{tableCount} table{tableCount === 1 ? '' : 's'}</span>
-          <span>{relationshipCount} relationship{relationshipCount === 1 ? '' : 's'}</span>
-          {selectedTable ? <span className="legend-hint">Click canvas to clear selection</span> : null}
+        <Panel position="bottom-center" className="schema-canvas-dock">
+          <RelationshipDisplayControls
+            connectionType={connectionType}
+            relationshipNotation={relationshipNotation}
+            onConnectionTypeChange={onConnectionTypeChange}
+            onRelationshipNotationChange={onRelationshipNotationChange}
+            onAutoLayout={handleAutoLayout}
+            compact={compactLayout}
+          />
+          <div className="schema-canvas-legend">
+            <span><span className="legend-dot legend-dot--pk">🔑</span> Primary key</span>
+            <span><span className="legend-dot legend-dot--fk">↗</span> Foreign key</span>
+            <span>{tableCount} table{tableCount === 1 ? '' : 's'}</span>
+            <span>{relationshipCount} relationship{relationshipCount === 1 ? '' : 's'}</span>
+            {selectedTable ? <span className="legend-hint">Click canvas to clear selection</span> : null}
+          </div>
         </Panel>
       </ReactFlow>
     </div>

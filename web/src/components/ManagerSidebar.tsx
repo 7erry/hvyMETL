@@ -14,6 +14,7 @@ import type { MigrationArtifacts, ManagerCostInputs } from '../sessionState';
 import type { PipelineExecutionListItem } from '../transformationSummaryTypes';
 import { ManagerCostPanel } from './ManagerCostPanel';
 import { SchemaImportPanel } from './SchemaImportPanel';
+import { CollapsiblePanel } from './CollapsiblePanel';
 import type { MigrationPlan } from '../migrationPlanTypes';
 import type { Dialect, SqlStructuralModel } from '../types';
 
@@ -98,6 +99,7 @@ export function ManagerSidebar({
   onSchemaFile,
   onOpenReview,
 }: ManagerSidebarProps) {
+  const [sidebarTab, setSidebarTab] = useState<'overview' | 'configure'>('overview');
   const [activity, setActivity] = useState<ActivityFeedItem[]>([]);
   const [executions, setExecutions] = useState<PipelineExecutionListItem[]>([]);
 
@@ -139,204 +141,230 @@ export function ManagerSidebar({
           onSchemaFile={onSchemaFile}
           compact
         />
-      ) : null}
-
-      <section className="manager-panel">
-        <h3>Migration progress</h3>
-        <div className="manager-progress-block">
-          <ProgressRing percent={progress.percent} />
-          <p className="manager-progress-summary">
-            <strong>{progress.mappedCount}</strong> of <strong>{progress.totalCount}</strong> entities mapped
-          </p>
-          <ul className="manager-progress-breakdown">
-            <li><span className="dot dot--ready" /> {progress.readyCount} ready</li>
-            <li><span className="dot dot--review" /> {reviewCount} need review</li>
-            <li><span className="dot dot--blocked" /> {progress.blockedCount} blocked</li>
-            <li><span className="dot dot--pending" /> {progress.pendingCount} pending</li>
-          </ul>
-        </div>
-      </section>
-
-      {(blockerCount > 0 || reviewCount > 0) && (
-        <section className="manager-panel manager-panel--alert">
-          <h3>Attention needed</h3>
-          {reviewCount > 0 ? (
-            <>
-              <p>
-                {reviewCount} collection(s) have recommended design changes — review and accept before sign-off.
-              </p>
-              <button type="button" className="primary manager-review-cta" onClick={onOpenReview}>
-                Review recommended changes
-              </button>
-            </>
-          ) : null}
-          {blockerCount > 0 ? (
-            <p>{blockerCount} entity(ies) are blocked and must be resolved before sign-off.</p>
-          ) : null}
-        </section>
-      )}
-
-      <ManagerCostPanel
-        model={model}
-        migrationPlan={migrationPlan}
-        inputs={managerCostInputs}
-        onChange={onManagerCostInputsChange}
-      />
-
-      <section className="manager-panel manager-token-panel">
-        <h3>Model API usage</h3>
-        {!cloudSummary.modelTokenUsage || cloudSummary.modelTokenUsage.totalTokens === 0 ? (
-          <>
-            <p className="manager-hint">{modelTokenUsageEmptyHint(cloudSummary.retrievalStrategy)}</p>
-            {cloudSummary.retrievalStrategy ? (
-              <dl className="manager-metrics manager-token-metrics">
-                <div>
-                  <dt>Retrieval mode</dt>
-                  <dd className="manager-token-strategy">{cloudSummary.retrievalStrategy}</dd>
-                </div>
-              </dl>
-            ) : null}
-          </>
-        ) : (
-          <>
-            <dl className="manager-metrics manager-token-metrics">
-              <div>
-                <dt>Session total</dt>
-                <dd className="manager-token-total">
-                  {formatTokenCount(cloudSummary.modelTokenUsage.totalTokens)} tokens
-                  {cloudSummary.modelTokenUsage.estimated ? (
-                    <span className="manager-token-estimated" title="Some values were estimated from text length">
-                      est.
-                    </span>
-                  ) : null}
-                </dd>
-              </div>
-              <div>
-                <dt>Estimated token cost</dt>
-                <dd className="manager-token-total">{formatModelTokenCost(modelTokenCost.totalUsd)}</dd>
-              </div>
-              <div>
-                <dt>Embeddings ({MODEL_TOKEN_PRICING.embeddingModel})</dt>
-                <dd>
-                  {formatTokenCount(cloudSummary.modelTokenUsage.embeddingTokens)} ·{' '}
-                  {formatModelTokenCost(modelTokenCost.embeddingUsd)}
-                </dd>
-              </div>
-              <div>
-                <dt>Rerank ({MODEL_TOKEN_PRICING.rerankModel})</dt>
-                <dd>
-                  {formatTokenCount(cloudSummary.modelTokenUsage.rerankTokens)} ·{' '}
-                  {formatModelTokenCost(modelTokenCost.rerankUsd)}
-                </dd>
-              </div>
-              <div>
-                <dt>API calls</dt>
-                <dd>{cloudSummary.modelTokenUsage.apiCalls.toLocaleString()}</dd>
-              </div>
-              {cloudSummary.retrievalStrategy ? (
-                <div>
-                  <dt>Retrieval mode</dt>
-                  <dd className="manager-token-strategy">{cloudSummary.retrievalStrategy}</dd>
-                </div>
-              ) : null}
-            </dl>
-            <p className="manager-hint manager-token-footnote">{tokenUsageSourceLabel(cloudSummary.modelTokenUsage)}</p>
-            <p className="manager-hint manager-token-footnote">
-              Pricing: {MODEL_TOKEN_PRICING.embeddingModel} $
-              {MODEL_TOKEN_PRICING.embeddingUsdPerMillionTokens.toFixed(2)} / 1M tokens;{' '}
-              {MODEL_TOKEN_PRICING.rerankModel} ${MODEL_TOKEN_PRICING.rerankUsdPerMillionTokens.toFixed(2)} / 1M
-              tokens. MongoDB lists {formatTokenCount(MODEL_TOKEN_PRICING.freeTokensPerModel)} free tokens for each
-              model; estimates show list price before Atlas organization-level free tier credits.
-            </p>
-          </>
-        )}
-      </section>
-
-      <section className="manager-panel">
-        <h3>Workload & Atlas imports</h3>
-        {!cloudSummary.profileLabel && !cloudSummary.hasImportData && cloudSummary.pipelineRunsRecorded === 0 ? (
-          <p className="manager-hint">
-            No pipeline data yet. Run the full pipeline to record Atlas import counts and workload settings.
-          </p>
-        ) : (
-          <dl className="manager-metrics">
-            {cloudSummary.profileLabel ? (
-              <div>
-                <dt>Workload profile</dt>
-                <dd>{cloudSummary.profileLabel}</dd>
-              </div>
-            ) : null}
-            {cloudSummary.readWriteRatio ? (
-              <div>
-                <dt>Read / write ratio</dt>
-                <dd>{cloudSummary.readWriteRatio}</dd>
-              </div>
-            ) : null}
-            {cloudSummary.documentsImported !== null ? (
-              <div>
-                <dt>Documents imported</dt>
-                <dd>{cloudSummary.documentsImported.toLocaleString()}</dd>
-              </div>
-            ) : null}
-            {cloudSummary.hasImportData ? (
-              <div>
-                <dt>Collections imported</dt>
-                <dd>
-                  {cloudSummary.collectionsSucceeded} succeeded
-                  {cloudSummary.collectionsFailed > 0
-                    ? ` · ${cloudSummary.collectionsFailed} failed`
-                    : ''}
-                </dd>
-              </div>
-            ) : null}
-            {cloudSummary.targetDatabase ? (
-              <div>
-                <dt>Target database</dt>
-                <dd>{cloudSummary.targetDatabase}</dd>
-              </div>
-            ) : null}
-            {cloudSummary.pipelineRunsRecorded > 0 ? (
-              <div>
-                <dt>Pipeline runs recorded</dt>
-                <dd>{cloudSummary.pipelineRunsRecorded}</dd>
-              </div>
-            ) : null}
-            {cloudSummary.lastPipelineAt ? (
-              <div>
-                <dt>Last pipeline run</dt>
-                <dd>{formatWhen(cloudSummary.lastPipelineAt)}</dd>
-              </div>
-            ) : null}
-            {cloudSummary.retrievalStrategy ? (
-              <div>
-                <dt>Design retrieval</dt>
-                <dd>{cloudSummary.retrievalStrategy}</dd>
-              </div>
-            ) : null}
-          </dl>
-        )}
-      </section>
-
-      <section className="manager-panel">
-        <div className="manager-panel__header">
-          <h3>Activity</h3>
-          <button type="button" className="tertiary manager-refresh" onClick={() => void refreshActivity()}>
-            Refresh activity
+      ) : (
+        <div className="manager-sidebar-tabs" role="tablist" aria-label="Manager sidebar">
+          <button
+            type="button"
+            role="tab"
+            aria-selected={sidebarTab === 'overview'}
+            className={sidebarTab === 'overview' ? 'active' : ''}
+            onClick={() => setSidebarTab('overview')}
+          >
+            Overview
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={sidebarTab === 'configure'}
+            className={sidebarTab === 'configure' ? 'active' : ''}
+            onClick={() => setSidebarTab('configure')}
+          >
+            Configuration
           </button>
         </div>
-        {activity.length === 0 ? (
-          <p className="manager-hint">No activity yet. Run design or the full pipeline to populate this feed.</p>
-        ) : (
-          <ul className="manager-activity">
-            {activity.map((item) => (
-              <li key={item.id} className={`manager-activity__item manager-activity__item--${item.tone}`}>
-                <span className="manager-activity__message">{item.message}</span>
-                <time className="manager-activity__time">{formatWhen(item.timestamp)}</time>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
+      )}
+
+      {model && sidebarTab === 'overview' ? (
+        <>
+          <CollapsiblePanel title="Migration Progress" defaultOpen>
+            <div className="manager-progress-block">
+              <ProgressRing percent={progress.percent} />
+              <p className="manager-progress-summary">
+                <strong>{progress.mappedCount}</strong> of <strong>{progress.totalCount}</strong> entities mapped
+              </p>
+              <ul className="manager-progress-breakdown">
+                <li><span className="dot dot--ready" /> {progress.readyCount} ready</li>
+                <li><span className="dot dot--review" /> {reviewCount} need review</li>
+                <li><span className="dot dot--blocked" /> {progress.blockedCount} blocked</li>
+                <li><span className="dot dot--pending" /> {progress.pendingCount} pending</li>
+              </ul>
+            </div>
+          </CollapsiblePanel>
+
+          {(blockerCount > 0 || reviewCount > 0) && (
+            <CollapsiblePanel title="Attention Needed" defaultOpen className="panel-dropdown--alert">
+              {reviewCount > 0 ? (
+                <>
+                  <p className="manager-hint">
+                    {reviewCount} collection(s) have recommended design changes — review and accept before sign-off.
+                  </p>
+                  <button type="button" className="primary manager-review-cta" onClick={onOpenReview}>
+                    Review recommended changes
+                  </button>
+                </>
+              ) : null}
+              {blockerCount > 0 ? (
+                <p className="manager-hint">{blockerCount} entity(ies) are blocked and must be resolved before sign-off.</p>
+              ) : null}
+            </CollapsiblePanel>
+          )}
+
+          <CollapsiblePanel
+            title="Activity"
+            headerActions={
+              <button type="button" className="tertiary manager-refresh" onClick={() => void refreshActivity()}>
+                Refresh
+              </button>
+            }
+          >
+            {activity.length === 0 ? (
+              <p className="manager-hint">No activity yet. Run design or the full pipeline to populate this feed.</p>
+            ) : (
+              <ul className="manager-activity">
+                {activity.map((item) => (
+                  <li key={item.id} className={`manager-activity__item manager-activity__item--${item.tone}`}>
+                    <span className="manager-activity__message">{item.message}</span>
+                    <time className="manager-activity__time">{formatWhen(item.timestamp)}</time>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </CollapsiblePanel>
+        </>
+      ) : null}
+
+      {model && sidebarTab === 'configure' ? (
+        <>
+          <ManagerCostPanel
+            model={model}
+            migrationPlan={migrationPlan}
+            inputs={managerCostInputs}
+            onChange={onManagerCostInputsChange}
+          />
+
+          <CollapsiblePanel title="Model API Usage">
+            {!cloudSummary.modelTokenUsage || cloudSummary.modelTokenUsage.totalTokens === 0 ? (
+              <>
+                <p className="manager-hint">{modelTokenUsageEmptyHint(cloudSummary.retrievalStrategy)}</p>
+                {cloudSummary.retrievalStrategy ? (
+                  <dl className="manager-metrics manager-token-metrics">
+                    <div>
+                      <dt>Retrieval mode</dt>
+                      <dd className="manager-token-strategy">{cloudSummary.retrievalStrategy}</dd>
+                    </div>
+                  </dl>
+                ) : null}
+              </>
+            ) : (
+              <>
+                <dl className="manager-metrics manager-token-metrics">
+                  <div>
+                    <dt>Session total</dt>
+                    <dd className="manager-token-total">
+                      {formatTokenCount(cloudSummary.modelTokenUsage.totalTokens)} tokens
+                      {cloudSummary.modelTokenUsage.estimated ? (
+                        <span className="manager-token-estimated" title="Some values were estimated from text length">
+                          est.
+                        </span>
+                      ) : null}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>Estimated token cost</dt>
+                    <dd className="manager-token-total">{formatModelTokenCost(modelTokenCost.totalUsd)}</dd>
+                  </div>
+                  <div>
+                    <dt>Embeddings ({MODEL_TOKEN_PRICING.embeddingModel})</dt>
+                    <dd>
+                      {formatTokenCount(cloudSummary.modelTokenUsage.embeddingTokens)} ·{' '}
+                      {formatModelTokenCost(modelTokenCost.embeddingUsd)}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>Rerank ({MODEL_TOKEN_PRICING.rerankModel})</dt>
+                    <dd>
+                      {formatTokenCount(cloudSummary.modelTokenUsage.rerankTokens)} ·{' '}
+                      {formatModelTokenCost(modelTokenCost.rerankUsd)}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>API calls</dt>
+                    <dd>{cloudSummary.modelTokenUsage.apiCalls.toLocaleString()}</dd>
+                  </div>
+                  {cloudSummary.retrievalStrategy ? (
+                    <div>
+                      <dt>Retrieval mode</dt>
+                      <dd className="manager-token-strategy">{cloudSummary.retrievalStrategy}</dd>
+                    </div>
+                  ) : null}
+                </dl>
+                <p className="manager-hint manager-token-footnote">{tokenUsageSourceLabel(cloudSummary.modelTokenUsage)}</p>
+                <p className="manager-hint manager-token-footnote">
+                  Pricing: {MODEL_TOKEN_PRICING.embeddingModel} $
+                  {MODEL_TOKEN_PRICING.embeddingUsdPerMillionTokens.toFixed(2)} / 1M tokens;{' '}
+                  {MODEL_TOKEN_PRICING.rerankModel} ${MODEL_TOKEN_PRICING.rerankUsdPerMillionTokens.toFixed(2)} / 1M
+                  tokens. MongoDB lists {formatTokenCount(MODEL_TOKEN_PRICING.freeTokensPerModel)} free tokens for each
+                  model; estimates show list price before Atlas organization-level free tier credits.
+                </p>
+              </>
+            )}
+          </CollapsiblePanel>
+
+          <CollapsiblePanel title="Workload & Atlas Imports">
+            {!cloudSummary.profileLabel && !cloudSummary.hasImportData && cloudSummary.pipelineRunsRecorded === 0 ? (
+              <p className="manager-hint">
+                No pipeline data yet. Run the full pipeline to record Atlas import counts and workload settings.
+              </p>
+            ) : (
+              <dl className="manager-metrics">
+                {cloudSummary.profileLabel ? (
+                  <div>
+                    <dt>Workload profile</dt>
+                    <dd>{cloudSummary.profileLabel}</dd>
+                  </div>
+                ) : null}
+                {cloudSummary.readWriteRatio ? (
+                  <div>
+                    <dt>Read / write ratio</dt>
+                    <dd>{cloudSummary.readWriteRatio}</dd>
+                  </div>
+                ) : null}
+                {cloudSummary.documentsImported !== null ? (
+                  <div>
+                    <dt>Documents imported</dt>
+                    <dd>{cloudSummary.documentsImported.toLocaleString()}</dd>
+                  </div>
+                ) : null}
+                {cloudSummary.hasImportData ? (
+                  <div>
+                    <dt>Collections imported</dt>
+                    <dd>
+                      {cloudSummary.collectionsSucceeded} succeeded
+                      {cloudSummary.collectionsFailed > 0
+                        ? ` · ${cloudSummary.collectionsFailed} failed`
+                        : ''}
+                    </dd>
+                  </div>
+                ) : null}
+                {cloudSummary.targetDatabase ? (
+                  <div>
+                    <dt>Target database</dt>
+                    <dd>{cloudSummary.targetDatabase}</dd>
+                  </div>
+                ) : null}
+                {cloudSummary.pipelineRunsRecorded > 0 ? (
+                  <div>
+                    <dt>Pipeline runs recorded</dt>
+                    <dd>{cloudSummary.pipelineRunsRecorded}</dd>
+                  </div>
+                ) : null}
+                {cloudSummary.lastPipelineAt ? (
+                  <div>
+                    <dt>Last pipeline run</dt>
+                    <dd>{formatWhen(cloudSummary.lastPipelineAt)}</dd>
+                  </div>
+                ) : null}
+                {cloudSummary.retrievalStrategy ? (
+                  <div>
+                    <dt>Design retrieval</dt>
+                    <dd>{cloudSummary.retrievalStrategy}</dd>
+                  </div>
+                ) : null}
+              </dl>
+            )}
+          </CollapsiblePanel>
+        </>
+      ) : null}
     </div>
   );
 }

@@ -15,6 +15,7 @@ import {
 } from '../managerCostEstimate';
 import type { MigrationPlan } from '../migrationPlanTypes';
 import type { SqlStructuralModel } from '../types';
+import { CollapsiblePanel } from './CollapsiblePanel';
 
 type ManagerCostPanelProps = {
   model: SqlStructuralModel | null;
@@ -84,10 +85,9 @@ export function ManagerCostPanel({
 
   if (!model) {
     return (
-      <section className="manager-panel">
-        <h3>Migration cost projection</h3>
+      <CollapsiblePanel title="Migration Cost Projection">
         <p className="manager-hint">Import a source schema to estimate Atlas sizing and monthly run costs.</p>
-      </section>
+      </CollapsiblePanel>
     );
   }
 
@@ -98,152 +98,124 @@ export function ManagerCostPanel({
   );
 
   return (
-    <section className="manager-panel manager-cost-panel">
-      <h3>Migration cost projection</h3>
-      <p className="manager-hint manager-cost-panel__intro">
-        Heuristic sizing from your DDL and workload profile — not a formal Atlas quote.
-      </p>
+    <>
+      <CollapsiblePanel title="Migration Cost Projection" defaultOpen className="manager-cost-panel">
+        <p className="manager-hint manager-cost-panel__intro">
+          Heuristic sizing from your DDL and workload profile — not a formal Atlas quote.
+        </p>
 
-      <div className="manager-cost-inputs">
-        <label className="manager-cost-field">
-          <span className="manager-cost-field__label">
-            Dataset scale — raw data: <strong>{formatGb(datasetScaleGb)}</strong>
-          </span>
-          <input
-            type="range"
-            min={DATASET_SLIDER_MIN_GB}
-            max={DATASET_SLIDER_MAX_GB}
-            step={DATASET_SLIDER_STEP_GB}
-            value={datasetScaleGb}
-            onChange={(e) => setDataSize(Number(e.target.value))}
-          />
-          {hasSchemaRowStats ? (
-            <span className="manager-cost-field__note">
-              Schema statistics estimate document shape; slider scenarios scale raw data up to 21 TB. Approximate
-              documents: {formatRowCount(projection.estimatedTotalRows)}.
+        <div className="manager-cost-inputs">
+          <label className="manager-cost-field">
+            <span className="manager-cost-field__label">
+              Dataset scale — raw data: <strong>{formatGb(datasetScaleGb)}</strong>
             </span>
-          ) : null}
-        </label>
-
-        <div className="manager-cost-workload" role="group" aria-label="Workload type">
-          <span className="manager-cost-field__label">Workload type</span>
-          <div className="manager-cost-workload__grid">
-            {WORKLOAD_OPTIONS.map((option) => (
-              <button
-                key={option.id}
-                type="button"
-                className={inputs.workloadType === option.id ? 'active' : ''}
-                onClick={() => setWorkload(option.id)}
-              >
-                <strong>{option.title}</strong>
-                <span>{option.hint}</span>
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <label className="manager-cost-field">
-          <span className="manager-cost-field__label">
-            Expected data growth: <strong>{inputs.growthRatePercent}%</strong> YoY
-          </span>
-          <input
-            type="range"
-            min={0}
-            max={50}
-            step={1}
-            value={inputs.growthRatePercent}
-            onChange={(e) => setGrowth(Number(e.target.value))}
-          />
-        </label>
-
-        {archiveOptions.length > 0 ? (
-          <details className="manager-archive-controls">
-            <summary className="manager-archive-controls__summary">
-              <span>
-                <strong>Archive pattern by collection</strong>
-                <small>
-                  {archiveOptions.length} eligible collection{archiveOptions.length === 1 ? '' : 's'}
-                  {projection.archiveStorageGb > 0
-                    ? ` · ${formatGb(projection.archiveStorageGb)} archived for ${formatUsd(projection.monthlyArchiveUsd)} / mo`
-                    : ''}
-                </small>
+            <input
+              type="range"
+              min={DATASET_SLIDER_MIN_GB}
+              max={DATASET_SLIDER_MAX_GB}
+              step={DATASET_SLIDER_STEP_GB}
+              value={datasetScaleGb}
+              onChange={(e) => setDataSize(Number(e.target.value))}
+            />
+            {hasSchemaRowStats ? (
+              <span className="manager-cost-field__note">
+                Schema statistics estimate document shape; slider scenarios scale raw data up to 21 TB. Approximate
+                documents: {formatRowCount(projection.estimatedTotalRows)}.
               </span>
-            </summary>
-            <p className="manager-cost-field__note">
-              Retain recent data on the hot Atlas cluster, then route older dated documents to Online Archive.
-            </p>
-            <div className="manager-archive-controls__list">
-              {archiveOptions.map((option) => (
-                <div className="manager-archive-control" key={option.collectionName}>
-                  <label className="manager-archive-control__toggle">
-                    <input
-                      type="checkbox"
-                      checked={option.isEnabled}
-                      onChange={(e) =>
-                        setArchiveRetention(option.collectionName, e.target.checked ? option.retentionYears : 0)
-                      }
-                    />
-                    <span>
-                      <strong>{option.collectionName}</strong>
-                      <small>
-                        {option.isPlanned ? 'Recommended' : 'Available'} · date field {option.timeField}
-                      </small>
-                    </span>
-                  </label>
-                  <label className="manager-archive-control__years">
-                    <span>Hot retention</span>
-                    <input
-                      type="number"
-                      min={1}
-                      max={10}
-                      step={1}
-                      value={option.retentionYears}
-                      disabled={!option.isEnabled}
-                      onChange={(e) => setArchiveRetention(option.collectionName, Number(e.target.value))}
-                    />
-                    <span>years</span>
-                  </label>
-                  <p className="manager-archive-control__hint">
-                    Partition: {option.partitionFields.join(' -> ')}. Use Atlas Data Federation's unified
-                    connection string for hot + archived queries.
-                  </p>
-                </div>
+            ) : null}
+          </label>
+
+          <div className="manager-cost-workload" role="group" aria-label="Workload type">
+            <span className="manager-cost-field__label">Workload type</span>
+            <div className="manager-cost-workload__grid">
+              {WORKLOAD_OPTIONS.map((option) => (
+                <button
+                  key={option.id}
+                  type="button"
+                  className={inputs.workloadType === option.id ? 'active' : ''}
+                  onClick={() => setWorkload(option.id)}
+                >
+                  <strong>{option.title}</strong>
+                  <span>{option.hint}</span>
+                </button>
               ))}
             </div>
-          </details>
-        ) : null}
-      </div>
-
-      <div className="manager-cost-card">
-        <div className="manager-cost-card__header">
-          <span className="manager-cost-card__icon" aria-hidden>💰</span>
-          <div>
-            <strong>Estimated monthly running cost (MongoDB Atlas)</strong>
-            <p>Target architecture: MongoDB Atlas dedicated cluster</p>
           </div>
-        </div>
 
-        <div className="manager-cost-savings" aria-label="Estimated MongoDB optimization savings">
-          <div className="manager-cost-savings__primary">
-            <span>Estimated monthly savings</span>
-            <strong>{formatUsd(projection.monthlySavingsUsd)}</strong>
-          </div>
-          <div className="manager-cost-savings__meta">
-            <span>{projection.savingsPercent}% lower than manual migration + all-hot storage baseline</span>
-            <span>
-              Baseline {formatUsd(projection.baselineMonthlyTotalUsd)} / mo → optimized{' '}
-              {formatUsd(projection.monthlyTotalUsd)} / mo
+          <label className="manager-cost-field">
+            <span className="manager-cost-field__label">
+              Expected data growth: <strong>{inputs.growthRatePercent}%</strong> YoY
             </span>
-            <span>
-              Includes {formatUsd(projection.monthlyManpowerSavingsUsd)} / mo monthlyized manpower avoided
-              {projection.infrastructureMonthlySavingsUsd > 0
-                ? ` and ${formatUsd(projection.infrastructureMonthlySavingsUsd)} / mo Atlas storage optimization`
-                : ''}
-              .
-            </span>
-          </div>
-        </div>
+            <input
+              type="range"
+              min={0}
+              max={50}
+              step={1}
+              value={inputs.growthRatePercent}
+              onChange={(e) => setGrowth(Number(e.target.value))}
+            />
+          </label>
 
+          {archiveOptions.length > 0 ? (
+            <details className="manager-archive-controls">
+              <summary className="manager-archive-controls__summary">
+                <span>
+                  <strong>Archive pattern by collection</strong>
+                  <small>
+                    {archiveOptions.length} eligible collection{archiveOptions.length === 1 ? '' : 's'}
+                    {projection.archiveStorageGb > 0
+                      ? ` · ${formatGb(projection.archiveStorageGb)} archived for ${formatUsd(projection.monthlyArchiveUsd)} / mo`
+                      : ''}
+                  </small>
+                </span>
+              </summary>
+              <p className="manager-cost-field__note">
+                Retain recent data on the hot Atlas cluster, then route older dated documents to Online Archive.
+              </p>
+              <div className="manager-archive-controls__list">
+                {archiveOptions.map((option) => (
+                  <div className="manager-archive-control" key={option.collectionName}>
+                    <label className="manager-archive-control__toggle">
+                      <input
+                        type="checkbox"
+                        checked={option.isEnabled}
+                        onChange={(e) =>
+                          setArchiveRetention(option.collectionName, e.target.checked ? option.retentionYears : 0)
+                        }
+                      />
+                      <span>
+                        <strong>{option.collectionName}</strong>
+                        <small>
+                          {option.isPlanned ? 'Recommended' : 'Available'} · date field {option.timeField}
+                        </small>
+                      </span>
+                    </label>
+                    <label className="manager-archive-control__years">
+                      <span>Hot retention</span>
+                      <input
+                        type="number"
+                        min={1}
+                        max={10}
+                        step={1}
+                        value={option.retentionYears}
+                        disabled={!option.isEnabled}
+                        onChange={(e) => setArchiveRetention(option.collectionName, Number(e.target.value))}
+                      />
+                      <span>years</span>
+                    </label>
+                    <p className="manager-archive-control__hint">
+                      Partition: {option.partitionFields.join(' -> ')}. Use Atlas Data Federation's unified
+                      connection string for hot + archived queries.
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </details>
+          ) : null}
+        </div>
+      </CollapsiblePanel>
+
+      <CollapsiblePanel title="Estimated Manpower Eliminated">
         <div className="manager-cost-manpower" aria-label="Estimated manpower eliminated">
           <div className="manager-cost-manpower__primary">
             <span>Estimated manpower eliminated</span>
@@ -266,7 +238,9 @@ export function ManagerCostPanel({
             ))}
           </div>
         </div>
+      </CollapsiblePanel>
 
+      <CollapsiblePanel title="Recommended Tier">
         <dl className="manager-cost-card__metrics">
           <div>
             <dt>Recommended tier</dt>
@@ -299,6 +273,37 @@ export function ManagerCostPanel({
           <span className="manager-cost-working-set__label">
             {projection.workingSetPercent}% working set fits in tier RAM
           </span>
+        </div>
+      </CollapsiblePanel>
+
+      <CollapsiblePanel title="Monthly Cost" defaultOpen>
+        <div className="manager-cost-card__header">
+          <span className="manager-cost-card__icon" aria-hidden>💰</span>
+          <div>
+            <strong>Estimated monthly running cost (MongoDB Atlas)</strong>
+            <p>Target architecture: MongoDB Atlas dedicated cluster</p>
+          </div>
+        </div>
+
+        <div className="manager-cost-savings" aria-label="Estimated MongoDB optimization savings">
+          <div className="manager-cost-savings__primary">
+            <span>Estimated monthly savings</span>
+            <strong>{formatUsd(projection.monthlySavingsUsd)}</strong>
+          </div>
+          <div className="manager-cost-savings__meta">
+            <span>{projection.savingsPercent}% lower than manual migration + all-hot storage baseline</span>
+            <span>
+              Baseline {formatUsd(projection.baselineMonthlyTotalUsd)} / mo → optimized{' '}
+              {formatUsd(projection.monthlyTotalUsd)} / mo
+            </span>
+            <span>
+              Includes {formatUsd(projection.monthlyManpowerSavingsUsd)} / mo monthlyized manpower avoided
+              {projection.infrastructureMonthlySavingsUsd > 0
+                ? ` and ${formatUsd(projection.infrastructureMonthlySavingsUsd)} / mo Atlas storage optimization`
+                : ''}
+              .
+            </span>
+          </div>
         </div>
 
         <div className="manager-cost-totals">
@@ -343,8 +348,10 @@ export function ManagerCostPanel({
             Avoid updates at the archive threshold; use TTL indexes instead for logs or sessions that can be deleted.
           </p>
         ) : null}
+      </CollapsiblePanel>
 
-        {projection.requiresSharding ? (
+      {projection.requiresSharding ? (
+        <CollapsiblePanel title="Sharding Recommended">
           <div className="manager-cost-sharding" aria-label="Sharding recommendations">
             <div className="manager-cost-sharding__header">
               <strong>Sharding recommended ({formatGb(SHARDING_THRESHOLD_GB)}+ dataset)</strong>
@@ -412,13 +419,14 @@ export function ManagerCostPanel({
               </table>
             </div>
           </div>
-        ) : null}
-      </div>
+        </CollapsiblePanel>
+      ) : null}
+
       <div className="manager-cost-legal" role="note">
         Estimates only. Not a quote, invoice, legal commitment, SLA, or financial advice. Actual MongoDB Atlas pricing,
         credits, taxes, usage, data transfer, support, and regional charges may vary.
       </div>
-    </section>
+    </>
   );
 }
 

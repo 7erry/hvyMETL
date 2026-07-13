@@ -159,6 +159,12 @@ export function MongoSchemaCanvas({
 
   const relationshipCount = useMemo(() => (plan ? edgesForPlan(plan).length : 0), [plan]);
 
+  const handleAutoLayout = useCallback(() => {
+    if (!plan) return;
+    const autoLayout = layoutMigrationPlan(plan, compactLayout ? COMPACT_GRAPH_LAYOUT_OPTIONS : undefined);
+    onPositionsChange(autoLayout);
+  }, [plan, compactLayout, onPositionsChange]);
+
   const [nodes, setNodes, onNodesChange] = useNodesState(flow.nodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(flow.edges);
 
@@ -221,34 +227,36 @@ export function MongoSchemaCanvas({
         />
         <Background variant={BackgroundVariant.Dots} gap={GRID} size={1} color="#00684A" />
         <Controls />
-        <Panel position="top-right" className="schema-canvas-toolbar-panel">
+        {!compactLayout ? (
+          <MiniMap nodeColor="#014E3D" maskColor="rgba(0, 30, 43, 0.8)" style={{ background: '#112733' }} />
+        ) : null}
+        <Panel position="bottom-center" className="schema-canvas-dock">
           <RelationshipDisplayControls
             connectionType={connectionType}
             relationshipNotation={relationshipNotation}
             onConnectionTypeChange={onConnectionTypeChange}
             onRelationshipNotationChange={onRelationshipNotationChange}
+            onAutoLayout={handleAutoLayout}
+            compact={compactLayout}
           />
-        </Panel>
-        {!compactLayout ? (
-          <MiniMap nodeColor="#014E3D" maskColor="rgba(0, 30, 43, 0.8)" style={{ background: '#112733' }} />
-        ) : null}
-        <Panel position="bottom-center" className="schema-canvas-legend">
-          <span>
-            <span className="legend-dot legend-dot--pk">🔑</span> Document id
-          </span>
-          <span>
-            <span className="legend-dot legend-dot--fk">⊕</span> Embedded array
-          </span>
-          <span>
-            <span className="legend-dot legend-dot--denorm">⇢</span> Denormalized
-          </span>
-          <span>
-            {plan.collections.length} collection{plan.collections.length === 1 ? '' : 's'}
-          </span>
-          <span>
-            {relationshipCount} link{relationshipCount === 1 ? '' : 's'}
-          </span>
-          {selectedCollection ? <span className="legend-hint">Click canvas to clear selection</span> : null}
+          <div className="schema-canvas-legend">
+            <span>
+              <span className="legend-dot legend-dot--pk">🔑</span> Document id
+            </span>
+            <span>
+              <span className="legend-dot legend-dot--fk">⊕</span> Embedded array
+            </span>
+            <span>
+              <span className="legend-dot legend-dot--denorm">⇢</span> Denormalized
+            </span>
+            <span>
+              {plan.collections.length} collection{plan.collections.length === 1 ? '' : 's'}
+            </span>
+            <span>
+              {relationshipCount} link{relationshipCount === 1 ? '' : 's'}
+            </span>
+            {selectedCollection ? <span className="legend-hint">Click canvas to clear selection</span> : null}
+          </div>
         </Panel>
       </ReactFlow>
     </div>

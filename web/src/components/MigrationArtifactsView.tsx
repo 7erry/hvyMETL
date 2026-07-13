@@ -9,6 +9,7 @@ import {
 import type { MigrationArtifacts } from '../sessionState';
 import { ArtifactCodePanel } from './ArtifactCodePanel';
 import { ApiArtifactsExplorer } from './ApiArtifactsExplorer';
+import { CopyButton } from './CopyButton';
 import { ResizableVerticalSplit } from './ResizableVerticalSplit';
 
 type ArtifactTab = {
@@ -326,9 +327,12 @@ export function MigrationArtifactsView({ artifacts, onChange, onBack }: Migratio
                     ) : null}
                     {!isRepoView ? <code>{active?.fileName}</code> : null}
                   </div>
-                  <button type="button" className="tertiary" onClick={handleDownload} disabled={!active}>
-                    Download file
-                  </button>
+                  <div className="artifact-editor-header__actions">
+                    <CopyButton text={active?.content ?? ''} label="Copy code" />
+                    <button type="button" className="tertiary" onClick={handleDownload} disabled={!active}>
+                      Download file
+                    </button>
+                  </div>
                 </div>
                 <ArtifactCodePanel
                   value={active?.content ?? ''}

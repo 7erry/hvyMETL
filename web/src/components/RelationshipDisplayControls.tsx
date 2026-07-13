@@ -10,6 +10,8 @@ type RelationshipDisplayControlsProps = {
   relationshipNotation: RelationshipNotation;
   onConnectionTypeChange: (type: RelationshipConnectionType) => void;
   onRelationshipNotationChange: (notation: RelationshipNotation) => void;
+  onAutoLayout?: () => void;
+  compact?: boolean;
 };
 
 /** On-canvas controls for FK line style and labels. */
@@ -18,10 +20,17 @@ export function RelationshipDisplayControls({
   relationshipNotation,
   onConnectionTypeChange,
   onRelationshipNotationChange,
+  onAutoLayout,
+  compact = false,
 }: RelationshipDisplayControlsProps) {
   return (
-    <div className="schema-canvas-toolbar">
+    <div className={`schema-canvas-toolbar${compact ? ' schema-canvas-toolbar--compact' : ''}`}>
       <span className="schema-canvas-toolbar__title">Relationships</span>
+      {onAutoLayout ? (
+        <button type="button" className="secondary schema-canvas-toolbar__layout" onClick={onAutoLayout}>
+          Auto-layout
+        </button>
+      ) : null}
       <label className="schema-canvas-toolbar__field">
         <span>Connection style</span>
         <select

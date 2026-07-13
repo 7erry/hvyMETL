@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import type { ReactNode, SyntheticEvent } from 'react';
 import { useState } from 'react';
 
 type CollapsiblePanelProps = {
@@ -6,7 +6,13 @@ type CollapsiblePanelProps = {
   children: ReactNode;
   defaultOpen?: boolean;
   className?: string;
+  /** Optional controls shown on the summary row (clicks do not toggle the panel). */
+  headerActions?: ReactNode;
 };
+
+function stopSummaryToggle(event: SyntheticEvent) {
+  event.stopPropagation();
+}
 
 /** Uniform sidebar disclosure panel with the same arrow affordance as canvas table lists. */
 export function CollapsiblePanel({
@@ -14,6 +20,7 @@ export function CollapsiblePanel({
   children,
   defaultOpen = false,
   className = '',
+  headerActions,
 }: CollapsiblePanelProps) {
   const [isOpen, setIsOpen] = useState(defaultOpen);
 
@@ -23,7 +30,18 @@ export function CollapsiblePanel({
       open={isOpen}
       onToggle={(event) => setIsOpen(event.currentTarget.open)}
     >
-      <summary className="panel-dropdown__summary">{title}</summary>
+      <summary className="panel-dropdown__summary">
+        <span className="panel-dropdown__title">{title}</span>
+        {headerActions ? (
+          <span
+            className="panel-dropdown__actions"
+            onClick={stopSummaryToggle}
+            onKeyDown={stopSummaryToggle}
+          >
+            {headerActions}
+          </span>
+        ) : null}
+      </summary>
       <div className="panel-dropdown__body">{children}</div>
     </details>
   );

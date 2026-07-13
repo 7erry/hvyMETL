@@ -21,66 +21,104 @@ const nodeTypes = {
   managerDomain: ManagerDomainNode,
 };
 
-const ENTITY_WIDTH = 148;
-const ENTITY_HEIGHT = 72;
-const DOMAIN_PAD = 24;
-const DOMAIN_HEADER = 56;
-const DOMAIN_GAP = 32;
+const ENTITY_WIDTH = 168;
+const ENTITY_HEIGHT = 80;
+const DOMAIN_PAD = 28;
+const DOMAIN_HEADER = 52;
+const DOMAIN_GAP_X = 48;
+const DOMAIN_GAP_Y = 40;
+const CANVAS_CENTER_X = 520;
+const CANVAS_CENTER_Y = 320;
+
+type DomainLayout = {
+  domain: BusinessDomain;
+  width: number;
+  height: number;
+  entityNodes: Node[];
+};
+
+function measureDomain(domain: BusinessDomain): DomainLayout {
+  const cols = Math.min(3, Math.max(1, domain.entities.length));
+  const rows = Math.ceil(domain.entities.length / cols);
+  const width = DOMAIN_PAD * 2 + cols * ENTITY_WIDTH + (cols - 1) * 14;
+  const height = DOMAIN_HEADER + DOMAIN_PAD + rows * ENTITY_HEIGHT + (rows - 1) * 12;
+
+  const entityNodes: Node[] = domain.entities.map((entity, index) => {
+    const col = index % cols;
+    const row = Math.floor(index / cols);
+    return {
+      id: entity.id,
+      type: 'managerEntity',
+      parentId: `domain-${domain.id}`,
+      position: {
+        x: DOMAIN_PAD + col * (ENTITY_WIDTH + 14),
+        y: DOMAIN_HEADER + row * (ENTITY_HEIGHT + 12),
+      },
+      data: { entity },
+      extent: 'parent' as const,
+      draggable: false,
+    };
+  });
+
+  return { domain, width, height, entityNodes };
+}
+
+function layoutDomains(domains: BusinessDomain[]): Node[] {
+  if (domains.length === 0) return [];
+
+  const layouts = domains.map(measureDomain);
+  const gridCols = Math.min(2, Math.max(1, Math.ceil(Math.sqrt(layouts.length))));
+  const rows: DomainLayout[][] = [];
+
+  for (let index = 0; index < layouts.length; index += gridCols) {
+    rows.push(layouts.slice(index, index + gridCols));
+  }
+
+  const rowHeights = rows.map((row) => Math.max(...row.map((item) => item.height)));
+  const rowWidths = rows.map((row) =>
+    row.reduce((sum, item, index) => sum + item.width + (index > 0 ? DOMAIN_GAP_X : 0), 0),
+  );
+  const totalHeight =
+    rowHeights.reduce((sum, height) => sum + height, 0) + (rows.length - 1) * DOMAIN_GAP_Y;
+
+  let y = CANVAS_CENTER_Y - totalHeight / 2;
+  const nodes: Node[] = [];
+
+  rows.forEach((row, rowIndex) => {
+    const rowWidth = rowWidths[rowIndex] ?? 0;
+    let x = CANVAS_CENTER_X - rowWidth / 2;
+
+    for (const layout of row) {
+      nodes.push({
+        id: `domain-${layout.domain.id}`,
+        type: 'managerDomain',
+        position: { x, y },
+        data: {
+          label: layout.domain.label,
+          entityCount: layout.domain.entities.length,
+          readyCount: layout.domain.entities.filter((e) => e.status === 'ready').length,
+          reviewCount: layout.domain.entities.filter((e) => e.status === 'review').length,
+          blockedCount: layout.domain.entities.filter((e) => e.status === 'blocked').length,
+        },
+        style: { width: layout.width, height: layout.height },
+        selectable: false,
+        draggable: false,
+      });
+      nodes.push(...layout.entityNodes);
+      x += layout.width + DOMAIN_GAP_X;
+    }
+
+    y += (rowHeights[rowIndex] ?? 0) + DOMAIN_GAP_Y;
+  });
+
+  return nodes;
+}
 
 type ManagerSchemaCanvasProps = {
   domains: BusinessDomain[];
   phase: SchemaPhase;
   onReviewEntity?: (entityId: string) => void;
 };
-
-function layoutDomains(domains: BusinessDomain[]): Node[] {
-  const nodes: Node[] = [];
-  let xOffset = 40;
-
-  for (const domain of domains) {
-    const cols = Math.min(3, Math.max(1, domain.entities.length));
-    const rows = Math.ceil(domain.entities.length / cols);
-    const domainWidth = DOMAIN_PAD * 2 + cols * ENTITY_WIDTH + (cols - 1) * 12;
-    const domainHeight = DOMAIN_HEADER + DOMAIN_PAD + rows * ENTITY_HEIGHT + (rows - 1) * 10;
-
-    nodes.push({
-      id: `domain-${domain.id}`,
-      type: 'managerDomain',
-      position: { x: xOffset, y: 40 },
-      data: {
-        label: domain.label,
-        entityCount: domain.entities.length,
-        readyCount: domain.entities.filter((e) => e.status === 'ready').length,
-        reviewCount: domain.entities.filter((e) => e.status === 'review').length,
-        blockedCount: domain.entities.filter((e) => e.status === 'blocked').length,
-      },
-      style: { width: domainWidth, height: domainHeight },
-      selectable: false,
-      draggable: false,
-    });
-
-    domain.entities.forEach((entity, index) => {
-      const col = index % cols;
-      const row = Math.floor(index / cols);
-      nodes.push({
-        id: entity.id,
-        type: 'managerEntity',
-        parentId: `domain-${domain.id}`,
-        position: {
-          x: DOMAIN_PAD + col * (ENTITY_WIDTH + 12),
-          y: DOMAIN_HEADER + row * (ENTITY_HEIGHT + 10),
-        },
-        data: { entity },
-        extent: 'parent',
-        draggable: false,
-      });
-    });
-
-    xOffset += domainWidth + DOMAIN_GAP;
-  }
-
-  return nodes;
-}
 
 export function ManagerSchemaCanvas({ domains, phase, onReviewEntity }: ManagerSchemaCanvasProps) {
   const wrapRef = useRef<HTMLDivElement>(null);

@@ -117,7 +117,7 @@ export const defaultSessionState = (): SessionState => ({
   sidebarWidth: 320,
   canvasPanelOpen: true,
   csvSourcePath: null,
-  relationshipConnectionType: 'bezier',
+  relationshipConnectionType: 'step',
   relationshipNotation: 'detailed',
   customProfile: null,
   customTelemetryInput: null,

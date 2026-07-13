@@ -206,18 +206,18 @@ export function ManagerView({
                     Review {pendingReviewCount} change{pendingReviewCount === 1 ? '' : 's'}
                   </button>
                 ) : null}
-                <button type="button" className="secondary" onClick={onRunPipeline} disabled={!model}>
+                <button
+                  type="button"
+                  className={showReviewActions ? 'secondary' : 'primary'}
+                  onClick={onRunPipeline}
+                  disabled={!model}
+                >
                   Run pipeline
                 </button>
                 <button type="button" className="secondary" onClick={onGenerateReport} disabled={!model || exporting}>
                   {exporting ? 'Generating…' : 'Generate report'}
                 </button>
-                <button
-                  type="button"
-                  className={showReviewActions ? 'secondary' : 'primary'}
-                  onClick={onSignOffExport}
-                  disabled={!migrationPlan}
-                >
+                <button type="button" className="secondary" onClick={onSignOffExport} disabled={!migrationPlan}>
                   Sign off export
                 </button>
                 {migrationArtifacts ? (
