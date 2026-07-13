@@ -114,15 +114,17 @@ describe('promoteQueryAccessToken', () => {
     const req = { headers: {} as Record<string, string>, query: { access_token: 'jwt-token' } } as Request;
     promoteQueryAccessToken(req, {} as Response, () => undefined);
     expect(req.headers.authorization).toBe('Bearer jwt-token');
+    expect(req.query.access_token).toBeUndefined();
   });
 
-  it('does not override an existing Authorization header', () => {
+  it('does not override an existing Authorization header but still strips query token', () => {
     const req = {
       headers: { authorization: 'Bearer existing' },
       query: { access_token: 'jwt-token' },
     } as Request;
     promoteQueryAccessToken(req, {} as Response, () => undefined);
     expect(req.headers.authorization).toBe('Bearer existing');
+    expect(req.query.access_token).toBeUndefined();
   });
 });
 
