@@ -2,7 +2,7 @@
  * HTTP routes for generated OpenAPI specs, MongoDB validator schemas, and Swagger UI.
  */
 
-import type { Express, Request, Response } from 'express';
+import type { Express, Request, Response, RequestHandler } from 'express';
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 import swaggerUi from 'swagger-ui-express';
@@ -13,10 +13,10 @@ import {
   serializeApiArtifactBundle,
   type ApiArtifactBundle,
 } from './apiArtifactStore.js';
-import { requireRole } from './auth.js';
+import { requireRole, promoteQueryAccessToken } from './auth.js';
 import { getRequestTenantId } from './tenant.js';
 
-const docsAuth = requireRole(['admin', 'developer', 'manager']);
+const docsAuth: RequestHandler[] = [promoteQueryAccessToken, ...requireRole(['admin', 'developer', 'manager'])];
 
 function resolveBundle(req: Request, rootDir: string): ApiArtifactBundle | null {
   const tenantId = getRequestTenantId(req);

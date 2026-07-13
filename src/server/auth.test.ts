@@ -4,8 +4,10 @@ import {
   effectiveRolesFromPayload,
   getPublicAuthConfig,
   issuerUrlToDomain,
+  promoteQueryAccessToken,
   rolesFromPayload,
 } from './auth.js';
+import type { Request, Response } from 'express';
 
 describe('issuerUrlToDomain', () => {
   it('strips scheme and trailing slash from issuer URL', () => {
@@ -104,6 +106,23 @@ describe('effectiveRolesFromPayload', () => {
     process.env.AUTH0_AUDIENCE = 'https://api.hvymetl.studio';
     process.env.HVYMETL_ADMIN_SUBS = 'google-oauth2|104005738020757337481';
     expect(effectiveRolesFromPayload({ sub: 'google-oauth2|104005738020757337481' })).toEqual(['admin']);
+  });
+});
+
+describe('promoteQueryAccessToken', () => {
+  it('copies access_token query param to Authorization header', () => {
+    const req = { headers: {} as Record<string, string>, query: { access_token: 'jwt-token' } } as Request;
+    promoteQueryAccessToken(req, {} as Response, () => undefined);
+    expect(req.headers.authorization).toBe('Bearer jwt-token');
+  });
+
+  it('does not override an existing Authorization header', () => {
+    const req = {
+      headers: { authorization: 'Bearer existing' },
+      query: { access_token: 'jwt-token' },
+    } as Request;
+    promoteQueryAccessToken(req, {} as Response, () => undefined);
+    expect(req.headers.authorization).toBe('Bearer existing');
   });
 });
 

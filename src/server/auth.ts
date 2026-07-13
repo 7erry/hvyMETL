@@ -148,6 +148,15 @@ export const requireAuth: RequestHandler = (req, res, next) => {
   return getAuthMiddleware()(req, res, next);
 };
 
+/** Allow Swagger UI new-tab links to pass a Bearer token via ?access_token= (hosted studio). */
+export const promoteQueryAccessToken: RequestHandler = (req, _res, next) => {
+  const queryToken = req.query.access_token;
+  if (!req.headers.authorization && typeof queryToken === 'string' && queryToken.trim()) {
+    req.headers.authorization = `Bearer ${queryToken.trim()}`;
+  }
+  next();
+};
+
 export function requireRole(allowedRoles: HvyRole[]): RequestHandler[] {
   return [
     requireAuth,
