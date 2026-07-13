@@ -95,6 +95,15 @@ export function readJsonArtifact(path: string): unknown {
   return JSON.parse(readFileSync(path, 'utf8'));
 }
 
+/** Read a JSON artifact that must be an object (OpenAPI specs, validator schemas). */
+export function readJsonObjectArtifact(path: string): Record<string, unknown> {
+  const parsed = readJsonArtifact(path);
+  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+    throw new Error(`Expected JSON object in artifact: ${path}`);
+  }
+  return parsed as Record<string, unknown>;
+}
+
 /** Public API shape for the web UI. */
 export function serializeApiArtifactBundle(bundle: ApiArtifactBundle): {
   outDir: string;

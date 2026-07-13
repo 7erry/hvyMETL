@@ -9,6 +9,7 @@ import swaggerUi from 'swagger-ui-express';
 import {
   getActiveApiArtifacts,
   readJsonArtifact,
+  readJsonObjectArtifact,
   serializeApiArtifactBundle,
   type ApiArtifactBundle,
 } from './apiArtifactStore.js';
@@ -30,7 +31,7 @@ function findCollection(bundle: ApiArtifactBundle, name: string) {
 function readCombinedOpenApiSpec(req: Request, rootDir: string): Record<string, unknown> | null {
   const bundle = resolveBundle(req, rootDir);
   if (!bundle) return null;
-  return readJsonArtifact(bundle.combinedOpenApiPath) as Record<string, unknown>;
+  return readJsonObjectArtifact(bundle.combinedOpenApiPath);
 }
 
 export function registerApiArtifactRoutes(app: Express, rootDir: string): void {
