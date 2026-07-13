@@ -6,6 +6,8 @@ type CollapsiblePanelProps = {
   children: ReactNode;
   defaultOpen?: boolean;
   className?: string;
+  /** Brief value shown on the right when the panel is collapsed. */
+  collapsedHint?: string;
   /** Optional controls shown on the summary row (clicks do not toggle the panel). */
   headerActions?: ReactNode;
 };
@@ -20,6 +22,7 @@ export function CollapsiblePanel({
   children,
   defaultOpen = false,
   className = '',
+  collapsedHint,
   headerActions,
 }: CollapsiblePanelProps) {
   const [isOpen, setIsOpen] = useState(defaultOpen);
@@ -32,6 +35,9 @@ export function CollapsiblePanel({
     >
       <summary className="panel-dropdown__summary">
         <span className="panel-dropdown__title">{title}</span>
+        {!isOpen && collapsedHint ? (
+          <span className="panel-dropdown__hint">{collapsedHint}</span>
+        ) : null}
         {headerActions ? (
           <span
             className="panel-dropdown__actions"

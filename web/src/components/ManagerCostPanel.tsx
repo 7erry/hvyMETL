@@ -46,6 +46,12 @@ const WORKLOAD_OPTIONS: { id: ManagerWorkloadType; title: string; hint: string }
   },
 ];
 
+const WORKLOAD_SHORT: Record<ManagerWorkloadType, string> = {
+  'read-heavy': '80/20',
+  balanced: '50/50',
+  'write-heavy': '20/80',
+};
+
 export function ManagerCostPanel({
   model,
   migrationPlan,
@@ -99,7 +105,12 @@ export function ManagerCostPanel({
 
   return (
     <>
-      <CollapsiblePanel title="Migration Cost Projection" defaultOpen className="manager-cost-panel">
+      <CollapsiblePanel
+        title="Migration Cost Projection"
+        defaultOpen
+        className="manager-cost-panel"
+        collapsedHint={`${formatGb(datasetScaleGb)} · ${WORKLOAD_SHORT[inputs.workloadType]}`}
+      >
         <p className="manager-hint manager-cost-panel__intro">
           Heuristic sizing from your DDL and workload profile — not a formal Atlas quote.
         </p>
@@ -215,7 +226,10 @@ export function ManagerCostPanel({
         </div>
       </CollapsiblePanel>
 
-      <CollapsiblePanel title="Estimated Manpower Eliminated">
+      <CollapsiblePanel
+        title="Estimated Manpower Eliminated"
+        collapsedHint={formatPersonWeeks(projection.personWeeksEliminated)}
+      >
         <div className="manager-cost-manpower" aria-label="Estimated manpower eliminated">
           <div className="manager-cost-manpower__primary">
             <span>Estimated manpower eliminated</span>
@@ -240,7 +254,10 @@ export function ManagerCostPanel({
         </div>
       </CollapsiblePanel>
 
-      <CollapsiblePanel title="Recommended Tier">
+      <CollapsiblePanel
+        title="Recommended Tier"
+        collapsedHint={`${projection.recommendedTier.label} · ${projection.recommendedTier.ramGb} GB RAM`}
+      >
         <dl className="manager-cost-card__metrics">
           <div>
             <dt>Recommended tier</dt>
@@ -276,7 +293,11 @@ export function ManagerCostPanel({
         </div>
       </CollapsiblePanel>
 
-      <CollapsiblePanel title="Monthly Cost" defaultOpen>
+      <CollapsiblePanel
+        title="Monthly Cost"
+        defaultOpen
+        collapsedHint={`${formatUsd(projection.monthlyTotalUsd)} / mo`}
+      >
         <div className="manager-cost-card__header">
           <span className="manager-cost-card__icon" aria-hidden>💰</span>
           <div>
@@ -351,7 +372,10 @@ export function ManagerCostPanel({
       </CollapsiblePanel>
 
       {projection.requiresSharding ? (
-        <CollapsiblePanel title="Sharding Recommended">
+        <CollapsiblePanel
+          title="Sharding Recommended"
+          collapsedHint={`${projection.shardingRecommendations.length} collections`}
+        >
           <div className="manager-cost-sharding" aria-label="Sharding recommendations">
             <div className="manager-cost-sharding__header">
               <strong>Sharding recommended ({formatGb(SHARDING_THRESHOLD_GB)}+ dataset)</strong>

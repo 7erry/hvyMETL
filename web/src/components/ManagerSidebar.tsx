@@ -127,6 +127,23 @@ export function ManagerSidebar({
     [cloudSummary.modelTokenUsage],
   );
 
+  const modelApiUsageHint = useMemo(() => {
+    const usage = cloudSummary.modelTokenUsage;
+    if (!usage || usage.totalTokens === 0) return undefined;
+    return `${formatTokenCount(usage.totalTokens)} tokens`;
+  }, [cloudSummary.modelTokenUsage]);
+
+  const workloadImportsHint = useMemo(() => {
+    if (cloudSummary.documentsImported !== null && cloudSummary.documentsImported > 0) {
+      return `${cloudSummary.documentsImported.toLocaleString()} docs`;
+    }
+    if (cloudSummary.profileLabel) return cloudSummary.profileLabel;
+    if (cloudSummary.pipelineRunsRecorded > 0) {
+      return `${cloudSummary.pipelineRunsRecorded} run${cloudSummary.pipelineRunsRecorded === 1 ? '' : 's'}`;
+    }
+    return undefined;
+  }, [cloudSummary]);
+
   return (
     <div className="manager-sidebar sidebar-scroll">
       {!model ? (
@@ -232,7 +249,7 @@ export function ManagerSidebar({
             onChange={onManagerCostInputsChange}
           />
 
-          <CollapsiblePanel title="Model API Usage">
+          <CollapsiblePanel title="Model API Usage" collapsedHint={modelApiUsageHint}>
             {!cloudSummary.modelTokenUsage || cloudSummary.modelTokenUsage.totalTokens === 0 ? (
               <>
                 <p className="manager-hint">{modelTokenUsageEmptyHint(cloudSummary.retrievalStrategy)}</p>
@@ -300,7 +317,7 @@ export function ManagerSidebar({
             )}
           </CollapsiblePanel>
 
-          <CollapsiblePanel title="Workload & Atlas Imports">
+          <CollapsiblePanel title="Workload & Atlas Imports" collapsedHint={workloadImportsHint}>
             {!cloudSummary.profileLabel && !cloudSummary.hasImportData && cloudSummary.pipelineRunsRecorded === 0 ? (
               <p className="manager-hint">
                 No pipeline data yet. Run the full pipeline to record Atlas import counts and workload settings.

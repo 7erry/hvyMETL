@@ -1077,12 +1077,30 @@ textarea {
 }
 
 .panel-dropdown__title {
-  flex: 1;
+  flex: 0 1 auto;
   min-width: 0;
+  max-width: 58%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .panel-dropdown__actions {
   flex-shrink: 0;
+}
+
+.panel-dropdown__hint {
+  flex: 1;
+  min-width: 0;
+  margin-left: 0.5rem;
+  text-align: right;
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--accent-secondary);
+  opacity: 0.88;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .panel-dropdown--alert {
