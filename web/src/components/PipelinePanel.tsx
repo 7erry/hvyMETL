@@ -3,16 +3,19 @@ import {
   fetchPipelineConfig,
   runPipeline,
   runPipelineWithCsv,
+  uploadPipelineCsvFiles,
   type PipelineConfigStatus,
   type PipelineProgressEvent,
   type PipelineRunResult,
 } from '../api';
-import { pickCsvDirectory } from '../directoryPicker';
+import { pickCsvDirectory, pickCsvFiles } from '../directoryPicker';
 import {
   hydratePipelineSettingsFromConfig,
   isEnvMongoPlaceholder,
+  isLikelyLocalFilesystemPath,
   mongoUriInputValue,
   mongoUriOverrideForFetch,
+  resolveHostedCsvSourcePath,
 } from '../pipelineFormHelpers';
 import {
   PIPELINE_PROGRESS_STAGES,
@@ -73,6 +76,8 @@ export function PipelinePanel({
   const [result, setResult] = useState<PipelineRunResult | null>(null);
   const [csvFiles, setCsvFiles] = useState<File[]>([]);
   const [csvDirectoryLabel, setCsvDirectoryLabel] = useState<string | null>(null);
+  const [csvUploading, setCsvUploading] = useState(false);
+  const [uploadedCsvCount, setUploadedCsvCount] = useState(0);
   const [showEnvDetails, setShowEnvDetails] = useState(false);
   const [form, setForm] = useState<PipelineForm>({
     mongoUri: '',
@@ -114,8 +119,9 @@ export function PipelinePanel({
     setProgress(null);
     setCsvFiles([]);
     setCsvDirectoryLabel(null);
+    setUploadedCsvCount(0);
     setShowEnvDetails(false);
-    const savedCsvPath = csvSourcePath?.trim() ?? '';
+    const savedCsvPath = resolveHostedCsvSourcePath(csvSourcePath, false);
     const savedCsvIsGeneratedMock = /(?:^|[/\\])mock-csv(?:[/\\])?$/i.test(savedCsvPath);
     const noCsv = !savedCsvPath || savedCsvIsGeneratedMock;
     setForm((prev) => ({
@@ -133,9 +139,13 @@ export function PipelinePanel({
           generateMockCsv: noCsv ? true : undefined,
         });
         setConfig(status);
+        const hostedSavedPath = resolveHostedCsvSourcePath(
+          savedCsvIsGeneratedMock ? '' : savedCsvPath,
+          Boolean(status.requiresCsvUpload),
+        );
         setForm((prev) => ({
           ...prev,
-          ...hydratePipelineSettingsFromConfig(prev, status, savedCsvIsGeneratedMock ? '' : savedCsvPath),
+          ...hydratePipelineSettingsFromConfig(prev, status, hostedSavedPath),
         }));
       } catch (e) {
         setError(String(e));
@@ -161,8 +171,15 @@ export function PipelinePanel({
   ]);
 
   const dataSourceMode: DataSourceMode = form.generateMockCsv ? 'mock' : 'real';
-  const effectiveCsvPath = form.csvSourcePath.trim() || csvSourcePath || config?.csvSourcePath || '';
-  const hasCsvSource = Boolean(config?.hasCsvSource || effectiveCsvPath || csvFiles.length > 0);
+  const requiresCsvUpload = Boolean(config?.requiresCsvUpload);
+  const effectiveCsvPath =
+    form.csvSourcePath.trim() ||
+    resolveHostedCsvSourcePath(csvSourcePath, requiresCsvUpload) ||
+    config?.csvSourcePath ||
+    '';
+  const hasCsvSource = Boolean(
+    config?.hasCsvSource || effectiveCsvPath || csvFiles.length > 0 || uploadedCsvCount > 0,
+  );
   const useMockCsv = form.generateMockCsv;
   const mockGeneratorReady = Boolean(config?.mockCsvGenerator?.ok);
 
@@ -190,14 +207,43 @@ export function PipelinePanel({
     if (mode === 'mock') {
       setCsvFiles([]);
       setCsvDirectoryLabel(null);
+      setUploadedCsvCount(0);
     }
   };
 
+  const uploadCsvFilesToServer = useCallback(
+    async (files: File[], label: string) => {
+      setCsvUploading(true);
+      setError('');
+      try {
+        const uploaded = await uploadPipelineCsvFiles(files);
+        setUploadedCsvCount(uploaded.fileCount);
+        setCsvDirectoryLabel(label);
+        setCsvFiles([]);
+        setForm((prev) => ({ ...prev, csvSourcePath: uploaded.csvSourcePath, generateMockCsv: false }));
+        onCsvSourcePathChange(uploaded.csvSourcePath);
+        const current = formRef.current;
+        const status = await fetchPipelineConfig({
+          schemaDialect: dialect,
+          csvSourcePath: uploaded.csvSourcePath,
+          csvToAtlasPath: current.csvToAtlasPath.trim() || undefined,
+          generateMockCsv: false,
+          mongoUri: mongoUriOverrideForFetch(current.mongoUri),
+        });
+        setConfig(status);
+      } finally {
+        setCsvUploading(false);
+      }
+    },
+    [dialect, onCsvSourcePathChange],
+  );
+
   useEffect(() => {
-    if (csvSourcePath && open && !/(?:^|[/\\])mock-csv(?:[/\\])?$/i.test(csvSourcePath)) {
-      setForm((prev) => (prev.csvSourcePath ? prev : { ...prev, csvSourcePath }));
-    }
-  }, [csvSourcePath, open]);
+    if (!csvSourcePath || !open) return;
+    if (requiresCsvUpload && isLikelyLocalFilesystemPath(csvSourcePath)) return;
+    if (/(?:^|[/\\])mock-csv(?:[/\\])?$/i.test(csvSourcePath)) return;
+    setForm((prev) => (prev.csvSourcePath ? prev : { ...prev, csvSourcePath }));
+  }, [csvSourcePath, open, requiresCsvUpload]);
 
   const handlePickCsvDirectory = async () => {
     try {
@@ -210,8 +256,14 @@ export function PipelinePanel({
       }
 
       setError('');
+      if (requiresCsvUpload) {
+        await uploadCsvFilesToServer(picked.files, picked.label);
+        return;
+      }
+
       setCsvFiles(picked.files);
       setCsvDirectoryLabel(picked.label);
+      setUploadedCsvCount(0);
       setForm((prev) => ({ ...prev, csvSourcePath: '', generateMockCsv: false }));
     } catch (e) {
       if (e instanceof DOMException && e.name === 'AbortError') return;
@@ -219,15 +271,37 @@ export function PipelinePanel({
     }
   };
 
+  const handlePickCsvFiles = async () => {
+    try {
+      const files = await pickCsvFiles();
+      if (!files?.length) return;
+      setError('');
+      if (requiresCsvUpload) {
+        await uploadCsvFilesToServer(files, `${files.length} selected file${files.length === 1 ? '' : 's'}`);
+        return;
+      }
+      setCsvFiles(files);
+      setCsvDirectoryLabel(`${files.length} selected file${files.length === 1 ? '' : 's'}`);
+      setUploadedCsvCount(0);
+      setForm((prev) => ({ ...prev, csvSourcePath: '', generateMockCsv: false }));
+    } catch (e) {
+      setError(String(e));
+    }
+  };
+
   const handleCsvSourcePathChange = (value: string) => {
+    if (requiresCsvUpload) return;
     setCsvDirectoryLabel(null);
     setCsvFiles([]);
+    setUploadedCsvCount(0);
     setForm((prev) => ({ ...prev, csvSourcePath: value, generateMockCsv: false }));
   };
 
   const csvSourceDisplay =
-    csvDirectoryLabel && csvFiles.length > 0
-      ? `${csvDirectoryLabel} (${csvFiles.length} CSV file${csvFiles.length === 1 ? '' : 's'})`
+    csvDirectoryLabel && (csvFiles.length > 0 || uploadedCsvCount > 0)
+      ? `${csvDirectoryLabel} (${csvFiles.length || uploadedCsvCount} CSV file${
+          (csvFiles.length || uploadedCsvCount) === 1 ? '' : 's'
+        }${uploadedCsvCount > 0 ? ' on server' : ''})`
       : form.csvSourcePath;
 
   const envChecks = useMemo(() => {
@@ -255,24 +329,24 @@ export function PipelinePanel({
         : [
             {
               id: 'data',
-              label: 'CSV export folder or server path',
+              label: requiresCsvUpload ? 'CSV files uploaded to studio server' : 'CSV export folder or server path',
               ok: hasCsvSource,
             },
           ]),
     ];
-  }, [config, dialectLabel, mongoReachable, hasCsvToAtlas, useMockCsv, hasCsvSource, mockGeneratorReady]);
+  }, [config, dialectLabel, mongoReachable, hasCsvToAtlas, useMockCsv, hasCsvSource, mockGeneratorReady, requiresCsvUpload]);
 
   const passedChecks = envChecks.filter((check) => check.ok).length;
   const envReady = envChecks.length > 0 && passedChecks === envChecks.length;
 
   const canRun = useMemo(() => {
-    if (running || !model) return false;
+    if (running || csvUploading || !model) return false;
     if (!hasMongoUri) return false;
     if (!hasCsvToAtlas) return false;
     if (useMockCsv && !mockGeneratorReady) return false;
     if (!hasCsvSource && !useMockCsv) return false;
     return true;
-  }, [running, model, hasMongoUri, hasCsvToAtlas, hasCsvSource, useMockCsv, mockGeneratorReady]);
+  }, [running, csvUploading, model, hasMongoUri, hasCsvToAtlas, hasCsvSource, useMockCsv, mockGeneratorReady]);
 
   const handleRun = async () => {
     setRunning(true);
@@ -291,8 +365,7 @@ export function PipelinePanel({
         drop: form.drop,
         mongoUri: resolveMongoUriOverride(),
         csvToAtlasPath: form.csvToAtlasPath.trim() || undefined,
-        csvSourcePath:
-          useMockCsv || csvFiles.length > 0 ? undefined : effectiveCsvPath ? effectiveCsvPath : undefined,
+        csvSourcePath: useMockCsv || csvFiles.length > 0 ? undefined : effectiveCsvPath || undefined,
         generateMockCsv: useMockCsv,
         mockCsvOptions: useMockCsv
           ? {
@@ -478,32 +551,57 @@ export function PipelinePanel({
           {dataSourceMode === 'real' ? (
             <div className="pipeline-card">
               <p className="pipeline-hint">{csvSourceHint}</p>
+              {requiresCsvUpload ? (
+                <p className="pipeline-hint">
+                  On <strong>{config?.hostedUrl ?? 'hvymetl.studio'}</strong>, CSV files from your computer are
+                  uploaded to the studio server before csvToAtlas import runs.
+                </p>
+              ) : null}
               <label>
-                CSV folder
+                {requiresCsvUpload ? 'CSV exports' : 'CSV folder'}
                 <div className="pipeline-path-row">
                   <input
                     type="text"
                     value={csvSourceDisplay}
-                    placeholder="Choose folder… or enter server path"
+                    placeholder={
+                      requiresCsvUpload
+                        ? 'Choose folder or CSV files to upload…'
+                        : 'Choose folder… or enter server path'
+                    }
                     onChange={(e) => handleCsvSourcePathChange(e.target.value)}
-                    disabled={running}
+                    disabled={running || csvUploading || requiresCsvUpload}
+                    readOnly={requiresCsvUpload}
                   />
                   <button
                     type="button"
                     className="secondary"
                     onClick={() => void handlePickCsvDirectory()}
-                    disabled={running}
+                    disabled={running || csvUploading}
                   >
-                    Choose folder
+                    {csvUploading ? 'Uploading…' : 'Choose folder'}
+                  </button>
+                  <button
+                    type="button"
+                    className="secondary"
+                    onClick={() => void handlePickCsvFiles()}
+                    disabled={running || csvUploading}
+                  >
+                    Choose files
                   </button>
                 </div>
-                {csvDirectoryLabel && csvFiles.length > 0 ? (
+                {csvUploading ? (
+                  <span className="pipeline-hint">Uploading CSV files to the studio server…</span>
+                ) : csvDirectoryLabel && (csvFiles.length > 0 || uploadedCsvCount > 0) ? (
                   <span className="pipeline-hint">
-                    {csvFiles.length} file(s): {csvFiles.map((f) => f.name).join(', ')}
+                    {uploadedCsvCount > 0
+                      ? `${uploadedCsvCount} file(s) ready on server${effectiveCsvPath ? `: ${effectiveCsvPath}` : ''}`
+                      : `${csvFiles.length} file(s) selected locally: ${csvFiles.map((f) => f.name).join(', ')}`}
                   </span>
                 ) : (
                   <span className="pipeline-hint">
-                    Upload from this browser, or type a path on the machine running the API server.
+                    {requiresCsvUpload
+                      ? 'Pick a folder or individual .csv files from your machine. They will be uploaded before import.'
+                      : 'Upload from this browser, or type a path on the machine running the API server.'}
                   </span>
                 )}
               </label>

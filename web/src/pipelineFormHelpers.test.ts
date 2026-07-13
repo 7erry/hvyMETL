@@ -2,8 +2,10 @@ import { describe, expect, it } from 'vitest';
 import {
   hydratePipelineSettingsFromConfig,
   isEnvMongoPlaceholder,
+  isLikelyLocalFilesystemPath,
   mongoUriInputValue,
   mongoUriOverrideForFetch,
+  resolveHostedCsvSourcePath,
 } from './pipelineFormHelpers';
 
 describe('pipelineFormHelpers', () => {
@@ -20,6 +22,14 @@ describe('pipelineFormHelpers', () => {
   it('hides env placeholder in the input value', () => {
     expect(mongoUriInputValue('(configured in .env)')).toBe('');
     expect(mongoUriInputValue('mongodb+srv://cluster')).toBe('mongodb+srv://cluster');
+  });
+
+  it('ignores local machine paths on hosted studio', () => {
+    expect(isLikelyLocalFilesystemPath('/Users/me/exports')).toBe(true);
+    expect(isLikelyLocalFilesystemPath('C:\\exports')).toBe(true);
+    expect(resolveHostedCsvSourcePath('/Users/me/exports', true)).toBe('');
+    expect(resolveHostedCsvSourcePath('/data/tenant/csv/batch', true)).toBe('/data/tenant/csv/batch');
+    expect(resolveHostedCsvSourcePath('/Users/me/exports', false)).toBe('/Users/me/exports');
   });
 
   it('hydrates empty fields without overwriting user input', () => {

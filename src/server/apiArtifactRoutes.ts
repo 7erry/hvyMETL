@@ -30,7 +30,7 @@ function findCollection(bundle: ApiArtifactBundle, name: string) {
 function readCombinedOpenApiSpec(req: Request, rootDir: string): Record<string, unknown> | null {
   const bundle = resolveBundle(req, rootDir);
   if (!bundle) return null;
-  return JSON.parse(readJsonArtifact(bundle.combinedOpenApiPath)) as Record<string, unknown>;
+  return readJsonArtifact(bundle.combinedOpenApiPath) as Record<string, unknown>;
 }
 
 export function registerApiArtifactRoutes(app: Express, rootDir: string): void {

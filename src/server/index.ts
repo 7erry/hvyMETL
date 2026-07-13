@@ -37,6 +37,7 @@ import { PIPELINE_EXECUTIONS_COLLECTION } from './pipelineExecutionTypes.js';
 import { generateFromPlan } from '../repogen/generate.js';
 import { REPOGEN_LANGUAGES } from '../repogen/languages/index.js';
 import { registerApiArtifactRoutes } from './apiArtifactRoutes.js';
+import { buildCsvUploadResponse, createCsvUploadMiddleware } from './csvUpload.js';
 import { registerApiArtifacts, serializeApiArtifactBundle } from './apiArtifactStore.js';
 import {
   authErrorHandler,
@@ -540,6 +541,7 @@ app.get('/api/pipeline/config', async (req, res) => {
       mongoConnectivity,
       serverEgressIp: serverEgressIp ?? undefined,
       hostedUrl: treatAsHosted ? hostedUrl : undefined,
+      requiresCsvUpload: treatAsHosted && isAuthConfigured(),
       mockCsvGenerator: verifyMockCsvGenerator(ROOT),
     });
   } catch (error) {
@@ -679,6 +681,37 @@ app.post('/api/pipeline/run', async (req, res) => {
   }
 });
 
+/** Stage CSV exports on the server before running the pipeline (hosted studio). */
+app.post('/api/pipeline/upload-csv', (req, res) => {
+  let tenantId: string;
+  try {
+    ({ tenantId } = tenantContextFromRequest(req));
+  } catch (error) {
+    res.status(401).json({ error: String(error) });
+    return;
+  }
+
+  const batchDir = tenantCsvBatchDir(ROOT, tenantId, 'csv-batch');
+  const csvUpload = createCsvUploadMiddleware(batchDir);
+
+  csvUpload(req, res, (uploadError: unknown) => {
+    if (uploadError) {
+      res.status(400).json({ error: String(uploadError) });
+      return;
+    }
+    try {
+      const files = req.files as Express.Multer.File[] | undefined;
+      if (!files?.length) {
+        res.status(400).json({ error: 'At least one CSV file is required' });
+        return;
+      }
+      res.json(buildCsvUploadResponse(batchDir));
+    } catch (error) {
+      res.status(500).json({ error: String(error) });
+    }
+  });
+});
+
 /** Run pipeline with CSV files uploaded in the same request. */
 app.post('/api/pipeline/run-with-csv', (req, res) => {
   let tenantId: string;
@@ -691,12 +724,7 @@ app.post('/api/pipeline/run-with-csv', (req, res) => {
   }
 
   const batchDir = tenantCsvBatchDir(ROOT, tenantId, 'csv-batch');
-  const csvUpload = multer({
-    storage: multer.diskStorage({
-      destination: (_uploadReq, _file, cb) => cb(null, batchDir),
-      filename: (_uploadReq, file, cb) => cb(null, file.originalname),
-    }),
-  }).array('csvs', 500);
+  const csvUpload = createCsvUploadMiddleware(batchDir);
 
   csvUpload(req, res, async (uploadError: unknown) => {
     if (uploadError) {

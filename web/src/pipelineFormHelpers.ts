@@ -55,3 +55,18 @@ export function hydratePipelineSettingsFromConfig(
 export function mongoUriInputValue(mongoUri: string): string {
   return isEnvMongoPlaceholder(mongoUri) ? '' : mongoUri;
 }
+
+/** True when a saved CSV path clearly refers to the user's machine, not the API server. */
+export function isLikelyLocalFilesystemPath(path: string): boolean {
+  const trimmed = path.trim();
+  if (!trimmed) return false;
+  return /^([A-Za-z]:\\|\\\\)/.test(trimmed) || /^\/Users\//.test(trimmed) || /^\/home\//.test(trimmed);
+}
+
+/** Ignore local-only paths when running against hosted studio. */
+export function resolveHostedCsvSourcePath(path: string | null | undefined, requiresCsvUpload: boolean): string {
+  const trimmed = path?.trim() ?? '';
+  if (!trimmed) return '';
+  if (requiresCsvUpload && isLikelyLocalFilesystemPath(trimmed)) return '';
+  return trimmed;
+}

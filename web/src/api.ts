@@ -142,6 +142,7 @@ export type PipelineConfigStatus = {
   };
   serverEgressIp?: string;
   hostedUrl?: string;
+  requiresCsvUpload?: boolean;
   mockCsvGenerator?: {
     ok: boolean;
     python?: string;
@@ -279,6 +280,7 @@ export async function runPipelineWithCsv(
   for (const file of files) body.append('csvs', file);
   body.append('profileId', request.profileId);
   if (request.customProfile) body.append('customProfile', JSON.stringify(request.customProfile));
+  if (request.customTelemetry) body.append('customTelemetry', JSON.stringify(request.customTelemetry));
   body.append('model', JSON.stringify(request.model));
   body.append('ddl', request.ddl);
   if (request.dialect) body.append('dialect', request.dialect);
@@ -362,6 +364,24 @@ export async function fetchApiArtifactJson(urlPath: string): Promise<unknown> {
   const path = urlPath.startsWith('/') ? urlPath : `/${urlPath}`;
   const res = await apiFetch(path);
   const data = await res.json();
+  if (!res.ok) throw new Error(data.error ?? res.statusText);
+  return data;
+}
+
+export type PipelineCsvUploadResult = {
+  ok: true;
+  csvSourcePath: string;
+  fileCount: number;
+  files: string[];
+};
+
+/** Upload CSV exports to the tenant workspace on the server (hosted studio). */
+export async function uploadPipelineCsvFiles(files: File[]): Promise<PipelineCsvUploadResult> {
+  if (files.length === 0) throw new Error('At least one CSV file is required');
+  const body = new FormData();
+  for (const file of files) body.append('csvs', file);
+  const res = await apiFetch(`${base}/api/pipeline/upload-csv`, { method: 'POST', body });
+  const data = (await res.json()) as PipelineCsvUploadResult & { error?: string };
   if (!res.ok) throw new Error(data.error ?? res.statusText);
   return data;
 }

@@ -11,12 +11,23 @@ function filterCsvFiles(files: File[]): File[] {
   return files.filter((file) => file.name.toLowerCase().endsWith('.csv'));
 }
 
-/** Read top-level CSV files from a directory handle (File System Access API). */
-async function readCsvFilesFromHandle(handle: FileSystemDirectoryHandle): Promise<File[]> {
+/** Read CSV files recursively from a directory handle (File System Access API). */
+async function readCsvFilesFromHandle(
+  handle: FileSystemDirectoryHandle,
+  relativePrefix = '',
+): Promise<File[]> {
   const files: File[] = [];
   for await (const entry of handle.values()) {
-    if (entry.kind !== 'file' || !entry.name.toLowerCase().endsWith('.csv')) continue;
-    files.push(await entry.getFile());
+    if (entry.kind === 'file') {
+      if (!entry.name.toLowerCase().endsWith('.csv')) continue;
+      const file = await entry.getFile();
+      const storedName = relativePrefix ? `${relativePrefix.replace(/\//g, '_')}${entry.name}` : entry.name;
+      files.push(new File([file], storedName, { type: file.type || 'text/csv' }));
+      continue;
+    }
+    if (entry.kind === 'directory') {
+      files.push(...(await readCsvFilesFromHandle(entry, `${relativePrefix}${entry.name}/`)));
+    }
   }
   files.sort((a, b) => a.name.localeCompare(b.name));
   return files;
@@ -81,4 +92,28 @@ export async function pickCsvDirectory(): Promise<CsvDirectoryPick | null> {
   }
 
   return pickDirectoryWithInput();
+}
+
+/** Pick one or more CSV files from the local machine. */
+export function pickCsvFiles(): Promise<File[] | null> {
+  return new Promise((resolve) => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.multiple = true;
+    input.accept = '.csv,text/csv';
+    input.style.display = 'none';
+
+    const finish = (files: File[] | null) => {
+      input.remove();
+      resolve(files);
+    };
+
+    input.addEventListener('change', () => {
+      const files = filterCsvFiles(Array.from(input.files ?? []));
+      finish(files.length > 0 ? files : null);
+    });
+
+    document.body.appendChild(input);
+    input.click();
+  });
 }
