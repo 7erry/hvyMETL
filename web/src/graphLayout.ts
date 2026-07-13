@@ -34,6 +34,18 @@ const DEFAULTS: Required<GraphLayoutOptions> = {
   maxRowWidth: 2600,
 };
 
+/** Tighter spacing for narrow viewports so diagrams remain readable on mobile. */
+export const COMPACT_GRAPH_LAYOUT_OPTIONS: GraphLayoutOptions = {
+  nodeWidth: 200,
+  nodeHeight: 150,
+  gapX: 72,
+  gapY: 44,
+  padding: 28,
+  componentGapX: 88,
+  componentGapY: 64,
+  maxRowWidth: 720,
+};
+
 function snap(value: number, grid: number): number {
   return Math.round(value / grid) * grid;
 }

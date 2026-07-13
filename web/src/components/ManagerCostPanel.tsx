@@ -4,9 +4,12 @@ import {
   computeManagerCostProjection,
   DEFAULT_MANAGER_COST_INPUTS,
   formatGb,
+  formatIndexKeyDisplay,
   formatPersonWeeks,
   formatRowCount,
+  formatShardKeyDisplay,
   formatUsd,
+  SHARDING_THRESHOLD_GB,
   type ManagerCostInputs,
   type ManagerWorkloadType,
 } from '../managerCostEstimate';
@@ -339,6 +342,76 @@ export function ManagerCostPanel({
             Archive model keeps about <strong>{projection.archiveHotDataPercent}%</strong> of collection bytes hot.
             Avoid updates at the archive threshold; use TTL indexes instead for logs or sessions that can be deleted.
           </p>
+        ) : null}
+
+        {projection.requiresSharding ? (
+          <div className="manager-cost-sharding" aria-label="Sharding recommendations">
+            <div className="manager-cost-sharding__header">
+              <strong>Sharding recommended ({formatGb(SHARDING_THRESHOLD_GB)}+ dataset)</strong>
+              <p>
+                At this scale, plan a sharded cluster with shard keys that distribute reads and writes uniformly.{' '}
+                <a
+                  href="https://www.mongodb.com/docs/manual/sharding/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Sharding documentation
+                </a>
+                {' · '}
+                <a
+                  href="https://www.mongodb.com/company/blog/mongodb/performance-best-practices-sharding"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Performance best practices
+                </a>
+              </p>
+            </div>
+            <ul className="manager-cost-sharding__guidance">
+              {projection.shardingGuidance.map((item) => (
+                <li key={item}>{item}</li>
+              ))}
+            </ul>
+            <div className="manager-cost-sharding__table-wrap">
+              <table className="manager-cost-sharding__table">
+                <thead>
+                  <tr>
+                    <th scope="col">Collection</th>
+                    <th scope="col">Hot storage</th>
+                    <th scope="col">Shard key</th>
+                    <th scope="col">Strategy</th>
+                    <th scope="col">Supporting index</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {projection.shardingRecommendations.map((rec) => (
+                    <tr key={rec.collectionName}>
+                      <td>
+                        <strong>{rec.collectionName}</strong>
+                        <span>{rec.rationale}</span>
+                        {rec.warnings.length > 0 ? (
+                          <ul className="manager-cost-sharding__warnings">
+                            {rec.warnings.map((warning) => (
+                              <li key={warning}>{warning}</li>
+                            ))}
+                          </ul>
+                        ) : null}
+                        <span className="manager-cost-sharding__query">{rec.queryGuidance}</span>
+                      </td>
+                      <td>{formatGb(rec.estimatedHotStorageGb)}</td>
+                      <td>
+                        <code>{formatShardKeyDisplay(rec.shardKey)}</code>
+                      </td>
+                      <td>{rec.strategy}</td>
+                      <td>
+                        <code>{formatIndexKeyDisplay(rec.supportingIndex)}</code>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
         ) : null}
       </div>
       <div className="manager-cost-legal" role="note">

@@ -3,10 +3,12 @@ import type { MigrationPlan } from './migrationPlanTypes';
 import type { SqlStructuralModel } from './types';
 import {
   buildArchiveCollectionOptions,
+  buildShardingRecommendations,
   computeManagerCostProjection,
   DEFAULT_MANAGER_COST_INPUTS,
   estimateColumnBytes,
   formatPersonWeeks,
+  SHARDING_THRESHOLD_GB,
   selectAtlasTier,
 } from './managerCostEstimate';
 
@@ -196,5 +198,75 @@ describe('managerCostEstimate', () => {
     expect(projection.estimatedTotalRows).toBeGreaterThan(DEFAULT_MANAGER_COST_INPUTS.estimatedTotalRows);
     expect(projection.recommendedTier.id).not.toBe('M50');
     expect(['M300', 'M400', 'M700']).toContain(projection.recommendedTier.id);
+    expect(projection.requiresSharding).toBe(true);
+    expect(projection.shardingRecommendations.length).toBeGreaterThan(0);
+    expect(projection.shardingRecommendations[0]?.shardKey).toBeDefined();
+    expect(projection.shardingGuidance.some((item) => item.includes('2 TB'))).toBe(true);
+  });
+
+  it('does not recommend sharding below the 2 TB threshold', () => {
+    const projection = computeManagerCostProjection(model, plan, DEFAULT_MANAGER_COST_INPUTS);
+    expect(projection.totalStorageGb).toBeLessThan(SHARDING_THRESHOLD_GB);
+    expect(projection.requiresSharding).toBe(false);
+    expect(projection.shardingRecommendations).toEqual([]);
+  });
+
+  it('prefers hashed time sharding for write-heavy bucket collections at scale', () => {
+    const bucketModel: SqlStructuralModel = {
+      source: 'test',
+      tables: [
+        {
+          name: 'readings',
+          columns: [
+            { name: 'sensor_id', sqlType: 'VARCHAR(64)', bsonType: 'string', nullable: false, isPrimaryKey: false },
+            { name: 'recorded_at', sqlType: 'TIMESTAMP', bsonType: 'date', nullable: false, isPrimaryKey: false },
+            { name: 'value', sqlType: 'DOUBLE', bsonType: 'double', nullable: false, isPrimaryKey: false },
+          ],
+          primaryKey: ['sensor_id', 'recorded_at'],
+          foreignKeys: [],
+          rowCount: 50_000_000,
+        },
+      ],
+      relationships: [],
+    };
+    const bucketPlan: MigrationPlan = {
+      source: 'test',
+      profileId: 'iot',
+      generatedAt: '2026-01-01',
+      collections: [
+        {
+          name: 'readings',
+          sourceTable: 'readings',
+          mergedTables: ['readings'],
+          idDerivation: { sourceColumns: ['sensor_id', 'recorded_at'], strategy: 'composite' },
+          patterns: [{ pattern: 'bucket', target: 'readings', reason: 'time series', knowledgeSource: 'test' }],
+          jsonSchema: { properties: {} },
+          indexes: [],
+          embeddedArrays: [],
+          extendedReferences: [],
+          computedFields: [],
+          bucket: {
+            groupByColumn: 'sensor_id',
+            timeColumn: 'recorded_at',
+            windowMinutes: 60,
+            measurementsField: 'measurements',
+          },
+        },
+      ],
+    };
+    const projection = computeManagerCostProjection(bucketModel, bucketPlan, {
+      ...DEFAULT_MANAGER_COST_INPUTS,
+      estimatedDataGb: 3 * 1024,
+      workloadType: 'write-heavy',
+    });
+    const { shardingRecommendations } = buildShardingRecommendations(
+      bucketModel,
+      bucketPlan,
+      projection,
+      new Map([['readings', projection.activeStorageGb]]),
+    );
+
+    expect(shardingRecommendations[0]?.strategy).toBe('compound-hashed');
+    expect(shardingRecommendations[0]?.shardKey.recordedAt).toBe('hashed');
   });
 });

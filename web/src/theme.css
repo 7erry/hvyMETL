@@ -3408,6 +3408,84 @@ textarea {
   font-size: 1.25rem;
 }
 
+.app--manager .manager-cost-sharding {
+  margin-top: 1rem;
+  padding-top: 0.85rem;
+  border-top: 1px solid rgba(0, 104, 74, 0.45);
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.app--manager .manager-cost-sharding__header p {
+  margin: 0.25rem 0 0;
+  font-size: 0.78rem;
+  opacity: 0.9;
+}
+
+.app--manager .manager-cost-sharding__header a {
+  color: var(--mdb-spring-green);
+}
+
+.app--manager .manager-cost-sharding__guidance {
+  margin: 0;
+  padding-left: 1.1rem;
+  font-size: 0.75rem;
+  opacity: 0.92;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.app--manager .manager-cost-sharding__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.75rem;
+}
+
+.app--manager .manager-cost-sharding__table th,
+.app--manager .manager-cost-sharding__table td {
+  padding: 0.45rem 0.5rem;
+  border-bottom: 1px solid rgba(0, 104, 74, 0.35);
+  vertical-align: top;
+  text-align: left;
+}
+
+.app--manager .manager-cost-sharding__table th {
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--mdb-green-base);
+}
+
+.app--manager .manager-cost-sharding__table td strong {
+  display: block;
+  margin-bottom: 0.2rem;
+}
+
+.app--manager .manager-cost-sharding__table td span {
+  display: block;
+  opacity: 0.88;
+  line-height: 1.35;
+}
+
+.app--manager .manager-cost-sharding__table code {
+  font-size: 0.72rem;
+  white-space: nowrap;
+}
+
+.app--manager .manager-cost-sharding__warnings {
+  margin: 0.35rem 0 0;
+  padding-left: 1rem;
+  color: #ffb347;
+}
+
+.app--manager .manager-cost-sharding__query {
+  margin-top: 0.35rem;
+  font-size: 0.72rem;
+  font-style: italic;
+}
+
 .app--manager .manager-cost-egress {
   margin: 0;
   font-size: 0.75rem;
@@ -3588,14 +3666,14 @@ textarea {
 
 .workspace-split--stacked .workspace-sidebar {
   width: 100% !important;
-  max-height: 42vh;
+  max-height: 34vh;
   border-right: none;
   border-bottom: 1px solid var(--mdb-green-dark-2);
 }
 
 .workspace-split--stacked .workspace-main {
   flex: 1;
-  min-height: 0;
+  min-height: 58vh;
 }
 
 /* --- Responsive / mobile layout --- */
@@ -3636,9 +3714,75 @@ textarea {
 
   .app--manager .manager-sidebar {
     width: 100% !important;
-    max-height: 45vh;
+    max-height: 36vh;
     border-right: none;
     border-bottom: 1px solid var(--mdb-green-dark-2);
+  }
+
+  .schema-phase-bar {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    padding: 0.45rem 0.75rem;
+  }
+
+  .schema-phase-bar__meta {
+    flex: 1 1 100%;
+    order: 2;
+  }
+
+  .schema-phase-toggle {
+    flex: 1 1 auto;
+  }
+
+  .schema-canvas-wrap {
+    flex: 1 1 auto;
+    min-height: 52vh;
+  }
+
+  .schema-canvas-wrap .react-flow__minimap {
+    display: none;
+  }
+
+  .schema-canvas-toolbar-panel {
+    margin: 0.35rem;
+  }
+
+  .schema-canvas-toolbar {
+    min-width: 0;
+    max-width: 9.5rem;
+    padding: 0.4rem 0.5rem;
+    gap: 0.35rem;
+  }
+
+  .schema-canvas-toolbar__title {
+    font-size: 0.65rem;
+  }
+
+  .schema-canvas-legend {
+    font-size: 0.65rem;
+    gap: 0.3rem 0.55rem;
+    margin-bottom: 0.35rem;
+    padding: 0.25rem 0.45rem;
+    max-width: calc(100% - 1rem);
+  }
+
+  .schema-canvas-wrap .react-flow__controls {
+    margin: 0 0 0.45rem 0.45rem;
+  }
+
+  .manager-canvas-legend {
+    flex-wrap: wrap;
+    gap: 0.35rem 0.55rem;
+    font-size: 0.65rem;
+    max-width: calc(100% - 1rem);
+  }
+
+  .manager-cost-sharding__table-wrap {
+    overflow-x: auto;
+  }
+
+  .manager-cost-sharding__table {
+    min-width: 640px;
   }
 
   .app--manager .manager-cost-workload__grid {

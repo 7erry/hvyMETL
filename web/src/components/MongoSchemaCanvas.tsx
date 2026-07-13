@@ -13,7 +13,8 @@ import {
   Panel,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
+import { DiagramCanvasFitView } from './DiagramCanvasFitView';
 import { RelationshipEdge } from './RelationshipEdge';
 import { RelationshipDisplayControls } from './RelationshipDisplayControls';
 import { CollectionNode, type CollectionNodeData } from './CollectionNode';
@@ -23,7 +24,8 @@ import {
   relatedCollectionNames,
   type MongoCollectionEdge,
 } from '../migrationPlanDisplay';
-import { layoutMigrationPlan } from '../graphLayout';
+import { COMPACT_GRAPH_LAYOUT_OPTIONS, layoutMigrationPlan } from '../graphLayout';
+import { useCompactDiagramLayout } from '../hooks/useCompactDiagramLayout';
 import type { RelationshipConnectionType, RelationshipNotation } from '../relationshipDisplay';
 import type { MigrationPlan } from '../migrationPlanTypes';
 
@@ -63,11 +65,12 @@ function planToFlow(
   selectedCollection: string | null,
   connectionType: RelationshipConnectionType,
   relationshipNotation: RelationshipNotation,
+  compactLayout: boolean,
 ): { nodes: Node<CollectionNodeData>[]; edges: Edge[] } {
   const planEdges = edgesForPlan(plan);
   const related = relatedCollectionNames(plan, selectedCollection);
   const hasSelection = Boolean(selectedCollection);
-  const autoLayout = layoutMigrationPlan(plan);
+  const autoLayout = layoutMigrationPlan(plan, compactLayout ? COMPACT_GRAPH_LAYOUT_OPTIONS : undefined);
 
   const incomingTargets = new Set(planEdges.map((e) => e.target));
   const outgoingSources = new Set(planEdges.map((e) => e.source));
@@ -144,12 +147,14 @@ export function MongoSchemaCanvas({
   onGeneratePlan,
   generating,
 }: MongoSchemaCanvasProps) {
+  const wrapRef = useRef<HTMLDivElement>(null);
+  const compactLayout = useCompactDiagramLayout();
   const flow = useMemo(
     () =>
       plan
-        ? planToFlow(plan, positions, selectedCollection, connectionType, relationshipNotation)
+        ? planToFlow(plan, positions, selectedCollection, connectionType, relationshipNotation, compactLayout)
         : { nodes: [], edges: [] },
-    [plan, positions, selectedCollection, connectionType, relationshipNotation],
+    [plan, positions, selectedCollection, connectionType, relationshipNotation, compactLayout],
   );
 
   const relationshipCount = useMemo(() => (plan ? edgesForPlan(plan).length : 0), [plan]);
@@ -187,8 +192,10 @@ export function MongoSchemaCanvas({
     );
   }
 
+  const collectionCount = plan.collections.length;
+
   return (
-    <div className="schema-canvas-wrap">
+    <div className="schema-canvas-wrap" ref={wrapRef}>
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -200,13 +207,18 @@ export function MongoSchemaCanvas({
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}
         fitView
-        fitViewOptions={{ padding: 0.2 }}
+        fitViewOptions={{ padding: compactLayout ? 0.1 : 0.2 }}
         snapToGrid={snapToGrid}
         snapGrid={[GRID, GRID]}
-        minZoom={0.2}
-        maxZoom={1.5}
+        minZoom={0.15}
+        maxZoom={compactLayout ? 1.25 : 1.5}
         proOptions={{ hideAttribution: true }}
       >
+        <DiagramCanvasFitView
+          fitKey={`${collectionCount}-${compactLayout ? 'compact' : 'wide'}`}
+          padding={compactLayout ? 0.1 : 0.15}
+          containerRef={wrapRef}
+        />
         <Background variant={BackgroundVariant.Dots} gap={GRID} size={1} color="#00684A" />
         <Controls />
         <Panel position="top-right" className="schema-canvas-toolbar-panel">
@@ -217,7 +229,9 @@ export function MongoSchemaCanvas({
             onRelationshipNotationChange={onRelationshipNotationChange}
           />
         </Panel>
-        <MiniMap nodeColor="#014E3D" maskColor="rgba(0, 30, 43, 0.8)" style={{ background: '#112733' }} />
+        {!compactLayout ? (
+          <MiniMap nodeColor="#014E3D" maskColor="rgba(0, 30, 43, 0.8)" style={{ background: '#112733' }} />
+        ) : null}
         <Panel position="bottom-center" className="schema-canvas-legend">
           <span>
             <span className="legend-dot legend-dot--pk">🔑</span> Document id

@@ -13,11 +13,13 @@ import {
   Panel,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
+import { DiagramCanvasFitView } from './DiagramCanvasFitView';
 import { RelationshipEdge } from './RelationshipEdge';
 import { RelationshipDisplayControls } from './RelationshipDisplayControls';
 import { TableNode, type TableNodeData } from './TableNode';
-import { layoutSqlModel } from '../graphLayout';
+import { COMPACT_GRAPH_LAYOUT_OPTIONS, layoutSqlModel } from '../graphLayout';
+import { useCompactDiagramLayout } from '../hooks/useCompactDiagramLayout';
 import {
   formatRelationshipLabel,
   type RelationshipConnectionType,
@@ -84,12 +86,13 @@ function modelToFlow(
   selectedTable: string | null,
   connectionType: RelationshipConnectionType,
   relationshipNotation: RelationshipNotation,
+  compactLayout: boolean,
 ): { nodes: Node<TableNodeData>[]; edges: Edge[] } {
   const tableNames = new Set(model.tables.map((t) => t.name));
   const referencedByColumn = buildReferencedColumns(model);
   const related = relatedTableNames(model, selectedTable);
   const hasSelection = Boolean(selectedTable);
-  const autoLayout = layoutSqlModel(model);
+  const autoLayout = layoutSqlModel(model, compactLayout ? COMPACT_GRAPH_LAYOUT_OPTIONS : undefined);
 
   const nodes: Node<TableNodeData>[] = model.tables.map((table) => {
     const pos = positions[table.name] ?? autoLayout[table.name] ?? { x: 40, y: 40 };
@@ -163,6 +166,8 @@ export function SchemaCanvas({
   selectedTable,
   onSelectTable,
 }: SchemaCanvasProps) {
+  const wrapRef = useRef<HTMLDivElement>(null);
+  const compactLayout = useCompactDiagramLayout();
   const flow = useMemo(
     () =>
       model
@@ -173,9 +178,10 @@ export function SchemaCanvas({
             selectedTable,
             connectionType,
             relationshipNotation,
+            compactLayout,
           )
         : { nodes: [], edges: [] },
-    [model, positions, onDuplicateTable, selectedTable, connectionType, relationshipNotation],
+    [model, positions, onDuplicateTable, selectedTable, connectionType, relationshipNotation, compactLayout],
   );
 
   const tableCount = model?.tables.length ?? 0;
@@ -213,7 +219,7 @@ export function SchemaCanvas({
   }
 
   return (
-    <div className="schema-canvas-wrap">
+    <div className="schema-canvas-wrap" ref={wrapRef}>
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -225,13 +231,18 @@ export function SchemaCanvas({
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}
         fitView
-        fitViewOptions={{ padding: 0.2 }}
+        fitViewOptions={{ padding: compactLayout ? 0.1 : 0.2 }}
         snapToGrid={snapToGrid}
         snapGrid={[GRID, GRID]}
-        minZoom={0.2}
-        maxZoom={1.5}
+        minZoom={0.15}
+        maxZoom={compactLayout ? 1.25 : 1.5}
         proOptions={{ hideAttribution: true }}
       >
+        <DiagramCanvasFitView
+          fitKey={`${tableCount}-${compactLayout ? 'compact' : 'wide'}`}
+          padding={compactLayout ? 0.1 : 0.15}
+          containerRef={wrapRef}
+        />
         <Background variant={BackgroundVariant.Dots} gap={GRID} size={1} color="#00684A" />
         <Controls />
         <Panel position="top-right" className="schema-canvas-toolbar-panel">
@@ -242,11 +253,13 @@ export function SchemaCanvas({
             onRelationshipNotationChange={onRelationshipNotationChange}
           />
         </Panel>
-        <MiniMap
-          nodeColor="#023430"
-          maskColor="rgba(0, 30, 43, 0.8)"
-          style={{ background: '#112733' }}
-        />
+        {!compactLayout ? (
+          <MiniMap
+            nodeColor="#023430"
+            maskColor="rgba(0, 30, 43, 0.8)"
+            style={{ background: '#112733' }}
+          />
+        ) : null}
         <Panel position="bottom-center" className="schema-canvas-legend">
           <span><span className="legend-dot legend-dot--pk">🔑</span> Primary key</span>
           <span><span className="legend-dot legend-dot--fk">↗</span> Foreign key</span>

@@ -8,7 +8,9 @@ import {
   Panel,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import { useMemo } from 'react';
+import { useMemo, useRef } from 'react';
+import { DiagramCanvasFitView } from './DiagramCanvasFitView';
+import { useCompactDiagramLayout } from '../hooks/useCompactDiagramLayout';
 import type { BusinessDomain } from '../managerDashboard';
 import { ManagerEntityNode } from './ManagerEntityNode';
 import { ManagerDomainNode } from './ManagerDomainNode';
@@ -81,7 +83,10 @@ function layoutDomains(domains: BusinessDomain[]): Node[] {
 }
 
 export function ManagerSchemaCanvas({ domains, phase, onReviewEntity }: ManagerSchemaCanvasProps) {
+  const wrapRef = useRef<HTMLDivElement>(null);
+  const compactLayout = useCompactDiagramLayout();
   const nodes = useMemo(() => layoutDomains(domains), [domains]);
+  const entityCount = domains.reduce((sum, domain) => sum + domain.entities.length, 0);
 
   if (domains.length === 0) {
     return (
@@ -93,15 +98,15 @@ export function ManagerSchemaCanvas({ domains, phase, onReviewEntity }: ManagerS
   }
 
   return (
-    <div className="manager-canvas schema-canvas-wrap">
+    <div className="manager-canvas schema-canvas-wrap" ref={wrapRef}>
       <ReactFlow
         nodes={nodes}
         edges={[]}
         nodeTypes={nodeTypes}
         fitView
-        fitViewOptions={{ padding: 0.2 }}
-        minZoom={0.3}
-        maxZoom={1.2}
+        fitViewOptions={{ padding: compactLayout ? 0.08 : 0.2 }}
+        minZoom={0.2}
+        maxZoom={compactLayout ? 1.1 : 1.2}
         nodesDraggable={false}
         nodesConnectable={false}
         elementsSelectable={Boolean(onReviewEntity)}
@@ -111,20 +116,27 @@ export function ManagerSchemaCanvas({ domains, phase, onReviewEntity }: ManagerS
         }}
         panOnScroll
       >
+        <DiagramCanvasFitView
+          fitKey={`${entityCount}-${phase}-${compactLayout ? 'compact' : 'wide'}`}
+          padding={compactLayout ? 0.08 : 0.15}
+          containerRef={wrapRef}
+        />
         <Background variant={BackgroundVariant.Dots} gap={20} size={1} color="#00684A" />
         <Controls showInteractive={false} />
-        <MiniMap
-          nodeColor={(node) => {
-            if (node.type === 'managerDomain') return '#023430';
-            const entity = (node.data as { entity?: { status: string } }).entity;
-            if (entity?.status === 'ready') return '#00ed64';
-            if (entity?.status === 'review') return '#ffb347';
-            if (entity?.status === 'blocked') return '#ff6b6b';
-            return '#6b8f8a';
-          }}
-          maskColor="rgba(0, 30, 43, 0.8)"
-          style={{ background: '#112733' }}
-        />
+        {!compactLayout ? (
+          <MiniMap
+            nodeColor={(node) => {
+              if (node.type === 'managerDomain') return '#023430';
+              const entity = (node.data as { entity?: { status: string } }).entity;
+              if (entity?.status === 'ready') return '#00ed64';
+              if (entity?.status === 'review') return '#ffb347';
+              if (entity?.status === 'blocked') return '#ff6b6b';
+              return '#6b8f8a';
+            }}
+            maskColor="rgba(0, 30, 43, 0.8)"
+            style={{ background: '#112733' }}
+          />
+        ) : null}
         <Panel position="top-left" className="manager-canvas-legend">
           <span className="manager-legend__item manager-legend__item--ready">Ready</span>
           <span className="manager-legend__item manager-legend__item--review">Needs review</span>

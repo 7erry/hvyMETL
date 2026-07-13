@@ -59,6 +59,9 @@ export type ManagerCostProjection = {
   personWeeksEliminated: number;
   manpowerReductionPercent: number;
   manpowerCategoryBreakdown: ManpowerSavingsCategory[];
+  requiresSharding: boolean;
+  shardingRecommendations: ShardingRecommendation[];
+  shardingGuidance: string[];
 };
 
 export type ManpowerSavingsCategory = {
@@ -76,6 +79,22 @@ export type ArchiveCollectionOption = {
   isPlanned: boolean;
   partitionFields: string[];
 };
+
+export type ShardingStrategy = 'hashed' | 'ranged' | 'compound-hashed';
+
+/** Suggested shard key and supporting guidance for a collection at scale. */
+export type ShardingRecommendation = {
+  collectionName: string;
+  estimatedHotStorageGb: number;
+  shardKey: Record<string, 1 | 'hashed'>;
+  strategy: ShardingStrategy;
+  supportingIndex: Record<string, 1 | -1>;
+  rationale: string;
+  warnings: string[];
+  queryGuidance: string;
+};
+
+export const SHARDING_THRESHOLD_GB = 2048;
 
 export const DEFAULT_MANAGER_COST_INPUTS: ManagerCostInputs = {
   estimatedTotalRows: 10_000_000,
@@ -406,6 +425,178 @@ function atlasWorkingSetRequirementGb(activeStorageGb: number, workingSetRatio: 
   return Math.max(0.5, activeStorageGb * workingSetRatio);
 }
 
+const TENANT_FIELD_PATTERN = /(^tenantId$|^accountId$|^customerId$|^orgId$|^organizationId$|^userId$)/i;
+const REGION_FIELD_PATTERN = /region|country|locale|datacenter|zone/i;
+
+function findTenantField(
+  model: SqlStructuralModel,
+  collection: MigrationPlan['collections'][number],
+): string | null {
+  const source = findSourceTable(model, collection);
+  if (source) {
+    for (const column of source.columns) {
+      const field = toCamelCase(column.name);
+      if (TENANT_FIELD_PATTERN.test(field)) return field;
+    }
+  }
+  const partitionTenant = collection.archive?.partitionFields?.find((field) => TENANT_FIELD_PATTERN.test(field));
+  return partitionTenant ?? null;
+}
+
+function findRegionField(model: SqlStructuralModel, collection: MigrationPlan['collections'][number]): string | null {
+  const source = findSourceTable(model, collection);
+  if (!source) return null;
+  for (const column of source.columns) {
+    const field = toCamelCase(column.name);
+    if (REGION_FIELD_PATTERN.test(column.name) || REGION_FIELD_PATTERN.test(field)) return field;
+  }
+  return null;
+}
+
+function formatShardKey(keys: Record<string, 1 | 'hashed'>): string {
+  return `{ ${Object.entries(keys)
+    .map(([field, direction]) => (direction === 'hashed' ? `${field}: "hashed"` : `${field}: ${direction}`))
+    .join(', ')} }`;
+}
+
+export function formatShardKeyDisplay(keys: Record<string, 1 | 'hashed'>): string {
+  return formatShardKey(keys);
+}
+
+export function formatIndexKeyDisplay(keys: Record<string, 1 | -1>): string {
+  return `{ ${Object.entries(keys)
+    .map(([field, direction]) => `${field}: ${direction}`)
+    .join(', ')} }`;
+}
+
+/** Derive per-collection shard keys when dataset size exceeds the sharding threshold. */
+export function buildShardingRecommendations(
+  model: SqlStructuralModel | null,
+  plan: MigrationPlan | null,
+  projection: Pick<
+    ManagerCostProjection,
+    'totalStorageGb' | 'rawDataGb' | 'writePercent' | 'estimatedTotalRows'
+  >,
+  collectionHotStorageGb: Map<string, number>,
+): { requiresSharding: boolean; shardingRecommendations: ShardingRecommendation[]; shardingGuidance: string[] } {
+  const datasetGb = Math.max(projection.totalStorageGb, projection.rawDataGb);
+  if (!model || !plan?.collections.length || datasetGb < SHARDING_THRESHOLD_GB) {
+    return { requiresSharding: false, shardingRecommendations: [], shardingGuidance: [] };
+  }
+
+  const mirrors = archiveMirrorNames(plan);
+  const writeHeavy = projection.writePercent >= 50;
+  const recommendations: ShardingRecommendation[] = [];
+
+  for (const collection of plan.collections) {
+    if (mirrors.has(collection.name)) continue;
+
+    const hotGb = collectionHotStorageGb.get(collection.name) ?? 0;
+    const tenantField = findTenantField(model, collection);
+    const regionField = findRegionField(model, collection);
+    const timeField = findArchiveTimeField(model, collection);
+    const idField =
+      collection.idDerivation.sourceColumns.length === 1
+        ? toCamelCase(collection.idDerivation.sourceColumns[0]!)
+        : '_id';
+
+    let shardKey: Record<string, 1 | 'hashed'>;
+    let strategy: ShardingStrategy;
+    let supportingIndex: Record<string, 1 | -1>;
+    let rationale: string;
+    const warnings: string[] = [];
+
+    if (collection.bucket) {
+      const groupField = toCamelCase(collection.bucket.groupByColumn);
+      const bucketTimeField = toCamelCase(collection.bucket.timeColumn);
+      if (writeHeavy) {
+        shardKey = { [groupField]: 1, [bucketTimeField]: 'hashed' };
+        strategy = 'compound-hashed';
+        rationale =
+          'Time-series bucket collections benefit from hashed sharding on the time component to spread write load evenly across shards.';
+      } else {
+        shardKey = { [groupField]: 1, [bucketTimeField]: 1 };
+        strategy = 'ranged';
+        rationale =
+          'Ranged sharding on metadata plus time co-locates bucket windows for efficient range reads per device or entity.';
+      }
+      supportingIndex = { [groupField]: 1, [bucketTimeField]: -1 };
+    } else if (tenantField && timeField) {
+      shardKey = writeHeavy
+        ? { [tenantField]: 1, [timeField]: 'hashed' }
+        : { [tenantField]: 1, [timeField]: 1 };
+      strategy = writeHeavy ? 'compound-hashed' : 'ranged';
+      rationale =
+        'Compound tenant + time keys localize tenant data while preserving uniform write distribution when the time field is hashed.';
+      supportingIndex = { [tenantField]: 1, [timeField]: -1 };
+    } else if (tenantField) {
+      shardKey = writeHeavy ? { [tenantField]: 'hashed' } : { [tenantField]: 1, [idField]: 1 };
+      strategy = writeHeavy ? 'hashed' : 'ranged';
+      rationale = writeHeavy
+        ? 'Hashed sharding on a high-cardinality tenant key spreads writes when queries are keyed by tenant.'
+        : 'Ranged sharding on tenant with a trailing unique field avoids hotspots while supporting tenant-scoped queries.';
+      supportingIndex = writeHeavy ? { [tenantField]: 1 } : { [tenantField]: 1, [idField]: 1 };
+    } else if (timeField && writeHeavy) {
+      shardKey = { [timeField]: 'hashed' };
+      strategy = 'hashed';
+      rationale =
+        'Hashed sharding on a monotonic time field distributes append-heavy ingest without creating a single-shard hotspot.';
+      supportingIndex = { [timeField]: -1 };
+      warnings.push('Include the shard key (or its prefix) in operational queries to avoid scatter-gather fan-out.');
+    } else if (regionField) {
+      shardKey = { [regionField]: 1, [idField]: 1 };
+      strategy = 'ranged';
+      rationale =
+        'Ranged sharding on region co-locates data for residency and geo-scoped queries; pair with zoned sharding in Atlas when required.';
+      supportingIndex = { [regionField]: 1, [idField]: 1 };
+    } else if (idField === '_id' || /(^id$|Id$)/.test(idField)) {
+      shardKey = { [idField]: 'hashed' };
+      strategy = 'hashed';
+      rationale =
+        'When no natural partition field exists, hashed sharding on the document identifier avoids monotonic _id hotspots.';
+      supportingIndex = { [idField]: 1 };
+      warnings.push(
+        'ObjectId and auto-increment identifiers are monotonic; do not use ranged sharding on _id alone.',
+      );
+    } else {
+      shardKey = { [idField]: 'hashed' };
+      strategy = 'hashed';
+      rationale = 'Hashed sharding on a high-cardinality business key yields uniform shard distribution for large collections.';
+      supportingIndex = { [idField]: 1 };
+    }
+
+    if (/status|type|category|flag/i.test(Object.keys(shardKey)[0] ?? '')) {
+      warnings.push('Low-cardinality leading shard keys can limit scale; prefer tenant, region, or hashed high-cardinality fields.');
+    }
+
+    recommendations.push({
+      collectionName: collection.name,
+      estimatedHotStorageGb: hotGb,
+      shardKey,
+      strategy,
+      supportingIndex,
+      rationale,
+      warnings,
+      queryGuidance:
+        'Route operational queries with the shard key (or its prefix) so mongos can target specific shards instead of scatter-gather.',
+    });
+  }
+
+  const shardingGuidance = [
+    `Dataset estimate (${formatGb(datasetGb)}) exceeds ${formatGb(SHARDING_THRESHOLD_GB)} — evaluate a sharded cluster instead of scaling a single replica set indefinitely.`,
+    'Choose shard keys with uniform read/write distribution; avoid monotonic keys alone for ranged sharding.',
+    'Pre-split and distribute chunks evenly before bulk load; for hashed sharding use numInitialChunks during collection creation.',
+    'Create a compound index that supports the shard key prefix before enabling sharding on each collection.',
+    'Use zoned sharding in Atlas Global Clusters when data must remain in specific regions.',
+  ];
+
+  return {
+    requiresSharding: recommendations.length > 0,
+    shardingRecommendations: recommendations.sort((a, b) => b.estimatedHotStorageGb - a.estimatedHotStorageGb),
+    shardingGuidance,
+  };
+}
+
 export function selectAtlasTier(requiredWorkingSetGb: number, requiredStorageGb: number): AtlasTierSpec {
   const workingSet = Math.max(0.5, requiredWorkingSetGb);
   const storage = Math.max(1, requiredStorageGb);
@@ -431,6 +622,7 @@ export function computeManagerCostProjection(
   let activeRawBytes = rawBytes;
   let archiveRawBytes = 0;
   let archiveCollectionCount = 0;
+  const collectionHotStorageGb = new Map<string, number>();
   if (model && plan?.collections.length) {
     rawBytes = 0;
     activeRawBytes = 0;
@@ -455,6 +647,12 @@ export function computeManagerCostProjection(
       } else {
         activeRawBytes += collectionRawBytes;
       }
+      collectionHotStorageGb.set(
+        collection.name,
+        (canArchive
+          ? collectionRawBytes * Math.min(1, retentionYears / ARCHIVE_ASSUMED_HISTORY_YEARS)
+          : collectionRawBytes) / BYTES_PER_GB,
+      );
     }
   }
 
@@ -463,6 +661,9 @@ export function computeManagerCostProjection(
     rawBytes *= scaleFactor;
     activeRawBytes *= scaleFactor;
     archiveRawBytes *= scaleFactor;
+    for (const [name, gb] of collectionHotStorageGb) {
+      collectionHotStorageGb.set(name, gb * scaleFactor);
+    }
   }
 
   const indexCount = countPlannedIndexes(plan, model);
@@ -507,6 +708,19 @@ export function computeManagerCostProjection(
   const projectedMonthlyNextYearUsd = monthlyTotalUsd * (1 + growth / 100);
   const archiveHotDataPercent = rawBytes > 0 ? Math.round((activeRawBytes / rawBytes) * 100) : 100;
 
+  const shardingPreview = {
+    totalStorageGb,
+    rawDataGb,
+    writePercent: preset.writePercent,
+    estimatedTotalRows,
+  };
+  const { requiresSharding, shardingRecommendations, shardingGuidance } = buildShardingRecommendations(
+    model,
+    plan,
+    shardingPreview,
+    collectionHotStorageGb,
+  );
+
   return {
     hasSchema,
     workloadLabel: preset.label,
@@ -537,6 +751,9 @@ export function computeManagerCostProjection(
     projectedMonthlyNextYearUsd,
     archiveCollectionCount,
     archiveHotDataPercent,
+    requiresSharding,
+    shardingRecommendations,
+    shardingGuidance,
     ...manpower,
   };
 }
