@@ -77,19 +77,51 @@ a.link-button {
     box-shadow 0.15s ease;
 }
 
-a.link-button:hover {
+button.link-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  min-height: var(--btn-min-height);
+  padding: var(--btn-padding-y) var(--btn-padding-x);
+  border: 1px solid var(--btn-secondary-border);
+  border-radius: var(--btn-border-radius);
+  background: transparent;
+  color: var(--btn-secondary-text);
+  font-size: var(--btn-font-size);
+  font-weight: 500;
+  line-height: 1.2;
+  white-space: nowrap;
+  cursor: pointer;
+  box-shadow: none;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+a.link-button:hover,
+button.link-button:hover:not(:disabled) {
   background: var(--btn-secondary-bg-hover);
   border-color: var(--mdb-green-base);
   color: var(--mdb-green-base);
   text-decoration: none;
 }
 
-a.link-button:focus {
+a.link-button:focus,
+button.link-button:focus {
   outline: none;
 }
 
-a.link-button:focus-visible {
+a.link-button:focus-visible,
+button.link-button:focus-visible {
   box-shadow: var(--btn-focus-ring);
+}
+
+button.link-button:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
 }
 
 /* —— Button hierarchy: primary · secondary (.ghost) · tertiary —— */

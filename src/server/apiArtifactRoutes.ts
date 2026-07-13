@@ -12,7 +12,10 @@ import {
   serializeApiArtifactBundle,
   type ApiArtifactBundle,
 } from './apiArtifactStore.js';
+import { requireRole } from './auth.js';
 import { getRequestTenantId } from './tenant.js';
+
+const docsAuth = requireRole(['admin', 'developer', 'manager']);
 
 function resolveBundle(req: Request, rootDir: string): ApiArtifactBundle | null {
   const tenantId = getRequestTenantId(req);
@@ -22,6 +25,12 @@ function resolveBundle(req: Request, rootDir: string): ApiArtifactBundle | null 
 
 function findCollection(bundle: ApiArtifactBundle, name: string) {
   return bundle.collections.find((collection) => collection.name === name);
+}
+
+function readCombinedOpenApiSpec(req: Request, rootDir: string): Record<string, unknown> | null {
+  const bundle = resolveBundle(req, rootDir);
+  if (!bundle) return null;
+  return JSON.parse(readJsonArtifact(bundle.combinedOpenApiPath)) as Record<string, unknown>;
 }
 
 export function registerApiArtifactRoutes(app: Express, rootDir: string): void {
@@ -74,18 +83,24 @@ export function registerApiArtifactRoutes(app: Express, rootDir: string): void {
   });
 
   app.use('/api/docs', swaggerUi.serve);
-  app.get(
-    '/api/docs',
-    swaggerUi.setup(undefined, {
+  app.get('/api/docs', ...docsAuth, (req, res, next) => {
+    const spec = readCombinedOpenApiSpec(req, rootDir);
+    if (!spec) {
+      res.status(404).type('text/plain').send('Combined OpenAPI spec not found.');
+      return;
+    }
+    return swaggerUi.setup(spec, {
       customSiteTitle: 'hvyMETL Migration API',
-      swaggerOptions: {
-        url: '/api/artifacts/openapi.json',
-        persistAuthorization: true,
-      },
-    }),
-  );
+      swaggerOptions: { persistAuthorization: true },
+    })(req, res, next);
+  });
 
-  app.get('/api/docs/openapi.json', (_req: Request, res: Response) => {
-    res.redirect('/api/artifacts/openapi.json');
+  app.get('/api/docs/openapi.json', ...docsAuth, (req, res) => {
+    const spec = readCombinedOpenApiSpec(req, rootDir);
+    if (!spec) {
+      res.status(404).json({ error: 'Combined OpenAPI spec not found.' });
+      return;
+    }
+    res.json(spec);
   });
 }

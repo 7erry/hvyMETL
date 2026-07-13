@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import {
   fetchApiArtifactJson,
   fetchApiArtifacts,
+  openSwaggerUi,
   type ApiArtifactBundleInfo,
 } from '../api';
 import { ArtifactCodePanel } from './ArtifactCodePanel';
@@ -26,6 +27,20 @@ export function ApiArtifactsExplorer({
   const [view, setView] = useState<ApiView>('combined-openapi');
   const [content, setContent] = useState('');
   const [contentLoading, setContentLoading] = useState(false);
+  const [swaggerOpening, setSwaggerOpening] = useState(false);
+
+  const handleOpenSwagger = useCallback(async () => {
+    if (!bundle) return;
+    setSwaggerOpening(true);
+    setError('');
+    try {
+      await openSwaggerUi(bundle.swaggerUiUrl);
+    } catch (e) {
+      setError(String(e));
+    } finally {
+      setSwaggerOpening(false);
+    }
+  }, [bundle]);
 
   const refreshBundle = useCallback(async () => {
     setLoading(true);
@@ -117,9 +132,14 @@ export function ApiArtifactsExplorer({
       <div className="api-artifacts-header__actions">
         {bundle ? (
           <>
-            <a className="link-button api-artifacts-swagger" href={bundle.swaggerUiUrl} target="_blank" rel="noreferrer">
-              Swagger UI
-            </a>
+            <button
+              type="button"
+              className="link-button api-artifacts-swagger"
+              onClick={() => void handleOpenSwagger()}
+              disabled={swaggerOpening}
+            >
+              {swaggerOpening ? 'Opening Swagger…' : 'Swagger UI'}
+            </button>
             {!collapsed ? (
               <>
                 <label className="api-artifacts-inline-field">

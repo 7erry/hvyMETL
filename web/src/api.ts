@@ -366,6 +366,19 @@ export async function fetchApiArtifactJson(urlPath: string): Promise<unknown> {
   return data;
 }
 
+/** Open Swagger UI in a new tab using the current Auth0 access token (hosted studio). */
+export async function openSwaggerUi(urlPath = '/api/docs'): Promise<void> {
+  const path = urlPath.startsWith('/') ? urlPath : `/${urlPath}`;
+  const res = await apiFetch(path, { headers: { accept: 'text/html' } });
+  if (!res.ok) throw new Error(await readApiError(res));
+  const html = await res.text();
+  const popup = window.open('', '_blank', 'noopener,noreferrer');
+  if (!popup) throw new Error('Popup blocked. Allow popups for this site to open Swagger UI.');
+  popup.document.open();
+  popup.document.write(html);
+  popup.document.close();
+}
+
 export type ExplainDesignRequest = ProfileRequestFields & {
   model: SqlStructuralModel;
   ddl?: string;
