@@ -134,6 +134,30 @@ export function writeTenantWorkspace(
   return next;
 }
 
+const PIPELINE_RUN_ID_PATTERN = /^run-\d+$/;
+
+/** Timestamped pipeline output directory for one run (under ui-pipeline/). */
+export function tenantPipelineRunDir(
+  rootDir: string,
+  tenantId: string,
+): { runId: string; dir: string } {
+  const runId = `run-${Date.now()}`;
+  const dir = join(tenantOutRoot(rootDir, tenantId), 'ui-pipeline', runId);
+  mkdirSync(dir, { recursive: true });
+  return { runId, dir };
+}
+
+/** Resolve a prior pipeline run directory after validating the run id. */
+export function resolveTenantPipelineRunDir(rootDir: string, tenantId: string, runId: string): string {
+  const normalized = runId.trim();
+  if (!PIPELINE_RUN_ID_PATTERN.test(normalized)) {
+    throw new Error('Invalid pipeline run id.');
+  }
+  const dir = join(tenantOutRoot(rootDir, tenantId), 'ui-pipeline', normalized);
+  assertPathWithinRoot(join(tenantOutRoot(rootDir, tenantId), 'ui-pipeline'), dir);
+  return dir;
+}
+
 /** Timestamped CSV batch directory inside the tenant upload tree. */
 export function tenantCsvBatchDir(rootDir: string, tenantId: string, label: string): string {
   const dir = join(tenantUploadRoot(rootDir, tenantId), 'csv', `${label}-${Date.now()}`);

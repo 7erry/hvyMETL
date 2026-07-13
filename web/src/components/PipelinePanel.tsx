@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
+  downloadPipelineResults,
   fetchPipelineConfig,
   runPipeline,
   runPipelineWithCsv,
+  saveTenantSecrets,
   uploadPipelineCsvFiles,
   type PipelineConfigStatus,
   type PipelineProgressEvent,
@@ -12,7 +14,10 @@ import { pickCsvDirectory, pickCsvFiles } from '../directoryPicker';
 import {
   hydratePipelineSettingsFromConfig,
   isEnvMongoPlaceholder,
+  isEnvModelKeyPlaceholder,
   isLikelyLocalFilesystemPath,
+  modelKeyInputValue,
+  modelKeyOverrideForFetch,
   mongoUriInputValue,
   mongoUriOverrideForFetch,
   resolveHostedCsvSourcePath,
@@ -42,6 +47,7 @@ type PipelinePanelProps = {
 
 type PipelineForm = {
   mongoUri: string;
+  mongodbModelKey: string;
   csvToAtlasPath: string;
   targetDb: string;
   csvSourcePath: string;
@@ -81,6 +87,7 @@ export function PipelinePanel({
   const [showEnvDetails, setShowEnvDetails] = useState(false);
   const [form, setForm] = useState<PipelineForm>({
     mongoUri: '',
+    mongodbModelKey: '',
     csvToAtlasPath: '',
     targetDb: 'csv_to_atlas',
     csvSourcePath: csvSourcePath ?? '',
@@ -90,8 +97,24 @@ export function PipelinePanel({
     mockChildMultiplier: 3,
     mockSeed: 42,
   });
+  const [downloadingZip, setDownloadingZip] = useState(false);
   const formRef = useRef(form);
   formRef.current = form;
+
+  const persistTenantSecrets = useCallback(async (fields: Pick<PipelineForm, 'mongoUri' | 'mongodbModelKey'>) => {
+    if (!config?.serverManagedCsvToAtlas) return;
+    const mongoUri = mongoUriOverrideForFetch(fields.mongoUri);
+    const mongodbModelKey = modelKeyOverrideForFetch(fields.mongodbModelKey);
+    if (!mongoUri && !mongodbModelKey) return;
+    try {
+      await saveTenantSecrets({
+        ...(mongoUri ? { mongoUri } : {}),
+        ...(mongodbModelKey ? { mongodbModelKey } : {}),
+      });
+    } catch {
+      // Non-blocking; pipeline run also persists credentials.
+    }
+  }, [config?.serverManagedCsvToAtlas]);
 
   const refreshConfig = useCallback(async () => {
     const current = formRef.current;
@@ -100,9 +123,10 @@ export function PipelinePanel({
       const status = await fetchPipelineConfig({
         schemaDialect: dialect,
         csvSourcePath: current.csvSourcePath || csvSourcePath || undefined,
-        csvToAtlasPath: current.csvToAtlasPath.trim() || undefined,
+        csvToAtlasPath: config?.serverManagedCsvToAtlas ? undefined : current.csvToAtlasPath.trim() || undefined,
         generateMockCsv: current.generateMockCsv,
         mongoUri: mongoUriOverrideForFetch(current.mongoUri),
+        mongodbModelKey: modelKeyOverrideForFetch(current.mongodbModelKey),
       });
       setConfig(status);
     } catch (e) {
@@ -110,7 +134,7 @@ export function PipelinePanel({
     } finally {
       setLoadingConfig(false);
     }
-  }, [dialect, csvSourcePath]);
+  }, [dialect, csvSourcePath, config?.serverManagedCsvToAtlas]);
 
   useEffect(() => {
     if (!open) return;
@@ -164,6 +188,7 @@ export function PipelinePanel({
   }, [
     open,
     form.mongoUri,
+    form.mongodbModelKey,
     form.csvToAtlasPath,
     form.csvSourcePath,
     form.generateMockCsv,
@@ -172,6 +197,7 @@ export function PipelinePanel({
 
   const dataSourceMode: DataSourceMode = form.generateMockCsv ? 'mock' : 'real';
   const requiresCsvUpload = Boolean(config?.requiresCsvUpload);
+  const serverManagedCsvToAtlas = Boolean(config?.serverManagedCsvToAtlas);
   const effectiveCsvPath =
     form.csvSourcePath.trim() ||
     resolveHostedCsvSourcePath(csvSourcePath, requiresCsvUpload) ||
@@ -187,10 +213,12 @@ export function PipelinePanel({
   const envCsvToAtlas = Boolean(config?.hasCsvToAtlas);
   const formMongoUri = form.mongoUri.trim();
   const hasMongoUriInput = Boolean(formMongoUri && !isEnvMongoPlaceholder(formMongoUri));
+  const formModelKey = form.mongodbModelKey.trim();
+  const hasModelKeyInput = Boolean(formModelKey && !isEnvModelKeyPlaceholder(formModelKey));
   const mongoReachable = Boolean(config?.mongoConnectivity?.ok);
   const hasMongoUri = mongoReachable;
-  const hasCsvToAtlasInput = Boolean(form.csvToAtlasPath.trim());
-  const hasCsvToAtlas = envCsvToAtlas || hasCsvToAtlasInput;
+  const hasCsvToAtlasInput = Boolean(form.csvToAtlasPath.trim()) && !serverManagedCsvToAtlas;
+  const hasCsvToAtlas = envCsvToAtlas || hasCsvToAtlasInput || serverManagedCsvToAtlas;
 
   const csvSourceHint = `Export tables from ${dialectLabel} as CSV files named after the table or collection (e.g. products.csv).`;
 
@@ -198,6 +226,19 @@ export function PipelinePanel({
     if (hasMongoUriInput) return formMongoUri;
     return undefined;
   };
+
+  const resolveModelKeyOverride = (): string | undefined => {
+    if (hasModelKeyInput) return formModelKey;
+    return undefined;
+  };
+
+  useEffect(() => {
+    if (!open || !serverManagedCsvToAtlas) return;
+    const timer = window.setTimeout(() => {
+      void persistTenantSecrets(formRef.current);
+    }, 800);
+    return () => window.clearTimeout(timer);
+  }, [open, serverManagedCsvToAtlas, form.mongoUri, form.mongodbModelKey, persistTenantSecrets]);
 
   const setDataSourceMode = (mode: DataSourceMode) => {
     setForm((prev) => ({
@@ -226,16 +267,17 @@ export function PipelinePanel({
         const status = await fetchPipelineConfig({
           schemaDialect: dialect,
           csvSourcePath: uploaded.csvSourcePath,
-          csvToAtlasPath: current.csvToAtlasPath.trim() || undefined,
+          csvToAtlasPath: serverManagedCsvToAtlas ? undefined : current.csvToAtlasPath.trim() || undefined,
           generateMockCsv: false,
           mongoUri: mongoUriOverrideForFetch(current.mongoUri),
+          mongodbModelKey: modelKeyOverrideForFetch(current.mongodbModelKey),
         });
         setConfig(status);
       } finally {
         setCsvUploading(false);
       }
     },
-    [dialect, onCsvSourcePathChange],
+    [dialect, onCsvSourcePathChange, serverManagedCsvToAtlas],
   );
 
   useEffect(() => {
@@ -364,7 +406,8 @@ export function PipelinePanel({
         targetDb: form.targetDb.trim() || undefined,
         drop: form.drop,
         mongoUri: resolveMongoUriOverride(),
-        csvToAtlasPath: form.csvToAtlasPath.trim() || undefined,
+        mongodbModelKey: resolveModelKeyOverride(),
+        csvToAtlasPath: serverManagedCsvToAtlas ? undefined : form.csvToAtlasPath.trim() || undefined,
         csvSourcePath: useMockCsv || csvFiles.length > 0 ? undefined : effectiveCsvPath || undefined,
         generateMockCsv: useMockCsv,
         mockCsvOptions: useMockCsv
@@ -457,28 +500,65 @@ export function PipelinePanel({
                 <div className="pipeline-env-details__fields">
                   <label>
                     MongoDB URI
-                    {envMongoUri ? <span className="pipeline-field-badge">.env configured</span> : null}
+                    {envMongoUri || config.tenantSecrets?.hasMongoUri ? (
+                      <span className="pipeline-field-badge">saved for your account</span>
+                    ) : null}
                     <input
                       type="password"
                       value={mongoUriInputValue(form.mongoUri)}
-                      placeholder={envMongoUri ? 'Leave empty to use .env, or enter to override' : 'mongodb+srv://…'}
+                      placeholder={
+                        envMongoUri || config.tenantSecrets?.hasMongoUri
+                          ? 'Leave empty to use saved URI, or enter to update'
+                          : 'mongodb+srv://…'
+                      }
                       onChange={(e) => setForm((prev) => ({ ...prev, mongoUri: e.target.value }))}
                       disabled={running}
                       autoComplete="off"
                     />
+                    {config.mongoUriMasked ? (
+                      <span className="pipeline-hint">Saved: {config.mongoUriMasked}</span>
+                    ) : null}
                   </label>
                   <label>
-                    csvToAtlas path
-                    {envCsvToAtlas ? <span className="pipeline-field-badge">.env configured</span> : null}
+                    MongoDB model key (MONGODB_MODEL_KEY)
+                    {config.hasModelKey || config.tenantSecrets?.hasMongodbModelKey ? (
+                      <span className="pipeline-field-badge">saved for your account</span>
+                    ) : null}
                     <input
-                      type="text"
-                      value={form.csvToAtlasPath}
-                      placeholder="/path/to/csvToAtlas (clone root or dist/)"
-                      onChange={(e) => setForm((prev) => ({ ...prev, csvToAtlasPath: e.target.value }))}
+                      type="password"
+                      value={modelKeyInputValue(form.mongodbModelKey)}
+                      placeholder={
+                        config.hasModelKey || config.tenantSecrets?.hasMongodbModelKey
+                          ? 'Leave empty to use saved key, or enter to update'
+                          : 'al-… (Atlas Model API key)'
+                      }
+                      onChange={(e) => setForm((prev) => ({ ...prev, mongodbModelKey: e.target.value }))}
                       disabled={running}
+                      autoComplete="off"
                     />
-                    <span className="pipeline-hint">Clone root with package.json, or path to dist/ containing cli.js</span>
+                    {config.mongodbModelKeyMasked ? (
+                      <span className="pipeline-hint">Saved: {config.mongodbModelKeyMasked}</span>
+                    ) : null}
                   </label>
+                  {serverManagedCsvToAtlas ? (
+                    <p className="pipeline-hint">
+                      csvToAtlas is configured on the studio server (<code>CSV_TO_ATLAS_PATH</code>) and cannot be changed here.
+                      {config.csvToAtlasLabel ? ` Using ${config.csvToAtlasLabel}.` : ''}
+                    </p>
+                  ) : (
+                    <label>
+                      csvToAtlas path
+                      {envCsvToAtlas ? <span className="pipeline-field-badge">.env configured</span> : null}
+                      <input
+                        type="text"
+                        value={form.csvToAtlasPath}
+                        placeholder="/path/to/csvToAtlas (clone root or dist/)"
+                        onChange={(e) => setForm((prev) => ({ ...prev, csvToAtlasPath: e.target.value }))}
+                        disabled={running}
+                      />
+                      <span className="pipeline-hint">Clone root with package.json, or path to dist/ containing cli.js</span>
+                    </label>
+                  )}
                 </div>
                 <button
                   type="button"
@@ -756,6 +836,21 @@ export function PipelinePanel({
               </ul>
             ) : null}
             <p className="pipeline-hint">Output: {result.paths.outDir}</p>
+            {result.runId ? (
+              <button
+                type="button"
+                className="secondary"
+                disabled={downloadingZip}
+                onClick={() => {
+                  setDownloadingZip(true);
+                  void downloadPipelineResults(result.runId!)
+                    .catch((e) => setError(String(e)))
+                    .finally(() => setDownloadingZip(false));
+                }}
+              >
+                {downloadingZip ? 'Preparing download…' : 'Download results (.zip)'}
+              </button>
+            ) : null}
           </div>
         ) : null}
 

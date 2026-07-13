@@ -15,6 +15,7 @@ import {
 /** Non-secret pipeline settings readable by the UI. */
 export type PipelineConfigStatus = {
   hasMongoUri: boolean;
+  hasModelKey: boolean;
   hasCsvToAtlas: boolean;
   csvToAtlasLabel?: string;
   csvToAtlasResolvedPath?: string;
@@ -38,6 +39,7 @@ export function getPipelineConfigStatus(
   },
 ): PipelineConfigStatus {
   const hasMongoUri = Boolean(env.MONGODB_URI?.trim());
+  const hasModelKey = Boolean(env.MONGODB_MODEL_KEY?.trim() || env.VOYAGE_API_KEY?.trim());
   const csvToAtlasPath =
     (options?.csvToAtlasPath ? sanitizeConfigPath(options.csvToAtlasPath) : undefined) ||
     readCsvToAtlasPathFromEnv(env);
@@ -62,6 +64,7 @@ export function getPipelineConfigStatus(
 
   return {
     hasMongoUri,
+    hasModelKey,
     hasCsvToAtlas: csvToAtlasValidation.ok,
     csvToAtlasLabel: csvToAtlasValidation.source?.label,
     csvToAtlasResolvedPath: csvToAtlasValidation.source?.rootPath,
@@ -89,11 +92,12 @@ export function resolvePipelineSchemaDialect(
 
 /** Merge request overrides into a process env for one import invocation. */
 export function buildPipelineImportEnv(
-  overrides: { mongoUri?: string; mongoDb?: string; csvToAtlasPath?: string },
+  overrides: { mongoUri?: string; mongoDb?: string; csvToAtlasPath?: string; mongodbModelKey?: string },
   base: NodeJS.ProcessEnv = process.env,
 ): NodeJS.ProcessEnv {
   const env = { ...base };
   if (overrides.mongoUri?.trim()) env.MONGODB_URI = overrides.mongoUri.trim();
+  if (overrides.mongodbModelKey?.trim()) env.MONGODB_MODEL_KEY = overrides.mongodbModelKey.trim();
   if (overrides.mongoDb?.trim()) env.MONGODB_DB = overrides.mongoDb.trim();
   if (overrides.csvToAtlasPath?.trim()) env.CSV_TO_ATLAS_PATH = overrides.csvToAtlasPath.trim();
   return env;

@@ -123,6 +123,7 @@ export async function importSqlite(
 
 export type PipelineConfigStatus = {
   hasMongoUri: boolean;
+  hasModelKey: boolean;
   hasCsvToAtlas: boolean;
   csvToAtlasLabel?: string;
   csvToAtlasResolvedPath?: string;
@@ -134,6 +135,7 @@ export type PipelineConfigStatus = {
   csvToAtlasValidation: { ok: boolean; errors: string[]; warnings: string[] };
   missing: string[];
   mongoUriMasked?: string;
+  mongodbModelKeyMasked?: string;
   mongoConnectivity?: {
     ok: boolean;
     code?: string;
@@ -143,6 +145,8 @@ export type PipelineConfigStatus = {
   serverEgressIp?: string;
   hostedUrl?: string;
   requiresCsvUpload?: boolean;
+  serverManagedCsvToAtlas?: boolean;
+  tenantSecrets?: TenantSecretsStatus;
   mockCsvGenerator?: {
     ok: boolean;
     python?: string;
@@ -153,10 +157,26 @@ export type PipelineConfigStatus = {
   };
 };
 
+export type TenantSecretsStatus = {
+  hasMongoUri: boolean;
+  hasMongodbModelKey: boolean;
+  mongoUriMasked?: string;
+  mongodbModelKeyMasked?: string;
+  updatedAt?: string;
+};
+
 export type PipelineRunResult = {
   ok: boolean;
   errors: string[];
-  paths: { outDir: string; planPath: string; reportPath: string; manifestPath: string };
+  paths: {
+    outDir: string;
+    planPath: string;
+    reportPath: string;
+    manifestPath: string;
+    zipPath?: string;
+  };
+  runId?: string;
+  zipDownloadUrl?: string;
   csvSource: {
     path: string;
     collections: { name: string; files: string[] }[];
@@ -190,6 +210,7 @@ export type PipelineRunRequest = ProfileRequestFields & {
   targetDb?: string;
   drop?: boolean;
   mongoUri?: string;
+  mongodbModelKey?: string;
   csvToAtlasPath?: string;
   customProfile?: WorkloadProfile;
 };
@@ -287,6 +308,7 @@ export async function runPipelineWithCsv(
   if (request.targetDb) body.append('targetDb', request.targetDb);
   if (request.drop === false) body.append('drop', 'false');
   if (request.mongoUri) body.append('mongoUri', request.mongoUri);
+  if (request.mongodbModelKey) body.append('mongodbModelKey', request.mongodbModelKey);
   if (request.csvToAtlasPath) body.append('csvToAtlasPath', request.csvToAtlasPath);
   if (request.cardinalityOverrides) body.append('cardinalityOverrides', JSON.stringify(request.cardinalityOverrides));
   if (request.forceEmbedOverrides) body.append('forceEmbedOverrides', JSON.stringify(request.forceEmbedOverrides));
@@ -311,6 +333,7 @@ export async function fetchPipelineConfig(options?: {
   csvToAtlasPath?: string;
   generateMockCsv?: boolean;
   mongoUri?: string;
+  mongodbModelKey?: string;
 }): Promise<PipelineConfigStatus> {
   const params = new URLSearchParams();
   if (options?.schemaDialect) params.set('schemaDialect', options.schemaDialect);
@@ -318,10 +341,44 @@ export async function fetchPipelineConfig(options?: {
   if (options?.csvToAtlasPath) params.set('csvToAtlasPath', options.csvToAtlasPath);
   if (options?.generateMockCsv) params.set('generateMockCsv', 'true');
   if (options?.mongoUri) params.set('mongoUri', options.mongoUri);
+  if (options?.mongodbModelKey) params.set('mongodbModelKey', options.mongodbModelKey);
   const query = params.toString();
   const res = await apiFetch(`${base}/api/pipeline/config${query ? `?${query}` : ''}`);
   if (!res.ok) throw new Error((await res.json()).error ?? res.statusText);
   return res.json();
+}
+
+export async function fetchTenantSecrets(): Promise<TenantSecretsStatus> {
+  const res = await apiFetch(`${base}/api/workspace/secrets`);
+  if (!res.ok) throw new Error(await readApiError(res));
+  const data = (await res.json()) as { secrets: TenantSecretsStatus };
+  return data.secrets;
+}
+
+export async function saveTenantSecrets(secrets: {
+  mongoUri?: string;
+  mongodbModelKey?: string;
+}): Promise<TenantSecretsStatus> {
+  const res = await apiFetch(`${base}/api/workspace/secrets`, {
+    method: 'PUT',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(secrets),
+  });
+  if (!res.ok) throw new Error(await readApiError(res));
+  const data = (await res.json()) as { secrets: TenantSecretsStatus };
+  return data.secrets;
+}
+
+export async function downloadPipelineResults(runId: string, filename?: string): Promise<void> {
+  const res = await apiFetch(`${base}/api/pipeline/runs/${encodeURIComponent(runId)}/download`);
+  if (!res.ok) throw new Error(await readApiError(res));
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement('a');
+  anchor.href = url;
+  anchor.download = filename ?? `hvymetl-pipeline-${runId}.zip`;
+  anchor.click();
+  URL.revokeObjectURL(url);
 }
 
 export type DesignMeta = {

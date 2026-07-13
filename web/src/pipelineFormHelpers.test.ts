@@ -37,14 +37,17 @@ describe('pipelineFormHelpers', () => {
       defaultTargetDb: 'tenant_db',
       csvSourcePath: '/server/csv',
       hasMongoUri: true,
+      hasModelKey: false,
       csvToAtlasResolvedPath: '/opt/csvToAtlas',
       csvToAtlasLabel: 'csvToAtlas',
+      serverManagedCsvToAtlas: false,
     };
 
     expect(
       hydratePipelineSettingsFromConfig(
         {
           mongoUri: '',
+          mongodbModelKey: '',
           csvToAtlasPath: '',
           targetDb: '',
           csvSourcePath: '',
@@ -54,6 +57,7 @@ describe('pipelineFormHelpers', () => {
       ),
     ).toEqual({
       mongoUri: '(configured in .env)',
+      mongodbModelKey: '',
       csvToAtlasPath: '/opt/csvToAtlas',
       targetDb: 'tenant_db',
       csvSourcePath: '/server/csv',
@@ -63,6 +67,7 @@ describe('pipelineFormHelpers', () => {
       hydratePipelineSettingsFromConfig(
         {
           mongoUri: 'mongodb+srv://user:pass@cluster',
+          mongodbModelKey: 'al-test-key',
           csvToAtlasPath: '/custom/csvToAtlas/path',
           targetDb: 'my_db',
           csvSourcePath: '/my/csv',
@@ -72,9 +77,48 @@ describe('pipelineFormHelpers', () => {
       ),
     ).toEqual({
       mongoUri: 'mongodb+srv://user:pass@cluster',
+      mongodbModelKey: 'al-test-key',
       csvToAtlasPath: '/custom/csvToAtlas/path',
       targetDb: 'my_db',
       csvSourcePath: '/my/csv',
+    });
+  });
+
+  it('uses server-managed csvToAtlas label on hosted studio', () => {
+    const status = {
+      defaultTargetDb: 'tenant_db',
+      csvSourcePath: '',
+      hasMongoUri: true,
+      hasModelKey: true,
+      csvToAtlasResolvedPath: '/opt/csvToAtlas',
+      csvToAtlasLabel: 'csvToAtlas',
+      serverManagedCsvToAtlas: true,
+      tenantSecrets: {
+        hasMongoUri: true,
+        hasMongodbModelKey: true,
+        mongoUriMasked: 'mongodb+srv://…',
+        mongodbModelKeyMasked: 'al-…key',
+      },
+    };
+
+    expect(
+      hydratePipelineSettingsFromConfig(
+        {
+          mongoUri: '',
+          mongodbModelKey: '',
+          csvToAtlasPath: '',
+          targetDb: '',
+          csvSourcePath: '',
+        },
+        status,
+        '',
+      ),
+    ).toEqual({
+      mongoUri: '(configured in .env)',
+      mongodbModelKey: '(configured in .env)',
+      csvToAtlasPath: '/opt/csvToAtlas',
+      targetDb: 'tenant_db',
+      csvSourcePath: '',
     });
   });
 
@@ -83,14 +127,17 @@ describe('pipelineFormHelpers', () => {
       defaultTargetDb: 'tenant_db',
       csvSourcePath: '',
       hasMongoUri: true,
+      hasModelKey: false,
       csvToAtlasResolvedPath: '/opt/csvToAtlas',
       csvToAtlasLabel: 'csvToAtlas',
+      serverManagedCsvToAtlas: false,
     };
 
     expect(
       hydratePipelineSettingsFromConfig(
         {
           mongoUri: 'm',
+          mongodbModelKey: '',
           csvToAtlasPath: '/p',
           targetDb: 'tenant_db',
           csvSourcePath: '',
@@ -100,6 +147,7 @@ describe('pipelineFormHelpers', () => {
       ),
     ).toEqual({
       mongoUri: 'm',
+      mongodbModelKey: '',
       csvToAtlasPath: '/p',
       targetDb: 'tenant_db',
       csvSourcePath: '',

@@ -38,6 +38,19 @@ import { generateFromPlan } from '../repogen/generate.js';
 import { REPOGEN_LANGUAGES } from '../repogen/languages/index.js';
 import { registerApiArtifactRoutes } from './apiArtifactRoutes.js';
 import { buildCsvUploadResponse, createCsvUploadMiddleware } from './csvUpload.js';
+import { hostedStudioUrl, isHostedStudioRequest } from './hosted.js';
+import {
+  persistPipelineCredentialOverrides,
+  resolvePipelineCredentials,
+  type PipelineCredentialOverrides,
+} from './pipelineCredentials.js';
+import {
+  pipelineResultsDownloadFilename,
+  pipelineResultsZipPath,
+  zipDirectory,
+} from './pipelineZip.js';
+import { readTenantSecrets, tenantSecretsStatus, writeTenantSecrets } from './tenantSecrets.js';
+import { runInScopedEnv } from '../runtime/scopedEnv.js';
 import { registerApiArtifacts, serializeApiArtifactBundle } from './apiArtifactStore.js';
 import {
   authErrorHandler,
@@ -59,6 +72,7 @@ import {
   tenantOutRoot,
   tenantSqliteUploadDir,
   tenantUploadRoot,
+  resolveTenantPipelineRunDir,
   writeTenantWorkspace,
 } from './tenant.js';
 import { mountWebUi } from './setupWebUi.js';
@@ -98,6 +112,59 @@ function scopedCsvSourcePath(req: Request, requestedPath?: string): string | und
     assertPathWithinTenantStorage(ROOT, tenantId, path);
   }
   return path;
+}
+
+function pipelineCredentialOverridesFromBody(body: Record<string, unknown> | undefined): PipelineCredentialOverrides {
+  return {
+    mongoUri: typeof body?.mongoUri === 'string' ? body.mongoUri : undefined,
+    mongodbModelKey: typeof body?.mongodbModelKey === 'string' ? body.mongodbModelKey : undefined,
+    csvToAtlasPath: typeof body?.csvToAtlasPath === 'string' ? body.csvToAtlasPath : undefined,
+  };
+}
+
+function resolveTenantMongoUriForRequest(
+  req: Request,
+  tenantId: string,
+  queryOverride?: string,
+): string {
+  const hosted = isHostedStudioRequest(req);
+  const authEnabled = isAuthConfigured();
+  const creds = resolvePipelineCredentials(ROOT, tenantId, {
+    hosted,
+    authEnabled,
+    overrides: { mongoUri: queryOverride },
+  });
+  return creds.mongoUri?.trim() || '';
+}
+
+async function withTenantMlEnv<T>(req: Request, tenantId: string, fn: () => Promise<T>): Promise<T> {
+  const hosted = isHostedStudioRequest(req);
+  const authEnabled = isAuthConfigured();
+  const creds = resolvePipelineCredentials(ROOT, tenantId, {
+    hosted,
+    authEnabled,
+    overrides: {},
+  });
+  return runInScopedEnv(
+    {
+      MONGODB_URI: creds.mongoUri,
+      MONGODB_MODEL_KEY: creds.mongodbModelKey,
+    },
+    fn,
+  );
+}
+
+function resolveWebPipelineCredentials(req: Request, tenantId: string) {
+  const hosted = isHostedStudioRequest(req);
+  const authEnabled = isAuthConfigured();
+  const overrides = pipelineCredentialOverridesFromBody(req.body);
+  persistPipelineCredentialOverrides(ROOT, tenantId, hosted, authEnabled, overrides);
+  const creds = resolvePipelineCredentials(ROOT, tenantId, {
+    hosted,
+    authEnabled,
+    overrides,
+  });
+  return { hosted, authEnabled, creds };
 }
 
 const app = express();
@@ -176,6 +243,32 @@ app.put('/api/workspace', (req, res) => {
     const { tenantId } = tenantContextFromRequest(req);
     const workspace = writeTenantWorkspace(ROOT, tenantId, req.body ?? {});
     res.json({ workspace });
+  } catch (error) {
+    res.status(400).json({ error: String(error) });
+  }
+});
+
+/** Masked per-tenant MongoDB URI and model key (hosted studio). */
+app.get('/api/workspace/secrets', (req, res) => {
+  try {
+    const { tenantId } = tenantContextFromRequest(req);
+    const secrets = readTenantSecrets(ROOT, tenantId);
+    res.json({ secrets: tenantSecretsStatus(secrets) });
+  } catch (error) {
+    res.status(401).json({ error: String(error) });
+  }
+});
+
+/** Save per-tenant MongoDB URI and/or MONGODB_MODEL_KEY. Values are never echoed back in full. */
+app.put('/api/workspace/secrets', (req, res) => {
+  try {
+    const { tenantId } = tenantContextFromRequest(req);
+    const body = req.body ?? {};
+    const patch: Partial<{ mongoUri: string; mongodbModelKey: string }> = {};
+    if ('mongoUri' in body) patch.mongoUri = typeof body.mongoUri === 'string' ? body.mongoUri : '';
+    if ('mongodbModelKey' in body) patch.mongodbModelKey = typeof body.mongodbModelKey === 'string' ? body.mongodbModelKey : '';
+    const saved = writeTenantSecrets(ROOT, tenantId, patch);
+    res.json({ secrets: tenantSecretsStatus(saved) });
   } catch (error) {
     res.status(400).json({ error: String(error) });
   }
@@ -291,16 +384,18 @@ app.post('/api/design', async (req, res) => {
     }
     const profile = resolveWorkloadProfile(req.body);
     const csvSourcePath = scopedCsvSourcePath(req, req.body?.csvSourcePath as string | undefined);
-    const result = await runDesignForModel({
-      model,
-      profile,
-      knowledgeDir: KNOWLEDGE_DIR,
-      csvSourcePath,
-      csvAllowedRoots,
-      cardinalityOverrides: req.body?.cardinalityOverrides as Record<string, number> | undefined,
-      forceEmbedOverrides: req.body?.forceEmbedOverrides as Record<string, boolean> | undefined,
-      dialect: req.body?.dialect as string | undefined,
-    });
+    const result = await withTenantMlEnv(req, tenantId, () =>
+      runDesignForModel({
+        model,
+        profile,
+        knowledgeDir: KNOWLEDGE_DIR,
+        csvSourcePath,
+        csvAllowedRoots,
+        cardinalityOverrides: req.body?.cardinalityOverrides as Record<string, number> | undefined,
+        forceEmbedOverrides: req.body?.forceEmbedOverrides as Record<string, boolean> | undefined,
+        dialect: req.body?.dialect as string | undefined,
+      }),
+    );
     const { apiArtifacts } = persistDesignApiArtifacts(result, tenantId, 'ui-design', 'ui-design');
     res.json({ ...result, apiArtifacts });
   } catch (error) {
@@ -348,20 +443,22 @@ app.post('/api/design/with-csv', (req, res) => {
         customProfile: req.body?.customProfile ? JSON.parse(String(req.body.customProfile)) : undefined,
         customTelemetry: req.body?.customTelemetry ? JSON.parse(String(req.body.customTelemetry)) : undefined,
       });
-      const result = await runDesignForModel({
-        model,
-        profile,
-        knowledgeDir: KNOWLEDGE_DIR,
-        csvSourcePath: batchDir,
-        csvAllowedRoots,
-        cardinalityOverrides: req.body?.cardinalityOverrides
-          ? JSON.parse(String(req.body.cardinalityOverrides)) as Record<string, number>
-          : undefined,
-        forceEmbedOverrides: req.body?.forceEmbedOverrides
-          ? JSON.parse(String(req.body.forceEmbedOverrides)) as Record<string, boolean>
-          : undefined,
-        dialect: req.body?.dialect as string | undefined,
-      });
+      const result = await withTenantMlEnv(req, tenantId, () =>
+        runDesignForModel({
+          model,
+          profile,
+          knowledgeDir: KNOWLEDGE_DIR,
+          csvSourcePath: batchDir,
+          csvAllowedRoots,
+          cardinalityOverrides: req.body?.cardinalityOverrides
+            ? JSON.parse(String(req.body.cardinalityOverrides)) as Record<string, number>
+            : undefined,
+          forceEmbedOverrides: req.body?.forceEmbedOverrides
+            ? JSON.parse(String(req.body.forceEmbedOverrides)) as Record<string, boolean>
+            : undefined,
+          dialect: req.body?.dialect as string | undefined,
+        }),
+      );
       const { apiArtifacts } = persistDesignApiArtifacts(result, tenantId, 'ui-design', 'ui-design');
       res.json({ ...result, apiArtifacts });
     } catch (error) {
@@ -497,6 +594,10 @@ app.post('/api/repogen/generate', (req, res) => {
 /** Pipeline config status (non-secret) for the UI. */
 app.get('/api/pipeline/config', async (req, res) => {
   try {
+    const { tenantId } = tenantContextFromRequest(req);
+    const hosted = isHostedStudioRequest(req);
+    const authEnabled = isAuthConfigured();
+    const serverManagedCsvToAtlas = hosted && authEnabled;
     const schemaDialect = String(req.query?.schemaDialect ?? req.query?.dialect ?? '').trim() || undefined;
     const rawCsvSourcePath = String(req.query?.csvSourcePath ?? req.query?.importedSourcePath ?? '').trim() || undefined;
     let csvSourcePath = rawCsvSourcePath;
@@ -508,12 +609,30 @@ app.get('/api/pipeline/config', async (req, res) => {
         return;
       }
     }
-    const csvToAtlasPath = String(req.query?.csvToAtlasPath ?? '').trim() || undefined;
+    const csvToAtlasPath = serverManagedCsvToAtlas
+      ? undefined
+      : String(req.query?.csvToAtlasPath ?? '').trim() || undefined;
     const generateMockCsv = req.query?.generateMockCsv === 'true' || req.query?.generateMockCsv === '1';
-    const mongoUriOverride = String(req.query?.mongoUri ?? '').trim();
-    const effectiveMongoUri = mongoUriOverride || process.env.MONGODB_URI?.trim() || '';
+    const mongoUriOverride = String(req.query?.mongoUri ?? '').trim() || undefined;
+    const modelKeyOverride = String(req.query?.mongodbModelKey ?? '').trim() || undefined;
+    const credentialOverrides = {
+      mongoUri: mongoUriOverride,
+      mongodbModelKey: modelKeyOverride,
+      csvToAtlasPath,
+    };
+    const creds = resolvePipelineCredentials(ROOT, tenantId, {
+      hosted,
+      authEnabled,
+      overrides: credentialOverrides,
+    });
+    const effectiveMongoUri = creds.mongoUri?.trim() || '';
+    const effectiveModelKey = creds.mongodbModelKey?.trim() || '';
 
-    const status = getPipelineConfigStatus(process.env, {
+    const configEnv: NodeJS.ProcessEnv = { ...process.env };
+    if (effectiveMongoUri) configEnv.MONGODB_URI = effectiveMongoUri;
+    if (effectiveModelKey) configEnv.MONGODB_MODEL_KEY = effectiveModelKey;
+
+    const status = getPipelineConfigStatus(configEnv, {
       schemaDialect,
       csvSourcePath,
       csvToAtlasPath,
@@ -522,26 +641,30 @@ app.get('/api/pipeline/config', async (req, res) => {
 
     let mongoConnectivity = effectiveMongoUri
       ? await verifyMongoUri(effectiveMongoUri, { timeoutMs: 12_000 })
-      : { ok: false as const, code: 'MISSING_URI', message: 'MONGODB_URI is not set.', hint: 'Add MONGODB_URI to .env (see .env.example).' };
+      : { ok: false as const, code: 'MISSING_URI', message: 'MONGODB_URI is not set.', hint: authEnabled && hosted ? 'Add your MongoDB Atlas URI in pipeline settings.' : 'Add MONGODB_URI to .env (see .env.example).' };
 
-    const hostedUrl = process.env.HVYMETL_HOSTED_URL?.trim() || 'https://hvymetl.studio';
-    const requestHost = String(req.get('host') ?? '').toLowerCase();
-    const treatAsHosted =
-      process.env.HVYMETL_HOSTED === '1' ||
-      Boolean(process.env.HVYMETL_HOSTED_URL?.trim()) ||
-      requestHost.includes('hvymetl.studio');
-    const serverEgressIp = treatAsHosted ? await getServerEgressIp() : null;
-    if (!mongoConnectivity.ok && treatAsHosted) {
+    const hostedUrl = hostedStudioUrl();
+    const serverEgressIp = hosted ? await getServerEgressIp() : null;
+    if (!mongoConnectivity.ok && hosted) {
       mongoConnectivity = enrichHostedMongoHint(mongoConnectivity, { hostedUrl, serverEgressIp });
     }
+
+    const storedSecrets = authEnabled ? readTenantSecrets(ROOT, tenantId) : null;
 
     res.json({
       ...status,
       mongoUriMasked: effectiveMongoUri ? maskMongoUri(effectiveMongoUri) : undefined,
+      mongodbModelKeyMasked: effectiveModelKey
+        ? tenantSecretsStatus({ version: 1, updatedAt: '', mongodbModelKey: effectiveModelKey }).mongodbModelKeyMasked
+        : storedSecrets?.mongodbModelKey
+          ? tenantSecretsStatus(storedSecrets).mongodbModelKeyMasked
+          : undefined,
       mongoConnectivity,
       serverEgressIp: serverEgressIp ?? undefined,
-      hostedUrl: treatAsHosted ? hostedUrl : undefined,
-      requiresCsvUpload: treatAsHosted && isAuthConfigured(),
+      hostedUrl: hosted ? hostedUrl : undefined,
+      requiresCsvUpload: serverManagedCsvToAtlas,
+      serverManagedCsvToAtlas,
+      tenantSecrets: authEnabled ? tenantSecretsStatus(storedSecrets) : undefined,
       mockCsvGenerator: verifyMockCsvGenerator(ROOT),
     });
   } catch (error) {
@@ -553,7 +676,7 @@ app.get('/api/pipeline/config', async (req, res) => {
 app.get('/api/pipeline/executions', async (req, res) => {
   try {
     const { tenantId } = tenantContextFromRequest(req);
-    const mongoUri = String(req.query?.mongoUri ?? process.env.MONGODB_URI ?? '').trim();
+    const mongoUri = resolveTenantMongoUriForRequest(req, tenantId, String(req.query?.mongoUri ?? '').trim() || undefined);
     if (!mongoUri) {
       res.status(400).json({ error: 'MONGODB_URI is required to list pipeline executions.' });
       return;
@@ -580,7 +703,7 @@ app.get('/api/pipeline/executions', async (req, res) => {
 app.get('/api/pipeline/executions/:executionId', async (req, res) => {
   try {
     const { tenantId } = tenantContextFromRequest(req);
-    const mongoUri = String(req.query?.mongoUri ?? process.env.MONGODB_URI ?? '').trim();
+    const mongoUri = resolveTenantMongoUriForRequest(req, tenantId, String(req.query?.mongoUri ?? '').trim() || undefined);
     if (!mongoUri) {
       res.status(400).json({ error: 'MONGODB_URI is required to fetch pipeline executions.' });
       return;
@@ -610,6 +733,8 @@ function pipelineRunResponse(result: Awaited<ReturnType<typeof runFullPipeline>>
     ok: result.ok,
     errors: result.errors,
     paths: result.paths,
+    runId: result.runId,
+    zipDownloadUrl: result.runId ? `/api/pipeline/runs/${result.runId}/download` : undefined,
     csvSource: result.csvSource,
     imports: result.imports,
     csvSourcePath: result.csvSource.path,
@@ -643,6 +768,7 @@ app.post('/api/pipeline/run', async (req, res) => {
     const targetDb =
       (req.body?.targetDb as string | undefined) ??
       (isAuthConfigured() ? tenantDefaultTargetDb(tenantId) : undefined);
+    const { hosted, authEnabled, creds } = resolveWebPipelineCredentials(req, tenantId);
 
     const pipelineRequest = {
       profileId: profile.id,
@@ -659,11 +785,12 @@ app.post('/api/pipeline/run', async (req, res) => {
       mockCsvOptions: req.body?.mockCsvOptions as import('../utilities/mockCsvFromDdl.js').MockCsvOptions | undefined,
       targetDb,
       drop: req.body?.drop !== false,
-      mongoUri: req.body?.mongoUri as string | undefined,
-      csvToAtlasPath: req.body?.csvToAtlasPath as string | undefined,
+      mongoUri: creds.mongoUri,
+      mongodbModelKey: creds.mongodbModelKey,
+      csvToAtlasPath: creds.csvToAtlasPath,
+      timestampedRunDir: hosted && authEnabled,
       knowledgeDir: KNOWLEDGE_DIR,
       rootDir: ROOT,
-      outDir: tenantArtifactDir(ROOT, tenantId, 'ui-pipeline'),
     };
 
     if (req.body?.stream === true) {
@@ -678,6 +805,26 @@ app.post('/api/pipeline/run', async (req, res) => {
     res.json(pipelineRunResponse(result));
   } catch (error) {
     res.status(500).json({ error: String(error) });
+  }
+});
+
+/** Download a zip archive of all artifacts from one pipeline run. */
+app.get('/api/pipeline/runs/:runId/download', async (req, res) => {
+  try {
+    const { tenantId } = tenantContextFromRequest(req);
+    const runId = String(req.params.runId ?? '').trim();
+    const runDir = resolveTenantPipelineRunDir(ROOT, tenantId, runId);
+    if (!existsSync(runDir)) {
+      res.status(404).json({ error: 'Pipeline run not found.' });
+      return;
+    }
+    const zipPath = pipelineResultsZipPath(runDir);
+    if (!existsSync(zipPath)) {
+      await zipDirectory(runDir, zipPath);
+    }
+    res.download(zipPath, pipelineResultsDownloadFilename(runId));
+  } catch (error) {
+    res.status(400).json({ error: String(error) });
   }
 });
 
@@ -751,6 +898,7 @@ app.post('/api/pipeline/run-with-csv', (req, res) => {
       }
 
       const streamProgress = req.body?.stream === 'true' || req.body?.stream === true;
+      const { hosted, authEnabled, creds } = resolveWebPipelineCredentials(req, tenantId);
 
       const pipelineRequest = {
         profileId: profile.id,
@@ -775,11 +923,12 @@ app.post('/api/pipeline/run-with-csv', (req, res) => {
           (req.body?.targetDb as string | undefined) ??
           (isAuthConfigured() ? tenantDefaultTargetDb(tenantId) : undefined),
         drop: req.body?.drop !== 'false',
-        mongoUri: req.body?.mongoUri as string | undefined,
-        csvToAtlasPath: req.body?.csvToAtlasPath as string | undefined,
+        mongoUri: creds.mongoUri,
+        mongodbModelKey: creds.mongodbModelKey,
+        csvToAtlasPath: creds.csvToAtlasPath,
+        timestampedRunDir: hosted && authEnabled,
         knowledgeDir: KNOWLEDGE_DIR,
         rootDir: ROOT,
-        outDir: tenantArtifactDir(ROOT, tenantId, 'ui-pipeline'),
       };
 
       if (streamProgress) {

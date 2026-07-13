@@ -26,6 +26,7 @@ vi.mock('./pipelineConfig.js', async (importOriginal) => {
     ...actual,
     getPipelineConfigStatus: () => ({
       hasMongoUri: true,
+      hasModelKey: false,
       hasCsvToAtlas: true,
       hasCsvSource: true,
       defaultTargetDb: 'test_db',

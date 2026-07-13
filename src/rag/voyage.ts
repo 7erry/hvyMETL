@@ -12,6 +12,7 @@
 
 import type { EmbeddingProvider } from '../types.js';
 import { parseApiUsage, recordEmbeddingUsage } from '../modelUsage.js';
+import { readScopedEnv } from '../runtime/scopedEnv.js';
 
 /** Default embedding model when MONGODB_MODEL_EMBEDDING_MODEL is unset. */
 const DEFAULT_MODEL = 'voyage-4';
@@ -39,7 +40,7 @@ export type VoyageEmbeddingProvider = EmbeddingProvider & {
 
 /** Read the MongoDB Model Key from environment (supports legacy VOYAGE_API_KEY). */
 export function readMongoDbModelKeyFromEnv(): string | null {
-  const key = process.env.MONGODB_MODEL_KEY ?? process.env.VOYAGE_API_KEY;
+  const key = readScopedEnv('MONGODB_MODEL_KEY') ?? readScopedEnv('VOYAGE_API_KEY');
   if (!key || key.trim() === '') return null;
   return key.trim().replace(/^["']|["']$/g, '');
 }

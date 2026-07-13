@@ -4,7 +4,8 @@
 
 import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { tenantArtifactDir } from './tenant.js';
+import { runInScopedEnv } from '../runtime/scopedEnv.js';
+import { tenantArtifactDir, tenantPipelineRunDir } from './tenant.js';
 import { writeDesignArtifacts, type DesignFromModelResult } from '../design/designFromModel.js';
 import { designFromModelWithMlEngine } from '../ml_engine/pipelinePatch.js';
 import { triggerPostMigrationReflection } from '../ml_engine/feedbackHooks.js';
@@ -37,6 +38,7 @@ import { persistPipelineExecution } from './persistPipelineExecution.js';
 import type { CollectionImportSummary, PipelineFeedbackSummary } from './pipelineExecutionTypes.js';
 import { PIPELINE_EXECUTIONS_COLLECTION } from './pipelineExecutionTypes.js';
 import type { PipelineProgressEvent } from './pipelineProgress.js';
+import { pipelineResultsZipPath, zipDirectory } from './pipelineZip.js';
 
 export type { PipelineProgressEvent, PipelineProgressStage } from './pipelineProgress.js';
 export { PIPELINE_PROGRESS_STAGES } from './pipelineProgress.js';
@@ -58,13 +60,17 @@ export type PipelineRunRequest = {
   outDir?: string;
   drop?: boolean;
   mongoUri?: string;
+  mongodbModelKey?: string;
   csvToAtlasPath?: string;
   knowledgeDir: string;
   rootDir: string;
   /** When true (or no CSV path), generate one CSV per CREATE TABLE from `ddl`. */
   generateMockCsv?: boolean;
   mockCsvOptions?: MockCsvOptions;
-  /** Test hook: inject an in-memory store instead of configuring Atlas persistence. */
+  /** When set, reuse this run directory instead of creating a new timestamped folder. */
+  runId?: string;
+  /** When false, keep writing to the shared ui-pipeline folder (local dev / tests). */
+  timestampedRunDir?: boolean;
   migrationStore?: MigrationStore;
   /** Optional progress callback (web UI SSE stream). */
   onProgress?: (event: PipelineProgressEvent) => void;
@@ -88,7 +94,9 @@ export type PipelineRunResult = {
     manifestPath: string;
     feedbackPath: string;
     combinedOpenApiPath?: string;
+    zipPath?: string;
   };
+  runId?: string;
   csvSource: {
     path: string;
     collections: { name: string; files: string[] }[];
@@ -171,14 +179,29 @@ function resolvePipelineCsvRoot(
 
 /** Validate inputs, run design, then import CSV exports via csvToAtlas. */
 export async function runFullPipeline(request: PipelineRunRequest): Promise<PipelineRunResult> {
-  const startedAt = new Date().toISOString();
-  const errors: string[] = [];
-  reportProgress(request, { stage: 'validating', message: 'Validating MongoDB URI and csvToAtlas configuration…' });
   const importEnv = buildPipelineImportEnv({
     mongoUri: request.mongoUri,
+    mongodbModelKey: request.mongodbModelKey,
     mongoDb: request.targetDb,
     csvToAtlasPath: request.csvToAtlasPath,
   });
+
+  return runInScopedEnv(
+    {
+      MONGODB_URI: importEnv.MONGODB_URI,
+      MONGODB_MODEL_KEY: importEnv.MONGODB_MODEL_KEY,
+    },
+    () => runFullPipelineInner(request, importEnv),
+  );
+}
+
+async function runFullPipelineInner(
+  request: PipelineRunRequest,
+  importEnv: NodeJS.ProcessEnv,
+): Promise<PipelineRunResult> {
+  const startedAt = new Date().toISOString();
+  const errors: string[] = [];
+  reportProgress(request, { stage: 'validating', message: 'Validating MongoDB URI and csvToAtlas configuration…' });
 
   const schemaDialect = resolvePipelineSchemaDialect(request.dialect, request.model);
   const config = getPipelineConfigStatus(importEnv, {
@@ -199,11 +222,20 @@ export async function runFullPipeline(request: PipelineRunRequest): Promise<Pipe
     throw new Error(config.csvToAtlasValidation.errors.join(' ') || 'CSV_TO_ATLAS_PATH is not configured.');
   }
 
-  const outDir =
-    request.outDir ??
-    (request.tenantId
-      ? tenantArtifactDir(request.rootDir, request.tenantId, 'ui-pipeline')
-      : join(request.rootDir, 'out', 'ui-pipeline'));
+  const useTimestampedRun = request.timestampedRunDir === true && Boolean(request.tenantId);
+  let runId = request.runId;
+  let outDir = request.outDir;
+  if (!outDir) {
+    if (useTimestampedRun && request.tenantId) {
+      const run = tenantPipelineRunDir(request.rootDir, request.tenantId);
+      runId = run.runId;
+      outDir = run.dir;
+    } else if (request.tenantId) {
+      outDir = tenantArtifactDir(request.rootDir, request.tenantId, 'ui-pipeline');
+    } else {
+      outDir = join(request.rootDir, 'out', 'ui-pipeline');
+    }
+  }
   mkdirSync(outDir, { recursive: true });
 
   const csvRoot = resolvePipelineCsvRoot(request, importEnv, outDir);
@@ -375,11 +407,20 @@ export async function runFullPipeline(request: PipelineRunRequest): Promise<Pipe
 
   reportProgress(request, { stage: 'done', message: errors.length === 0 ? 'Pipeline completed successfully.' : 'Pipeline finished with errors.' });
 
+  let zipPath: string | undefined;
+  try {
+    zipPath = pipelineResultsZipPath(outDir);
+    await zipDirectory(outDir, zipPath);
+  } catch {
+    zipPath = undefined;
+  }
+
   return {
     ok: errors.length === 0,
     design,
     feedback,
     execution,
+    runId,
     paths: {
       outDir,
       planPath: paths.planPath,
@@ -387,6 +428,7 @@ export async function runFullPipeline(request: PipelineRunRequest): Promise<Pipe
       manifestPath,
       feedbackPath,
       combinedOpenApiPath: paths.combinedOpenApiPath,
+      zipPath,
     },
     csvSource: { path: csvRoot, collections: csvCollections },
     imports,
