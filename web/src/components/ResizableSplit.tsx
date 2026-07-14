@@ -30,6 +30,8 @@ type ResizableSplitProps = {
   onSidebarWidthChange: (width: number) => void;
   minWidth?: number;
   maxWidth?: number;
+  /** Taller stacked sidebar when schema import is the primary action (mobile). */
+  stackedSidebarMode?: 'default' | 'import';
   sidebar: ReactNode;
   main: ReactNode;
 };
@@ -40,6 +42,7 @@ export function ResizableSplit({
   onSidebarWidthChange,
   minWidth = 260,
   maxWidth = 640,
+  stackedSidebarMode = 'default',
   sidebar,
   main,
 }: ResizableSplitProps) {
@@ -82,7 +85,7 @@ export function ResizableSplit({
 
   return (
     <div
-      className={`workspace-split${isDragging ? ' workspace-split--dragging' : ''}${stacked ? ' workspace-split--stacked' : ''}`}
+      className={`workspace-split${isDragging ? ' workspace-split--dragging' : ''}${stacked ? ' workspace-split--stacked' : ''}${stacked && stackedSidebarMode === 'import' ? ' workspace-split--stacked-import' : ''}`}
     >
       <aside className="workspace-sidebar" style={stacked ? undefined : { width: sidebarWidth }}>
         {sidebar}

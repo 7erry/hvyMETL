@@ -805,6 +805,11 @@ export default function App() {
               </button>
             </>
           ) : null}
+          {view === 'diagram' && !model ? (
+            <button type="button" className="primary" onClick={() => setSchemaImportModalOpen(true)}>
+              Import schema
+            </button>
+          ) : null}
           {view === 'migration' ? (
             <button type="button" className="tertiary" onClick={() => setSessionField('view', 'diagram')}>
               Back to dashboard
@@ -877,11 +882,12 @@ export default function App() {
           <ResizableSplit
             sidebarWidth={sidebarWidth}
             onSidebarWidthChange={(width) => setSessionField('sidebarWidth', width)}
+            stackedSidebarMode={!model ? 'import' : 'default'}
             sidebar={
               <div className="sidebar-scroll">
                 {schemaPhase === 'before' ? (
                   <>
-                    <CollapsiblePanel title="Instant Schema Import">
+                    <CollapsiblePanel title="Instant Schema Import" defaultOpen={!model}>
                       <SchemaImportPanel
                         dialects={dialects}
                         dialect={dialect}
@@ -1226,7 +1232,7 @@ export default function App() {
       ) : null}
 
       <SchemaImportModal
-        open={uiRole === 'developer' && !model && schemaImportModalOpen}
+        open={!model && schemaImportModalOpen}
         dialects={dialects}
         dialect={dialect}
         ddl={ddl}

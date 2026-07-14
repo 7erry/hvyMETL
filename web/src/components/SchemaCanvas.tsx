@@ -17,6 +17,7 @@ import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { DiagramCanvasFitView } from './DiagramCanvasFitView';
 import { RelationshipEdge } from './RelationshipEdge';
 import { RelationshipDisplayControls } from './RelationshipDisplayControls';
+import { CollapsibleCanvasLegend } from './CollapsibleCanvasLegend';
 import { TableNode, type TableNodeData } from './TableNode';
 import { COMPACT_GRAPH_LAYOUT_OPTIONS, layoutSqlModel } from '../graphLayout';
 import { useCompactDiagramLayout } from '../hooks/useCompactDiagramLayout';
@@ -258,7 +259,7 @@ export function SchemaCanvas({
             style={{ background: '#112733' }}
           />
         ) : null}
-        <Panel position="bottom-center" className="schema-canvas-dock">
+        <Panel position="bottom-right" className="schema-canvas-dock schema-canvas-dock--corner">
           <RelationshipDisplayControls
             connectionType={connectionType}
             relationshipNotation={relationshipNotation}
@@ -267,13 +268,14 @@ export function SchemaCanvas({
             onAutoLayout={handleAutoLayout}
             compact={compactLayout}
           />
-          <div className="schema-canvas-legend">
+          <CollapsibleCanvasLegend
+            collapsedHint={`${tableCount} table${tableCount === 1 ? '' : 's'} · ${relationshipCount} rel${relationshipCount === 1 ? '' : 's'}`}
+            compact={compactLayout}
+          >
             <span><span className="legend-dot legend-dot--pk">🔑</span> Primary key</span>
             <span><span className="legend-dot legend-dot--fk">↗</span> Foreign key</span>
-            <span>{tableCount} table{tableCount === 1 ? '' : 's'}</span>
-            <span>{relationshipCount} relationship{relationshipCount === 1 ? '' : 's'}</span>
             {selectedTable ? <span className="legend-hint">Click canvas to clear selection</span> : null}
-          </div>
+          </CollapsibleCanvasLegend>
         </Panel>
       </ReactFlow>
     </div>

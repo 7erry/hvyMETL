@@ -17,6 +17,7 @@ import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { DiagramCanvasFitView } from './DiagramCanvasFitView';
 import { RelationshipEdge } from './RelationshipEdge';
 import { RelationshipDisplayControls } from './RelationshipDisplayControls';
+import { CollapsibleCanvasLegend } from './CollapsibleCanvasLegend';
 import { CollectionNode, type CollectionNodeData } from './CollectionNode';
 import {
   edgesForPlan,
@@ -230,7 +231,7 @@ export function MongoSchemaCanvas({
         {!compactLayout ? (
           <MiniMap nodeColor="#014E3D" maskColor="rgba(0, 30, 43, 0.8)" style={{ background: '#112733' }} />
         ) : null}
-        <Panel position="bottom-center" className="schema-canvas-dock">
+        <Panel position="bottom-right" className="schema-canvas-dock schema-canvas-dock--corner">
           <RelationshipDisplayControls
             connectionType={connectionType}
             relationshipNotation={relationshipNotation}
@@ -239,7 +240,10 @@ export function MongoSchemaCanvas({
             onAutoLayout={handleAutoLayout}
             compact={compactLayout}
           />
-          <div className="schema-canvas-legend">
+          <CollapsibleCanvasLegend
+            collapsedHint={`${plan.collections.length} coll · ${relationshipCount} link${relationshipCount === 1 ? '' : 's'}`}
+            compact={compactLayout}
+          >
             <span>
               <span className="legend-dot legend-dot--pk">🔑</span> Document id
             </span>
@@ -249,14 +253,8 @@ export function MongoSchemaCanvas({
             <span>
               <span className="legend-dot legend-dot--denorm">⇢</span> Denormalized
             </span>
-            <span>
-              {plan.collections.length} collection{plan.collections.length === 1 ? '' : 's'}
-            </span>
-            <span>
-              {relationshipCount} link{relationshipCount === 1 ? '' : 's'}
-            </span>
             {selectedCollection ? <span className="legend-hint">Click canvas to clear selection</span> : null}
-          </div>
+          </CollapsibleCanvasLegend>
         </Panel>
       </ReactFlow>
     </div>

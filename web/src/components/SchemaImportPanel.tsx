@@ -73,7 +73,7 @@ export function SchemaImportPanel({
         rows={compact ? 6 : 8}
         className="schema-import-panel__textarea"
       />
-      <div className="button-row">
+      <div className="button-row schema-import-panel__actions">
         <button type="button" className="primary" onClick={onImportQuery} disabled={!apiConnected}>
           Import DDL
         </button>
@@ -89,8 +89,7 @@ export function SchemaImportPanel({
           ref={fileInputRef}
           type="file"
           accept=".sql,.ddl,.txt,.db,.sqlite,.sqlite3"
-          hidden
-          aria-hidden
+          className="schema-import-panel__file-input"
           onChange={(e) => {
             const file = e.target.files?.[0];
             if (file) onSchemaFile(file);

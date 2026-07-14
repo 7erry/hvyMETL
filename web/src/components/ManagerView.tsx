@@ -169,6 +169,7 @@ export function ManagerView({
         sidebarWidth={Math.max(sidebarWidth, MANAGER_SIDEBAR_MIN_WIDTH)}
         minWidth={MANAGER_SIDEBAR_MIN_WIDTH}
         maxWidth={MANAGER_SIDEBAR_MAX_WIDTH}
+        stackedSidebarMode={!model ? 'import' : 'default'}
         onSidebarWidthChange={onSidebarWidthChange}
         sidebar={
           <ManagerSidebar
