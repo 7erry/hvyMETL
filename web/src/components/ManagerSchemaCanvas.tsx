@@ -5,10 +5,9 @@ import {
   MiniMap,
   type Node,
   BackgroundVariant,
-  Panel,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import { useMemo, useRef, useState } from 'react';
+import { useMemo, useRef } from 'react';
 import { DiagramCanvasFitView } from './DiagramCanvasFitView';
 import { useCompactDiagramLayout } from '../hooks/useCompactDiagramLayout';
 import type { BusinessDomain } from '../managerDashboard';
@@ -123,8 +122,6 @@ type ManagerSchemaCanvasProps = {
 export function ManagerSchemaCanvas({ domains, phase, onReviewEntity }: ManagerSchemaCanvasProps) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const compactLayout = useCompactDiagramLayout();
-  const [legendOpen, setLegendOpen] = useState(false);
-  const legendHint = phase === 'before' ? 'Source SQL' : 'Target MongoDB';
   const nodes = useMemo(() => layoutDomains(domains), [domains]);
   const entityCount = domains.reduce((sum, domain) => sum + domain.entities.length, 0);
 
@@ -177,24 +174,6 @@ export function ManagerSchemaCanvas({ domains, phase, onReviewEntity }: ManagerS
             style={{ background: '#112733' }}
           />
         ) : null}
-        <Panel position="bottom-right" className="manager-canvas-legend-panel">
-          <details
-            className="manager-canvas-legend manager-canvas-legend--collapsible"
-            open={legendOpen}
-            onToggle={(event) => setLegendOpen(event.currentTarget.open)}
-          >
-            <summary className="manager-canvas-legend__summary">
-              <span>Legend</span>
-              {!legendOpen ? <span className="manager-canvas-legend__hint">{legendHint}</span> : null}
-            </summary>
-            <div className="manager-canvas-legend__body">
-              <span className="manager-legend__item manager-legend__item--ready">Ready</span>
-              <span className="manager-legend__item manager-legend__item--review">Review</span>
-              <span className="manager-legend__item manager-legend__item--blocked">Blocked</span>
-              <span className="manager-legend__item manager-legend__item--pending">Pending</span>
-            </div>
-          </details>
-        </Panel>
       </ReactFlow>
     </div>
   );

@@ -17,7 +17,6 @@ import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { DiagramCanvasFitView } from './DiagramCanvasFitView';
 import { RelationshipEdge } from './RelationshipEdge';
 import { RelationshipDisplayControls } from './RelationshipDisplayControls';
-import { CollapsibleCanvasLegend } from './CollapsibleCanvasLegend';
 import { CollectionNode, type CollectionNodeData } from './CollectionNode';
 import {
   edgesForPlan,
@@ -158,8 +157,6 @@ export function MongoSchemaCanvas({
     [plan, positions, selectedCollection, connectionType, relationshipNotation, compactLayout],
   );
 
-  const relationshipCount = useMemo(() => (plan ? edgesForPlan(plan).length : 0), [plan]);
-
   const handleAutoLayout = useCallback(() => {
     if (!plan) return;
     const autoLayout = layoutMigrationPlan(plan, compactLayout ? COMPACT_GRAPH_LAYOUT_OPTIONS : undefined);
@@ -240,14 +237,6 @@ export function MongoSchemaCanvas({
             onAutoLayout={handleAutoLayout}
             compact={compactLayout}
           />
-          <CollapsibleCanvasLegend
-            collapsedHint={`${plan.collections.length} coll · ${relationshipCount} link${relationshipCount === 1 ? '' : 's'}`}
-            compact={compactLayout}
-          >
-            <span className="legend-chip"><i className="legend-swatch legend-swatch--pk" aria-hidden /> _id</span>
-            <span className="legend-chip"><i className="legend-swatch legend-swatch--fk" aria-hidden /> Embed</span>
-            <span className="legend-chip"><i className="legend-swatch legend-swatch--denorm" aria-hidden /> Denorm</span>
-          </CollapsibleCanvasLegend>
         </Panel>
       </ReactFlow>
     </div>

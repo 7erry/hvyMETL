@@ -240,7 +240,7 @@ export function ManagerView({
                   : undefined
               }
             />
-            <ManagerStatusBar milestone={milestone} statusMessage={statusMessage} />
+            <ManagerStatusBar milestone={milestone} statusMessage={statusMessage} schemaPhase={schemaPhase} />
           </div>
         }
       />

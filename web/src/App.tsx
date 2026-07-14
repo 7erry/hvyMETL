@@ -16,7 +16,10 @@ import { CustomTelemetryModal } from './components/CustomTelemetryModal';
 import { ManagerView } from './components/ManagerView';
 import { SchemaImportPanel } from './components/SchemaImportPanel';
 import { SchemaImportModal } from './components/SchemaImportModal';
+import { DiagramStatusFooter } from './components/DiagramStatusFooter';
+import { FooterDiagramLegend } from './components/FooterDiagramLegend';
 import { CollapsiblePanel } from './components/CollapsiblePanel';
+import { edgesForPlan } from './migrationPlanDisplay';
 import { CardinalityOverridesPanel } from './components/CardinalityOverridesPanel';
 import { AuthGate } from './components/AuthGate';
 import { FALLBACK_DIALECTS } from './dialectConstants';
@@ -764,6 +767,28 @@ export default function App() {
     setStatus('Session cleared.');
   };
 
+  const diagramLegend = useMemo(() => {
+    if (view !== 'diagram' || uiRole !== 'developer') return null;
+    if (schemaPhase === 'before' && model) {
+      return (
+        <FooterDiagramLegend
+          variant="sql"
+          stats={`${model.tables.length} tbl · ${model.relationships.length} rel`}
+        />
+      );
+    }
+    if (schemaPhase === 'after' && migrationPlan) {
+      const links = edgesForPlan(migrationPlan).length;
+      return (
+        <FooterDiagramLegend
+          variant="mongo"
+          stats={`${migrationPlan.collections.length} coll · ${links} link${links === 1 ? '' : 's'}`}
+        />
+      );
+    }
+    return null;
+  }, [view, uiRole, schemaPhase, model, migrationPlan]);
+
   return (
     <AuthGate>
     <div
@@ -1191,9 +1216,7 @@ export default function App() {
                     generating={designingPlan}
                   />
                 )}
-                <footer style={{ padding: '0.5rem 1rem', fontSize: '0.8rem', borderTop: '1px solid #00684A', background: '#112733' }}>
-                  {status || 'Ready — session persists on refresh. Broad database support via DDL import.'}
-                </footer>
+                <DiagramStatusFooter status={status} legend={diagramLegend} />
               </>
             }
           />
@@ -1207,9 +1230,7 @@ export default function App() {
                 onBack={() => setSessionField('view', 'diagram')}
               />
             ) : null}
-            <footer style={{ padding: '0.5rem 1rem', fontSize: '0.8rem', borderTop: '1px solid #00684A', background: '#112733' }}>
-              {status || 'Ready — session persists on refresh. Broad database support via DDL import.'}
-            </footer>
+            <DiagramStatusFooter status={status} />
           </main>
         )}
       </div>

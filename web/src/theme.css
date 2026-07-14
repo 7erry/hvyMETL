@@ -995,6 +995,58 @@ textarea {
   font-style: italic;
 }
 
+.diagram-status-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.35rem 1rem;
+  border-top: 1px solid var(--mdb-green-dark-2);
+  background: #112733;
+  min-height: 0;
+}
+
+.diagram-status-footer__message {
+  flex: 1;
+  min-width: 0;
+  font-size: 0.75rem;
+  line-height: 1.35;
+  opacity: 0.9;
+}
+
+.diagram-status-footer__legend {
+  flex-shrink: 0;
+}
+
+.footer-diagram-legend {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.28rem 0.45rem;
+  font-size: 0.74rem;
+  font-weight: 500;
+  line-height: 1.2;
+  color: var(--mdb-spring-green);
+}
+
+.footer-diagram-legend__stats {
+  opacity: 0.82;
+  white-space: nowrap;
+}
+
+.footer-diagram-legend__sep {
+  opacity: 0.45;
+}
+
+.footer-diagram-legend--manager .manager-legend__item {
+  padding: 0.04rem 0.28rem;
+  border-radius: 3px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  line-height: 1.15;
+}
+
 .relationship-edge-label {
   position: absolute;
   padding: 0.2rem 0.45rem;
@@ -3105,11 +3157,20 @@ textarea {
   display: flex;
   align-items: center;
   gap: 1rem;
-  padding: 0.65rem 1.25rem;
+  padding: 0.35rem 1rem;
   background: #112733;
   border-top: 1px solid var(--mdb-green-dark-2);
   font-size: 0.8rem;
   flex-wrap: wrap;
+}
+
+.app--manager .manager-status-bar__trail {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  margin-left: auto;
+  flex-shrink: 0;
 }
 
 .app--manager .manager-status-bar__milestones {
@@ -3154,8 +3215,8 @@ textarea {
 
 .app--manager .manager-status-bar__status {
   font-size: 0.75rem;
-  opacity: 0.75;
-  max-width: 280px;
+  opacity: 0.85;
+  white-space: nowrap;
 }
 
 .app--manager .manager-review-cta {

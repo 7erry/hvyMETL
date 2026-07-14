@@ -1,11 +1,15 @@
 import type { ManagerMilestone } from '../managerDashboard';
 
+import type { SchemaPhase } from '../sessionState';
+import { ManagerDiagramLegend } from './ManagerDiagramLegend';
+
 type ManagerStatusBarProps = {
   milestone: ManagerMilestone;
   statusMessage?: string;
+  schemaPhase?: SchemaPhase;
 };
 
-export function ManagerStatusBar({ milestone, statusMessage }: ManagerStatusBarProps) {
+export function ManagerStatusBar({ milestone, statusMessage, schemaPhase }: ManagerStatusBarProps) {
   const steps = Array.from({ length: milestone.totalSteps }, (_, i) => i + 1);
 
   return (
@@ -32,7 +36,10 @@ export function ManagerStatusBar({ milestone, statusMessage }: ManagerStatusBarP
         <span>{milestone.detail}</span>
         {milestone.etaHint ? <span className="manager-status-bar__eta">{milestone.etaHint}</span> : null}
       </div>
-      {statusMessage ? <span className="manager-status-bar__status">{statusMessage}</span> : null}
+      <div className="manager-status-bar__trail">
+        {statusMessage ? <span className="manager-status-bar__status">{statusMessage}</span> : null}
+        {schemaPhase ? <ManagerDiagramLegend phase={schemaPhase} /> : null}
+      </div>
     </footer>
   );
 }

@@ -17,7 +17,6 @@ import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { DiagramCanvasFitView } from './DiagramCanvasFitView';
 import { RelationshipEdge } from './RelationshipEdge';
 import { RelationshipDisplayControls } from './RelationshipDisplayControls';
-import { CollapsibleCanvasLegend } from './CollapsibleCanvasLegend';
 import { TableNode, type TableNodeData } from './TableNode';
 import { COMPACT_GRAPH_LAYOUT_OPTIONS, layoutSqlModel } from '../graphLayout';
 import { useCompactDiagramLayout } from '../hooks/useCompactDiagramLayout';
@@ -186,10 +185,6 @@ export function SchemaCanvas({
   );
 
   const tableCount = model?.tables.length ?? 0;
-  const relationshipCount = useMemo(
-    () => model?.tables.reduce((n, t) => n + t.foreignKeys.length, 0) ?? 0,
-    [model],
-  );
 
   const handleAutoLayout = useCallback(() => {
     if (!model) return;
@@ -268,13 +263,6 @@ export function SchemaCanvas({
             onAutoLayout={handleAutoLayout}
             compact={compactLayout}
           />
-          <CollapsibleCanvasLegend
-            collapsedHint={`${tableCount} tbl · ${relationshipCount} rel`}
-            compact={compactLayout}
-          >
-            <span className="legend-chip"><i className="legend-swatch legend-swatch--pk" aria-hidden /> PK</span>
-            <span className="legend-chip"><i className="legend-swatch legend-swatch--fk" aria-hidden /> FK</span>
-          </CollapsibleCanvasLegend>
         </Panel>
       </ReactFlow>
     </div>
