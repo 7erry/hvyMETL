@@ -1,9 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import {
   applyCardinalityOverrides,
+  allRelationshipsForceEmbed,
+  buildForceEmbedOverridesForAll,
   pruneCardinalityOverrides,
   pruneForceEmbedOverrides,
   relationshipOverrideKey,
+  someRelationshipsForceEmbed,
   type CardinalityOverrides,
   type ForceEmbedOverrides,
 } from './cardinalityOverrides';
@@ -93,5 +96,21 @@ describe('cardinalityOverrides', () => {
     const overrides: ForceEmbedOverrides = { [key]: true, stale: true, disabled: false };
 
     expect(pruneForceEmbedOverrides(model, overrides)).toEqual({ [key]: true });
+  });
+
+  it('buildForceEmbedOverridesForAll enables or clears every relationship', () => {
+    const key = relationshipOverrideKey(model.relationships[0]);
+
+    expect(buildForceEmbedOverridesForAll(model, true)).toEqual({ [key]: true });
+    expect(buildForceEmbedOverridesForAll(model, false)).toEqual({});
+  });
+
+  it('allRelationshipsForceEmbed and someRelationshipsForceEmbed reflect override state', () => {
+    const key = relationshipOverrideKey(model.relationships[0]);
+
+    expect(allRelationshipsForceEmbed(model, {})).toBe(false);
+    expect(someRelationshipsForceEmbed(model, {})).toBe(false);
+    expect(allRelationshipsForceEmbed(model, { [key]: true })).toBe(true);
+    expect(someRelationshipsForceEmbed(model, { [key]: true })).toBe(false);
   });
 });

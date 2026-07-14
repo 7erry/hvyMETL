@@ -1,5 +1,12 @@
+import { useEffect, useRef } from 'react';
 import type { CardinalityOverrides, ForceEmbedOverrides } from '../cardinalityOverrides';
-import { relationshipLabel, relationshipOverrideKey } from '../cardinalityOverrides';
+import {
+  allRelationshipsForceEmbed,
+  buildForceEmbedOverridesForAll,
+  relationshipLabel,
+  relationshipOverrideKey,
+  someRelationshipsForceEmbed,
+} from '../cardinalityOverrides';
 import type { SqlStructuralModel } from '../types';
 
 type CardinalityOverridesPanelProps = {
@@ -35,6 +42,20 @@ export function CardinalityOverridesPanel({
     onChange(overrides, next);
   };
 
+  const allForced = allRelationshipsForceEmbed(model, forceEmbedOverrides);
+  const someForced = someRelationshipsForceEmbed(model, forceEmbedOverrides);
+  const forceAllRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (forceAllRef.current) {
+      forceAllRef.current.indeterminate = someForced;
+    }
+  }, [someForced, allForced]);
+
+  const setForceAll = (enabled: boolean) => {
+    onChange(overrides, buildForceEmbedOverridesForAll(model, enabled));
+  };
+
   if (model.relationships.length === 0) {
     return <p className="cardinality-overrides__hint">No foreign-key relationships were found in this schema.</p>;
   }
@@ -46,6 +67,15 @@ export function CardinalityOverridesPanel({
         5,000 are treated as bounded for embed decisions. You can also force a linked child table to embed into its
         parent collection.
       </p>
+      <label className="cardinality-overrides__force-all">
+        <input
+          ref={forceAllRef}
+          type="checkbox"
+          checked={allForced}
+          onChange={(event) => setForceAll(event.currentTarget.checked)}
+        />
+        <span>Force All</span>
+      </label>
       <div className="cardinality-overrides__list">
         {model.relationships.map((relationship) => {
           const key = relationshipOverrideKey(relationship);

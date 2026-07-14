@@ -63,3 +63,36 @@ export function pruneForceEmbedOverrides(
   const validKeys = new Set(model.relationships.map(relationshipOverrideKey));
   return Object.fromEntries(Object.entries(overrides).filter(([key, value]) => value === true && validKeys.has(key)));
 }
+
+/** True when every relationship in the model has force embed enabled. */
+export function allRelationshipsForceEmbed(
+  model: SqlStructuralModel,
+  overrides: ForceEmbedOverrides,
+): boolean {
+  if (model.relationships.length === 0) return false;
+  return model.relationships.every(
+    (relationship) => overrides[relationshipOverrideKey(relationship)] === true,
+  );
+}
+
+/** True when at least one relationship has force embed enabled but not all. */
+export function someRelationshipsForceEmbed(
+  model: SqlStructuralModel,
+  overrides: ForceEmbedOverrides,
+): boolean {
+  const forced = model.relationships.filter(
+    (relationship) => overrides[relationshipOverrideKey(relationship)] === true,
+  ).length;
+  return forced > 0 && forced < model.relationships.length;
+}
+
+/** Build force-embed overrides for every relationship, or clear all when disabled. */
+export function buildForceEmbedOverridesForAll(
+  model: SqlStructuralModel,
+  enabled: boolean,
+): ForceEmbedOverrides {
+  if (!enabled) return {};
+  return Object.fromEntries(
+    model.relationships.map((relationship) => [relationshipOverrideKey(relationship), true]),
+  );
+}
