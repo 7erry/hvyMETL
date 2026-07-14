@@ -189,12 +189,9 @@ export function ManagerSchemaCanvas({ domains, phase, onReviewEntity }: ManagerS
             </summary>
             <div className="manager-canvas-legend__body">
               <span className="manager-legend__item manager-legend__item--ready">Ready</span>
-              <span className="manager-legend__item manager-legend__item--review">Needs review</span>
+              <span className="manager-legend__item manager-legend__item--review">Review</span>
               <span className="manager-legend__item manager-legend__item--blocked">Blocked</span>
               <span className="manager-legend__item manager-legend__item--pending">Pending</span>
-              <span className="manager-canvas-legend__phase">
-                View: {phase === 'before' ? 'Source SQL' : 'Target MongoDB'}
-              </span>
             </div>
           </details>
         </Panel>

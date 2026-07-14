@@ -269,12 +269,11 @@ export function SchemaCanvas({
             compact={compactLayout}
           />
           <CollapsibleCanvasLegend
-            collapsedHint={`${tableCount} table${tableCount === 1 ? '' : 's'} · ${relationshipCount} rel${relationshipCount === 1 ? '' : 's'}`}
+            collapsedHint={`${tableCount} tbl · ${relationshipCount} rel`}
             compact={compactLayout}
           >
-            <span><span className="legend-dot legend-dot--pk">🔑</span> Primary key</span>
-            <span><span className="legend-dot legend-dot--fk">↗</span> Foreign key</span>
-            {selectedTable ? <span className="legend-hint">Click canvas to clear selection</span> : null}
+            <span className="legend-chip"><i className="legend-swatch legend-swatch--pk" aria-hidden /> PK</span>
+            <span className="legend-chip"><i className="legend-swatch legend-swatch--fk" aria-hidden /> FK</span>
           </CollapsibleCanvasLegend>
         </Panel>
       </ReactFlow>

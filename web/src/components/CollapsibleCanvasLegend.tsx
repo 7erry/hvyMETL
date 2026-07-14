@@ -19,7 +19,7 @@ export function CollapsibleCanvasLegend({
   className = '',
   children,
 }: CollapsibleCanvasLegendProps) {
-  const [isOpen, setIsOpen] = useState(defaultOpen ?? !compact);
+  const [isOpen, setIsOpen] = useState(defaultOpen ?? false);
 
   return (
     <details
