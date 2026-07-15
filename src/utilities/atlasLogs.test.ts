@@ -160,6 +160,21 @@ describe('atlasLogs', () => {
     expect(error.hint).toContain('IP Access List');
   });
 
+  it('maps unauthorized log download to cluster log viewer hint', () => {
+    const error = parseAtlasAdminApiFailure(
+      401,
+      JSON.stringify({
+        detail: 'Current user is not authorized to perform this action.',
+        error: 401,
+        errorCode: 'USER_UNAUTHORIZED',
+      }),
+      'Atlas database log download',
+    );
+    expect(error.code).toBe('USER_UNAUTHORIZED');
+    expect(error.message).toContain('cluster logs');
+    expect(error.hint).toContain('Project Cluster Log Viewer');
+  });
+
   it('validates log file names', () => {
     expect(isAtlasLogFileName('mongodb.gz')).toBe(true);
     expect(isAtlasLogFileName('invalid.log')).toBe(false);

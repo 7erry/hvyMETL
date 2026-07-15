@@ -26,7 +26,14 @@ Set these on the **API server** `.env` (never commit secrets):
 | `ATLAS_NODE_HOSTNAME` | no | Shard/host FQDN for log download, e.g. `cluster0-shard-00-00.abc12.mongodb.net` |
 
 Create a service account in Atlas: **Access Manager → Service Accounts → Add Service Account**.
-Grant access to the target project (Project Cluster Log Viewer or Project Owner).
+
+| Action | Minimum project role |
+| --- | --- |
+| **Project events** | Project Read Only (or Project Owner) |
+| **Database log download** | **Project Cluster Log Viewer** (or Project Owner) |
+
+Grant roles at **Atlas → Project Access → Service Accounts → your account → Edit Permissions**.
+Log download is **not available** on M0, M2, M5, flex, or serverless clusters.
 
 Requests use versioned `Accept` headers (`application/vnd.atlas.2025-02-19+json` for events,
 `application/vnd.atlas.2025-03-12+gzip` for log downloads) against `https://cloud.mongodb.com/api/atlas/v2/…`.
@@ -80,6 +87,12 @@ access list**:
 This is **separate** from **Network Access** on your database cluster (used by `MONGODB_URI`).
 
 The Atlas Logs panel displays the API server's detected egress IP on the status line when available.
+
+### `USER_UNAUTHORIZED` (401) on database logs
+
+The service account can read project events but needs **Project Cluster Log Viewer** (or
+Project Owner) to download mongod/mongos logs. Update permissions under **Project Access →
+Service Accounts**. hvyMETL still shows project events when log download fails.
 
 ## 7. Testing
 

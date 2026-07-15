@@ -78,6 +78,7 @@ export function ManagerAtlasLogsPanel({ apiConnected }: ManagerAtlasLogsPanelPro
 
   const events: AtlasProjectEvent[] = snapshot?.events.events ?? [];
   const databaseLogs: AtlasDatabaseLogResult | undefined = snapshot?.databaseLogs;
+  const databaseLogWarning = snapshot?.databaseLogWarning;
 
   return (
     <CollapsiblePanel title="Atlas Logs" collapsedHint={collapsedHint}>
@@ -128,6 +129,15 @@ export function ManagerAtlasLogsPanel({ apiConnected }: ManagerAtlasLogsPanelPro
             </div>
           ) : null}
 
+          {databaseLogWarning ? (
+            <div className="manager-atlas-logs__section">
+              <p className="manager-atlas-logs__warn">
+                <strong>Database logs unavailable:</strong> {databaseLogWarning.error}
+                {databaseLogWarning.hint ? ` ${databaseLogWarning.hint}` : ''}
+              </p>
+            </div>
+          ) : null}
+
           {databaseLogs ? (
             <div className="manager-atlas-logs__section">
               <h4 className="manager-atlas-logs__heading">
@@ -139,12 +149,12 @@ export function ManagerAtlasLogsPanel({ apiConnected }: ManagerAtlasLogsPanelPro
               </p>
               <pre className="manager-atlas-logs__preview">{databaseLogs.lines.join('\n')}</pre>
             </div>
-          ) : status.hasHostName ? null : (
+          ) : !status.hasHostName ? (
             <p className="manager-hint">
               Add <code>ATLAS_NODE_HOSTNAME</code> (for example <code>cluster0-shard-00-00.abc12.mongodb.net</code>)
               to download mongod/mongos logs.
             </p>
-          )}
+          ) : null}
         </>
       )}
     </CollapsiblePanel>

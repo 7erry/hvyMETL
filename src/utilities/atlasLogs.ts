@@ -56,6 +56,12 @@ export type AtlasDatabaseLogResult = {
   truncated: boolean;
 };
 
+export type AtlasLogFetchWarning = {
+  error: string;
+  hint?: string;
+  code?: string;
+};
+
 type OAuthTokenResponse = {
   access_token?: string;
   expires_in?: number;
@@ -226,6 +232,30 @@ export function parseAtlasAdminApiFailure(
     );
   }
 
+  if (parsed.errorCode === 'USER_UNAUTHORIZED' || httpStatus === 401) {
+    const isLogDownload = /log download|database log/i.test(context);
+    return new AtlasLogsApiError(
+      isLogDownload
+        ? 'Service account lacks permission to download cluster logs.'
+        : 'Service account lacks permission for this Atlas Admin API action.',
+      httpStatus,
+      {
+        code: parsed.errorCode ?? 'USER_UNAUTHORIZED',
+        hint: isLogDownload
+          ? [
+              'Grant the service account **Project Cluster Log Viewer** on this Atlas project',
+              '(Atlas → Project Access → Service Accounts → your account → Edit Permissions).',
+              'Project Owner also works. Log download is not available on M0, M2, M5, flex, or serverless tiers.',
+              'Project events may still load without this role.',
+            ].join(' ')
+          : [
+              'Grant the service account access to this Atlas project (e.g. Project Read Only or Project Owner).',
+              'Atlas → Project Access → Service Accounts → your account → Edit Permissions.',
+            ].join(' '),
+      },
+    );
+  }
+
   const detail = parsed.detail?.trim() || bodyText.trim() || parsed.reason || 'Unknown Atlas error';
   return new AtlasLogsApiError(`${context} failed (${httpStatus}): ${detail}`, httpStatus, {
     code: parsed.errorCode,
@@ -236,6 +266,14 @@ async function assertAtlasResponseOk(response: Response, context: string): Promi
   if (response.ok) return;
   const errText = await response.text();
   throw parseAtlasAdminApiFailure(response.status, errText, context);
+}
+
+/** Convert Atlas log errors into UI-safe warning payloads (non-fatal for snapshots). */
+export function atlasLogWarningFromError(error: unknown): AtlasLogFetchWarning {
+  if (error instanceof AtlasLogsApiError) {
+    return { error: error.message, hint: error.hint, code: error.code };
+  }
+  return { error: String(error) };
 }
 
 function normalizeAtlasEvent(record: Record<string, unknown>): AtlasProjectEvent {
@@ -346,6 +384,7 @@ export async function fetchAtlasLogsSnapshot(
   status: AtlasLogsStatus;
   events: AtlasProjectEventsResult;
   databaseLogs?: AtlasDatabaseLogResult;
+  databaseLogWarning?: AtlasLogFetchWarning;
 }> {
   const config = readAtlasLogsConfig(env);
   if (!config) {
@@ -359,17 +398,23 @@ export async function fetchAtlasLogsSnapshot(
   });
 
   let databaseLogs: AtlasDatabaseLogResult | undefined;
+  let databaseLogWarning: AtlasLogFetchWarning | undefined;
   if (options?.includeDatabaseLogs && config.hostName) {
-    databaseLogs = await fetchAtlasDatabaseLogs(config, {
-      logName: options.logName,
-      maxLines: options.maxLogLines,
-      token,
-    });
+    try {
+      databaseLogs = await fetchAtlasDatabaseLogs(config, {
+        logName: options?.logName,
+        maxLines: options?.maxLogLines,
+        token,
+      });
+    } catch (error) {
+      databaseLogWarning = atlasLogWarningFromError(error);
+    }
   }
 
   return {
     status: getAtlasLogsStatus(env),
     events,
     databaseLogs,
+    databaseLogWarning,
   };
 }

@@ -211,10 +211,17 @@ export type AtlasDatabaseLogResult = {
   truncated: boolean;
 };
 
+export type AtlasLogFetchWarning = {
+  error: string;
+  hint?: string;
+  code?: string;
+};
+
 export type AtlasLogsSnapshot = {
   status: AtlasLogsStatus;
   events: AtlasProjectEventsResult;
   databaseLogs?: AtlasDatabaseLogResult;
+  databaseLogWarning?: AtlasLogFetchWarning;
 };
 
 export async function fetchAtlasLogsStatus(): Promise<AtlasLogsStatus> {

@@ -6,6 +6,7 @@ import { Router, type Response } from 'express';
 import { getServerEgressIp } from '../utilities/mongoConnectivity.js';
 import {
   AtlasLogsApiError,
+  atlasLogWarningFromError,
   fetchAtlasDatabaseLogs,
   fetchAtlasProjectEvents,
   getAtlasLogsStatus,
@@ -100,17 +101,23 @@ export function createAtlasLogsRouter(): Router {
       });
 
       let databaseLogs;
+      let databaseLogWarning;
       if (includeDatabaseLogs) {
-        databaseLogs = await fetchAtlasDatabaseLogs(config, {
-          logName,
-          maxLines: Number.isFinite(maxLogLines) ? maxLogLines : 50,
-        });
+        try {
+          databaseLogs = await fetchAtlasDatabaseLogs(config, {
+            logName,
+            maxLines: Number.isFinite(maxLogLines) ? maxLogLines : 50,
+          });
+        } catch (error) {
+          databaseLogWarning = atlasLogWarningFromError(error);
+        }
       }
 
       res.json({
         status: { ...getAtlasLogsStatus(), serverEgressIp },
         events,
         databaseLogs,
+        databaseLogWarning,
       });
     } catch (error) {
       handleAtlasRouteError(res, error);
