@@ -102,6 +102,8 @@ export function PipelinePanel({
   const [downloadingZip, setDownloadingZip] = useState(false);
   const formRef = useRef(form);
   formRef.current = form;
+  const configRef = useRef(config);
+  configRef.current = config;
 
   const persistTenantSecrets = useCallback(async (fields: Pick<PipelineForm, 'mongoUri' | 'mongodbModelKey'>) => {
     if (!config?.serverManagedCsvToAtlas) return;
@@ -118,14 +120,16 @@ export function PipelinePanel({
     }
   }, [config?.serverManagedCsvToAtlas]);
 
-  const refreshConfig = useCallback(async () => {
+  const refreshConfig = useCallback(async (options?: { showLoading?: boolean }) => {
     const current = formRef.current;
-    setLoadingConfig(true);
+    const cfg = configRef.current;
+    const showLoading = options?.showLoading ?? !cfg;
+    if (showLoading) setLoadingConfig(true);
     try {
       const status = await fetchPipelineConfig({
         schemaDialect: dialect,
         csvSourcePath: current.csvSourcePath || csvSourcePath || undefined,
-        csvToAtlasPath: isCsvToAtlasServerConfigured(config, csvToAtlasUserOverridePath(current.csvToAtlasPath, config))
+        csvToAtlasPath: isCsvToAtlasServerConfigured(cfg, csvToAtlasUserOverridePath(current.csvToAtlasPath, cfg))
           ? undefined
           : current.csvToAtlasPath.trim() || undefined,
         generateMockCsv: current.generateMockCsv,
@@ -136,9 +140,9 @@ export function PipelinePanel({
     } catch (e) {
       setError(String(e));
     } finally {
-      setLoadingConfig(false);
+      if (showLoading) setLoadingConfig(false);
     }
-  }, [dialect, csvSourcePath, config]);
+  }, [dialect, csvSourcePath]);
 
   useEffect(() => {
     if (!open) return;
@@ -612,7 +616,7 @@ export function PipelinePanel({
                 <button
                   type="button"
                   className="tertiary pipeline-env-details__refresh"
-                  onClick={() => void refreshConfig()}
+                  onClick={() => void refreshConfig({ showLoading: true })}
                   disabled={loadingConfig || running}
                 >
                   {loadingConfig ? 'Refreshing…' : 'Refresh checks'}
