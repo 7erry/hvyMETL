@@ -3,15 +3,20 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   AtlasLogsApiError,
   configureAtlasLogsRuntime,
+  describeAtlasLogHostNameIssue,
   extractAtlasBlockedIp,
   fetchAtlasDatabaseLogs,
+  fetchAtlasProcessHostNames,
   fetchAtlasProjectEvents,
   getAtlasAccessToken,
   getAtlasLogsStatus,
   isAtlasLogFileName,
+  isAtlasShardNodeHostName,
+  looksLikeAtlasClusterConnectionHost,
   normalizeAtlasEnvValue,
   parseAtlasAdminApiFailure,
   readAtlasLogsConfig,
+  suggestAtlasShardHostName,
 } from './atlasLogs.js';
 
 const TEST_CONFIG = {
@@ -60,6 +65,68 @@ describe('atlasLogs', () => {
 
   it('reports unconfigured status when credentials are missing', () => {
     expect(getAtlasLogsStatus({})).toEqual({ configured: false, hasHostName: false });
+  });
+
+  it('detects cluster connection hostname vs shard node hostname', () => {
+    expect(isAtlasShardNodeHostName('cluster0-shard-00-00.abc12.mongodb.net')).toBe(true);
+    expect(isAtlasShardNodeHostName('myfreecluster.5thctns.mongodb.net')).toBe(false);
+    expect(looksLikeAtlasClusterConnectionHost('myfreecluster.5thctns.mongodb.net')).toBe(true);
+    expect(suggestAtlasShardHostName('myfreecluster.5thctns.mongodb.net')).toBe(
+      'myfreecluster-shard-00-00.5thctns.mongodb.net',
+    );
+  });
+
+  it('flags invalid ATLAS_NODE_HOSTNAME in status', () => {
+    const status = getAtlasLogsStatus({
+      ATLAS_CLIENT_ID: TEST_CONFIG.clientId,
+      ATLAS_CLIENT_SECRET: TEST_CONFIG.clientSecret,
+      ATLAS_GROUP_ID: TEST_CONFIG.groupId,
+      ATLAS_NODE_HOSTNAME: 'myfreecluster.5thctns.mongodb.net',
+    });
+    expect(status.hostNameLooksValid).toBe(false);
+    expect(status.hostNameHint).toContain('myfreecluster-shard-00-00.5thctns.mongodb.net');
+  });
+
+  it('rejects cluster connection hostname before calling Atlas log download API', async () => {
+    const fetchFn = vi.fn();
+    configureAtlasLogsRuntime({ fetchFn, clearTokenCache: true });
+
+    await expect(
+      fetchAtlasDatabaseLogs(
+        { ...TEST_CONFIG, hostName: 'myfreecluster.5thctns.mongodb.net' },
+        { token: 'token-abc' },
+      ),
+    ).rejects.toMatchObject({
+      name: 'AtlasLogsApiError',
+      httpStatus: 400,
+      code: 'INVALID_HOSTNAME',
+    });
+    expect(fetchFn).not.toHaveBeenCalled();
+    expect(describeAtlasLogHostNameIssue('myfreecluster.5thctns.mongodb.net')).toContain('-shard-00-00');
+  });
+
+  it('lists process hostnames for log download hints', async () => {
+    configureAtlasLogsRuntime({
+      fetchFn: vi.fn(async (input: RequestInfo | URL) => {
+        const url = String(input);
+        expect(url).toContain('/processes');
+        return new Response(
+          JSON.stringify({
+            results: [
+              { hostname: 'internal-host', userAlias: 'myfreecluster-shard-00-00.5thctns.mongodb.net' },
+              { hostname: 'myfreecluster-shard-00-01.5thctns.mongodb.net' },
+            ],
+          }),
+          { status: 200 },
+        );
+      }),
+      clearTokenCache: true,
+    });
+
+    await expect(fetchAtlasProcessHostNames(TEST_CONFIG, { token: 'token-abc' })).resolves.toEqual([
+      'myfreecluster-shard-00-00.5thctns.mongodb.net',
+      'myfreecluster-shard-00-01.5thctns.mongodb.net',
+    ]);
   });
 
   it('obtains and caches OAuth access token', async () => {
@@ -173,6 +240,20 @@ describe('atlasLogs', () => {
     expect(error.code).toBe('USER_UNAUTHORIZED');
     expect(error.message).toContain('cluster logs');
     expect(error.hint).toContain('Project Cluster Log Viewer');
+  });
+
+  it('maps invalid hostname failures to shard node guidance', () => {
+    const error = parseAtlasAdminApiFailure(
+      400,
+      JSON.stringify({
+        detail: 'Invalid hostname myfreecluster.5thctns.mongodb.net.',
+        error: 400,
+      }),
+      'Atlas database log download',
+    );
+    expect(error.code).toBe('INVALID_HOSTNAME');
+    expect(error.hint).toContain('-shard-00-00');
+    expect(error.hint).toContain('M0');
   });
 
   it('validates log file names', () => {

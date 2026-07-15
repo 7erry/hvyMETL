@@ -110,6 +110,12 @@ export function ManagerAtlasLogsPanel({ apiConnected }: ManagerAtlasLogsPanelPro
             </p>
           ) : null}
 
+          {status.hostNameHint ? (
+            <p className="manager-atlas-logs__warn">
+              <strong>Check ATLAS_NODE_HOSTNAME:</strong> {status.hostNameHint}
+            </p>
+          ) : null}
+
           {!snapshot && !loading && !error ? (
             <p className="manager-hint">Click Refresh logs to pull recent Atlas project activity.</p>
           ) : null}
@@ -151,8 +157,9 @@ export function ManagerAtlasLogsPanel({ apiConnected }: ManagerAtlasLogsPanelPro
             </div>
           ) : !status.hasHostName ? (
             <p className="manager-hint">
-              Add <code>ATLAS_NODE_HOSTNAME</code> (for example <code>cluster0-shard-00-00.abc12.mongodb.net</code>)
-              to download mongod/mongos logs.
+              Add <code>ATLAS_NODE_HOSTNAME</code> with a per-node FQDN (for example{' '}
+              <code>cluster0-shard-00-00.abc12.mongodb.net</code>), not the cluster connection hostname
+              from <code>MONGODB_URI</code>. Atlas → cluster → View Monitoring lists node hostnames.
             </p>
           ) : null}
         </>

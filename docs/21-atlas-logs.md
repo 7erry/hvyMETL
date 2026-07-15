@@ -23,7 +23,7 @@ Set these on the **API server** `.env` (never commit secrets):
 | `ATLAS_CLIENT_ID` | yes | Atlas service account client id (`mdb_sa_id_…`) |
 | `ATLAS_CLIENT_SECRET` | yes | Service account secret (`mdb_sa_sk_…`) |
 | `ATLAS_GROUP_ID` | yes | Atlas **Project ID** (group id) |
-| `ATLAS_NODE_HOSTNAME` | no | Shard/host FQDN for log download, e.g. `cluster0-shard-00-00.abc12.mongodb.net` |
+| `ATLAS_NODE_HOSTNAME` | no | Per-node FQDN for log download, e.g. `cluster0-shard-00-00.abc12.mongodb.net` (not the cluster connection hostname from `mongodb+srv://`) |
 
 Create a service account in Atlas: **Access Manager → Service Accounts → Add Service Account**.
 
@@ -93,6 +93,21 @@ The Atlas Logs panel displays the API server's detected egress IP on the status 
 The service account can read project events but needs **Project Cluster Log Viewer** (or
 Project Owner) to download mongod/mongos logs. Update permissions under **Project Access →
 Service Accounts**. hvyMETL still shows project events when log download fails.
+
+### `Invalid hostname` (400) on database logs
+
+`ATLAS_NODE_HOSTNAME` must be a **per-node FQDN**, not the cluster connection hostname from
+`MONGODB_URI`:
+
+| Wrong (connection host) | Right (node host for logs) |
+| --- | --- |
+| `myfreecluster.5thctns.mongodb.net` | `myfreecluster-shard-00-00.5thctns.mongodb.net` |
+
+Find node hostnames in Atlas → your cluster → **View Monitoring**, or expand the standard (non-SRV)
+connection string and copy a host that includes `-shard-00-00`.
+
+If the hostname format is correct but download still fails, confirm the cluster tier: log download
+is **not available** on M0 free tier, M2, M5, flex, or serverless clusters.
 
 ## 7. Testing
 

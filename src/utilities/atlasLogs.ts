@@ -9,7 +9,12 @@ const ATLAS_OAUTH_URL = 'https://cloud.mongodb.com/api/oauth/token';
 const ATLAS_API_BASE = 'https://cloud.mongodb.com/api/atlas/v2';
 /** Atlas Admin API version headers (required for v2 resources). */
 const ATLAS_EVENTS_ACCEPT = 'application/vnd.atlas.2025-02-19+json';
+const ATLAS_PROCESSES_ACCEPT = 'application/vnd.atlas.2025-03-12+json';
 const ATLAS_LOGS_ACCEPT = 'application/vnd.atlas.2025-03-12+gzip';
+
+/** Per-node FQDN used by the log download API (not the cluster SRV connection hostname). */
+const ATLAS_SHARD_NODE_HOST_PATTERN = /-shard-\d{2}-\d{2}\.[a-z0-9]+\.mongodb\.net$/i;
+const ATLAS_MONGODB_NET_SUFFIX = /\.mongodb\.net$/i;
 
 const ATLAS_GROUP_ID_PATTERN = /^[a-f0-9]{24}$/i;
 
@@ -32,6 +37,10 @@ export type AtlasLogsStatus = {
   groupIdMasked?: string;
   /** Public egress IP of the API server (for Atlas Admin API access list). */
   serverEgressIp?: string;
+  /** True when ATLAS_NODE_HOSTNAME looks like a shard/node FQDN (not a cluster connection hostname). */
+  hostNameLooksValid?: boolean;
+  /** Set when ATLAS_NODE_HOSTNAME appears to be a cluster connection hostname instead of a node FQDN. */
+  hostNameHint?: string;
 };
 
 export type AtlasProjectEvent = {
@@ -114,14 +123,63 @@ export function readAtlasLogsConfig(env: NodeJS.ProcessEnv = process.env): Atlas
   return { clientId, clientSecret, groupId, hostName };
 }
 
+/** True when hostname matches Atlas per-node log download FQDN pattern. */
+export function isAtlasShardNodeHostName(hostName: string): boolean {
+  return ATLAS_SHARD_NODE_HOST_PATTERN.test(hostName.trim());
+}
+
+/** True when hostname looks like a cluster connection string host (missing -shard-00-00 segment). */
+export function looksLikeAtlasClusterConnectionHost(hostName: string): boolean {
+  const trimmed = hostName.trim();
+  if (!ATLAS_MONGODB_NET_SUFFIX.test(trimmed)) return false;
+  return !isAtlasShardNodeHostName(trimmed);
+}
+
+/** Guess primary replica-set node FQDN from a cluster connection hostname. */
+export function suggestAtlasShardHostName(connectionHost: string): string | undefined {
+  const trimmed = connectionHost.trim();
+  const dotIndex = trimmed.indexOf('.');
+  if (dotIndex <= 0) return undefined;
+  const clusterLabel = trimmed.slice(0, dotIndex);
+  const domainSuffix = trimmed.slice(dotIndex);
+  if (!clusterLabel || !ATLAS_MONGODB_NET_SUFFIX.test(domainSuffix)) return undefined;
+  return `${clusterLabel}-shard-00-00${domainSuffix}`;
+}
+
+/** Build actionable copy when ATLAS_NODE_HOSTNAME is not a log-download node FQDN. */
+export function describeAtlasLogHostNameIssue(hostName: string): string | undefined {
+  const trimmed = hostName.trim();
+  if (!trimmed || isAtlasShardNodeHostName(trimmed)) return undefined;
+
+  const suggested = looksLikeAtlasClusterConnectionHost(trimmed)
+    ? suggestAtlasShardHostName(trimmed)
+    : undefined;
+
+  const parts = [
+    'ATLAS_NODE_HOSTNAME must be a per-node FQDN (for example cluster0-shard-00-00.abc12.mongodb.net),',
+    'not the cluster connection hostname from MONGODB_URI.',
+    'In Atlas → your cluster → Connect → Drivers, open the standard connection string and copy a host',
+    'that includes -shard-00-00 (View Monitoring on the cluster also lists node hostnames).',
+    'Log download is not available on M0, M2, M5, flex, or serverless tiers.',
+  ];
+  if (suggested) {
+    parts.splice(2, 0, `Try ${suggested} instead of ${trimmed}.`);
+  }
+  return parts.join(' ');
+}
+
 /** UI-safe summary of whether Atlas logs can be fetched. */
 export function getAtlasLogsStatus(env: NodeJS.ProcessEnv = process.env): AtlasLogsStatus {
   const config = readAtlasLogsConfig(env);
   if (!config) return { configured: false, hasHostName: false };
+
+  const hostNameHint = config.hostName ? describeAtlasLogHostNameIssue(config.hostName) : undefined;
   return {
     configured: true,
     hasHostName: Boolean(config.hostName),
     groupIdMasked: maskAtlasGroupId(config.groupId),
+    hostNameLooksValid: config.hostName ? !hostNameHint : undefined,
+    hostNameHint,
   };
 }
 
@@ -232,6 +290,23 @@ export function parseAtlasAdminApiFailure(
     );
   }
 
+  const invalidHostDetail = parsed.detail?.trim() ?? '';
+  const isInvalidHostName =
+    httpStatus === 400 &&
+    (/invalid hostname/i.test(invalidHostDetail) || parsed.errorCode === 'INVALID_HOSTNAME');
+
+  if (isInvalidHostName) {
+    return new AtlasLogsApiError('Atlas rejected the log download hostname.', httpStatus, {
+      code: parsed.errorCode ?? 'INVALID_HOSTNAME',
+      hint: [
+        'Use a per-node FQDN such as mycluster-shard-00-00.abc12.mongodb.net — not the cluster connection hostname',
+        '(for example mycluster.abc12.mongodb.net from mongodb+srv://).',
+        'Atlas → cluster → View Monitoring lists node hostnames; pick one mongod host.',
+        'Log download is not available on M0 free tier, M2, M5, flex, or serverless clusters.',
+      ].join(' '),
+    });
+  }
+
   if (parsed.errorCode === 'USER_UNAUTHORIZED' || httpStatus === 401) {
     const isLogDownload = /log download|database log/i.test(context);
     return new AtlasLogsApiError(
@@ -326,6 +401,66 @@ export function isAtlasLogFileName(value: string): value is AtlasLogFileName {
   return (DEFAULT_LOG_NAMES as string[]).includes(value);
 }
 
+type AtlasProcessRecord = {
+  hostname?: string;
+  userAlias?: string;
+  typeName?: string;
+};
+
+type AtlasProcessesResponse = {
+  results?: AtlasProcessRecord[];
+};
+
+/** List mongod/mongos node hostnames from the Atlas processes API (for log download hints). */
+export async function fetchAtlasProcessHostNames(
+  config: AtlasLogsEnvConfig,
+  options?: { token?: string; limit?: number },
+): Promise<string[]> {
+  const token = options?.token ?? (await getAtlasAccessToken(config));
+  const url = `${ATLAS_API_BASE}/groups/${encodeURIComponent(config.groupId)}/processes?itemsPerPage=500&pageNum=1`;
+
+  const response = await fetchImpl(url, {
+    method: 'GET',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      Accept: ATLAS_PROCESSES_ACCEPT,
+    },
+  });
+
+  await assertAtlasResponseOk(response, 'Atlas processes request');
+
+  const data = (await response.json()) as AtlasProcessesResponse;
+  const limit = Math.min(Math.max(options?.limit ?? 6, 1), 20);
+  const hostNames: string[] = [];
+
+  for (const process of data.results ?? []) {
+    const candidate = process.userAlias?.trim() || process.hostname?.trim();
+    if (!candidate || !ATLAS_MONGODB_NET_SUFFIX.test(candidate)) continue;
+    if (!hostNames.includes(candidate)) hostNames.push(candidate);
+    if (hostNames.length >= limit) break;
+  }
+
+  return hostNames;
+}
+
+async function enrichAtlasLogHostNameHint(
+  config: AtlasLogsEnvConfig,
+  hostName: string,
+  hint: string | undefined,
+  token?: string,
+): Promise<string | undefined> {
+  const parts = [hint, describeAtlasLogHostNameIssue(hostName)].filter(Boolean);
+  try {
+    const processHosts = await fetchAtlasProcessHostNames(config, { token, limit: 3 });
+    if (processHosts.length > 0) {
+      parts.push(`Example node hostnames in this project: ${processHosts.join(', ')}.`);
+    }
+  } catch {
+    // processes list is best-effort for hints only
+  }
+  return parts.length > 0 ? parts.join(' ') : undefined;
+}
+
 /** Download and decompress a mongod/mongos log file from Atlas. */
 export async function fetchAtlasDatabaseLogs(
   config: AtlasLogsEnvConfig,
@@ -339,6 +474,14 @@ export async function fetchAtlasDatabaseLogs(
   const hostName = options?.hostName?.trim() || config.hostName?.trim();
   if (!hostName) {
     throw new Error('ATLAS_NODE_HOSTNAME is required to download database logs.');
+  }
+
+  const hostNameIssue = describeAtlasLogHostNameIssue(hostName);
+  if (hostNameIssue) {
+    throw new AtlasLogsApiError('ATLAS_NODE_HOSTNAME is not a valid Atlas log download node hostname.', 400, {
+      code: 'INVALID_HOSTNAME',
+      hint: hostNameIssue,
+    });
   }
 
   const logName = options?.logName ?? 'mongodb.gz';
@@ -407,7 +550,16 @@ export async function fetchAtlasLogsSnapshot(
         token,
       });
     } catch (error) {
-      databaseLogWarning = atlasLogWarningFromError(error);
+      const warning = atlasLogWarningFromError(error);
+      if (config.hostName) {
+        warning.hint = await enrichAtlasLogHostNameHint(
+          config,
+          config.hostName,
+          warning.hint,
+          token,
+        );
+      }
+      databaseLogWarning = warning;
     }
   }
 

@@ -188,6 +188,8 @@ export type AtlasLogsStatus = {
   hasHostName: boolean;
   groupIdMasked?: string;
   serverEgressIp?: string;
+  hostNameLooksValid?: boolean;
+  hostNameHint?: string;
 };
 
 export type AtlasProjectEvent = {
