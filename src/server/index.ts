@@ -25,6 +25,7 @@ import { buildPromptBundle, buildRetrievalQuery } from '../rag/promptBundle.js';
 import { parseDdlToModel } from '../utilities/ddlParser.js';
 import { generateMockCsvFromDdl, verifyMockCsvGenerator } from '../utilities/mockCsvFromDdl.js';
 import type { MigrationPlan, SqlStructuralModel } from '../types.js';
+import { readCsvToAtlasPathFromEnv } from '../utilities/csvToAtlas.js';
 import { getPipelineConfigStatus } from './pipelineConfig.js';
 import { runFullPipeline } from './runPipeline.js';
 import { runFullPipelineWithStream } from './pipelineStream.js';
@@ -650,9 +651,11 @@ app.get('/api/pipeline/config', async (req, res) => {
     }
 
     const storedSecrets = authEnabled ? readTenantSecrets(ROOT, tenantId) : null;
+    const csvToAtlasFromEnv = Boolean(readCsvToAtlasPathFromEnv(process.env));
 
     res.json({
       ...status,
+      csvToAtlasFromEnv: csvToAtlasFromEnv || status.csvToAtlasFromEnv,
       mongoUriMasked: effectiveMongoUri ? maskMongoUri(effectiveMongoUri) : undefined,
       mongodbModelKeyMasked: effectiveModelKey
         ? tenantSecretsStatus({ version: 1, updatedAt: '', mongodbModelKey: effectiveModelKey }).mongodbModelKeyMasked

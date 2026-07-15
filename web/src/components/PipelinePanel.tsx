@@ -13,6 +13,8 @@ import {
 import { pickCsvDirectory, pickCsvFiles } from '../directoryPicker';
 import {
   hydratePipelineSettingsFromConfig,
+  isCsvToAtlasServerConfigured,
+  csvToAtlasUserOverridePath,
   isEnvMongoPlaceholder,
   isEnvModelKeyPlaceholder,
   isLikelyLocalFilesystemPath,
@@ -123,10 +125,9 @@ export function PipelinePanel({
       const status = await fetchPipelineConfig({
         schemaDialect: dialect,
         csvSourcePath: current.csvSourcePath || csvSourcePath || undefined,
-        csvToAtlasPath:
-          config?.serverManagedCsvToAtlas || config?.csvToAtlasFromEnv
-            ? undefined
-            : current.csvToAtlasPath.trim() || undefined,
+        csvToAtlasPath: isCsvToAtlasServerConfigured(config, csvToAtlasUserOverridePath(current.csvToAtlasPath, config))
+          ? undefined
+          : current.csvToAtlasPath.trim() || undefined,
         generateMockCsv: current.generateMockCsv,
         mongoUri: mongoUriOverrideForFetch(current.mongoUri),
         mongodbModelKey: modelKeyOverrideForFetch(current.mongodbModelKey),
@@ -137,7 +138,7 @@ export function PipelinePanel({
     } finally {
       setLoadingConfig(false);
     }
-  }, [dialect, csvSourcePath, config?.serverManagedCsvToAtlas, config?.csvToAtlasFromEnv]);
+  }, [dialect, csvSourcePath, config]);
 
   useEffect(() => {
     if (!open) return;
@@ -201,7 +202,8 @@ export function PipelinePanel({
   const dataSourceMode: DataSourceMode = form.generateMockCsv ? 'mock' : 'real';
   const requiresCsvUpload = Boolean(config?.requiresCsvUpload);
   const serverManagedCsvToAtlas = Boolean(config?.serverManagedCsvToAtlas);
-  const serverConfiguredCsvToAtlas = serverManagedCsvToAtlas || Boolean(config?.csvToAtlasFromEnv);
+  const csvToAtlasOverridePath = csvToAtlasUserOverridePath(form.csvToAtlasPath, config);
+  const serverConfiguredCsvToAtlas = isCsvToAtlasServerConfigured(config, csvToAtlasOverridePath);
   const effectiveCsvPath =
     form.csvSourcePath.trim() ||
     resolveHostedCsvSourcePath(csvSourcePath, requiresCsvUpload) ||
@@ -221,7 +223,7 @@ export function PipelinePanel({
   const hasModelKeyInput = Boolean(formModelKey && !isEnvModelKeyPlaceholder(formModelKey));
   const mongoReachable = Boolean(config?.mongoConnectivity?.ok);
   const hasMongoUri = mongoReachable;
-  const hasCsvToAtlasInput = Boolean(form.csvToAtlasPath.trim()) && !serverConfiguredCsvToAtlas;
+  const hasCsvToAtlasInput = Boolean(csvToAtlasOverridePath);
   const hasCsvToAtlas = envCsvToAtlas || hasCsvToAtlasInput || serverConfiguredCsvToAtlas;
 
   const csvSourceHint = `Export tables from ${dialectLabel} as CSV files named after the table or collection (e.g. products.csv).`;

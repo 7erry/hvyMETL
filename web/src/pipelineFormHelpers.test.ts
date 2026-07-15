@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
+  csvToAtlasUserOverridePath,
   hydratePipelineSettingsFromConfig,
+  isCsvToAtlasServerConfigured,
   isEnvMongoPlaceholder,
   isLikelyLocalFilesystemPath,
   mongoUriInputValue,
@@ -38,9 +40,11 @@ describe('pipelineFormHelpers', () => {
       csvSourcePath: '/server/csv',
       hasMongoUri: true,
       hasModelKey: false,
+      hasCsvToAtlas: false,
       csvToAtlasResolvedPath: '/opt/csvToAtlas',
       csvToAtlasLabel: 'csvToAtlas',
       serverManagedCsvToAtlas: false,
+      csvToAtlasFromEnv: false,
     };
 
     expect(
@@ -116,10 +120,39 @@ describe('pipelineFormHelpers', () => {
     ).toEqual({
       mongoUri: '(configured in .env)',
       mongodbModelKey: '(configured in .env)',
-      csvToAtlasPath: '/opt/csvToAtlas',
+      csvToAtlasPath: '',
       targetDb: 'tenant_db',
       csvSourcePath: '',
     });
+  });
+
+  it('hides csvToAtlas form path when server .env provides a valid install', () => {
+    const status = {
+      defaultTargetDb: 'csv_to_atlas',
+      csvSourcePath: '',
+      hasMongoUri: true,
+      hasModelKey: false,
+      hasCsvToAtlas: true,
+      csvToAtlasResolvedPath: '/opt/csvToAtlas',
+      csvToAtlasLabel: 'csvToAtlas',
+      serverManagedCsvToAtlas: false,
+      csvToAtlasFromEnv: false,
+    };
+
+    expect(isCsvToAtlasServerConfigured(status)).toBe(true);
+    expect(
+      hydratePipelineSettingsFromConfig(
+        {
+          mongoUri: '',
+          mongodbModelKey: '',
+          csvToAtlasPath: '',
+          targetDb: '',
+          csvSourcePath: '',
+        },
+        status,
+        '',
+      ).csvToAtlasPath,
+    ).toBe('');
   });
 
   it('locks csvToAtlas path when configured in server .env', () => {
@@ -128,6 +161,7 @@ describe('pipelineFormHelpers', () => {
       csvSourcePath: '',
       hasMongoUri: true,
       hasModelKey: false,
+      hasCsvToAtlas: true,
       csvToAtlasResolvedPath: '/opt/csvToAtlas',
       csvToAtlasLabel: 'csvToAtlas',
       serverManagedCsvToAtlas: false,
@@ -149,7 +183,7 @@ describe('pipelineFormHelpers', () => {
     ).toEqual({
       mongoUri: '(configured in .env)',
       mongodbModelKey: '',
-      csvToAtlasPath: '/opt/csvToAtlas',
+      csvToAtlasPath: '',
       targetDb: 'csv_to_atlas',
       csvSourcePath: '',
     });
@@ -161,6 +195,7 @@ describe('pipelineFormHelpers', () => {
       csvSourcePath: '',
       hasMongoUri: true,
       hasModelKey: false,
+      hasCsvToAtlas: true,
       csvToAtlasResolvedPath: '/opt/csvToAtlas',
       csvToAtlasLabel: 'csvToAtlas',
       serverManagedCsvToAtlas: false,

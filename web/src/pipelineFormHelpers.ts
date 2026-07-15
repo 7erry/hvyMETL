@@ -34,6 +34,34 @@ export function modelKeyOverrideForFetch(modelKey: string): string | undefined {
   return trimmed;
 }
 
+type CsvToAtlasConfigSlice = Pick<
+  PipelineConfigStatus,
+  'serverManagedCsvToAtlas' | 'csvToAtlasFromEnv' | 'hasCsvToAtlas' | 'csvToAtlasResolvedPath'
+>;
+
+/** True when the API server already provides csvToAtlas (hide the settings field unless the user is overriding). */
+export function isCsvToAtlasServerConfigured(
+  status: CsvToAtlasConfigSlice | null | undefined,
+  userOverridePath = '',
+): boolean {
+  if (!status || userOverridePath.trim()) return false;
+  if (status.serverManagedCsvToAtlas) return true;
+  if (status.csvToAtlasFromEnv) return true;
+  return Boolean(status.hasCsvToAtlas && status.csvToAtlasResolvedPath);
+}
+
+/** User-typed csvToAtlas path that differs from the server-resolved installation. */
+export function csvToAtlasUserOverridePath(
+  formPath: string,
+  status: Pick<PipelineConfigStatus, 'csvToAtlasResolvedPath' | 'csvToAtlasLabel'> | null | undefined,
+): string {
+  const trimmed = formPath.trim();
+  if (!trimmed) return '';
+  const serverPath = (status?.csvToAtlasResolvedPath ?? status?.csvToAtlasLabel ?? '').trim();
+  if (serverPath && trimmed === serverPath) return '';
+  return trimmed;
+}
+
 /**
  * Fill empty pipeline settings from server config when the panel opens.
  * Never overwrites values the user is already editing.
@@ -60,8 +88,9 @@ export function hydratePipelineSettingsFromConfig(
     prev.mongoUri.trim().length > 0 && !isEnvMongoPlaceholder(prev.mongoUri);
   const hasUserModelKey =
     prev.mongodbModelKey.trim().length > 0 && !isEnvModelKeyPlaceholder(prev.mongodbModelKey);
-  const csvToAtlasLocked = status.serverManagedCsvToAtlas || Boolean(status.csvToAtlasFromEnv);
-  const hasUserCsvToAtlas = prev.csvToAtlasPath.trim().length > 0 && !csvToAtlasLocked;
+  const userCsvToAtlasOverride = csvToAtlasUserOverridePath(prev.csvToAtlasPath, status);
+  const csvToAtlasLocked = isCsvToAtlasServerConfigured(status, userCsvToAtlasOverride);
+  const hasUserCsvToAtlas = Boolean(userCsvToAtlasOverride);
 
   const storedMongo = status.tenantSecrets?.hasMongoUri;
   const storedModelKey = status.tenantSecrets?.hasMongodbModelKey;
@@ -84,9 +113,9 @@ export function hydratePipelineSettingsFromConfig(
           ? ENV_MODEL_KEY_PLACEHOLDER
           : prev.mongodbModelKey,
     csvToAtlasPath: csvToAtlasLocked
-      ? status.csvToAtlasResolvedPath || status.csvToAtlasLabel || 'Configured on server'
+      ? ''
       : hasUserCsvToAtlas
-        ? prev.csvToAtlasPath
+        ? userCsvToAtlasOverride
         : status.csvToAtlasResolvedPath || status.csvToAtlasLabel || '',
   };
 }
