@@ -109,7 +109,6 @@ export function ManagerView({
   }, [pendingReviewCount, schemaPhase]);
 
   const showReviewActions = schemaPhase === 'after' && pendingReviewCount > 0;
-  const pipelineSucceeded = migrationArtifacts?.pipelineResult?.ok === true;
 
   const domains = useMemo(
     () =>
@@ -211,16 +210,10 @@ export function ManagerView({
                 <button
                   type="button"
                   className={showReviewActions ? 'secondary' : 'primary'}
-                  onClick={() => {
-                    if (pipelineSucceeded && !pipelineOpen) {
-                      onOpenMigrationView();
-                    } else {
-                      onRunPipeline();
-                    }
-                  }}
+                  onClick={onRunPipeline}
                   disabled={!model}
                 >
-                  {pipelineSucceeded && !pipelineOpen ? 'Done' : 'Run pipeline'}
+                  Run pipeline
                 </button>
                 <button type="button" className="secondary" onClick={onGenerateReport} disabled={!model || exporting}>
                   {exporting ? 'Generating…' : 'Generate report'}

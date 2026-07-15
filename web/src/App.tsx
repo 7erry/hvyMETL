@@ -137,7 +137,6 @@ export default function App() {
     () => Object.keys(cardinalityOverrides).length > 0 || Object.keys(forceEmbedOverrides).length > 0,
     [cardinalityOverrides, forceEmbedOverrides],
   );
-  const pipelineSucceeded = migrationArtifacts?.pipelineResult?.ok === true;
 
   const handleCardinalityOverridesChange = (
     overrides: SessionState['cardinalityOverrides'],
@@ -843,19 +842,8 @@ export default function App() {
             </button>
           ) : uiRole === 'developer' ? (
             <>
-              <button
-                type="button"
-                className="primary"
-                onClick={() => {
-                  if (pipelineSucceeded && !pipelineOpen) {
-                    setSessionField('view', 'migration');
-                  } else {
-                    setPipelineOpen(true);
-                  }
-                }}
-                disabled={!model}
-              >
-                {pipelineSucceeded && !pipelineOpen ? 'Done' : 'Run pipeline'}
+              <button type="button" className="primary" onClick={() => setPipelineOpen(true)} disabled={!model}>
+                Run pipeline
               </button>
               <button type="button" className="secondary" onClick={() => void handleAiExport()} disabled={!model || exporting}>
                 {exporting ? 'Exporting…' : 'Export migration'}
