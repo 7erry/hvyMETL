@@ -959,35 +959,33 @@ textarea {
 .legend-chip {
   display: inline-flex;
   align-items: center;
-  gap: 0.22rem;
+  gap: 0.28rem;
   white-space: nowrap;
 }
 
-.legend-swatch {
-  display: inline-block;
-  width: 0.42rem;
-  height: 0.42rem;
-  border-radius: 50%;
+.diagram-tag-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 0.9rem;
+  font-family: ui-monospace, monospace;
+  font-size: 0.72rem;
+  line-height: 1;
   flex-shrink: 0;
 }
 
-.legend-swatch--pk {
-  background: var(--mdb-green-base);
-  box-shadow: 0 0 0 1px rgba(0, 237, 100, 0.35);
+.diagram-tag-icon--id,
+.diagram-tag-icon--sql-pk {
+  color: #00ed64;
 }
 
-.legend-swatch--fk {
-  background: #4fc3f7;
-  box-shadow: 0 0 0 1px rgba(79, 195, 247, 0.35);
+.diagram-tag-icon--embed,
+.diagram-tag-icon--sql-fk {
+  color: var(--mdb-spring-green);
 }
 
-.legend-swatch--denorm {
-  background: #ffb347;
-  box-shadow: 0 0 0 1px rgba(255, 179, 71, 0.35);
-}
-
-.legend-dot {
-  margin-right: 0.2rem;
+.diagram-tag-icon--denorm {
+  color: rgba(227, 252, 247, 0.9);
 }
 
 .legend-hint {

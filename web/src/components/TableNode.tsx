@@ -1,6 +1,7 @@
 import { memo } from 'react';
 import { Handle, Position, type NodeProps } from '@xyflow/react';
 import type { TableModel } from '../types';
+import { SQL_COLUMN_GLYPH } from '../fieldTagIcons';
 
 export type TableNodeData = {
   table: TableModel;
@@ -66,7 +67,7 @@ function TableNodeComponent({ data }: NodeProps & { data: TableNodeData }) {
                 />
               ) : null}
               <span className="column-name">
-                {isPk ? '🔑 ' : isFk ? '↗ ' : ''}
+                {isPk ? `${SQL_COLUMN_GLYPH.pk} ` : isFk ? `${SQL_COLUMN_GLYPH.fk} ` : ''}
                 {col.name}
               </span>
               <span className="column-type">{col.sqlType}</span>

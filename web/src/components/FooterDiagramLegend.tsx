@@ -1,3 +1,11 @@
+import {
+  MongoDenormTagIcon,
+  MongoEmbedTagIcon,
+  MongoIdTagIcon,
+  SqlFkTagIcon,
+  SqlPkTagIcon,
+} from '../fieldTagIcons';
+
 type FooterDiagramLegendProps = {
   variant: 'sql' | 'mongo';
   stats: string;
@@ -14,22 +22,22 @@ export function FooterDiagramLegend({ variant, stats }: FooterDiagramLegendProps
       {variant === 'sql' ? (
         <>
           <span className="legend-chip">
-            <i className="legend-swatch legend-swatch--pk" aria-hidden /> PK
+            <SqlPkTagIcon /> PK
           </span>
           <span className="legend-chip">
-            <i className="legend-swatch legend-swatch--fk" aria-hidden /> FK
+            <SqlFkTagIcon /> FK
           </span>
         </>
       ) : (
         <>
           <span className="legend-chip">
-            <i className="legend-swatch legend-swatch--pk" aria-hidden /> _id
+            <MongoIdTagIcon /> _id
           </span>
           <span className="legend-chip">
-            <i className="legend-swatch legend-swatch--fk" aria-hidden /> Embed
+            <MongoEmbedTagIcon /> Embed
           </span>
           <span className="legend-chip">
-            <i className="legend-swatch legend-swatch--denorm" aria-hidden /> Denorm
+            <MongoDenormTagIcon /> Denorm
           </span>
         </>
       )}

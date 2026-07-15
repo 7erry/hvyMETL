@@ -2,6 +2,7 @@ import { memo } from 'react';
 import { Handle, Position, type NodeProps } from '@xyflow/react';
 import type { CollectionFieldRow } from '../migrationPlanDisplay';
 import type { CollectionPlan } from '../migrationPlanTypes';
+import { mongoFieldTagPrefix } from '../fieldTagIcons';
 
 export type CollectionNodeData = {
   collection: CollectionPlan;
@@ -16,16 +17,6 @@ export type CollectionNodeData = {
   /** Whether this collection has non-field outgoing edges. */
   hasOutgoing: boolean;
 };
-
-function tagIcon(tags: string[]): string {
-  if (tags.includes('id')) return '🔑 ';
-  if (tags.includes('embed')) return '⊕ ';
-  if (tags.includes('denorm')) return '⇢ ';
-  if (tags.includes('computed')) return 'ƒ ';
-  if (tags.includes('bucket')) return '⏱ ';
-  if (tags.includes('index')) return '◆ ';
-  return '';
-}
 
 function CollectionNodeComponent({ data }: NodeProps & { data: CollectionNodeData }) {
   const { collection, fields, selected, related, dimmed, linkFields, hasIncoming, hasOutgoing } = data;
@@ -96,7 +87,7 @@ function CollectionNodeComponent({ data }: NodeProps & { data: CollectionNodeDat
           return (
             <li key={field.name} className={rowClass}>
               <span className="column-name">
-                {tagIcon(field.tags)}
+                {mongoFieldTagPrefix(field.tags)}
                 {field.name}
               </span>
               <span className="column-type">{field.bsonType}</span>
