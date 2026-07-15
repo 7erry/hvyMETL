@@ -6,7 +6,12 @@
 import { gunzipSync } from 'node:zlib';
 
 const ATLAS_OAUTH_URL = 'https://cloud.mongodb.com/api/oauth/token';
-const ATLAS_API_BASE = 'https://cloud.mongodb.com/api/v2';
+const ATLAS_API_BASE = 'https://cloud.mongodb.com/api/atlas/v2';
+/** Atlas Admin API version headers (required for v2 resources). */
+const ATLAS_EVENTS_ACCEPT = 'application/vnd.atlas.2025-02-19+json';
+const ATLAS_LOGS_ACCEPT = 'application/vnd.atlas.2025-03-12+gzip';
+
+const ATLAS_GROUP_ID_PATTERN = /^[a-f0-9]{24}$/i;
 
 export type AtlasLogFileName =
   | 'mongodb.gz'
@@ -93,6 +98,11 @@ export function readAtlasLogsConfig(env: NodeJS.ProcessEnv = process.env): Atlas
   const hostName = normalizeAtlasEnvValue(env.ATLAS_NODE_HOSTNAME);
 
   if (!clientId || !clientSecret || !groupId) return null;
+  if (!ATLAS_GROUP_ID_PATTERN.test(groupId)) {
+    throw new Error(
+      `ATLAS_GROUP_ID must be a 24-character hexadecimal Atlas project id (found "${groupId}").`,
+    );
+  }
   return { clientId, clientSecret, groupId, hostName };
 }
 
@@ -175,7 +185,7 @@ export async function fetchAtlasProjectEvents(
     method: 'GET',
     headers: {
       Authorization: `Bearer ${token}`,
-      Accept: 'application/json',
+      Accept: ATLAS_EVENTS_ACCEPT,
     },
   });
 
@@ -225,7 +235,10 @@ export async function fetchAtlasDatabaseLogs(
   const url = `${ATLAS_API_BASE}/groups/${encodeURIComponent(config.groupId)}/clusters/${encodeURIComponent(hostName)}/logs/${encodeURIComponent(logName)}`;
   const response = await fetchImpl(url, {
     method: 'GET',
-    headers: { Authorization: `Bearer ${token}` },
+    headers: {
+      Authorization: `Bearer ${token}`,
+      Accept: ATLAS_LOGS_ACCEPT,
+    },
   });
 
   if (!response.ok) {

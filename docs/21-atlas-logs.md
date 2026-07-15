@@ -10,8 +10,8 @@ Migration Studio.
 
 | Capability | Atlas API | UI |
 | --- | --- | --- |
-| **Project events** | `GET /api/v2/groups/{groupId}/events` | Manager sidebar → **Atlas Logs** |
-| **Database logs** | `GET /api/v2/groups/{groupId}/clusters/{hostName}/logs/{logName}` | Last N lines of `mongodb.gz` (gzip decompressed server-side) |
+| **Project events** | `GET /api/atlas/v2/groups/{groupId}/events` | Manager sidebar → **Atlas Logs** |
+| **Database logs** | `GET /api/atlas/v2/groups/{groupId}/clusters/{hostName}/logs/{logName}.gz` | Last N lines of `mongodb.gz` (gzip decompressed server-side) |
 | **OAuth token** | `POST /api/oauth/token` (service account) | Cached ~1 hour on the API server |
 
 ## 2. Environment variables
@@ -26,7 +26,10 @@ Set these on the **API server** `.env` (never commit secrets):
 | `ATLAS_NODE_HOSTNAME` | no | Shard/host FQDN for log download, e.g. `cluster0-shard-00-00.abc12.mongodb.net` |
 
 Create a service account in Atlas: **Access Manager → Service Accounts → Add Service Account**.
-Grant access to the target project (Project Owner or read access to logs/events).
+Grant access to the target project (Project Cluster Log Viewer or Project Owner).
+
+Requests use versioned `Accept` headers (`application/vnd.atlas.2025-02-19+json` for events,
+`application/vnd.atlas.2025-03-12+gzip` for log downloads) against `https://cloud.mongodb.com/api/atlas/v2/…`.
 
 ## 3. API routes
 

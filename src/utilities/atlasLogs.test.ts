@@ -73,18 +73,36 @@ describe('atlasLogs', () => {
     expect(oauthCalls).toBe(1);
   });
 
-  it('fetches project events', async () => {
-    mockFetch({
-      '/api/oauth/token': () =>
-        new Response(JSON.stringify({ access_token: 'token-abc', expires_in: 3600 }), { status: 200 }),
-      '/events?': () =>
-        new Response(
+  it('rejects invalid group ids', () => {
+    expect(() =>
+      readAtlasLogsConfig({
+        ATLAS_CLIENT_ID: 'id',
+        ATLAS_CLIENT_SECRET: 'secret',
+        ATLAS_GROUP_ID: 'not-a-valid-project-id',
+      }),
+    ).toThrow(/24-character hexadecimal/);
+  });
+
+  it('fetches project events from the atlas v2 API', async () => {
+    configureAtlasLogsRuntime({
+      fetchFn: vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+        const url = String(input);
+        if (url.includes('/api/oauth/token')) {
+          return new Response(JSON.stringify({ access_token: 'token-abc', expires_in: 3600 }), { status: 200 });
+        }
+        expect(url).toContain('https://cloud.mongodb.com/api/atlas/v2/groups/');
+        expect(url).toContain('/events');
+        const headers = new Headers(init?.headers);
+        expect(headers.get('Accept')).toBe('application/vnd.atlas.2025-02-19+json');
+        return new Response(
           JSON.stringify({
             results: [{ id: '1', eventTypeName: 'CLUSTER_CREATED', created: '2026-01-01T00:00:00Z' }],
             totalCount: 1,
           }),
           { status: 200 },
-        ),
+        );
+      }),
+      clearTokenCache: true,
     });
 
     const result = await fetchAtlasProjectEvents(TEST_CONFIG, { token: 'token-abc' });
@@ -94,8 +112,16 @@ describe('atlasLogs', () => {
 
   it('downloads and decompresses database logs', async () => {
     const payload = gzipSync(Buffer.from('line one\nline two\nline three\n', 'utf-8'));
-    mockFetch({
-      '/logs/mongodb.gz': () => new Response(payload, { status: 200 }),
+    configureAtlasLogsRuntime({
+      fetchFn: vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+        const url = String(input);
+        expect(url).toContain('https://cloud.mongodb.com/api/atlas/v2/groups/');
+        expect(url).toContain('/logs/mongodb.gz');
+        const headers = new Headers(init?.headers);
+        expect(headers.get('Accept')).toBe('application/vnd.atlas.2025-03-12+gzip');
+        return new Response(payload, { status: 200 });
+      }),
+      clearTokenCache: true,
     });
 
     const result = await fetchAtlasDatabaseLogs(TEST_CONFIG, {
