@@ -6,7 +6,7 @@
 
 import { describe, expect, it } from 'vitest';
 import type { RelationshipModel, SqlStructuralModel, TableModel } from '../types.js';
-import { WORKLOAD_PROFILES } from '../profiles/profiles.js';
+import { WORKLOAD_PROFILES, buildCustomProfile } from '../profiles/profiles.js';
 import { buildMigrationPlan, isLineItemsChild, isMetaTable, shouldDefaultEmbedLineItems } from './patternSelector.js';
 
 /** Build a minimal TableModel with sensible defaults. */
@@ -235,7 +235,9 @@ describe('buildMigrationPlan', () => {
     const plan = buildMigrationPlan(model, WORKLOAD_PROFILES.ledger);
     const locations = plan.collections.find((collection) => collection.sourceTable === 'locations');
 
-    expect(locations?.embeddedArrays.some((array) => array.sourceTable === 'company_assets')).toBe(false);
+    const partialEmbed = locations?.embeddedArrays.find((array) => array.sourceTable === 'company_assets');
+    expect(partialEmbed?.subsetLimit).toBe(25);
+    expect(plan.collections.some((collection) => collection.sourceTable === 'company_assets')).toBe(true);
   });
 
   it('uses developer bounded cardinality to embed a selected multi-parent relationship', () => {
@@ -338,7 +340,7 @@ describe('buildMigrationPlan', () => {
     const products = plan.collections.find((collection) => collection.sourceTable === 'products');
 
     const subsetArray = products?.embeddedArrays.find((array) => array.field === 'recentReviews');
-    expect(subsetArray?.subsetLimit).toBe(10);
+    expect(subsetArray?.subsetLimit).toBe(25);
     expect(subsetArray?.overflowCollection).toBe('reviews');
     expect(products?.patterns.some((decision) => decision.pattern === 'subset')).toBe(true);
     expect(products?.patterns.some((decision) => decision.pattern === 'outlier')).toBe(true);
@@ -430,14 +432,117 @@ describe('buildMigrationPlan', () => {
       ],
     };
 
-    const plan = buildMigrationPlan(model, WORKLOAD_PROFILES.ledger);
+    const plan = buildMigrationPlan(
+      model,
+      buildCustomProfile(
+        { readPercent: 20, writePercent: 80, peakRpm: 20000, growthRate: '15GB/month' },
+        true,
+      ),
+    );
     const accounts = plan.collections.find((collection) => collection.sourceTable === 'accounts');
 
     expect(accounts?.embeddedArrays).toHaveLength(0);
     expect(accounts?.patterns.some((decision) => decision.pattern === 'reference')).toBe(true);
     expect(plan.collections.some((collection) => collection.sourceTable === 'transactions')).toBe(true);
-    // Ledger durability tuning flows into the plan.
     expect(plan.writeConcern).toEqual({ w: 'majority', journal: true });
+  });
+
+  it('uses subset embeds for unbounded children on balanced workloads', () => {
+    const model: SqlStructuralModel = {
+      source: 'synthetic.db',
+      tables: [
+        table({ name: 'accounts' }),
+        table({
+          name: 'transactions',
+          rowCount: 9000,
+          columns: [
+            { name: 'id', sqlType: 'INTEGER', bsonType: 'long', nullable: false, isPrimaryKey: true },
+            { name: 'account_id', sqlType: 'INTEGER', bsonType: 'long', nullable: false, isPrimaryKey: false },
+            { name: 'amount', sqlType: 'INTEGER', bsonType: 'long', nullable: false, isPrimaryKey: false },
+          ],
+          foreignKeys: [{ column: 'account_id', referencesTable: 'accounts', referencesColumn: 'id' }],
+        }),
+      ],
+      relationships: [
+        relationship({ parentTable: 'accounts', childTable: 'transactions', fkColumn: 'account_id', avgChildrenPerParent: 200, maxChildrenPerParent: 800, isBounded: false }),
+      ],
+    };
+
+    const plan = buildMigrationPlan(model, WORKLOAD_PROFILES.ledger);
+    const accounts = plan.collections.find((collection) => collection.sourceTable === 'accounts');
+
+    expect(accounts?.embeddedArrays.some((array) => array.sourceTable === 'transactions')).toBe(true);
+    expect(accounts?.patterns.some((decision) => decision.pattern === 'subset')).toBe(true);
+  });
+
+  it('embeds bounded children even on balanced write/read workloads', () => {
+    const model: SqlStructuralModel = {
+      source: 'synthetic.db',
+      tables: [
+        table({ name: 'accounts' }),
+        table({
+          name: 'account_notes',
+          rowCount: 500,
+          columns: [
+            { name: 'id', sqlType: 'INTEGER', bsonType: 'long', nullable: false, isPrimaryKey: true },
+            { name: 'account_id', sqlType: 'INTEGER', bsonType: 'long', nullable: false, isPrimaryKey: false },
+            { name: 'body', sqlType: 'TEXT', bsonType: 'string', nullable: false, isPrimaryKey: false },
+          ],
+          foreignKeys: [{ column: 'account_id', referencesTable: 'accounts', referencesColumn: 'id' }],
+        }),
+      ],
+      relationships: [
+        relationship({
+          parentTable: 'accounts',
+          childTable: 'account_notes',
+          fkColumn: 'account_id',
+          avgChildrenPerParent: 8,
+          maxChildrenPerParent: 20,
+          isBounded: true,
+        }),
+      ],
+    };
+
+    const plan = buildMigrationPlan(model, WORKLOAD_PROFILES.ledger);
+    const accounts = plan.collections.find((collection) => collection.sourceTable === 'accounts');
+
+    expect(accounts?.embeddedArrays.some((array) => array.sourceTable === 'account_notes')).toBe(true);
+    expect(plan.collections.some((collection) => collection.sourceTable === 'account_notes')).toBe(false);
+  });
+
+  it('embeds unknown-cardinality DDL children when the workload is not write-heavy', () => {
+    const model: SqlStructuralModel = {
+      source: 'ddl:oracle',
+      tables: [
+        table({ name: 'departments', rowCount: 0 }),
+        table({
+          name: 'department_contacts',
+          rowCount: 0,
+          columns: [
+            { name: 'id', sqlType: 'INTEGER', bsonType: 'long', nullable: false, isPrimaryKey: true },
+            { name: 'department_id', sqlType: 'INTEGER', bsonType: 'long', nullable: false, isPrimaryKey: false },
+            { name: 'email', sqlType: 'VARCHAR(120)', bsonType: 'string', nullable: false, isPrimaryKey: false },
+          ],
+          foreignKeys: [{ column: 'department_id', referencesTable: 'departments', referencesColumn: 'id' }],
+        }),
+      ],
+      relationships: [
+        relationship({
+          parentTable: 'departments',
+          childTable: 'department_contacts',
+          fkColumn: 'department_id',
+          avgChildrenPerParent: 0,
+          maxChildrenPerParent: 0,
+          isBounded: false,
+        }),
+      ],
+    };
+
+    const plan = buildMigrationPlan(model, WORKLOAD_PROFILES.catalog);
+    const departments = plan.collections.find((collection) => collection.sourceTable === 'departments');
+
+    expect(departments?.embeddedArrays.some((array) => array.sourceTable === 'department_contacts')).toBe(true);
+    expect(plan.collections.some((collection) => collection.sourceTable === 'department_contacts')).toBe(false);
   });
 
   it('detects self-referencing tables as the Tree pattern', () => {

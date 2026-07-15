@@ -11,9 +11,8 @@ import type {
   WorkloadProfile,
 } from '../types.js';
 import { isPolymorphicTable } from './patternSelector.js';
+import { EMBED_LEANING_PERCENT, READ_HEAVY_PERCENT, WRITE_HEAVY_PERCENT } from './embedThresholds.js';
 
-const READ_HEAVY_PERCENT = 70;
-const WRITE_HEAVY_PERCENT = 60;
 const FIREHOSE_MIN_ROWS = 10_000;
 const ARCHIVE_MIN_ROWS = 5_000;
 
@@ -129,6 +128,7 @@ function buildDataStatsInsights(
 function buildProfileInsights(profile: WorkloadProfile): TransformationInsight[] {
   const insights: TransformationInsight[] = [];
   const readHeavy = profile.telemetry.readPercent >= READ_HEAVY_PERCENT;
+  const embedLeaning = profile.telemetry.readPercent >= EMBED_LEANING_PERCENT;
   const writeHeavy = profile.telemetry.writePercent >= WRITE_HEAVY_PERCENT;
 
   insights.push({
@@ -137,23 +137,35 @@ function buildProfileInsights(profile: WorkloadProfile): TransformationInsight[]
     body: `${profile.telemetry.readPercent}:${profile.telemetry.writePercent} read:write · ${profile.telemetry.peakRpm.toLocaleString('en-US')} peak RPM · growth ${profile.telemetry.growthRate}.`,
   });
 
-  if (!readHeavy) {
+  if (writeHeavy && !embedLeaning) {
     insights.push({
       severity: 'warn',
-      title: 'Embed and subset patterns are gated off',
-      body: `Embed and subset apply when reads ≥ ${READ_HEAVY_PERCENT}%. This profile is ${profile.telemetry.readPercent}% read — child tables stay as references (no recent* embedded arrays on parents).`,
+      title: 'Write-heavy profile — references preferred',
+      body: `Writes are ${profile.telemetry.writePercent}% and reads are below ${EMBED_LEANING_PERCENT}% — child tables stay as references unless they are bounded, line-item, or explicitly forced to embed.`,
     });
   } else if (writeHeavy) {
     insights.push({
       severity: 'info',
-      title: 'Write-heavy signals present',
-      body: `Writes are ${profile.telemetry.writePercent}% — unbounded children prefer reference over full embed even on read-leaning profiles; firehose children may bucket when row counts support it.`,
+      title: 'Mixed workload with write-heavy signals',
+      body: `Writes are ${profile.telemetry.writePercent}% — bounded and line-item children can still fully embed; unbounded children prefer subset over pure reference when reads are ≥ ${EMBED_LEANING_PERCENT}%.`,
+    });
+  } else if (readHeavy) {
+    insights.push({
+      severity: 'success',
+      title: 'Read-heavy profile — embed and subset eligible',
+      body: `Reads are ${profile.telemetry.readPercent}% — bounded children fully embed; unbounded children get subset (recent N on parent + overflow collection).`,
+    });
+  } else if (embedLeaning) {
+    insights.push({
+      severity: 'success',
+      title: 'Embed-leaning profile — partial and bounded embeds enabled',
+      body: `Reads are ${profile.telemetry.readPercent}% — bounded children fully embed; unbounded children get subset instead of staying reference-only.`,
     });
   } else {
     insights.push({
-      severity: 'success',
-      title: 'Read-heavy profile — subset and embed eligible',
-      body: `Reads are ${profile.telemetry.readPercent}% — bounded children can fully embed; unbounded children get subset (recent N on parent + overflow collection).`,
+      severity: 'warn',
+      title: 'Reference-first profile',
+      body: `Reads are ${profile.telemetry.readPercent}% — only structural patterns (meta, junction, EAV) and explicit overrides embed by default.`,
     });
   }
 
@@ -165,18 +177,26 @@ function explainChildRelationship(
   relationship: RelationshipModel,
   childTableName: string,
   model: SqlStructuralModel,
-  readHeavy: boolean,
+  embedLeaning: boolean,
 ): string | null {
   if (isHubTable(childTableName, model)) {
     return `${childTableName} is a hub (other tables reference it) — stays its own collection; parent keeps a reference + optional computed counter instead of embedding it.`;
   }
 
-  if (!readHeavy) {
-    return `${childTableName} → reference only (profile read ratio below ${READ_HEAVY_PERCENT}%).`;
+  if (relationship.isBounded) {
+    return `${childTableName} is bounded (max ${relationship.maxChildrenPerParent}/parent) — fully embedded into ${parentTable}.`;
   }
 
-  if (relationship.isBounded) {
-    return `${childTableName} is bounded (max ${relationship.maxChildrenPerParent}/parent) — eligible for full embed on read-heavy workloads.`;
+  if (
+    relationship.maxChildrenPerParent === 0 &&
+    relationship.avgChildrenPerParent === 0 &&
+    relationship.cardinalitySource !== 'developer'
+  ) {
+    return `${childTableName} has no CSV/SQLite stats — embedded by default as a dependent child on non-write-heavy workloads.`;
+  }
+
+  if (!embedLeaning) {
+    return `${childTableName} → reference only (profile read ratio below ${EMBED_LEANING_PERCENT}%).`;
   }
 
   return `${childTableName} is treated as unbounded (max ${relationship.maxChildrenPerParent}, avg ${relationship.avgChildrenPerParent}) — subset embeds recent rows on parent; full history stays in overflow collection ${childTableName}.`;
@@ -185,7 +205,7 @@ function explainChildRelationship(
 function buildCollectionNotes(
   plan: MigrationPlan,
   model: SqlStructuralModel,
-  readHeavy: boolean,
+  embedLeaning: boolean,
 ): CollectionTransformationNote[] {
   const tablesByName = new Map(model.tables.map((table) => [table.name, table]));
 
@@ -217,7 +237,7 @@ function buildCollectionNotes(
         relationship,
         relationship.childTable,
         model,
-        readHeavy,
+        embedLeaning,
       );
       if (childNote) notes.push(childNote);
     }
@@ -330,6 +350,7 @@ export function explainTransformation(
   const hasRowStats = enrichedModel.tables.some((table) => table.rowCount > 0);
   const csvEnriched = options.csvEnriched ?? false;
   const readHeavyEligible = profile.telemetry.readPercent >= READ_HEAVY_PERCENT;
+  const embedLeaning = profile.telemetry.readPercent >= EMBED_LEANING_PERCENT;
   const writeHeavy = profile.telemetry.writePercent >= WRITE_HEAVY_PERCENT;
 
   const subsetCollectionCount = plan.collections.filter((collection) =>
@@ -349,7 +370,7 @@ export function explainTransformation(
     ...buildStructuralInsights(plan, enrichedModel, foldedTables),
   ];
 
-  const collections = buildCollectionNotes(plan, enrichedModel, readHeavyEligible);
+  const collections = buildCollectionNotes(plan, enrichedModel, embedLeaning);
 
   const base: Omit<TransformationSummary, 'markdown'> = {
     headline: formatTransformHeadline(originalModel.tables.length, plan.collections.length, foldedTables.length),

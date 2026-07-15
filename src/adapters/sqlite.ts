@@ -16,6 +16,7 @@ import type {
   SqlStructuralModel,
   TableModel,
 } from '../types.js';
+import { BOUNDED_CHILDREN_THRESHOLD } from '../design/embedThresholds.js';
 import type { KeyRange, SqlSourceAdapter } from './types.js';
 
 /** Shape of one row returned by PRAGMA table_info. */
@@ -32,12 +33,6 @@ type PragmaForeignKeyRow = {
   from: string;
   to: string | null;
 };
-
-/**
- * A child array is considered "bounded" (safe to embed) when no parent has
- * more children than this. Above it, the array risks unbounded growth.
- */
-const BOUNDED_CHILDREN_THRESHOLD = 100;
 
 /**
  * Map a raw SQLite column type to the closest BSON type, so the design

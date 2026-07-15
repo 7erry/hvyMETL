@@ -5,11 +5,11 @@
 
 import { readFileSync } from 'node:fs';
 import type { RelationshipModel, SqlStructuralModel, TableModel } from '../types.js';
+import { BOUNDED_CHILDREN_THRESHOLD } from '../design/embedThresholds.js';
 import { csvBaseName, listCsvFiles } from './csvSource.js';
 import { parseCsv } from './csv.js';
 
-/** Max children per parent still considered "bounded" for embed decisions (matches sqlite adapter). */
-export const BOUNDED_CHILDREN_THRESHOLD = 100;
+export { BOUNDED_CHILDREN_THRESHOLD } from '../design/embedThresholds.js';
 
 /** Parse one CSV file into header-keyed row records. */
 function readCsvRecords(filePath: string): Record<string, string>[] {

@@ -15,8 +15,9 @@
  *   Junction table (two FKs, no payload)        -> embedded id array
  *   Meta / *meta extension tables               -> nested object or Attribute (Rule 1)
  *   Strict line-item children (orders_items)    -> embed by default (checklist)
- *   Bounded 1:N child + read-heavy              -> embed
- *   Unbounded 1:N child + read-heavy            -> Subset (+ overflow ref)
+ *   Bounded 1:N child                           -> embed (read-heavy no longer required)
+ *   Unknown-cardinality dependent child         -> embed when workload is not write-heavy
+ *   Unbounded 1:N child + embed-leaning         -> Subset (+ overflow ref)
  *   Unbounded 1:N child + write-heavy           -> reference
  *   Heavily skewed child counts                 -> Outlier flag
  *   FK to a small lookup table + read-heavy     -> Extended Reference
@@ -46,23 +47,20 @@ import type {
   WorkloadProfile,
 } from '../types.js';
 import { singularize, toCamelCase, toPascalCase } from '../utilities/naming.js';
+import {
+  EMBED_LEANING_PERCENT,
+  LINE_ITEMS_EMBED_MAX,
+  READ_HEAVY_PERCENT,
+  SUBSET_LIMIT,
+  WRITE_HEAVY_PERCENT,
+} from './embedThresholds.js';
 
-/* -------------------------------------------------------------------------- */
-/* Tunable thresholds                                                         */
-/* -------------------------------------------------------------------------- */
-
-/** A workload writing at least this percentage is treated as write-heavy. */
-const WRITE_HEAVY_PERCENT = 60;
-/** A workload reading at least this percentage is treated as read-heavy. */
-const READ_HEAVY_PERCENT = 70;
 /** Developer-provided max cardinality at or below this value can force embedding. */
 const DEVELOPER_OVERRIDE_EMBED_MAX_CHILDREN = 5000;
 /** Tables at or below this row count can be duplicated as lookups. */
 const LOOKUP_TABLE_MAX_ROWS = 5000;
 /** Child tables with at least this many rows are "firehose" candidates. */
 const FIREHOSE_MIN_ROWS = 10000;
-/** How many child documents the Subset pattern keeps on the parent. */
-const SUBSET_LIMIT = 10;
 /** Max lookup columns duplicated by the Extended Reference pattern. */
 const EXTENDED_REFERENCE_MAX_COLUMNS = 3;
 /** A max/avg child ratio above this (with enough children) flags an outlier. */
@@ -77,8 +75,6 @@ const ARCHIVE_MIN_ROWS = 5000;
 const ARCHIVE_AFTER_DAYS_DEFAULT = 365 * 5;
 /** Atlas Online Archive should keep a recent active window on the primary cluster. */
 const ARCHIVE_ACTIVE_DATA_MINIMUM_DAYS = 90;
-/** Max children per parent treated as safely embeddable for line-item tables without stats. */
-const LINE_ITEMS_EMBED_MAX = 100;
 
 /** Peak RPM at which Single Collection is considered without an explicit preference. */
 const SINGLE_COLLECTION_MIN_RPM = 100_000;
@@ -137,6 +133,8 @@ export function isLineItemsChild(parentTable: string, childTable: TableModel): b
   if (child === `${parent}_items` || child === `${singular}_items`) return true;
   if (/_items$/i.test(child) && childTable.foreignKeys.length === 1) return true;
   if (/_lines$/i.test(child) && childTable.foreignKeys.length === 1) return true;
+  if (/_details$/i.test(child) && childTable.foreignKeys.length === 1) return true;
+  if (/_entries$/i.test(child) && childTable.foreignKeys.length === 1) return true;
   return false;
 }
 
@@ -448,6 +446,7 @@ function planChildRelationships(
   properties: Record<string, unknown>;
 } {
   const isReadHeavy = profile.telemetry.readPercent >= READ_HEAVY_PERCENT;
+  const isEmbedLeaning = profile.telemetry.readPercent >= EMBED_LEANING_PERCENT;
   const isWriteHeavy = profile.telemetry.writePercent >= WRITE_HEAVY_PERCENT;
   const ratioLabel = `${profile.telemetry.readPercent}:${profile.telemetry.writePercent} R:W at ${profile.telemetry.peakRpm.toLocaleString('en-US')} RPM`;
 
@@ -656,8 +655,8 @@ function planChildRelationships(
     if (
       shouldDefaultEmbedLineItems(relationship, childTable, table.name) &&
       !childHasDependents &&
-      isReadHeavy &&
-      !skewed
+      !skewed &&
+      !isWriteHeavy
     ) {
       const field = toCamelCase(childTable.name);
       embeddedArrays.push({ field, sourceTable: childTable.name, joinColumn: relationship.fkColumn });
@@ -680,8 +679,39 @@ function planChildRelationships(
       continue;
     }
 
-    // Rule 4: bounded children on read-heavy workloads embed fully.
-    if (relationship.isBounded && isReadHeavy && !skewed) {
+    const unknownCardinality =
+      relationship.maxChildrenPerParent === 0 &&
+      relationship.avgChildrenPerParent === 0 &&
+      relationship.cardinalitySource !== 'developer';
+
+    // DDL-only or missing stats: embed dependent children when the workload is not write-heavy.
+    if (
+      unknownCardinality &&
+      !childHasDependents &&
+      !isWriteHeavy &&
+      !isFirehoseTable(childTable) &&
+      childTable.foreignKeys.length <= 2 &&
+      !skewed
+    ) {
+      const field = toCamelCase(childTable.name);
+      embeddedArrays.push({ field, sourceTable: childTable.name, joinColumn: relationship.fkColumn });
+      properties[field] = {
+        bsonType: 'array',
+        items: { bsonType: 'object' },
+        description: `Embedded ${childTable.name} by default (no cardinality stats; assumed small dependent child).`,
+      };
+      patterns.push({
+        pattern: 'embed',
+        target: `${table.name}.${field}`,
+        reason: `No CSV/SQLite cardinality stats for ${childTable.name}; embedding into ${table.name} because the workload is not write-heavy (${ratioLabel}) and the child looks like a dependent detail table.`,
+        knowledgeSource: 'embed-vs-reference.md',
+      });
+      absorbedTables.add(childTable.name);
+      continue;
+    }
+
+    // Rule 4: bounded children embed fully (read-heavy no longer required).
+    if (relationship.isBounded && !skewed) {
       const field = toCamelCase(childTable.name);
       embeddedArrays.push({ field, sourceTable: childTable.name, joinColumn: relationship.fkColumn });
       properties[field] = {
@@ -699,9 +729,9 @@ function planChildRelationships(
       continue;
     }
 
-    // Rule 5: unbounded (or skewed) children on read-heavy workloads get the
+    // Rule 5: unbounded (or skewed) children on read-leaning workloads get the
     // Subset pattern: newest N embedded, full set referenced.
-    if (isReadHeavy) {
+    if (isEmbedLeaning || !isWriteHeavy) {
       const field = `recent${toPascalCase(childTable.name)}`;
       embeddedArrays.push({
         field,
@@ -741,7 +771,7 @@ function planChildRelationships(
     }
 
     // Read-leaning workloads also get a computed counter for referenced sets.
-    if (isReadHeavy) {
+    if (isEmbedLeaning) {
       addComputedCounter(
         childTable,
         relationship,

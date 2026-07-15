@@ -12,6 +12,7 @@
  */
 
 import type { WorkloadProfile, WorkloadProfileId, WorkloadTelemetry } from '../types.js';
+import { WRITE_HEAVY_PERCENT } from '../design/embedThresholds.js';
 import type { CustomProfileInput } from './customProfileInput.js';
 import { validateCustomProfileInput } from './customProfileInput.js';
 
@@ -140,7 +141,7 @@ export function getProfile(id: string): WorkloadProfile {
  * @param isCritical - True when lost writes are unacceptable (financial data).
  */
 export function buildCustomProfile(telemetry: WorkloadTelemetry, isCritical: boolean): WorkloadProfile {
-  const isWriteHeavy = telemetry.writePercent >= 60;
+  const isWriteHeavy = telemetry.writePercent >= WRITE_HEAVY_PERCENT;
   const isHighRpm = telemetry.peakRpm >= 100000;
 
   return {

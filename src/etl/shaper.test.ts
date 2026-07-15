@@ -104,7 +104,7 @@ describe('buildShapedQuery (document collections)', () => {
 
   it('emits a "[]" JSON-array header for the Subset pattern, capped in SQL', () => {
     expect(shaped.columns).toContain('recentReviews[]');
-    expect(shaped.sql).toContain('LIMIT 10');
+    expect(shaped.sql).toContain('LIMIT 25');
     expect(shaped.sql).toContain('json_group_array');
   });
 
