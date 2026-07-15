@@ -859,8 +859,19 @@ export function PipelinePanel({
             Cancel
           </button>
           <div className="pipeline-modal__footer-actions">
-            <button type="button" className="primary" onClick={() => void handleRun()} disabled={!canRun || running}>
-              {running ? 'Running…' : result ? 'Run again' : 'Run pipeline'}
+            <button
+              type="button"
+              className="primary"
+              onClick={() => {
+                if (result?.ok) {
+                  onClose();
+                } else {
+                  void handleRun();
+                }
+              }}
+              disabled={running || (!result?.ok && !canRun)}
+            >
+              {running ? 'Running…' : result?.ok ? 'Done' : result ? 'Run again' : 'Run pipeline'}
             </button>
           </div>
         </footer>
