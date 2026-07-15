@@ -22,6 +22,12 @@ Open **http://localhost:3847** (dev and production). Swagger UI: **http://localh
 Environment: `.env` is loaded by the API server (`MONGODB_MODEL_KEY` for hybrid RAG
 exports, same as CLI).
 
+**Hosted authentication** (https://hvymetl.studio): Auth0 with refresh tokens. If renewal
+fails (missing refresh token, cleared storage), the UI shows **Session expired — please sign
+in again** with a **Sign in again** action instead of raw Auth0 errors. See
+[`web/README.md` — Auth0 setup](../web/README.md#auth0-setup-hosted-studio) for roles,
+refresh-token rotation, and troubleshooting.
+
 ## 3. Features
 
 ### Current UI Screenshots

@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { SESSION_EXPIRED_DETAIL } from '../auth/authErrors';
 import { useAccess } from '../auth/HostedAuthProvider';
 
 type AuthGateProps = {
@@ -16,6 +17,24 @@ export function AuthGate({ children }: AuthGateProps) {
         <section className="auth-gate__card">
           <strong>Loading hvyMETL Studio…</strong>
           <p>Checking your sign-in session.</p>
+        </section>
+      </main>
+    );
+  }
+
+  if (access.sessionExpired) {
+    return (
+      <main className="auth-gate">
+        <section className="auth-gate__card">
+          <strong>Session expired</strong>
+          <p>{SESSION_EXPIRED_DETAIL}</p>
+          <button type="button" className="primary" onClick={() => void access.reauthenticate()}>
+            Sign in again
+          </button>
+          <button type="button" className="secondary" onClick={access.logout}>
+            Sign out
+          </button>
+          <a href="/terms">Terms and Conditions</a>
         </section>
       </main>
     );

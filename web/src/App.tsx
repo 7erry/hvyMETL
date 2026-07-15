@@ -52,6 +52,7 @@ import {
   inferProfile,
   fetchWorkspace,
   saveWorkspace,
+  describeApiError,
 } from './api';
 import {
   defaultSessionState,
@@ -228,7 +229,7 @@ export default function App() {
         setDialects(d);
       } catch (e) {
         setDialects(FALLBACK_DIALECTS);
-        const message = String(e);
+        const message = describeApiError(e);
         const authFailure = /401|403|authentication required|forbidden/i.test(message);
         if (authFailure && needsAuth) {
           setApiConnected(true);
@@ -319,7 +320,7 @@ export default function App() {
       const { model: m, inferred } = await importDdl(ddlText, dialect);
       await applySchema(ddlText, m, inferred?.profileId);
     } catch (e) {
-      setStatus(`Import failed: ${String(e)}`);
+      setStatus(`Import failed: ${describeApiError(e)}`);
     }
   };
 
@@ -330,7 +331,7 @@ export default function App() {
       setSessionField('ddl', text);
       await handleImportQuery(text);
     } catch (e) {
-      setStatus(`DDL import failed: ${String(e)}`);
+      setStatus(`DDL import failed: ${describeApiError(e)}`);
     }
   };
 
@@ -341,7 +342,7 @@ export default function App() {
       setSessionField('dialect', 'sqlite');
       await applySchema(d, m, inferred?.profileId);
     } catch (e) {
-      setStatus(`SQLite import failed: ${String(e)}`);
+      setStatus(`SQLite import failed: ${describeApiError(e)}`);
     }
   };
 
@@ -461,7 +462,7 @@ export default function App() {
           }));
           setStatus(`Diagram imported. Workload profile: ${inferred.label} (auto-detected).`);
         } catch (e) {
-          setStatus(`Invalid diagram file: ${String(e)}`);
+          setStatus(`Invalid diagram file: ${describeApiError(e)}`);
         }
       })();
     };
@@ -505,7 +506,7 @@ export default function App() {
           : `${data.plan.collections.length} MongoDB collections`;
         setStatus(`MongoDB diagram imported · ${summary}.`);
       } catch (e) {
-        setStatus(`Invalid MongoDB diagram file: ${String(e)}`);
+        setStatus(`Invalid MongoDB diagram file: ${describeApiError(e)}`);
       }
     };
     reader.readAsText(file);
@@ -534,7 +535,7 @@ export default function App() {
       }));
       setStatus('Transformation summary updated.');
     } catch (e) {
-      setStatus(`Explain failed: ${String(e)}`);
+      setStatus(`Explain failed: ${describeApiError(e)}`);
     } finally {
       setExplainingSummary(false);
     }
@@ -643,7 +644,7 @@ export default function App() {
         setStatus(`${summary}. ${meta.csvEnriched ? 'CSV-enriched' : 'Introspection stats'} · ${result.retrievalStrategy ?? 'RAG'}.`);
       }
     } catch (e) {
-      setStatus(`Design failed: ${String(e)}`);
+      setStatus(`Design failed: ${describeApiError(e)}`);
     } finally {
       setDesigningPlan(false);
     }
@@ -657,7 +658,7 @@ export default function App() {
       setDesignCsvLabel(pick.label);
       setStatus(`Selected ${pick.files.length} CSV file(s) from ${pick.label} for design enrichment.`);
     } catch (e) {
-      setStatus(`CSV folder pick failed: ${String(e)}`);
+      setStatus(`CSV folder pick failed: ${describeApiError(e)}`);
     }
   };
 
@@ -708,7 +709,7 @@ export default function App() {
       setSession((prev) => ({ ...prev, migrationArtifacts: artifacts, view: 'migration' }));
       setStatus(`Generated migration plan, design report, and ${artifacts.prompts.length} RAG prompts.`);
     } catch (e) {
-      setStatus(`Export failed: ${String(e)}`);
+      setStatus(`Export failed: ${describeApiError(e)}`);
     } finally {
       setExporting(false);
     }

@@ -1,5 +1,6 @@
 import type { DiagramExport, Dialect, Profile, SqlStructuralModel } from './types';
 import type { ProfileRequestFields, WorkloadProfile } from './customProfileShared';
+import { formatAuthError, toAuthError } from './auth/authErrors';
 
 const base = '';
 
@@ -12,10 +13,21 @@ export function setAccessTokenProvider(provider: AccessTokenProvider | undefined
 }
 
 async function apiFetch(input: RequestInfo | URL, init: RequestInit = {}): Promise<Response> {
-  const token = accessTokenProvider ? await accessTokenProvider() : '';
   const headers = new Headers(init.headers);
-  if (token) headers.set('authorization', `Bearer ${token}`);
+  if (accessTokenProvider) {
+    try {
+      const token = await accessTokenProvider();
+      if (token) headers.set('authorization', `Bearer ${token}`);
+    } catch (error) {
+      throw toAuthError(error);
+    }
+  }
   return fetch(input, { ...init, headers });
+}
+
+/** User-facing message for failed API calls (including auth token renewal). */
+export function describeApiError(error: unknown): string {
+  return formatAuthError(error);
 }
 
 export type ProfileInference = {

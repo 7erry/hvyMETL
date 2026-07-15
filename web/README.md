@@ -252,6 +252,22 @@ Management API** with scopes `read:roles` and `update:users`.
    - Older tenants: **Actions → Flows → Login** → drag → **Apply**
 6. **Sign out** of hvymetl.studio and **sign in again** (roles are baked in at login; refreshing is not enough)
 
+**Session expired / Missing Refresh Token**
+
+If Auth0 cannot renew your access token (for example after clearing browser storage, or when
+refresh tokens were enabled after your last login), the UI shows **Session expired — please sign
+in again** instead of a raw Auth0 error. Click **Sign in again** to re-authenticate.
+
+Typical causes:
+
+- Signed in before **Refresh Token Rotation** was enabled on the Auth0 SPA application
+- Browser cleared `localStorage` for hvymetl.studio
+- Long-idle tab where the refresh token was revoked or expired
+
+Fix: use **Sign in again** on the session screen, or sign out and sign back in. If the error
+persists, confirm the Auth0 SPA has **Refresh Token Rotation** enabled and redeploy after
+changing Auth0 application settings.
+
 If you still see *Access pending*, check **DevTools → Network → `/api/auth/me`** while signed in.
 Empty `roles` with `rolesSource: "none"` means the server has `HVYMETL_DEFAULT_ROLE=none` and the
 Login Action did not add role claims. By default (Auth0 enabled, no override), the API assigns

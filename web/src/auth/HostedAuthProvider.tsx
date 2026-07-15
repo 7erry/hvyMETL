@@ -1,5 +1,6 @@
 import {
   createContext,
+  useCallback,
   useContext,
   useEffect,
   useLayoutEffect,
@@ -15,12 +16,14 @@ import {
   rolesFromClaims,
   type HvyRole,
 } from './access';
+import { formatAuthError, isSessionExpiredAuthError } from './authErrors';
 
 type AuthState = {
   enabled: boolean;
   serverAuthRequired: boolean;
   isLoading: boolean;
   isAuthenticated: boolean;
+  sessionExpired: boolean;
   userId: string;
   userName: string;
   userEmail: string;
@@ -33,6 +36,7 @@ type AuthState = {
   apiReady: boolean;
   error?: string;
   login: () => Promise<void>;
+  reauthenticate: () => Promise<void>;
   logout: () => void;
 };
 
@@ -41,6 +45,7 @@ const disabledAuthState: AuthState = {
   serverAuthRequired: false,
   isLoading: false,
   isAuthenticated: true,
+  sessionExpired: false,
   userId: 'local-dev',
   userName: 'Local developer',
   userEmail: '',
@@ -51,6 +56,7 @@ const disabledAuthState: AuthState = {
   preferredRole: 'developer',
   apiReady: true,
   login: async () => undefined,
+  reauthenticate: async () => undefined,
   logout: () => undefined,
 };
 
@@ -137,20 +143,32 @@ function Auth0Bridge({
   } = useAuth0();
   const [roles, setRoles] = useState<HvyRole[]>([]);
   const [claimsLoading, setClaimsLoading] = useState(true);
+  const [sessionExpired, setSessionExpired] = useState(false);
 
-  const getApiAccessToken = (): Promise<string> =>
-    audience
-      ? getAccessTokenSilently({ authorizationParams: { audience } })
-      : getAccessTokenSilently();
+  const getApiAccessToken = useCallback(async (): Promise<string> => {
+    try {
+      const token = audience
+        ? await getAccessTokenSilently({ authorizationParams: { audience } })
+        : await getAccessTokenSilently();
+      setSessionExpired(false);
+      return token;
+    } catch (tokenError) {
+      if (isSessionExpiredAuthError(tokenError)) {
+        setSessionExpired(true);
+        setAccessTokenProvider(undefined);
+      }
+      throw tokenError;
+    }
+  }, [audience, getAccessTokenSilently]);
 
   useLayoutEffect(() => {
-    if (!isAuthenticated) {
+    if (!isAuthenticated || sessionExpired) {
       setAccessTokenProvider(undefined);
       return;
     }
     setAccessTokenProvider(() => getApiAccessToken());
     return () => setAccessTokenProvider(undefined);
-  }, [audience, getAccessTokenSilently, isAuthenticated]);
+  }, [getApiAccessToken, isAuthenticated, sessionExpired]);
 
   useEffect(() => {
     if (!isAuthenticated || isLoading) {
@@ -178,8 +196,14 @@ function Auth0Bridge({
         try {
           const accessToken = await getApiAccessToken();
           resolved.push(...rolesFromClaims(parseJwtPayload(accessToken), rolesClaim));
-        } catch {
-          // fall through
+        } catch (tokenError) {
+          if (isSessionExpiredAuthError(tokenError)) {
+            if (!cancelled) {
+              setSessionExpired(true);
+              setAccessTokenProvider(undefined);
+            }
+            return;
+          }
         }
       }
 
@@ -213,16 +237,19 @@ function Auth0Bridge({
     return () => {
       cancelled = true;
     };
-  }, [audience, getAccessTokenSilently, getIdTokenClaims, isAuthenticated, isLoading, rolesClaim, user]);
+  }, [audience, getApiAccessToken, getIdTokenClaims, isAuthenticated, isLoading, rolesClaim, user]);
 
   const sessionLoading = isLoading || claimsLoading;
+  const formattedError = error ? formatAuthError(error) : undefined;
+  const authSessionExpired = sessionExpired || (formattedError ? isSessionExpiredAuthError(error) : false);
 
   const value: AuthState = {
     enabled: true,
     serverAuthRequired,
     isLoading: sessionLoading,
     isAuthenticated,
-    apiReady: !sessionLoading && isAuthenticated,
+    sessionExpired: authSessionExpired,
+    apiReady: !sessionLoading && isAuthenticated && !authSessionExpired,
     userId: typeof user?.sub === 'string' && user.sub.trim() ? user.sub : 'authenticated-user',
     userName: user?.name ?? user?.nickname ?? user?.email ?? 'Authenticated user',
     userEmail: user?.email ?? '',
@@ -231,8 +258,15 @@ function Auth0Bridge({
     canUseDeveloper: roles.includes('admin') || roles.includes('developer'),
     canUseManager: roles.includes('admin') || roles.includes('manager'),
     preferredRole: preferredUiRole(roles),
-    error: error?.message,
+    error: formattedError,
     login: () => loginWithRedirect(),
+    reauthenticate: () =>
+      loginWithRedirect({
+        authorizationParams: {
+          prompt: 'login',
+          ...(audience ? { audience } : {}),
+        },
+      }),
     logout: () => auth0Logout({ logoutParams: { returnTo: window.location.origin } }),
   };
 
