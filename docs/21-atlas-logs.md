@@ -109,6 +109,23 @@ connection string and copy a host that includes `-shard-00-00`.
 If the hostname format is correct but download still fails, confirm the cluster tier: log download
 is **not available** on M0 free tier, M2, M5, flex, or serverless clusters.
 
+### `Logs for host not supported on tenant clusters` (400)
+
+Atlas returns this when the cluster is a **shared-tier (tenant) cluster** — typically M0 free,
+M2, M5, or Flex. The node hostname is correct; Atlas simply does not expose mongod/mongos log
+download on these tiers.
+
+| Symptom | Meaning |
+| --- | --- |
+| Hostnames like `ac-xxxx-shard-00-00.….mongodb.net` | Valid node FQDN |
+| Error mentions **tenant clusters** | Tier limitation, not a config mistake |
+
+**Options:**
+
+1. Use **Recent project events** in the Atlas Logs panel (works on shared tiers).
+2. Upgrade the cluster to **M10 or higher** (dedicated tier) to enable database log preview.
+3. Remove `ATLAS_NODE_HOSTNAME` if you only need project events — it avoids a failed log fetch on refresh.
+
 ## 7. Testing
 
 Unit tests mock `fetch` and gzip payloads:

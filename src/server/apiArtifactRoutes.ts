@@ -83,7 +83,7 @@ export function registerApiArtifactRoutes(app: Express, rootDir: string): void {
     res.type('application/json').send(readJsonArtifact(collection.schemaPath));
   });
 
-  app.use('/api/docs', swaggerUi.serve);
+  app.use('/api/docs', promoteQueryAccessToken, swaggerUi.serve);
   app.get('/api/docs', ...docsAuth, (req, res, next) => {
     const spec = readCombinedOpenApiSpec(req, rootDir);
     if (!spec) {

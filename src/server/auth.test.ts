@@ -110,21 +110,30 @@ describe('effectiveRolesFromPayload', () => {
 });
 
 describe('promoteQueryAccessToken', () => {
-  it('copies access_token query param to Authorization header', () => {
-    const req = { headers: {} as Record<string, string>, query: { access_token: 'jwt-token' } } as Request;
+  it('copies access_token query param to Authorization header and strips it from the URL', () => {
+    const req = {
+      headers: {} as Record<string, string>,
+      url: '/api/docs?access_token=jwt-token&foo=1',
+      originalUrl: '/api/docs?access_token=jwt-token&foo=1',
+      query: { access_token: 'jwt-token', foo: '1' },
+    } as Request;
     promoteQueryAccessToken(req, {} as Response, () => undefined);
     expect(req.headers.authorization).toBe('Bearer jwt-token');
-    expect(req.query.access_token).toBeUndefined();
+    expect(req.url).toBe('/api/docs?foo=1');
+    expect(req.originalUrl).toBe('/api/docs?foo=1');
   });
 
   it('does not override an existing Authorization header but still strips query token', () => {
     const req = {
       headers: { authorization: 'Bearer existing' },
+      url: '/api/docs?access_token=jwt-token',
+      originalUrl: '/api/docs?access_token=jwt-token',
       query: { access_token: 'jwt-token' },
     } as Request;
     promoteQueryAccessToken(req, {} as Response, () => undefined);
     expect(req.headers.authorization).toBe('Bearer existing');
-    expect(req.query.access_token).toBeUndefined();
+    expect(req.url).toBe('/api/docs');
+    expect(req.originalUrl).toBe('/api/docs');
   });
 });
 

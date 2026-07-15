@@ -259,6 +259,21 @@ export function extractAtlasBlockedIp(detail: string | undefined, parameters?: s
   return match?.[1];
 }
 
+/** True when Atlas indicates log download is unavailable on shared/tenant cluster tiers. */
+export function isAtlasTenantClusterLogUnsupportedDetail(detail: string): boolean {
+  return /tenant cluster/i.test(detail) && /log/i.test(detail);
+}
+
+/** Skip hostname/process hints when the failure is a cluster tier limitation, not a bad host. */
+export function shouldSkipAtlasLogHostNameEnrichment(error: unknown): boolean {
+  if (error instanceof AtlasLogsApiError) {
+    if (error.code === 'TENANT_CLUSTER_LOGS_UNSUPPORTED') return true;
+    const combined = `${error.message} ${error.hint ?? ''}`;
+    if (isAtlasTenantClusterLogUnsupportedDetail(combined)) return true;
+  }
+  return false;
+}
+
 /** Map Atlas Admin API HTTP failures to actionable errors. */
 export function parseAtlasAdminApiFailure(
   httpStatus: number,
@@ -307,6 +322,25 @@ export function parseAtlasAdminApiFailure(
     });
   }
 
+  const detail = parsed.detail?.trim() || bodyText.trim() || parsed.reason || '';
+  if (
+    httpStatus === 400 &&
+    isAtlasTenantClusterLogUnsupportedDetail(detail)
+  ) {
+    return new AtlasLogsApiError(
+      'Database log download is not supported on this Atlas cluster tier.',
+      httpStatus,
+      {
+        code: parsed.errorCode ?? 'TENANT_CLUSTER_LOGS_UNSUPPORTED',
+        hint: [
+          'Atlas shared-tier clusters (M0 free, M2, M5, Flex) do not support mongod/mongos log download via the Admin API.',
+          'Your node hostname is correct — upgrade to a dedicated cluster (M10 or higher) to enable database log preview.',
+          'Project events in the Atlas Logs panel still work on shared tiers.',
+        ].join(' '),
+      },
+    );
+  }
+
   if (parsed.errorCode === 'USER_UNAUTHORIZED' || httpStatus === 401) {
     const isLogDownload = /log download|database log/i.test(context);
     return new AtlasLogsApiError(
@@ -331,8 +365,8 @@ export function parseAtlasAdminApiFailure(
     );
   }
 
-  const detail = parsed.detail?.trim() || bodyText.trim() || parsed.reason || 'Unknown Atlas error';
-  return new AtlasLogsApiError(`${context} failed (${httpStatus}): ${detail}`, httpStatus, {
+  const detailForMessage = parsed.detail?.trim() || bodyText.trim() || parsed.reason || 'Unknown Atlas error';
+  return new AtlasLogsApiError(`${context} failed (${httpStatus}): ${detailForMessage}`, httpStatus, {
     code: parsed.errorCode,
   });
 }
@@ -551,7 +585,7 @@ export async function fetchAtlasLogsSnapshot(
       });
     } catch (error) {
       const warning = atlasLogWarningFromError(error);
-      if (config.hostName) {
+      if (config.hostName && !shouldSkipAtlasLogHostNameEnrichment(error)) {
         warning.hint = await enrichAtlasLogHostNameHint(
           config,
           config.hostName,

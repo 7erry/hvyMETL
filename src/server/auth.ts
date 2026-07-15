@@ -148,14 +148,35 @@ export const requireAuth: RequestHandler = (req, res, next) => {
   return getAuthMiddleware()(req, res, next);
 };
 
+/** Remove access_token from the request URL so JWT middleware sees only one auth method. */
+function stripAccessTokenFromRequestUrl(req: Request): string | undefined {
+  const readToken = (url: string): { path: string; token?: string } => {
+    const queryIndex = url.indexOf('?');
+    if (queryIndex === -1) return { path: url };
+
+    const pathname = url.slice(0, queryIndex);
+    const params = new URLSearchParams(url.slice(queryIndex + 1));
+    const token = params.get('access_token')?.trim() || undefined;
+    params.delete('access_token');
+    const search = params.toString();
+    return { path: search ? `${pathname}?${search}` : pathname, token };
+  };
+
+  const fromUrl = readToken(req.url);
+  if (!fromUrl.token) return undefined;
+
+  req.url = fromUrl.path;
+  if (typeof req.originalUrl === 'string') {
+    req.originalUrl = readToken(req.originalUrl).path;
+  }
+  return fromUrl.token;
+}
+
 /** Allow Swagger UI new-tab links to pass a Bearer token via ?access_token= (hosted studio). */
 export const promoteQueryAccessToken: RequestHandler = (req, _res, next) => {
-  const queryToken = req.query.access_token;
-  if (typeof queryToken === 'string' && queryToken.trim()) {
-    if (!req.headers.authorization) {
-      req.headers.authorization = `Bearer ${queryToken.trim()}`;
-    }
-    delete req.query.access_token;
+  const queryToken = stripAccessTokenFromRequestUrl(req);
+  if (queryToken && !req.headers.authorization) {
+    req.headers.authorization = `Bearer ${queryToken}`;
   }
   next();
 };

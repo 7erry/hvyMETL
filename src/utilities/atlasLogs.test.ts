@@ -12,10 +12,12 @@ import {
   getAtlasLogsStatus,
   isAtlasLogFileName,
   isAtlasShardNodeHostName,
+  isAtlasTenantClusterLogUnsupportedDetail,
   looksLikeAtlasClusterConnectionHost,
   normalizeAtlasEnvValue,
   parseAtlasAdminApiFailure,
   readAtlasLogsConfig,
+  shouldSkipAtlasLogHostNameEnrichment,
   suggestAtlasShardHostName,
 } from './atlasLogs.js';
 
@@ -254,6 +256,22 @@ describe('atlasLogs', () => {
     expect(error.code).toBe('INVALID_HOSTNAME');
     expect(error.hint).toContain('-shard-00-00');
     expect(error.hint).toContain('M0');
+  });
+
+  it('maps tenant cluster log failures to tier guidance without hostname enrichment', () => {
+    const error = parseAtlasAdminApiFailure(
+      400,
+      JSON.stringify({
+        detail: 'Logs for host not supported on tenant clusters.',
+        error: 400,
+      }),
+      'Atlas database log download',
+    );
+    expect(error.code).toBe('TENANT_CLUSTER_LOGS_UNSUPPORTED');
+    expect(error.message).toContain('not supported on this Atlas cluster tier');
+    expect(error.hint).toContain('M10');
+    expect(isAtlasTenantClusterLogUnsupportedDetail('Logs for host not supported on tenant clusters.')).toBe(true);
+    expect(shouldSkipAtlasLogHostNameEnrichment(error)).toBe(true);
   });
 
   it('validates log file names', () => {
