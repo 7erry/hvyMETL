@@ -2788,6 +2788,77 @@ textarea {
   margin: 0 0 0.5rem;
 }
 
+.app--manager .manager-atlas-logs__toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.app--manager .manager-atlas-logs__error {
+  margin: 0 0 0.5rem;
+  color: #f5a8a8;
+  font-size: 0.78rem;
+}
+
+.app--manager .manager-atlas-logs__section {
+  margin-top: 0.75rem;
+}
+
+.app--manager .manager-atlas-logs__heading {
+  margin: 0 0 0.35rem;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--mdb-green-base);
+}
+
+.app--manager .manager-atlas-logs__events {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-size: 0.78rem;
+}
+
+.app--manager .manager-atlas-logs__events li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.25rem 0.75rem;
+  padding: 0.35rem 0;
+  border-bottom: 1px solid rgba(0, 104, 74, 0.25);
+}
+
+.app--manager .manager-atlas-logs__events strong {
+  color: var(--mdb-spring-green);
+  font-weight: 600;
+}
+
+.app--manager .manager-atlas-logs__meta {
+  grid-column: 1 / -1;
+  opacity: 0.75;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.7rem;
+  word-break: break-all;
+}
+
+.app--manager .manager-atlas-logs__preview {
+  margin: 0.35rem 0 0;
+  padding: 0.65rem 0.75rem;
+  max-height: 12rem;
+  overflow: auto;
+  border-radius: 8px;
+  border: 1px solid rgba(0, 104, 74, 0.35);
+  background: rgba(0, 0, 0, 0.25);
+  font-size: 0.68rem;
+  line-height: 1.35;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
 .app--manager .manager-progress-block {
   text-align: center;
 }

@@ -26,6 +26,7 @@ merge-mode diagrams.
 | [12-validate-hybrid-rag.md](12-validate-hybrid-rag.md) | Validate MongoDB Model Key + hybrid BM25 + Voyage 4 + RRF | `scripts/validate-hybrid-rag.mjs` |
 | [13-web-ui.md](13-web-ui.md) | Optional MongoDB-branded Migration Studio (ER diagrams, templates, AI export) | [web/README.md](../web/README.md), `src/server/` |
 | [20-manager.md](20-manager.md) | Manager View, cost projections, retention controls, and pre-migration cloud cost governance | `web/src/components/ManagerView.tsx`, `web/src/managerCostEstimate.ts` |
+| [21-atlas-logs.md](21-atlas-logs.md) | Atlas Admin API project events and database log preview in Manager View | `src/utilities/atlasLogs.ts`, `web/src/components/ManagerAtlasLogsPanel.tsx` |
 | [14-validate-csv-to-atlas.md](14-validate-csv-to-atlas.md) | External csvToAtlas path (`CSV_TO_ATLAS_PATH`) and validation | `src/utilities/csvToAtlas.ts` |
 | [04-adapters.md](04-adapters.md) | The pluggable SQL source adapter and SQLite implementation | `src/adapters/` |
 | [05-design-engine.md](05-design-engine.md) | Introspection-to-pattern decision engine and `migration-plan.json` | `src/design/` |

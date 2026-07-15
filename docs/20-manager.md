@@ -60,6 +60,7 @@ flowchart LR
 | **Collection Archive controls** | Cost panel | Which dated collections should keep only recent data hot, and how many years should be retained before archive routing? |
 | **Model API usage** | Manager sidebar | Did this run use hybrid/vector retrieval or BM25-only design, and what token volume was consumed? |
 | **Cloud resource summary** | Manager sidebar | Which collection/index/archive choices affect Atlas infrastructure sizing? |
+| **Atlas Logs** | Manager sidebar | Recent Atlas project events and optional mongod log preview via Admin API |
 
 The **Model API usage** panel also estimates list-price token spend using MongoDB
 Voyage AI billing rates: `voyage-4` embeddings at **$0.06 / 1M tokens** and

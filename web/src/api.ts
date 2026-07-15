@@ -178,6 +178,62 @@ export type TenantSecretsStatus = {
   updatedAt?: string;
 };
 
+export type AtlasLogsStatus = {
+  configured: boolean;
+  hasHostName: boolean;
+  groupIdMasked?: string;
+};
+
+export type AtlasProjectEvent = {
+  id?: string;
+  created?: string;
+  eventTypeName?: string;
+  groupId?: string;
+  hostname?: string;
+};
+
+export type AtlasProjectEventsResult = {
+  events: AtlasProjectEvent[];
+  totalCount: number;
+};
+
+export type AtlasDatabaseLogResult = {
+  logName: string;
+  hostName: string;
+  lineCount: number;
+  lines: string[];
+  truncated: boolean;
+};
+
+export type AtlasLogsSnapshot = {
+  status: AtlasLogsStatus;
+  events: AtlasProjectEventsResult;
+  databaseLogs?: AtlasDatabaseLogResult;
+};
+
+export async function fetchAtlasLogsStatus(): Promise<AtlasLogsStatus> {
+  const res = await apiFetch(`${base}/api/atlas/logs/status`);
+  if (!res.ok) throw new Error(await readApiError(res));
+  return res.json();
+}
+
+export async function fetchAtlasLogsSnapshot(options?: {
+  itemsPerPage?: number;
+  maxLogLines?: number;
+  includeDatabaseLogs?: boolean;
+  logName?: string;
+}): Promise<AtlasLogsSnapshot> {
+  const params = new URLSearchParams();
+  if (options?.itemsPerPage) params.set('itemsPerPage', String(options.itemsPerPage));
+  if (options?.maxLogLines) params.set('maxLogLines', String(options.maxLogLines));
+  if (options?.includeDatabaseLogs === false) params.set('includeDatabaseLogs', 'false');
+  if (options?.logName) params.set('logName', options.logName);
+  const query = params.toString();
+  const res = await apiFetch(`${base}/api/atlas/logs/snapshot${query ? `?${query}` : ''}`);
+  if (!res.ok) throw new Error(await readApiError(res));
+  return res.json();
+}
+
 export type PipelineRunResult = {
   ok: boolean;
   errors: string[];

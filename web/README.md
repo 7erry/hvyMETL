@@ -361,6 +361,11 @@ controls so business owners can review architecture and savings before cutover.
 
 ![Manager dashboard showing migration review and cost projection](docs/screenshots/manager-review-cost.png)
 
+**Atlas Logs** (Manager sidebar) pulls recent Atlas project events via the Admin API
+when `ATLAS_CLIENT_ID`, `ATLAS_CLIENT_SECRET`, and `ATLAS_GROUP_ID` are set in the API
+server `.env`. Optional `ATLAS_NODE_HOSTNAME` enables a mongod log preview. See
+[docs/21-atlas-logs.md](../docs/21-atlas-logs.md).
+
 ### AI migration artifacts
 
 **AI Migration Export** opens a full-screen editor for every generated artifact —

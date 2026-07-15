@@ -27,6 +27,7 @@ import { generateMockCsvFromDdl, verifyMockCsvGenerator } from '../utilities/moc
 import type { MigrationPlan, SqlStructuralModel } from '../types.js';
 import { readCsvToAtlasPathFromEnv } from '../utilities/csvToAtlas.js';
 import { getPipelineConfigStatus } from './pipelineConfig.js';
+import { createAtlasLogsRouter } from './atlasLogsRoutes.js';
 import { runFullPipeline } from './runPipeline.js';
 import { runFullPipelineWithStream } from './pipelineStream.js';
 import {
@@ -227,6 +228,7 @@ app.use('/api/repogen', ...requireRole(['admin', 'developer']));
 app.use('/api/pipeline', ...requireRole(['admin', 'developer']));
 app.use('/api/mock-csv', ...requireRole(['admin', 'developer']));
 app.use('/api/workspace', ...requireRole(['admin', 'developer', 'manager']));
+app.use('/api/atlas', ...requireRole(['admin', 'developer', 'manager']), createAtlasLogsRouter());
 
 registerApiArtifactRoutes(app, ROOT);
 
