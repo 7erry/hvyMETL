@@ -145,6 +145,7 @@ export type PipelineConfigStatus = {
   schemaDialect?: string;
   schemaDialectLabel?: string;
   csvToAtlasValidation: { ok: boolean; errors: string[]; warnings: string[] };
+  csvToAtlasFromEnv?: boolean;
   missing: string[];
   mongoUriMasked?: string;
   mongodbModelKeyMasked?: string;

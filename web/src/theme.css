@@ -2151,8 +2151,49 @@ textarea {
 .pipeline-env-details__fields {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 1rem;
   margin-top: 0.75rem;
+}
+
+.pipeline-env-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.pipeline-env-field__header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.pipeline-env-field__name {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  color: var(--mdb-green-base);
+}
+
+.pipeline-env-field__current {
+  margin: 0;
+  font-size: 0.72rem;
+  line-height: 1.4;
+  color: var(--mdb-gray-light-1, #e8edea);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  word-break: break-all;
+  opacity: 0.85;
+}
+
+.pipeline-env-field__current--empty {
+  opacity: 0.55;
+  font-style: italic;
+  font-family: inherit;
+}
+
+.pipeline-env-field input {
+  width: 100%;
 }
 
 .pipeline-env-details__refresh {

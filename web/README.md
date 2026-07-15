@@ -341,7 +341,10 @@ summary (e.g. `31 SQL tables → 20 MongoDB collections (11 folded)`).
 ### Full pipeline with mock data
 
 The pipeline dialog validates MongoDB, csvToAtlas, dialect, and mock CSV generation
-before running design → CSV shaping → Atlas import.
+before running design → CSV shaping → Atlas import. **View settings** lists
+`MONGODB_URI`, `MONGODB_MODEL_KEY`, and (when not already in server `.env`) `CSV_TO_ATLAS_PATH`
+with the current masked value below each field. When `CSV_TO_ATLAS_PATH` is set on the API
+server, that row is omitted from the settings panel.
 
 ![Run Full Pipeline dialog with mock data settings](docs/screenshots/pipeline-mock-data.png)
 

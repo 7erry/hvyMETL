@@ -122,6 +122,39 @@ describe('pipelineFormHelpers', () => {
     });
   });
 
+  it('locks csvToAtlas path when configured in server .env', () => {
+    const status = {
+      defaultTargetDb: 'csv_to_atlas',
+      csvSourcePath: '',
+      hasMongoUri: true,
+      hasModelKey: false,
+      csvToAtlasResolvedPath: '/opt/csvToAtlas',
+      csvToAtlasLabel: 'csvToAtlas',
+      serverManagedCsvToAtlas: false,
+      csvToAtlasFromEnv: true,
+    };
+
+    expect(
+      hydratePipelineSettingsFromConfig(
+        {
+          mongoUri: '',
+          mongodbModelKey: '',
+          csvToAtlasPath: '',
+          targetDb: '',
+          csvSourcePath: '',
+        },
+        status,
+        '',
+      ),
+    ).toEqual({
+      mongoUri: '(configured in .env)',
+      mongodbModelKey: '',
+      csvToAtlasPath: '/opt/csvToAtlas',
+      targetDb: 'csv_to_atlas',
+      csvSourcePath: '',
+    });
+  });
+
   it('preserves partial mongo URI while typing (no reset to placeholder)', () => {
     const status = {
       defaultTargetDb: 'tenant_db',

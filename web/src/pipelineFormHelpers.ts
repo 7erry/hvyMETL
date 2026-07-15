@@ -51,6 +51,7 @@ export function hydratePipelineSettingsFromConfig(
     | 'mongoUriMasked'
     | 'mongodbModelKeyMasked'
     | 'serverManagedCsvToAtlas'
+    | 'csvToAtlasFromEnv'
     | 'tenantSecrets'
   >,
   savedCsvPath: string,
@@ -59,7 +60,8 @@ export function hydratePipelineSettingsFromConfig(
     prev.mongoUri.trim().length > 0 && !isEnvMongoPlaceholder(prev.mongoUri);
   const hasUserModelKey =
     prev.mongodbModelKey.trim().length > 0 && !isEnvModelKeyPlaceholder(prev.mongodbModelKey);
-  const hasUserCsvToAtlas = prev.csvToAtlasPath.trim().length > 0 && !status.serverManagedCsvToAtlas;
+  const csvToAtlasLocked = status.serverManagedCsvToAtlas || Boolean(status.csvToAtlasFromEnv);
+  const hasUserCsvToAtlas = prev.csvToAtlasPath.trim().length > 0 && !csvToAtlasLocked;
 
   const storedMongo = status.tenantSecrets?.hasMongoUri;
   const storedModelKey = status.tenantSecrets?.hasMongodbModelKey;
@@ -81,7 +83,7 @@ export function hydratePipelineSettingsFromConfig(
         : status.hasModelKey
           ? ENV_MODEL_KEY_PLACEHOLDER
           : prev.mongodbModelKey,
-    csvToAtlasPath: status.serverManagedCsvToAtlas
+    csvToAtlasPath: csvToAtlasLocked
       ? status.csvToAtlasResolvedPath || status.csvToAtlasLabel || 'Configured on server'
       : hasUserCsvToAtlas
         ? prev.csvToAtlasPath

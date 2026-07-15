@@ -31,6 +31,7 @@ vi.mock('./pipelineConfig.js', async (importOriginal) => {
       hasCsvSource: true,
       defaultTargetDb: 'test_db',
       csvToAtlasValidation: { ok: true, errors: [], warnings: [] },
+      csvToAtlasFromEnv: true,
       missing: [],
     }),
   };

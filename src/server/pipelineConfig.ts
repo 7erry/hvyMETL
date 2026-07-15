@@ -25,6 +25,8 @@ export type PipelineConfigStatus = {
   schemaDialect?: string;
   schemaDialectLabel?: string;
   csvToAtlasValidation: Pick<CsvToAtlasValidation, 'ok' | 'errors' | 'warnings'>;
+  /** True when `CSV_TO_ATLAS_PATH` is set on the API server `.env` (not a UI override). */
+  csvToAtlasFromEnv: boolean;
   missing: string[];
 };
 
@@ -43,6 +45,7 @@ export function getPipelineConfigStatus(
   const csvToAtlasPath =
     (options?.csvToAtlasPath ? sanitizeConfigPath(options.csvToAtlasPath) : undefined) ||
     readCsvToAtlasPathFromEnv(env);
+  const csvToAtlasFromEnv = Boolean(readCsvToAtlasPathFromEnv(env));
   const csvToAtlasValidation = validateCsvToAtlasInstallation(csvToAtlasPath);
   const envCsvPath = readCsvSourceFromEnv(env);
   const requestedCsv = options?.csvSourcePath?.trim();
@@ -78,6 +81,7 @@ export function getPipelineConfigStatus(
       errors: csvToAtlasValidation.errors,
       warnings: csvToAtlasValidation.warnings,
     },
+    csvToAtlasFromEnv,
     missing,
   };
 }
