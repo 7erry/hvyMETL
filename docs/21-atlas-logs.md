@@ -65,7 +65,23 @@ If credentials are missing, the panel explains which `.env` variables to add.
 - The UI never receives client id/secret; only masked project id and log content.
 - OAuth tokens are cached in memory on the API process and refreshed before expiry.
 
-## 6. Testing
+## 6. Troubleshooting
+
+### `IP_ADDRESS_NOT_ON_ACCESS_LIST` (403)
+
+Atlas Admin API calls originate from the **hvyMETL API server**, not your browser.
+If you see `IP address … is not allowed`, add that IP to the **organization-level Admin API
+access list**:
+
+1. Atlas → **Organization Settings** → **Access Manager** → **IP Access List**
+2. **Add IP Address** → enter the IP shown in the error (or the **server IP** in the Atlas Logs panel)
+3. For local dev only, you can temporarily use **Allow Access from Anywhere** (`0.0.0.0/0`)
+
+This is **separate** from **Network Access** on your database cluster (used by `MONGODB_URI`).
+
+The Atlas Logs panel displays the API server's detected egress IP on the status line when available.
+
+## 7. Testing
 
 Unit tests mock `fetch` and gzip payloads:
 

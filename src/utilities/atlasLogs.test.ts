@@ -1,13 +1,16 @@
 import { gzipSync } from 'node:zlib';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
+  AtlasLogsApiError,
   configureAtlasLogsRuntime,
+  extractAtlasBlockedIp,
   fetchAtlasDatabaseLogs,
   fetchAtlasProjectEvents,
   getAtlasAccessToken,
   getAtlasLogsStatus,
   isAtlasLogFileName,
   normalizeAtlasEnvValue,
+  parseAtlasAdminApiFailure,
   readAtlasLogsConfig,
 } from './atlasLogs.js';
 
@@ -131,6 +134,30 @@ describe('atlasLogs', () => {
     expect(result.lineCount).toBe(3);
     expect(result.lines).toEqual(['line two', 'line three']);
     expect(result.truncated).toBe(true);
+  });
+
+  it('extracts blocked IP from Atlas error payload', () => {
+    expect(
+      extractAtlasBlockedIp('IP address 104.30.164.7 is not allowed to access this resource.', ['104.30.164.7']),
+    ).toBe('104.30.164.7');
+  });
+
+  it('maps IP access list failures to actionable errors', () => {
+    const error = parseAtlasAdminApiFailure(
+      403,
+      JSON.stringify({
+        detail: 'IP address 104.30.164.7 is not allowed to access this resource.',
+        error: 403,
+        errorCode: 'IP_ADDRESS_NOT_ON_ACCESS_LIST',
+        parameters: ['104.30.164.7'],
+      }),
+      'Atlas project events request',
+    );
+    expect(error).toBeInstanceOf(AtlasLogsApiError);
+    expect(error.httpStatus).toBe(403);
+    expect(error.blockedIp).toBe('104.30.164.7');
+    expect(error.message).toContain('104.30.164.7');
+    expect(error.hint).toContain('IP Access List');
   });
 
   it('validates log file names', () => {

@@ -51,7 +51,12 @@ export async function inferProfile(model: SqlStructuralModel): Promise<ProfileIn
 async function readApiError(res: Response): Promise<string> {
   try {
     const data = await res.json();
-    if (data && typeof data.error === 'string') return data.error;
+    if (data && typeof data.error === 'string') {
+      if (typeof data.hint === 'string' && data.hint.trim()) {
+        return `${data.error} ${data.hint}`;
+      }
+      return data.error;
+    }
   } catch {
     // ignore
   }
@@ -182,6 +187,7 @@ export type AtlasLogsStatus = {
   configured: boolean;
   hasHostName: boolean;
   groupIdMasked?: string;
+  serverEgressIp?: string;
 };
 
 export type AtlasProjectEvent = {

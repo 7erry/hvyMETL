@@ -94,6 +94,7 @@ export function ManagerAtlasLogsPanel({ apiConnected }: ManagerAtlasLogsPanelPro
             <span className="manager-hint">
               Project {status.groupIdMasked ?? 'configured'}
               {status.hasHostName ? ' · database logs enabled' : ' · project events only'}
+              {status.serverEgressIp ? ` · server IP ${status.serverEgressIp}` : ''}
             </span>
             <button type="button" className="tertiary" onClick={() => void loadSnapshot()} disabled={loading}>
               {loading ? 'Refreshing…' : 'Refresh logs'}
@@ -101,6 +102,12 @@ export function ManagerAtlasLogsPanel({ apiConnected }: ManagerAtlasLogsPanelPro
           </div>
 
           {error ? <p className="manager-atlas-logs__error">{error}</p> : null}
+          {status.serverEgressIp ? (
+            <p className="manager-hint">
+              Add API server IP <code>{status.serverEgressIp}</code> to Atlas → Organization Settings → Access
+              Manager → <strong>IP Access List</strong> (Admin API, separate from cluster Network Access).
+            </p>
+          ) : null}
 
           {!snapshot && !loading && !error ? (
             <p className="manager-hint">Click Refresh logs to pull recent Atlas project activity.</p>

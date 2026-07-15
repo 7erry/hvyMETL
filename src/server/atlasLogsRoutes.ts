@@ -3,7 +3,9 @@
  */
 
 import { Router, type Response } from 'express';
+import { getServerEgressIp } from '../utilities/mongoConnectivity.js';
 import {
+  AtlasLogsApiError,
   fetchAtlasDatabaseLogs,
   fetchAtlasProjectEvents,
   getAtlasLogsStatus,
@@ -22,11 +24,25 @@ function atlasConfigOrError(res: Response) {
   return config;
 }
 
+function handleAtlasRouteError(res: Response, error: unknown): void {
+  if (error instanceof AtlasLogsApiError) {
+    res.status(error.httpStatus).json({
+      error: error.message,
+      code: error.code,
+      hint: error.hint,
+      blockedIp: error.blockedIp,
+    });
+    return;
+  }
+  res.status(502).json({ error: String(error) });
+}
+
 export function createAtlasLogsRouter(): Router {
   const router = Router();
 
-  router.get('/logs/status', (_req, res) => {
-    res.json(getAtlasLogsStatus());
+  router.get('/logs/status', async (_req, res) => {
+    const serverEgressIp = (await getServerEgressIp()) ?? undefined;
+    res.json({ ...getAtlasLogsStatus(), serverEgressIp });
   });
 
   router.get('/logs/events', async (req, res) => {
@@ -42,7 +58,7 @@ export function createAtlasLogsRouter(): Router {
       });
       res.json(result);
     } catch (error) {
-      res.status(502).json({ error: String(error) });
+      handleAtlasRouteError(res, error);
     }
   });
 
@@ -63,7 +79,7 @@ export function createAtlasLogsRouter(): Router {
       });
       res.json(result);
     } catch (error) {
-      res.status(502).json({ error: String(error) });
+      handleAtlasRouteError(res, error);
     }
   });
 
@@ -77,6 +93,7 @@ export function createAtlasLogsRouter(): Router {
       const includeDatabaseLogs = req.query.includeDatabaseLogs !== 'false' && Boolean(config.hostName);
       const logNameRaw = String(req.query.logName ?? 'mongodb.gz');
       const logName = isAtlasLogFileName(logNameRaw) ? logNameRaw : 'mongodb.gz';
+      const serverEgressIp = (await getServerEgressIp()) ?? undefined;
 
       const events = await fetchAtlasProjectEvents(config, {
         itemsPerPage: Number.isFinite(itemsPerPage) ? itemsPerPage : 15,
@@ -91,12 +108,12 @@ export function createAtlasLogsRouter(): Router {
       }
 
       res.json({
-        status: getAtlasLogsStatus(),
+        status: { ...getAtlasLogsStatus(), serverEgressIp },
         events,
         databaseLogs,
       });
     } catch (error) {
-      res.status(502).json({ error: String(error) });
+      handleAtlasRouteError(res, error);
     }
   });
 

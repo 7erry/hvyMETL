@@ -30,6 +30,8 @@ export type AtlasLogsStatus = {
   configured: boolean;
   hasHostName: boolean;
   groupIdMasked?: string;
+  /** Public egress IP of the API server (for Atlas Admin API access list). */
+  serverEgressIp?: string;
 };
 
 export type AtlasProjectEvent = {
@@ -145,7 +147,7 @@ export async function getAtlasAccessToken(
 
   if (!response.ok) {
     const errText = await response.text();
-    throw new Error(`Atlas OAuth authentication failed (${response.status}): ${errText}`);
+    throw parseAtlasAdminApiFailure(response.status, errText, 'Atlas OAuth authentication');
   }
 
   const data = (await response.json()) as OAuthTokenResponse;
@@ -158,6 +160,82 @@ export async function getAtlasAccessToken(
     expiresAtMs: Date.now() + (ttlSeconds - 60) * 1000,
   };
   return token;
+}
+
+type AtlasAdminErrorBody = {
+  detail?: string;
+  error?: number;
+  errorCode?: string;
+  parameters?: string[];
+  reason?: string;
+};
+
+/** Structured Atlas Admin API failure for routes and UI hints. */
+export class AtlasLogsApiError extends Error {
+  readonly httpStatus: number;
+  readonly code?: string;
+  readonly hint?: string;
+  readonly blockedIp?: string;
+
+  constructor(message: string, httpStatus: number, options?: { code?: string; hint?: string; blockedIp?: string }) {
+    super(message);
+    this.name = 'AtlasLogsApiError';
+    this.httpStatus = httpStatus;
+    this.code = options?.code;
+    this.hint = options?.hint;
+    this.blockedIp = options?.blockedIp;
+  }
+}
+
+/** Extract IPv4 from Atlas error detail text. */
+export function extractAtlasBlockedIp(detail: string | undefined, parameters?: string[]): string | undefined {
+  const fromParams = parameters?.find((value) => /^\d{1,3}(?:\.\d{1,3}){3}$/.test(value));
+  if (fromParams) return fromParams;
+  const match = detail?.match(/\b(\d{1,3}(?:\.\d{1,3}){3})\b/);
+  return match?.[1];
+}
+
+/** Map Atlas Admin API HTTP failures to actionable errors. */
+export function parseAtlasAdminApiFailure(
+  httpStatus: number,
+  bodyText: string,
+  context: string,
+): AtlasLogsApiError {
+  let parsed: AtlasAdminErrorBody = {};
+  try {
+    parsed = JSON.parse(bodyText) as AtlasAdminErrorBody;
+  } catch {
+    // ignore non-JSON bodies
+  }
+
+  const blockedIp = extractAtlasBlockedIp(parsed.detail, parsed.parameters);
+  if (parsed.errorCode === 'IP_ADDRESS_NOT_ON_ACCESS_LIST' && blockedIp) {
+    return new AtlasLogsApiError(
+      `Atlas Admin API blocked this server's IP address (${blockedIp}).`,
+      httpStatus,
+      {
+        code: parsed.errorCode,
+        blockedIp,
+        hint: [
+          'Atlas Admin API calls come from the hvyMETL API server, not your browser.',
+          `In Atlas → Organization Settings → Access Manager → IP Access List, add ${blockedIp}.`,
+          'For local development you can temporarily allow 0.0.0.0/0 (Allow Access from Anywhere).',
+          'Cluster Network Access (for MONGODB_URI) is separate from the Admin API IP access list.',
+        ].join(' '),
+      },
+    );
+  }
+
+  const detail = parsed.detail?.trim() || bodyText.trim() || parsed.reason || 'Unknown Atlas error';
+  return new AtlasLogsApiError(`${context} failed (${httpStatus}): ${detail}`, httpStatus, {
+    code: parsed.errorCode,
+  });
+}
+
+async function assertAtlasResponseOk(response: Response, context: string): Promise<void> {
+  if (response.ok) return;
+  const errText = await response.text();
+  throw parseAtlasAdminApiFailure(response.status, errText, context);
 }
 
 function normalizeAtlasEvent(record: Record<string, unknown>): AtlasProjectEvent {
@@ -189,10 +267,7 @@ export async function fetchAtlasProjectEvents(
     },
   });
 
-  if (!response.ok) {
-    const errText = await response.text();
-    throw new Error(`Atlas project events request failed (${response.status}): ${errText || response.statusText}`);
-  }
+  await assertAtlasResponseOk(response, 'Atlas project events request');
 
   const data = (await response.json()) as AtlasEventsResponse;
   const events = (data.results ?? []).map(normalizeAtlasEvent);
@@ -241,10 +316,7 @@ export async function fetchAtlasDatabaseLogs(
     },
   });
 
-  if (!response.ok) {
-    const errText = await response.text();
-    throw new Error(`Atlas database log download failed (${response.status}): ${errText || response.statusText}`);
-  }
+  await assertAtlasResponseOk(response, 'Atlas database log download');
 
   const arrayBuffer = await response.arrayBuffer();
   const decompressed = gunzipSync(Buffer.from(arrayBuffer)).toString('utf-8');
