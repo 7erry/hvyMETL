@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import {
   HVY_ROLES,
+  authenticateSwaggerDocsAccess,
   effectiveRolesFromPayload,
   getPublicAuthConfig,
   issuerUrlToDomain,
@@ -175,5 +176,38 @@ describe('rolesFromPayload', () => {
 
   it('supports all hvyMETL roles', () => {
     expect(HVY_ROLES).toEqual(['admin', 'developer', 'manager']);
+  });
+});
+
+describe('authenticateSwaggerDocsAccess', () => {
+  const envKeys = ['HVYMETL_AUTH_DISABLED', 'AUTH0_ISSUER_BASE_URL', 'AUTH0_AUDIENCE', 'HVYMETL_HOSTED_URL'] as const;
+
+  afterEach(() => {
+    for (const key of envKeys) delete process.env[key];
+  });
+
+  it('redirects unauthenticated browser requests to the studio openSwagger flow', () => {
+    process.env.AUTH0_ISSUER_BASE_URL = 'https://tenant.us.auth0.com/';
+    process.env.AUTH0_AUDIENCE = 'https://api.hvymetl.studio';
+    process.env.HVYMETL_HOSTED_URL = 'https://hvymetl.studio';
+
+    const req = {
+      method: 'GET',
+      path: '/api/docs/',
+      protocol: 'https',
+      headers: { accept: 'text/html,application/xhtml+xml' },
+      get: (name: string) => (name.toLowerCase() === 'host' ? 'hvymetl.studio' : undefined),
+      accepts: (types: string[]) => (types.includes('html') ? 'html' : false),
+    } as unknown as Request;
+
+    let redirectUrl = '';
+    const res = {
+      redirect: (_status: number, url: string) => {
+        redirectUrl = url;
+      },
+    } as unknown as Response;
+
+    authenticateSwaggerDocsAccess(req, res, () => undefined);
+    expect(redirectUrl).toBe('https://hvymetl.studio/?openSwagger=%2Fapi%2Fdocs');
   });
 });

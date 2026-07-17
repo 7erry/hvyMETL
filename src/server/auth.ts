@@ -181,6 +181,43 @@ export const promoteQueryAccessToken: RequestHandler = (req, _res, next) => {
   next();
 };
 
+function swaggerDocsReturnPath(req: Request): string {
+  const path = req.path.replace(/\/$/, '') || '/api/docs';
+  return path.startsWith('/') ? path : '/api/docs';
+}
+
+function redirectToStudioSwaggerLogin(req: Request, res: Response): void {
+  const configured = env('HVYMETL_HOSTED_URL');
+  const base = (configured || `${req.protocol}://${req.get('host') ?? 'localhost'}`).replace(/\/+$/, '');
+  const docsPath = swaggerDocsReturnPath(req);
+  res.redirect(302, `${base}/?openSwagger=${encodeURIComponent(docsPath)}`);
+}
+
+/**
+ * Browser visits to /api/docs lack SPA Bearer tokens. Redirect HTML requests to the studio,
+ * which opens Swagger in a new tab with ?access_token= after Auth0 login.
+ */
+export const authenticateSwaggerDocsAccess: RequestHandler = (req, res, next) => {
+  if (!isAuthConfigured()) {
+    next();
+    return;
+  }
+
+  const prefersHtml =
+    (req.method === 'GET' || req.method === 'HEAD') && req.accepts(['html', 'json']) === 'html';
+
+  if (!req.headers.authorization?.trim()) {
+    if (prefersHtml) {
+      redirectToStudioSwaggerLogin(req, res);
+      return;
+    }
+    requireAuth(req, res, next);
+    return;
+  }
+
+  requireAuth(req, res, next);
+};
+
 export function requireRole(allowedRoles: HvyRole[]): RequestHandler[] {
   return [
     requireAuth,

@@ -13,10 +13,16 @@ import {
   serializeApiArtifactBundle,
   type ApiArtifactBundle,
 } from './apiArtifactStore.js';
-import { requireRole, promoteQueryAccessToken } from './auth.js';
+import { requireRole, promoteQueryAccessToken, authenticateSwaggerDocsAccess } from './auth.js';
 import { getRequestTenantId } from './tenant.js';
 
-const docsAuth: RequestHandler[] = [promoteQueryAccessToken, ...requireRole(['admin', 'developer', 'manager'])];
+const docsRoleCheck = requireRole(['admin', 'developer', 'manager']).slice(1);
+
+const docsAuth: RequestHandler[] = [
+  promoteQueryAccessToken,
+  authenticateSwaggerDocsAccess,
+  ...docsRoleCheck,
+];
 
 function resolveBundle(req: Request, rootDir: string): ApiArtifactBundle | null {
   const tenantId = getRequestTenantId(req);
@@ -84,6 +90,10 @@ export function registerApiArtifactRoutes(app: Express, rootDir: string): void {
   });
 
   app.use('/api/docs', promoteQueryAccessToken, swaggerUi.serve);
+  app.get('/api/docs/', (req, res) => {
+    const query = req.url.includes('?') ? req.url.slice(req.url.indexOf('?')) : '';
+    res.redirect(301, `/api/docs${query}`);
+  });
   app.get('/api/docs', ...docsAuth, (req, res, next) => {
     const spec = readCombinedOpenApiSpec(req, rootDir);
     if (!spec) {

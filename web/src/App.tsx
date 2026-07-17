@@ -53,6 +53,7 @@ import {
   fetchWorkspace,
   saveWorkspace,
   describeApiError,
+  openSwaggerUi,
 } from './api';
 import {
   defaultSessionState,
@@ -159,6 +160,23 @@ export default function App() {
         : 'Cleared developer embed overrides. Run design to regenerate the migration plan.',
     );
   };
+
+  useEffect(() => {
+    if (!access.apiReady) return;
+    const params = new URLSearchParams(window.location.search);
+    const openSwagger = params.get('openSwagger')?.trim();
+    if (!openSwagger) return;
+
+    params.delete('openSwagger');
+    const remainder = params.toString();
+    const nextPath = remainder ? `${window.location.pathname}?${remainder}` : window.location.pathname;
+    window.history.replaceState({}, '', nextPath);
+
+    const docsPath = openSwagger.startsWith('/') ? openSwagger : `/${openSwagger}`;
+    void openSwaggerUi(docsPath).catch((error) => {
+      setStatus(describeApiError(error));
+    });
+  }, [access.apiReady]);
 
   useEffect(() => {
     if (access.isLoading) return;
