@@ -1,3 +1,25 @@
+## hvyMETL 1.7.1
+
+Patch release for hosted Migration Studio CSV uploads, pipeline reliability, Atlas Logs, and studio UX fixes since 1.7.0.
+
+### Highlights
+
+- **CSV pipeline uploads:** clearer errors when API responses are HTML instead of JSON; validate CSV filenames against imported SQL tables (e.g. warn on non-table exports).
+- **HTTP 413 fixes:** upload CSVs one file at a time; auto-split files over ~900 KB into `*.chunkN.csv` parts before upload (fits common 1 MB reverse-proxy limits).
+- **MongoDB Atlas Logs** in Manager View via Atlas Admin API (snapshot, project events, log download) with egress IP and hostname validation guidance.
+- **Auth UX:** friendlier session-expired re-login flow; Swagger UI auth fixes on Express 5 and new-tab `access_token` links.
+- **Pipeline dialog:** fix config refresh loop / endless loading; keep **Done** label after success; hide csvToAtlas path when configured in server `.env`; per-user pipeline secrets and downloadable zip results on hosted studio.
+- **Design:** more aggressive SQL child-table embedding; diagram footer legend icons aligned with collection field glyphs; inline collapsible legends.
+- **Dialects:** SAP ASE (Sybase) DDL import support.
+
+### Verification
+
+- `npm test`
+- `npm run build`
+- `npm run build --prefix web`
+
+---
+
 ## hvyMETL 1.7.0
 
 Hosted Migration Studio release: Auth0 login on [hvymetl.studio](https://hvymetl.studio), per-user tenant isolation, and production auth fallbacks when Auth0 Login Actions are still being wired up.

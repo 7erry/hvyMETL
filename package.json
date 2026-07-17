@@ -1,6 +1,6 @@
 {
   "name": "hvymetl",
-  "version": "1.7.0",
+  "version": "1.7.1",
   "description": "RAG-driven SQL-to-MongoDB migration toolkit: pattern knowledge base, workload profiles, parallel pattern-aware ETL, cvsToAtlas import integration, and repository layer generation.",
   "type": "module",
   "license": "BUSL-1.1",
