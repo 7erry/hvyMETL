@@ -4,7 +4,13 @@
 
 import { resolve } from 'node:path';
 import { getDialectLabel, inferSchemaDialect } from '../dialects.js';
-import { hasCsvSourceAtPath, readCsvSourceFromEnv } from '../utilities/csvSource.js';
+import { basename } from 'node:path';
+import {
+  csvTableMatchWarnings,
+  hasCsvSourceAtPath,
+  listCsvFiles,
+  readCsvSourceFromEnv,
+} from '../utilities/csvSource.js';
 import {
   readCsvToAtlasPathFromEnv,
   sanitizeConfigPath,
@@ -28,6 +34,8 @@ export type PipelineConfigStatus = {
   /** True when `CSV_TO_ATLAS_PATH` is set on the API server `.env` (not a UI override). */
   csvToAtlasFromEnv: boolean;
   missing: string[];
+  csvFileNames?: string[];
+  csvSchemaWarnings?: string[];
 };
 
 /** Build a UI-safe summary of what is configured vs missing. */
@@ -38,6 +46,7 @@ export function getPipelineConfigStatus(
     csvSourcePath?: string;
     csvToAtlasPath?: string;
     generateMockCsv?: boolean;
+    expectedTables?: string[];
   },
 ): PipelineConfigStatus {
   const hasMongoUri = Boolean(env.MONGODB_URI?.trim());
@@ -65,6 +74,19 @@ export function getPipelineConfigStatus(
     missing.push('HVYMETL_CSV_SOURCE or CSV export directory (or enable mock CSV generation)');
   }
 
+  let csvFileNames: string[] | undefined;
+  let csvSchemaWarnings: string[] | undefined;
+  if (resolvedCsv) {
+    try {
+      csvFileNames = listCsvFiles(resolvedCsv).map((filePath) => basename(filePath));
+      if (options?.expectedTables?.length) {
+        csvSchemaWarnings = csvTableMatchWarnings(csvFileNames, options.expectedTables);
+      }
+    } catch {
+      // Non-fatal: path may be unreadable during partial config refresh.
+    }
+  }
+
   return {
     hasMongoUri,
     hasModelKey,
@@ -83,6 +105,8 @@ export function getPipelineConfigStatus(
     },
     csvToAtlasFromEnv,
     missing,
+    csvFileNames,
+    csvSchemaWarnings,
   };
 }
 

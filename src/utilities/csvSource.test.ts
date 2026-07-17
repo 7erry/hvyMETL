@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { csvBaseName, matchCsvFilesForCollection } from './csvSource.js';
+import { csvBaseName, csvTableMatchWarnings, matchCsvFilesForCollection } from './csvSource.js';
 import type { CollectionPlan } from '../types.js';
 
 const sampleCollection = (name: string, sourceTable: string): CollectionPlan => ({
@@ -36,5 +36,11 @@ describe('csvSource', () => {
       '/exports/products.chunk2.csv',
     ]);
     expect(matchCsvFilesForCollection(files, customers)).toEqual(['/exports/customers.csv']);
+  });
+
+  it('warns when CSV names do not match SQL tables', () => {
+    const warnings = csvTableMatchWarnings(['clusters.csv'], ['orders', 'customers']);
+    expect(warnings[0]).toMatch(/No CSV files match/);
+    expect(warnings[0]).toMatch(/clusters\.csv/);
   });
 });

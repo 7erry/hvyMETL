@@ -616,6 +616,10 @@ app.get('/api/pipeline/config', async (req, res) => {
       ? undefined
       : String(req.query?.csvToAtlasPath ?? '').trim() || undefined;
     const generateMockCsv = req.query?.generateMockCsv === 'true' || req.query?.generateMockCsv === '1';
+    const expectedTables = String(req.query?.expectedTables ?? '')
+      .split(',')
+      .map((entry) => entry.trim())
+      .filter(Boolean);
     const mongoUriOverride = String(req.query?.mongoUri ?? '').trim() || undefined;
     const modelKeyOverride = String(req.query?.mongodbModelKey ?? '').trim() || undefined;
     const credentialOverrides = {
@@ -640,6 +644,7 @@ app.get('/api/pipeline/config', async (req, res) => {
       csvSourcePath,
       csvToAtlasPath,
       generateMockCsv,
+      expectedTables,
     });
 
     let mongoConnectivity = effectiveMongoUri

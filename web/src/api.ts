@@ -49,18 +49,58 @@ export async function inferProfile(model: SqlStructuralModel): Promise<ProfileIn
 }
 
 async function readApiError(res: Response): Promise<string> {
-  try {
-    const data = await res.json();
-    if (data && typeof data.error === 'string') {
-      if (typeof data.hint === 'string' && data.hint.trim()) {
-        return `${data.error} ${data.hint}`;
+  const contentType = res.headers.get('content-type') ?? '';
+  const body = await res.text();
+  if (contentType.includes('application/json')) {
+    try {
+      const data = JSON.parse(body) as { error?: string; hint?: string; message?: string };
+      if (typeof data.error === 'string') {
+        if (typeof data.hint === 'string' && data.hint.trim()) {
+          return `${data.error} ${data.hint}`;
+        }
+        return data.error;
       }
-      return data.error;
+      if (typeof data.message === 'string' && data.message.trim()) return data.message;
+    } catch {
+      // fall through
     }
-  } catch {
-    // ignore
+  }
+  const trimmed = body.trim();
+  if (trimmed.startsWith('<') || trimmed.includes('<html')) {
+    if (res.status === 401 || res.status === 403) {
+      return res.status === 401
+        ? 'Authentication required. Sign in again.'
+        : 'Forbidden: insufficient permissions for this action.';
+    }
+    if (res.status === 502 || res.status === 503 || res.status === 504) {
+      return `API unavailable (HTTP ${res.status}). Start the hvyMETL API server (npm run dev from the repo root).`;
+    }
+    return `Unexpected HTML response from server (HTTP ${res.status}). Ensure the API server is running and you are signed in on hosted studio.`;
+  }
+  if (trimmed) {
+    return trimmed.split('\n')[0]?.slice(0, 240) || res.statusText || `HTTP ${res.status}`;
   }
   return res.statusText || `HTTP ${res.status}`;
+}
+
+async function parseApiJsonResponse<T>(res: Response): Promise<T> {
+  if (!res.ok) throw new Error(await readApiError(res));
+  const contentType = res.headers.get('content-type') ?? '';
+  const body = await res.text();
+  if (!contentType.includes('application/json')) {
+    const trimmed = body.trim();
+    if (trimmed.startsWith('<') || trimmed.includes('<html')) {
+      throw new Error(
+        'API returned HTML instead of JSON. Ensure the hvyMETL API server is running (npm run dev) and sign in again on hosted studio.',
+      );
+    }
+    throw new Error(`Expected JSON from API (HTTP ${res.status}).`);
+  }
+  try {
+    return JSON.parse(body) as T;
+  } catch {
+    throw new Error('Invalid JSON in API response.');
+  }
 }
 
 export async function checkApiHealth(): Promise<boolean> {
@@ -173,6 +213,8 @@ export type PipelineConfigStatus = {
     message?: string;
     hint?: string;
   };
+  csvFileNames?: string[];
+  csvSchemaWarnings?: string[];
 };
 
 export type TenantSecretsStatus = {
@@ -306,8 +348,7 @@ async function consumePipelineStream(
   onProgress: (event: import('./pipelineStages.js').PipelineProgressEvent) => void,
 ): Promise<PipelineRunResult> {
   if (!response.ok) {
-    const data = (await response.json().catch(() => ({}))) as { error?: string };
-    throw new Error(data.error ?? response.statusText);
+    throw new Error(await readApiError(response));
   }
   if (!response.body) {
     throw new Error('Pipeline stream returned no body');
@@ -371,9 +412,7 @@ export async function runPipeline(
     return consumePipelineStream(res, onProgress);
   }
 
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error ?? res.statusText);
-  return data;
+  return parseApiJsonResponse<PipelineRunResult>(res);
 }
 
 export async function runPipelineWithCsv(
@@ -406,9 +445,7 @@ export async function runPipelineWithCsv(
     return consumePipelineStream(res, onProgress);
   }
 
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error ?? res.statusText);
-  return data;
+  return parseApiJsonResponse<PipelineRunResult>(res);
 }
 
 export async function fetchPipelineConfig(options?: {
@@ -418,6 +455,7 @@ export async function fetchPipelineConfig(options?: {
   generateMockCsv?: boolean;
   mongoUri?: string;
   mongodbModelKey?: string;
+  expectedTables?: string[];
 }): Promise<PipelineConfigStatus> {
   const params = new URLSearchParams();
   if (options?.schemaDialect) params.set('schemaDialect', options.schemaDialect);
@@ -426,10 +464,10 @@ export async function fetchPipelineConfig(options?: {
   if (options?.generateMockCsv) params.set('generateMockCsv', 'true');
   if (options?.mongoUri) params.set('mongoUri', options.mongoUri);
   if (options?.mongodbModelKey) params.set('mongodbModelKey', options.mongodbModelKey);
+  if (options?.expectedTables?.length) params.set('expectedTables', options.expectedTables.join(','));
   const query = params.toString();
   const res = await apiFetch(`${base}/api/pipeline/config${query ? `?${query}` : ''}`);
-  if (!res.ok) throw new Error((await res.json()).error ?? res.statusText);
-  return res.json();
+  return parseApiJsonResponse<PipelineConfigStatus>(res);
 }
 
 export async function fetchTenantSecrets(): Promise<TenantSecretsStatus> {
@@ -522,9 +560,7 @@ export async function uploadPipelineCsvFiles(files: File[]): Promise<PipelineCsv
   const body = new FormData();
   for (const file of files) body.append('csvs', file);
   const res = await apiFetch(`${base}/api/pipeline/upload-csv`, { method: 'POST', body });
-  const data = (await res.json()) as PipelineCsvUploadResult & { error?: string };
-  if (!res.ok) throw new Error(data.error ?? res.statusText);
-  return data;
+  return parseApiJsonResponse<PipelineCsvUploadResult>(res);
 }
 
 /** Open Swagger UI in a new tab using the current Auth0 access token (hosted studio). */

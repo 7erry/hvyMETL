@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { fatalCsvSchemaMismatch } from '../csvSchemaValidation';
 import {
   downloadPipelineResults,
+  describeApiError,
   fetchPipelineConfig,
   runPipeline,
   runPipelineWithCsv,
@@ -120,6 +122,8 @@ export function PipelinePanel({
     }
   }, [config?.serverManagedCsvToAtlas]);
 
+  const schemaTableNames = useMemo(() => model.tables.map((table) => table.name), [model]);
+
   const refreshConfig = useCallback(async (options?: { showLoading?: boolean }) => {
     const current = formRef.current;
     const cfg = configRef.current;
@@ -135,14 +139,15 @@ export function PipelinePanel({
         generateMockCsv: current.generateMockCsv,
         mongoUri: mongoUriOverrideForFetch(current.mongoUri),
         mongodbModelKey: modelKeyOverrideForFetch(current.mongodbModelKey),
+        expectedTables: schemaTableNames,
       });
       setConfig(status);
     } catch (e) {
-      setError(String(e));
+      setError(describeApiError(e));
     } finally {
       if (showLoading) setLoadingConfig(false);
     }
-  }, [dialect, csvSourcePath]);
+  }, [dialect, csvSourcePath, schemaTableNames]);
 
   useEffect(() => {
     if (!open) return;
@@ -169,6 +174,7 @@ export function PipelinePanel({
           schemaDialect: dialect,
           csvSourcePath: savedCsvIsGeneratedMock ? undefined : savedCsvPath || undefined,
           generateMockCsv: noCsv ? true : undefined,
+          expectedTables: model.tables.map((table) => table.name),
         });
         setConfig(status);
         const hostedSavedPath = resolveHostedCsvSourcePath(
@@ -180,12 +186,12 @@ export function PipelinePanel({
           ...hydratePipelineSettingsFromConfig(prev, status, hostedSavedPath),
         }));
       } catch (e) {
-        setError(String(e));
+        setError(describeApiError(e));
       } finally {
         setLoadingConfig(false);
       }
     })();
-  }, [open, csvSourcePath, dialect]);
+  }, [open, csvSourcePath, dialect, model.tables]);
 
   useEffect(() => {
     if (!open) return;
@@ -262,8 +268,18 @@ export function PipelinePanel({
     }
   };
 
+  const rejectCsvIfSchemaMismatch = (fileNames: string[]): boolean => {
+    const fatal = fatalCsvSchemaMismatch(fileNames, schemaTableNames);
+    if (fatal) {
+      setError(fatal);
+      return true;
+    }
+    return false;
+  };
+
   const uploadCsvFilesToServer = useCallback(
     async (files: File[], label: string) => {
+      if (rejectCsvIfSchemaMismatch(files.map((file) => file.name))) return;
       setCsvUploading(true);
       setError('');
       try {
@@ -281,13 +297,16 @@ export function PipelinePanel({
           generateMockCsv: false,
           mongoUri: mongoUriOverrideForFetch(current.mongoUri),
           mongodbModelKey: modelKeyOverrideForFetch(current.mongodbModelKey),
+          expectedTables: schemaTableNames,
         });
         setConfig(status);
+      } catch (e) {
+        setError(describeApiError(e));
       } finally {
         setCsvUploading(false);
       }
     },
-    [dialect, onCsvSourcePathChange, serverConfiguredCsvToAtlas],
+    [dialect, onCsvSourcePathChange, schemaTableNames, serverConfiguredCsvToAtlas],
   );
 
   useEffect(() => {
@@ -313,6 +332,8 @@ export function PipelinePanel({
         return;
       }
 
+      if (rejectCsvIfSchemaMismatch(picked.files.map((file) => file.name))) return;
+
       setCsvFiles(picked.files);
       setCsvDirectoryLabel(picked.label);
       setUploadedCsvCount(0);
@@ -332,6 +353,7 @@ export function PipelinePanel({
         await uploadCsvFilesToServer(files, `${files.length} selected file${files.length === 1 ? '' : 's'}`);
         return;
       }
+      if (rejectCsvIfSchemaMismatch(files.map((file) => file.name))) return;
       setCsvFiles(files);
       setCsvDirectoryLabel(`${files.length} selected file${files.length === 1 ? '' : 's'}`);
       setUploadedCsvCount(0);
@@ -450,7 +472,7 @@ export function PipelinePanel({
       }
       onComplete(pipelineResult);
     } catch (e) {
-      setError(String(e));
+      setError(describeApiError(e));
     } finally {
       setRunning(false);
       setProgress(null);
@@ -637,6 +659,14 @@ export function PipelinePanel({
             {config.mongoConnectivity.hint ? (
               <pre className="pipeline-hint">{config.mongoConnectivity.hint}</pre>
             ) : null}
+          </div>
+        ) : null}
+
+        {config?.csvSchemaWarnings?.length ? (
+          <div className="pipeline-warn">
+            {config.csvSchemaWarnings.map((warning) => (
+              <p key={warning}>{warning}</p>
+            ))}
           </div>
         ) : null}
 

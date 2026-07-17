@@ -197,9 +197,18 @@ export function requireRole(allowedRoles: HvyRole[]): RequestHandler[] {
 
 export function authErrorHandler(error: unknown, _req: Request, res: Response, next: NextFunction): void {
   if (error && typeof error === 'object' && 'status' in error) {
-    const status = Number((error as { status?: number }).status);
-    if (status === 401) {
-      res.status(401).json({ error: 'Authentication required' });
+    const authError = error as { status?: number; message?: string };
+    const status = Number(authError.status);
+    if (status >= 400 && status < 600) {
+      const message =
+        typeof authError.message === 'string' && authError.message.trim()
+          ? authError.message.trim()
+          : status === 401
+            ? 'Authentication required'
+            : status === 403
+              ? 'Forbidden'
+              : `Request failed (${status})`;
+      res.status(status).json({ error: message });
       return;
     }
   }
