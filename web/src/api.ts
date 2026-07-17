@@ -2,6 +2,8 @@ import type { DiagramExport, Dialect, Profile, SqlStructuralModel } from './type
 import type { ProfileRequestFields, WorkloadProfile } from './customProfileShared';
 import { formatAuthError, toAuthError } from './auth/authErrors';
 
+import { prepareCsvFilesForUpload } from './csvUploadSplit.js';
+
 const base = '';
 
 type AccessTokenProvider = () => Promise<string>;
@@ -67,8 +69,8 @@ async function readApiError(res: Response): Promise<string> {
   }
   if (res.status === 413) {
     return (
-      'CSV upload exceeds the size limit (HTTP 413). Files are uploaded one at a time; if a single .csv is still too large, ' +
-      'place exports on the machine running the API server and enter that folder path instead of uploading through the browser.'
+      'CSV upload exceeds the size limit (HTTP 413). Large files are split into .chunkN.csv parts automatically; ' +
+      'if upload still fails, place exports on the machine running the API server and enter that folder path instead.'
     );
   }
   const trimmed = body.trim();
@@ -557,8 +559,9 @@ async function uploadPipelineCsvBatch(
 export async function uploadPipelineCsvFiles(files: File[]): Promise<PipelineCsvUploadResult> {
   if (files.length === 0) throw new Error('At least one CSV file is required');
 
+  const prepared = await prepareCsvFilesForUpload(files);
   let result: PipelineCsvUploadResult | undefined;
-  for (const file of files) {
+  for (const file of prepared) {
     result = await uploadPipelineCsvBatch([file], result?.csvSourcePath);
   }
   return result!;
