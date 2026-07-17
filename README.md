@@ -296,8 +296,9 @@ Full matrix, parser limits, and examples: **[docs/18-sql-dialects.md](docs/18-sq
 | `examples/personalization/personalization.db` | `personalization` (70:30) | Attribute traits, Computed; Single Collection with `--profile mobile` |
 | `examples/analytics/analytics.db` | `realtime-analytics` (30:70) | Bucket firehose, rollup-shaped pre-allocation demo, Computed |
 | `examples/singleview/singleview.db` | `single-view` (85:15) | Customer-360 embed fan-in, Extended Reference on orders |
+| `examples/ledger/ledger.sql` | `ledger` (50:50) | PostgreSQL double-entry ledger, CoA tree, journal line embeds, audit trail |
 
-Each domain lives under `examples/<domain>/` with `<domain>.sql`,
+Each seeded domain lives under `examples/<domain>/` with `<domain>.sql`,
 `<domain>_generator.py`, and a pre-arranged **`hvymetl-diagram-*.json`** ER export
 for Migration Studio. SQLite databases are built with `npm run seed-examples`;
 per-table CSVs are generated locally (not in git) with e.g.

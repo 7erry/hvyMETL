@@ -25,6 +25,14 @@ corresponding decision rules from the
 | `personalization.db` | `personalization` | profiles, profile_traits (sparse), items, affinities (two parents), recommendations, segments, profile_segments (junction) | Attribute, multi-parent guard, Subset, Computed |
 | `analytics.db` | `realtime-analytics` | tracked_sites, campaigns, page_events (firehose, `event_type`), funnels, funnel_steps, hourly_rollups | Bucket, Pre-allocation, Computed, Reference |
 | `singleview.db` | `single-view` | crm_customers, web_accounts, orders, order_items, support_tickets, marketing_touches, loyalty_accounts | Extended Reference fan-in, embed fan-in, Computed |
+| `ledger.sql` | `ledger` | currencies, fx_rates, legal_entities, customers, accounts (CoA tree), journal_entries, journal_lines (partitioned), audit_logs | Financial Ledger profile, embed line items, Tree (CoA), Computed balances, Schema Versioning |
+
+`ledger.sql` is **PostgreSQL DDL paste only** (no SQLite seeder). Load it from Migration Studio **Load example** or:
+
+```bash
+# Migration Studio: Load example → Financial Ledger (Enterprise)
+npm run hvymetl -- design --ddl-file examples/ledger/ledger.sql --profile ledger --out out/ledger
+```
 
 ### Knowledge-base pattern applicability
 

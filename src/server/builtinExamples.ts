@@ -19,6 +19,12 @@ const SUGGESTED_PROFILE_BY_DOMAIN: Record<string, string> = {
   personalization: 'personalization',
   analytics: 'realtime-analytics',
   singleview: 'single-view',
+  ledger: 'ledger',
+};
+
+/** DDL paste dialect for examples that are not SQLite schemas. */
+const DOMAIN_DIALECTS: Record<string, string> = {
+  ledger: 'postgresql',
 };
 
 /** Human-readable labels for seeded example folders. */
@@ -30,6 +36,7 @@ const DOMAIN_LABELS: Record<string, string> = {
   personalization: 'Personalization Engine',
   analytics: 'Real-Time Analytics',
   singleview: 'Single View (Customer 360)',
+  ledger: 'Financial Ledger (Enterprise)',
 };
 
 /** One selectable built-in DDL example on the API server disk. */
@@ -134,7 +141,7 @@ export function listBuiltinExamples(examplesDir: string): BuiltinExampleSummary[
       id: domain,
       label: DOMAIN_LABELS[domain] ?? domain,
       description: readFirstCommentLine(sqlPath) ?? `Example schema for ${domain}.`,
-      dialect: 'sqlite',
+      dialect: DOMAIN_DIALECTS[domain] ?? 'sqlite',
       suggestedProfileId: SUGGESTED_PROFILE_BY_DOMAIN[domain],
     });
   }

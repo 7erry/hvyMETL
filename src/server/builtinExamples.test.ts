@@ -84,4 +84,15 @@ describe('repo bundled examples', () => {
     expect(summary.suggestedProfileId).toBe('catalog');
     expect(ddl).toContain('CREATE TABLE products');
   });
+
+  it('loads ledger as PostgreSQL with ledger profile suggestion', () => {
+    const { path } = resolveBuiltinExamplesDir();
+    const example = listBuiltinExamples(path).find((item) => item.id === 'ledger');
+    expect(example?.dialect).toBe('postgresql');
+    expect(example?.suggestedProfileId).toBe('ledger');
+
+    const { ddl, summary } = readBuiltinExample(path, 'ledger');
+    expect(summary.label).toBe('Financial Ledger (Enterprise)');
+    expect(ddl).toContain('CREATE TABLE journal_entries');
+  });
 });

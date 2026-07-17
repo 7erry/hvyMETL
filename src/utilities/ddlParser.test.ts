@@ -1,4 +1,7 @@
 import { describe, expect, it } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { parseDdlToModel } from './ddlParser.js';
 
 const SAMPLE = `
@@ -215,5 +218,25 @@ describe('parseDdlToModel — additional dialects', () => {
   it('parses Amazon Aurora PostgreSQL DDL (PostgreSQL-compatible)', () => {
     const model = parseDdlToModel(SAMPLE, 'aurora-postgresql');
     expect(model.tables).toHaveLength(2);
+  });
+
+  it('parses enterprise financial ledger PostgreSQL DDL with partitioned journal lines', () => {
+    const ddl = readFileSync(join(dirname(fileURLToPath(import.meta.url)), '../../examples/ledger/ledger.sql'), 'utf8');
+    const model = parseDdlToModel(ddl, 'postgresql');
+    expect(model.tables.map((table) => table.name).sort()).toEqual([
+      'accounts',
+      'audit_logs',
+      'currencies',
+      'customers',
+      'fx_rates',
+      'journal_entries',
+      'journal_lines',
+      'legal_entities',
+    ]);
+    const journalEntries = model.tables.find((table) => table.name === 'journal_entries');
+    const journalLines = model.tables.find((table) => table.name === 'journal_lines');
+    expect(journalEntries?.foreignKeys.some((fk) => fk.referencesTable === 'legal_entities')).toBe(true);
+    expect(journalLines?.foreignKeys.some((fk) => fk.referencesTable === 'journal_entries')).toBe(true);
+    expect(journalLines?.foreignKeys.some((fk) => fk.referencesTable === 'accounts')).toBe(true);
   });
 });
