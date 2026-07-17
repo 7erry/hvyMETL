@@ -39,7 +39,12 @@ import { PIPELINE_EXECUTIONS_COLLECTION } from './pipelineExecutionTypes.js';
 import { generateFromPlan } from '../repogen/generate.js';
 import { REPOGEN_LANGUAGES } from '../repogen/languages/index.js';
 import { registerApiArtifactRoutes } from './apiArtifactRoutes.js';
-import { buildCsvUploadResponse, createCsvUploadMiddleware } from './csvUpload.js';
+import {
+  buildCsvUploadResponse,
+  createCsvUploadMiddleware,
+  formatMulterUploadError,
+  resolveCsvUploadBatchDir,
+} from './csvUpload.js';
 import { hostedStudioUrl, isHostedStudioRequest } from './hosted.js';
 import {
   persistPipelineCredentialOverrides,
@@ -848,12 +853,24 @@ app.post('/api/pipeline/upload-csv', (req, res) => {
     return;
   }
 
-  const batchDir = tenantCsvBatchDir(ROOT, tenantId, 'csv-batch');
+  const appendPath = String(req.query?.csvSourcePath ?? '').trim() || undefined;
+  let batchDir: string;
+  try {
+    batchDir = resolveCsvUploadBatchDir(ROOT, tenantId, appendPath);
+  } catch (error) {
+    res.status(403).json({ error: String(error) });
+    return;
+  }
+
   const csvUpload = createCsvUploadMiddleware(batchDir);
 
   csvUpload(req, res, (uploadError: unknown) => {
     if (uploadError) {
-      res.status(400).json({ error: String(uploadError) });
+      const formatted = formatMulterUploadError(uploadError);
+      res.status(formatted.status).json({
+        error: formatted.error,
+        ...(formatted.hint ? { hint: formatted.hint } : {}),
+      });
       return;
     }
     try {

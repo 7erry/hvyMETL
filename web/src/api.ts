@@ -65,6 +65,12 @@ async function readApiError(res: Response): Promise<string> {
       // fall through
     }
   }
+  if (res.status === 413) {
+    return (
+      'CSV upload exceeds the size limit (HTTP 413). Files are uploaded one at a time; if a single .csv is still too large, ' +
+      'place exports on the machine running the API server and enter that folder path instead of uploading through the browser.'
+    );
+  }
   const trimmed = body.trim();
   if (trimmed.startsWith('<') || trimmed.includes('<html')) {
     if (res.status === 401 || res.status === 403) {
@@ -420,32 +426,8 @@ export async function runPipelineWithCsv(
   request: PipelineRunRequest,
   onProgress?: (event: import('./pipelineStages.js').PipelineProgressEvent) => void,
 ): Promise<PipelineRunResult> {
-  const body = new FormData();
-  for (const file of files) body.append('csvs', file);
-  body.append('profileId', request.profileId);
-  if (request.customProfile) body.append('customProfile', JSON.stringify(request.customProfile));
-  if (request.customTelemetry) body.append('customTelemetry', JSON.stringify(request.customTelemetry));
-  body.append('model', JSON.stringify(request.model));
-  body.append('ddl', request.ddl);
-  if (request.dialect) body.append('dialect', request.dialect);
-  if (request.targetDb) body.append('targetDb', request.targetDb);
-  if (request.drop === false) body.append('drop', 'false');
-  if (request.mongoUri) body.append('mongoUri', request.mongoUri);
-  if (request.mongodbModelKey) body.append('mongodbModelKey', request.mongodbModelKey);
-  if (request.csvToAtlasPath) body.append('csvToAtlasPath', request.csvToAtlasPath);
-  if (request.cardinalityOverrides) body.append('cardinalityOverrides', JSON.stringify(request.cardinalityOverrides));
-  if (request.forceEmbedOverrides) body.append('forceEmbedOverrides', JSON.stringify(request.forceEmbedOverrides));
-  if (request.generateMockCsv) body.append('generateMockCsv', 'true');
-  if (request.mockCsvOptions) body.append('mockCsvOptions', JSON.stringify(request.mockCsvOptions));
-  if (onProgress) body.append('stream', 'true');
-
-  const res = await apiFetch(`${base}/api/pipeline/run-with-csv`, { method: 'POST', body });
-
-  if (onProgress) {
-    return consumePipelineStream(res, onProgress);
-  }
-
-  return parseApiJsonResponse<PipelineRunResult>(res);
+  const uploaded = await uploadPipelineCsvFiles(files);
+  return runPipeline({ ...request, csvSourcePath: uploaded.csvSourcePath }, onProgress);
 }
 
 export async function fetchPipelineConfig(options?: {
@@ -554,13 +536,32 @@ export type PipelineCsvUploadResult = {
   files: string[];
 };
 
+/** Upload one CSV (or a small batch) to an existing or new tenant batch directory. */
+async function uploadPipelineCsvBatch(
+  files: File[],
+  existingCsvSourcePath?: string,
+): Promise<PipelineCsvUploadResult> {
+  const body = new FormData();
+  for (const file of files) body.append('csvs', file);
+  const params = new URLSearchParams();
+  if (existingCsvSourcePath) params.set('csvSourcePath', existingCsvSourcePath);
+  const query = params.toString();
+  const res = await apiFetch(`${base}/api/pipeline/upload-csv${query ? `?${query}` : ''}`, {
+    method: 'POST',
+    body,
+  });
+  return parseApiJsonResponse<PipelineCsvUploadResult>(res);
+}
+
 /** Upload CSV exports to the tenant workspace on the server (hosted studio). */
 export async function uploadPipelineCsvFiles(files: File[]): Promise<PipelineCsvUploadResult> {
   if (files.length === 0) throw new Error('At least one CSV file is required');
-  const body = new FormData();
-  for (const file of files) body.append('csvs', file);
-  const res = await apiFetch(`${base}/api/pipeline/upload-csv`, { method: 'POST', body });
-  return parseApiJsonResponse<PipelineCsvUploadResult>(res);
+
+  let result: PipelineCsvUploadResult | undefined;
+  for (const file of files) {
+    result = await uploadPipelineCsvBatch([file], result?.csvSourcePath);
+  }
+  return result!;
 }
 
 /** Open Swagger UI in a new tab using the current Auth0 access token (hosted studio). */
