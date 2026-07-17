@@ -16,7 +16,9 @@ instead of generic LLM training data. Fourteen curated markdown documents coveri
 the [MongoDB Manual Schema Design Patterns](https://www.mongodb.com/docs/manual/data-modeling/design-patterns/)
 and the Building with Patterns series, each with applicability thresholds and
 verified code blocks, are chunked at heading boundaries and ranked against a
-workload-derived query. By default retrieval is **BM25 only** (no API keys, fully offline).
+workload-derived query. Runnable mappings from each doc to a seeded example
+database are in **[examples/README.md](../examples/README.md)** and
+[10-examples.md § Knowledge-base pattern applicability](10-examples.md#knowledge-base-pattern-applicability). By default retrieval is **BM25 only** (no API keys, fully offline).
 When `MONGODB_MODEL_KEY` is set, the retriever runs **hybrid search**: BM25 for exact keyword tokens plus
 [Voyage 4](https://docs.voyageai.com/docs/embeddings) embeddings for conceptual
 context, with scores merged via **Reciprocal Rank Fusion (RRF)**. The top chunks are

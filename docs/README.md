@@ -40,6 +40,7 @@ merge-mode diagrams.
 | [19-llm-and-models.md](19-llm-and-models.md) | Which models hvyMETL uses — embeddings, rerankers, and what is *not* a chat LLM | `src/rag/`, `src/ml_engine/`, `src/design/` |
 | [18-sql-dialects.md](18-sql-dialects.md) | Eleven supported SQL dialects — SQLite live adapter vs DDL paste import | `src/dialects.ts`, `src/utilities/ddlParser.ts` |
 | [10-examples.md](10-examples.md) | The seven example SQL domains and the deterministic seeder | `examples/`, `src/examples/` |
+| [examples/README.md](../examples/README.md) | Pattern → example → verify-command matrix for the knowledge base | `examples/` |
 | [11-run-all-examples.md](11-run-all-examples.md) | End-to-end Atlas run for all seven domains with automated validation | `scripts/run-all-examples.mjs` |
 
 ## Architectural Role

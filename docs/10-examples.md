@@ -24,7 +24,50 @@ corresponding decision rules from the
 | `mobile.db` | `mobile` | app_users, user_devices, sessions, app_events (firehose), purchases, push_notifications | Subset, Bucket, Computed, Extended Reference |
 | `personalization.db` | `personalization` | profiles, profile_traits (sparse), items, affinities (two parents), recommendations, segments, profile_segments (junction) | Attribute, multi-parent guard, Subset, Computed |
 | `analytics.db` | `realtime-analytics` | tracked_sites, campaigns, page_events (firehose, `event_type`), funnels, funnel_steps, hourly_rollups | Bucket, Pre-allocation, Computed, Reference |
-| `singleview.db` | `single-view` | crm_customers, web_accounts, orders, order_items, support_tickets, marketing_touches, loyalty_accounts | Extended Reference fan-in, Subset + Outlier, Computed |
+| `singleview.db` | `single-view` | crm_customers, web_accounts, orders, order_items, support_tickets, marketing_touches, loyalty_accounts | Extended Reference fan-in, embed fan-in, Computed |
+
+### Knowledge-base pattern applicability
+
+Each row in [`examples/README.md`](../examples/README.md) maps one `knowledge/*.md`
+document to a concrete table, collection, and `hvymetl design` command so you can
+verify pattern decisions against the source material RAG retrieves.
+
+**Quick reference — where to see each automated pattern:**
+
+| Pattern | Best example | Collection / table | Default profile |
+| --- | --- | --- | --- |
+| Attribute | `catalog` or `personalization` | `products` (EAV) / `profiles` (traits) | `catalog` / `personalization` |
+| Archive | `catalog` | `reviews` + `reviews_archive` | `catalog` |
+| Bucket | `iot` (also `mobile`, `analytics`) | `sensor_readings` / `app_events` / `page_events` | `iot` / `mobile` / `realtime-analytics` |
+| Computed | any domain | parent counters, bucket aggregates | each domain default |
+| Embed / Reference | any domain | bounded children vs lookups | each domain default |
+| Extended Reference | `catalog`, `cms`, `mobile`, `singleview` | e.g. `products.brand`, `orders.crmCustomer` | matching domain profile |
+| Outlier | `catalog`, `cms` | skewed `reviews`, skewed blocks on `assets` | `catalog`, `cms` |
+| Polymorphic | `cms` | `content_blocks` | `cms` |
+| Schema Versioning | any domain | every planned collection | each domain default |
+| Single Collection | `cms` or `personalization` | `pages_tags` / `profiles_segments` hub | use `--profile mobile` (see below) |
+| Subset | `catalog`, `cms` | `products.recentReviews`, bounded blocks | `catalog`, `cms` |
+| Tree | `catalog`, `cms` | `categories`, `pages` | `catalog`, `cms` |
+
+**Single Collection** needs a profile that prefers it (`mobile` or
+`realtime-analytics`) because junction tables in `cms.db` default to embed-on-parent
+under the CMS profile:
+
+```bash
+npm run hvymetl -- design --source examples/cms/cms.db --profile mobile --out out/cms-sc
+```
+
+**Pre-allocation** ([`knowledge/preallocation.md`](../knowledge/preallocation.md)):
+the analytics domain’s `hourly_rollups` and IoT/analytics profile preferences model
+predictable write slots; RAG cites the doc during design. The engine does not yet
+emit a distinct `preallocation` pattern id — treat the rollup schema as the
+reference shape.
+
+**Migration principles** ([`knowledge/migration-principles.md`](../knowledge/migration-principles.md)):
+cross-cutting embed/merge rules applied across all examples; retrieved with pattern
+chunks during RAG (see [03-knowledge-rag.md](03-knowledge-rag.md)).
+
+Regression coverage: `npm test -- src/examples/examplePatternCoverage.test.ts`.
 
 ### `seed.ts` entry point
 

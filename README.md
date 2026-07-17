@@ -289,19 +289,20 @@ Full matrix, parser limits, and examples: **[docs/18-sql-dialects.md](docs/18-sq
 
 | Database | Default profile | What it exercises |
 | --- | --- | --- |
-| `examples/catalog/catalog.db` | `catalog` (95:5) | Extended Reference, Subset, Outlier (skewed reviews), Attribute (EAV), Computed, Tree |
-| `examples/cms/cms.db` | `cms` (90:10) | Polymorphic blocks, Tree pages, embeds, junction tags |
-| `examples/iot/iot.db` | `iot` (10:90) | Bucket (60k readings), Computed counters, references |
-| `examples/mobile/mobile.db` | `mobile` (80:20) | Bucket events, Subset sessions, Extended Reference |
-| `examples/personalization/personalization.db` | `personalization` (70:30) | Computed affinities, Attribute traits, junction segments |
-| `examples/analytics/analytics.db` | `realtime-analytics` (30:70) | Bucket firehose, Pre-allocation rollups, Computed |
-| `examples/singleview/singleview.db` | `single-view` (85:15) | Customer-360 merge, Subset orders, Outlier mega accounts |
+| `examples/catalog/catalog.db` | `catalog` (95:5) | Attribute (EAV), Subset + Outlier reviews, Extended Reference, Tree, Archive |
+| `examples/cms/cms.db` | `cms` (90:10) | Polymorphic blocks, Tree pages, Outlier, embeds; Single Collection with `--profile mobile` |
+| `examples/iot/iot.db` | `iot` (10:90) | Bucket (60k readings), Computed counters, embed/reference |
+| `examples/mobile/mobile.db` | `mobile` (80:20) | Bucket events, Extended Reference, Computed |
+| `examples/personalization/personalization.db` | `personalization` (70:30) | Attribute traits, Computed; Single Collection with `--profile mobile` |
+| `examples/analytics/analytics.db` | `realtime-analytics` (30:70) | Bucket firehose, rollup-shaped pre-allocation demo, Computed |
+| `examples/singleview/singleview.db` | `single-view` (85:15) | Customer-360 embed fan-in, Extended Reference on orders |
 
 Each domain lives under `examples/<domain>/` with `<domain>.sql`,
 `<domain>_generator.py`, and a pre-arranged **`hvymetl-diagram-*.json`** ER export
 for Migration Studio. SQLite databases are built with `npm run seed-examples`;
 per-table CSVs are generated locally (not in git) with e.g.
-`cd examples/iot && python iot_generator.py`. See **[docs/10-examples.md](docs/10-examples.md)**.
+`cd examples/iot && python iot_generator.py`. Pattern-to-example matrix:
+**[examples/README.md](examples/README.md)** and **[docs/10-examples.md](docs/10-examples.md)**.
 
 Any profile can be applied to any source: `--profile ledger` against `catalog.db`
 produces a reference-first plan with `w: "majority"` durability.
