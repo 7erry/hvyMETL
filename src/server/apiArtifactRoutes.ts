@@ -10,6 +10,7 @@ import {
   getActiveApiArtifacts,
   readJsonArtifact,
   readJsonObjectArtifact,
+  resolveLatestApiArtifactDir,
   serializeApiArtifactBundle,
   type ApiArtifactBundle,
 } from './apiArtifactStore.js';
@@ -26,8 +27,8 @@ const docsAuth: RequestHandler[] = [
 
 function resolveBundle(req: Request, rootDir: string): ApiArtifactBundle | null {
   const tenantId = getRequestTenantId(req);
-  const defaultOutDir = join(rootDir, 'out', 'tenants', tenantId, 'ui-export');
-  return getActiveApiArtifacts(defaultOutDir, tenantId);
+  const latestDir = resolveLatestApiArtifactDir(rootDir, tenantId);
+  return getActiveApiArtifacts(latestDir, tenantId);
 }
 
 function findCollection(bundle: ApiArtifactBundle, name: string) {

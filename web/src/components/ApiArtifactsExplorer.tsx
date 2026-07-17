@@ -9,6 +9,8 @@ import { ArtifactCodePanel } from './ArtifactCodePanel';
 
 type ApiArtifactsExplorerProps = {
   initialBundle?: ApiArtifactBundleInfo | null;
+  /** Bust cached bundle when design/export/pipeline artifacts change. */
+  refreshKey?: string;
   collapsed?: boolean;
   onToggleCollapse?: () => void;
 };
@@ -17,6 +19,7 @@ type ApiView = 'combined-openapi' | 'collection-schema' | 'collection-openapi';
 
 export function ApiArtifactsExplorer({
   initialBundle,
+  refreshKey,
   collapsed = false,
   onToggleCollapse,
 }: ApiArtifactsExplorerProps) {
@@ -49,7 +52,13 @@ export function ApiArtifactsExplorer({
       const next = await fetchApiArtifacts();
       setBundle(next);
       if (next?.collections.length) {
-        setSelectedCollection((prev) => prev || next.collections[0].name);
+        setSelectedCollection((prev) =>
+          prev && next.collections.some((collection) => collection.name === prev)
+            ? prev
+            : next.collections[0].name,
+        );
+      } else {
+        setSelectedCollection('');
       }
     } catch (e) {
       setError(String(e));
@@ -60,12 +69,19 @@ export function ApiArtifactsExplorer({
   }, []);
 
   useEffect(() => {
-    if (!initialBundle) {
-      void refreshBundle();
-    } else if (initialBundle.collections.length > 0) {
-      setSelectedCollection(initialBundle.collections[0].name);
+    setBundle(initialBundle ?? null);
+    if (initialBundle?.collections.length) {
+      setSelectedCollection((prev) =>
+        prev && initialBundle.collections.some((collection) => collection.name === prev)
+          ? prev
+          : initialBundle.collections[0].name,
+      );
     }
-  }, [initialBundle, refreshBundle]);
+  }, [initialBundle]);
+
+  useEffect(() => {
+    void refreshBundle();
+  }, [refreshKey, refreshBundle]);
 
   useEffect(() => {
     if (!bundle || collapsed) return;

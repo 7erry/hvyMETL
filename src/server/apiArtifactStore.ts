@@ -2,8 +2,9 @@
  * Track the latest generated OpenAPI + MongoDB schema artifact bundle on disk.
  */
 
-import { existsSync, readdirSync, readFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
+import { tenantArtifactDir, type TenantArtifactKind } from './tenant.js';
 
 export type ApiArtifactCollection = {
   name: string;
@@ -42,6 +43,31 @@ function listCollectionArtifacts(outDir: string): ApiArtifactCollection[] {
   return collections.sort((a, b) => a.name.localeCompare(b.name));
 }
 
+/** Re-read collection artifact files from disk (drops removed collections). */
+function hydrateBundleFromDisk(bundle: ApiArtifactBundle): ApiArtifactBundle {
+  return {
+    ...bundle,
+    collections: listCollectionArtifacts(bundle.outDir),
+  };
+}
+
+const ARTIFACT_KINDS: TenantArtifactKind[] = ['ui-pipeline', 'ui-design', 'ui-export'];
+
+/** Newest tenant artifact folder that contains a combined OpenAPI spec. */
+export function resolveLatestApiArtifactDir(rootDir: string, tenantId: string): string | undefined {
+  let latest: { dir: string; mtime: number } | undefined;
+  for (const kind of ARTIFACT_KINDS) {
+    const dir = tenantArtifactDir(rootDir, tenantId, kind);
+    const combinedOpenApiPath = join(dir, 'openapi.json');
+    if (!existsSync(combinedOpenApiPath)) continue;
+    const mtime = statSync(combinedOpenApiPath).mtimeMs;
+    if (!latest || mtime > latest.mtime) {
+      latest = { dir, mtime };
+    }
+  }
+  return latest?.dir;
+}
+
 /** Register an output directory that contains openapi.json and schemas/. */
 export function registerApiArtifacts(
   outDir: string,
@@ -69,24 +95,28 @@ export function registerApiArtifacts(
   return bundle;
 }
 
-/** Active bundle, or the default ui-export folder when present. */
+/** Active bundle, or the newest tenant artifact folder when present. */
 export function getActiveApiArtifacts(defaultOutDir?: string, tenantId?: string): ApiArtifactBundle | null {
   if (tenantId) {
+    if (defaultOutDir) {
+      const cached = activeBundlesByTenant.get(tenantId);
+      if (cached?.outDir === defaultOutDir && existsSync(cached.combinedOpenApiPath)) {
+        return hydrateBundleFromDisk(cached);
+      }
+      return registerApiArtifacts(defaultOutDir, 'default', tenantId);
+    }
     const cached = activeBundlesByTenant.get(tenantId);
     if (cached && existsSync(cached.combinedOpenApiPath)) {
-      return cached;
-    }
-    if (defaultOutDir) {
-      return registerApiArtifacts(defaultOutDir, 'default', tenantId) ?? null;
+      return hydrateBundleFromDisk(cached);
     }
     return null;
   }
 
   if (activeBundle && existsSync(activeBundle.combinedOpenApiPath)) {
-    return activeBundle;
+    return hydrateBundleFromDisk(activeBundle);
   }
   if (defaultOutDir) {
-    return registerApiArtifacts(defaultOutDir, 'default') ?? null;
+    return registerApiArtifacts(defaultOutDir, 'default');
   }
   return null;
 }

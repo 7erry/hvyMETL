@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { mkdirSync, rmSync } from 'node:fs';
 import {
@@ -101,6 +101,31 @@ describe('collectionApiSchemas', () => {
     assertOpenApiShape(openApi);
     const combined = JSON.parse(readFileSync(result.combinedOpenApiPath, 'utf8')) as Record<string, unknown>;
     assertOpenApiShape(combined);
+
+    rmSync(outDir, { recursive: true, force: true });
+  });
+
+  it('removes schema files for collections no longer in the plan', () => {
+    const outDir = join(process.cwd(), 'out', 'collection-artifacts-prune-test');
+    rmSync(outDir, { recursive: true, force: true });
+    mkdirSync(outDir, { recursive: true });
+
+    const twoCollectionPlan: MigrationPlan = {
+      ...samplePlan,
+      collections: [
+        samplePlan.collections[0],
+        {
+          ...samplePlan.collections[0],
+          name: 'orders',
+          sourceTable: 'orders',
+        },
+      ],
+    };
+    writeCollectionApiArtifacts(outDir, twoCollectionPlan);
+    expect(readdirSync(join(outDir, 'schemas')).sort()).toEqual(['orders.schema.json', 'products.schema.json']);
+
+    writeCollectionApiArtifacts(outDir, samplePlan);
+    expect(readdirSync(join(outDir, 'schemas'))).toEqual(['products.schema.json']);
 
     rmSync(outDir, { recursive: true, force: true });
   });

@@ -348,6 +348,7 @@ export function MigrationArtifactsView({ artifacts, onChange, onBack }: Migratio
           bottom={
             <ApiArtifactsExplorer
               initialBundle={artifacts.apiArtifacts}
+              refreshKey={`${artifacts.generatedAt ?? ''}:${artifacts.designMeta?.collectionCount ?? ''}:${artifacts.apiArtifacts?.registeredAt ?? ''}`}
               collapsed={apiPanelCollapsed}
               onToggleCollapse={toggleApiPanel}
             />

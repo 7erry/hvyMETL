@@ -2,7 +2,7 @@
  * Per-collection MongoDB validator schemas and OpenAPI 3 documents from migration plans.
  */
 
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readdirSync, unlinkSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { CollectionPlan, MigrationPlan } from '../types.js';
 
@@ -340,6 +340,18 @@ export function writeCollectionApiArtifacts(outDir: string, plan: MigrationPlan)
   const openapiDir = join(outDir, 'openapi');
   mkdirSync(schemasDir, { recursive: true });
   mkdirSync(openapiDir, { recursive: true });
+
+  const currentNames = new Set(plan.collections.map((collection) => collection.name));
+  for (const fileName of existsSync(schemasDir) ? readdirSync(schemasDir) : []) {
+    if (!fileName.endsWith('.schema.json')) continue;
+    const name = fileName.replace(/\.schema\.json$/i, '');
+    if (!currentNames.has(name)) unlinkSync(join(schemasDir, fileName));
+  }
+  for (const fileName of existsSync(openapiDir) ? readdirSync(openapiDir) : []) {
+    if (!fileName.endsWith('.openapi.json')) continue;
+    const name = fileName.replace(/\.openapi\.json$/i, '');
+    if (!currentNames.has(name)) unlinkSync(join(openapiDir, fileName));
+  }
 
   const perCollection: CollectionArtifactPaths['perCollection'] = [];
 

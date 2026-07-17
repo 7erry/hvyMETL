@@ -643,7 +643,7 @@ export default function App() {
           generatedAt: new Date().toISOString(),
           repositories: prev.migrationArtifacts?.repositories,
           pipelineResult: prev.migrationArtifacts?.pipelineResult,
-          apiArtifacts: result.apiArtifacts ?? prev.migrationArtifacts?.apiArtifacts,
+          apiArtifacts: result.apiArtifacts ?? null,
         },
         collectionPositions: initialCollectionPositions(
           result.plan as { collections: CollectionPlan[] },
