@@ -48,6 +48,7 @@ type ManagerViewProps = {
   onDdlChange: (ddl: string) => void;
   onImportQuery: () => void;
   onSchemaFile: (file: File) => void;
+  onImportBuiltinExample?: (exampleId: string) => void | Promise<void>;
   exporting: boolean;
   statusMessage: string;
   pipelineOpen: boolean;
@@ -78,6 +79,7 @@ export function ManagerView({
   onDdlChange,
   onImportQuery,
   onSchemaFile,
+  onImportBuiltinExample,
   exporting,
   statusMessage,
   pipelineOpen,
@@ -190,6 +192,7 @@ export function ManagerView({
             onDdlChange={onDdlChange}
             onImportQuery={onImportQuery}
             onSchemaFile={onSchemaFile}
+            onImportBuiltinExample={onImportBuiltinExample}
             onOpenReview={() => openReview()}
           />
         }

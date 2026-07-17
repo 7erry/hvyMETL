@@ -46,7 +46,7 @@ refresh-token rotation, and troubleshooting.
 
 | Feature | UI location | Backend |
 | --- | --- | --- |
-| **Instant Schema Import** | Sidebar → paste DDL → Import Query, or **Import file** (DDL auto-imports on select) | `POST /api/schema/import-ddl` |
+| **Instant Schema Import** | Sidebar → paste DDL → Import Query, **Upload file**, or **Load example** (bundled DDL from server `~/hvymetl/examples`) | `POST /api/schema/import-ddl`, `GET /api/schema/builtin-examples`, `POST /api/schema/import-builtin-example` |
 | **Broad Database Support** | Dialect selector (PostgreSQL, MySQL, SQLite, MSSQL, ClickHouse, Oracle, IBM Db2, CockroachDB, Amazon Aurora, Google Cloud Spanner) | DDL parser; SQLite file upload live |
 | **Embed Overrides** | Before view → **Embed Overrides** → enter max child rows per parent and/or check **Force embed** for linked FK relationships when CSV/live stats are unavailable | `cardinalityOverrides` and `forceEmbedOverrides` applied by design, explain, export, and pipeline APIs |
 | **Customizable ER Diagrams** | Main canvas (drag tables, zoom, minimap) | React Flow + `SqlStructuralModel` |
@@ -77,6 +77,8 @@ All six pipeline steps (Knowledge + RAG, profiles, design, ETL, import, codegen)
 | `GET` | `/api/dialects` | — | Supported database labels |
 | `GET` | `/api/templates` | — | Template DDL + parsed model |
 | `POST` | `/api/schema/import-ddl` | `{ ddl, dialect }` | `{ model }` |
+| `GET` | `/api/schema/builtin-examples` | — | `{ examples, examplesDir, source }` |
+| `POST` | `/api/schema/import-builtin-example` | `{ exampleId }` | `{ model, ddl, dialect, suggestedProfileId, inferred }` |
 | `POST` | `/api/schema/import-sqlite` | `multipart database` | `{ model, ddl, sourcePath }` |
 | `POST` | `/api/design` | `{ model, profileId, ddl, cardinalityOverrides?, forceEmbedOverrides? }` | `{ plan, designReport, retrievalStrategy }` |
 | `POST` | `/api/export/migration` | `{ model, profileId, ddl, cardinalityOverrides?, forceEmbedOverrides? }` | Downloads: plan JSON, design report, RAG prompts |

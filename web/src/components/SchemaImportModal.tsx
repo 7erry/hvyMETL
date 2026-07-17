@@ -11,6 +11,7 @@ type SchemaImportModalProps = {
   onDdlChange: (ddl: string) => void;
   onImportQuery: () => void;
   onSchemaFile: (file: File) => void;
+  onImportBuiltinExample?: (exampleId: string) => void | Promise<void>;
   onClose: () => void;
 };
 
@@ -25,6 +26,7 @@ export function SchemaImportModal({
   onDdlChange,
   onImportQuery,
   onSchemaFile,
+  onImportBuiltinExample,
   onClose,
 }: SchemaImportModalProps) {
   if (!open) return null;
@@ -53,6 +55,7 @@ export function SchemaImportModal({
           onDdlChange={onDdlChange}
           onImportQuery={onImportQuery}
           onSchemaFile={onSchemaFile}
+          onImportBuiltinExample={onImportBuiltinExample}
           framed={false}
         />
       </div>

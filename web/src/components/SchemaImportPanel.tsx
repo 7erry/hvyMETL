@@ -1,5 +1,6 @@
-import { useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useAccess } from '../auth/HostedAuthProvider';
+import { fetchBuiltinExamples, type BuiltinExampleSummary } from '../api';
 import type { Dialect } from '../types';
 
 type SchemaImportPanelProps = {
@@ -11,6 +12,7 @@ type SchemaImportPanelProps = {
   onDdlChange: (ddl: string) => void;
   onImportQuery: () => void;
   onSchemaFile: (file: File) => void;
+  onImportBuiltinExample?: (exampleId: string) => void | Promise<void>;
   compact?: boolean;
   framed?: boolean;
 };
@@ -24,11 +26,52 @@ export function SchemaImportPanel({
   onDdlChange,
   onImportQuery,
   onSchemaFile,
+  onImportBuiltinExample,
   compact = false,
   framed = true,
 }: SchemaImportPanelProps) {
   const access = useAccess();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [builtinExamples, setBuiltinExamples] = useState<BuiltinExampleSummary[]>([]);
+  const [selectedExampleId, setSelectedExampleId] = useState('');
+  const [loadingExamples, setLoadingExamples] = useState(false);
+  const [loadingExample, setLoadingExample] = useState(false);
+
+  useEffect(() => {
+    if (!apiConnected || !onImportBuiltinExample) {
+      setBuiltinExamples([]);
+      setSelectedExampleId('');
+      return;
+    }
+
+    let cancelled = false;
+    setLoadingExamples(true);
+    void fetchBuiltinExamples()
+      .then(({ examples }) => {
+        if (!cancelled) setBuiltinExamples(examples);
+      })
+      .catch(() => {
+        if (!cancelled) setBuiltinExamples([]);
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingExamples(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [apiConnected, onImportBuiltinExample]);
+
+  const handleLoadExample = async () => {
+    if (!selectedExampleId || !onImportBuiltinExample) return;
+    setLoadingExample(true);
+    try {
+      await onImportBuiltinExample(selectedExampleId);
+    } finally {
+      setLoadingExample(false);
+    }
+  };
+
   const content = (
     <>
       {!apiConnected ? (
@@ -97,6 +140,54 @@ export function SchemaImportPanel({
           }}
         />
       </div>
+      {onImportBuiltinExample ? (
+        <div className="schema-import-panel__examples">
+          <label className="schema-import-panel__label" htmlFor="builtin-example-select">
+            Built-in example
+          </label>
+          <div className="schema-import-panel__example-row">
+            <select
+              id="builtin-example-select"
+              value={selectedExampleId}
+              onChange={(e) => setSelectedExampleId(e.target.value)}
+              className="schema-import-panel__select"
+              disabled={!apiConnected || loadingExamples || builtinExamples.length === 0}
+            >
+              <option value="">
+                {loadingExamples
+                  ? 'Loading examples…'
+                  : builtinExamples.length === 0
+                    ? 'No examples on server'
+                    : 'Choose an example…'}
+              </option>
+              {builtinExamples.map((example) => (
+                <option key={example.id} value={example.id}>
+                  {example.label}
+                </option>
+              ))}
+            </select>
+            <button
+              type="button"
+              className="secondary"
+              onClick={() => void handleLoadExample()}
+              disabled={!apiConnected || !selectedExampleId || loadingExample}
+            >
+              {loadingExample ? 'Loading…' : 'Load example'}
+            </button>
+          </div>
+          {selectedExampleId ? (
+            <p className="schema-import-panel__hint">
+              {builtinExamples.find((example) => example.id === selectedExampleId)?.description ??
+                'Loads DDL from the server examples folder.'}
+            </p>
+          ) : (
+            <p className="schema-import-panel__hint">
+              Examples are read from <code>~/hvymetl/examples</code> on the server (or the repo{' '}
+              <code>examples/</code> folder locally).
+            </p>
+          )}
+        </div>
+      ) : null}
       <p className="schema-import-panel__hint">
         Use <code>.sql</code> / <code>.ddl</code> for scripts, or <code>.db</code> for SQLite uploads.
       </p>

@@ -4230,6 +4230,17 @@ textarea {
   opacity: 0;
 }
 
+.schema-import-panel__examples {
+  margin-top: 0.75rem;
+}
+
+.schema-import-panel__example-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.5rem;
+  align-items: center;
+}
+
 /* --- Auth gate (hosted login) --- */
 .auth-gate {
   display: flex;

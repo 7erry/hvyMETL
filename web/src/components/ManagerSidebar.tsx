@@ -37,6 +37,7 @@ type ManagerSidebarProps = {
   onDdlChange: (ddl: string) => void;
   onImportQuery: () => void;
   onSchemaFile: (file: File) => void;
+  onImportBuiltinExample?: (exampleId: string) => void | Promise<void>;
   onOpenReview: () => void;
 };
 
@@ -98,6 +99,7 @@ export function ManagerSidebar({
   onDdlChange,
   onImportQuery,
   onSchemaFile,
+  onImportBuiltinExample,
   onOpenReview,
 }: ManagerSidebarProps) {
   const [sidebarTab, setSidebarTab] = useState<'overview' | 'configure'>('overview');
@@ -157,6 +159,7 @@ export function ManagerSidebar({
           onDdlChange={onDdlChange}
           onImportQuery={onImportQuery}
           onSchemaFile={onSchemaFile}
+          onImportBuiltinExample={onImportBuiltinExample}
           compact
         />
       ) : (

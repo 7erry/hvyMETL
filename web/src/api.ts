@@ -171,9 +171,46 @@ export async function importDdl(
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ ddl, dialect }),
   });
-  if (!res.ok) throw new Error((await res.json()).error ?? res.statusText);
+  if (!res.ok) throw new Error(await readApiError(res));
   const data = await res.json();
   return { model: data.model, ddl, inferred: data.inferred };
+}
+
+export type BuiltinExampleSummary = {
+  id: string;
+  label: string;
+  description: string;
+  dialect: string;
+  suggestedProfileId?: string;
+};
+
+export async function fetchBuiltinExamples(): Promise<{
+  examples: BuiltinExampleSummary[];
+  examplesDir: string;
+  source: 'env' | 'home' | 'repo';
+}> {
+  const res = await apiFetch(`${base}/api/schema/builtin-examples`);
+  if (!res.ok) throw new Error(await readApiError(res));
+  return res.json();
+}
+
+export async function importBuiltinExample(exampleId: string): Promise<{
+  model: SqlStructuralModel;
+  ddl: string;
+  dialect: string;
+  exampleId: string;
+  label: string;
+  description?: string;
+  suggestedProfileId?: string;
+  inferred?: ProfileInference;
+}> {
+  const res = await apiFetch(`${base}/api/schema/import-builtin-example`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ exampleId }),
+  });
+  if (!res.ok) throw new Error(await readApiError(res));
+  return res.json();
 }
 
 export async function importSqlite(

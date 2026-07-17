@@ -41,6 +41,7 @@ import {
   fetchDialects,
   fetchProfiles,
   importDdl,
+  importBuiltinExample,
   importSqlite,
   runDesign,
   runDesignWithCsv,
@@ -339,6 +340,20 @@ export default function App() {
       await applySchema(ddlText, m, inferred?.profileId);
     } catch (e) {
       setStatus(`Import failed: ${describeApiError(e)}`);
+    }
+  };
+
+  const handleImportBuiltinExample = async (exampleId: string) => {
+    try {
+      setStatus('Loading built-in example…');
+      const result = await importBuiltinExample(exampleId);
+      setSessionField('dialect', result.dialect);
+      setSessionField('ddl', result.ddl);
+      const profileId = result.suggestedProfileId ?? result.inferred?.profileId;
+      await applySchema(result.ddl, result.model, profileId);
+      setStatus(`Loaded example "${result.label}" (${result.model.tables.length} tables).`);
+    } catch (e) {
+      setStatus(`Example import failed: ${describeApiError(e)}`);
     }
   };
 
@@ -921,6 +936,7 @@ export default function App() {
               onDdlChange={(value) => setSessionField('ddl', value)}
               onImportQuery={() => void handleImportQuery()}
               onSchemaFile={(file) => void handleSchemaFileUpload(file)}
+              onImportBuiltinExample={(id) => void handleImportBuiltinExample(id)}
             />
           ) : (
           <ResizableSplit
@@ -941,6 +957,7 @@ export default function App() {
                         onDdlChange={(value) => setSessionField('ddl', value)}
                         onImportQuery={() => void handleImportQuery()}
                         onSchemaFile={(file) => void handleSchemaFileUpload(file)}
+                        onImportBuiltinExample={(id) => void handleImportBuiltinExample(id)}
                         framed={false}
                       />
                     </CollapsiblePanel>
@@ -1281,6 +1298,7 @@ export default function App() {
         onDdlChange={(value) => setSessionField('ddl', value)}
         onImportQuery={() => void handleImportQuery()}
         onSchemaFile={(file) => void handleSchemaFileUpload(file)}
+        onImportBuiltinExample={(id) => void handleImportBuiltinExample(id)}
         onClose={() => setSchemaImportModalOpen(false)}
       />
 

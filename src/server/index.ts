@@ -90,6 +90,11 @@ import {
   maskMongoUri,
   verifyMongoUri,
 } from '../utilities/mongoConnectivity.js';
+import {
+  listBuiltinExamples,
+  readBuiltinExample,
+  resolveBuiltinExamplesDir,
+} from './builtinExamples.js';
 
 const KNOWLEDGE_DIR = join(ROOT, 'knowledge');
 const UPLOAD_DIR = join(ROOT, 'web-uploads');
@@ -339,6 +344,45 @@ app.post('/api/schema/import-ddl', (req, res) => {
     const model = parseDdlToModel(ddl, `ddl:${dialect}`);
     const inferred = inferWorkloadProfile(model);
     res.json({ model, dialect, tableCount: model.tables.length, inferred });
+  } catch (error) {
+    res.status(400).json({ error: String(error) });
+  }
+});
+
+/** List bundled example DDL scripts available on the server (~/hvymetl/examples or repo). */
+app.get('/api/schema/builtin-examples', (_req, res) => {
+  try {
+    const location = resolveBuiltinExamplesDir();
+    const examples = listBuiltinExamples(location.path);
+    res.json({ examples, examplesDir: location.path, source: location.source });
+  } catch (error) {
+    res.status(500).json({ error: String(error) });
+  }
+});
+
+/** Load and parse one bundled example DDL by id. */
+app.post('/api/schema/import-builtin-example', (req, res) => {
+  const exampleId = String(req.body?.exampleId ?? req.body?.id ?? '').trim();
+  if (!exampleId) {
+    res.status(400).json({ error: 'exampleId is required' });
+    return;
+  }
+  try {
+    const location = resolveBuiltinExamplesDir();
+    const { ddl, dialect, summary } = readBuiltinExample(location.path, exampleId);
+    const model = parseDdlToModel(ddl, `example:${exampleId}`);
+    const inferred = inferWorkloadProfile(model);
+    res.json({
+      model,
+      ddl,
+      dialect,
+      exampleId: summary.id,
+      label: summary.label,
+      description: summary.description,
+      suggestedProfileId: summary.suggestedProfileId,
+      tableCount: model.tables.length,
+      inferred,
+    });
   } catch (error) {
     res.status(400).json({ error: String(error) });
   }
