@@ -61,7 +61,7 @@ export function AgentCopilotSidebar({ beforeJson = '', afterJson = '' }: AgentCo
 
   return (
     <aside
-      className="agent-copilot-sidebar"
+      className={`agent-copilot-sidebar${copilot.expanded ? ' agent-copilot-sidebar--expanded' : ''}`}
       style={{ width: copilot.width }}
       aria-label="Agent Copilot"
     >
@@ -80,14 +80,26 @@ export function AgentCopilotSidebar({ beforeJson = '', afterJson = '' }: AgentCo
             </p>
           </div>
         </div>
-        <button
-          type="button"
-          className="btn-icon"
-          onClick={() => copilot.setOpen(false)}
-          aria-label="Collapse copilot"
-        >
-          ›
-        </button>
+        <div className="agent-copilot-sidebar__header-actions">
+          <button
+            type="button"
+            className="btn-icon"
+            onClick={copilot.toggleExpanded}
+            aria-label={copilot.expanded ? 'Compact copilot width' : 'Expand copilot width'}
+            title={copilot.expanded ? 'Compact width' : 'Expand width'}
+          >
+            {copilot.expanded ? '⤡' : '⤢'}
+          </button>
+          <button
+            type="button"
+            className="btn-icon"
+            onClick={() => copilot.setOpen(false)}
+            aria-label="Collapse copilot"
+            title="Close copilot"
+          >
+            ›
+          </button>
+        </div>
       </header>
 
       <div className="agent-copilot-sidebar__tabs" role="tablist">

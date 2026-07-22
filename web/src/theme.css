@@ -4616,7 +4616,15 @@ textarea {
   font-family: 'JetBrains Mono', 'SF Mono', 'Fira Code', ui-monospace, monospace;
   color: #c8ffe8;
   transform: translateX(100%);
-  transition: transform 0.28s ease;
+  transition: transform 0.28s ease, width 0.28s ease;
+}
+
+.agent-copilot-sidebar--expanded .copilot-translator__code {
+  max-height: 360px;
+}
+
+.agent-copilot-sidebar--expanded .copilot-diff-viewer__panes pre {
+  max-height: 220px;
 }
 
 .workspace-canvas-shell--copilot-open .agent-copilot-sidebar {
@@ -4665,6 +4673,13 @@ textarea {
   display: flex;
   gap: 0.55rem;
   align-items: flex-start;
+}
+
+.agent-copilot-sidebar__header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.15rem;
+  flex-shrink: 0;
 }
 
 .agent-copilot-sidebar__status {

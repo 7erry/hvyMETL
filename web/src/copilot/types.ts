@@ -126,3 +126,9 @@ export const QUICK_ACTION_CHIPS = [
   'Optimize Schema',
   'Translate SQL',
 ] as const;
+
+/** Default copilot drawer width (px). */
+export const COPILOT_WIDTH_COMPACT = 380;
+
+/** Expanded copilot drawer width (px). */
+export const COPILOT_WIDTH_EXPANDED = 560;

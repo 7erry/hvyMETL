@@ -21,6 +21,7 @@ import type {
   SqlTranslationOutput,
   ToolExecutionResult,
 } from './types';
+import { COPILOT_WIDTH_COMPACT, COPILOT_WIDTH_EXPANDED } from './types';
 import type { MigrationPlan } from '../migrationPlanTypes';
 import type { CardinalityOverrides, ForceEmbedOverrides } from '../cardinalityOverrides';
 import type { SqlStructuralModel } from '../types';
@@ -28,6 +29,7 @@ import type { SqlStructuralModel } from '../types';
 export type CopilotContextValue = {
   open: boolean;
   width: number;
+  expanded: boolean;
   activeTab: 'chat' | 'translator';
   status: AgentStatus;
   preset: CopilotWorkflowPreset;
@@ -44,6 +46,8 @@ export type CopilotContextValue = {
   llmModel: string | null;
   toggleOpen: () => void;
   setOpen: (open: boolean) => void;
+  toggleExpanded: () => void;
+  setExpanded: (expanded: boolean) => void;
   setActiveTab: (tab: 'chat' | 'translator') => void;
   setPreset: (preset: CopilotWorkflowPreset) => void;
   setToolsEnabled: (enabled: boolean) => void;
@@ -86,7 +90,8 @@ export function CopilotProvider({
   onReRunPipeline,
 }: CopilotProviderProps) {
   const [open, setOpen] = useState(false);
-  const [width] = useState(380);
+  const [expanded, setExpanded] = useState(false);
+  const width = expanded ? COPILOT_WIDTH_EXPANDED : COPILOT_WIDTH_COMPACT;
   const [activeTab, setActiveTab] = useState<'chat' | 'translator'>('chat');
   const [status, setStatus] = useState<AgentStatus>('idle');
   const [preset, setPreset] = useState<CopilotWorkflowPreset>('schema-design');
@@ -380,6 +385,7 @@ export function CopilotProvider({
     () => ({
       open,
       width,
+      expanded,
       activeTab,
       status,
       preset,
@@ -395,7 +401,12 @@ export function CopilotProvider({
       llmConfigured,
       llmModel,
       toggleOpen: () => setOpen((prev) => !prev),
-      setOpen,
+      setOpen: (nextOpen: boolean) => {
+        setOpen(nextOpen);
+        if (!nextOpen) setExpanded(false);
+      },
+      toggleExpanded: () => setExpanded((prev) => !prev),
+      setExpanded,
       setActiveTab,
       setPreset,
       setToolsEnabled,
@@ -427,6 +438,7 @@ export function CopilotProvider({
     [
       open,
       width,
+      expanded,
       activeTab,
       status,
       preset,
