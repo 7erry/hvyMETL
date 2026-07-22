@@ -1,3 +1,38 @@
+## hvyMETL 1.8.0
+
+Minor release introducing the **Agent Copilot** — an AI-assisted migration assistant in Migration Studio — plus schema UX improvements, new examples, and studio polish since 1.7.1.
+
+### Highlights
+
+- **Agent Copilot sidebar:** collapsible cyberpunk-themed drawer (`⌘K` / `Ctrl+K`) with chat, tool execution cards, slash commands (`/fold`, `/guardrails`, `/translate`, `/clear-overrides`, `/highlight`), and quick-action chips.
+- **Grove LLM integration:** server-side proxy to OpenAI-compatible Grove chat completions (`GROVE_API_KEY`, default model `gpt-5.6-luna`); schema-aware system prompt and multi-turn tool-calling loop without exposing API keys to the browser.
+- **Canvas agent tools:** `foldTable`, `detachTable`, `setEmbedOverride`, `highlightNodes`, `runGuardrailCheck`, and `translateSQLToMongo` wired to live embed overrides and ERD state.
+- **Guardrail engine:** migration risk analysis (unbounded arrays, 16 MB document size, missing PKs, orphan FKs) with interactive warning badges on table nodes; badge clicks open the copilot with an optimization prompt.
+- **Query Translator tab:** paste T-SQL / PostgreSQL and get aggregation pipeline JSON, Mongoose script, and shell code with copy and index recommendations.
+- **Pipeline self-healing:** failed pipeline runs report errors to the copilot with heuristic fix suggestions and **Apply Fix & Re-run**.
+- **Schema UX:** built-in **Load example** picker for repo DDL examples; default ER diagram edges use curved bezier paths; Transformation Summary cross-links to Embed Overrides (and back) for DDL-only imports.
+- **Examples & docs:** Financial Ledger PostgreSQL example; knowledge-base pattern example mapping and coverage tests.
+- **API artifacts:** OpenAPI and JSON Schema outputs stay aligned with the current migration plan after embed override changes.
+- **Auth:** redirect unauthenticated browser visits to `/api/docs` through hosted Swagger login.
+
+### Configuration
+
+Add to `.env` for LLM-powered copilot chat (optional — offline heuristics and slash commands work without it):
+
+```bash
+GROVE_API_KEY=your_grove_api_key
+# GROVE_API_URL=https://grove-gateway-prod.azure-api.net/grove-foundry-prod/openai/v1/chat/completions
+# GROVE_MODEL=gpt-5.6-luna
+```
+
+### Verification
+
+- `npm test`
+- `npm run build`
+- `npm run build --prefix web`
+
+---
+
 ## hvyMETL 1.7.1
 
 Patch release for hosted Migration Studio CSV uploads, pipeline reliability, Atlas Logs, and studio UX fixes since 1.7.0.
