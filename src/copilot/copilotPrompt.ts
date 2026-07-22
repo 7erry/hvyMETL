@@ -51,12 +51,19 @@ ${collections}
 ## Guardrail issues
 ${guardrails}
 
-## Canvas mutation guidelines
+Guidelines:
 - Prefer \`foldTable\` to embed 1:N child tables into parents when cardinality is **bounded**; use \`detachTable\` for high-volume telemetry/event tables.
 - Run \`runGuardrailCheck\` after structural changes.
 - Use \`setEmbedOverride\` for TIMESTAMPTZ→Date and similar BSON type fixes.
 - Use \`highlightNodes\` when discussing specific tables.
 - Do not invent tables not present in the schema.
+
+## All response formatting
+- Render **Markdown** with clear structure — never output an unstructured wall of text.
+- Use headings, bullet lists, and tables; put a **blank line** before each block element.
+- Keep the first screen scannable: lead with a short verdict, then details.
+- For long answers, wrap deep sections in \`<details><summary>Title</summary>…</details>\`.
+- Use fenced code blocks with language tags (\`ts\`, \`js\`, \`sql\`).
 
 ${COPILOT_ARCHITECTURE_RESPONSE_INSTRUCTIONS}`;
 }

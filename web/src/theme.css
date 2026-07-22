@@ -4846,6 +4846,133 @@ textarea {
   border: 1px solid var(--copilot-border);
 }
 
+.copilot-message__body--markdown {
+  padding: 0.45rem 0.55rem;
+  border-radius: 6px;
+  border: 1px solid rgba(0, 237, 100, 0.12);
+  background: rgba(0, 0, 0, 0.18);
+}
+
+.copilot-md-h1 {
+  margin: 0 0 0.5rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--copilot-accent);
+  letter-spacing: 0.02em;
+}
+
+.copilot-md-h2 {
+  margin: 0.75rem 0 0.35rem;
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: #e3fcf7;
+}
+
+.copilot-md-h3 {
+  margin: 0.55rem 0 0.25rem;
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: #b8c4c1;
+}
+
+.copilot-md-p {
+  margin: 0.35rem 0;
+  color: #c8d6d2;
+}
+
+.copilot-md-callout {
+  margin: 0.5rem 0;
+  padding: 0.4rem 0.55rem;
+  border-left: 3px solid var(--copilot-accent);
+  background: rgba(0, 237, 100, 0.08);
+  color: #dfffea;
+}
+
+.copilot-md-inline-code {
+  padding: 0.05rem 0.25rem;
+  border-radius: 3px;
+  background: rgba(0, 237, 100, 0.12);
+  font-size: 0.66rem;
+}
+
+.copilot-md-table-wrap {
+  overflow-x: auto;
+  margin: 0.45rem 0;
+}
+
+.copilot-md-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.65rem;
+}
+
+.copilot-md-table th,
+.copilot-md-table td {
+  padding: 0.3rem 0.45rem;
+  border: 1px solid rgba(0, 237, 100, 0.18);
+  text-align: left;
+  vertical-align: top;
+}
+
+.copilot-md-table th {
+  background: rgba(0, 237, 100, 0.1);
+  color: #e3fcf7;
+  font-weight: 600;
+}
+
+.copilot-md-table td {
+  color: #c8d6d2;
+}
+
+.copilot-details {
+  margin: 0.45rem 0;
+  border: 1px solid rgba(0, 237, 100, 0.15);
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.22);
+  overflow: hidden;
+}
+
+.copilot-details__summary,
+.copilot-details > summary {
+  cursor: pointer;
+  padding: 0.4rem 0.55rem;
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--copilot-accent-dim);
+  list-style: none;
+  user-select: none;
+}
+
+.copilot-details__summary::-webkit-details-marker,
+.copilot-details > summary::-webkit-details-marker {
+  display: none;
+}
+
+.copilot-details__summary::before,
+.copilot-details > summary::before {
+  content: '▸ ';
+  color: var(--copilot-accent);
+}
+
+.copilot-details[open] > .copilot-details__summary::before,
+.copilot-details[open] > summary::before {
+  content: '▾ ';
+}
+
+.copilot-details > *:not(summary) {
+  padding: 0 0.55rem 0.45rem;
+}
+
+.copilot-message__body--markdown ul,
+.copilot-message__body--markdown ol {
+  margin: 0.35rem 0;
+  padding-left: 1.1rem;
+}
+
+.copilot-message__body--markdown li {
+  margin: 0.15rem 0;
+}
+
 .copilot-tool-card {
   margin-bottom: 0.35rem;
   padding: 0.45rem 0.55rem;

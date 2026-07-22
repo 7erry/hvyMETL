@@ -10,16 +10,21 @@ describe('copilotArchitecturePrompt', () => {
   it('requires Before/After schema code and production patterns', () => {
     expect(COPILOT_ARCHITECTURE_RESPONSE_INSTRUCTIONS).toContain('Before');
     expect(COPILOT_ARCHITECTURE_RESPONSE_INSTRUCTIONS).toContain('After');
-    expect(COPILOT_ARCHITECTURE_RESPONSE_INSTRUCTIONS).toContain('Subset Pattern');
-    expect(COPILOT_ARCHITECTURE_RESPONSE_INSTRUCTIONS).toContain('Time-Series Collections');
+    expect(COPILOT_ARCHITECTURE_RESPONSE_INSTRUCTIONS).toContain('Subset');
+    expect(COPILOT_ARCHITECTURE_RESPONSE_INSTRUCTIONS).toContain('Time-Series');
     expect(COPILOT_ARCHITECTURE_RESPONSE_INSTRUCTIONS).toContain('16 MB BSON');
+  });
+
+  it('requires collapsible details for deep sections', () => {
+    expect(COPILOT_ARCHITECTURE_RESPONSE_INSTRUCTIONS).toContain('<details>');
+    expect(COPILOT_ARCHITECTURE_RESPONSE_INSTRUCTIONS).toContain('Verdict callout');
   });
 
   it('builds focused architecture review user prompts', () => {
     const prompt = buildArchitectureReviewUserPrompt('trains');
     expect(prompt).toContain('trains');
-    expect(prompt).toContain('production-ready');
-    expect(prompt).toContain('Before/After');
+    expect(prompt).toContain('Tell me about');
+    expect(prompt).toContain('<details>');
   });
 
   it('defines optimize schema quick-action prompt', () => {

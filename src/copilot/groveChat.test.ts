@@ -23,7 +23,8 @@ describe('buildCopilotSystemPrompt (groveChat)', () => {
     expect(prompt).toContain('trips');
     expect(prompt).toContain('train_telemetry');
     expect(prompt).toContain('Unbounded Array');
-    expect(prompt).toContain('Subset Pattern');
+    expect(prompt).toContain('Subset');
+    expect(prompt).toContain('<details>');
   });
 });
 

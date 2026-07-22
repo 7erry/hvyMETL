@@ -4,6 +4,7 @@ import { COPILOT_SLASH_COMMANDS, QUICK_ACTION_CHIPS, type AgentStatus } from '..
 import { ToolExecutionCard } from './copilot/ToolExecutionCard';
 import { QueryTranslatorPanel } from './copilot/QueryTranslatorPanel';
 import { SchemaDiffViewer } from './copilot/SchemaDiffViewer';
+import { CopilotMessageBody } from './copilot/CopilotMessageBody';
 
 const STATUS_LABEL: Record<AgentStatus, string> = {
   idle: 'Idle',
@@ -131,7 +132,7 @@ export function AgentCopilotSidebar({ beforeJson = '', afterJson = '' }: AgentCo
                 className={`copilot-message copilot-message--${message.role}`}
               >
                 {message.toolExecution ? <ToolExecutionCard execution={message.toolExecution} /> : null}
-                <div className="copilot-message__body">{message.content}</div>
+                <CopilotMessageBody content={message.content} markdown={message.markdown} />
               </article>
             ))}
 
