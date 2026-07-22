@@ -816,11 +816,8 @@ app.get('/api/pipeline/executions/:executionId', async (req, res) => {
 /** Shared JSON shape for pipeline run responses. */
 function pipelineRunResponse(
   result: Awaited<ReturnType<typeof runFullPipeline>>,
-  req: import('express').Request,
+  _req: import('express').Request,
 ) {
-  const execution = result.execution
-    ? sanitizeExecutionTargetDbForClient(result.execution, req)
-    : result.execution;
   return {
     ok: result.ok,
     errors: result.errors,
@@ -835,7 +832,7 @@ function pipelineRunResponse(
     migrationPlanJson: result.design.plan,
     designReportMarkdown: result.design.designReport,
     feedback: result.feedback,
-    execution,
+    execution: result.execution,
     apiArtifacts: result.apiArtifacts,
   };
 }
