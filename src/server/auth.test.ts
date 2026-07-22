@@ -1,11 +1,14 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import {
   HVY_ROLES,
+  SWAGGER_AUTH_COOKIE,
   authenticateSwaggerDocsAccess,
   effectiveRolesFromPayload,
   getPublicAuthConfig,
+  issueSwaggerDocsCookie,
   issuerUrlToDomain,
   promoteQueryAccessToken,
+  promoteSwaggerSessionCookie,
   rolesFromPayload,
 } from './auth.js';
 import type { Request, Response } from 'express';
@@ -135,6 +138,52 @@ describe('promoteQueryAccessToken', () => {
     expect(req.headers.authorization).toBe('Bearer existing');
     expect(req.url).toBe('/api/docs');
     expect(req.originalUrl).toBe('/api/docs');
+  });
+
+  it('reads access_token from req.query when Express has already parsed the URL', () => {
+    const req = {
+      headers: {} as Record<string, string>,
+      url: '/api/docs',
+      originalUrl: '/api/docs?access_token=jwt-token',
+      query: { access_token: 'jwt-token' },
+    } as Request;
+    promoteQueryAccessToken(req, {} as Response, () => undefined);
+    expect(req.headers.authorization).toBe('Bearer jwt-token');
+  });
+});
+
+describe('promoteSwaggerSessionCookie', () => {
+  it('promotes the bootstrap cookie to Authorization and clears it', () => {
+    const req = {
+      headers: { cookie: `${SWAGGER_AUTH_COOKIE}=jwt-token` },
+    } as Request;
+    const setCookie: string[] = [];
+    const res = {
+      append: (_name: string, value: string) => {
+        setCookie.push(value);
+      },
+    } as unknown as Response;
+
+    promoteSwaggerSessionCookie(req, res, () => undefined);
+    expect(req.headers.authorization).toBe('Bearer jwt-token');
+    expect(setCookie.some((value) => value.includes(`${SWAGGER_AUTH_COOKIE}=`) && value.includes('Max-Age=0'))).toBe(true);
+  });
+});
+
+describe('issueSwaggerDocsCookie', () => {
+  it('sets a short-lived HttpOnly cookie scoped to /api/docs', () => {
+    const setCookie: string[] = [];
+    const res = {
+      append: (_name: string, value: string) => {
+        setCookie.push(value);
+      },
+    } as unknown as Response;
+
+    issueSwaggerDocsCookie(res, 'jwt-token');
+    expect(setCookie[0]).toContain(`${SWAGGER_AUTH_COOKIE}=jwt-token`);
+    expect(setCookie[0]).toContain('Path=/api/docs');
+    expect(setCookie[0]).toContain('HttpOnly');
+    expect(setCookie[0]).toContain('Max-Age=60');
   });
 });
 

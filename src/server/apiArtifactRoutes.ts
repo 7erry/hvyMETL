@@ -14,13 +14,14 @@ import {
   serializeApiArtifactBundle,
   type ApiArtifactBundle,
 } from './apiArtifactStore.js';
-import { requireRole, promoteQueryAccessToken, authenticateSwaggerDocsAccess } from './auth.js';
+import { requireRole, promoteQueryAccessToken, promoteSwaggerSessionCookie, authenticateSwaggerDocsAccess, issueSwaggerDocsCookie } from './auth.js';
 import { getRequestTenantId } from './tenant.js';
 
 const docsRoleCheck = requireRole(['admin', 'developer', 'manager']).slice(1);
 
 const docsAuth: RequestHandler[] = [
   promoteQueryAccessToken,
+  promoteSwaggerSessionCookie,
   authenticateSwaggerDocsAccess,
   ...docsRoleCheck,
 ];
@@ -104,6 +105,17 @@ export function registerApiArtifactRoutes(app: Express, rootDir: string): void {
 
   // Register HTML + spec routes before swaggerUi.serve — the static middleware otherwise
   // 301-redirects /api/docs → /api/docs/ and drops ?access_token= from new-tab auth links.
+  app.post('/api/docs/bootstrap', ...requireRole(['admin', 'developer', 'manager']), (req, res) => {
+    const authHeader = req.headers.authorization?.trim() ?? '';
+    const token = authHeader.startsWith('Bearer ') ? authHeader.slice('Bearer '.length).trim() : '';
+    if (!token) {
+      res.status(401).json({ error: 'Authentication required' });
+      return;
+    }
+    issueSwaggerDocsCookie(res, token);
+    res.json({ ok: true });
+  });
+
   app.get('/api/docs/openapi.json', ...docsAuth, (req, res) => {
     const spec = readCombinedOpenApiSpec(req, rootDir);
     if (!spec) {

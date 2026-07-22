@@ -606,17 +606,24 @@ export async function uploadPipelineCsvFiles(files: File[]): Promise<PipelineCsv
   return result!;
 }
 
-/** Open Swagger UI in a new tab using the current Auth0 access token (hosted studio). */
+/** Open Swagger UI in a new tab after priming a short-lived auth cookie on the server. */
 export async function openSwaggerUi(urlPath = '/api/docs'): Promise<void> {
   const path = urlPath.startsWith('/') ? urlPath : `/${urlPath}`;
-  const token = accessTokenProvider ? await accessTokenProvider() : '';
-  if (accessTokenProvider && !token) {
-    throw new Error('Authentication required. Sign in again to open Swagger UI.');
+  if (accessTokenProvider) {
+    const token = await accessTokenProvider();
+    if (!token) {
+      throw new Error('Authentication required. Sign in again to open Swagger UI.');
+    }
+    const bootstrap = await apiFetch(`${base}/api/docs/bootstrap`, {
+      method: 'POST',
+      credentials: 'same-origin',
+    });
+    if (!bootstrap.ok) {
+      const payload = (await bootstrap.json().catch(() => ({}))) as { error?: string };
+      throw new Error(payload.error ?? bootstrap.statusText ?? 'Failed to open Swagger UI.');
+    }
   }
-  const url = token
-    ? `${path}?access_token=${encodeURIComponent(token)}`
-    : path;
-  const popup = window.open(url, '_blank', 'noopener,noreferrer');
+  const popup = window.open(path, '_blank', 'noopener,noreferrer');
   if (!popup) throw new Error('Popup blocked. Allow popups for this site to open Swagger UI.');
 }
 

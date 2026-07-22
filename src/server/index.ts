@@ -181,6 +181,13 @@ function resolveWebPipelineCredentials(req: Request, tenantId: string) {
 }
 
 const app = express();
+if (
+  process.env.NODE_ENV === 'production' ||
+  process.env.HVYMETL_HOSTED === '1' ||
+  Boolean(process.env.HVYMETL_HOSTED_URL?.trim())
+) {
+  app.set('trust proxy', 1);
+}
 app.use(cors());
 app.use(express.json({ limit: '4mb' }));
 

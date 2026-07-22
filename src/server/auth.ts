@@ -1,5 +1,6 @@
 import type { NextFunction, Request, RequestHandler, Response } from 'express';
 import { auth } from 'express-oauth2-jwt-bearer';
+import { hostedStudioUrl } from './hosted.js';
 
 export type HvyRole = 'admin' | 'developer' | 'manager';
 
@@ -148,6 +149,20 @@ export const requireAuth: RequestHandler = (req, res, next) => {
   return getAuthMiddleware()(req, res, next);
 };
 
+export const SWAGGER_AUTH_COOKIE = 'hvymetl_swagger_auth';
+const SWAGGER_AUTH_COOKIE_PATH = '/api/docs';
+const SWAGGER_AUTH_COOKIE_MAX_AGE_SEC = 60;
+
+function readRequestQueryToken(req: Request): string | undefined {
+  const fromQuery = req.query?.access_token;
+  if (typeof fromQuery === 'string' && fromQuery.trim()) return fromQuery.trim();
+  if (Array.isArray(fromQuery)) {
+    const first = fromQuery.find((entry): entry is string => typeof entry === 'string' && Boolean(entry.trim()));
+    if (first) return first.trim();
+  }
+  return undefined;
+}
+
 /** Remove access_token from the request URL so JWT middleware sees only one auth method. */
 function stripAccessTokenFromRequestUrl(req: Request): string | undefined {
   const readToken = (url: string): { path: string; token?: string } => {
@@ -172,11 +187,90 @@ function stripAccessTokenFromRequestUrl(req: Request): string | undefined {
   return fromUrl.token;
 }
 
-/** Allow Swagger UI new-tab links to pass a Bearer token via ?access_token= (hosted studio). */
+function readCookieValue(req: Request, name: string): string | undefined {
+  const header = req.headers.cookie;
+  if (!header) return undefined;
+  for (const part of header.split(';')) {
+    const trimmed = part.trim();
+    const separator = trimmed.indexOf('=');
+    if (separator === -1) continue;
+    if (trimmed.slice(0, separator) !== name) continue;
+    const raw = trimmed.slice(separator + 1);
+    try {
+      return decodeURIComponent(raw).trim() || undefined;
+    } catch {
+      return raw.trim() || undefined;
+    }
+  }
+  return undefined;
+}
+
+function swaggerAuthCookieSecure(): boolean {
+  return process.env.NODE_ENV === 'production' || Boolean(env('HVYMETL_HOSTED_URL') || env('HVYMETL_HOSTED') === '1');
+}
+
+function formatSwaggerAuthCookie(token: string): string {
+  const secure = swaggerAuthCookieSecure();
+  return [
+    `${SWAGGER_AUTH_COOKIE}=${encodeURIComponent(token)}`,
+    `Path=${SWAGGER_AUTH_COOKIE_PATH}`,
+    'HttpOnly',
+    'SameSite=Lax',
+    `Max-Age=${SWAGGER_AUTH_COOKIE_MAX_AGE_SEC}`,
+    ...(secure ? ['Secure'] : []),
+  ].join('; ');
+}
+
+function formatClearSwaggerAuthCookie(): string {
+  const secure = swaggerAuthCookieSecure();
+  return [
+    `${SWAGGER_AUTH_COOKIE}=`,
+    `Path=${SWAGGER_AUTH_COOKIE_PATH}`,
+    'HttpOnly',
+    'SameSite=Lax',
+    'Max-Age=0',
+    ...(secure ? ['Secure'] : []),
+  ].join('; ');
+}
+
+/** Short-lived cookie set by POST /api/docs/bootstrap so Swagger can open in a new tab without ?access_token=. */
+export function issueSwaggerDocsCookie(res: Response, bearerToken: string): void {
+  const token = bearerToken.trim();
+  if (!token) return;
+  res.append('Set-Cookie', formatSwaggerAuthCookie(token));
+}
+
+function clearSwaggerDocsCookie(res: Response): void {
+  res.append('Set-Cookie', formatClearSwaggerAuthCookie());
+}
+
+/** Allow Swagger UI new-tab links to pass a Bearer token via ?access_token= (legacy fallback). */
 export const promoteQueryAccessToken: RequestHandler = (req, _res, next) => {
-  const queryToken = stripAccessTokenFromRequestUrl(req);
-  if (queryToken && !req.headers.authorization) {
+  const urlToken = stripAccessTokenFromRequestUrl(req);
+
+  if (req.headers.authorization?.trim()) {
+    next();
+    return;
+  }
+
+  const queryToken = urlToken ?? readRequestQueryToken(req);
+  if (queryToken) {
     req.headers.authorization = `Bearer ${queryToken}`;
+  }
+  next();
+};
+
+/** Promote the bootstrap cookie into Authorization for browser new-tab Swagger visits. */
+export const promoteSwaggerSessionCookie: RequestHandler = (req, res, next) => {
+  if (req.headers.authorization?.trim()) {
+    next();
+    return;
+  }
+
+  const cookieToken = readCookieValue(req, SWAGGER_AUTH_COOKIE);
+  if (cookieToken) {
+    req.headers.authorization = `Bearer ${cookieToken}`;
+    clearSwaggerDocsCookie(res);
   }
   next();
 };
@@ -188,7 +282,7 @@ function swaggerDocsReturnPath(req: Request): string {
 
 function redirectToStudioSwaggerLogin(req: Request, res: Response): void {
   const configured = env('HVYMETL_HOSTED_URL');
-  const base = (configured || `${req.protocol}://${req.get('host') ?? 'localhost'}`).replace(/\/+$/, '');
+  const base = (configured || hostedStudioUrl()).replace(/\/+$/, '');
   const docsPath = swaggerDocsReturnPath(req);
   res.redirect(302, `${base}/?openSwagger=${encodeURIComponent(docsPath)}`);
 }
