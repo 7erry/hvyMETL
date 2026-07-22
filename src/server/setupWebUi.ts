@@ -34,12 +34,30 @@ function isDistBuildValid(webDist: string): boolean {
   return true;
 }
 
+/** True when the process should never serve Vite dev middleware (hosted / production). */
+export function isProductionUiContext(): boolean {
+  return (
+    process.env.NODE_ENV === 'production' ||
+    process.env.HVYMETL_HOSTED === '1' ||
+    Boolean(process.env.HVYMETL_HOSTED_URL?.trim())
+  );
+}
+
 function shouldServeWithVite(devMode: boolean, webDist: string): boolean {
-  if (devMode) return true;
-  if (!isDistBuildValid(webDist)) {
-    return process.env.NODE_ENV !== 'production';
+  if (isDistBuildValid(webDist)) return false;
+  if (isProductionUiContext()) {
+    if (process.env.HVYMETL_ALLOW_VITE_DEV === '1' && devMode) return true;
+    return false;
   }
-  return false;
+  if (devMode) return true;
+  return true;
+}
+
+let mountedUiMode: WebUiMode = 'not-built';
+
+/** UI mount mode from the last {@link mountWebUi} call (for health checks). */
+export function getWebUiMode(): WebUiMode {
+  return mountedUiMode;
 }
 
 function mountSpaFallback(
@@ -64,6 +82,12 @@ function mountSpaFallback(
 export async function mountWebUi(app: Express, rootDir: string, devMode: boolean): Promise<WebUiMode> {
   const webRoot = join(rootDir, 'web');
   const webDist = join(webRoot, 'dist');
+
+  if (isProductionUiContext() && devMode && process.env.HVYMETL_ALLOW_VITE_DEV !== '1') {
+    console.warn(
+      '[hvyMETL] Ignoring HVYMETL_DEV_PROXY in production/hosted mode. Use npm run start:hosted (static web/dist).',
+    );
+  }
 
   if (shouldServeWithVite(devMode, webDist)) {
     const { createServer: createViteServer } = await import('vite');
@@ -91,16 +115,19 @@ export async function mountWebUi(app: Express, rootDir: string, devMode: boolean
       }
     });
 
-    return 'vite';
+    mountedUiMode = 'vite';
+    return mountedUiMode;
   }
 
   if (isDistBuildValid(webDist)) {
     mountSpaFallback(app, webDist);
-    return 'static';
+    mountedUiMode = 'static';
+    return mountedUiMode;
   }
 
   app.get(/^(?!\/api).*/, (_req, res) => {
     res.status(503).type('html').send(notBuiltPage());
   });
-  return 'not-built';
+  mountedUiMode = 'not-built';
+  return mountedUiMode;
 }

@@ -83,7 +83,7 @@ import {
   resolveTenantPipelineRunDir,
   writeTenantWorkspace,
 } from './tenant.js';
-import { mountWebUi } from './setupWebUi.js';
+import { getWebUiMode, mountWebUi } from './setupWebUi.js';
 import type { DesignFromModelResult } from '../design/designFromModel.js';
 import {
   enrichHostedMongoHint,
@@ -200,7 +200,14 @@ function persistDesignApiArtifacts(
 }
 
 app.get('/api/health', (_req, res) => {
-  res.json({ ok: true, name: 'hvyMETL', cli: 'available' });
+  const ui = getWebUiMode();
+  res.json({
+    ok: true,
+    name: 'hvyMETL',
+    cli: 'available',
+    ui,
+    uiHealthy: ui === 'static',
+  });
 });
 
 app.get('/api/auth/config', (_req, res) => {
