@@ -180,6 +180,35 @@ export default function App() {
     });
   }, [setSessionField]);
 
+  const handleCardinalityOverridesChange = useCallback(
+    (
+      overrides: SessionState['cardinalityOverrides'],
+      nextForceEmbedOverrides = forceEmbedOverrides,
+    ) => {
+      setSession((prev) => ({
+        ...prev,
+        cardinalityOverrides: overrides,
+        forceEmbedOverrides: nextForceEmbedOverrides,
+        migrationArtifacts: null,
+        collectionPositions: {},
+        selectedCollection: null,
+        managerReviewAcceptances: null,
+        schemaPhase: 'before',
+      }));
+      const count = Object.keys(overrides).length + Object.keys(nextForceEmbedOverrides).length;
+      setStatus(
+        count > 0
+          ? `Applied ${count} developer embed override${count === 1 ? '' : 's'}. Run design to regenerate embeds.`
+          : 'Cleared developer embed overrides. Run design to regenerate the migration plan.',
+      );
+    },
+    [forceEmbedOverrides],
+  );
+
+  const handleClearCopilotOverrides = useCallback(() => {
+    handleCardinalityOverridesChange({}, {});
+  }, [handleCardinalityOverridesChange]);
+
   const handleCopilotMutations = useCallback((mutation: AgentToolMutation) => {
     setSession((prev) => {
       const embedChanged =
@@ -207,32 +236,6 @@ export default function App() {
       setStatus('Agent updated embed overrides. Run design to refresh the MongoDB plan.');
     }
   }, []);
-
-  const handleClearCopilotOverrides = useCallback(() => {
-    handleCardinalityOverridesChange({}, {});
-  }, [handleCardinalityOverridesChange]);
-
-  const handleCardinalityOverridesChange = (
-    overrides: SessionState['cardinalityOverrides'],
-    nextForceEmbedOverrides = forceEmbedOverrides,
-  ) => {
-    setSession((prev) => ({
-      ...prev,
-      cardinalityOverrides: overrides,
-      forceEmbedOverrides: nextForceEmbedOverrides,
-      migrationArtifacts: null,
-      collectionPositions: {},
-      selectedCollection: null,
-      managerReviewAcceptances: null,
-      schemaPhase: 'before',
-    }));
-    const count = Object.keys(overrides).length + Object.keys(nextForceEmbedOverrides).length;
-    setStatus(
-      count > 0
-        ? `Applied ${count} developer embed override${count === 1 ? '' : 's'}. Run design to regenerate embeds.`
-        : 'Cleared developer embed overrides. Run design to regenerate the migration plan.',
-    );
-  };
 
   useEffect(() => {
     if (!access.apiReady) return;

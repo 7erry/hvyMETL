@@ -320,7 +320,7 @@ export function HostedAuthProvider({ children }: { children: ReactNode }) {
       clientId={clientAuth.clientId}
       authorizationParams={{
         redirect_uri: window.location.origin,
-        scope: 'openid profile email',
+        scope: 'openid profile email offline_access',
         ...(clientAuth.audience ? { audience: clientAuth.audience } : {}),
       }}
       cacheLocation="localstorage"
