@@ -29,10 +29,10 @@
     "dev:ui": "npm run -s build && npm install --prefix web --silent && node scripts/dev-ui-server.mjs",
     "start:ui": "npm run -s build:ui && node dist/server/index.js",
     "start:hosted": "npm run -s build && node scripts/start-hosted.mjs",
-    "pm2:start": "pm2 start ecosystem.config.cjs",
+    "pm2:start": "node scripts/pm2-deploy.mjs",
     "pm2:stop": "pm2 stop hvymetl-studio",
     "pm2:reload": "pm2 reload hvymetl-studio --update-env",
-    "pm2:deploy": "npm run -s build:ui && pm2 reload ecosystem.config.cjs --update-env",
+    "pm2:deploy": "node scripts/pm2-deploy.mjs",
     "pm2:logs": "pm2 logs hvymetl-studio --lines 100",
     "test": "vitest run"
   },

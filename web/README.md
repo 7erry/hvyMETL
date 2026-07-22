@@ -296,14 +296,17 @@ testing without JWT checks.
 ```bash
 cd /path/to/hvyMETL
 git pull
-npm run pm2:deploy          # build API + web/dist, reload PM2
+npm run pm2:deploy          # build, remove duplicate PM2 apps, start ONE process
 ```
+
+If you see **two PM2 processes**, do not run `pm2 start` manually — only use `npm run pm2:deploy`.
+To inspect: `pm2 list` (expect exactly one `hvymetl-studio`).
 
 First-time setup:
 
 ```bash
-npm run pm2:start           # starts hvymetl-studio from ecosystem.config.cjs
-pm2 save                    # persist across reboots
+npm run pm2:deploy
+pm2 save
 pm2 startup                 # follow the printed systemd command once
 ```
 
@@ -311,10 +314,10 @@ Verify:
 
 ```bash
 curl -s https://hvymetl.studio/api/health
-# expect: "ui":"static","uiHealthy":true
+# expect: "ui":"static","uiBundle":"/assets/index-....js","version":"1.8.0"
 
-curl -s https://hvymetl.studio/ | grep -E 'assets|vite'
-# expect /assets/index-*.js — NOT /@vite/client
+curl -s https://hvymetl.studio/ | grep assets
+# uiBundle in /api/health must match the script src here
 ```
 
 PM2 runs `dist/server/index.js` with `NODE_ENV=production` and `HVYMETL_HOSTED=1`

@@ -54,17 +54,41 @@ function shouldServeWithVite(devMode: boolean, webDist: string): boolean {
 }
 
 let mountedUiMode: WebUiMode = 'not-built';
+let mountedWebDist = '';
 
 /** UI mount mode from the last {@link mountWebUi} call (for health checks). */
 export function getWebUiMode(): WebUiMode {
   return mountedUiMode;
 }
 
+/** Main JS bundle referenced by web/dist/index.html (for deploy diagnostics). */
+export function getWebUiBundleAsset(rootDir: string): string | null {
+  const webDist = mountedWebDist || join(rootDir, 'web', 'dist');
+  const indexPath = join(webDist, 'index.html');
+  if (!existsSync(indexPath)) return null;
+  const html = readFileSync(indexPath, 'utf8');
+  const match = html.match(/src="(\/assets\/[^"]+\.js)"/);
+  return match?.[1] ?? null;
+}
+
 function mountSpaFallback(
   app: Express,
   webDist: string,
 ): void {
-  app.use(express.static(webDist, { index: false, fallthrough: true }));
+  mountedWebDist = webDist;
+
+  app.use(
+    express.static(webDist, {
+      index: false,
+      fallthrough: true,
+      setHeaders(res, filePath) {
+        if (filePath.endsWith('index.html')) {
+          res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
+          res.setHeader('Pragma', 'no-cache');
+        }
+      },
+    }),
+  );
   app.use((req, res, next) => {
     if (req.method !== 'GET' && req.method !== 'HEAD') return next();
     if (req.path.startsWith('/api')) return next();
@@ -72,6 +96,8 @@ function mountSpaFallback(
       res.status(404).type('text/plain').send('Not found');
       return;
     }
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
     res.sendFile(join(webDist, 'index.html'), (err) => {
       if (err) next(err);
     });

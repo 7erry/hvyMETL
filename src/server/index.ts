@@ -83,7 +83,7 @@ import {
   resolveTenantPipelineRunDir,
   writeTenantWorkspace,
 } from './tenant.js';
-import { getWebUiMode, mountWebUi } from './setupWebUi.js';
+import { getWebUiBundleAsset, getWebUiMode, mountWebUi } from './setupWebUi.js';
 import type { DesignFromModelResult } from '../design/designFromModel.js';
 import {
   enrichHostedMongoHint,
@@ -201,12 +201,22 @@ function persistDesignApiArtifacts(
 
 app.get('/api/health', (_req, res) => {
   const ui = getWebUiMode();
+  let version = 'unknown';
+  try {
+    const pkg = JSON.parse(readFileSync(join(ROOT, 'package.json'), 'utf8')) as { version?: string };
+    version = pkg.version ?? version;
+  } catch {
+    // ignore
+  }
   res.json({
     ok: true,
     name: 'hvyMETL',
+    version,
     cli: 'available',
     ui,
     uiHealthy: ui === 'static',
+    uiBundle: getWebUiBundleAsset(ROOT),
+    pid: process.pid,
   });
 });
 

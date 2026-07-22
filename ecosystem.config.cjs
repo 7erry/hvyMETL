@@ -1,12 +1,8 @@
 /**
  * PM2 process config for https://hvymetl.studio
  *
- * Deploy:
- *   git pull
- *   npm run pm2:deploy
- *
- * First boot:
- *   npm run pm2:start
+ * Always deploy with: npm run pm2:deploy
+ * (builds web/dist, deletes duplicate/legacy PM2 apps, starts exactly one process)
  */
 module.exports = {
   apps: [
@@ -21,6 +17,7 @@ module.exports = {
       max_memory_restart: '1500M',
       listen_timeout: 120_000,
       kill_timeout: 10_000,
+      merge_logs: true,
       env: {
         NODE_ENV: 'production',
         HVYMETL_HOSTED: '1',
