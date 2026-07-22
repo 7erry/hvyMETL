@@ -75,6 +75,7 @@ import { layoutSqlModel } from './graphLayout';
 import { pickCsvDirectory } from './directoryPicker';
 import type { CollectionPlan, MigrationPlan } from './migrationPlanTypes';
 import type { PipelineExecutionDetail } from './transformationSummaryTypes';
+import { DDL_ONLY_IMPORT_INSIGHT_ID } from './transformationSummaryTypes';
 import type { Dialect, Profile, SqlStructuralModel } from './types';
 
 export default function App() {
@@ -92,6 +93,7 @@ export default function App() {
   const [pipelineOpen, setPipelineOpen] = useState(false);
   const [customTelemetryOpen, setCustomTelemetryOpen] = useState(false);
   const [schemaImportModalOpen, setSchemaImportModalOpen] = useState(() => !session.model);
+  const [transformationInsightScrollId, setTransformationInsightScrollId] = useState<string | null>(null);
   const diagramFileInputRef = useRef<HTMLInputElement>(null);
   const mongoDiagramFileInputRef = useRef<HTMLInputElement>(null);
 
@@ -139,6 +141,15 @@ export default function App() {
     () => Object.keys(cardinalityOverrides).length > 0 || Object.keys(forceEmbedOverrides).length > 0,
     [cardinalityOverrides, forceEmbedOverrides],
   );
+  const ddlOnlyImport = useMemo(
+    () => Boolean(model && !model.tables.some((table) => table.rowCount > 0)),
+    [model],
+  );
+
+  const handleViewDdlOnlyTransformationInsight = useCallback(() => {
+    setSessionField('schemaPhase', 'after');
+    setTransformationInsightScrollId(DDL_ONLY_IMPORT_INSIGHT_ID);
+  }, [setSessionField]);
 
   const handleCardinalityOverridesChange = (
     overrides: SessionState['cardinalityOverrides'],
@@ -968,6 +979,7 @@ export default function App() {
                           overrides={cardinalityOverrides}
                           forceEmbedOverrides={forceEmbedOverrides}
                           onChange={handleCardinalityOverridesChange}
+                          onViewDdlOnlyInsight={handleViewDdlOnlyTransformationInsight}
                         />
                       </CollapsiblePanel>
                     ) : null}
@@ -1036,6 +1048,8 @@ export default function App() {
                       onRefresh={() => void handleRefreshExplanation()}
                       refreshing={explainingSummary}
                       framed={false}
+                      showDdlOnlyPreview={ddlOnlyImport}
+                      scrollToInsightId={transformationInsightScrollId}
                     />
                   </CollapsiblePanel>
                 ) : null}

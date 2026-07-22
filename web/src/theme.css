@@ -1387,6 +1387,21 @@ textarea {
   opacity: 0.85;
 }
 
+.cardinality-overrides__ddl-insight {
+  margin: 0 0 0.75rem;
+  padding: 0.65rem 0.75rem;
+  font-size: 0.75rem;
+  line-height: 1.45;
+  border-radius: 6px;
+  border: 1px solid color-mix(in srgb, var(--mongo-yellow) 35%, transparent);
+  background: color-mix(in srgb, var(--mongo-yellow) 8%, transparent);
+}
+
+.cardinality-overrides__ddl-insight .link-button {
+  font-size: inherit;
+  vertical-align: baseline;
+}
+
 .cardinality-overrides__list {
   display: flex;
   flex-direction: column;

@@ -1,5 +1,14 @@
 /** Web mirror of server transformation summary (see src/design/explainTransformation.ts). */
 
+/** Keep in sync with the DDL-only insight in src/design/explainTransformation.ts */
+export const DDL_ONLY_IMPORT_INSIGHT = {
+  title: 'DDL-only import — no row counts or cardinality',
+  body:
+    'Pasted DDL sets every table to rowCount 0 and every FK to avg/max children 0 (unbounded). Full embed, bucket, and archive patterns need CSV exports or a SQLite .db upload so the engine can measure volume and children-per-parent.',
+} as const;
+
+export const DDL_ONLY_IMPORT_INSIGHT_ID = 'transformation-insight-ddl-only';
+
 export type TransformationInsightSeverity = 'info' | 'warn' | 'success';
 
 export type TransformationInsight = {

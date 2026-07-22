@@ -7,6 +7,7 @@ import {
   relationshipOverrideKey,
   someRelationshipsForceEmbed,
 } from '../cardinalityOverrides';
+import { DDL_ONLY_IMPORT_INSIGHT } from '../transformationSummaryTypes';
 import type { SqlStructuralModel } from '../types';
 
 type CardinalityOverridesPanelProps = {
@@ -14,6 +15,8 @@ type CardinalityOverridesPanelProps = {
   overrides: CardinalityOverrides;
   forceEmbedOverrides: ForceEmbedOverrides;
   onChange: (overrides: CardinalityOverrides, forceEmbedOverrides: ForceEmbedOverrides) => void;
+  /** When set, shows a link to the After view Transformation Summary DDL-only insight. */
+  onViewDdlOnlyInsight?: () => void;
 };
 
 export function CardinalityOverridesPanel({
@@ -21,6 +24,7 @@ export function CardinalityOverridesPanel({
   overrides,
   forceEmbedOverrides,
   onChange,
+  onViewDdlOnlyInsight,
 }: CardinalityOverridesPanelProps) {
   const setMaxChildren = (key: string, value: number) => {
     const next = { ...overrides };
@@ -60,8 +64,19 @@ export function CardinalityOverridesPanel({
     return <p className="cardinality-overrides__hint">No foreign-key relationships were found in this schema.</p>;
   }
 
+  const ddlOnlyImport = !model.tables.some((table) => table.rowCount > 0);
+
   return (
     <div className="cardinality-overrides">
+      {ddlOnlyImport && onViewDdlOnlyInsight ? (
+        <p className="cardinality-overrides__ddl-insight">
+          <button type="button" className="link-button" onClick={onViewDdlOnlyInsight}>
+            {DDL_ONLY_IMPORT_INSIGHT.title}
+          </button>
+          {' — '}
+          {DDL_ONLY_IMPORT_INSIGHT.body}
+        </p>
+      ) : null}
       <p className="cardinality-overrides__hint">
         Optional: suggest max child rows per parent when CSV or live database stats are unavailable. Values up to
         5,000 are treated as bounded for embed decisions. You can also force a linked child table to embed into its
