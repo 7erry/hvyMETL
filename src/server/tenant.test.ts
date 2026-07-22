@@ -34,13 +34,19 @@ describe('tenant helpers', () => {
   it('derives a user prefix from Auth0 profile fields', () => {
     expect(tenantDbPrefixFromPayload({ name: 'Terry Walters' })).toBe('terry_walters');
     expect(tenantDbPrefixFromPayload({ email: 'terry.walters@example.com' })).toBe('terry_walters');
-    expect(tenantDbPrefixFromPayload({ sub: 'auth0|abc' })).toBe('auth0_abc');
+    expect(tenantDbPrefixFromPayload({ sub: 'auth0|abc' })).toMatch(/^u_[a-f0-9]{8}$/);
   });
 
-  it('maps logical database names to physical Atlas names', () => {
+  it('maps logical database names to physical Atlas names within shared-tier limits', () => {
     expect(resolvePhysicalTargetDb('terry_walters', 'csv_to_atlas')).toBe('terry_walters__csv_to_atlas');
+    expect(resolvePhysicalTargetDb('terry_walters', 'csv_to_atlas').length).toBeLessThanOrEqual(38);
+    const googleSub = 'google-oauth2|104005738020757337481';
+    const prefix = tenantDbPrefixFromPayload({ sub: googleSub });
+    const physical = resolvePhysicalTargetDb(prefix, 'csv_to_atlas');
+    expect(physical.length).toBeLessThanOrEqual(38);
+    expect(physical.endsWith('__csv_to_atlas')).toBe(true);
     const longLogical = 'x'.repeat(80);
-    expect(resolvePhysicalTargetDb('terry_walters', longLogical).length).toBeLessThanOrEqual(63);
+    expect(resolvePhysicalTargetDb('terry_walters', longLogical).length).toBeLessThanOrEqual(38);
   });
 
   it('parses logical names and strips an accidental own prefix', () => {

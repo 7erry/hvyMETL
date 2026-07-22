@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { isAbsolute, join, relative, resolve } from 'node:path';
 import type { Request } from 'express';
@@ -92,11 +93,18 @@ export const DEFAULT_LOGICAL_TARGET_DB = 'csv_to_atlas';
 /** Separator between user prefix and logical database name in Atlas. */
 export const TENANT_DB_SEPARATOR = '__';
 
-/** Max MongoDB database name length. */
-const MONGODB_DB_NAME_MAX_LENGTH = 63;
+/**
+ * Max Atlas database name length (shared-tier clusters enforce 38 bytes).
+ * Override with HVYMETL_ATLAS_DB_NAME_MAX_LENGTH when your tier allows longer names.
+ */
+export function atlasDbNameMaxLength(): number {
+  const configured = Number(process.env.HVYMETL_ATLAS_DB_NAME_MAX_LENGTH ?? 38);
+  if (!Number.isFinite(configured) || configured < 1) return 38;
+  return Math.min(Math.floor(configured), 63);
+}
 
 /** Max length of the user prefix segment before the separator. */
-const TENANT_DB_PREFIX_MAX_LENGTH = 32;
+const TENANT_DB_PREFIX_MAX_LENGTH = 24;
 
 export type ResolvedTargetDb = {
   /** Name the user sees and enters (e.g. csv_to_atlas). */
@@ -122,6 +130,14 @@ export function sanitizeLogicalTargetDb(name: string): string {
   return trimmed;
 }
 
+/** Derive a short stable prefix from Auth0 `sub` when profile name fields are absent. */
+export function tenantDbPrefixFromSub(sub: string): string {
+  const trimmed = sub.trim();
+  if (!trimmed) return LOCAL_DEV_TENANT_ID;
+  const digest = createHash('sha256').update(trimmed).digest('hex').slice(0, 8);
+  return `u_${digest}`;
+}
+
 /** Derive a stable MongoDB namespace prefix from the Auth0 profile (e.g. Terry Walters → terry_walters). */
 export function tenantDbPrefixFromPayload(payload: Record<string, unknown> | undefined): string {
   const fromName = typeof payload?.name === 'string' ? payload.name : '';
@@ -139,8 +155,8 @@ export function tenantDbPrefixFromPayload(payload: Record<string, unknown> | und
   if (slug) {
     return slug.slice(0, TENANT_DB_PREFIX_MAX_LENGTH);
   }
-  const sub = tenantIdFromPayload(payload);
-  return sub ? sanitizeTenantId(sub).slice(0, TENANT_DB_PREFIX_MAX_LENGTH) : LOCAL_DEV_TENANT_ID;
+  const sub = typeof payload?.sub === 'string' ? payload.sub : '';
+  return sub ? tenantDbPrefixFromSub(sub) : LOCAL_DEV_TENANT_ID;
 }
 
 /** Parse user input into a logical database name (strip own prefix if pasted accidentally). */
@@ -162,16 +178,28 @@ export function parseLogicalTargetDb(input: string | undefined, userPrefix: stri
 /** Build the physical Atlas database name for an authenticated tenant. */
 export function resolvePhysicalTargetDb(userPrefix: string, logicalDb: string): string {
   const logical = sanitizeLogicalTargetDb(logicalDb);
-  const prefix = userPrefix.slice(0, TENANT_DB_PREFIX_MAX_LENGTH);
-  const maxLogicalLength = Math.max(1, MONGODB_DB_NAME_MAX_LENGTH - prefix.length - TENANT_DB_SEPARATOR.length);
-  return `${prefix}${TENANT_DB_SEPARATOR}${logical.slice(0, maxLogicalLength)}`;
+  const maxTotal = atlasDbNameMaxLength();
+  const separatorLength = TENANT_DB_SEPARATOR.length;
+  const maxPrefixLength = Math.max(
+    1,
+    Math.min(TENANT_DB_PREFIX_MAX_LENGTH, maxTotal - separatorLength - logical.length),
+  );
+  let prefix = userPrefix.slice(0, maxPrefixLength);
+  let effectiveLogical = logical;
+  let physical = `${prefix}${TENANT_DB_SEPARATOR}${effectiveLogical}`;
+  if (physical.length > maxTotal) {
+    const maxLogicalLength = Math.max(1, maxTotal - prefix.length - separatorLength);
+    effectiveLogical = logical.slice(0, maxLogicalLength);
+    physical = `${prefix}${TENANT_DB_SEPARATOR}${effectiveLogical}`;
+  }
+  return physical.slice(0, maxTotal);
 }
 
 /** Strip a tenant prefix for API responses and UI display. */
-export function toLogicalTargetDb(physicalOrLogical: string, userPrefix: string): string {
-  const prefix = `${userPrefix}${TENANT_DB_SEPARATOR}`;
-  if (physicalOrLogical.startsWith(prefix)) {
-    return physicalOrLogical.slice(prefix.length) || DEFAULT_LOGICAL_TARGET_DB;
+export function toLogicalTargetDb(physicalOrLogical: string, _userPrefix?: string): string {
+  const separatorIndex = physicalOrLogical.indexOf(TENANT_DB_SEPARATOR);
+  if (separatorIndex > 0) {
+    return physicalOrLogical.slice(separatorIndex + TENANT_DB_SEPARATOR.length) || DEFAULT_LOGICAL_TARGET_DB;
   }
   return physicalOrLogical;
 }
