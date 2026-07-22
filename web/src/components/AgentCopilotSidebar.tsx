@@ -158,12 +158,12 @@ export function AgentCopilotSidebar({ beforeJson = '', afterJson = '' }: AgentCo
             <div className="copilot-quick-chips">
               {QUICK_ACTION_CHIPS.map((chip) => (
                 <button
-                  key={chip}
+                  key={chip.label}
                   type="button"
                   className="copilot-chip"
-                  onClick={() => copilot.sendMessage(chip)}
+                  onClick={() => copilot.sendMessage(chip.prompt)}
                 >
-                  {chip}
+                  {chip.label}
                 </button>
               ))}
             </div>

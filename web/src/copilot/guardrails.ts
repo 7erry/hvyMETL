@@ -1,5 +1,6 @@
 import type { SqlStructuralModel } from '../types';
 import type { GuardrailIssue } from './types';
+import { buildArchitectureReviewUserPrompt } from '../../../src/copilot/copilotArchitecturePrompt.js';
 
 const FIREHOSE_NAME_PATTERN = /telemetry|reading|event|log|metric|audit|line|stop/i;
 const ESTIMATED_BYTES_PER_ROW = 280;
@@ -22,7 +23,9 @@ export function analyzeMigrationRisks(model: SqlStructuralModel | null): Guardra
         severity: 'critical',
         label: 'Missing PK',
         detail: `Table "${table.name}" has no primary key columns detected.`,
-        suggestedPrompt: `How should I optimize ${table.name} to resolve missing primary key detection?`,
+        suggestedPrompt: buildArchitectureReviewUserPrompt(
+          `${table.name} (missing primary key — recommend _id strategy and collection shape)`,
+        ),
       });
     }
 
@@ -35,7 +38,9 @@ export function analyzeMigrationRisks(model: SqlStructuralModel | null): Guardra
           severity: 'warning',
           label: 'Orphan FK',
           detail: `${table.name}.${fk.column} references missing table ${fk.referencesTable}.`,
-          suggestedPrompt: `How should I optimize ${table.name} to resolve the orphaned foreign key on ${fk.column}?`,
+          suggestedPrompt: buildArchitectureReviewUserPrompt(
+            `${table.name} (orphan FK ${fk.column} → ${fk.referencesTable})`,
+          ),
         });
       }
     }
@@ -56,7 +61,9 @@ export function analyzeMigrationRisks(model: SqlStructuralModel | null): Guardra
           severity: 'warning',
           label: 'Unbounded Array',
           detail: `Embedding ${table.name} into ${rel.parentTable} may create unbounded arrays (${rel.maxChildrenPerParent || 'unknown'} max children).`,
-          suggestedPrompt: `How should I optimize ${table.name} to resolve this unbounded array risk?`,
+          suggestedPrompt: buildArchitectureReviewUserPrompt(
+            `embedding ${table.name} into ${rel.parentTable} (unbounded array risk)`,
+          ),
         });
       }
     }
@@ -76,7 +83,9 @@ export function analyzeMigrationRisks(model: SqlStructuralModel | null): Guardra
         severity: estimatedDocBytes >= DOCUMENT_SIZE_CRITICAL_BYTES ? 'critical' : 'warning',
         label: estimatedDocBytes >= DOCUMENT_SIZE_CRITICAL_BYTES ? '16MB Risk' : 'Large Document',
         detail: `Estimated BSON size for ${table.name} with embedded children ~${Math.round(estimatedDocBytes / 1024)}KB.`,
-        suggestedPrompt: `How should I optimize ${table.name} to avoid exceeding MongoDB's 16MB document limit?`,
+        suggestedPrompt: buildArchitectureReviewUserPrompt(
+          `${table.name} (estimated large document / 16MB BSON risk)`,
+        ),
       });
     }
   }

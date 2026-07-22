@@ -1,3 +1,5 @@
+import { OPTIMIZE_SCHEMA_USER_PROMPT } from '../../../src/copilot/copilotArchitecturePrompt.js';
+
 /** Agent status shown in the copilot header. */
 export type AgentStatus = 'idle' | 'analyzing' | 'mutating';
 
@@ -121,11 +123,16 @@ export const COPILOT_SLASH_COMMANDS = [
   { command: '/highlight', description: 'Highlight tables on the canvas' },
 ] as const;
 
-export const QUICK_ACTION_CHIPS = [
-  'Check Guardrails',
-  'Optimize Schema',
-  'Translate SQL',
-] as const;
+export type CopilotQuickAction = {
+  label: string;
+  prompt: string;
+};
+
+export const QUICK_ACTION_CHIPS: CopilotQuickAction[] = [
+  { label: 'Check Guardrails', prompt: 'Check Guardrails' },
+  { label: 'Optimize Schema', prompt: OPTIMIZE_SCHEMA_USER_PROMPT },
+  { label: 'Translate SQL', prompt: 'Translate SQL' },
+];
 
 /** Default copilot drawer width (px). */
 export const COPILOT_WIDTH_DEFAULT = 380;

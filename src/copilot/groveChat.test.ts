@@ -2,7 +2,7 @@ import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
 import { buildCopilotSystemPrompt } from './copilotPrompt.js';
 import { callGroveChat, isGroveConfigured, readGroveConfig } from './groveChat.js';
 
-describe('buildCopilotSystemPrompt', () => {
+describe('buildCopilotSystemPrompt (groveChat)', () => {
   it('includes table and guardrail context', () => {
     const prompt = buildCopilotSystemPrompt({
       tables: [{ name: 'trips', columnCount: 3, rowCount: 100 }],
@@ -23,6 +23,7 @@ describe('buildCopilotSystemPrompt', () => {
     expect(prompt).toContain('trips');
     expect(prompt).toContain('train_telemetry');
     expect(prompt).toContain('Unbounded Array');
+    expect(prompt).toContain('Subset Pattern');
   });
 });
 

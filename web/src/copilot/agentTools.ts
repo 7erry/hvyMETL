@@ -302,9 +302,6 @@ export function parseCopilotCommand(input: string): AgentToolCall | { message: s
   if (trimmed === '/translate' || trimmed === 'Translate SQL') {
     return { message: '__open_translator__' };
   }
-  if (trimmed === 'Optimize Schema') {
-    return { tool: 'runGuardrailCheck', args: {} };
-  }
   const foldMatch = trimmed.match(/^\/fold\s+(\w+)\s+->\s+(\w+)(?:\s+(array|single))?$/i);
   if (foldMatch) {
     return {
