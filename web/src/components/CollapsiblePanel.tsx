@@ -6,6 +6,11 @@ type CollapsiblePanelProps = {
   children: ReactNode;
   defaultOpen?: boolean;
   className?: string;
+  /** Element id for scroll targets and cross-panel navigation. */
+  id?: string;
+  /** Controlled open state; omit for uncontrolled behavior. */
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
   /** Brief value shown on the right when the panel is collapsed. */
   collapsedHint?: string;
   /** Optional controls shown on the summary row (clicks do not toggle the panel). */
@@ -22,16 +27,29 @@ export function CollapsiblePanel({
   children,
   defaultOpen = false,
   className = '',
+  id,
+  open,
+  onOpenChange,
   collapsedHint,
   headerActions,
 }: CollapsiblePanelProps) {
-  const [isOpen, setIsOpen] = useState(defaultOpen);
+  const [internalOpen, setInternalOpen] = useState(defaultOpen);
+  const isOpen = open ?? internalOpen;
+
+  const handleToggle = (event: SyntheticEvent<HTMLDetailsElement>) => {
+    const nextOpen = event.currentTarget.open;
+    if (open === undefined) {
+      setInternalOpen(nextOpen);
+    }
+    onOpenChange?.(nextOpen);
+  };
 
   return (
     <details
+      id={id}
       className={`panel panel-dropdown${className ? ` ${className}` : ''}`}
       open={isOpen}
-      onToggle={(event) => setIsOpen(event.currentTarget.open)}
+      onToggle={handleToggle}
     >
       <summary className="panel-dropdown__summary">
         <span className="panel-dropdown__title">{title}</span>

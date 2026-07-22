@@ -9,6 +9,9 @@ export const DDL_ONLY_IMPORT_INSIGHT = {
 
 export const DDL_ONLY_IMPORT_INSIGHT_ID = 'transformation-insight-ddl-only';
 
+/** Scroll target for cross-link from Transformation Summary → Embed Overrides. */
+export const EMBED_OVERRIDES_PANEL_ID = 'embed-overrides-panel';
+
 export type TransformationInsightSeverity = 'info' | 'warn' | 'success';
 
 export type TransformationInsight = {
