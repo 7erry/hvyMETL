@@ -291,11 +291,38 @@ UI can load Auth0 settings from `GET /api/auth/config` without build-time `VITE_
 Optionally set `VITE_AUTH0_*` at web build time instead. Set `HVYMETL_AUTH_DISABLED=1` only for local
 testing without JWT checks.
 
-**Production deploy (https://hvymetl.studio):** use `npm run start:ui` so the server
-serves static `web/dist`. Do **not** run `npm run dev:ui` or set `HVYMETL_DEV_PROXY=1` in
-production — that serves the Vite dev client and requires `VITE_AUTH0_*` in the **runtime**
-environment instead of at build time. If `/` references `/@vite/client`, the site is in dev
-mode and Auth0 login will not work unless those runtime vars are set.
+**Production deploy (https://hvymetl.studio) with PM2:**
+
+```bash
+cd /path/to/hvyMETL
+git pull
+npm run pm2:deploy          # build API + web/dist, reload PM2
+```
+
+First-time setup:
+
+```bash
+npm run pm2:start           # starts hvymetl-studio from ecosystem.config.cjs
+pm2 save                    # persist across reboots
+pm2 startup                 # follow the printed systemd command once
+```
+
+Verify:
+
+```bash
+curl -s https://hvymetl.studio/api/health
+# expect: "ui":"static","uiHealthy":true
+
+curl -s https://hvymetl.studio/ | grep -E 'assets|vite'
+# expect /assets/index-*.js — NOT /@vite/client
+```
+
+PM2 runs `dist/server/index.js` with `NODE_ENV=production` and `HVYMETL_HOSTED=1`
+(see `ecosystem.config.cjs`). Keep `.env` in the repo root — the API loads it on boot.
+Do **not** run `npm run dev:ui` or set `HVYMETL_DEV_PROXY=1` under PM2; that serves Vite
+dev HTML and breaks Auth0 login.
+
+Alternative without PM2: `npm run start:hosted` (builds UI if missing, then starts the API).
 
 **Multi-tenant isolation:** Each authenticated user is scoped by Auth0 `sub`. Uploads,
 design/pipeline artifacts, and workspace settings live under
