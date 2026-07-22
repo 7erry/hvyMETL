@@ -6,6 +6,7 @@ import {
   type PointerEvent as ReactPointerEvent,
   type ReactNode,
 } from 'react';
+import { SIDEBAR_WIDTH_MAX, SIDEBAR_WIDTH_MIN } from '../layoutConstants.js';
 
 const MOBILE_STACK_QUERY = '(max-width: 768px)';
 
@@ -40,8 +41,8 @@ type ResizableSplitProps = {
 export function ResizableSplit({
   sidebarWidth,
   onSidebarWidthChange,
-  minWidth = 260,
-  maxWidth = 640,
+  minWidth = SIDEBAR_WIDTH_MIN,
+  maxWidth = SIDEBAR_WIDTH_MAX,
   stackedSidebarMode = 'default',
   sidebar,
   main,

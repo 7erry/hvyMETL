@@ -21,8 +21,10 @@ import type { ManagerReviewAcceptances, ManagerCostInputs, MigrationArtifacts } 
 import type { MigrationPlan } from '../migrationPlanTypes';
 import type { Dialect, SqlStructuralModel } from '../types';
 
-const MANAGER_SIDEBAR_MIN_WIDTH = 460;
-const MANAGER_SIDEBAR_MAX_WIDTH = 780;
+import {
+  MANAGER_SIDEBAR_MAX_WIDTH,
+  MANAGER_SIDEBAR_MIN_WIDTH,
+} from '../layoutConstants.js';
 
 type ManagerViewProps = {
   model: SqlStructuralModel | null;

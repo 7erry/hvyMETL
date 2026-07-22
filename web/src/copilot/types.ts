@@ -134,11 +134,8 @@ export const QUICK_ACTION_CHIPS: CopilotQuickAction[] = [
   { label: 'Translate SQL', prompt: 'Translate SQL' },
 ];
 
-/** Default copilot drawer width (px). */
-export const COPILOT_WIDTH_DEFAULT = 380;
-
-/** Minimum copilot drawer width (px). */
-export const COPILOT_WIDTH_MIN = 320;
-
-/** Maximum copilot drawer width (px). */
-export const COPILOT_WIDTH_MAX = 640;
+export {
+  COPILOT_WIDTH_DEFAULT,
+  COPILOT_WIDTH_MAX,
+  COPILOT_WIDTH_MIN,
+} from '../layoutConstants.js';

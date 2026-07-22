@@ -3,11 +3,22 @@ import type { CardinalityOverrides, ForceEmbedOverrides } from './cardinalityOve
 import type { RelationshipConnectionType, RelationshipNotation } from './relationshipDisplay';
 import type { CustomProfileInput, WorkloadProfile } from './customProfileShared';
 import { DEFAULT_MANAGER_COST_INPUTS, type ManagerCostInputs } from './managerCostEstimate';
+import {
+  COPILOT_WIDTH_DEFAULT,
+  SIDEBAR_WIDTH_DEFAULT,
+  SIDEBAR_WIDTH_MAX,
+  COPILOT_WIDTH_MAX,
+} from './layoutConstants.js';
 
 const STORAGE_KEY_PREFIX = 'hvymetl-session-v1';
 
 function sessionStorageKey(userId?: string): string {
   return userId ? `${STORAGE_KEY_PREFIX}:${userId}` : STORAGE_KEY_PREFIX;
+}
+
+function clampPanelWidth(value: unknown, fallback: number, max: number): number {
+  if (typeof value !== 'number' || !Number.isFinite(value)) return fallback;
+  return Math.min(max, Math.max(1, Math.round(value)));
 }
 
 export type PromptArtifact = {
@@ -115,8 +126,8 @@ export const defaultSessionState = (): SessionState => ({
   schemaPhase: 'before',
   view: 'diagram',
   migrationArtifacts: null,
-  sidebarWidth: 320,
-  copilotWidth: 380,
+  sidebarWidth: SIDEBAR_WIDTH_DEFAULT,
+  copilotWidth: COPILOT_WIDTH_DEFAULT,
   canvasPanelOpen: true,
   csvSourcePath: null,
   relationshipConnectionType: 'bezier',
@@ -140,6 +151,8 @@ export function loadSessionState(userId?: string): SessionState {
       ...defaultSessionState(),
       ...rest,
       csvSourcePath: rest.csvSourcePath ?? _legacy ?? null,
+      sidebarWidth: clampPanelWidth(rest.sidebarWidth, SIDEBAR_WIDTH_DEFAULT, SIDEBAR_WIDTH_MAX),
+      copilotWidth: clampPanelWidth(rest.copilotWidth, COPILOT_WIDTH_DEFAULT, COPILOT_WIDTH_MAX),
       managerCostInputs: {
         ...DEFAULT_MANAGER_COST_INPUTS,
         ...(rest.managerCostInputs ?? {}),
