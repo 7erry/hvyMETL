@@ -15,6 +15,7 @@ import {
   type ApiArtifactBundle,
 } from './apiArtifactStore.js';
 import { requireRole, promoteQueryAccessToken, promoteSwaggerSessionCookie, authenticateSwaggerDocsAccess, issueSwaggerDocsCookie } from './auth.js';
+import { swaggerUiSetupOptions } from './swaggerUiTheme.js';
 import { getRequestTenantId } from './tenant.js';
 
 const docsRoleCheck = requireRole(['admin', 'developer', 'manager']).slice(1);
@@ -97,10 +98,7 @@ export function registerApiArtifactRoutes(app: Express, rootDir: string): void {
       res.status(404).type('text/plain').send('Combined OpenAPI spec not found.');
       return;
     }
-    swaggerUi.setup(spec, {
-      customSiteTitle: 'hvyMETL Migration API',
-      swaggerOptions: { persistAuthorization: true },
-    })(req, res, next);
+    swaggerUi.setup(spec, swaggerUiSetupOptions())(req, res, next);
   };
 
   // Register HTML + spec routes before swaggerUi.serve — the static middleware otherwise
