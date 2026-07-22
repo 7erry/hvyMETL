@@ -1,10 +1,11 @@
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useCopilot } from '../copilot/CopilotContext';
 import { COPILOT_SLASH_COMMANDS, QUICK_ACTION_CHIPS, type AgentStatus } from '../copilot/types';
 import { ToolExecutionCard } from './copilot/ToolExecutionCard';
 import { QueryTranslatorPanel } from './copilot/QueryTranslatorPanel';
 import { SchemaDiffViewer } from './copilot/SchemaDiffViewer';
 import { CopilotMessageBody } from './copilot/CopilotMessageBody';
+import { CopilotTypingIndicator } from './copilot/CopilotTypingIndicator';
 
 const STATUS_LABEL: Record<AgentStatus, string> = {
   idle: 'Idle',
@@ -35,6 +36,15 @@ export function AgentCopilotSidebar({ beforeJson = '', afterJson = '' }: AgentCo
     if (!input.startsWith('/')) return [];
     return COPILOT_SLASH_COMMANDS.filter((cmd) => cmd.command.startsWith(input.split(/\s/)[0] ?? ''));
   }, [input]);
+
+  const isWaiting = copilot.status !== 'idle';
+
+  useEffect(() => {
+    if (!isWaiting) return;
+    requestAnimationFrame(() => {
+      threadRef.current?.scrollTo({ top: threadRef.current.scrollHeight, behavior: 'smooth' });
+    });
+  }, [isWaiting, copilot.messages.length]);
 
   const handleSend = () => {
     if (!input.trim()) return;
@@ -136,6 +146,8 @@ export function AgentCopilotSidebar({ beforeJson = '', afterJson = '' }: AgentCo
               </article>
             ))}
 
+            <CopilotTypingIndicator status={copilot.status} />
+
             {copilot.pipelineError ? (
               <div className="copilot-self-heal">
                 <p className="copilot-self-heal__error">{copilot.selfHealSuggestion}</p>
@@ -193,7 +205,7 @@ export function AgentCopilotSidebar({ beforeJson = '', afterJson = '' }: AgentCo
                 placeholder="Message agent… (/fold, /guardrails, /translate)"
                 rows={2}
               />
-              <button type="button" className="primary" onClick={handleSend} aria-label="Send message">
+              <button type="button" className="primary" onClick={handleSend} disabled={isWaiting} aria-label="Send message">
                 Send
               </button>
             </div>

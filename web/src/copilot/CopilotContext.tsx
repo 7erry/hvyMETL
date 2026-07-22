@@ -300,6 +300,7 @@ export function CopilotProvider({
       }
 
       if (llmConfigured) {
+        setStatus('analyzing');
         const userTurn: CopilotLlmMessage = { role: 'user', content: trimmed };
         const nextHistory = [...llmHistory, userTurn];
         setLlmHistory(nextHistory);
