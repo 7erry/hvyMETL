@@ -25,7 +25,7 @@
     "postinstall": "npm rebuild better-sqlite3 --silent",
     "validate-hybrid-rag": "npm run -s build && node scripts/validate-hybrid-rag.mjs",
     "validate-collection-openapi": "node scripts/validate-collection-openapi.mjs",
-    "build:ui": "npm run -s build && npm install --prefix web && npm run -s build --prefix web",
+    "build:ui": "npm run -s build && npm install --prefix web --include=dev && npm run -s build --prefix web",
     "dev:ui": "npm run -s build && npm install --prefix web --silent && node scripts/dev-ui-server.mjs",
     "start:ui": "npm run -s build:ui && node dist/server/index.js",
     "start:hosted": "npm run -s build && node scripts/start-hosted.mjs",

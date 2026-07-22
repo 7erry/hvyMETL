@@ -18,7 +18,10 @@ if (!existsSync(webDistIndex) || process.env.HVYMETL_FORCE_UI_BUILD === '1') {
   const build = spawnSync('npm', ['run', '-s', 'build:ui'], {
     cwd: root,
     stdio: 'inherit',
-    env: process.env,
+    env: {
+      ...process.env,
+      npm_config_production: 'false',
+    },
   });
   if (build.status !== 0) {
     process.exit(build.status ?? 1);

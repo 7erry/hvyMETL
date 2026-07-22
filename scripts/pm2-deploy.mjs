@@ -14,11 +14,7 @@ function run(command, args, options = {}) {
   const result = spawnSync(command, args, {
     cwd: root,
     stdio: 'inherit',
-    env: {
-      ...process.env,
-      NODE_ENV: 'production',
-      HVYMETL_HOSTED: '1',
-    },
+    env: options.env ?? process.env,
     ...options,
   });
   if (result.status !== 0) {
@@ -46,7 +42,13 @@ function deleteProcess(name) {
 }
 
 console.log('[pm2:deploy] Building API + web/dist...');
-run('npm', ['run', '-s', 'build:ui']);
+run('npm', ['run', '-s', 'build:ui'], {
+  env: {
+    ...process.env,
+    // Vite build needs devDependencies (@vitejs/plugin-react); do not omit them.
+    npm_config_production: 'false',
+  },
+});
 
 console.log('[pm2:deploy] Cleaning duplicate / legacy PM2 processes...');
 const processes = pm2List();
