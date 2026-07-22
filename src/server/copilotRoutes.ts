@@ -9,6 +9,9 @@ import {
   type CopilotChatMessage,
   type CopilotSchemaContext,
 } from '../copilot/groveChat.js';
+import { invokeMongoInspectTool } from '../copilot/mongoInspectService.js';
+import { isMongoInspectToolName } from '../copilot/mongoInspectToolSchemas.js';
+import { isMongoMcpEnabled, probeMongoMcpAvailability } from '../copilot/mongoMcpClient.js';
 
 function parseChatMessages(raw: unknown): CopilotChatMessage[] {
   if (!Array.isArray(raw)) return [];
@@ -59,11 +62,39 @@ function handleCopilotError(res: Response, error: unknown): void {
 export function createCopilotRouter(): Router {
   const router = Router();
 
-  router.get('/status', (_req, res) => {
+  router.get('/status', async (_req, res) => {
+    const mongoInspectEnabled = isMongoMcpEnabled();
+    const mongoInspectProbe = mongoInspectEnabled ? await probeMongoMcpAvailability() : { available: false };
     res.json({
       configured: isGroveConfigured(),
       model: process.env.GROVE_MODEL?.trim() || 'gpt-5.6-luna',
+      mongoInspect: {
+        enabled: mongoInspectEnabled,
+        available: mongoInspectProbe.available,
+        message: mongoInspectProbe.available ? undefined : mongoInspectProbe.message,
+      },
     });
+  });
+
+  router.post('/mongo/inspect', async (req, res) => {
+    try {
+      const tool = String(req.body?.tool ?? '').trim();
+      const args =
+        req.body?.args && typeof req.body.args === 'object'
+          ? (req.body.args as Record<string, unknown>)
+          : {};
+
+      if (!isMongoInspectToolName(tool)) {
+        res.status(400).json({ error: `Unknown MongoDB inspect tool "${tool}".` });
+        return;
+      }
+
+      const result = await invokeMongoInspectTool(req, tool, args);
+      const status = result.serviceUnavailable ? 503 : result.ok ? 200 : 400;
+      res.status(status).json(result);
+    } catch (error) {
+      handleCopilotError(res, error);
+    }
   });
 
   router.post('/chat', async (req, res) => {

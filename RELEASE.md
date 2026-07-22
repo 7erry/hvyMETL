@@ -1,3 +1,35 @@
+## hvyMETL 1.9.0
+
+Minor release adding **MongoDB inspect tools** to Agent Copilot (Phase 1) via a co-hosted MongoDB MCP HTTP server, plus wider resizable copilot/sidebar panels.
+
+### Highlights
+
+- **Agent Copilot MongoDB inspect (Phase 1):** read-only tools to list databases/collections, infer collection schema, list indexes, and run capped `find` queries against imported Atlas data.
+- **Server-side MCP proxy:** `POST /api/copilot/mongo/inspect` calls the co-hosted MongoDB MCP server; tenant database prefixes are applied server-side and **never shown** to users or the LLM (logical names only).
+- **Graceful degradation:** when the MCP service is unavailable, copilot shows a clear offline message and inspect tool calls return HTTP 503 without breaking chat or canvas tools.
+- **Wider panels:** left sidebar and Agent Copilot dividers expand up to 960px.
+
+### Configuration
+
+Add to `.env` on the studio host (MCP co-located on localhost):
+
+```bash
+HVYMETL_MCP_MONGODB_URL=http://127.0.0.1:3000/mcp
+HVYMETL_MCP_MONGODB_ENABLED=1
+# Optional shared secret headers (must match MCP server MDB_MCP_HTTP_HEADERS)
+# HVYMETL_MCP_MONGODB_HEADERS={"x-api-key":"shared-secret"}
+```
+
+See [docs/20-agent-copilot-mongodb-inspect.md](docs/20-agent-copilot-mongodb-inspect.md).
+
+### Verification
+
+- `npm test`
+- `npm run build`
+- `npm run build --prefix web`
+
+---
+
 ## hvyMETL 1.8.0
 
 Minor release introducing the **Agent Copilot** — an AI-assisted migration assistant in Migration Studio — plus schema UX improvements, new examples, and studio polish since 1.7.1.

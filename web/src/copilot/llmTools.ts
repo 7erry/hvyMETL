@@ -1,7 +1,8 @@
 import type { OpenAiToolCall } from './types';
-import type { AgentToolCall, CopilotToolName } from './types';
+import type { AgentToolCall, CopilotToolName, MongoInspectToolName } from './types';
+import { isMongoInspectToolName } from './types';
 
-const TOOL_NAMES = new Set<CopilotToolName>([
+const CANVAS_TOOL_NAMES = new Set<CopilotToolName>([
   'foldTable',
   'setEmbedOverride',
   'highlightNodes',
@@ -10,10 +11,17 @@ const TOOL_NAMES = new Set<CopilotToolName>([
   'translateSQLToMongo',
 ]);
 
-/** Parses an OpenAI tool_call payload into a typed agent tool call. */
-export function parseOpenAiToolCall(toolCall: OpenAiToolCall): AgentToolCall | null {
-  const name = toolCall.function.name as CopilotToolName;
-  if (!TOOL_NAMES.has(name)) return null;
+export type ServerMongoInspectToolCall = {
+  kind: 'mongoInspect';
+  tool: MongoInspectToolName;
+  args: Record<string, unknown>;
+};
+
+export type ParsedCopilotToolCall = AgentToolCall | ServerMongoInspectToolCall;
+
+/** Parses an OpenAI tool_call payload into a canvas or server-side inspect tool call. */
+export function parseOpenAiToolCall(toolCall: OpenAiToolCall): ParsedCopilotToolCall | null {
+  const name = toolCall.function.name;
 
   let args: Record<string, unknown>;
   try {
@@ -21,6 +29,12 @@ export function parseOpenAiToolCall(toolCall: OpenAiToolCall): AgentToolCall | n
   } catch {
     return null;
   }
+
+  if (isMongoInspectToolName(name)) {
+    return { kind: 'mongoInspect', tool: name, args };
+  }
+
+  if (!CANVAS_TOOL_NAMES.has(name as CopilotToolName)) return null;
 
   switch (name) {
     case 'foldTable':
@@ -65,4 +79,10 @@ export function parseOpenAiToolCall(toolCall: OpenAiToolCall): AgentToolCall | n
     default:
       return null;
   }
+}
+
+export function isServerMongoInspectToolCall(
+  call: ParsedCopilotToolCall,
+): call is ServerMongoInspectToolCall {
+  return 'kind' in call && call.kind === 'mongoInspect';
 }

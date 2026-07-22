@@ -4691,6 +4691,11 @@ textarea {
   opacity: 0.75;
 }
 
+.agent-copilot-sidebar__meta--warn {
+  color: #ffb86c;
+  opacity: 1;
+}
+
 .agent-copilot-sidebar__title-row {
   display: flex;
   gap: 0.55rem;

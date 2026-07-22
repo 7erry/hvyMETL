@@ -331,6 +331,11 @@ export function toolDisplayName(tool: CopilotToolName): string {
     detachTable: 'Detach Table',
     runGuardrailCheck: 'Guardrail Check',
     translateSQLToMongo: 'Translate SQL',
+    listMongoDatabases: 'List Databases',
+    listMongoCollections: 'List Collections',
+    describeMongoCollectionSchema: 'Collection Schema',
+    listMongoCollectionIndexes: 'Collection Indexes',
+    findMongoDocuments: 'Find Documents',
   };
   return names[tool];
 }

@@ -88,7 +88,13 @@ export function AgentCopilotSidebar({ beforeJson = '', afterJson = '' }: AgentCo
               ) : (
                 <> · offline heuristics</>
               )}
+              {!copilot.mongoInspectAvailable ? <> · Atlas inspect offline</> : null}
             </p>
+            {!copilot.mongoInspectAvailable && copilot.mongoInspectMessage ? (
+              <p className="agent-copilot-sidebar__meta agent-copilot-sidebar__meta--warn">
+                {copilot.mongoInspectMessage}
+              </p>
+            ) : null}
           </div>
         </div>
         <button

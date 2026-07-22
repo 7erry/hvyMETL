@@ -14,7 +14,32 @@ export type CopilotToolName =
   | 'highlightNodes'
   | 'detachTable'
   | 'runGuardrailCheck'
-  | 'translateSQLToMongo';
+  | 'translateSQLToMongo'
+  | 'listMongoDatabases'
+  | 'listMongoCollections'
+  | 'describeMongoCollectionSchema'
+  | 'listMongoCollectionIndexes'
+  | 'findMongoDocuments';
+
+/** Tools executed server-side via the MongoDB MCP proxy. */
+export type MongoInspectToolName =
+  | 'listMongoDatabases'
+  | 'listMongoCollections'
+  | 'describeMongoCollectionSchema'
+  | 'listMongoCollectionIndexes'
+  | 'findMongoDocuments';
+
+export const MONGO_INSPECT_TOOL_NAMES = new Set<MongoInspectToolName>([
+  'listMongoDatabases',
+  'listMongoCollections',
+  'describeMongoCollectionSchema',
+  'listMongoCollectionIndexes',
+  'findMongoDocuments',
+]);
+
+export function isMongoInspectToolName(name: string): name is MongoInspectToolName {
+  return MONGO_INSPECT_TOOL_NAMES.has(name as MongoInspectToolName);
+}
 
 /** One chat message in the copilot thread. */
 export type CopilotMessage = {
@@ -113,6 +138,20 @@ export type CopilotChatApiResponse = {
 export type CopilotStatusResponse = {
   configured: boolean;
   model: string;
+  mongoInspect?: {
+    enabled: boolean;
+    available: boolean;
+    message?: string;
+  };
+};
+
+export type MongoInspectInvokeResponse = {
+  ok: boolean;
+  tool: MongoInspectToolName;
+  summary: string;
+  data?: unknown;
+  error?: string;
+  serviceUnavailable?: boolean;
 };
 
 export const COPILOT_SLASH_COMMANDS = [

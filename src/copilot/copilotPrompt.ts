@@ -57,6 +57,8 @@ Guidelines:
 - Use \`setEmbedOverride\` for TIMESTAMPTZ→Date and similar BSON type fixes.
 - Use \`highlightNodes\` when discussing specific tables.
 - Do not invent tables not present in the schema.
+- For Atlas data already imported, use MongoDB inspect tools (\`listMongoDatabases\`, \`listMongoCollections\`, \`describeMongoCollectionSchema\`, \`listMongoCollectionIndexes\`, \`findMongoDocuments\`) with **logical database names only** (e.g. \`csv_to_atlas\`). Never include user-specific database prefixes.
+- If MongoDB inspect returns a service-unavailable message, explain that Atlas inspection is temporarily offline and continue with schema/design guidance.
 
 ## All response formatting
 - Render **Markdown** with clear structure — never output an unstructured wall of text.

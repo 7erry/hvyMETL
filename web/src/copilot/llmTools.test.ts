@@ -1,24 +1,23 @@
 import { describe, expect, it } from 'vitest';
-import type { OpenAiToolCall } from './types';
-import { parseOpenAiToolCall } from './llmTools';
+import { isMongoInspectToolName } from './types';
+import { isServerMongoInspectToolCall, parseOpenAiToolCall } from './llmTools';
 
-describe('parseOpenAiToolCall', () => {
-  it('parses foldTable arguments', () => {
-    const toolCall: OpenAiToolCall = {
+describe('llmTools mongo inspect parsing', () => {
+  it('routes inspect tool calls to the server-side executor', () => {
+    const parsed = parseOpenAiToolCall({
       id: 'call_1',
       type: 'function',
       function: {
-        name: 'foldTable',
-        arguments: JSON.stringify({
-          sourceTable: 'train_telemetry',
-          targetTable: 'trips',
-          embedType: 'array',
-        }),
+        name: 'listMongoCollections',
+        arguments: JSON.stringify({ database: 'csv_to_atlas' }),
       },
-    };
-    expect(parseOpenAiToolCall(toolCall)).toEqual({
-      tool: 'foldTable',
-      args: { sourceTable: 'train_telemetry', targetTable: 'trips', embedType: 'array' },
     });
+    expect(parsed).not.toBeNull();
+    expect(isServerMongoInspectToolCall(parsed!)).toBe(true);
+    if (parsed && isServerMongoInspectToolCall(parsed)) {
+      expect(parsed.tool).toBe('listMongoCollections');
+      expect(parsed.args.database).toBe('csv_to_atlas');
+    }
+    expect(isMongoInspectToolName('listMongoCollections')).toBe(true);
   });
 });

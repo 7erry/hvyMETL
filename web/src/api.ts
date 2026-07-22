@@ -823,6 +823,22 @@ export async function fetchCopilotStatus(): Promise<CopilotStatusResponse> {
   return res.json();
 }
 
+export async function invokeCopilotMongoInspect(
+  tool: import('./copilot/types').MongoInspectToolName,
+  args: Record<string, unknown>,
+): Promise<import('./copilot/types').MongoInspectInvokeResponse> {
+  const res = await apiFetch(`${base}/api/copilot/mongo/inspect`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ tool, args }),
+  });
+  const data = (await res.json()) as import('./copilot/types').MongoInspectInvokeResponse & { error?: string };
+  if (!res.ok && !data.summary) {
+    throw new Error(data.error ?? res.statusText);
+  }
+  return data;
+}
+
 export async function sendCopilotChat(request: {
   messages: CopilotLlmMessage[];
   schemaContext: CopilotSchemaContextPayload;

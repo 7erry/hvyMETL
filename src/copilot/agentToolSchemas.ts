@@ -1,5 +1,7 @@
 /** OpenAI-compatible function definitions for the hvyMETL agent copilot. */
-export const COPILOT_OPENAI_TOOLS = [
+import { COPILOT_MONGO_INSPECT_OPENAI_TOOLS } from './mongoInspectToolSchemas.js';
+
+export const COPILOT_CANVAS_OPENAI_TOOLS = [
   {
     type: 'function' as const,
     function: {
@@ -91,7 +93,10 @@ export const COPILOT_OPENAI_TOOLS = [
   },
 ];
 
-export type CopilotToolName =
+/** Canvas + MongoDB inspect tools sent to Grove when tool calling is enabled. */
+export const COPILOT_OPENAI_TOOLS = [...COPILOT_CANVAS_OPENAI_TOOLS, ...COPILOT_MONGO_INSPECT_OPENAI_TOOLS];
+
+export type CopilotCanvasToolName =
   | 'foldTable'
   | 'setEmbedOverride'
   | 'highlightNodes'

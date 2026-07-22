@@ -1,6 +1,8 @@
 import express from 'express';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createCopilotRouter } from './copilotRoutes.js';
+import * as mongoInspectService from '../copilot/mongoInspectService.js';
+import * as mongoMcpClient from '../copilot/mongoMcpClient.js';
 
 describe('copilot routes', () => {
   const originalEnv = { ...process.env };
@@ -8,6 +10,8 @@ describe('copilot routes', () => {
 
   beforeEach(() => {
     process.env.GROVE_API_KEY = 'test-key';
+    vi.spyOn(mongoMcpClient, 'isMongoMcpEnabled').mockReturnValue(true);
+    vi.spyOn(mongoMcpClient, 'probeMongoMcpAvailability').mockResolvedValue({ available: true });
     vi.stubGlobal(
       'fetch',
       vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
@@ -62,10 +66,27 @@ describe('copilot routes', () => {
     return { status: response.status, body };
   }
 
-  it('returns configured status', async () => {
+  it('returns configured status with mongo inspect probe', async () => {
     const { status, body } = await getJson('/api/copilot/status');
     expect(status).toBe(200);
     expect(body.configured).toBe(true);
+    expect((body.mongoInspect as { available: boolean }).available).toBe(true);
+  });
+
+  it('invokes mongo inspect tools via API', async () => {
+    vi.spyOn(mongoInspectService, 'invokeMongoInspectTool').mockResolvedValue({
+      ok: true,
+      tool: 'listMongoDatabases',
+      summary: 'Found 1 database.',
+      data: { databases: [{ name: 'csv_to_atlas' }], totalCount: 1 },
+    });
+
+    const { status, body } = await postJson('/api/copilot/mongo/inspect', {
+      tool: 'listMongoDatabases',
+      args: {},
+    });
+    expect(status).toBe(200);
+    expect(body.summary).toBe('Found 1 database.');
   });
 
   it('proxies chat to Grove', async () => {

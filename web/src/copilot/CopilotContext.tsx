@@ -9,15 +9,16 @@ import {
 } from 'react';
 import { executeAgentTool, parseCopilotCommand, type AgentToolContext, type AgentToolMutation } from './agentTools';
 import { analyzeMigrationRisks } from './guardrails';
-import { parseOpenAiToolCall } from './llmTools';
+import { parseOpenAiToolCall, isServerMongoInspectToolCall } from './llmTools';
 import { buildSchemaContextPayload } from './schemaContext';
-import { fetchCopilotStatus, sendCopilotChat } from '../api';
+import { fetchCopilotStatus, invokeCopilotMongoInspect, sendCopilotChat } from '../api';
 import type {
   AgentStatus,
   CopilotLlmMessage,
   CopilotMessage,
   CopilotWorkflowPreset,
   GuardrailIssue,
+  MongoInspectToolName,
   SqlTranslationOutput,
   ToolExecutionResult,
 } from './types';
@@ -43,6 +44,8 @@ export type CopilotContextValue = {
   toolsEnabled: boolean;
   llmConfigured: boolean;
   llmModel: string | null;
+  mongoInspectAvailable: boolean;
+  mongoInspectMessage: string | null;
   toggleOpen: () => void;
   setOpen: (open: boolean) => void;
   setActiveTab: (tab: 'chat' | 'translator') => void;
@@ -105,6 +108,8 @@ export function CopilotProvider({
   const [toolsEnabled, setToolsEnabled] = useState(true);
   const [llmConfigured, setLlmConfigured] = useState(false);
   const [llmModel, setLlmModel] = useState<string | null>(null);
+  const [mongoInspectAvailable, setMongoInspectAvailable] = useState(false);
+  const [mongoInspectMessage, setMongoInspectMessage] = useState<string | null>(null);
   const [llmHistory, setLlmHistory] = useState<CopilotLlmMessage[]>([]);
 
   useEffect(() => {
@@ -112,10 +117,14 @@ export function CopilotProvider({
       .then((status) => {
         setLlmConfigured(status.configured);
         setLlmModel(status.configured ? status.model : null);
+        setMongoInspectAvailable(Boolean(status.mongoInspect?.enabled && status.mongoInspect.available));
+        setMongoInspectMessage(status.mongoInspect?.message ?? null);
       })
       .catch(() => {
         setLlmConfigured(false);
         setLlmModel(null);
+        setMongoInspectAvailable(false);
+        setMongoInspectMessage(null);
       });
   }, []);
 
@@ -199,6 +208,29 @@ export function CopilotProvider({
     [appendMessage, executeTool],
   );
 
+  const runMongoInspectTool = useCallback(
+    async (tool: MongoInspectToolName, args: Record<string, unknown>): Promise<ToolExecutionResult> => {
+      try {
+        const response = await invokeCopilotMongoInspect(tool, args);
+        return {
+          tool,
+          summary: response.summary,
+          delta: response.ok ? [`Inspect tool ${tool} completed.`] : [],
+          ok: response.ok,
+        };
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        return {
+          tool,
+          summary: message,
+          delta: [],
+          ok: false,
+        };
+      }
+    },
+    [],
+  );
+
   const runLlmTurn = useCallback(
     async (history: CopilotLlmMessage[]): Promise<CopilotLlmMessage[]> => {
       const schemaContext = buildSchemaContextPayload({
@@ -240,6 +272,25 @@ export function CopilotProvider({
         for (const toolCall of toolCalls) {
           const parsed = parseOpenAiToolCall(toolCall);
           if (!parsed) continue;
+
+          if (isServerMongoInspectToolCall(parsed)) {
+            const result = await runMongoInspectTool(parsed.tool, parsed.args);
+            appendMessage({
+              role: 'agent',
+              content: result.summary,
+              toolExecution: result,
+            });
+            messages = [
+              ...messages,
+              {
+                role: 'tool',
+                tool_call_id: toolCall.id,
+                content: JSON.stringify(result),
+              },
+            ];
+            continue;
+          }
+
           const result = executeTool(parsed);
           appendMessage({
             role: 'agent',
@@ -268,6 +319,7 @@ export function CopilotProvider({
       guardrailIssues,
       model,
       plan,
+      runMongoInspectTool,
       toolsEnabled,
     ],
   );
@@ -400,6 +452,8 @@ export function CopilotProvider({
       toolsEnabled,
       llmConfigured,
       llmModel,
+      mongoInspectAvailable,
+      mongoInspectMessage,
       toggleOpen: () => setOpen((prev) => !prev),
       setOpen,
       setActiveTab,
@@ -448,6 +502,8 @@ export function CopilotProvider({
       toolsEnabled,
       llmConfigured,
       llmModel,
+      mongoInspectAvailable,
+      mongoInspectMessage,
       sendMessage,
       openWithPrompt,
       openGuardrailPrompt,
