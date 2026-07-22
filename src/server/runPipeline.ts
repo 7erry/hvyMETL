@@ -5,7 +5,7 @@
 import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { runInScopedEnv } from '../runtime/scopedEnv.js';
-import { tenantArtifactDir, tenantPipelineRunDir } from './tenant.js';
+import { DEFAULT_LOGICAL_TARGET_DB, tenantArtifactDir, tenantPipelineRunDir } from './tenant.js';
 import { writeDesignArtifacts, type DesignFromModelResult } from '../design/designFromModel.js';
 import { designFromModelWithMlEngine } from '../ml_engine/pipelinePatch.js';
 import { triggerPostMigrationReflection } from '../ml_engine/feedbackHooks.js';
@@ -56,7 +56,10 @@ export type PipelineRunRequest = {
   tenantId?: string;
   cardinalityOverrides?: Record<string, number>;
   forceEmbedOverrides?: Record<string, boolean>;
+  /** Physical Atlas database name passed to csvToAtlas. */
   targetDb?: string;
+  /** Logical database name stored in execution history and shown in the UI. */
+  logicalTargetDb?: string;
   outDir?: string;
   drop?: boolean;
   mongoUri?: string;
@@ -308,15 +311,16 @@ async function runFullPipelineInner(
   const csvImportManifest = { csvSource: csvRoot, schemaDialect, collections: csvCollections };
   writeFileSync(manifestPath, `${JSON.stringify(csvImportManifest, null, 2)}\n`);
 
-  const requestedTargetDb =
+  const logicalTargetDb =
+    request.logicalTargetDb ??
     request.targetDb ??
-    (request.tenantId ? `hvymetl_${request.tenantId}`.slice(0, 63) : undefined) ??
-    importEnv.MONGODB_DB ??
-    'csv_to_atlas';
-  const targetDb = importEnv.MONGODB_URI?.trim()
-    ? await resolveMongoDatabaseNameCasing(importEnv.MONGODB_URI, requestedTargetDb, { timeoutMs: 12_000 })
-    : requestedTargetDb;
-  importEnv.MONGODB_DB = targetDb;
+    importEnv.MONGODB_DB?.trim() ??
+    DEFAULT_LOGICAL_TARGET_DB;
+  const requestedPhysicalDb = request.targetDb ?? logicalTargetDb;
+  const physicalTargetDb = importEnv.MONGODB_URI?.trim()
+    ? await resolveMongoDatabaseNameCasing(importEnv.MONGODB_URI, requestedPhysicalDb, { timeoutMs: 12_000 })
+    : requestedPhysicalDb;
+  importEnv.MONGODB_DB = physicalTargetDb;
   const imports: CollectionImportSummary[] = [];
   const importTotal = csvCollections.length;
   let importIndex = 0;
@@ -378,7 +382,7 @@ async function runFullPipelineInner(
     profileId: request.profileId,
     dialect: request.dialect,
     schemaDialect,
-    targetDb,
+    targetDb: logicalTargetDb,
     memoryDb,
     csvSourcePath: csvRoot,
     outDir,

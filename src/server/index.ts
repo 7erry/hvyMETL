@@ -76,11 +76,12 @@ import {
   readTenantWorkspace,
   tenantArtifactDir,
   tenantCsvBatchDir,
-  tenantDefaultTargetDb,
   tenantOutRoot,
   tenantSqliteUploadDir,
   tenantUploadRoot,
   resolveTenantPipelineRunDir,
+  resolveTargetDbForRequest,
+  sanitizeExecutionTargetDbForClient,
   writeTenantWorkspace,
 } from './tenant.js';
 import { getWebUiBundleAsset, getWebUiMode, mountWebUi } from './setupWebUi.js';
@@ -777,7 +778,7 @@ app.get('/api/pipeline/executions', async (req, res) => {
       memoryDb: resolveMemoryDbName(process.env),
       collection: PIPELINE_EXECUTIONS_COLLECTION,
       count: executions.length,
-      executions,
+      executions: executions.map((execution) => sanitizeExecutionTargetDbForClient(execution, req)),
     });
   } catch (error) {
     res.status(500).json({ error: String(error) });
@@ -806,14 +807,20 @@ app.get('/api/pipeline/executions/:executionId', async (req, res) => {
       res.status(404).json({ error: 'Pipeline execution not found.' });
       return;
     }
-    res.json({ execution });
+    res.json({ execution: sanitizeExecutionTargetDbForClient(execution, req) });
   } catch (error) {
     res.status(500).json({ error: String(error) });
   }
 });
 
 /** Shared JSON shape for pipeline run responses. */
-function pipelineRunResponse(result: Awaited<ReturnType<typeof runFullPipeline>>) {
+function pipelineRunResponse(
+  result: Awaited<ReturnType<typeof runFullPipeline>>,
+  req: import('express').Request,
+) {
+  const execution = result.execution
+    ? sanitizeExecutionTargetDbForClient(result.execution, req)
+    : result.execution;
   return {
     ok: result.ok,
     errors: result.errors,
@@ -828,9 +835,18 @@ function pipelineRunResponse(result: Awaited<ReturnType<typeof runFullPipeline>>
     migrationPlanJson: result.design.plan,
     designReportMarkdown: result.design.designReport,
     feedback: result.feedback,
-    execution: result.execution,
+    execution,
     apiArtifacts: result.apiArtifacts,
   };
+}
+
+/** Resolve logical + physical target database names from the request body. */
+function resolvePipelineTargetDbFromRequest(req: import('express').Request, bodyTargetDb?: string) {
+  try {
+    return resolveTargetDbForRequest(req, bodyTargetDb);
+  } catch (error) {
+    throw new Error(String(error));
+  }
 }
 
 /**
@@ -850,9 +866,10 @@ app.post('/api/pipeline/run', async (req, res) => {
     }
 
     const csvSourcePath = scopedCsvSourcePath(req, req.body?.csvSourcePath as string | undefined);
-    const targetDb =
-      (req.body?.targetDb as string | undefined) ??
-      (isAuthConfigured() ? tenantDefaultTargetDb(tenantId) : undefined);
+    const { logical: logicalTargetDb, physical: targetDb } = resolvePipelineTargetDbFromRequest(
+      req,
+      req.body?.targetDb as string | undefined,
+    );
     const { hosted, authEnabled, creds } = resolveWebPipelineCredentials(req, tenantId);
 
     const pipelineRequest = {
@@ -869,6 +886,7 @@ app.post('/api/pipeline/run', async (req, res) => {
       generateMockCsv: Boolean(req.body?.generateMockCsv),
       mockCsvOptions: req.body?.mockCsvOptions as import('../utilities/mockCsvFromDdl.js').MockCsvOptions | undefined,
       targetDb,
+      logicalTargetDb,
       drop: req.body?.drop !== false,
       mongoUri: creds.mongoUri,
       mongodbModelKey: creds.mongodbModelKey,
@@ -881,15 +899,20 @@ app.post('/api/pipeline/run', async (req, res) => {
     if (req.body?.stream === true) {
       await runFullPipelineWithStream(res, pipelineRequest, (result) => ({
         type: 'complete',
-        ...pipelineRunResponse(result),
+        ...pipelineRunResponse(result, req),
       }));
       return;
     }
 
     const result = await runFullPipeline(pipelineRequest);
-    res.json(pipelineRunResponse(result));
+    res.json(pipelineRunResponse(result, req));
   } catch (error) {
-    res.status(500).json({ error: String(error) });
+    const message = String(error);
+    if (/database name|invalid database/i.test(message)) {
+      res.status(400).json({ error: message });
+      return;
+    }
+    res.status(500).json({ error: message });
   }
 });
 
@@ -996,6 +1019,10 @@ app.post('/api/pipeline/run-with-csv', (req, res) => {
 
       const streamProgress = req.body?.stream === 'true' || req.body?.stream === true;
       const { hosted, authEnabled, creds } = resolveWebPipelineCredentials(req, tenantId);
+      const { logical: logicalTargetDb, physical: targetDb } = resolvePipelineTargetDbFromRequest(
+        req,
+        req.body?.targetDb as string | undefined,
+      );
 
       const pipelineRequest = {
         profileId: profile.id,
@@ -1016,9 +1043,8 @@ app.post('/api/pipeline/run-with-csv', (req, res) => {
         mockCsvOptions: req.body?.mockCsvOptions
           ? (JSON.parse(String(req.body.mockCsvOptions)) as import('../utilities/mockCsvFromDdl.js').MockCsvOptions)
           : undefined,
-        targetDb:
-          (req.body?.targetDb as string | undefined) ??
-          (isAuthConfigured() ? tenantDefaultTargetDb(tenantId) : undefined),
+        targetDb,
+        logicalTargetDb,
         drop: req.body?.drop !== 'false',
         mongoUri: creds.mongoUri,
         mongodbModelKey: creds.mongodbModelKey,
@@ -1031,16 +1057,21 @@ app.post('/api/pipeline/run-with-csv', (req, res) => {
       if (streamProgress) {
         await runFullPipelineWithStream(res, pipelineRequest, (result) => ({
           type: 'complete',
-          ...pipelineRunResponse(result),
+          ...pipelineRunResponse(result, req),
         }));
         return;
       }
 
       const result = await runFullPipeline(pipelineRequest);
 
-      res.json(pipelineRunResponse(result));
+      res.json(pipelineRunResponse(result, req));
     } catch (error) {
-      res.status(500).json({ error: String(error) });
+      const message = String(error);
+      if (/database name|invalid database/i.test(message)) {
+        res.status(400).json({ error: message });
+        return;
+      }
+      res.status(500).json({ error: message });
     }
   });
 });

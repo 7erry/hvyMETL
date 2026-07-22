@@ -86,9 +86,118 @@ export function assertPathWithinTenantStorage(rootDir: string, tenantId: string,
   }
 }
 
-/** Default Atlas import database name for a hosted tenant. */
-export function tenantDefaultTargetDb(tenantId: string): string {
-  return `hvymetl_${tenantId}`.slice(0, 63);
+/** Default logical import database name shown in the UI. */
+export const DEFAULT_LOGICAL_TARGET_DB = 'csv_to_atlas';
+
+/** Separator between user prefix and logical database name in Atlas. */
+export const TENANT_DB_SEPARATOR = '__';
+
+/** Max MongoDB database name length. */
+const MONGODB_DB_NAME_MAX_LENGTH = 63;
+
+/** Max length of the user prefix segment before the separator. */
+const TENANT_DB_PREFIX_MAX_LENGTH = 32;
+
+export type ResolvedTargetDb = {
+  /** Name the user sees and enters (e.g. csv_to_atlas). */
+  logical: string;
+  /** Physical Atlas database name (e.g. terry_walters__csv_to_atlas). */
+  physical: string;
+};
+
+/** Default logical import database name for a hosted tenant. */
+export function tenantDefaultTargetDb(_tenantId?: string): string {
+  return DEFAULT_LOGICAL_TARGET_DB;
+}
+
+/** Normalize a user-supplied logical database name. */
+export function sanitizeLogicalTargetDb(name: string): string {
+  const trimmed = name.trim().toLowerCase();
+  if (!trimmed) {
+    throw new Error('Database name is required.');
+  }
+  if (!/^[a-z0-9_]+$/.test(trimmed)) {
+    throw new Error('Database name may only contain letters, numbers, and underscores.');
+  }
+  return trimmed;
+}
+
+/** Derive a stable MongoDB namespace prefix from the Auth0 profile (e.g. Terry Walters → terry_walters). */
+export function tenantDbPrefixFromPayload(payload: Record<string, unknown> | undefined): string {
+  const fromName = typeof payload?.name === 'string' ? payload.name : '';
+  const fromNickname = typeof payload?.nickname === 'string' ? payload.nickname : '';
+  const fromEmail =
+    typeof payload?.email === 'string' && payload.email.includes('@')
+      ? payload.email.split('@')[0] ?? ''
+      : '';
+  const raw = fromName.trim() || fromNickname.trim() || fromEmail.trim();
+  const slug = raw
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/^_+|_+$/g, '')
+    .replace(/_+/g, '_');
+  if (slug) {
+    return slug.slice(0, TENANT_DB_PREFIX_MAX_LENGTH);
+  }
+  const sub = tenantIdFromPayload(payload);
+  return sub ? sanitizeTenantId(sub).slice(0, TENANT_DB_PREFIX_MAX_LENGTH) : LOCAL_DEV_TENANT_ID;
+}
+
+/** Parse user input into a logical database name (strip own prefix if pasted accidentally). */
+export function parseLogicalTargetDb(input: string | undefined, userPrefix: string): string {
+  if (!input?.trim()) {
+    return DEFAULT_LOGICAL_TARGET_DB;
+  }
+  const trimmed = input.trim();
+  const ownPrefix = `${userPrefix}${TENANT_DB_SEPARATOR}`;
+  let candidate = trimmed;
+  if (candidate.toLowerCase().startsWith(ownPrefix)) {
+    candidate = candidate.slice(ownPrefix.length);
+  } else if (candidate.includes(TENANT_DB_SEPARATOR)) {
+    throw new Error('Invalid database name.');
+  }
+  return sanitizeLogicalTargetDb(candidate || DEFAULT_LOGICAL_TARGET_DB);
+}
+
+/** Build the physical Atlas database name for an authenticated tenant. */
+export function resolvePhysicalTargetDb(userPrefix: string, logicalDb: string): string {
+  const logical = sanitizeLogicalTargetDb(logicalDb);
+  const prefix = userPrefix.slice(0, TENANT_DB_PREFIX_MAX_LENGTH);
+  const maxLogicalLength = Math.max(1, MONGODB_DB_NAME_MAX_LENGTH - prefix.length - TENANT_DB_SEPARATOR.length);
+  return `${prefix}${TENANT_DB_SEPARATOR}${logical.slice(0, maxLogicalLength)}`;
+}
+
+/** Strip a tenant prefix for API responses and UI display. */
+export function toLogicalTargetDb(physicalOrLogical: string, userPrefix: string): string {
+  const prefix = `${userPrefix}${TENANT_DB_SEPARATOR}`;
+  if (physicalOrLogical.startsWith(prefix)) {
+    return physicalOrLogical.slice(prefix.length) || DEFAULT_LOGICAL_TARGET_DB;
+  }
+  return physicalOrLogical;
+}
+
+/** Map user input to logical + physical target database names for one request. */
+export function resolveTargetDbForRequest(req: RequestWithAuth, logicalInput?: string): ResolvedTargetDb {
+  if (!isAuthConfigured()) {
+    const logical = parseLogicalTargetDb(logicalInput, LOCAL_DEV_TENANT_ID);
+    return { logical, physical: logical };
+  }
+  const prefix = tenantDbPrefixFromPayload(req.auth?.payload);
+  const logical = parseLogicalTargetDb(logicalInput, prefix);
+  const physical = resolvePhysicalTargetDb(prefix, logical);
+  return { logical, physical };
+}
+
+/** Return a pipeline execution record with a logical targetDb for the client. */
+export function sanitizeExecutionTargetDbForClient<T extends { targetDb: string }>(
+  execution: T,
+  req: RequestWithAuth,
+): T {
+  if (!isAuthConfigured()) {
+    return execution;
+  }
+  const prefix = tenantDbPrefixFromPayload(req.auth?.payload);
+  return { ...execution, targetDb: toLogicalTargetDb(execution.targetDb, prefix) };
 }
 
 /** Per-tenant persisted UI settings (manager inputs, overrides, etc.). */
