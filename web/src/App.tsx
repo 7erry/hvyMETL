@@ -141,6 +141,7 @@ export default function App() {
     view,
     migrationArtifacts,
     sidebarWidth,
+    copilotWidth,
     canvasPanelOpen,
     csvSourcePath,
     relationshipConnectionType,
@@ -905,6 +906,8 @@ export default function App() {
       plan={migrationPlan}
       cardinalityOverrides={cardinalityOverrides}
       forceEmbedOverrides={forceEmbedOverrides}
+      copilotWidth={copilotWidth}
+      onCopilotWidthChange={(width) => setSessionField('copilotWidth', width)}
       onApplyMutations={handleCopilotMutations}
       onClearOverrides={handleClearCopilotOverrides}
       onReRunPipeline={() => setPipelineOpen(true)}

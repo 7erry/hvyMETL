@@ -128,7 +128,10 @@ export const QUICK_ACTION_CHIPS = [
 ] as const;
 
 /** Default copilot drawer width (px). */
-export const COPILOT_WIDTH_COMPACT = 380;
+export const COPILOT_WIDTH_DEFAULT = 380;
 
-/** Expanded copilot drawer width (px). */
-export const COPILOT_WIDTH_EXPANDED = 560;
+/** Minimum copilot drawer width (px). */
+export const COPILOT_WIDTH_MIN = 320;
+
+/** Maximum copilot drawer width (px). */
+export const COPILOT_WIDTH_MAX = 640;

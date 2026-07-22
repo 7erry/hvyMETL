@@ -4590,16 +4590,46 @@ textarea {
   position: relative;
 }
 
+.workspace-canvas-shell--copilot-open {
+  flex-direction: row;
+}
+
+.workspace-canvas-shell--dragging {
+  cursor: col-resize;
+  user-select: none;
+}
+
 .workspace-canvas-shell__main {
   flex: 1 1 auto;
   min-width: 0;
   display: flex;
   flex-direction: column;
-  transition: margin-right 0.28s ease;
+  transition: flex-basis 0.15s ease;
 }
 
-.workspace-canvas-shell--copilot-open .workspace-canvas-shell__main {
-  margin-right: var(--copilot-width, 380px);
+.workspace-canvas-shell--copilot-open .agent-copilot-sidebar {
+  position: relative;
+  flex-shrink: 0;
+  transform: none;
+  transition: width 0.15s ease;
+}
+
+.workspace-divider--copilot {
+  flex-shrink: 0;
+  align-self: stretch;
+  z-index: 21;
+}
+
+.workspace-canvas-shell--dragging .workspace-divider--copilot,
+.workspace-divider--copilot:hover {
+  background: rgba(0, 104, 74, 0.35);
+}
+
+.workspace-canvas-shell--dragging .workspace-divider--copilot .workspace-divider__grip,
+.workspace-divider--copilot:hover .workspace-divider__grip {
+  height: 52px;
+  background: var(--mdb-green-dark-3);
+  border-color: var(--mdb-green);
 }
 
 .agent-copilot-sidebar {
@@ -4616,19 +4646,11 @@ textarea {
   font-family: 'JetBrains Mono', 'SF Mono', 'Fira Code', ui-monospace, monospace;
   color: #c8ffe8;
   transform: translateX(100%);
-  transition: transform 0.28s ease, width 0.28s ease;
-}
-
-.agent-copilot-sidebar--expanded .copilot-translator__code {
-  max-height: 360px;
-}
-
-.agent-copilot-sidebar--expanded .copilot-diff-viewer__panes pre {
-  max-height: 220px;
+  transition: transform 0.28s ease;
 }
 
 .workspace-canvas-shell--copilot-open .agent-copilot-sidebar {
-  transform: translateX(0);
+  transform: none;
 }
 
 .agent-copilot-launcher {
@@ -4673,13 +4695,6 @@ textarea {
   display: flex;
   gap: 0.55rem;
   align-items: flex-start;
-}
-
-.agent-copilot-sidebar__header-actions {
-  display: flex;
-  align-items: center;
-  gap: 0.15rem;
-  flex-shrink: 0;
 }
 
 .agent-copilot-sidebar__status {

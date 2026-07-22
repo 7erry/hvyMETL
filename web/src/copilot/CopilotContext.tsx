@@ -21,7 +21,6 @@ import type {
   SqlTranslationOutput,
   ToolExecutionResult,
 } from './types';
-import { COPILOT_WIDTH_COMPACT, COPILOT_WIDTH_EXPANDED } from './types';
 import type { MigrationPlan } from '../migrationPlanTypes';
 import type { CardinalityOverrides, ForceEmbedOverrides } from '../cardinalityOverrides';
 import type { SqlStructuralModel } from '../types';
@@ -29,7 +28,7 @@ import type { SqlStructuralModel } from '../types';
 export type CopilotContextValue = {
   open: boolean;
   width: number;
-  expanded: boolean;
+  setWidth: (width: number) => void;
   activeTab: 'chat' | 'translator';
   status: AgentStatus;
   preset: CopilotWorkflowPreset;
@@ -46,8 +45,6 @@ export type CopilotContextValue = {
   llmModel: string | null;
   toggleOpen: () => void;
   setOpen: (open: boolean) => void;
-  toggleExpanded: () => void;
-  setExpanded: (expanded: boolean) => void;
   setActiveTab: (tab: 'chat' | 'translator') => void;
   setPreset: (preset: CopilotWorkflowPreset) => void;
   setToolsEnabled: (enabled: boolean) => void;
@@ -74,6 +71,8 @@ type CopilotProviderProps = {
   plan: MigrationPlan | null;
   cardinalityOverrides: CardinalityOverrides;
   forceEmbedOverrides: ForceEmbedOverrides;
+  copilotWidth: number;
+  onCopilotWidthChange: (width: number) => void;
   onApplyMutations: (mutation: AgentToolMutation) => void;
   onClearOverrides: () => void;
   onReRunPipeline?: () => void;
@@ -85,13 +84,13 @@ export function CopilotProvider({
   plan,
   cardinalityOverrides,
   forceEmbedOverrides,
+  copilotWidth,
+  onCopilotWidthChange,
   onApplyMutations,
   onClearOverrides,
   onReRunPipeline,
 }: CopilotProviderProps) {
   const [open, setOpen] = useState(false);
-  const [expanded, setExpanded] = useState(false);
-  const width = expanded ? COPILOT_WIDTH_EXPANDED : COPILOT_WIDTH_COMPACT;
   const [activeTab, setActiveTab] = useState<'chat' | 'translator'>('chat');
   const [status, setStatus] = useState<AgentStatus>('idle');
   const [preset, setPreset] = useState<CopilotWorkflowPreset>('schema-design');
@@ -384,8 +383,8 @@ export function CopilotProvider({
   const value = useMemo<CopilotContextValue>(
     () => ({
       open,
-      width,
-      expanded,
+      width: copilotWidth,
+      setWidth: onCopilotWidthChange,
       activeTab,
       status,
       preset,
@@ -401,12 +400,7 @@ export function CopilotProvider({
       llmConfigured,
       llmModel,
       toggleOpen: () => setOpen((prev) => !prev),
-      setOpen: (nextOpen: boolean) => {
-        setOpen(nextOpen);
-        if (!nextOpen) setExpanded(false);
-      },
-      toggleExpanded: () => setExpanded((prev) => !prev),
-      setExpanded,
+      setOpen,
       setActiveTab,
       setPreset,
       setToolsEnabled,
@@ -437,8 +431,8 @@ export function CopilotProvider({
     }),
     [
       open,
-      width,
-      expanded,
+      copilotWidth,
+      onCopilotWidthChange,
       activeTab,
       status,
       preset,

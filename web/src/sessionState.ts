@@ -88,6 +88,7 @@ export type SessionState = {
   view: AppView;
   migrationArtifacts: MigrationArtifacts | null;
   sidebarWidth: number;
+  copilotWidth: number;
   canvasPanelOpen: boolean;
   csvSourcePath: string | null;
   relationshipConnectionType: RelationshipConnectionType;
@@ -115,6 +116,7 @@ export const defaultSessionState = (): SessionState => ({
   view: 'diagram',
   migrationArtifacts: null,
   sidebarWidth: 320,
+  copilotWidth: 380,
   canvasPanelOpen: true,
   csvSourcePath: null,
   relationshipConnectionType: 'bezier',
