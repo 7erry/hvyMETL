@@ -2,7 +2,7 @@
  * HTTP routes for generated OpenAPI specs, MongoDB validator schemas, and Swagger UI.
  */
 
-import type { Express, Request, Response, RequestHandler } from 'express';
+import type { Express, NextFunction, Request, Response, RequestHandler } from 'express';
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 import swaggerUi from 'swagger-ui-express';
@@ -90,23 +90,20 @@ export function registerApiArtifactRoutes(app: Express, rootDir: string): void {
     res.type('application/json').send(readJsonArtifact(collection.schemaPath));
   });
 
-  app.use('/api/docs', promoteQueryAccessToken, swaggerUi.serve);
-  app.get('/api/docs/', (req, res) => {
-    const query = req.url.includes('?') ? req.url.slice(req.url.indexOf('?')) : '';
-    res.redirect(301, `/api/docs${query}`);
-  });
-  app.get('/api/docs', ...docsAuth, (req, res, next) => {
+  const renderSwaggerDocs = (req: Request, res: Response, next: NextFunction): void => {
     const spec = readCombinedOpenApiSpec(req, rootDir);
     if (!spec) {
       res.status(404).type('text/plain').send('Combined OpenAPI spec not found.');
       return;
     }
-    return swaggerUi.setup(spec, {
+    swaggerUi.setup(spec, {
       customSiteTitle: 'hvyMETL Migration API',
       swaggerOptions: { persistAuthorization: true },
     })(req, res, next);
-  });
+  };
 
+  // Register HTML + spec routes before swaggerUi.serve — the static middleware otherwise
+  // 301-redirects /api/docs → /api/docs/ and drops ?access_token= from new-tab auth links.
   app.get('/api/docs/openapi.json', ...docsAuth, (req, res) => {
     const spec = readCombinedOpenApiSpec(req, rootDir);
     if (!spec) {
@@ -115,4 +112,7 @@ export function registerApiArtifactRoutes(app: Express, rootDir: string): void {
     }
     res.json(spec);
   });
+
+  app.get(['/api/docs', '/api/docs/'], ...docsAuth, renderSwaggerDocs);
+  app.use('/api/docs', promoteQueryAccessToken, swaggerUi.serve);
 }
