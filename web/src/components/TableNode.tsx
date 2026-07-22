@@ -3,18 +3,34 @@ import { Handle, Position, type NodeProps } from '@xyflow/react';
 import type { TableModel } from '../types';
 import { SQL_COLUMN_GLYPH } from '../fieldTagIcons';
 
+import type { GuardrailIssue } from '../copilot/types';
+
 export type TableNodeData = {
   table: TableModel;
   onDuplicate?: (name: string) => void;
   selected?: boolean;
+  highlighted?: boolean;
   related?: boolean;
   dimmed?: boolean;
   fkColumns: string[];
   referencedColumns: string[];
+  guardrailBadge?: GuardrailIssue;
+  onGuardrailClick?: (issue: GuardrailIssue) => void;
 };
 
 function TableNodeComponent({ data }: NodeProps & { data: TableNodeData }) {
-  const { table, onDuplicate, selected, related, dimmed, fkColumns, referencedColumns } = data;
+  const {
+    table,
+    onDuplicate,
+    selected,
+    highlighted,
+    related,
+    dimmed,
+    fkColumns,
+    referencedColumns,
+    guardrailBadge,
+    onGuardrailClick,
+  } = data;
   const fkSet = new Set(fkColumns);
   const refSet = new Set(referencedColumns);
 
@@ -23,6 +39,7 @@ function TableNodeComponent({ data }: NodeProps & { data: TableNodeData }) {
       className={[
         'table-node',
         selected ? 'selected' : '',
+        highlighted ? 'highlighted' : '',
         related && !selected ? 'related' : '',
         dimmed ? 'dimmed' : '',
       ]
@@ -31,6 +48,19 @@ function TableNodeComponent({ data }: NodeProps & { data: TableNodeData }) {
     >
       <header>
         <span className="table-node__name">{table.name}</span>
+        {guardrailBadge ? (
+          <button
+            type="button"
+            className={`table-node__guardrail table-node__guardrail--${guardrailBadge.severity}`}
+            onClick={(e) => {
+              e.stopPropagation();
+              onGuardrailClick?.(guardrailBadge);
+            }}
+            title={guardrailBadge.detail}
+          >
+            ⚠ {guardrailBadge.label}
+          </button>
+        ) : null}
         {onDuplicate && (
           <button
             type="button"

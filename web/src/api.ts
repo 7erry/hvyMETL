@@ -1,6 +1,8 @@
 import type { DiagramExport, Dialect, Profile, SqlStructuralModel } from './types';
 import type { ProfileRequestFields, WorkloadProfile } from './customProfileShared';
 import { formatAuthError, toAuthError } from './auth/authErrors';
+import type { CopilotChatApiResponse, CopilotLlmMessage, CopilotStatusResponse } from './copilot/types';
+import type { CopilotSchemaContextPayload } from './copilot/schemaContext';
 
 import { prepareCsvFilesForUpload } from './csvUploadSplit.js';
 
@@ -806,6 +808,27 @@ export function downloadText(filename: string, text: string, mime = 'text/plain'
   a.download = filename;
   a.click();
   URL.revokeObjectURL(url);
+}
+
+export async function fetchCopilotStatus(): Promise<CopilotStatusResponse> {
+  const res = await apiFetch(`${base}/api/copilot/status`);
+  if (!res.ok) throw new Error((await res.json()).error ?? res.statusText);
+  return res.json();
+}
+
+export async function sendCopilotChat(request: {
+  messages: CopilotLlmMessage[];
+  schemaContext: CopilotSchemaContextPayload;
+  toolsEnabled?: boolean;
+}): Promise<CopilotChatApiResponse> {
+  const res = await apiFetch(`${base}/api/copilot/chat`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(request),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error ?? res.statusText);
+  return data;
 }
 
 export type { DiagramExport, MongoDiagramExport };

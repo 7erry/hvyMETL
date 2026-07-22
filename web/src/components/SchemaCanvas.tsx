@@ -26,6 +26,8 @@ import {
   type RelationshipNotation,
 } from '../relationshipDisplay';
 import type { SqlStructuralModel, TableModel } from '../types';
+import type { GuardrailIssue } from '../copilot/types';
+import { guardrailsByTable } from '../copilot/guardrails';
 
 const GRID = 20;
 const nodeTypes = { table: TableNode };
@@ -43,6 +45,9 @@ type SchemaCanvasProps = {
   onDuplicateTable: (name: string) => void;
   selectedTable: string | null;
   onSelectTable: (name: string | null) => void;
+  highlightedTables?: string[];
+  guardrailIssues?: GuardrailIssue[];
+  onGuardrailClick?: (issue: GuardrailIssue) => void;
 };
 
 function snap(value: number, enabled: boolean): number {
@@ -84,9 +89,12 @@ function modelToFlow(
   positions: Record<string, { x: number; y: number }>,
   onDuplicate: (name: string) => void,
   selectedTable: string | null,
+  highlightedTables: string[],
   connectionType: RelationshipConnectionType,
   relationshipNotation: RelationshipNotation,
   compactLayout: boolean,
+  guardrailMap: Map<string, GuardrailIssue[]>,
+  onGuardrailClick?: (issue: GuardrailIssue) => void,
 ): { nodes: Node<TableNodeData>[]; edges: Edge[] } {
   const tableNames = new Set(model.tables.map((t) => t.name));
   const referencedByColumn = buildReferencedColumns(model);
@@ -99,6 +107,8 @@ function modelToFlow(
     const fkColumns = table.foreignKeys.map((fk) => fk.column);
     const referencedColumns = [...(referencedByColumn.get(table.name) ?? [])];
 
+    const badge = guardrailMap.get(table.name)?.[0];
+
     return {
       id: table.name,
       type: 'table',
@@ -107,10 +117,13 @@ function modelToFlow(
         table,
         onDuplicate,
         selected: table.name === selectedTable,
+        highlighted: highlightedTables.includes(table.name),
         related: related.has(table.name),
         dimmed: hasSelection && !related.has(table.name),
         fkColumns,
         referencedColumns,
+        guardrailBadge: badge,
+        onGuardrailClick,
       },
     };
   });
@@ -165,9 +178,13 @@ export function SchemaCanvas({
   onDuplicateTable,
   selectedTable,
   onSelectTable,
+  highlightedTables = [],
+  guardrailIssues = [],
+  onGuardrailClick,
 }: SchemaCanvasProps) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const compactLayout = useCompactDiagramLayout();
+  const guardrailMap = useMemo(() => guardrailsByTable(guardrailIssues), [guardrailIssues]);
   const flow = useMemo(
     () =>
       model
@@ -176,12 +193,26 @@ export function SchemaCanvas({
             positions,
             onDuplicateTable,
             selectedTable,
+            highlightedTables,
             connectionType,
             relationshipNotation,
             compactLayout,
+            guardrailMap,
+            onGuardrailClick,
           )
         : { nodes: [], edges: [] },
-    [model, positions, onDuplicateTable, selectedTable, connectionType, relationshipNotation, compactLayout],
+    [
+      model,
+      positions,
+      onDuplicateTable,
+      selectedTable,
+      highlightedTables,
+      connectionType,
+      relationshipNotation,
+      compactLayout,
+      guardrailMap,
+      onGuardrailClick,
+    ],
   );
 
   const tableCount = model?.tables.length ?? 0;

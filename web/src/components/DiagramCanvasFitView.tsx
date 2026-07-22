@@ -8,7 +8,7 @@ type DiagramCanvasFitViewProps = {
   containerRef: RefObject<HTMLElement | null>;
 };
 
-/** Keeps the React Flow viewport fitted when the canvas resizes or content changes. */
+/** Keeps the React Flow viewport fitted when content changes; skips refit on container resize to avoid flicker when copilot drawer toggles. */
 export function DiagramCanvasFitView({
   fitKey,
   padding = 0.12,
@@ -24,21 +24,6 @@ export function DiagramCanvasFitView({
     }, 60);
     return () => clearTimeout(timer);
   }, [fitKey, padding]);
-
-  useEffect(() => {
-    const el = containerRef.current;
-    if (!el) return;
-
-    const refit = () => {
-      void fitViewRef.current({ padding, duration: 0 });
-    };
-
-    const observer = new ResizeObserver(() => {
-      refit();
-    });
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, [containerRef, padding]);
 
   return null;
 }

@@ -47,6 +47,7 @@ type PipelinePanelProps = {
   csvSourcePath: string | null;
   onCsvSourcePathChange: (path: string) => void;
   onComplete: (result: PipelineRunResult) => void;
+  onPipelineFailure?: (errors: string[]) => void;
 };
 
 type PipelineForm = {
@@ -77,6 +78,7 @@ export function PipelinePanel({
   csvSourcePath,
   onCsvSourcePathChange,
   onComplete,
+  onPipelineFailure,
 }: PipelinePanelProps) {
   const [config, setConfig] = useState<PipelineConfigStatus | null>(null);
   const [loadingConfig, setLoadingConfig] = useState(false);
@@ -471,6 +473,9 @@ export function PipelinePanel({
         onCsvSourcePathChange('');
       }
       onComplete(pipelineResult);
+      if (!pipelineResult.ok && pipelineResult.errors.length > 0) {
+        onPipelineFailure?.(pipelineResult.errors);
+      }
     } catch (e) {
       setError(describeApiError(e));
     } finally {

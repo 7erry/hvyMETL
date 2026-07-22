@@ -1,8 +1,14 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ComponentProps } from 'react';
 import { MongoLogo } from './components/MongoLogo';
 import { CopyButton } from './components/CopyButton';
 import { MigrationArtifactsView } from './components/MigrationArtifactsView';
 import { SchemaCanvas, deleteTableFromModel, duplicateTableInModel } from './components/SchemaCanvas';
+import { SchemaCanvasWithCopilot } from './components/SchemaCanvasWithCopilot';
+import { WorkspaceCanvasShell } from './components/WorkspaceCanvasShell';
+import { CopilotHotkeys } from './components/CopilotHotkeys';
+import { CopilotProvider, useCopilot } from './copilot/CopilotContext';
+import type { AgentToolMutation } from './copilot/agentTools';
+import { suggestPipelineSelfHeal } from './copilot/selfHeal';
 import { MongoSchemaCanvas } from './components/MongoSchemaCanvas';
 import { TableDetails } from './components/TableDetails';
 import { CollectionDetails } from './components/CollectionDetails';
@@ -78,6 +84,30 @@ import type { PipelineExecutionDetail } from './transformationSummaryTypes';
 import { EMBED_OVERRIDES_PANEL_ID } from './transformationSummaryTypes';
 import type { Dialect, Profile, SqlStructuralModel } from './types';
 
+function CopilotHeaderToggle() {
+  const copilot = useCopilot();
+  return (
+    <button type="button" className="tertiary" onClick={copilot.toggleOpen} title="Agent Copilot (⌘K)">
+      ◈ Copilot
+    </button>
+  );
+}
+
+function PipelinePanelConnected(
+  props: ComponentProps<typeof PipelinePanel>,
+) {
+  const copilot = useCopilot();
+  return (
+    <PipelinePanel
+      {...props}
+      onPipelineFailure={(errors) => {
+        const suggestion = suggestPipelineSelfHeal(errors);
+        copilot.reportPipelineError(errors.join('\n'), suggestion);
+      }}
+    />
+  );
+}
+
 export default function App() {
   const access = useAccess();
   const [profiles, setProfiles] = useState<Profile[]>([]);
@@ -149,6 +179,38 @@ export default function App() {
       document.getElementById(EMBED_OVERRIDES_PANEL_ID)?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     });
   }, [setSessionField]);
+
+  const handleCopilotMutations = useCallback((mutation: AgentToolMutation) => {
+    setSession((prev) => {
+      const embedChanged =
+        mutation.cardinalityOverrides !== undefined || mutation.forceEmbedOverrides !== undefined;
+      return {
+        ...prev,
+        ...(mutation.cardinalityOverrides !== undefined
+          ? { cardinalityOverrides: mutation.cardinalityOverrides }
+          : {}),
+        ...(mutation.forceEmbedOverrides !== undefined
+          ? { forceEmbedOverrides: mutation.forceEmbedOverrides }
+          : {}),
+        ...(mutation.selectedTable !== undefined ? { selectedTable: mutation.selectedTable } : {}),
+        ...(embedChanged
+          ? {
+              migrationArtifacts: null,
+              collectionPositions: {},
+              selectedCollection: null,
+              managerReviewAcceptances: null,
+            }
+          : {}),
+      };
+    });
+    if (mutation.cardinalityOverrides !== undefined || mutation.forceEmbedOverrides !== undefined) {
+      setStatus('Agent updated embed overrides. Run design to refresh the MongoDB plan.');
+    }
+  }, []);
+
+  const handleClearCopilotOverrides = useCallback(() => {
+    handleCardinalityOverridesChange({}, {});
+  }, [handleCardinalityOverridesChange]);
 
   const handleCardinalityOverridesChange = (
     overrides: SessionState['cardinalityOverrides'],
@@ -835,6 +897,16 @@ export default function App() {
 
   return (
     <AuthGate>
+    <CopilotProvider
+      model={model}
+      plan={migrationPlan}
+      cardinalityOverrides={cardinalityOverrides}
+      forceEmbedOverrides={forceEmbedOverrides}
+      onApplyMutations={handleCopilotMutations}
+      onClearOverrides={handleClearCopilotOverrides}
+      onReRunPipeline={() => setPipelineOpen(true)}
+    >
+    <CopilotHotkeys />
     <div
       className={uiRole === 'manager' ? 'app-root app--manager' : 'app-root'}
       style={{ display: 'flex', flexDirection: 'column', height: '100%' }}
@@ -888,6 +960,7 @@ export default function App() {
               <button type="button" className="primary" onClick={() => setPipelineOpen(true)} disabled={!model}>
                 Run pipeline
               </button>
+              <CopilotHeaderToggle />
               <button type="button" className="secondary" onClick={() => void handleAiExport()} disabled={!model || exporting}>
                 {exporting ? 'Exporting…' : 'Export migration'}
               </button>
@@ -1215,6 +1288,10 @@ export default function App() {
               </div>
             }
             main={
+              <WorkspaceCanvasShell
+                beforeJson={model ? JSON.stringify(model, null, 2) : ''}
+                afterJson={migrationArtifacts?.planJson ?? ''}
+              >
               <>
                 <div className="schema-phase-bar">
                   <SchemaPhaseToggle
@@ -1239,7 +1316,7 @@ export default function App() {
                   ) : null}
                 </div>
                 {schemaPhase === 'before' ? (
-                  <SchemaCanvas
+                  <SchemaCanvasWithCopilot
                     model={model}
                     snapToGrid={snapToGrid}
                     connectionType={relationshipConnectionType}
@@ -1270,6 +1347,7 @@ export default function App() {
                 )}
                 <DiagramStatusFooter status={status} legend={diagramLegend} />
               </>
+              </WorkspaceCanvasShell>
             }
           />
           )
@@ -1288,7 +1366,7 @@ export default function App() {
       </div>
 
       {designModel ? (
-        <PipelinePanel
+        <PipelinePanelConnected
           open={pipelineOpen}
           onClose={() => setPipelineOpen(false)}
           model={designModel}
@@ -1335,6 +1413,7 @@ export default function App() {
         }}
       />
     </div>
+    </CopilotProvider>
     </AuthGate>
   );
 }
