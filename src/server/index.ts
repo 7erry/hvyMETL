@@ -838,9 +838,9 @@ function pipelineRunResponse(
 }
 
 /** Resolve logical + physical target database names from the request body. */
-function resolvePipelineTargetDbFromRequest(req: import('express').Request, bodyTargetDb?: string) {
+async function resolvePipelineTargetDbFromRequest(req: import('express').Request, bodyTargetDb?: string) {
   try {
-    return resolveTargetDbForRequest(req, bodyTargetDb);
+    return await resolveTargetDbForRequest(req, bodyTargetDb);
   } catch (error) {
     throw new Error(String(error));
   }
@@ -863,7 +863,7 @@ app.post('/api/pipeline/run', async (req, res) => {
     }
 
     const csvSourcePath = scopedCsvSourcePath(req, req.body?.csvSourcePath as string | undefined);
-    const { logical: logicalTargetDb, physical: targetDb } = resolvePipelineTargetDbFromRequest(
+    const { logical: logicalTargetDb, physical: targetDb } = await resolvePipelineTargetDbFromRequest(
       req,
       req.body?.targetDb as string | undefined,
     );
@@ -1016,7 +1016,7 @@ app.post('/api/pipeline/run-with-csv', (req, res) => {
 
       const streamProgress = req.body?.stream === 'true' || req.body?.stream === true;
       const { hosted, authEnabled, creds } = resolveWebPipelineCredentials(req, tenantId);
-      const { logical: logicalTargetDb, physical: targetDb } = resolvePipelineTargetDbFromRequest(
+      const { logical: logicalTargetDb, physical: targetDb } = await resolvePipelineTargetDbFromRequest(
         req,
         req.body?.targetDb as string | undefined,
       );

@@ -2,7 +2,7 @@ import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { isAbsolute, join, relative, resolve } from 'node:path';
 import type { Request } from 'express';
-import { isAuthConfigured } from './auth.js';
+import { isAuthConfigured, readBearerToken, readAuthDisplayName, resolveAuthDisplayName } from './auth.js';
 
 /** Shared tenant id when Auth0 is disabled (local single-developer mode). */
 export const LOCAL_DEV_TENANT_ID = 'local-dev';
@@ -138,23 +138,38 @@ export function tenantDbPrefixFromSub(sub: string): string {
   return `u_${digest}`;
 }
 
-/** Derive a stable MongoDB namespace prefix from the Auth0 profile (e.g. Terry Walters → terry_walters). */
-export function tenantDbPrefixFromPayload(payload: Record<string, unknown> | undefined): string {
-  const fromName = typeof payload?.name === 'string' ? payload.name : '';
-  const fromNickname = typeof payload?.nickname === 'string' ? payload.nickname : '';
-  const fromEmail =
-    typeof payload?.email === 'string' && payload.email.includes('@')
-      ? payload.email.split('@')[0] ?? ''
-      : '';
-  const raw = fromName.trim() || fromNickname.trim() || fromEmail.trim();
-  const slug = raw
+/** Slugify a human display name for MongoDB database name prefixes. */
+export function slugifyTenantDbPrefix(raw: string): string {
+  const normalized = raw.includes('@') ? (raw.split('@')[0] ?? raw) : raw;
+  const slug = normalized
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '_')
     .replace(/^_+|_+$/g, '')
     .replace(/_+/g, '_');
-  if (slug) {
-    return slug.slice(0, TENANT_DB_PREFIX_MAX_LENGTH);
-  }
+  return slug.slice(0, TENANT_DB_PREFIX_MAX_LENGTH);
+}
+
+/** Derive a stable MongoDB namespace prefix from a display name (e.g. Terry Walters → terry_walters). */
+export function tenantDbPrefixFromDisplayName(raw: string): string | null {
+  const slug = slugifyTenantDbPrefix(raw);
+  return slug || null;
+}
+
+/** Derive a stable MongoDB namespace prefix from Auth0 JWT claims (sync; no userinfo fetch). */
+export function tenantDbPrefixFromPayload(payload: Record<string, unknown> | undefined): string {
+  const displayName = readAuthDisplayName(payload);
+  const fromDisplay = displayName ? tenantDbPrefixFromDisplayName(displayName) : null;
+  if (fromDisplay) return fromDisplay;
+  const sub = typeof payload?.sub === 'string' ? payload.sub : '';
+  return sub ? tenantDbPrefixFromSub(sub) : LOCAL_DEV_TENANT_ID;
+}
+
+/** Resolve the tenant DB prefix using the same display name shown in the web UI header. */
+export async function tenantDbPrefixFromRequest(req: RequestWithAuth): Promise<string> {
+  const payload = req.auth?.payload;
+  const displayName = await resolveAuthDisplayName(payload, readBearerToken(req));
+  const fromDisplay = displayName ? tenantDbPrefixFromDisplayName(displayName) : null;
+  if (fromDisplay) return fromDisplay;
   const sub = typeof payload?.sub === 'string' ? payload.sub : '';
   return sub ? tenantDbPrefixFromSub(sub) : LOCAL_DEV_TENANT_ID;
 }
@@ -196,7 +211,7 @@ export function resolvePhysicalTargetDb(userPrefix: string, logicalDb: string): 
 }
 
 /** Strip a tenant prefix for API responses and UI display. */
-export function toLogicalTargetDb(physicalOrLogical: string, _userPrefix?: string): string {
+export function toLogicalTargetDb(physicalOrLogical: string): string {
   const separatorIndex = physicalOrLogical.indexOf(TENANT_DB_SEPARATOR);
   if (separatorIndex > 0) {
     return physicalOrLogical.slice(separatorIndex + TENANT_DB_SEPARATOR.length) || DEFAULT_LOGICAL_TARGET_DB;
@@ -205,12 +220,15 @@ export function toLogicalTargetDb(physicalOrLogical: string, _userPrefix?: strin
 }
 
 /** Map user input to logical + physical target database names for one request. */
-export function resolveTargetDbForRequest(req: RequestWithAuth, logicalInput?: string): ResolvedTargetDb {
+export async function resolveTargetDbForRequest(
+  req: RequestWithAuth,
+  logicalInput?: string,
+): Promise<ResolvedTargetDb> {
   if (!isAuthConfigured()) {
     const logical = parseLogicalTargetDb(logicalInput, LOCAL_DEV_TENANT_ID);
     return { logical, physical: logical };
   }
-  const prefix = tenantDbPrefixFromPayload(req.auth?.payload);
+  const prefix = await tenantDbPrefixFromRequest(req);
   const logical = parseLogicalTargetDb(logicalInput, prefix);
   const physical = resolvePhysicalTargetDb(prefix, logical);
   return { logical, physical };
@@ -219,13 +237,12 @@ export function resolveTargetDbForRequest(req: RequestWithAuth, logicalInput?: s
 /** Return a pipeline execution record with a logical targetDb for the client. */
 export function sanitizeExecutionTargetDbForClient<T extends { targetDb: string }>(
   execution: T,
-  req: RequestWithAuth,
+  _req: RequestWithAuth,
 ): T {
   if (!isAuthConfigured()) {
     return execution;
   }
-  const prefix = tenantDbPrefixFromPayload(req.auth?.payload);
-  return { ...execution, targetDb: toLogicalTargetDb(execution.targetDb, prefix) };
+  return { ...execution, targetDb: toLogicalTargetDb(execution.targetDb) };
 }
 
 /** Per-tenant persisted UI settings (manager inputs, overrides, etc.). */

@@ -9,6 +9,7 @@ import {
   sanitizeExecutionTargetDbForClient,
   sanitizeTenantId,
   tenantDbPrefixFromPayload,
+  tenantDbPrefixFromRequest,
   tenantDefaultTargetDb,
   tenantIdFromPayload,
   toLogicalTargetDb,
@@ -37,6 +38,17 @@ describe('tenant helpers', () => {
     expect(tenantDbPrefixFromPayload({ sub: 'auth0|abc' })).toMatch(/^u_[a-f0-9]{8}$/);
   });
 
+  it('loads display name from Auth0 userinfo when the access token lacks profile claims', async () => {
+    vi.spyOn(auth, 'isAuthConfigured').mockReturnValue(true);
+    vi.spyOn(auth, 'resolveAuthDisplayName').mockResolvedValue('Terry Walters');
+    const req = {
+      auth: { payload: { sub: 'google-oauth2|104005738020757337481' } },
+      headers: { authorization: 'Bearer access-token' },
+    } as Parameters<typeof tenantDbPrefixFromRequest>[0];
+    await expect(tenantDbPrefixFromRequest(req)).resolves.toBe('terry_walters');
+    vi.restoreAllMocks();
+  });
+
   it('maps logical database names to physical Atlas names within shared-tier limits', () => {
     expect(resolvePhysicalTargetDb('terry_walters', 'csv_to_atlas')).toBe('terry_walters__csv_to_atlas');
     expect(resolvePhysicalTargetDb('terry_walters', 'csv_to_atlas').length).toBeLessThanOrEqual(38);
@@ -55,21 +67,26 @@ describe('tenant helpers', () => {
     expect(() => parseLogicalTargetDb('other_user__secret', 'terry_walters')).toThrow(/invalid database/i);
   });
 
-  it('resolves prefixed physical names when auth is enabled', () => {
+  it('resolves prefixed physical names when auth is enabled', async () => {
     vi.spyOn(auth, 'isAuthConfigured').mockReturnValue(true);
+    vi.spyOn(auth, 'resolveAuthDisplayName').mockResolvedValue('Terry Walters');
     const req = {
-      auth: { payload: { name: 'Terry Walters' } },
+      auth: { payload: { sub: 'google-oauth2|104005738020757337481' } },
+      headers: { authorization: 'Bearer access-token' },
     } as Parameters<typeof resolveTargetDbForRequest>[0];
-    expect(resolveTargetDbForRequest(req, 'csv_to_atlas')).toEqual({
+    await expect(resolveTargetDbForRequest(req, 'csv_to_atlas')).resolves.toEqual({
       logical: 'csv_to_atlas',
       physical: 'terry_walters__csv_to_atlas',
     });
     vi.restoreAllMocks();
   });
 
-  it('resolves target databases per request when auth is disabled', () => {
+  it('resolves target databases per request when auth is disabled', async () => {
     const req = { auth: undefined } as Parameters<typeof resolveTargetDbForRequest>[0];
-    expect(resolveTargetDbForRequest(req, 'my_app')).toEqual({ logical: 'my_app', physical: 'my_app' });
+    await expect(resolveTargetDbForRequest(req, 'my_app')).resolves.toEqual({
+      logical: 'my_app',
+      physical: 'my_app',
+    });
   });
 
   it('strips tenant prefixes from execution records for the client', () => {
@@ -82,7 +99,7 @@ describe('tenant helpers', () => {
       req,
     );
     expect(sanitized.targetDb).toBe('csv_to_atlas');
-    expect(toLogicalTargetDb('terry_walters__csv_to_atlas', 'terry_walters')).toBe('csv_to_atlas');
+    expect(toLogicalTargetDb('terry_walters__csv_to_atlas')).toBe('csv_to_atlas');
     vi.restoreAllMocks();
   });
 

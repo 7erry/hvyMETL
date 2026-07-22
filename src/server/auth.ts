@@ -326,6 +326,53 @@ export function requireRole(allowedRoles: HvyRole[]): RequestHandler[] {
   ];
 }
 
+export function readBearerToken(req: Request): string | undefined {
+  const header = req.headers.authorization?.trim();
+  if (!header?.toLowerCase().startsWith('bearer ')) return undefined;
+  const token = header.slice('Bearer '.length).trim();
+  return token || undefined;
+}
+
+/** Same display-name precedence as the web UI header (`HostedAuthProvider.userName`). */
+export function readAuthDisplayName(payload: Record<string, unknown> | undefined): string {
+  const name = typeof payload?.name === 'string' ? payload.name.trim() : '';
+  if (name) return name;
+  const nickname = typeof payload?.nickname === 'string' ? payload.nickname.trim() : '';
+  if (nickname) return nickname;
+  const email = typeof payload?.email === 'string' ? payload.email.trim() : '';
+  if (email) return email;
+  return '';
+}
+
+/** Load Auth0 profile claims when they are missing from the access token JWT. */
+export async function fetchAuth0UserInfo(accessToken: string): Promise<Record<string, unknown> | null> {
+  const issuer = env('AUTH0_ISSUER_BASE_URL').replace(/\/+$/, '');
+  if (!issuer || !accessToken.trim()) return null;
+  try {
+    const response = await fetch(`${issuer}/userinfo`, {
+      headers: { Authorization: `Bearer ${accessToken}`, Accept: 'application/json' },
+      signal: AbortSignal.timeout(8_000),
+    });
+    if (!response.ok) return null;
+    const data: unknown = await response.json();
+    return data && typeof data === 'object' ? (data as Record<string, unknown>) : null;
+  } catch {
+    return null;
+  }
+}
+
+/** Resolve the signed-in user's display name from JWT claims or Auth0 `/userinfo`. */
+export async function resolveAuthDisplayName(
+  payload: Record<string, unknown> | undefined,
+  accessToken?: string,
+): Promise<string> {
+  const fromPayload = readAuthDisplayName(payload);
+  if (fromPayload) return fromPayload;
+  if (!accessToken?.trim()) return '';
+  const userinfo = await fetchAuth0UserInfo(accessToken);
+  return readAuthDisplayName(userinfo ?? undefined);
+}
+
 export function authErrorHandler(error: unknown, _req: Request, res: Response, next: NextFunction): void {
   if (error && typeof error === 'object' && 'status' in error) {
     const authError = error as { status?: number; message?: string };

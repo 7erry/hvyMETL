@@ -9,9 +9,21 @@ import {
   issuerUrlToDomain,
   promoteQueryAccessToken,
   promoteSwaggerSessionCookie,
+  readAuthDisplayName,
   rolesFromPayload,
 } from './auth.js';
 import type { Request, Response } from 'express';
+
+describe('readAuthDisplayName', () => {
+  it('matches the web UI header display-name precedence', () => {
+    expect(readAuthDisplayName({ name: 'Terry Walters', nickname: 'terry', email: 'a@b.com' })).toBe(
+      'Terry Walters',
+    );
+    expect(readAuthDisplayName({ nickname: 'terry', email: 'a@b.com' })).toBe('terry');
+    expect(readAuthDisplayName({ email: 'terry.walters@example.com' })).toBe('terry.walters@example.com');
+    expect(readAuthDisplayName({ sub: 'auth0|abc' })).toBe('');
+  });
+});
 
 describe('issuerUrlToDomain', () => {
   it('strips scheme and trailing slash from issuer URL', () => {
