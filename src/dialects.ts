@@ -11,7 +11,7 @@ export type DialectDefinition = {
   parserFamily: string;
 };
 
-export const DIALECTS: DialectDefinition[] = [
+const DIALECT_DEFINITIONS: DialectDefinition[] = [
   { id: 'sqlite', label: 'SQLite', live: true, parserFamily: 'sqlite' },
   { id: 'postgresql', label: 'PostgreSQL', live: false, parserFamily: 'postgresql' },
   { id: 'mysql', label: 'MySQL', live: false, parserFamily: 'mysql' },
@@ -35,6 +35,13 @@ export const DIALECTS: DialectDefinition[] = [
   { id: 'teradata', label: 'Teradata', live: false, parserFamily: 'teradata' },
   { id: 'firebird', label: 'Firebird', live: false, parserFamily: 'firebird' },
 ];
+
+/** Sort dialect options A→Z by display label for UI selectors. */
+export function sortDialectsByLabel<T extends { label: string }>(dialects: readonly T[]): T[] {
+  return [...dialects].sort((a, b) => a.label.localeCompare(b.label, undefined, { sensitivity: 'base' }));
+}
+
+export const DIALECTS: DialectDefinition[] = sortDialectsByLabel(DIALECT_DEFINITIONS);
 
 /** Canonical dialect ids for validation and tests. */
 export const SUPPORTED_DIALECT_IDS = DIALECTS.map((dialect) => dialect.id);

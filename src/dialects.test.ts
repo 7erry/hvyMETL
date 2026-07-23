@@ -9,6 +9,7 @@ import {
   isSupportedDialect,
   normalizeDialectId,
   resolveImportDialect,
+  sortDialectsByLabel,
 } from './dialects.js';
 
 describe('dialects', () => {
@@ -34,6 +35,14 @@ describe('dialects', () => {
     const ids = DIALECTS.map((dialect) => dialect.id);
     expect(new Set(ids).size).toBe(ids.length);
     expect(ids.sort()).toEqual([...SUPPORTED_DIALECT_IDS].sort());
+  });
+
+  it('sorts DIALECTS alphabetically by display label', () => {
+    const labels = DIALECTS.map((dialect) => dialect.label);
+    expect(labels).toEqual(sortDialectsByLabel(DIALECTS).map((dialect) => dialect.label));
+    expect(labels).toEqual([...labels].sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' })));
+    expect(labels[0]).toBe('Amazon Aurora (MySQL)');
+    expect(labels[labels.length - 1]).toBe('YugabyteDB');
   });
 
   it('normalizes common dialect aliases', () => {

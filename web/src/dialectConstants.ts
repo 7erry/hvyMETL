@@ -1,7 +1,11 @@
 import type { Dialect } from './types';
 
-/** Offline fallback when GET /api/dialects fails (mirrors src/dialects.ts). */
-export const FALLBACK_DIALECTS: Dialect[] = [
+/** Sort dialect options A→Z by display label for UI selectors. */
+export function sortDialectsByLabel(dialects: readonly Dialect[]): Dialect[] {
+  return [...dialects].sort((a, b) => a.label.localeCompare(b.label, undefined, { sensitivity: 'base' }));
+}
+
+const UNSORTED_FALLBACK_DIALECTS: Dialect[] = [
   { id: 'sqlite', label: 'SQLite', live: true },
   { id: 'postgresql', label: 'PostgreSQL', live: false },
   { id: 'mysql', label: 'MySQL', live: false },
@@ -25,3 +29,6 @@ export const FALLBACK_DIALECTS: Dialect[] = [
   { id: 'teradata', label: 'Teradata', live: false },
   { id: 'firebird', label: 'Firebird', live: false },
 ];
+
+/** Offline fallback when GET /api/dialects fails (mirrors src/dialects.ts). */
+export const FALLBACK_DIALECTS: Dialect[] = sortDialectsByLabel(UNSORTED_FALLBACK_DIALECTS);

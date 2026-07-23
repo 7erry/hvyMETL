@@ -1,6 +1,7 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useAccess } from '../auth/HostedAuthProvider';
 import { fetchBuiltinExamples, type BuiltinExampleSummary } from '../api';
+import { sortDialectsByLabel } from '../dialectConstants';
 import type { Dialect } from '../types';
 
 type SchemaImportPanelProps = {
@@ -32,6 +33,7 @@ export function SchemaImportPanel({
 }: SchemaImportPanelProps) {
   const access = useAccess();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const sortedDialects = useMemo(() => sortDialectsByLabel(dialects), [dialects]);
   const [builtinExamples, setBuiltinExamples] = useState<BuiltinExampleSummary[]>([]);
   const [selectedExampleId, setSelectedExampleId] = useState('');
   const [loadingExamples, setLoadingExamples] = useState(false);
@@ -96,12 +98,12 @@ export function SchemaImportPanel({
         value={dialect}
         onChange={(e) => onDialectChange(e.target.value)}
         className="schema-import-panel__select"
-        disabled={dialects.length === 0}
+        disabled={sortedDialects.length === 0}
       >
-        {dialects.length === 0 ? (
+        {sortedDialects.length === 0 ? (
           <option value="">Loading dialects…</option>
         ) : (
-          dialects.map((d) => (
+          sortedDialects.map((d) => (
             <option key={d.id} value={d.id}>
               {d.label}
               {!d.live ? ' (DDL paste)' : ''}
