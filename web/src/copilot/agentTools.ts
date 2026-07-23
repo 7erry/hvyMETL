@@ -177,9 +177,9 @@ function executeDetachTable(args: DetachTableArgs, ctx: AgentToolContext): { res
   const delta: string[] = [];
   for (const rel of rels) {
     const key = relationshipOverrideKey(rel);
-    delete nextForce[key];
+    nextForce[key] = false;
     delete nextCardinality[key];
-    delta.push(`cleared override ${key}`);
+    delta.push(`forceEmbed[${key}] = false`);
   }
   return {
     result: {

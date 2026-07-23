@@ -4,26 +4,39 @@ import { ResizableVerticalSplit } from '../ResizableVerticalSplit';
 import { SqlTranslationOutputView } from './SqlTranslationOutputView';
 
 const MIN_OUTPUT_PANEL_HEIGHT = 120;
-const MIN_INPUT_PANEL_HEIGHT = 140;
+const MIN_INPUT_PANEL_HEIGHT = 100;
+/** Bottom (results) pane gets this share of the translator body by default. */
+const DEFAULT_BOTTOM_RATIO = 0.75;
+
+function computeDefaultBottomHeight(available: number): number {
+  const maxBottom = Math.max(MIN_OUTPUT_PANEL_HEIGHT, available - MIN_INPUT_PANEL_HEIGHT);
+  const preferred = Math.round(available * DEFAULT_BOTTOM_RATIO);
+  return Math.min(maxBottom, Math.max(MIN_OUTPUT_PANEL_HEIGHT, preferred));
+}
 
 /** SQL → MongoDB query translator drawer tab. */
 export function QueryTranslatorPanel() {
   const copilot = useCopilot();
   const [sql, setSql] = useState('');
-  const [outputPanelHeight, setOutputPanelHeight] = useState(280);
+  const [outputPanelHeight, setOutputPanelHeight] = useState(MIN_OUTPUT_PANEL_HEIGHT);
   const containerRef = useRef<HTMLDivElement>(null);
   const sqlInputRef = useRef<HTMLTextAreaElement>(null);
+  const outputPaneRef = useRef<HTMLDivElement>(null);
+  const userAdjustedSplitRef = useRef(false);
   const output = copilot.sqlTranslation;
 
-  const syncOutputHeight = useCallback(() => {
+  const applyDefaultSplit = useCallback((force = false) => {
     const container = containerRef.current;
     if (!container) return;
     const available = container.clientHeight;
     if (available <= 0) return;
-    setOutputPanelHeight((current) => {
-      const maxBottom = Math.max(MIN_OUTPUT_PANEL_HEIGHT, available - MIN_INPUT_PANEL_HEIGHT);
-      return Math.min(maxBottom, Math.max(MIN_OUTPUT_PANEL_HEIGHT, current));
-    });
+    if (!force && userAdjustedSplitRef.current) return;
+    setOutputPanelHeight(computeDefaultBottomHeight(available));
+  }, []);
+
+  const handleBottomHeightChange = useCallback((height: number) => {
+    userAdjustedSplitRef.current = true;
+    setOutputPanelHeight(height);
   }, []);
 
   useEffect(() => {
@@ -31,26 +44,28 @@ export function QueryTranslatorPanel() {
     if (!container) return;
 
     const observer = new ResizeObserver(() => {
-      syncOutputHeight();
+      applyDefaultSplit();
     });
     observer.observe(container);
-    syncOutputHeight();
+    applyDefaultSplit(true);
 
     return () => observer.disconnect();
-  }, [syncOutputHeight]);
+  }, [applyDefaultSplit]);
 
   useEffect(() => {
-    if (output) {
-      syncOutputHeight();
+    if (!output) {
+      const focus = () => sqlInputRef.current?.focus({ preventScroll: true });
+      focus();
+      const timerIds = [0, 50, 150].map((delayMs) => window.setTimeout(focus, delayMs));
+      return () => timerIds.forEach((timerId) => window.clearTimeout(timerId));
     }
-  }, [output, syncOutputHeight]);
 
-  useEffect(() => {
-    const focus = () => sqlInputRef.current?.focus({ preventScroll: true });
-    focus();
-    const timerIds = [0, 50, 150].map((delayMs) => window.setTimeout(focus, delayMs));
+    applyDefaultSplit(true);
+    const focusOutput = () => outputPaneRef.current?.focus({ preventScroll: true });
+    focusOutput();
+    const timerIds = [0, 50, 150].map((delayMs) => window.setTimeout(focusOutput, delayMs));
     return () => timerIds.forEach((timerId) => window.clearTimeout(timerId));
-  }, []);
+  }, [output, applyDefaultSplit]);
 
   const handleTranslate = () => {
     if (!sql.trim()) return;
@@ -70,6 +85,7 @@ export function QueryTranslatorPanel() {
         onChange={(e) => setSql(e.target.value)}
         placeholder="SELECT t.id, s.name FROM trips t JOIN trip_stops s ON ..."
         spellCheck={false}
+        rows={3}
       />
       <div className="copilot-translator__actions button-row">
         <button type="button" className="primary" onClick={handleTranslate}>
@@ -83,12 +99,17 @@ export function QueryTranslatorPanel() {
     <div ref={containerRef} className="copilot-translator copilot-translator--split">
       <ResizableVerticalSplit
         bottomHeight={outputPanelHeight}
-        onBottomHeightChange={setOutputPanelHeight}
+        onBottomHeightChange={handleBottomHeightChange}
         minBottom={MIN_OUTPUT_PANEL_HEIGHT}
         minTop={MIN_INPUT_PANEL_HEIGHT}
         top={inputPane}
         bottom={
-          <div className="copilot-translator__pane copilot-translator__pane--output">
+          <div
+            ref={outputPaneRef}
+            className="copilot-translator__pane copilot-translator__pane--output"
+            tabIndex={-1}
+            aria-label="Translation output"
+          >
             {output ? (
               <SqlTranslationOutputView output={output} layout="panel" />
             ) : (

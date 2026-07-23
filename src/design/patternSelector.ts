@@ -569,6 +569,23 @@ function planChildRelationships(
       continue;
     }
 
+    if (relationship.forceEmbed === false) {
+      patterns.push({
+        pattern: 'reference',
+        target: `${table.name} -> ${childTable.name}`,
+        reason: `Developer disabled force-embed for ${childTable.name}; it stays a separate collection instead of folding into ${table.name}.`,
+        knowledgeSource: 'embed-vs-reference.md',
+      });
+      if (isReadHeavy) {
+        addComputedCounter(
+          childTable,
+          relationship,
+          `Reads dominate (${ratioLabel}); storing the ${childTable.name} count avoids an aggregation on every read.`,
+        );
+      }
+      continue;
+    }
+
     // Rule 3: timestamped firehose children on bucket-friendly workloads
     // become their own bucketed collection (handled when the child table is
     // planned); the parent just gets a computed counter.

@@ -5268,6 +5268,14 @@ textarea {
   overflow: hidden;
 }
 
+.copilot-translator__pane--output:focus {
+  outline: none;
+}
+
+.copilot-translator__pane--output:focus-visible {
+  box-shadow: inset 0 0 0 1px var(--copilot-accent);
+}
+
 .copilot-translator__placeholder {
   margin: auto 0;
   font-size: 0.68rem;
@@ -5312,8 +5320,9 @@ textarea {
 }
 
 .copilot-translator__input {
-  flex: 1;
+  flex: 1 1 auto;
   min-height: 0;
+  max-height: 100%;
   margin: 0.35rem 0;
   padding: 0.45rem;
   border-radius: 6px;

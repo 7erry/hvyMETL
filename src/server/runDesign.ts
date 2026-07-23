@@ -94,8 +94,9 @@ function applyCardinalityOverrides(
       const maxChildrenPerParent = overrides?.[key];
       const hasMaxOverride =
         typeof maxChildrenPerParent === 'number' && Number.isFinite(maxChildrenPerParent) && maxChildrenPerParent > 0;
-      const forceEmbed = forceEmbedOverrides?.[key] === true;
-      if (!forceEmbed && !hasMaxOverride) return relationship;
+      const forceEmbedOverride = forceEmbedOverrides?.[key];
+      const hasForceEmbedOverride = forceEmbedOverride === true || forceEmbedOverride === false;
+      if (!hasForceEmbedOverride && !hasMaxOverride) return relationship;
       return {
         ...relationship,
         ...(hasMaxOverride
@@ -106,7 +107,7 @@ function applyCardinalityOverrides(
               cardinalitySource: 'developer' as const,
             }
           : {}),
-        forceEmbed,
+        ...(hasForceEmbedOverride ? { forceEmbed: forceEmbedOverride } : {}),
       };
     }),
   };

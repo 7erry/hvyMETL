@@ -58,6 +58,7 @@ Orchestrates introspect → retrieve → plan → write, and always closes the a
 | Unknown-cardinality single-parent child (DDL-only) | not write-heavy, not time-series, one FK parent | default **embed** (assumed small dependent) | `embed-vs-reference.md` |
 | Time-series or multi-parent child (DDL-only, no stats) | force embed not set | **reference** (planner skips default embed) | `embed-vs-reference.md` |
 | Developer force-embed override | explicit UI/API override on a linked FK | full **embed** for that relationship | `embed-vs-reference.md` |
+| Developer force-embed disabled | explicit UI/API `forceEmbed: false` on a linked FK | **reference** (separate collection) | `embed-vs-reference.md` |
 | Bounded child from measured stats (max ≤ 100/parent) | reads ≥ 70% | full **embed** (child collection dropped) | `embed-vs-reference.md` |
 | Developer cardinality override (max 1–5000/parent) | explicit UI/API override | full **embed** for that relationship | `embed-vs-reference.md` |
 | Unbounded or skewed child | reads ≥ 70% | **Subset** (newest 10) + overflow collection | `subset.md` |
@@ -93,7 +94,9 @@ Internal: `src/adapters/sqlite.ts`, `src/rag/*` (for the report's cited context)
   unavailable. Cardinality overrides with max `1-5000` are treated as explicit
   bounded developer intent and can force a full embed for that relationship; values
   above `5000` remain unbounded. Force-embed overrides fold only schema-linked FK
-  child tables into their parent collection. CSV and SQLite introspection remain
+  child tables into their parent collection. Setting **Force embed** to off stores
+  `forceEmbed: false` for that relationship so the child always remains its own
+  collection, even when default heuristics would embed it. CSV and SQLite introspection remain
   preferred because they measure actual fan-out.
 - **Double-embedding prevention.** A child with two required parents (e.g.
   `affinities` → `profiles` *and* `items`) embeds only under its primary parent

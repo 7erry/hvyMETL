@@ -37,7 +37,7 @@ export function CardinalityOverridesPanel({
     if (isForced) {
       next[key] = true;
     } else {
-      delete next[key];
+      next[key] = false;
     }
     onChange(overrides, next);
   };
@@ -65,7 +65,7 @@ export function CardinalityOverridesPanel({
       <p className="cardinality-overrides__hint">
         Optional: suggest max child rows per parent when CSV or live database stats are unavailable. Values up to
         5,000 are treated as bounded for embed decisions. You can also force a linked child table to embed into its
-        parent collection.
+        parent collection. Unchecking **Force embed** keeps the child as its own collection.
       </p>
       <label className="cardinality-overrides__force-all">
         <input
@@ -80,14 +80,17 @@ export function CardinalityOverridesPanel({
         {model.relationships.map((relationship) => {
           const key = relationshipOverrideKey(relationship);
           const value = overrides[key] ?? '';
-          const isForced = forceEmbedOverrides[key] === true;
+          const forceEmbedChoice = forceEmbedOverrides[key];
+          const isForced = forceEmbedChoice === true;
+          const isSeparateCollection = forceEmbedChoice === false;
           return (
             <div className="cardinality-overrides__row" key={key}>
               <span>
                 <strong>{relationshipLabel(relationship)}</strong>
                 <small>
                   Current max: {relationship.maxChildrenPerParent || 'unknown'} ·{' '}
-                  {relationship.isBounded ? 'bounded' : 'unbounded'} · {isForced ? 'force embed enabled' : 'planner decides'}
+                  {relationship.isBounded ? 'bounded' : 'unbounded'} ·{' '}
+                  {isForced ? 'force embed enabled' : isSeparateCollection ? 'separate collection' : 'planner decides'}
                 </small>
               </span>
               <div className="cardinality-overrides__controls">

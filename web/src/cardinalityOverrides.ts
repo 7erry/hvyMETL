@@ -23,11 +23,13 @@ export function applyCardinalityOverrides(
   forceEmbedOverrides: ForceEmbedOverrides = {},
 ): SqlStructuralModel {
   const relationships = model.relationships.map((relationship) => {
-    const maxChildrenPerParent = overrides[relationshipOverrideKey(relationship)];
+    const key = relationshipOverrideKey(relationship);
+    const maxChildrenPerParent = overrides[key];
     const hasMaxOverride =
       typeof maxChildrenPerParent === 'number' && Number.isFinite(maxChildrenPerParent) && maxChildrenPerParent > 0;
-    const forceEmbed = forceEmbedOverrides[relationshipOverrideKey(relationship)] === true;
-    if (!forceEmbed && !hasMaxOverride) return relationship;
+    const forceEmbedOverride = forceEmbedOverrides[key];
+    const hasForceEmbedOverride = forceEmbedOverride === true || forceEmbedOverride === false;
+    if (!hasForceEmbedOverride && !hasMaxOverride) return relationship;
 
     return {
       ...relationship,
@@ -39,7 +41,7 @@ export function applyCardinalityOverrides(
             cardinalitySource: 'developer' as const,
           }
         : {}),
-      forceEmbed,
+      ...(hasForceEmbedOverride ? { forceEmbed: forceEmbedOverride } : {}),
     };
   });
 
@@ -61,7 +63,7 @@ export function pruneForceEmbedOverrides(
 ): ForceEmbedOverrides {
   if (!model) return {};
   const validKeys = new Set(model.relationships.map(relationshipOverrideKey));
-  return Object.fromEntries(Object.entries(overrides).filter(([key, value]) => value === true && validKeys.has(key)));
+  return Object.fromEntries(Object.entries(overrides).filter(([key, value]) => validKeys.has(key) && typeof value === 'boolean'));
 }
 
 /** True when every relationship in the model has force embed enabled. */

@@ -60,6 +60,15 @@ describe('cardinalityOverrides', () => {
     });
   });
 
+  it('applies force-embed false to keep a child as a separate collection', () => {
+    const key = relationshipOverrideKey(model.relationships[0]);
+    const adjusted = applyCardinalityOverrides(model, {}, { [key]: false });
+
+    expect(adjusted.relationships[0]).toMatchObject({
+      forceEmbed: false,
+    });
+  });
+
   it('treats developer max cardinality up to 5000 as bounded', () => {
     const key = relationshipOverrideKey(model.relationships[0]);
     const adjusted = applyCardinalityOverrides(model, { [key]: 500 });
@@ -93,9 +102,9 @@ describe('cardinalityOverrides', () => {
 
   it('prunes stale force-embed relationship override keys', () => {
     const key = relationshipOverrideKey(model.relationships[0]);
-    const overrides: ForceEmbedOverrides = { [key]: true, stale: true, disabled: false };
+    const overrides: ForceEmbedOverrides = { [key]: false, stale: true };
 
-    expect(pruneForceEmbedOverrides(model, overrides)).toEqual({ [key]: true });
+    expect(pruneForceEmbedOverrides(model, overrides)).toEqual({ [key]: false });
   });
 
   it('buildForceEmbedOverridesForAll enables or clears every relationship', () => {

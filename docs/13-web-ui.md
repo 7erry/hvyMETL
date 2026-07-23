@@ -146,18 +146,21 @@ full embedding for that relationship. Values above `5000` remain unbounded, so d
 falls back to subset/reference behavior.
 
 If the developer wants a linked child table folded into the parent collection without
-providing a max cardinality, check **Force embed** for that FK. The UI sends a
+providing a max cardinality, check **Force embed** for that FK. Unchecking **Force embed**
+keeps the child as a separate collection (`forceEmbed: false`) even when the planner
+would otherwise embed it by default. The UI sends a
 `forceEmbedOverrides` object using the same `parent::child::fkColumn` key:
 
 ```json
 {
   "locations::company_assets::location_id": true,
-  "employees::user_accounts::employee_id": true
+  "customers::customer_addresses::customer_id": false
 }
 ```
 
 Force embed intentionally bypasses normal workload/cardinality heuristics for that
-linked relationship and drops the standalone child collection. It is scoped to FK
+linked relationship and drops the standalone child collection. A `false` value
+explicitly prevents embedding for that FK. It is scoped to FK
 relationships discovered in the schema; unrelated tables cannot be forced into one
 collection through this control. Changing overrides clears the old migration plan and
 returns to the Before view so the next **Refresh design** run cannot reuse a stale

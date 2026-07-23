@@ -174,6 +174,47 @@ describe('buildMigrationPlan', () => {
     expect(plan.collections.some((collection) => collection.sourceTable === 'company_assets')).toBe(false);
   });
 
+  it('keeps a child as a separate collection when force-embed is explicitly disabled', () => {
+    const model: SqlStructuralModel = {
+      source: 'ddl:oracle',
+      tables: [
+        table({ name: 'customers', rowCount: 0 }),
+        table({
+          name: 'customer_addresses',
+          rowCount: 0,
+          columns: [
+            { name: 'address_id', sqlType: 'INT', bsonType: 'int', nullable: false, isPrimaryKey: true },
+            { name: 'street', sqlType: 'VARCHAR(200)', bsonType: 'string', nullable: false, isPrimaryKey: false },
+            { name: 'customer_id', sqlType: 'INT', bsonType: 'int', nullable: false, isPrimaryKey: false },
+          ],
+          primaryKey: ['address_id'],
+          foreignKeys: [{ column: 'customer_id', referencesTable: 'customers', referencesColumn: 'customer_id' }],
+        }),
+      ],
+      relationships: [
+        relationship({
+          parentTable: 'customers',
+          childTable: 'customer_addresses',
+          fkColumn: 'customer_id',
+          avgChildrenPerParent: 0,
+          maxChildrenPerParent: 0,
+          isBounded: false,
+          forceEmbed: false,
+        }),
+      ],
+    };
+
+    const plan = buildMigrationPlan(model, WORKLOAD_PROFILES.catalog);
+    const customers = plan.collections.find((collection) => collection.sourceTable === 'customers');
+    const addresses = plan.collections.find((collection) => collection.sourceTable === 'customer_addresses');
+
+    expect(customers?.embeddedArrays ?? []).not.toContainEqual(
+      expect.objectContaining({ sourceTable: 'customer_addresses' }),
+    );
+    expect(addresses).toBeDefined();
+    expect(customers?.patterns.some((decision) => decision.pattern === 'reference' && decision.reason.includes('disabled force-embed'))).toBe(true);
+  });
+
   it('uses developer max cardinality 5000 as the bounded embed limit', () => {
     const model: SqlStructuralModel = {
       source: 'ddl:oracle',
