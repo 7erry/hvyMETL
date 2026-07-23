@@ -11,6 +11,7 @@ import {
   authIdentitySlugCandidates,
   legacyTenantImportDatabaseName,
   parseLogicalTargetDb,
+  readClientDbPrefix,
   resolvePhysicalTargetDb,
   tenantDbPrefixCandidates,
   tenantDbPrefixFromRequest,
@@ -57,9 +58,11 @@ export async function resolveTenantMongoInspectScope(
 
   const payload = req.auth?.payload;
   const displayName = await resolveAuthDisplayName(payload, readBearerToken(req));
+  const clientPrefix = readClientDbPrefix(req);
+  const extraPrefixes = clientPrefix ? [clientPrefix] : [];
   const tenantId = tenantIdFromPayload(payload);
-  const identitySlugs = authIdentitySlugCandidates(payload, displayName);
-  const prefixCandidates = tenantDbPrefixCandidates(payload, displayName);
+  const identitySlugs = authIdentitySlugCandidates(payload, displayName, extraPrefixes);
+  const prefixCandidates = tenantDbPrefixCandidates(payload, displayName, extraPrefixes);
   const primaryPrefix = (await tenantDbPrefixFromRequest(req)) || prefixCandidates[0] || 'local-dev';
 
   let scope = buildScope({
@@ -102,6 +105,15 @@ export function augmentTenantMongoInspectScope(
   const merged = [
     ...new Set([...scope.prefixCandidates, ...discoverPrefixCandidatesFromCluster(clusterDatabaseNames, identitySlugs)]),
   ];
+  return augmentScopeWithPrefixes(scope, merged);
+}
+
+/** Add explicit prefix segments discovered from owned or inferred Atlas database names. */
+export function augmentScopeWithPrefixes(
+  scope: TenantMongoInspectScope,
+  prefixCandidates: string[],
+): TenantMongoInspectScope {
+  const merged = [...new Set([...scope.prefixCandidates, ...prefixCandidates])];
   if (merged.length === scope.prefixCandidates.length) return scope;
   return buildScope({
     authEnabled: scope.authEnabled,
@@ -109,6 +121,91 @@ export function augmentTenantMongoInspectScope(
     primaryPrefix: scope.primaryPrefix,
     prefixCandidates: merged,
   });
+}
+
+/** Extract `{prefix}` segments from physical `{prefix}__{logical}` database names. */
+export function prefixesFromPhysicalDatabaseNames(physicalDatabaseNames: string[]): string[] {
+  const prefixes = new Set<string>();
+  for (const physical of physicalDatabaseNames) {
+    const separatorIndex = physical.indexOf(TENANT_DB_SEPARATOR);
+    if (separatorIndex <= 0) continue;
+    prefixes.add(physical.slice(0, separatorIndex));
+  }
+  return [...prefixes];
+}
+
+/**
+ * Resolve physical Atlas databases for a tenant, including uniquely matched `{prefix}__{logical}`
+ * names when the JWT lacks the import prefix (e.g. data in terry_walters__mytrains but token only has u_{hash}).
+ */
+export function discoverTenantPhysicalDatabases(
+  scope: TenantMongoInspectScope,
+  clusterDatabaseNames: string[],
+  knownLogicalDatabases: string[] = [],
+): string[] {
+  const physical = new Set<string>();
+
+  for (const name of clusterDatabaseNames) {
+    if (scope.ownsPhysicalDatabase(name)) physical.add(name);
+  }
+
+  const logicalsToProbe = new Set<string>(knownLogicalDatabases);
+  for (const name of clusterDatabaseNames) {
+    if (scope.ownsPhysicalDatabase(name)) {
+      logicalsToProbe.add(scope.toLogicalDatabase(name));
+    }
+  }
+
+  for (const logical of logicalsToProbe) {
+    const suffix = `${TENANT_DB_SEPARATOR}${logical}`;
+    const matches = clusterDatabaseNames.filter((name) => name === logical || name.endsWith(suffix));
+    if (matches.length !== 1) continue;
+
+    const physicalName = matches[0]!;
+    const separatorIndex = physicalName.indexOf(TENANT_DB_SEPARATOR);
+    const prefix = separatorIndex > 0 ? physicalName.slice(0, separatorIndex) : '';
+    const allowed =
+      knownLogicalDatabases.includes(logical) ||
+      scope.ownsPhysicalDatabase(physicalName) ||
+      (prefix.length > 0 && scope.prefixCandidates.includes(prefix));
+    if (allowed) physical.add(physicalName);
+  }
+
+  return [...physical];
+}
+
+/** Build logical database listings (with optional size) from discovered physical database names. */
+export function listLogicalDatabasesFromPhysical(
+  scope: TenantMongoInspectScope,
+  physicalDatabaseNames: string[],
+  sizesByPhysicalName: Map<string, number | undefined> = new Map(),
+): Array<{ name: string; size?: number }> {
+  const byLogical = new Map<string, { name: string; size?: number }>();
+
+  for (const physical of physicalDatabaseNames) {
+    const logical = scope.toLogicalDatabase(physical);
+    const size = sizesByPhysicalName.get(physical);
+    const existing = byLogical.get(logical);
+    if (!existing || (size ?? 0) > (existing.size ?? 0)) {
+      byLogical.set(logical, { name: logical, size });
+    }
+  }
+
+  return [...byLogical.values()].sort((left, right) => (right.size ?? 0) - (left.size ?? 0));
+}
+
+/** Resolve inspect scope using cluster contents and known import logical names. */
+export function resolveInspectScopeForCluster(
+  scope: TenantMongoInspectScope,
+  clusterDatabaseNames: string[],
+  knownLogicalDatabases: string[] = [],
+): { scope: TenantMongoInspectScope; physicalDatabaseNames: string[] } {
+  let nextScope = scope;
+  let physicalDatabaseNames = discoverTenantPhysicalDatabases(nextScope, clusterDatabaseNames, knownLogicalDatabases);
+  const discoveredPrefixes = prefixesFromPhysicalDatabaseNames(physicalDatabaseNames);
+  nextScope = augmentScopeWithPrefixes(nextScope, discoveredPrefixes);
+  physicalDatabaseNames = discoverTenantPhysicalDatabases(nextScope, clusterDatabaseNames, knownLogicalDatabases);
+  return { scope: nextScope, physicalDatabaseNames };
 }
 
 function buildScope(input: {

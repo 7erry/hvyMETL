@@ -173,12 +173,24 @@ export async function tenantDbPrefixFromRequest(req: RequestWithAuth): Promise<s
   return candidates[0] ?? LOCAL_DEV_TENANT_ID;
 }
 
+/** HTTP header the SPA sends with the slugified UI display name for MongoDB inspect scoping. */
+export const CLIENT_DB_PREFIX_HEADER = 'x-hvymetl-db-prefix';
+
+/** Read a validated tenant DB prefix supplied by the authenticated web client. */
+export function readClientDbPrefix(req: Request): string | null {
+  const raw = req.headers[CLIENT_DB_PREFIX_HEADER.toLowerCase()] ?? req.headers[CLIENT_DB_PREFIX_HEADER];
+  const value =
+    typeof raw === 'string' ? raw.trim() : Array.isArray(raw) ? (raw[0]?.trim() ?? '') : '';
+  if (!value || !/^[a-z0-9_]{1,24}$/.test(value)) return null;
+  return value;
+}
 /** Collect slug prefixes derived from Auth0 profile fields for import DB ownership checks. */
 export function authIdentitySlugCandidates(
   payload: Record<string, unknown> | undefined,
   displayName?: string,
+  extraPrefixes: string[] = [],
 ): string[] {
-  const slugs = new Set<string>();
+  const slugs = new Set<string>(extraPrefixes.filter(Boolean));
   const givenName = typeof payload?.given_name === 'string' ? payload.given_name.trim() : '';
   const familyName = typeof payload?.family_name === 'string' ? payload.family_name.trim() : '';
   const combinedName = [givenName, familyName].filter(Boolean).join(' ');
@@ -207,8 +219,9 @@ export function authIdentitySlugCandidates(
 export function tenantDbPrefixCandidates(
   payload: Record<string, unknown> | undefined,
   displayName?: string,
+  extraPrefixes: string[] = [],
 ): string[] {
-  return authIdentitySlugCandidates(payload, displayName);
+  return authIdentitySlugCandidates(payload, displayName, extraPrefixes);
 }
 
 /** Legacy pipeline import database name before `{prefix}__{logical}` naming (hvymetl_{tenantId}). */

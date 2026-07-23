@@ -50,7 +50,7 @@ describe('mongoInspectService', () => {
 
     const req = {
       auth: { payload: { sub: 'google-oauth2|abc' } },
-      headers: { authorization: 'Bearer token' },
+      headers: { authorization: 'Bearer token', 'x-hvymetl-db-prefix': 'terry_walters' },
     } as import('express').Request;
 
     const result = await invokeMongoInspectTool(req, 'listMongoDatabases', {});
@@ -86,7 +86,7 @@ describe('mongoInspectService', () => {
 
     const req = {
       auth: { payload: { sub: 'google-oauth2|abc' } },
-      headers: { authorization: 'Bearer token' },
+      headers: { authorization: 'Bearer token', 'x-hvymetl-db-prefix': 'terry_walters' },
     } as import('express').Request;
 
     const result = await invokeMongoInspectTool(req, 'listMongoCollections', {});
@@ -97,6 +97,69 @@ describe('mongoInspectService', () => {
       collections: [{ name: 'stations' }, { name: 'trains' }],
       totalCount: 2,
     });
+    vi.restoreAllMocks();
+  });
+
+  it('lists mytrains from terry_walters__mytrains when JWT only has sub hash prefix', async () => {
+    vi.spyOn(mongoMcpClient, 'isMongoMcpEnabled').mockReturnValue(true);
+    vi.spyOn(mongoMcpClient, 'callMongoMcpTool').mockResolvedValue({
+      databases: [
+        { name: 'u_c5d09a77__railway_ops', size: 1 },
+        { name: 'terry_walters__mytrains', size: 900 },
+      ],
+      totalCount: 2,
+    });
+    vi.spyOn(auth, 'isAuthConfigured').mockReturnValue(true);
+    vi.spyOn(auth, 'resolveAuthDisplayName').mockResolvedValue('');
+
+    const req = {
+      auth: { payload: { sub: 'google-oauth2|abc' } },
+      headers: { authorization: 'Bearer token', 'x-hvymetl-db-prefix': 'terry_walters' },
+    } as import('express').Request;
+
+    const result = await invokeMongoInspectTool(req, 'listMongoDatabases', {});
+    expect(result.ok).toBe(true);
+    expect(result.data).toEqual({
+      databases: [{ name: 'mytrains', size: 900 }],
+      totalCount: 1,
+    });
+    vi.restoreAllMocks();
+  });
+
+  it('lists collections from terry_walters__mytrains when logical mytrains is requested', async () => {
+    vi.spyOn(mongoMcpClient, 'isMongoMcpEnabled').mockReturnValue(true);
+    vi.spyOn(mongoMcpClient, 'callMongoMcpTool').mockImplementation(async (name, args) => {
+      if (name === 'list-databases') {
+        return {
+          databases: [
+            { name: 'u_c5d09a77__railway_ops', size: 1 },
+            { name: 'terry_walters__mytrains', size: 900 },
+          ],
+          totalCount: 2,
+        };
+      }
+      expect(args).toEqual({ connectionId: 'preconfigured', database: 'terry_walters__mytrains' });
+      return {
+        collections: [{ name: 'routes' }, { name: 'stations' }, { name: 'trains' }],
+        totalCount: 3,
+      };
+    });
+    vi.spyOn(auth, 'isAuthConfigured').mockReturnValue(true);
+    vi.spyOn(auth, 'resolveAuthDisplayName').mockResolvedValue('');
+
+    const req = {
+      auth: { payload: { sub: 'google-oauth2|abc' } },
+      headers: { authorization: 'Bearer token', 'x-hvymetl-db-prefix': 'terry_walters' },
+    } as import('express').Request;
+
+    const result = await invokeMongoInspectTool(req, 'listMongoCollections', { database: 'mytrains' });
+    expect(result.ok).toBe(true);
+    expect(result.summary).toBe('Listed 3 collection(s) in mytrains.');
+    expect((result.data as { collections: Array<{ name: string }> }).collections.map((entry) => entry.name)).toEqual([
+      'routes',
+      'stations',
+      'trains',
+    ]);
     vi.restoreAllMocks();
   });
 });

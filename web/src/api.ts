@@ -11,9 +11,26 @@ const base = '';
 type AccessTokenProvider = () => Promise<string>;
 
 let accessTokenProvider: AccessTokenProvider | undefined;
+let dbPrefixProvider: (() => string | undefined) | undefined;
 
 export function setAccessTokenProvider(provider: AccessTokenProvider | undefined): void {
   accessTokenProvider = provider;
+}
+
+/** Supply the slugified UI display name so server-side MongoDB inspect can match Atlas prefixes. */
+export function setDbPrefixProvider(provider: (() => string | undefined) | undefined): void {
+  dbPrefixProvider = provider;
+}
+
+function slugifyClientDbPrefix(raw: string): string | undefined {
+  const normalized = raw.includes('@') ? (raw.split('@')[0] ?? raw) : raw;
+  const slug = normalized
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/^_+|_+$/g, '')
+    .replace(/_+/g, '_')
+    .slice(0, 24);
+  return slug || undefined;
 }
 
 async function apiFetch(input: RequestInfo | URL, init: RequestInit = {}): Promise<Response> {
@@ -27,6 +44,14 @@ async function apiFetch(input: RequestInfo | URL, init: RequestInit = {}): Promi
     }
   }
   return fetch(input, { ...init, headers });
+}
+
+async function copilotApiFetch(input: RequestInfo | URL, init: RequestInit = {}): Promise<Response> {
+  const headers = new Headers(init.headers);
+  const prefix = dbPrefixProvider?.()?.trim();
+  const slug = prefix ? slugifyClientDbPrefix(prefix) : undefined;
+  if (slug) headers.set('x-hvymetl-db-prefix', slug);
+  return apiFetch(input, { ...init, headers });
 }
 
 /** User-facing message for failed API calls (including auth token renewal). */
@@ -818,7 +843,7 @@ export function downloadText(filename: string, text: string, mime = 'text/plain'
 }
 
 export async function fetchCopilotStatus(): Promise<CopilotStatusResponse> {
-  const res = await apiFetch(`${base}/api/copilot/status`);
+  const res = await copilotApiFetch(`${base}/api/copilot/status`);
   if (!res.ok) throw new Error((await res.json()).error ?? res.statusText);
   return res.json();
 }
@@ -827,7 +852,7 @@ export async function invokeCopilotMongoInspect(
   tool: import('./copilot/types').MongoInspectToolName,
   args: Record<string, unknown>,
 ): Promise<import('./copilot/types').MongoInspectInvokeResponse> {
-  const res = await apiFetch(`${base}/api/copilot/mongo/inspect`, {
+  const res = await copilotApiFetch(`${base}/api/copilot/mongo/inspect`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ tool, args }),
@@ -844,7 +869,7 @@ export async function sendCopilotChat(request: {
   schemaContext: CopilotSchemaContextPayload;
   toolsEnabled?: boolean;
 }): Promise<CopilotChatApiResponse> {
-  const res = await apiFetch(`${base}/api/copilot/chat`, {
+  const res = await copilotApiFetch(`${base}/api/copilot/chat`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify(request),

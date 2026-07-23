@@ -4,7 +4,10 @@ import {
   assertDatabaseAccess,
   augmentTenantMongoInspectScope,
   discoverPrefixCandidatesFromCluster,
+  discoverTenantPhysicalDatabases,
+  listLogicalDatabasesFromPhysical,
   mergeDiscoveredLogicalDatabases,
+  resolveInspectScopeForCluster,
   resolveTenantMongoInspectScope,
   sanitizeDatabaseListForClient,
 } from './mongoInspectScope.js';
@@ -101,6 +104,28 @@ describe('mongoInspectScope', () => {
       ['terry_walters'],
     );
     expect(augmented.resolvePhysicalDatabase('mytrains')).toBe('terry_walters__mytrains');
+    vi.restoreAllMocks();
+  });
+
+  it('discovers prefixed databases via unique logical suffix when JWT prefix differs from Atlas', async () => {
+    vi.spyOn(auth, 'isAuthConfigured').mockReturnValue(true);
+    vi.spyOn(auth, 'resolveAuthDisplayName').mockResolvedValue('');
+
+    const req = {
+      auth: { payload: { sub: 'google-oauth2|abc' } },
+      headers: { authorization: 'Bearer token', 'x-hvymetl-db-prefix': 'terry_walters' },
+    } as Parameters<typeof resolveTenantMongoInspectScope>[0];
+
+    const baseScope = await resolveTenantMongoInspectScope(req);
+    expect(baseScope.prefixCandidates.some((prefix) => prefix.startsWith('u_'))).toBe(true);
+
+    const clusterDatabaseNames = ['terry_walters__mytrains', 'terry_walters__railway_ops', 'other_user__app'];
+    const resolved = resolveInspectScopeForCluster(baseScope, clusterDatabaseNames, ['mytrains', 'railway_ops']);
+    const physical = discoverTenantPhysicalDatabases(resolved.scope, clusterDatabaseNames, ['mytrains', 'railway_ops']);
+    const logical = listLogicalDatabasesFromPhysical(resolved.scope, physical);
+
+    expect(resolved.scope.prefixCandidates).toContain('terry_walters');
+    expect(logical.map((entry) => entry.name).sort()).toEqual(['mytrains', 'railway_ops']);
     vi.restoreAllMocks();
   });
 });
