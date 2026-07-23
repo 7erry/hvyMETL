@@ -115,6 +115,19 @@ via **Import Query** (paste `CREATE TABLE` scripts).
 | `aurora-postgresql` | Amazon Aurora (PostgreSQL) | DDL paste | Same parser rules as PostgreSQL |
 | `aurora-mysql` | Amazon Aurora (MySQL) | DDL paste | Same parser rules as MySQL |
 | `spanner` | Google Cloud Spanner | DDL paste | Trailing `PRIMARY KEY (…)`, `INTERLEAVE IN PARENT`, `INT64` / `STRING` / `BYTES` types |
+| `mariadb` | MariaDB | DDL paste | MySQL-compatible; `AUTO_INCREMENT`, inline FKs |
+| `yugabyte` | YugabyteDB | DDL paste | PostgreSQL-compatible; `UUID`, inline `REFERENCES` |
+| `redshift` | Amazon Redshift | DDL paste | PostgreSQL-compatible; `IDENTITY`, `BIGINT` |
+| `snowflake` | Snowflake | DDL paste | `AUTOINCREMENT`, `VARIANT`, `NUMBER` |
+| `bigquery` | Google BigQuery | DDL paste | Backtick-qualified names, trailing `PRIMARY KEY`, `INT64` / `STRING` |
+| `databricks` | Databricks SQL / Spark SQL | DDL paste | `USING DELTA`, table-level FK constraints (alias: `spark-sql`) |
+| `singlestore` | SingleStore (MemSQL) | DDL paste | MySQL-compatible (alias: `memsql`) |
+| `sap-hana` | SAP HANA | DDL paste | `NVARCHAR`, identity columns, table-level FKs |
+| `teradata` | Teradata | DDL paste | `CREATE MULTISET TABLE`, table-level PK/FK |
+| `firebird` | Firebird | DDL paste | Inline `REFERENCES`, integer PKs |
+
+Unknown dialect ids on `POST /api/schema/import-ddl` return **400** with the list of
+supported ids from `GET /api/dialects`.
 
 The dialect selector sets the `source` label on the structural model (e.g.
 `ddl:db2`) and helps you pick the right DDL syntax when pasting; parsing is shared

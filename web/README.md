@@ -512,13 +512,15 @@ The **schema source dialect** is taken from your schema import automatically.
 | Dialect | Import |
 | --- | --- |
 | SQLite | **File upload** or DDL paste |
-| PostgreSQL, MySQL, MSSQL, SAP ASE (Sybase), ClickHouse, Oracle | DDL paste |
+| PostgreSQL, MySQL, MariaDB, MSSQL, SAP ASE (Sybase), ClickHouse, Oracle | DDL paste |
 | IBM Db2 | DDL paste — schema-qualified tables (`SALES.ORDERS`), quoted FKs |
-| CockroachDB | DDL paste — PostgreSQL-compatible (`IF NOT EXISTS`, `INT8`) |
+| CockroachDB, YugabyteDB, Amazon Redshift | DDL paste — PostgreSQL-compatible |
 | Amazon Aurora (PostgreSQL / MySQL) | DDL paste — same rules as PostgreSQL or MySQL |
-| Google Cloud Spanner | DDL paste — trailing `PRIMARY KEY`, `INT64` / `STRING` / `BYTES` |
+| Google Cloud Spanner, Google BigQuery | DDL paste — trailing `PRIMARY KEY`, cloud-native types |
+| Snowflake, Databricks SQL / Spark SQL | DDL paste — warehouse DDL (`AUTOINCREMENT`, `USING DELTA`, …) |
+| SingleStore (MemSQL), Firebird, SAP HANA, Teradata | DDL paste — see full matrix in docs |
 
-Full dialect IDs and parser notes: [docs/13-web-ui.md §5](../docs/13-web-ui.md#5-supported-sql-dialects).
+Full dialect IDs and parser notes: [docs/18-sql-dialects.md](../docs/18-sql-dialects.md) and [docs/13-web-ui.md §5](../docs/13-web-ui.md#5-supported-sql-dialects).
 
 ### CLI parity
 

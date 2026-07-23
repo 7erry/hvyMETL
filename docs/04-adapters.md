@@ -12,8 +12,8 @@ implementing one new file — no changes elsewhere. The shipped implementation w
 `better-sqlite3` (embedded, zero infrastructure) and powers the seven bundled example
 databases.
 
-**Only SQLite has a live adapter today.** The other ten dialects (PostgreSQL, MySQL,
-Oracle, …) import schema via pasted DDL — see [18-sql-dialects.md](18-sql-dialects.md).
+**Only SQLite has a live adapter today.** The other twenty-one dialects (PostgreSQL, MySQL,
+Oracle, Snowflake, BigQuery, …) import schema via pasted DDL — see [18-sql-dialects.md](18-sql-dialects.md).
 
 ## 2. Technical Details & Signature
 

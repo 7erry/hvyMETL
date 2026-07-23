@@ -13,7 +13,7 @@ import { loadProjectEnv } from './loadProjectEnv.js';
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '../..');
 loadProjectEnv(ROOT);
 import { createSqliteAdapter } from '../adapters/sqlite.js';
-import { DIALECTS } from '../dialects.js';
+import { DIALECTS, resolveImportDialect } from '../dialects.js';
 import { writeDesignArtifacts } from '../design/designFromModel.js';
 import { explainDesignRequest, runDesignForModel } from './runDesign.js';
 import { ALL_PROFILES, buildCustomProfileFromInput, getProfile } from '../profiles/profiles.js';
@@ -362,9 +362,15 @@ app.post('/api/profiles/infer', (req, res) => {
 /** Instant schema import from one DDL query / script. */
 app.post('/api/schema/import-ddl', (req, res) => {
   const ddl = String(req.body?.ddl ?? '');
-  const dialect = String(req.body?.dialect ?? 'postgresql');
   if (!ddl.trim()) {
     res.status(400).json({ error: 'ddl is required' });
+    return;
+  }
+  let dialect: string;
+  try {
+    dialect = resolveImportDialect(req.body?.dialect);
+  } catch (error) {
+    res.status(400).json({ error: String(error) });
     return;
   }
   try {

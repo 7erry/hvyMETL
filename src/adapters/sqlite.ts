@@ -40,12 +40,12 @@ type PragmaForeignKeyRow = {
  */
 export function sqlTypeToBsonType(sqlType: string): string {
   const normalized = sqlType.toUpperCase();
-  if (/(^|\b)(INT64|INT32|INT16|INT8|INTEGER|INT|SMALLINT|BIGINT|TINYINT)\b/.test(normalized)) return 'long';
-  if (/(^|\b)(FLOAT64|FLOAT32|REAL|FLOA|DOUB|NUMERIC|DECIMAL)\b/.test(normalized)) return 'double';
+  if (/(^|\b)(INT64|INT32|INT16|INT8|INTEGER|INT|SMALLINT|BIGINT|TINYINT|BYTEINT|NUMBER)\b/.test(normalized)) return 'long';
+  if (/(^|\b)(FLOAT64|FLOAT32|REAL|FLOA|DOUB|NUMERIC|DECIMAL|DOUBLE)\b/.test(normalized)) return 'double';
   if (/(^|\b)(BOOL|BOOLEAN)\b/.test(normalized)) return 'bool';
   if (/(DATE|TIME|TIMESTAMP)/.test(normalized)) return 'date';
-  if (/(BLOB|BYTES)/.test(normalized)) return 'binData';
-  if (/(STRING|CHAR|CLOB|TEXT|VARCHAR|NVARCHAR)/.test(normalized)) return 'string';
+  if (/(BLOB|BYTES|BINARY|VARBINARY)/.test(normalized)) return 'binData';
+  if (/(STRING|CHAR|CLOB|TEXT|VARCHAR|NVARCHAR|VARIANT|OBJECT|JSON|GEOGRAPHY)/.test(normalized)) return 'string';
   return 'string';
 }
 

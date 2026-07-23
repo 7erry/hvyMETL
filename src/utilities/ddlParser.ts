@@ -2,8 +2,10 @@
  * Lightweight DDL parser for instant schema import from pasted SQL.
  *
  * Extracts CREATE TABLE definitions (PostgreSQL, MySQL, SQLite, MSSQL, Sybase ASE,
- * Oracle, IBM Db2, CockroachDB, Amazon Aurora, Google Cloud Spanner) into the same
- * SqlStructuralModel shape the design engine consumes.
+ * Oracle, IBM Db2, CockroachDB, Amazon Aurora, Google Cloud Spanner, Snowflake,
+ * BigQuery, Redshift, Databricks/Spark SQL, MariaDB, YugabyteDB, SingleStore,
+ * SAP HANA, Teradata, Firebird) into the same SqlStructuralModel shape the design
+ * engine consumes.
  * Row counts default to 0; relationship stats use conservative defaults.
  */
 
@@ -12,7 +14,7 @@ import { sqlTypeToBsonType } from '../adapters/sqlite.js';
 
 /** Words that begin table/column constraint clauses (not part of the SQL type). */
 const CONSTRAINT_KEYWORD =
-  /\s+(?:GENERATED|IDENTITY|DEFAULT|NOT\s+NULL|NULL|PRIMARY\s+KEY|UNIQUE|CHECK|CONSTRAINT|REFERENCES|OPTIONS)\b/i;
+  /\s+(?:GENERATED|IDENTITY|AUTOINCREMENT|AUTO_INCREMENT|SERIAL|BIGSERIAL|SMALLSERIAL|DEFAULT|NOT\s+NULL|NULL|PRIMARY\s+KEY|UNIQUE|CHECK|CONSTRAINT|REFERENCES|OPTIONS|COMMENT)\b/i;
 
 /** Parse one SQL identifier (quoted or bare) starting at pos. */
 function parseIdentifierAt(text: string, pos: number): { value: string; next: number } | null {
@@ -97,7 +99,7 @@ function findCreateTableBlocks(
   ddl: string,
 ): { tableName: string; body: string; trailingPrimaryKey: string[] }[] {
   const blocks: { tableName: string; body: string; trailingPrimaryKey: string[] }[] = [];
-  const headRe = /CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?/gi;
+  const headRe = /CREATE\s+(?:OR\s+REPLACE\s+TABLE|MULTISET\s+TABLE|TABLE)\s+(?:IF\s+NOT\s+EXISTS\s+)?/gi;
   let headMatch: RegExpExecArray | null;
 
   while ((headMatch = headRe.exec(ddl)) !== null) {
@@ -196,7 +198,10 @@ function isNonColumnConstraint(line: string): boolean {
   if (/^CONSTRAINT\s+\w+\s+FOREIGN\s+KEY\s*\(/i.test(trimmed)) return true;
   if (/^CONSTRAINT\s+\w+\s+(?:UNIQUE|CHECK|PRIMARY\s+KEY)\b/i.test(trimmed)) return true;
   if (/^INTERLEAVE\s+IN\s+PARENT\b/i.test(trimmed)) return true;
-  if (/^(?:KEY|INDEX)\s/i.test(trimmed)) return true;
+  if (/^(?:KEY|INDEX|PARTITION|CLUSTER)\s/i.test(trimmed)) return true;
+  if (/^USING\s+(?:DELTA|PARQUET|ICEBERG)\b/i.test(trimmed)) return true;
+  if (/^STORED\s+AS\b/i.test(trimmed)) return true;
+  if (/^WITH\s*\(/i.test(trimmed)) return true;
   return false;
 }
 
