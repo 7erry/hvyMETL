@@ -9,6 +9,8 @@ import {
   MCP_INSPECT_UNAVAILABLE_MESSAGE,
   callMongoMcpTool,
   isMongoMcpEnabled,
+  withMongoMcpSession,
+  type MongoMcpToolCaller,
 } from './mongoMcpClient.js';
 import {
   assertDatabaseAccess,
@@ -191,12 +193,8 @@ export async function invokeMongoInspectTool(
   let knownLogicalDatabases: string[] = [];
   let databaseSizes = new Map<string, number | undefined>();
   try {
-    clusterNames = await fetchClusterDatabaseNames();
-    scope = await resolveTenantMongoInspectScope(req, { clusterDatabaseNames: clusterNames });
+    scope = await resolveTenantMongoInspectScope(req);
     knownLogicalDatabases = await loadTenantLogicalTargetDatabases(scope.tenantId);
-    const resolved = resolveInspectScopeForCluster(scope, clusterNames, knownLogicalDatabases);
-    scope = resolved.scope;
-    databaseSizes = buildDatabaseSizeMap(clusterNames.map((name) => ({ name })));
   } catch (error) {
     return {
       ok: false,
@@ -207,47 +205,61 @@ export async function invokeMongoInspectTool(
   }
 
   try {
-    const { mcpArgs, logicalDatabase, physicalDatabase } = await buildMcpArguments(
-      scope,
-      tool,
-      args,
-      clusterNames,
-      knownLogicalDatabases,
-      databaseSizes,
-    );
-    const mcpName = MONGO_INSPECT_MCP_TOOL_MAP[tool];
-    const raw = await callMongoMcpTool(mcpName, mcpArgs);
-    if (tool === 'listMongoDatabases') {
-      const payload = normalizeListDatabasesPayload(raw);
-      for (const entry of payload.databases ?? []) {
-        databaseSizes.set(entry.name, entry.size);
+    return await withMongoMcpSession(async (callTool) => {
+      clusterNames = await fetchClusterDatabaseNames(callTool);
+      const resolved = resolveInspectScopeForCluster(scope, clusterNames, knownLogicalDatabases);
+      scope = resolved.scope;
+      databaseSizes = buildDatabaseSizeMap(clusterNames.map((name) => ({ name })));
+
+      const { mcpArgs, logicalDatabase, physicalDatabase } = await buildMcpArguments(
+        scope,
+        tool,
+        args,
+        clusterNames,
+        knownLogicalDatabases,
+        databaseSizes,
+      );
+      if (physicalDatabase) {
+        assertPhysicalDatabaseOnCluster(scope, logicalDatabase, physicalDatabase, clusterNames);
       }
-    }
-    let data = sanitizeInspectPayload(
-      scope,
-      tool,
-      logicalDatabase,
-      args,
-      raw,
-      clusterNames,
-      knownLogicalDatabases,
-      databaseSizes,
-    );
-    if (tool === 'listMongoCollections' && physicalDatabase) {
-      const payload = data as { database: string; collections: Array<{ name: string }>; totalCount: number };
-      const collections = await enrichCollectionSummaries(physicalDatabase, payload.collections ?? []);
-      data = {
-        database: payload.database,
-        collections,
-        totalCount: collections.length,
+      const mcpName = MONGO_INSPECT_MCP_TOOL_MAP[tool];
+      const raw = await callTool(mcpName, mcpArgs);
+      if (tool === 'listMongoDatabases') {
+        const payload = normalizeListDatabasesPayload(raw);
+        for (const entry of payload.databases ?? []) {
+          databaseSizes.set(entry.name, entry.size);
+        }
+      }
+      let data = sanitizeInspectPayload(
+        scope,
+        tool,
+        logicalDatabase,
+        args,
+        raw,
+        clusterNames,
+        knownLogicalDatabases,
+        databaseSizes,
+      );
+      if (tool === 'listMongoCollections' && physicalDatabase) {
+        const payload = data as { database: string; collections: Array<{ name: string }>; totalCount: number };
+        const collections = await enrichCollectionSummaries(
+          physicalDatabase,
+          payload.collections ?? [],
+          callTool,
+        );
+        data = {
+          database: payload.database,
+          collections,
+          totalCount: collections.length,
+        };
+      }
+      return {
+        ok: true,
+        tool,
+        summary: summarizeInspectResult(tool, data),
+        data,
       };
-    }
-    return {
-      ok: true,
-      tool,
-      summary: summarizeInspectResult(tool, data),
-      data,
-    };
+    });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     const serviceUnavailable = isServiceUnavailableError(message);
@@ -445,10 +457,22 @@ function clampNumber(value: unknown, fallback: number, min: number, max: number)
   return Math.min(max, Math.max(min, Math.round(numeric)));
 }
 
-async function fetchClusterDatabaseNames(): Promise<string[]> {
-  const raw = await callMongoMcpTool('list-databases', { connectionId: MCP_CONNECTION_ID });
+async function fetchClusterDatabaseNames(callTool: MongoMcpToolCaller = callMongoMcpTool): Promise<string[]> {
+  const raw = await callTool('list-databases', { connectionId: MCP_CONNECTION_ID });
   const payload = normalizeListDatabasesPayload(raw);
   return (payload.databases ?? []).map((entry) => entry.name);
+}
+
+function assertPhysicalDatabaseOnCluster(
+  scope: TenantMongoInspectScope,
+  logicalDatabase: string,
+  physicalDatabase: string,
+  clusterNames: string[],
+): void {
+  if (clusterNames.includes(physicalDatabase)) return;
+  throw new Error(
+    `Database "${logicalDatabase}" was not found on the cluster. Run listMongoDatabases and use one of the returned names.`,
+  );
 }
 
 /** Pick the physical database that exists on the cluster for a logical import name. */

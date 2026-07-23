@@ -162,7 +162,53 @@ export function parseMongoMcpToolPayload(content: unknown): unknown {
 }
 
 /** Connect to the MCP server, run one tool, and close the session. */
-export async function callMongoMcpTool(name: string, args: Record<string, unknown>): Promise<unknown> {
+export type MongoMcpToolCaller = (name: string, args: Record<string, unknown>) => Promise<unknown>;
+
+function normalizeMongoMcpError(error: unknown): Error {
+  const message = error instanceof Error ? error.message : String(error);
+  if (/unexpected token.*[<']|is not valid json/i.test(message)) {
+    return new Error(
+      'MongoDB inspect returned an unexpected HTML response. The inspection service may be overloaded — try again in a moment.',
+    );
+  }
+  if (/fetch failed|ECONNREFUSED|ENOTFOUND|timed out|aborted/i.test(message)) {
+    return new Error(MCP_INSPECT_UNAVAILABLE_MESSAGE);
+  }
+  return error instanceof Error ? error : new Error(message);
+}
+
+async function executeMongoMcpToolCall(
+  client: Client,
+  name: string,
+  args: Record<string, unknown>,
+): Promise<unknown> {
+  const abort = AbortSignal.timeout(MCP_TOOL_TIMEOUT_MS);
+  const result = await client.callTool({ name, arguments: args }, undefined, { signal: abort });
+  if (result.isError) {
+    const message =
+      Array.isArray(result.content) &&
+      result.content[0] &&
+      typeof result.content[0] === 'object' &&
+      'text' in result.content[0]
+        ? String((result.content[0] as { text: string }).text)
+        : `MongoDB MCP tool "${name}" failed.`;
+    throw new Error(message);
+  }
+  return extractMongoMcpToolPayload({
+    content: result.content,
+    structuredContent:
+      'structuredContent' in result &&
+      result.structuredContent &&
+      typeof result.structuredContent === 'object'
+        ? (result.structuredContent as Record<string, unknown>)
+        : undefined,
+  });
+}
+
+/** Reuse one MCP session for multiple tool calls (avoids connection storms during collection enrichment). */
+export async function withMongoMcpSession<T>(
+  fn: (callTool: MongoMcpToolCaller) => Promise<T>,
+): Promise<T> {
   const config = readMongoMcpConfig();
   if (!config.enabled) {
     throw new Error(MCP_INSPECT_UNAVAILABLE_MESSAGE);
@@ -173,32 +219,25 @@ export async function callMongoMcpTool(name: string, args: Record<string, unknow
   });
   const client = new Client({ name: 'hvymetl-copilot', version: '1.9.0' });
 
-  const abort = AbortSignal.timeout(MCP_TOOL_TIMEOUT_MS);
   try {
     await client.connect(transport);
-    const result = await client.callTool({ name, arguments: args }, undefined, { signal: abort });
-    if (result.isError) {
-      const message =
-        Array.isArray(result.content) &&
-        result.content[0] &&
-        typeof result.content[0] === 'object' &&
-        'text' in result.content[0]
-          ? String((result.content[0] as { text: string }).text)
-          : `MongoDB MCP tool "${name}" failed.`;
-      throw new Error(message);
-    }
-    return extractMongoMcpToolPayload({
-      content: result.content,
-      structuredContent:
-        'structuredContent' in result &&
-        result.structuredContent &&
-        typeof result.structuredContent === 'object'
-          ? (result.structuredContent as Record<string, unknown>)
-          : undefined,
-    });
+    const callTool: MongoMcpToolCaller = async (name, args) => {
+      try {
+        return await executeMongoMcpToolCall(client, name, args);
+      } catch (error) {
+        throw normalizeMongoMcpError(error);
+      }
+    };
+    return await fn(callTool);
+  } catch (error) {
+    throw normalizeMongoMcpError(error);
   } finally {
     await client.close().catch(() => undefined);
   }
+}
+
+export async function callMongoMcpTool(name: string, args: Record<string, unknown>): Promise<unknown> {
+  return withMongoMcpSession((callTool) => callTool(name, args));
 }
 
 /** Lightweight availability probe for copilot status and graceful degradation. */

@@ -857,7 +857,17 @@ export async function invokeCopilotMongoInspect(
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ tool, args }),
   });
-  const data = (await res.json()) as import('./copilot/types').MongoInspectInvokeResponse & { error?: string };
+  const contentType = res.headers.get('content-type') ?? '';
+  const body = await res.text();
+  if (!contentType.includes('application/json')) {
+    throw new Error(await readApiError(new Response(body, { status: res.status, headers: res.headers })));
+  }
+  let data: import('./copilot/types').MongoInspectInvokeResponse & { error?: string };
+  try {
+    data = JSON.parse(body) as typeof data;
+  } catch {
+    throw new Error('Invalid JSON in API response.');
+  }
   if (!res.ok && !data.summary) {
     throw new Error(data.error ?? res.statusText);
   }
