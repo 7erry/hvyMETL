@@ -124,7 +124,8 @@ npm run hvymetl -- repogen --plan out/iot/migration-plan.json --out out/iot/repo
 
 After **AI Migration Export**, use the **Repository language** dropdown and click
 **Generate repositories**. Generated files appear as tabs; **Download repositories**
-saves all files. See [13-web-ui.md](13-web-ui.md).
+downloads a single zip (`hvymetl-repositories-{language}.zip`) containing all generated
+source files. See [13-web-ui.md](13-web-ui.md).
 
 ### API
 

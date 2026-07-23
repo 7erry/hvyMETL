@@ -343,7 +343,7 @@ After **AI Migration Export**, the Migration Studio opens a full-screen view wit
 
 After **AI Migration Export**, choose a **Repository language** (13 MongoDB client
 drivers) and click **Generate repositories** to add connection, index, and repository
-source files as tabs. Use **Download repositories** to save the full set.
+source files as tabs. Use **Download repositories** to save one zip archive with the full set.
 
 ![Repository language picker](../web/docs/screenshots/repository-language-picker.png)
 

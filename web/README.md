@@ -409,7 +409,7 @@ editable text, per-file download, and **Download all**. Artifacts persist in
 After **AI Migration Export**, choose one of **13 MongoDB officially supported client
 languages** from the **Repository language** dropdown, then click **Generate
 repositories**. Generated connection, index, and repository files appear as tabs;
-use **Download repositories** to save the full set.
+use **Download repositories** to save one zip with the full generated source tree.
 
 ![Repository language picker showing 13 MongoDB client drivers](docs/screenshots/repository-language-picker.png)
 

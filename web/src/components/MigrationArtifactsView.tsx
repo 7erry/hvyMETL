@@ -6,6 +6,7 @@ import {
   generateRepositories,
   type RepogenLanguageOption,
 } from '../api';
+import { downloadRepositoriesZip, repositoriesZipFilename } from '../repositoryDownload';
 import type { MigrationArtifacts } from '../sessionState';
 import { ArtifactCodePanel } from './ArtifactCodePanel';
 import { ApiArtifactsExplorer } from './ApiArtifactsExplorer';
@@ -160,10 +161,11 @@ export function MigrationArtifactsView({ artifacts, onChange, onBack }: Migratio
   };
 
   const handleDownloadRepositories = () => {
-    if (!artifacts.repositories) return;
-    for (const file of artifacts.repositories.files) {
-      downloadText(file.relativePath, file.content, 'text/plain');
-    }
+    if (!artifacts.repositories?.files.length) return;
+    downloadRepositoriesZip(
+      artifacts.repositories.files,
+      repositoriesZipFilename(artifacts.repositories.language),
+    );
   };
 
   const handleGenerateRepositories = useCallback(async () => {
