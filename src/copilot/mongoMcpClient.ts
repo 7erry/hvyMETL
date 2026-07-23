@@ -222,7 +222,7 @@ export async function withMongoMcpSession<T>(
   const transport = new StreamableHTTPClientTransport(new URL(config.url), {
     requestInit: { headers: config.headers },
   });
-  const client = new Client({ name: 'hvymetl-copilot', version: '1.9.0' });
+  const client = new Client({ name: 'hvymetl-copilot', version: '2.0.0' });
 
   try {
     await client.connect(transport);
@@ -258,7 +258,7 @@ export async function probeMongoMcpAvailability(): Promise<{ available: boolean;
   const transport = new StreamableHTTPClientTransport(new URL(config.url), {
     requestInit: { headers: config.headers },
   });
-  const client = new Client({ name: 'hvymetl-copilot-probe', version: '1.9.0' });
+  const client = new Client({ name: 'hvymetl-copilot-probe', version: '2.0.0' });
   const abort = AbortSignal.timeout(MCP_PROBE_TIMEOUT_MS);
 
   try {

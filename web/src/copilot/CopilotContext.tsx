@@ -23,6 +23,7 @@ import {
   serializeWorkflowToolResult,
   type CopilotWorkflowHandlers,
 } from './workflowTools';
+import { buildCopilotHelpResponse, isCopilotHelpQuestion } from './copilotHelp';
 import { buildMongoInspectDelta, serializeMongoInspectToolResult } from './mongoInspectDisplay';
 import { buildMongoPlanContext } from './mongoPlanContextPayload';
 import { buildSchemaContextPayload } from './schemaContext';
@@ -509,6 +510,15 @@ export function CopilotProvider({
       if (!trimmed) return;
 
       appendMessage({ role: 'user', content: trimmed });
+
+      if (isCopilotHelpQuestion(trimmed)) {
+        appendMessage({
+          role: 'agent',
+          content: buildCopilotHelpResponse(),
+          markdown: true,
+        });
+        return;
+      }
 
       const directWorkflow = parseDirectWorkflowCommand(trimmed);
       if (directWorkflow) {

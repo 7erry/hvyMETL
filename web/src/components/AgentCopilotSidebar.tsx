@@ -165,8 +165,8 @@ export function AgentCopilotSidebar({ beforeJson = '', afterJson = '' }: AgentCo
             <div className="agent-copilot-sidebar__thread" ref={threadRef}>
               {copilot.messages.length === 0 ? (
                 <p className="agent-copilot-sidebar__empty">
-                  Ask about embeds, run <code>/guardrails</code>, or use quick actions below.{' '}
-                  <kbd>⌘K</kbd> toggles this panel.
+                  Ask about embeds, run <code>/guardrails</code>, or say{' '}
+                  <em>Guide me through the migration workflow</em>. <kbd>⌘K</kbd> toggles this panel.
                 </p>
               ) : null}
               {copilot.messages.map((message) => (

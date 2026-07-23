@@ -1,3 +1,37 @@
+## hvyMETL 2.0.0
+
+Major release focused on **guided migration workflow in Agent Copilot**, MongoDB inspect/analyze maturity, schema import breadth, and studio polish since 1.9.0.
+
+### Highlights
+
+- **Copilot migration workflow:** new tools to run each studio step — `clearSession`, `importSchemaDdl`, `importBuiltinExample`, `refreshDesign`, `runPipeline` — plus `listMongoCollections` to verify Atlas data. **Migration steps** quick chip and slash commands (`/clear-session`, `/refresh-design`, `/run-pipeline`).
+- **Copilot help:** asking *how can you help?* returns a capability overview with **Guide me through the migration workflow** as the suggested next prompt.
+- **MongoDB inspect & analyze (Phase 2):** `aggregateMongoCollection`, `explainMongoOperation`, and `compareMongoCollectionToPlan` via MCP, with structured UI tables for aggregation, explain, and plan comparison results.
+- **Inspect reliability:** tenant logical-database discovery (client prefix + hash/legacy names), large-database listing fixes, and duplicate listing suppression (no echoed markdown tables after tool cards).
+- **Agent Copilot UX:** markdown responses, typing indicator, chat input auto-focus, Query Translator layout (results-first split), SQL translation visible in tool cards, and tool calling always enabled.
+- **Query Translator:** `ORDER BY … DESC` maps to MongoDB sort `-1`; qualified column names (`o.status`) normalized in `$match` / `$sort`.
+- **Schema import:** 10 additional DDL dialects (22 total): Snowflake, BigQuery, Redshift, Databricks/Spark SQL, MariaDB, YugabyteDB, SingleStore, SAP HANA, Teradata, Firebird; dialect dropdown sorted A→Z.
+- **Design & embeds:** unchecking **Force embed** keeps child as a separate collection; default ER edge labels use **cardinality** notation (`N → 1`); time-series and multi-parent FK children excluded from default embed.
+- **Artifacts:** generated repositories download as a single `hvymetl-repositories-{language}.zip`.
+- **Hosted studio fixes:** custom workload telemetry **Apply profile** uses authenticated API calls; Atlas import DB names respect shared-tier length limits.
+
+### Copilot workflow (typical path)
+
+1. Clear session and import SQL (paste DDL or built-in example)
+2. **Refresh design** — ML/RAG MongoDB target schema
+3. **Run pipeline** — load CSV/SQLite into Atlas
+4. **List collections** — confirm imported data in a logical database
+
+Say *Guide me through the migration workflow* in copilot chat to walk through these steps interactively.
+
+### Verification
+
+- `npm test`
+- `npm run build`
+- `npm run build --prefix web`
+
+---
+
 ## hvyMETL 1.9.0
 
 Minor release adding **MongoDB inspect tools** to Agent Copilot (Phase 1) via a co-hosted MongoDB MCP HTTP server, plus wider resizable copilot/sidebar panels.
