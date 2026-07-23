@@ -11,6 +11,10 @@ import {
 import { executeAgentTool, parseCopilotCommand, type AgentToolContext, type AgentToolMutation } from './agentTools';
 import { analyzeMigrationRisks } from './guardrails';
 import { parseOpenAiToolCall, isServerMongoInspectToolCall } from './llmTools';
+import {
+  parseDirectMongoInspectCommand,
+  shouldSuppressListMongoDatabasesDisplay,
+} from './inspectCommandRouting';
 import { buildMongoInspectDelta, serializeMongoInspectToolResult } from './mongoInspectDisplay';
 import { buildMongoPlanContext } from './mongoPlanContextPayload';
 import { buildSchemaContextPayload } from './schemaContext';
@@ -309,6 +313,20 @@ export function CopilotProvider({
     [plan],
   );
 
+  const runMongoInspectDirect = useCallback(
+    async (tool: MongoInspectToolName, args: Record<string, unknown>) => {
+      setStatus('mutating');
+      const result = await runMongoInspectTool(tool, args);
+      appendMessage({
+        role: 'agent',
+        content: '',
+        toolExecution: result,
+      });
+      setStatus('idle');
+    },
+    [appendMessage, runMongoInspectTool],
+  );
+
   const runLlmTurn = useCallback(
     async (history: CopilotLlmMessage[]): Promise<CopilotLlmMessage[]> => {
       const schemaContext = buildSchemaContextPayload({
@@ -318,6 +336,9 @@ export function CopilotProvider({
         forceEmbedOverrides,
         guardrailIssues,
       });
+
+      const userMessage =
+        [...history].reverse().find((entry) => entry.role === 'user')?.content.trim() ?? '';
 
       let messages = [...history];
       const maxIterations = 6;
@@ -333,6 +354,11 @@ export function CopilotProvider({
         messages = [...messages, assistant];
 
         const toolCalls = assistant.tool_calls ?? [];
+        const parsedBatch = toolCalls
+          .map((toolCall) => parseOpenAiToolCall(toolCall))
+          .filter((parsed): parsed is NonNullable<typeof parsed> => parsed !== null);
+        const suppressListMongoDatabases = shouldSuppressListMongoDatabasesDisplay(userMessage, parsedBatch);
+
         if (assistant.content?.trim() && !toolCalls.length) {
           appendMessage({
             role: 'agent',
@@ -353,6 +379,24 @@ export function CopilotProvider({
           }
 
           if (isServerMongoInspectToolCall(parsed)) {
+            if (parsed.tool === 'listMongoDatabases' && suppressListMongoDatabases) {
+              messages = [
+                ...messages,
+                {
+                  role: 'tool',
+                  tool_call_id: toolCall.id,
+                  content: serializeMongoInspectToolResult({
+                    ok: true,
+                    tool: 'listMongoDatabases',
+                    summary:
+                      'Skipped listing databases — the user already named a target database or listMongoCollections runs in the same turn.',
+                    data: null,
+                  }),
+                },
+              ];
+              continue;
+            }
+
             const result = await runMongoInspectTool(parsed.tool, parsed.args);
             appendMessage({
               role: 'agent',
@@ -414,6 +458,12 @@ export function CopilotProvider({
 
       appendMessage({ role: 'user', content: trimmed });
 
+      const directInspect = parseDirectMongoInspectCommand(trimmed);
+      if (directInspect) {
+        void runMongoInspectDirect(directInspect.tool, directInspect.args);
+        return;
+      }
+
       const parsed = parseCopilotCommand(trimmed);
       if (parsed && 'message' in parsed) {
         if (parsed.message === '__clear_overrides__') {
@@ -466,7 +516,7 @@ export function CopilotProvider({
         setStatus('idle');
       }, 400);
     },
-    [appendMessage, llmConfigured, llmHistory, model, onClearOverrides, runLlmTurn, runTool],
+    [appendMessage, llmConfigured, llmHistory, model, onClearOverrides, runLlmTurn, runMongoInspectDirect, runTool],
   );
 
   const openWithPrompt = useCallback(
