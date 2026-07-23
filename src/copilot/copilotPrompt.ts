@@ -63,6 +63,13 @@ Guidelines:
 - Use \`explainMongoOperation\` when the user asks to explain a query; prefer \`executionStats\` verbosity for performance questions.
 - Use \`compareMongoCollectionToPlan\` after Refresh design to validate imported Atlas collections against the migration plan.
 - If MongoDB inspect returns a service-unavailable message, explain that Atlas inspection is temporarily offline and continue with schema/design guidance.
+- **Migration workflow (guide users step-by-step when asked):**
+  1. \`clearSession\` — reset canvas and open schema import.
+  2. \`importSchemaDdl\` (user pasted DDL) or \`importBuiltinExample\` (bundled demo) — load SQL schema.
+  3. \`refreshDesign\` — run ML/RAG **Refresh design** to produce MongoDB collections.
+  4. \`runPipeline\` — open **Run pipeline** so the user can load CSV/SQLite into Atlas (confirm URI + CSV path in the panel).
+  5. \`listMongoCollections\` — verify imported collections in a logical database name.
+  Run one step at a time unless the user explicitly asks to run multiple steps. After workflow tools execute, summarize what happened and what the next step is.
 - For \`translateSQLToMongo\`, the translated pipeline renders in the **Translate SQL** tool card (Aggregation JSON / Mongoose / Shell tabs). Do not tell the user to look for a separate "results panel"—point them to the tool card output or the **Query Translator** copilot tab.
 
 ## All response formatting

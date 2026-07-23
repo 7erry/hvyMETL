@@ -15,6 +15,11 @@ export type CopilotToolName =
   | 'detachTable'
   | 'runGuardrailCheck'
   | 'translateSQLToMongo'
+  | 'clearSession'
+  | 'importSchemaDdl'
+  | 'importBuiltinExample'
+  | 'refreshDesign'
+  | 'runPipeline'
   | 'listMongoDatabases'
   | 'listMongoCollections'
   | 'describeMongoCollectionSchema'
@@ -97,6 +102,13 @@ export type TranslateSqlArgs = {
   sqlQuery: string;
 };
 
+export type WorkflowToolName =
+  | 'clearSession'
+  | 'importSchemaDdl'
+  | 'importBuiltinExample'
+  | 'refreshDesign'
+  | 'runPipeline';
+
 export type AgentToolCall =
   | { tool: 'foldTable'; args: FoldTableArgs }
   | { tool: 'setEmbedOverride'; args: SetEmbedOverrideArgs }
@@ -173,6 +185,9 @@ export const COPILOT_SLASH_COMMANDS = [
   { command: '/translate', description: 'Open SQL query translator' },
   { command: '/clear-overrides', description: 'Clear embed overrides' },
   { command: '/highlight', description: 'Highlight tables on the canvas' },
+  { command: '/clear-session', description: 'Clear session and open schema import' },
+  { command: '/refresh-design', description: 'Run Refresh design (ML/RAG)' },
+  { command: '/run-pipeline', description: 'Open Run pipeline panel' },
 ] as const;
 
 export type CopilotQuickAction = {
@@ -181,6 +196,7 @@ export type CopilotQuickAction = {
 };
 
 export const QUICK_ACTION_CHIPS: CopilotQuickAction[] = [
+  { label: 'Migration steps', prompt: 'Guide me through the migration workflow: clear session, import SQL, refresh design, run pipeline, then list collections.' },
   { label: 'Check Guardrails', prompt: 'Check Guardrails' },
   { label: 'Optimize Schema', prompt: OPTIMIZE_SCHEMA_USER_PROMPT },
   { label: 'Translate SQL', prompt: 'Translate SQL' },

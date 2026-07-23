@@ -10,13 +10,19 @@ import {
 } from 'react';
 import { executeAgentTool, parseCopilotCommand, type AgentToolContext, type AgentToolMutation } from './agentTools';
 import { analyzeMigrationRisks } from './guardrails';
-import { parseOpenAiToolCall, isServerMongoInspectToolCall } from './llmTools';
+import { parseOpenAiToolCall, isServerMongoInspectToolCall, isWorkflowToolCallParsed } from './llmTools';
 import {
   parseDirectMongoInspectCommand,
   shouldSuppressListMongoDatabasesDisplay,
   isInspectOnlyUserMessage,
   looksLikeInspectListingEcho,
 } from './inspectCommandRouting';
+import {
+  executeWorkflowTool,
+  parseDirectWorkflowCommand,
+  serializeWorkflowToolResult,
+  type CopilotWorkflowHandlers,
+} from './workflowTools';
 import { buildMongoInspectDelta, serializeMongoInspectToolResult } from './mongoInspectDisplay';
 import { buildMongoPlanContext } from './mongoPlanContextPayload';
 import { buildSchemaContextPayload } from './schemaContext';
@@ -89,6 +95,7 @@ type CopilotProviderProps = {
   onApplyMutations: (mutation: AgentToolMutation) => void;
   onClearOverrides: () => void;
   onReRunPipeline?: () => void;
+  workflowHandlers: CopilotWorkflowHandlers;
 };
 
 export function CopilotProvider({
@@ -102,6 +109,7 @@ export function CopilotProvider({
   onApplyMutations,
   onClearOverrides,
   onReRunPipeline,
+  workflowHandlers,
 }: CopilotProviderProps) {
   const [open, setOpenState] = useState(false);
   const [activeTab, setActiveTabState] = useState<'chat' | 'translator'>('chat');
@@ -329,6 +337,20 @@ export function CopilotProvider({
     [appendMessage, runMongoInspectTool],
   );
 
+  const runWorkflowDirect = useCallback(
+    async (call: Parameters<typeof executeWorkflowTool>[0]) => {
+      setStatus('mutating');
+      const result = await executeWorkflowTool(call, workflowHandlers);
+      appendMessage({
+        role: 'agent',
+        content: result.summary,
+        toolExecution: result,
+      });
+      setStatus('idle');
+    },
+    [appendMessage, workflowHandlers],
+  );
+
   const runLlmTurn = useCallback(
     async (history: CopilotLlmMessage[]): Promise<CopilotLlmMessage[]> => {
       const schemaContext = buildSchemaContextPayload({
@@ -430,6 +452,24 @@ export function CopilotProvider({
             continue;
           }
 
+          if (isWorkflowToolCallParsed(parsed)) {
+            const result = await executeWorkflowTool(parsed, workflowHandlers);
+            appendMessage({
+              role: 'agent',
+              content: result.summary,
+              toolExecution: result,
+            });
+            messages = [
+              ...messages,
+              {
+                role: 'tool',
+                tool_call_id: toolCall.id,
+                content: serializeWorkflowToolResult(result),
+              },
+            ];
+            continue;
+          }
+
           const result = executeTool(parsed);
           appendMessage({
             role: 'agent',
@@ -459,6 +499,7 @@ export function CopilotProvider({
       model,
       plan,
       runMongoInspectTool,
+      workflowHandlers,
     ],
   );
 
@@ -468,6 +509,12 @@ export function CopilotProvider({
       if (!trimmed) return;
 
       appendMessage({ role: 'user', content: trimmed });
+
+      const directWorkflow = parseDirectWorkflowCommand(trimmed);
+      if (directWorkflow) {
+        void runWorkflowDirect(directWorkflow);
+        return;
+      }
 
       const directInspect = parseDirectMongoInspectCommand(trimmed);
       if (directInspect) {
@@ -527,7 +574,7 @@ export function CopilotProvider({
         setStatus('idle');
       }, 400);
     },
-    [appendMessage, llmConfigured, llmHistory, model, onClearOverrides, runLlmTurn, runMongoInspectDirect, runTool],
+    [appendMessage, llmConfigured, llmHistory, model, onClearOverrides, runLlmTurn, runMongoInspectDirect, runWorkflowDirect, runTool],
   );
 
   const openWithPrompt = useCallback(

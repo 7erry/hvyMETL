@@ -8,6 +8,7 @@ import { WorkspaceCanvasShell } from './components/WorkspaceCanvasShell';
 import { CopilotHotkeys } from './components/CopilotHotkeys';
 import { CopilotProvider, useCopilot } from './copilot/CopilotContext';
 import type { AgentToolMutation } from './copilot/agentTools';
+import type { CopilotWorkflowHandlers } from './copilot/workflowTools';
 import { suggestPipelineSelfHeal } from './copilot/selfHeal';
 import { MongoSchemaCanvas } from './components/MongoSchemaCanvas';
 import { TableDetails } from './components/TableDetails';
@@ -698,8 +699,10 @@ export default function App() {
     }
   };
 
-  const handleGeneratePlan = async () => {
-    if (!designModel) return;
+  const handleGeneratePlan = async (): Promise<{ ok: boolean; summary: string }> => {
+    if (!designModel) {
+      return { ok: false, summary: 'No schema loaded.' };
+    }
     try {
       setDesigningPlan(true);
       setStatus('Running ML/RAG design engine for MongoDB schema…');
@@ -745,15 +748,23 @@ export default function App() {
         schemaPhase: 'after',
       }));
       const summary = formatTransformSummary(meta);
+      let statusMessage: string;
       if (!meta.hasRowStats) {
-        setStatus(hasCardinalityOverrides
+        statusMessage = hasCardinalityOverrides
           ? `${summary}. Developer embed overrides applied where provided; add CSV or a .db file for measured row counts.`
-          : `${summary}. Add CSV exports (or import a .db file) so embed/subset/bucket patterns can fold tables.`);
+          : `${summary}. Add CSV exports (or import a .db file) so embed/subset/bucket patterns can fold tables.`;
       } else {
-        setStatus(`${summary}. ${meta.csvEnriched ? 'CSV-enriched' : 'Introspection stats'} · ${result.retrievalStrategy ?? 'RAG'}.`);
+        statusMessage = `${summary}. ${meta.csvEnriched ? 'CSV-enriched' : 'Introspection stats'} · ${result.retrievalStrategy ?? 'RAG'}.`;
       }
+      setStatus(statusMessage);
+      return {
+        ok: true,
+        summary: `${statusMessage} Next: run runPipeline to load data into Atlas, then listMongoCollections to verify.`,
+      };
     } catch (e) {
-      setStatus(`Design failed: ${describeApiError(e)}`);
+      const message = describeApiError(e);
+      setStatus(`Design failed: ${message}`);
+      return { ok: false, summary: message };
     } finally {
       setDesigningPlan(false);
     }
@@ -877,6 +888,66 @@ export default function App() {
     setStatus('Session cleared.');
   };
 
+  const copilotWorkflowHandlers = useMemo<CopilotWorkflowHandlers>(
+    () => ({
+      clearSession: () => {
+        handleClearSession();
+      },
+      importSchemaDdl: async ({ ddl: ddlText, dialect: importDialect }) => {
+        try {
+          setStatus('Importing schema…');
+          const resolvedDialect = importDialect ?? dialect;
+          const { model: importedModel, inferred } = await importDdl(ddlText, resolvedDialect);
+          await applySchema(ddlText, importedModel, inferred?.profileId);
+          return {
+            ok: true,
+            summary: `Imported ${importedModel.tables.length} table(s). Next: run refreshDesign.`,
+            delta: [`tables: ${importedModel.tables.length}`],
+          };
+        } catch (e) {
+          const summary = describeApiError(e);
+          setStatus(`Import failed: ${summary}`);
+          return { ok: false, summary };
+        }
+      },
+      importBuiltinExample: async (exampleId) => {
+        try {
+          setStatus('Loading built-in example…');
+          const result = await importBuiltinExample(exampleId);
+          setSessionField('dialect', result.dialect);
+          setSessionField('ddl', result.ddl);
+          const nextProfileId = result.suggestedProfileId ?? result.inferred?.profileId;
+          await applySchema(result.ddl, result.model, nextProfileId);
+          return {
+            ok: true,
+            summary: `Loaded example "${result.label}" (${result.model.tables.length} tables). Next: run refreshDesign.`,
+            delta: [`example: ${exampleId}`, `tables: ${result.model.tables.length}`],
+          };
+        } catch (e) {
+          const summary = describeApiError(e);
+          setStatus(`Example import failed: ${summary}`);
+          return { ok: false, summary };
+        }
+      },
+      refreshDesign: () => handleGeneratePlan(),
+      runPipeline: () => {
+        if (!model) {
+          return {
+            ok: false,
+            summary: 'No schema loaded. Import SQL and refresh design before running the pipeline.',
+          };
+        }
+        setPipelineOpen(true);
+        return {
+          ok: true,
+          summary: 'Opened Run pipeline panel. Confirm MongoDB URI and CSV source, then click Run.',
+          delta: ['pipeline modal open'],
+        };
+      },
+    }),
+    [applySchema, dialect, handleGeneratePlan, model],
+  );
+
   const diagramLegend = useMemo(() => {
     if (view !== 'diagram' || uiRole !== 'developer') return null;
     if (schemaPhase === 'before' && model) {
@@ -911,6 +982,7 @@ export default function App() {
       onApplyMutations={handleCopilotMutations}
       onClearOverrides={handleClearCopilotOverrides}
       onReRunPipeline={() => setPipelineOpen(true)}
+      workflowHandlers={copilotWorkflowHandlers}
     >
     <CopilotHotkeys />
     <div
