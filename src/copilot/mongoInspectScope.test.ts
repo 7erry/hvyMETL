@@ -2,6 +2,8 @@ import { describe, expect, it, vi } from 'vitest';
 import * as auth from '../server/auth.js';
 import {
   assertDatabaseAccess,
+  augmentTenantMongoInspectScope,
+  discoverPrefixCandidatesFromCluster,
   mergeDiscoveredLogicalDatabases,
   resolveTenantMongoInspectScope,
   sanitizeDatabaseListForClient,
@@ -69,6 +71,36 @@ describe('mongoInspectScope', () => {
     expect(sanitizeDatabaseListForClient(scope, [{ name: 'my_app', size: 1 }])).toEqual([
       { name: 'my_app', size: 1 },
     ]);
+    vi.restoreAllMocks();
+  });
+
+  it('discovers cluster prefixes that match the signed-in user identity slug', async () => {
+    vi.spyOn(auth, 'isAuthConfigured').mockReturnValue(true);
+    vi.spyOn(auth, 'resolveAuthDisplayName').mockResolvedValue('Terry Walters');
+
+    const req = {
+      auth: { payload: { sub: 'google-oauth2|abc', email: 'terry.walters@example.com' } },
+      headers: { authorization: 'Bearer token' },
+    } as Parameters<typeof resolveTenantMongoInspectScope>[0];
+
+    const scope = await resolveTenantMongoInspectScope(req, {
+      clusterDatabaseNames: ['terry_walters__mytrains', 'other_user__app'],
+    });
+
+    expect(discoverPrefixCandidatesFromCluster(['terry_walters__mytrains'], ['terry_walters'])).toEqual([
+      'terry_walters',
+    ]);
+    expect(scope.prefixCandidates).toContain('terry_walters');
+    expect(
+      sanitizeDatabaseListForClient(scope, [{ name: 'terry_walters__mytrains', size: 100 }]),
+    ).toEqual([{ name: 'mytrains', size: 100 }]);
+
+    const augmented = augmentTenantMongoInspectScope(
+      scope,
+      ['terry_walters__mytrains'],
+      ['terry_walters'],
+    );
+    expect(augmented.resolvePhysicalDatabase('mytrains')).toBe('terry_walters__mytrains');
     vi.restoreAllMocks();
   });
 });

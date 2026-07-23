@@ -8,6 +8,7 @@ import { isAuthConfigured, readBearerToken, resolveAuthDisplayName } from '../se
 import {
   DEFAULT_LOGICAL_TARGET_DB,
   TENANT_DB_SEPARATOR,
+  authIdentitySlugCandidates,
   legacyTenantImportDatabaseName,
   parseLogicalTargetDb,
   resolvePhysicalTargetDb,
@@ -41,7 +42,10 @@ export type TenantMongoInspectScope = {
 };
 
 /** Build inspect scope for the authenticated request (or local-dev when auth is off). */
-export async function resolveTenantMongoInspectScope(req: RequestWithAuth): Promise<TenantMongoInspectScope> {
+export async function resolveTenantMongoInspectScope(
+  req: RequestWithAuth,
+  options?: { clusterDatabaseNames?: string[] },
+): Promise<TenantMongoInspectScope> {
   if (!isAuthConfigured()) {
     return buildScope({
       authEnabled: false,
@@ -54,14 +58,56 @@ export async function resolveTenantMongoInspectScope(req: RequestWithAuth): Prom
   const payload = req.auth?.payload;
   const displayName = await resolveAuthDisplayName(payload, readBearerToken(req));
   const tenantId = tenantIdFromPayload(payload);
+  const identitySlugs = authIdentitySlugCandidates(payload, displayName);
   const prefixCandidates = tenantDbPrefixCandidates(payload, displayName);
   const primaryPrefix = (await tenantDbPrefixFromRequest(req)) || prefixCandidates[0] || 'local-dev';
 
-  return buildScope({
+  let scope = buildScope({
     authEnabled: true,
     tenantId,
     primaryPrefix,
     prefixCandidates: prefixCandidates.length ? prefixCandidates : [primaryPrefix],
+  });
+
+  if (options?.clusterDatabaseNames?.length) {
+    scope = augmentTenantMongoInspectScope(scope, options.clusterDatabaseNames, identitySlugs);
+  }
+
+  return scope;
+}
+
+/** Add cluster prefixes that match the signed-in user's identity slugs. */
+export function discoverPrefixCandidatesFromCluster(
+  clusterDatabaseNames: string[],
+  identitySlugs: string[],
+): string[] {
+  const discovered = new Set(identitySlugs);
+  for (const physical of clusterDatabaseNames) {
+    const separatorIndex = physical.indexOf(TENANT_DB_SEPARATOR);
+    if (separatorIndex <= 0) continue;
+    const prefix = physical.slice(0, separatorIndex);
+    if (identitySlugs.includes(prefix)) {
+      discovered.add(prefix);
+    }
+  }
+  return [...discovered];
+}
+
+/** Expand inspect scope when Atlas already contains prefixed databases for this user. */
+export function augmentTenantMongoInspectScope(
+  scope: TenantMongoInspectScope,
+  clusterDatabaseNames: string[],
+  identitySlugs: string[],
+): TenantMongoInspectScope {
+  const merged = [
+    ...new Set([...scope.prefixCandidates, ...discoverPrefixCandidatesFromCluster(clusterDatabaseNames, identitySlugs)]),
+  ];
+  if (merged.length === scope.prefixCandidates.length) return scope;
+  return buildScope({
+    authEnabled: scope.authEnabled,
+    tenantId: scope.tenantId,
+    primaryPrefix: scope.primaryPrefix,
+    prefixCandidates: merged,
   });
 }
 

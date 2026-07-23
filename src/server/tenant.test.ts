@@ -35,6 +35,9 @@ describe('tenant helpers', () => {
   it('derives a user prefix from Auth0 profile fields', () => {
     expect(tenantDbPrefixFromPayload({ name: 'Terry Walters' })).toBe('terry_walters');
     expect(tenantDbPrefixFromPayload({ email: 'terry.walters@example.com' })).toBe('terry_walters');
+    expect(
+      tenantDbPrefixFromPayload({ given_name: 'Terry', family_name: 'Walters', sub: 'auth0|abc' }),
+    ).toBe('terry_walters');
     expect(tenantDbPrefixFromPayload({ sub: 'auth0|abc' })).toMatch(/^u_[a-f0-9]{8}$/);
   });
 

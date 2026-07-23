@@ -157,21 +157,50 @@ export function tenantDbPrefixFromDisplayName(raw: string): string | null {
 
 /** Derive a stable MongoDB namespace prefix from Auth0 JWT claims (sync; no userinfo fetch). */
 export function tenantDbPrefixFromPayload(payload: Record<string, unknown> | undefined): string {
-  const displayName = readAuthDisplayName(payload);
-  const fromDisplay = displayName ? tenantDbPrefixFromDisplayName(displayName) : null;
-  if (fromDisplay) return fromDisplay;
-  const sub = typeof payload?.sub === 'string' ? payload.sub : '';
-  return sub ? tenantDbPrefixFromSub(sub) : LOCAL_DEV_TENANT_ID;
+  const candidates = authIdentitySlugCandidates(payload);
+  const fromProfile = candidates.find((slug) => !slug.startsWith('u_'));
+  if (fromProfile) return fromProfile;
+  return candidates[0] ?? LOCAL_DEV_TENANT_ID;
 }
 
 /** Resolve the tenant DB prefix using the same display name shown in the web UI header. */
 export async function tenantDbPrefixFromRequest(req: RequestWithAuth): Promise<string> {
   const payload = req.auth?.payload;
   const displayName = await resolveAuthDisplayName(payload, readBearerToken(req));
-  const fromDisplay = displayName ? tenantDbPrefixFromDisplayName(displayName) : null;
-  if (fromDisplay) return fromDisplay;
-  const sub = typeof payload?.sub === 'string' ? payload.sub : '';
-  return sub ? tenantDbPrefixFromSub(sub) : LOCAL_DEV_TENANT_ID;
+  const candidates = authIdentitySlugCandidates(payload, displayName);
+  const fromProfile = candidates.find((slug) => !slug.startsWith('u_'));
+  if (fromProfile) return fromProfile;
+  return candidates[0] ?? LOCAL_DEV_TENANT_ID;
+}
+
+/** Collect slug prefixes derived from Auth0 profile fields for import DB ownership checks. */
+export function authIdentitySlugCandidates(
+  payload: Record<string, unknown> | undefined,
+  displayName?: string,
+): string[] {
+  const slugs = new Set<string>();
+  const givenName = typeof payload?.given_name === 'string' ? payload.given_name.trim() : '';
+  const familyName = typeof payload?.family_name === 'string' ? payload.family_name.trim() : '';
+  const combinedName = [givenName, familyName].filter(Boolean).join(' ');
+
+  const fields = [
+    displayName,
+    readAuthDisplayName(payload),
+    combinedName || undefined,
+    typeof payload?.nickname === 'string' ? payload.nickname : undefined,
+    typeof payload?.preferred_username === 'string' ? payload.preferred_username : undefined,
+    typeof payload?.email === 'string' ? payload.email : undefined,
+  ];
+
+  for (const raw of fields) {
+    if (typeof raw !== 'string' || !raw.trim()) continue;
+    const slug = tenantDbPrefixFromDisplayName(raw);
+    if (slug) slugs.add(slug);
+  }
+
+  const rawSub = typeof payload?.sub === 'string' ? payload.sub.trim() : '';
+  if (rawSub) slugs.add(tenantDbPrefixFromSub(rawSub));
+  return [...slugs];
 }
 
 /** All import-database prefixes that may belong to one Auth0 user (display name, sub hash, legacy). */
@@ -179,13 +208,7 @@ export function tenantDbPrefixCandidates(
   payload: Record<string, unknown> | undefined,
   displayName?: string,
 ): string[] {
-  const prefixes = new Set<string>();
-  const resolvedDisplay = displayName?.trim() || readAuthDisplayName(payload);
-  const fromDisplay = resolvedDisplay ? tenantDbPrefixFromDisplayName(resolvedDisplay) : null;
-  if (fromDisplay) prefixes.add(fromDisplay);
-  const rawSub = typeof payload?.sub === 'string' ? payload.sub.trim() : '';
-  if (rawSub) prefixes.add(tenantDbPrefixFromSub(rawSub));
-  return [...prefixes];
+  return authIdentitySlugCandidates(payload, displayName);
 }
 
 /** Legacy pipeline import database name before `{prefix}__{logical}` naming (hvymetl_{tenantId}). */

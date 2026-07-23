@@ -62,4 +62,41 @@ describe('mongoInspectService', () => {
     });
     vi.restoreAllMocks();
   });
+
+  it('lists collections from the discovered logical database when database arg is omitted', async () => {
+    vi.spyOn(mongoMcpClient, 'isMongoMcpEnabled').mockReturnValue(true);
+    vi.spyOn(mongoMcpClient, 'callMongoMcpTool').mockImplementation(async (name, args) => {
+      if (name === 'list-databases') {
+        return {
+          databases: [
+            { name: 'terry_walters__csv_to_atlas', size: 1 },
+            { name: 'terry_walters__mytrains', size: 500 },
+          ],
+          totalCount: 2,
+        };
+      }
+      expect(args).toEqual({ connectionId: 'preconfigured', database: 'terry_walters__mytrains' });
+      return {
+        collections: [{ name: 'stations' }, { name: 'trains' }],
+        totalCount: 2,
+      };
+    });
+    vi.spyOn(auth, 'isAuthConfigured').mockReturnValue(true);
+    vi.spyOn(auth, 'resolveAuthDisplayName').mockResolvedValue('Terry Walters');
+
+    const req = {
+      auth: { payload: { sub: 'google-oauth2|abc' } },
+      headers: { authorization: 'Bearer token' },
+    } as import('express').Request;
+
+    const result = await invokeMongoInspectTool(req, 'listMongoCollections', {});
+    expect(result.ok).toBe(true);
+    expect(result.summary).toBe('Listed 2 collection(s) in mytrains.');
+    expect(result.data).toEqual({
+      database: 'mytrains',
+      collections: [{ name: 'stations' }, { name: 'trains' }],
+      totalCount: 2,
+    });
+    vi.restoreAllMocks();
+  });
 });
