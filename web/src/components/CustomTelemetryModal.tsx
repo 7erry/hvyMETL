@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { buildCustomProfile, type CustomProfileInput } from '../customProfileShared';
+import { buildCustomProfile, type CustomProfileInput } from '../api';
 import type { WorkloadProfile } from '../profileTypes';
 
 export type { CustomProfileInput, WorkloadProfile };

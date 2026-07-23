@@ -1,5 +1,5 @@
 import type { DiagramExport, Dialect, Profile, SqlStructuralModel } from './types';
-import type { ProfileRequestFields, WorkloadProfile } from './customProfileShared';
+import type { CustomProfileInput, ProfileRequestFields, WorkloadProfile } from './customProfileShared';
 import { formatAuthError, toAuthError } from './auth/authErrors';
 import type { CopilotChatApiResponse, CopilotLlmMessage, CopilotStatusResponse } from './copilot/types';
 import type { CopilotSchemaContextPayload } from './copilot/schemaContext';
@@ -179,6 +179,18 @@ export async function fetchProfiles(): Promise<Profile[]> {
   const data = await res.json();
   if (!Array.isArray(data)) throw new Error('Profiles API returned invalid data');
   return data;
+}
+
+/** Build a custom workload profile from telemetry and driver tuning (requires auth when enabled). */
+export async function buildCustomProfile(input: CustomProfileInput): Promise<WorkloadProfile> {
+  const data = await parseApiJsonResponse<{ profile: WorkloadProfile }>(
+    await apiFetch(`${base}/api/profiles/custom`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(input),
+    }),
+  );
+  return data.profile;
 }
 
 export async function fetchDialects(): Promise<Dialect[]> {

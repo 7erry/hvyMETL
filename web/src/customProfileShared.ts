@@ -41,19 +41,6 @@ export type WorkloadProfile = {
   };
 };
 
-const base = '';
-
-export async function buildCustomProfile(input: CustomProfileInput): Promise<WorkloadProfile> {
-  const res = await fetch(`${base}/api/profiles/custom`, {
-    method: 'POST',
-    headers: { 'content-type': 'application/json' },
-    body: JSON.stringify(input),
-  });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error ?? res.statusText);
-  return data.profile;
-}
-
 export type ProfileRequestFields = {
   profileId: string;
   customProfile?: WorkloadProfile;
