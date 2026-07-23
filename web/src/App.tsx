@@ -9,6 +9,7 @@ import { CopilotHotkeys } from './components/CopilotHotkeys';
 import { CopilotProvider, useCopilot } from './copilot/CopilotContext';
 import type { AgentToolMutation } from './copilot/agentTools';
 import type { CopilotWorkflowHandlers } from './copilot/workflowTools';
+import { buildPipelineVerifyNextStep } from './copilot/workflowTools';
 import { suggestPipelineSelfHeal } from './copilot/selfHeal';
 import { MongoSchemaCanvas } from './components/MongoSchemaCanvas';
 import { TableDetails } from './components/TableDetails';
@@ -104,6 +105,21 @@ function PipelinePanelConnected(
       onPipelineFailure={(errors) => {
         const suggestion = suggestPipelineSelfHeal(errors);
         copilot.reportPipelineError(errors.join('\n'), suggestion);
+      }}
+      onComplete={(result) => {
+        props.onComplete(result);
+        if (result.ok && result.targetDb) {
+          const imported = result.imports.filter((entry) => entry.ok).length;
+          copilot.showWorkflowResult({
+            tool: 'runPipeline',
+            summary: `Pipeline imported ${imported} collection${imported === 1 ? '' : 's'} into ${result.targetDb}.`,
+            delta: result.imports.map(
+              (entry) => `${entry.collection}: ${entry.ok ? `${entry.insertedCount ?? '?'} docs` : entry.error ?? 'failed'}`,
+            ),
+            ok: true,
+            nextStep: buildPipelineVerifyNextStep(result.targetDb),
+          });
+        }
       }}
     />
   );
@@ -759,7 +775,7 @@ export default function App() {
       setStatus(statusMessage);
       return {
         ok: true,
-        summary: `${statusMessage} Next: run runPipeline to load data into Atlas, then listMongoCollections to verify.`,
+        summary: statusMessage,
       };
     } catch (e) {
       const message = describeApiError(e);
@@ -901,7 +917,7 @@ export default function App() {
           await applySchema(ddlText, importedModel, inferred?.profileId);
           return {
             ok: true,
-            summary: `Imported ${importedModel.tables.length} table(s). Next: run refreshDesign.`,
+            summary: `Imported ${importedModel.tables.length} table(s).`,
             delta: [`tables: ${importedModel.tables.length}`],
           };
         } catch (e) {
@@ -920,7 +936,7 @@ export default function App() {
           await applySchema(result.ddl, result.model, nextProfileId);
           return {
             ok: true,
-            summary: `Loaded example "${result.label}" (${result.model.tables.length} tables). Next: run refreshDesign.`,
+            summary: `Loaded example "${result.label}" (${result.model.tables.length} tables).`,
             delta: [`example: ${exampleId}`, `tables: ${result.model.tables.length}`],
           };
         } catch (e) {
@@ -940,7 +956,7 @@ export default function App() {
         setPipelineOpen(true);
         return {
           ok: true,
-          summary: 'Opened Run pipeline panel. Confirm MongoDB URI and CSV source, then click Run.',
+          summary: 'Opened Run pipeline panel. Confirm settings, then click Run.',
           delta: ['pipeline modal open'],
         };
       },

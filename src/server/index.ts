@@ -830,6 +830,7 @@ function pipelineRunResponse(
     paths: result.paths,
     runId: result.runId,
     zipDownloadUrl: result.runId ? `/api/pipeline/runs/${result.runId}/download` : undefined,
+    targetDb: result.targetDb,
     csvSource: result.csvSource,
     imports: result.imports,
     csvSourcePath: result.csvSource.path,

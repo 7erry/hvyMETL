@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { parseDirectWorkflowCommand, parseWorkflowToolCall } from './workflowTools';
+import {
+  attachWorkflowNextStep,
+  buildPipelineVerifyNextStep,
+  parseDirectWorkflowCommand,
+  parseWorkflowToolCall,
+  resolveWorkflowNextStep,
+} from './workflowTools';
 
 describe('workflowTools', () => {
   it('parses workflow tool calls from OpenAI payloads', () => {
@@ -40,6 +46,39 @@ describe('workflowTools', () => {
       kind: 'workflow',
       tool: 'importBuiltinExample',
       args: { exampleId: 'oracle' },
+    });
+  });
+
+  it('suggests clickable next steps after import and design workflow tools', () => {
+    expect(resolveWorkflowNextStep('importBuiltinExample')).toEqual({
+      kind: 'workflow',
+      label: 'Refresh design',
+      tool: 'refreshDesign',
+      args: {},
+    });
+    expect(resolveWorkflowNextStep('refreshDesign')).toEqual({
+      kind: 'workflow',
+      label: 'Run pipeline',
+      tool: 'runPipeline',
+      args: {},
+    });
+    expect(resolveWorkflowNextStep('runPipeline')).toBeUndefined();
+
+    const enriched = attachWorkflowNextStep({
+      tool: 'importSchemaDdl',
+      summary: 'Imported 5 tables.',
+      delta: [],
+      ok: true,
+    });
+    expect(enriched.nextStep?.label).toBe('Refresh design');
+  });
+
+  it('builds a verify-collections next step after pipeline import', () => {
+    expect(buildPipelineVerifyNextStep('finops')).toEqual({
+      kind: 'mongoInspect',
+      label: 'Verify collections in finops',
+      tool: 'listMongoCollections',
+      args: { database: 'finops' },
     });
   });
 });

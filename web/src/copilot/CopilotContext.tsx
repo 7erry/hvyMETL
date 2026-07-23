@@ -19,6 +19,7 @@ import {
 } from './inspectCommandRouting';
 import {
   executeWorkflowTool,
+  nextStepToWorkflowCall,
   parseDirectWorkflowCommand,
   serializeWorkflowToolResult,
   type CopilotWorkflowHandlers,
@@ -33,6 +34,7 @@ import type {
   AgentStatus,
   CopilotLlmMessage,
   CopilotMessage,
+  CopilotNextStep,
   CopilotWorkflowPreset,
   GuardrailIssue,
   MongoInspectToolName,
@@ -75,6 +77,10 @@ export type CopilotContextValue = {
   applySelfHeal: () => void;
   applyToolMutations: (mutation: AgentToolMutation) => void;
   translateSql: (sqlQuery: string) => void;
+  /** Run a one-click migration workflow follow-up from a tool result card. */
+  runNextStep: (step: CopilotNextStep) => void;
+  /** Append a workflow-style tool result card (e.g. after pipeline import completes). */
+  showWorkflowResult: (result: ToolExecutionResult) => void;
   /** Registers the chat textarea focus handler (sidebar mounts/unmounts with open state). */
   registerChatInputFocus: (focus: (() => void) | null) => void;
 };
@@ -627,6 +633,32 @@ export function CopilotProvider({
     [appendMessage],
   );
 
+  const runNextStep = useCallback(
+    (step: CopilotNextStep) => {
+      appendMessage({ role: 'user', content: step.label });
+      if (step.kind === 'workflow') {
+        const call = nextStepToWorkflowCall(step);
+        if (call) {
+          void runWorkflowDirect(call);
+        }
+        return;
+      }
+      void runMongoInspectDirect(step.tool, step.args);
+    },
+    [appendMessage, runMongoInspectDirect, runWorkflowDirect],
+  );
+
+  const showWorkflowResult = useCallback(
+    (result: ToolExecutionResult) => {
+      appendMessage({
+        role: 'agent',
+        content: result.summary,
+        toolExecution: result,
+      });
+    },
+    [appendMessage],
+  );
+
   const translateSql = useCallback(
     (sqlQuery: string) => {
       runTool({ tool: 'translateSQLToMongo', args: { sqlQuery } });
@@ -682,6 +714,8 @@ export function CopilotProvider({
       },
       applyToolMutations,
       translateSql,
+      runNextStep,
+      showWorkflowResult,
       registerChatInputFocus,
     }),
     [
@@ -713,6 +747,8 @@ export function CopilotProvider({
       onReRunPipeline,
       applyToolMutations,
       translateSql,
+      runNextStep,
+      showWorkflowResult,
       registerChatInputFocus,
       runTool,
       appendMessage,

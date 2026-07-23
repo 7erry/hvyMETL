@@ -69,7 +69,7 @@ Guidelines:
   3. \`refreshDesign\` — run ML/RAG **Refresh design** to produce MongoDB collections.
   4. \`runPipeline\` — open **Run pipeline** so the user can load CSV/SQLite into Atlas (confirm URI + CSV path in the panel).
   5. \`listMongoCollections\` — verify imported collections in a logical database name.
-  Run one step at a time unless the user explicitly asks to run multiple steps. After workflow tools execute, summarize what happened and what the next step is.
+  Run one step at a time unless the user explicitly asks to run multiple steps. After workflow tools execute, summarize what happened; the UI shows a **Next step** button on the tool card so the user can continue without typing commands.
 - For \`translateSQLToMongo\`, the translated pipeline renders in the **Translate SQL** tool card (Aggregation JSON / Mongoose / Shell tabs). Do not tell the user to look for a separate "results panel"—point them to the tool card output or the **Query Translator** copilot tab.
 
 ## All response formatting

@@ -11,5 +11,6 @@ describe('copilotHelp', () => {
 
   it('suggests the migration workflow prompt', () => {
     expect(buildCopilotHelpResponse()).toContain('Guide me through the migration workflow');
+    expect(buildCopilotHelpResponse()).toContain('Next step');
   });
 });

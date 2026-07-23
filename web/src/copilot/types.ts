@@ -77,6 +77,8 @@ export type ToolExecutionResult = {
   data?: unknown;
   /** SQL translation payload when tool is translateSQLToMongo. */
   sqlTranslation?: SqlTranslationOutput;
+  /** Suggested migration workflow step the user can run with one click. */
+  nextStep?: CopilotNextStep;
 };
 
 export type FoldTableArgs = {
@@ -108,6 +110,21 @@ export type WorkflowToolName =
   | 'importBuiltinExample'
   | 'refreshDesign'
   | 'runPipeline';
+
+/** One-click follow-up action shown after a migration workflow tool completes. */
+export type CopilotNextStep =
+  | {
+      kind: 'workflow';
+      label: string;
+      tool: WorkflowToolName;
+      args: Record<string, unknown>;
+    }
+  | {
+      kind: 'mongoInspect';
+      label: string;
+      tool: MongoInspectToolName;
+      args: Record<string, unknown>;
+    };
 
 export type AgentToolCall =
   | { tool: 'foldTable'; args: FoldTableArgs }

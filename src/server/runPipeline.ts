@@ -100,6 +100,7 @@ export type PipelineRunResult = {
     zipPath?: string;
   };
   runId?: string;
+  targetDb?: string;
   csvSource: {
     path: string;
     collections: { name: string; files: string[] }[];
@@ -426,6 +427,7 @@ async function runFullPipelineInner(
     feedback,
     execution,
     runId,
+    targetDb: logicalTargetDb,
     paths: {
       outDir,
       planPath: paths.planPath,

@@ -64,6 +64,19 @@ export function ToolExecutionCard({ execution }: ToolExecutionCardProps) {
         <MongoAnalyzeCompareTable data={execution.data} />
       ) : null}
       {sqlTranslation ? <SqlTranslationOutputView output={sqlTranslation} showTranslatorTabHint /> : null}
+      {execution.nextStep ? (
+        <div className="copilot-tool-card__next-step">
+          <span className="copilot-tool-card__next-step-label">Next step</span>
+          <button
+            type="button"
+            className="primary copilot-tool-card__next-step-btn"
+            disabled={copilot.status !== 'idle'}
+            onClick={() => copilot.runNextStep(execution.nextStep!)}
+          >
+            {execution.nextStep.label}
+          </button>
+        </div>
+      ) : null}
       {!hasStructuredOutput && execution.delta.length > 0 ? (
         <ul className="copilot-tool-card__delta">
           {execution.delta.map((line) => (

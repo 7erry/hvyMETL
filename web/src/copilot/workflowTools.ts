@@ -1,4 +1,4 @@
-import type { ToolExecutionResult, WorkflowToolName } from './types';
+import type { CopilotNextStep, ToolExecutionResult, WorkflowToolName } from './types';
 
 export type WorkflowToolResult = Pick<ToolExecutionResult, 'tool' | 'summary' | 'delta' | 'ok'> & {
   delta?: string[];
@@ -67,56 +67,65 @@ export async function executeWorkflowTool(
   call: WorkflowToolCall,
   handlers: CopilotWorkflowHandlers,
 ): Promise<ToolExecutionResult> {
+  let result: ToolExecutionResult;
+
   switch (call.tool) {
     case 'clearSession':
       handlers.clearSession();
-      return {
+      result = {
         tool: 'clearSession',
         summary: 'Session cleared. Schema import dialog opened — paste DDL or pick a built-in example.',
         delta: ['session reset', 'schema import modal open'],
         ok: true,
       };
+      break;
     case 'importSchemaDdl': {
       const outcome = await handlers.importSchemaDdl(call.args);
-      return {
+      result = {
         tool: 'importSchemaDdl',
         summary: outcome.summary,
         delta: outcome.delta ?? (outcome.ok ? ['schema imported'] : []),
         ok: outcome.ok,
       };
+      break;
     }
     case 'importBuiltinExample': {
       const outcome = await handlers.importBuiltinExample(call.args.exampleId);
-      return {
+      result = {
         tool: 'importBuiltinExample',
         summary: outcome.summary,
         delta: outcome.delta ?? (outcome.ok ? ['example loaded'] : []),
         ok: outcome.ok,
       };
+      break;
     }
     case 'refreshDesign': {
       const outcome = await handlers.refreshDesign();
-      return {
+      result = {
         tool: 'refreshDesign',
         summary: outcome.summary,
         delta: outcome.delta ?? (outcome.ok ? ['design refreshed'] : []),
         ok: outcome.ok,
       };
+      break;
     }
     case 'runPipeline': {
       const outcome = handlers.runPipeline();
-      return {
+      result = {
         tool: 'runPipeline',
         summary: outcome.summary,
         delta: outcome.delta ?? ['pipeline panel opened'],
         ok: outcome.ok,
       };
+      break;
     }
     default: {
       const _exhaustive: never = call;
       return _exhaustive;
     }
   }
+
+  return attachWorkflowNextStep(result);
 }
 
 export function workflowToolDisplayName(tool: WorkflowToolName): string {
@@ -128,6 +137,43 @@ export function workflowToolDisplayName(tool: WorkflowToolName): string {
     runPipeline: 'Run Pipeline',
   };
   return names[tool];
+}
+
+/** Maps a completed workflow tool to the recommended one-click next step. */
+export function resolveWorkflowNextStep(completedTool: WorkflowToolName): CopilotNextStep | undefined {
+  switch (completedTool) {
+    case 'importSchemaDdl':
+    case 'importBuiltinExample':
+      return { kind: 'workflow', label: 'Refresh design', tool: 'refreshDesign', args: {} };
+    case 'refreshDesign':
+      return { kind: 'workflow', label: 'Run pipeline', tool: 'runPipeline', args: {} };
+    default:
+      return undefined;
+  }
+}
+
+/** Attach a clickable next-step action when a workflow tool succeeds. */
+export function attachWorkflowNextStep(result: ToolExecutionResult): ToolExecutionResult {
+  if (!result.ok || !isWorkflowToolName(result.tool)) {
+    return result;
+  }
+  const nextStep = resolveWorkflowNextStep(result.tool);
+  return nextStep ? { ...result, nextStep } : result;
+}
+
+/** Build a verify-collections next step after a successful pipeline import. */
+export function buildPipelineVerifyNextStep(targetDb: string): CopilotNextStep {
+  return {
+    kind: 'mongoInspect',
+    label: `Verify collections in ${targetDb}`,
+    tool: 'listMongoCollections',
+    args: { database: targetDb },
+  };
+}
+
+/** Converts a stored next-step action back into a workflow tool call. */
+export function nextStepToWorkflowCall(step: Extract<CopilotNextStep, { kind: 'workflow' }>): WorkflowToolCall | null {
+  return parseWorkflowToolCall(step.tool, step.args);
 }
 
 /** Maps common chat phrases to workflow tool calls (bypasses LLM). */

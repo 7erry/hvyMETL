@@ -19,6 +19,8 @@ export function buildCopilotHelpResponse(): string {
     '',
     'I also fold embeds on the ERD, run guardrails, translate SQL queries, and explain MongoDB operations.',
     '',
+    'After each workflow step, use the **Next step** button on the tool result card — no need to type commands.',
+    '',
     '**Try:** Guide me through the migration workflow',
     '',
     'Or use quick actions below, slash commands like `/refresh-design`, or ask naturally (e.g. *show me databases*).',

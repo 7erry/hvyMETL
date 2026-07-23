@@ -394,6 +394,7 @@ export type PipelineRunResult = {
   };
   imports: { collection: string; files: string[]; ok: boolean; insertedCount?: number; error?: string }[];
   csvSourcePath?: string;
+  targetDb?: string;
   retrievalStrategy?: string;
   modelTokenUsage?: import('./modelUsage').ModelTokenUsage;
   migrationPlanJson?: unknown;
