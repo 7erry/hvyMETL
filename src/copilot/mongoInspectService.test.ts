@@ -55,7 +55,7 @@ describe('mongoInspectService', () => {
 
     const result = await invokeMongoInspectTool(req, 'listMongoDatabases', {});
     expect(result.ok).toBe(true);
-    expect(result.summary).toBe('Found 1 database.');
+    expect(result.summary).toBe('Found 1 database: mytrains.');
     expect(result.data).toEqual({
       databases: [{ name: 'mytrains', size: 100 }],
       totalCount: 1,
@@ -91,7 +91,7 @@ describe('mongoInspectService', () => {
 
     const result = await invokeMongoInspectTool(req, 'listMongoCollections', {});
     expect(result.ok).toBe(true);
-    expect(result.summary).toBe('Listed 2 collection(s) in mytrains.');
+    expect(result.summary).toBe('Listed 2 collection(s) in mytrains: stations, trains.');
     expect(result.data).toEqual({
       database: 'mytrains',
       collections: [{ name: 'stations' }, { name: 'trains' }],
@@ -154,7 +154,7 @@ describe('mongoInspectService', () => {
 
     const result = await invokeMongoInspectTool(req, 'listMongoCollections', { database: 'mytrains' });
     expect(result.ok).toBe(true);
-    expect(result.summary).toBe('Listed 3 collection(s) in mytrains.');
+    expect(result.summary).toBe('Listed 3 collection(s) in mytrains: routes, stations, trains.');
     expect((result.data as { collections: Array<{ name: string }> }).collections.map((entry) => entry.name)).toEqual([
       'routes',
       'stations',

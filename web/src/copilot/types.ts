@@ -59,6 +59,8 @@ export type ToolExecutionResult = {
   summary: string;
   delta: string[];
   ok: boolean;
+  /** Structured inspect payload from /api/copilot/mongo/inspect (logical DB names, collections, etc.). */
+  data?: unknown;
 };
 
 export type FoldTableArgs = {

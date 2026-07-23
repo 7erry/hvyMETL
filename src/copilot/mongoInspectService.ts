@@ -396,11 +396,31 @@ function summarizeInspectResult(tool: MongoInspectToolName, data: unknown): stri
 
   if (tool === 'listMongoDatabases') {
     const count = typeof record.totalCount === 'number' ? record.totalCount : 0;
+    const databases = Array.isArray(record.databases)
+      ? record.databases.filter(
+          (entry): entry is { name: string } =>
+            Boolean(entry && typeof entry === 'object' && typeof (entry as { name?: unknown }).name === 'string'),
+        )
+      : [];
+    const names = databases.map((entry) => entry.name);
+    if (count === 1 && names[0]) return `Found 1 database: ${names[0]}.`;
+    if (names.length > 0) return `Found ${count} databases: ${names.join(', ')}.`;
     return count === 1 ? 'Found 1 database.' : `Found ${count} databases.`;
   }
   if (tool === 'listMongoCollections') {
     const count = typeof record.totalCount === 'number' ? record.totalCount : 0;
     const db = typeof record.database === 'string' ? record.database : 'database';
+    const collections = Array.isArray(record.collections)
+      ? record.collections
+          .filter(
+            (entry): entry is { name: string } =>
+              Boolean(entry && typeof entry === 'object' && typeof (entry as { name?: unknown }).name === 'string'),
+          )
+          .map((entry) => entry.name)
+      : [];
+    if (collections.length > 0) {
+      return `Listed ${count} collection(s) in ${db}: ${collections.join(', ')}.`;
+    }
     return `Listed ${count} collection(s) in ${db}.`;
   }
   if (tool === 'describeMongoCollectionSchema') {

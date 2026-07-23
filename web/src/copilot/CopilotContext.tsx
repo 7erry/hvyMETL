@@ -10,6 +10,7 @@ import {
 import { executeAgentTool, parseCopilotCommand, type AgentToolContext, type AgentToolMutation } from './agentTools';
 import { analyzeMigrationRisks } from './guardrails';
 import { parseOpenAiToolCall, isServerMongoInspectToolCall } from './llmTools';
+import { buildMongoInspectDelta, serializeMongoInspectToolResult } from './mongoInspectDisplay';
 import { buildSchemaContextPayload } from './schemaContext';
 import { fetchCopilotStatus, invokeCopilotMongoInspect, sendCopilotChat } from '../api';
 import type {
@@ -215,8 +216,9 @@ export function CopilotProvider({
         return {
           tool,
           summary: response.summary,
-          delta: response.ok ? [`Inspect tool ${tool} completed.`] : [],
+          delta: buildMongoInspectDelta(tool, response),
           ok: response.ok,
+          data: response.data,
         };
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
@@ -285,7 +287,12 @@ export function CopilotProvider({
               {
                 role: 'tool',
                 tool_call_id: toolCall.id,
-                content: JSON.stringify(result),
+                content: serializeMongoInspectToolResult({
+                  ok: result.ok,
+                  tool: parsed.tool,
+                  summary: result.summary,
+                  data: result.data,
+                }),
               },
             ];
             continue;
