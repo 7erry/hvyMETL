@@ -74,6 +74,7 @@ When the MCP server is down, inspect calls return HTTP 503 with a user-friendly 
 | `src/copilot/mongoPlanContext.ts` | Migration plan snapshot parsing |
 | `src/copilot/mongoInspectToolSchemas.ts` | OpenAI tool definitions |
 | `src/server/copilotRoutes.ts` | `/api/copilot/mongo/inspect` |
+| `web/src/copilot/CopilotContext.tsx` | Routes inspect/analyze tool calls to the API |
 | `web/src/components/copilot/MongoAnalyzeTables.tsx` | Aggregate, explain, and compare result tables |
 
 ## Verification
