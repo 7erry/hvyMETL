@@ -5,6 +5,7 @@ import type { CopilotChatApiResponse, CopilotLlmMessage, CopilotStatusResponse }
 import type { CopilotSchemaContextPayload } from './copilot/schemaContext';
 
 import { prepareCsvFilesForUpload } from './csvUploadSplit.js';
+import { createPipelineStreamConsumer } from './pipelineStream.js';
 
 const base = '';
 
@@ -439,44 +440,15 @@ async function consumePipelineStream(
   }
 
   const reader = response.body.getReader();
-  const decoder = new TextDecoder();
-  let buffer = '';
+  const consumer = createPipelineStreamConsumer(onProgress);
 
   while (true) {
     const { done, value } = await reader.read();
-    if (done) break;
-    buffer += decoder.decode(value, { stream: true });
-    const frames = buffer.split('\n\n');
-    buffer = frames.pop() ?? '';
-
-    for (const frame of frames) {
-      const dataLine = frame.split('\n').find((line) => line.startsWith('data: '));
-      if (!dataLine) continue;
-      const payload = JSON.parse(dataLine.slice(6)) as {
-        type: string;
-        error?: string;
-        stage?: import('./pipelineStages.js').PipelineProgressStage;
-        message?: string;
-        current?: number;
-        total?: number;
-        collection?: string;
-      } & PipelineRunResult;
-
-      if (payload.type === 'progress' && payload.stage && payload.message) {
-        onProgress({
-          stage: payload.stage,
-          message: payload.message,
-          current: payload.current,
-          total: payload.total,
-          collection: payload.collection,
-        });
-      } else if (payload.type === 'complete') {
-        const { type: _type, ...result } = payload;
-        return result as PipelineRunResult;
-      } else if (payload.type === 'error') {
-        throw new Error(payload.error ?? 'Pipeline failed');
-      }
+    const result = consumer.pushChunk(value, done);
+    if (result) {
+      return result as PipelineRunResult;
     }
+    if (done) break;
   }
 
   throw new Error('Pipeline stream ended without a result');

@@ -25,6 +25,7 @@ export type PipelineStreamCompletePayload = {
 /** Write one SSE data frame to the response. */
 export function writePipelineSse(res: Response, payload: unknown): void {
   res.write(`data: ${JSON.stringify(payload)}\n\n`);
+  (res as Response & { flush?: () => void }).flush?.();
 }
 
 /** Map a finished pipeline result to the same JSON shape as POST /api/pipeline/run. */
@@ -55,6 +56,7 @@ export async function runFullPipelineWithStream(
   res.setHeader('Content-Type', 'text/event-stream; charset=utf-8');
   res.setHeader('Cache-Control', 'no-cache, no-transform');
   res.setHeader('Connection', 'keep-alive');
+  res.setHeader('X-Accel-Buffering', 'no');
   res.flushHeaders?.();
 
   const onProgress = (event: PipelineProgressEvent) => {

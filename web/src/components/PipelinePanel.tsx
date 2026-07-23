@@ -108,6 +108,7 @@ export function PipelinePanel({
   formRef.current = form;
   const configRef = useRef(config);
   configRef.current = config;
+  const wasOpenRef = useRef(false);
 
   const persistTenantSecrets = useCallback(async (fields: Pick<PipelineForm, 'mongoUri' | 'mongodbModelKey'>) => {
     if (!config?.serverManagedCsvToAtlas) return;
@@ -152,14 +153,24 @@ export function PipelinePanel({
   }, [dialect, csvSourcePath, schemaTableNames]);
 
   useEffect(() => {
-    if (!open) return;
-    setError('');
-    setResult(null);
-    setProgress(null);
-    setCsvFiles([]);
-    setCsvDirectoryLabel(null);
-    setUploadedCsvCount(0);
-    setShowEnvDetails(false);
+    if (!open) {
+      wasOpenRef.current = false;
+      return;
+    }
+
+    const justOpened = !wasOpenRef.current;
+    wasOpenRef.current = true;
+
+    if (justOpened) {
+      setError('');
+      setResult(null);
+      setProgress(null);
+      setCsvFiles([]);
+      setCsvDirectoryLabel(null);
+      setUploadedCsvCount(0);
+      setShowEnvDetails(false);
+    }
+
     const savedCsvPath = resolveHostedCsvSourcePath(csvSourcePath, false);
     const savedCsvIsGeneratedMock = /(?:^|[/\\])mock-csv(?:[/\\])?$/i.test(savedCsvPath);
     const noCsv = !savedCsvPath || savedCsvIsGeneratedMock;
@@ -170,7 +181,7 @@ export function PipelinePanel({
     }));
 
     void (async () => {
-      setLoadingConfig(true);
+      if (justOpened) setLoadingConfig(true);
       try {
         const status = await fetchPipelineConfig({
           schemaDialect: dialect,
@@ -190,7 +201,7 @@ export function PipelinePanel({
       } catch (e) {
         setError(describeApiError(e));
       } finally {
-        setLoadingConfig(false);
+        if (justOpened) setLoadingConfig(false);
       }
     })();
   }, [open, csvSourcePath, dialect, model.tables]);
@@ -469,7 +480,7 @@ export function PipelinePanel({
       setResult(pipelineResult);
       if (pipelineResult.csvSourcePath && !useMockCsv) {
         onCsvSourcePathChange(pipelineResult.csvSourcePath);
-      } else if (useMockCsv) {
+      } else if (useMockCsv && csvSourcePath) {
         onCsvSourcePathChange('');
       }
       onComplete(pipelineResult);
