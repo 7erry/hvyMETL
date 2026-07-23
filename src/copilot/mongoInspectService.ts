@@ -39,6 +39,30 @@ type ListDatabasesPayload = {
   totalCount?: number;
 };
 
+function normalizeListDatabasesPayload(raw: unknown): ListDatabasesPayload {
+  if (Array.isArray(raw)) {
+    const databases = raw
+      .filter((entry): entry is { name: string; size?: number } => {
+        return Boolean(entry && typeof entry === 'object' && typeof (entry as { name?: unknown }).name === 'string');
+      })
+      .map((entry) => ({ name: entry.name, size: entry.size }));
+    return { databases, totalCount: databases.length };
+  }
+
+  if (!raw || typeof raw !== 'object') return {};
+  const record = raw as Record<string, unknown>;
+  if (!Array.isArray(record.databases)) return {};
+  const databases = record.databases
+    .filter((entry): entry is { name: string; size?: number } => {
+      return Boolean(entry && typeof entry === 'object' && typeof (entry as { name?: unknown }).name === 'string');
+    })
+    .map((entry) => ({ name: entry.name, size: entry.size }));
+  return {
+    databases,
+    totalCount: typeof record.totalCount === 'number' ? record.totalCount : databases.length,
+  };
+}
+
 type ListCollectionsPayload = {
   collections?: Array<{ name: string }>;
   totalCount?: number;
@@ -183,7 +207,7 @@ async function sanitizeInspectPayload(
   );
 
   if (tool === 'listMongoDatabases') {
-    const payload = (raw ?? {}) as ListDatabasesPayload;
+    const payload = normalizeListDatabasesPayload(raw);
     const clusterNames = (payload.databases ?? []).map((entry) => entry.name);
     const sanitized = sanitizeDatabaseListForClient(scope, payload.databases ?? []);
     const databases = mergeDiscoveredLogicalDatabases(scope, clusterNames, sanitized);
@@ -243,7 +267,7 @@ function clampNumber(value: unknown, fallback: number, min: number, max: number)
 
 async function fetchClusterDatabaseNames(): Promise<string[]> {
   const raw = await callMongoMcpTool('list-databases', { connectionId: MCP_CONNECTION_ID });
-  const payload = (raw ?? {}) as ListDatabasesPayload;
+  const payload = normalizeListDatabasesPayload(raw);
   return (payload.databases ?? []).map((entry) => entry.name);
 }
 

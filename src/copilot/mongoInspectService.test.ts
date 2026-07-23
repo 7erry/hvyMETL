@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+import * as auth from '../server/auth.js';
 import * as mongoMcpClient from './mongoMcpClient.js';
 import { invokeMongoInspectTool } from './mongoInspectService.js';
 
@@ -35,6 +36,30 @@ describe('mongoInspectService', () => {
       database: 'csv_to_atlas',
     });
     expect((result.data as { database: string }).database).toBe('csv_to_atlas');
+    vi.restoreAllMocks();
+  });
+
+  it('lists tenant databases from MCP structuredContent and strips prefixes', async () => {
+    vi.spyOn(mongoMcpClient, 'isMongoMcpEnabled').mockReturnValue(true);
+    vi.spyOn(mongoMcpClient, 'callMongoMcpTool').mockResolvedValue({
+      databases: [{ name: 'terry_walters__mytrains', size: 100 }],
+      totalCount: 1,
+    });
+    vi.spyOn(auth, 'isAuthConfigured').mockReturnValue(true);
+    vi.spyOn(auth, 'resolveAuthDisplayName').mockResolvedValue('Terry Walters');
+
+    const req = {
+      auth: { payload: { sub: 'google-oauth2|abc' } },
+      headers: { authorization: 'Bearer token' },
+    } as import('express').Request;
+
+    const result = await invokeMongoInspectTool(req, 'listMongoDatabases', {});
+    expect(result.ok).toBe(true);
+    expect(result.summary).toBe('Found 1 database.');
+    expect(result.data).toEqual({
+      databases: [{ name: 'mytrains', size: 100 }],
+      totalCount: 1,
+    });
     vi.restoreAllMocks();
   });
 });

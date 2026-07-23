@@ -52,19 +52,112 @@ type McpContentBlock = {
   text?: string;
 };
 
+type McpToolCallResult = {
+  content?: unknown;
+  structuredContent?: Record<string, unknown>;
+};
+
+/** Prefer MCP structuredContent; fall back to parsing human-readable content blocks. */
+export function extractMongoMcpToolPayload(result: McpToolCallResult): unknown {
+  if (result.structuredContent && typeof result.structuredContent === 'object') {
+    return result.structuredContent;
+  }
+  return parseMongoMcpToolPayload(result.content);
+}
+
+function tryParseJsonFromText(text: string): unknown | undefined {
+  const trimmed = text.trim();
+  if (!trimmed) return undefined;
+
+  try {
+    return JSON.parse(trimmed) as unknown;
+  } catch {
+    // MongoDB MCP wraps JSON arrays inside untrusted-user-data tags.
+  }
+
+  const untrustedMatch = trimmed.match(
+    /<untrusted-user-data-[^>]+>\s*([\s\S]*?)\s*<\/untrusted-user-data-[^>]+>/,
+  );
+  if (untrustedMatch?.[1]) {
+    try {
+      return JSON.parse(untrustedMatch[1].trim()) as unknown;
+    } catch {
+      // Continue scanning other blocks.
+    }
+  }
+
+  const arrayStart = trimmed.indexOf('[{');
+  if (arrayStart >= 0) {
+    try {
+      const candidate = trimmed.slice(arrayStart);
+      const end = findMatchingJsonBracket(candidate, '[', ']');
+      if (end >= 0) {
+        return JSON.parse(candidate.slice(0, end + 1)) as unknown;
+      }
+    } catch {
+      // Continue scanning other blocks.
+    }
+  }
+
+  const objectStart = trimmed.indexOf('{"');
+  if (objectStart >= 0) {
+    try {
+      const candidate = trimmed.slice(objectStart);
+      const end = findMatchingJsonBracket(candidate, '{', '}');
+      if (end >= 0) {
+        return JSON.parse(candidate.slice(0, end + 1)) as unknown;
+      }
+    } catch {
+      // Continue scanning other blocks.
+    }
+  }
+
+  return undefined;
+}
+
+function findMatchingJsonBracket(text: string, open: string, close: string): number {
+  let depth = 0;
+  let inString = false;
+  let escaped = false;
+
+  for (let index = 0; index < text.length; index += 1) {
+    const char = text[index];
+    if (inString) {
+      if (escaped) {
+        escaped = false;
+      } else if (char === '\\') {
+        escaped = true;
+      } else if (char === '"') {
+        inString = false;
+      }
+      continue;
+    }
+
+    if (char === '"') {
+      inString = true;
+      continue;
+    }
+    if (char === open) depth += 1;
+    if (char === close) {
+      depth -= 1;
+      if (depth === 0) return index;
+    }
+  }
+
+  return -1;
+}
+
 /** Parse JSON tool output from MCP content blocks. */
 export function parseMongoMcpToolPayload(content: unknown): unknown {
   if (!Array.isArray(content)) return content;
   const blocks = content as McpContentBlock[];
+
   for (const block of blocks) {
-    if (block.type === 'text' && typeof block.text === 'string' && block.text.trim()) {
-      try {
-        return JSON.parse(block.text) as unknown;
-      } catch {
-        return { text: block.text };
-      }
-    }
+    if (block.type !== 'text' || typeof block.text !== 'string') continue;
+    const parsed = tryParseJsonFromText(block.text);
+    if (parsed !== undefined) return parsed;
   }
+
   return { content: blocks };
 }
 
@@ -94,7 +187,15 @@ export async function callMongoMcpTool(name: string, args: Record<string, unknow
           : `MongoDB MCP tool "${name}" failed.`;
       throw new Error(message);
     }
-    return parseMongoMcpToolPayload(result.content);
+    return extractMongoMcpToolPayload({
+      content: result.content,
+      structuredContent:
+        'structuredContent' in result &&
+        result.structuredContent &&
+        typeof result.structuredContent === 'object'
+          ? (result.structuredContent as Record<string, unknown>)
+          : undefined,
+    });
   } finally {
     await client.close().catch(() => undefined);
   }
