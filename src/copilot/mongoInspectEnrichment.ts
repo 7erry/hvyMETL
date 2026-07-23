@@ -3,8 +3,8 @@
  */
 
 import { callMongoMcpTool, type MongoMcpToolCaller } from './mongoMcpClient.js';
+import { MCP_PRECONFIGURED_CONNECTION_ID } from './mongoInspectConnection.js';
 
-const MCP_CONNECTION_ID = 'preconfigured';
 const MAX_COLLECTIONS_TO_ENRICH = 40;
 /** Limit parallel collection enrichment to avoid overloading the MCP server. */
 const ENRICH_CONCURRENCY = 3;
@@ -49,10 +49,11 @@ async function enrichOneCollection(
   callTool: MongoMcpToolCaller,
   physicalDatabase: string,
   entry: { name: string },
+  connectionId: string,
 ): Promise<MongoInspectCollectionSummary> {
   const summary: MongoInspectCollectionSummary = { name: entry.name };
   const baseArgs = {
-    connectionId: MCP_CONNECTION_ID,
+    connectionId,
     database: physicalDatabase,
     collection: entry.name,
   };
@@ -102,9 +103,10 @@ export async function enrichCollectionSummaries(
   physicalDatabase: string,
   collections: Array<{ name: string }>,
   callTool: MongoMcpToolCaller = callMongoMcpTool,
+  connectionId: string = MCP_PRECONFIGURED_CONNECTION_ID,
 ): Promise<MongoInspectCollectionSummary[]> {
   const targets = collections.slice(0, MAX_COLLECTIONS_TO_ENRICH);
   return mapWithConcurrency(targets, ENRICH_CONCURRENCY, (entry) =>
-    enrichOneCollection(callTool, physicalDatabase, entry),
+    enrichOneCollection(callTool, physicalDatabase, entry, connectionId),
   );
 }

@@ -57,6 +57,7 @@ Orchestrates introspect → retrieve → plan → write, and always closes the a
 | Child has multiple parents | non-primary parent | reference + Computed counter | `embed-vs-reference.md` |
 | Unknown-cardinality single-parent child (DDL-only) | not write-heavy, not time-series, one FK parent | default **embed** (assumed small dependent) | `embed-vs-reference.md` |
 | Time-series or multi-parent child (DDL-only, no stats) | force embed not set | **reference** (planner skips default embed) | `embed-vs-reference.md` |
+| Developer force-embed override | explicit UI/API override on a linked FK | full **embed** for that relationship | `embed-vs-reference.md` |
 | Bounded child from measured stats (max ≤ 100/parent) | reads ≥ 70% | full **embed** (child collection dropped) | `embed-vs-reference.md` |
 | Developer cardinality override (max 1–5000/parent) | explicit UI/API override | full **embed** for that relationship | `embed-vs-reference.md` |
 | Unbounded or skewed child | reads ≥ 70% | **Subset** (newest 10) + overflow collection | `subset.md` |

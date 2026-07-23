@@ -15,7 +15,8 @@ export type MongoInspectToolName = (typeof MONGO_INSPECT_TOOL_NAMES)[number];
 
 const LOGICAL_DB_PROPERTY = {
   type: 'string',
-  description: 'Logical database name (e.g. csv_to_atlas). Do not include user prefixes.',
+  description:
+    'Logical database name (e.g. mytrains). Omit when the collection name exists in only one of your databases—the server resolves it automatically.',
 };
 
 /** OpenAI function definitions for Phase 1 MongoDB inspect via MCP. */
@@ -50,7 +51,7 @@ export const COPILOT_MONGO_INSPECT_OPENAI_TOOLS = [
       description: 'Infer a collection document schema from a sample of documents.',
       parameters: {
         type: 'object',
-        required: ['database', 'collection'],
+        required: ['collection'],
         properties: {
           database: LOGICAL_DB_PROPERTY,
           collection: { type: 'string', description: 'Collection name' },
@@ -69,7 +70,7 @@ export const COPILOT_MONGO_INSPECT_OPENAI_TOOLS = [
       description: 'List classic and Atlas Search indexes for a collection.',
       parameters: {
         type: 'object',
-        required: ['database', 'collection'],
+        required: ['collection'],
         properties: {
           database: LOGICAL_DB_PROPERTY,
           collection: { type: 'string', description: 'Collection name' },
@@ -84,7 +85,7 @@ export const COPILOT_MONGO_INSPECT_OPENAI_TOOLS = [
       description: 'Run a read-only find query against a collection (max 25 documents).',
       parameters: {
         type: 'object',
-        required: ['database', 'collection'],
+        required: ['collection'],
         properties: {
           database: LOGICAL_DB_PROPERTY,
           collection: { type: 'string', description: 'Collection name' },
@@ -119,7 +120,7 @@ export const COPILOT_MONGO_INSPECT_OPENAI_TOOLS = [
         'Run a read-only aggregation pipeline against a collection (max 20 stages, results capped at 50 documents).',
       parameters: {
         type: 'object',
-        required: ['database', 'collection', 'pipeline'],
+        required: ['collection', 'pipeline'],
         properties: {
           database: LOGICAL_DB_PROPERTY,
           collection: { type: 'string', description: 'Collection name' },
@@ -140,7 +141,7 @@ export const COPILOT_MONGO_INSPECT_OPENAI_TOOLS = [
         'Explain a find, count, or aggregate operation and return the winning plan (optionally with executionStats).',
       parameters: {
         type: 'object',
-        required: ['database', 'collection', 'method'],
+        required: ['collection', 'method'],
         properties: {
           database: LOGICAL_DB_PROPERTY,
           collection: { type: 'string', description: 'Collection name' },
@@ -190,7 +191,7 @@ export const COPILOT_MONGO_INSPECT_OPENAI_TOOLS = [
         'Compare a live Atlas collection against the current hvyMETL migration plan (fields, embeds, indexes). Requires Refresh design first.',
       parameters: {
         type: 'object',
-        required: ['database', 'collection'],
+        required: ['collection'],
         properties: {
           database: LOGICAL_DB_PROPERTY,
           collection: { type: 'string', description: 'Collection name' },

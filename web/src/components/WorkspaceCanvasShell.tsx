@@ -28,18 +28,14 @@ export function WorkspaceCanvasShell({ children, beforeJson, afterJson }: Worksp
     >
       <div className="workspace-canvas-shell__main">{children}</div>
       {copilot.open ? (
-        <>
-          <CopilotResizeDivider
-            shellRef={shellRef}
-            width={copilot.width}
-            onWidthChange={copilot.setWidth}
-            onDraggingChange={setIsDragging}
-          />
-          <AgentCopilotSidebar beforeJson={beforeJson} afterJson={afterJson} />
-        </>
-      ) : (
-        <AgentCopilotSidebar beforeJson={beforeJson} afterJson={afterJson} />
-      )}
+        <CopilotResizeDivider
+          shellRef={shellRef}
+          width={copilot.width}
+          onWidthChange={copilot.setWidth}
+          onDraggingChange={setIsDragging}
+        />
+      ) : null}
+      <AgentCopilotSidebar beforeJson={beforeJson} afterJson={afterJson} />
     </div>
   );
 }

@@ -4,10 +4,16 @@
 
 import type { Request } from 'express';
 import { getMigrationStore } from '../ml_engine/migrationStore.js';
+import { isAuthConfigured } from '../server/auth.js';
+import { isHostedStudioRequest } from '../server/hosted.js';
 import { toLogicalTargetDb } from '../server/tenant.js';
 import {
+  ensureMongoInspectMcpConnection,
+  releaseMongoInspectMcpConnection,
+  resolveMongoInspectMongoUri,
+} from './mongoInspectConnection.js';
+import {
   MCP_INSPECT_UNAVAILABLE_MESSAGE,
-  callMongoMcpTool,
   isMongoMcpEnabled,
   withMongoMcpSession,
   type MongoMcpToolCaller,
@@ -32,7 +38,6 @@ import {
   type MongoInspectToolName,
 } from './mongoInspectToolSchemas.js';
 
-const MCP_CONNECTION_ID = 'preconfigured';
 const MAX_FIND_LIMIT = 25;
 const MAX_SCHEMA_SAMPLE = 100;
 
@@ -173,7 +178,80 @@ function resolveInspectLogicalDatabase(
   return scope.defaultLogicalDatabase;
 }
 
-/** Build MCP arguments and sanitize the response for one inspect/analyze tool. */
+function hasInspectDatabaseArg(args: Record<string, unknown>): boolean {
+  return typeof args.database === 'string' && args.database.trim().length > 0;
+}
+
+/** Resolve the logical database when a collection name appears in exactly one tenant database. */
+async function resolveLogicalDatabaseForCollection(
+  scope: TenantMongoInspectScope,
+  collectionName: string,
+  clusterNames: string[],
+  knownLogicalDatabases: string[],
+  callTool: MongoMcpToolCaller,
+  connectionId: string,
+): Promise<string> {
+  const resolved = resolveInspectScopeForCluster(scope, clusterNames, knownLogicalDatabases);
+  const physicalDatabases = discoverTenantPhysicalDatabases(
+    resolved.scope,
+    clusterNames,
+    knownLogicalDatabases,
+  );
+  const logicalMatches = new Set<string>();
+
+  for (const physicalDatabase of physicalDatabases) {
+    const raw = await callTool('list-collections', { connectionId, database: physicalDatabase });
+    const payload = normalizeListCollectionsPayload(raw);
+    const hasCollection = (payload.collections ?? []).some((entry) => entry.name === collectionName);
+    if (hasCollection) {
+      logicalMatches.add(resolved.scope.toLogicalDatabase(physicalDatabase));
+    }
+  }
+
+  const matches = [...logicalMatches];
+  if (matches.length === 1) {
+    return matches[0]!;
+  }
+  if (matches.length === 0) {
+    throw new Error(
+      `Collection "${collectionName}" was not found in any of your databases. Run listMongoDatabases first.`,
+    );
+  }
+  throw new Error(
+    `Collection "${collectionName}" exists in multiple databases (${matches.join(', ')}). Specify the database argument.`,
+  );
+}
+
+async function resolveInspectLogicalDatabaseForTool(
+  scope: TenantMongoInspectScope,
+  tool: MongoInspectToolName,
+  args: Record<string, unknown>,
+  clusterNames: string[],
+  knownLogicalDatabases: string[],
+  databaseSizes: Map<string, number | undefined>,
+  callTool: MongoMcpToolCaller,
+  connectionId: string,
+): Promise<string> {
+  if (tool === 'listMongoCollections' || hasInspectDatabaseArg(args)) {
+    return resolveInspectLogicalDatabase(scope, args, clusterNames, knownLogicalDatabases, databaseSizes);
+  }
+
+  const collection = typeof args.collection === 'string' ? args.collection.trim() : '';
+  if (!collection) {
+    throw new Error('Collection name is required.');
+  }
+
+  return resolveLogicalDatabaseForCollection(
+    scope,
+    collection,
+    clusterNames,
+    knownLogicalDatabases,
+    callTool,
+    connectionId,
+  );
+}
+
+/** Execute one inspect/analyze tool for Agent Copilot via the MCP server. */
 export async function invokeMongoInspectTool(
   req: Request,
   tool: MongoInspectToolName,
@@ -210,78 +288,96 @@ export async function invokeMongoInspectTool(
   }
 
   try {
+    const hosted = isHostedStudioRequest(req);
+    const authEnabled = isAuthConfigured();
+    const mongoUri = resolveMongoInspectMongoUri(req);
+
     return await withMongoMcpSession(async (callTool) => {
-      clusterNames = await fetchClusterDatabaseNames(callTool);
-      const resolved = resolveInspectScopeForCluster(scope, clusterNames, knownLogicalDatabases);
-      scope = resolved.scope;
-      databaseSizes = buildDatabaseSizeMap(clusterNames.map((name) => ({ name })));
+      const mcpConnection = await ensureMongoInspectMcpConnection(callTool, mongoUri, {
+        hosted,
+        authEnabled,
+      });
+      const { connectionId } = mcpConnection;
 
-      const { mcpArgs, logicalDatabase, physicalDatabase } = await buildMcpArguments(
-        scope,
-        tool,
-        args,
-        clusterNames,
-        knownLogicalDatabases,
-        databaseSizes,
-      );
-      if (physicalDatabase) {
-        assertPhysicalDatabaseOnCluster(scope, logicalDatabase, physicalDatabase, clusterNames);
-      }
+      try {
+        clusterNames = await fetchClusterDatabaseNames(callTool, connectionId);
+        const resolved = resolveInspectScopeForCluster(scope, clusterNames, knownLogicalDatabases);
+        scope = resolved.scope;
+        databaseSizes = buildDatabaseSizeMap(clusterNames.map((name) => ({ name })));
 
-      if (tool === 'compareMongoCollectionToPlan') {
-        const collection = String(args.collection ?? '').trim();
-        const data = await runCompareCollectionToPlan({
+        const { mcpArgs, logicalDatabase, physicalDatabase } = await buildMcpArguments(
+          scope,
+          tool,
+          args,
+          clusterNames,
+          knownLogicalDatabases,
+          databaseSizes,
+          connectionId,
           callTool,
+        );
+        if (physicalDatabase) {
+          assertPhysicalDatabaseOnCluster(scope, logicalDatabase, physicalDatabase, clusterNames);
+        }
+
+        if (tool === 'compareMongoCollectionToPlan') {
+          const collection = String(args.collection ?? '').trim();
+          const data = await runCompareCollectionToPlan({
+            callTool,
+            connectionId,
+            logicalDatabase,
+            physicalDatabase: physicalDatabase!,
+            collection,
+            planContext: options.planContext,
+          });
+          return {
+            ok: true,
+            tool,
+            summary: summarizeInspectResult(tool, data),
+            data,
+          };
+        }
+
+        const mcpName = MONGO_INSPECT_MCP_TOOL_MAP[tool];
+        const raw = await callTool(mcpName, mcpArgs);
+        if (tool === 'listMongoDatabases') {
+          const payload = normalizeListDatabasesPayload(raw);
+          for (const entry of payload.databases ?? []) {
+            databaseSizes.set(entry.name, entry.size);
+          }
+        }
+        let data = sanitizeInspectPayload(
+          scope,
+          tool,
           logicalDatabase,
-          physicalDatabase: physicalDatabase!,
-          collection,
-          planContext: options.planContext,
-        });
+          args,
+          raw,
+          clusterNames,
+          knownLogicalDatabases,
+          databaseSizes,
+        );
+        if (tool === 'listMongoCollections' && physicalDatabase) {
+          const payload = data as { database: string; collections: Array<{ name: string }>; totalCount: number };
+          const collections = await enrichCollectionSummaries(
+            physicalDatabase,
+            payload.collections ?? [],
+            callTool,
+            connectionId,
+          );
+          data = {
+            database: payload.database,
+            collections,
+            totalCount: collections.length,
+          };
+        }
         return {
           ok: true,
           tool,
           summary: summarizeInspectResult(tool, data),
           data,
         };
+      } finally {
+        await releaseMongoInspectMcpConnection(callTool, mcpConnection);
       }
-
-      const mcpName = MONGO_INSPECT_MCP_TOOL_MAP[tool];
-      const raw = await callTool(mcpName, mcpArgs);
-      if (tool === 'listMongoDatabases') {
-        const payload = normalizeListDatabasesPayload(raw);
-        for (const entry of payload.databases ?? []) {
-          databaseSizes.set(entry.name, entry.size);
-        }
-      }
-      let data = sanitizeInspectPayload(
-        scope,
-        tool,
-        logicalDatabase,
-        args,
-        raw,
-        clusterNames,
-        knownLogicalDatabases,
-        databaseSizes,
-      );
-      if (tool === 'listMongoCollections' && physicalDatabase) {
-        const payload = data as { database: string; collections: Array<{ name: string }>; totalCount: number };
-        const collections = await enrichCollectionSummaries(
-          physicalDatabase,
-          payload.collections ?? [],
-          callTool,
-        );
-        data = {
-          database: payload.database,
-          collections,
-          totalCount: collections.length,
-        };
-      }
-      return {
-        ok: true,
-        tool,
-        summary: summarizeInspectResult(tool, data),
-        data,
-      };
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
@@ -320,19 +416,22 @@ async function buildMcpArguments(
   clusterNames: string[],
   knownLogicalDatabases: string[],
   databaseSizes: Map<string, number | undefined>,
+  connectionId: string,
+  callTool: MongoMcpToolCaller,
 ): Promise<BuildMcpArgumentsResult> {
-  const connectionId = MCP_CONNECTION_ID;
-
   if (tool === 'listMongoDatabases') {
     return { mcpArgs: { connectionId }, logicalDatabase: scope.defaultLogicalDatabase };
   }
 
-  const logicalDatabase = resolveInspectLogicalDatabase(
+  const logicalDatabase = await resolveInspectLogicalDatabaseForTool(
     scope,
+    tool,
     args,
     clusterNames,
     knownLogicalDatabases,
     databaseSizes,
+    callTool,
+    connectionId,
   );
   const physicalDatabase = await resolveAccessiblePhysicalDatabase(
     scope,
@@ -547,6 +646,10 @@ function sanitizeInspectPayload(
     };
   }
 
+  if (tool === 'listMongoCollectionIndexes') {
+    return normalizeCollectionIndexesPayload(logicalDatabase, args, raw);
+  }
+
   return {
     database: logicalDatabase,
     collection: typeof args.collection === 'string' ? args.collection : '',
@@ -580,7 +683,12 @@ function summarizeInspectResult(tool: MongoInspectToolName, data: unknown): stri
     return `Inferred schema for ${record.collection} in ${record.database}.`;
   }
   if (tool === 'listMongoCollectionIndexes') {
-    return `Listed indexes for ${record.collection} in ${record.database}.`;
+    const count = typeof record.totalCount === 'number' ? record.totalCount : 0;
+    const collection = typeof record.collection === 'string' ? record.collection : 'collection';
+    const db = typeof record.database === 'string' ? record.database : 'database';
+    return count === 1
+      ? `Listed 1 index for ${collection} in ${db}.`
+      : `Listed ${count} indexes for ${collection} in ${db}.`;
   }
   if (tool === 'findMongoDocuments') {
     const result = record.result as { queryResultsCount?: number } | undefined;
@@ -611,8 +719,78 @@ function clampNumber(value: unknown, fallback: number, min: number, max: number)
   return Math.min(max, Math.max(min, Math.round(numeric)));
 }
 
-async function fetchClusterDatabaseNames(callTool: MongoMcpToolCaller = callMongoMcpTool): Promise<string[]> {
-  const raw = await callTool('list-databases', { connectionId: MCP_CONNECTION_ID });
+type CollectionIndexesPayload = {
+  database: string;
+  collection: string;
+  classicIndexes: Array<{ name: string; key: Record<string, unknown> }>;
+  searchIndexes: Array<{ name: string; type: string; status: string; queryable: boolean }>;
+  totalCount: number;
+};
+
+/** Normalize MCP collection-indexes output for the copilot UI. */
+function normalizeCollectionIndexesPayload(
+  logicalDatabase: string,
+  args: Record<string, unknown>,
+  raw: unknown,
+): CollectionIndexesPayload {
+  const collection = typeof args.collection === 'string' ? args.collection : '';
+  const record = raw && typeof raw === 'object' ? (raw as Record<string, unknown>) : {};
+
+  const classicIndexes = Array.isArray(record.classicIndexes)
+    ? record.classicIndexes
+        .filter(
+          (entry): entry is { name: string; key: Record<string, unknown> } =>
+            Boolean(
+              entry &&
+                typeof entry === 'object' &&
+                typeof (entry as { name?: unknown }).name === 'string' &&
+                (entry as { key?: unknown }).key &&
+                typeof (entry as { key?: unknown }).key === 'object',
+            ),
+        )
+        .map((entry) => ({ name: entry.name, key: entry.key }))
+    : [];
+
+  const searchIndexes = Array.isArray(record.searchIndexes)
+    ? record.searchIndexes
+        .filter(
+          (entry): entry is { name: string; type: string; status: string; queryable: boolean } =>
+            Boolean(
+              entry &&
+                typeof entry === 'object' &&
+                typeof (entry as { name?: unknown }).name === 'string' &&
+                typeof (entry as { type?: unknown }).type === 'string' &&
+                typeof (entry as { status?: unknown }).status === 'string' &&
+                typeof (entry as { queryable?: unknown }).queryable === 'boolean',
+            ),
+        )
+        .map((entry) => ({
+          name: entry.name,
+          type: entry.type,
+          status: entry.status,
+          queryable: entry.queryable,
+        }))
+    : [];
+
+  const totalCount =
+    typeof record.classicIndexesCount === 'number' && typeof record.searchIndexesCount === 'number'
+      ? record.classicIndexesCount + record.searchIndexesCount
+      : classicIndexes.length + searchIndexes.length;
+
+  return {
+    database: logicalDatabase,
+    collection,
+    classicIndexes,
+    searchIndexes,
+    totalCount,
+  };
+}
+
+async function fetchClusterDatabaseNames(
+  callTool: MongoMcpToolCaller,
+  connectionId: string,
+): Promise<string[]> {
+  const raw = await callTool('list-databases', { connectionId });
   const payload = normalizeListDatabasesPayload(raw);
   return (payload.databases ?? []).map((entry) => entry.name);
 }
@@ -673,13 +851,14 @@ async function resolveAccessiblePhysicalDatabase(
 
 async function runCompareCollectionToPlan(input: {
   callTool: MongoMcpToolCaller;
+  connectionId: string;
   logicalDatabase: string;
   physicalDatabase: string;
   collection: string;
   planContext?: MongoPlanContext;
 }): Promise<unknown> {
   const baseArgs = {
-    connectionId: MCP_CONNECTION_ID,
+    connectionId: input.connectionId,
     database: input.physicalDatabase,
     collection: input.collection,
   };

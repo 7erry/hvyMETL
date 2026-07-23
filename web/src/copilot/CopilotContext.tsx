@@ -4,6 +4,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from 'react';
@@ -13,6 +14,7 @@ import { parseOpenAiToolCall, isServerMongoInspectToolCall } from './llmTools';
 import { buildMongoInspectDelta, serializeMongoInspectToolResult } from './mongoInspectDisplay';
 import { buildMongoPlanContext } from './mongoPlanContextPayload';
 import { buildSchemaContextPayload } from './schemaContext';
+import { serializeCanvasToolResult, toolExecutionHasStructuredOutput } from './toolExecutionDisplay';
 import { fetchCopilotStatus, invokeCopilotMongoInspect, sendCopilotChat } from '../api';
 import type {
   AgentStatus,
@@ -43,7 +45,6 @@ export type CopilotContextValue = {
   pipelineError: string | null;
   selfHealSuggestion: string | null;
   showDiffPreview: boolean;
-  toolsEnabled: boolean;
   llmConfigured: boolean;
   llmModel: string | null;
   mongoInspectAvailable: boolean;
@@ -52,7 +53,6 @@ export type CopilotContextValue = {
   setOpen: (open: boolean) => void;
   setActiveTab: (tab: 'chat' | 'translator') => void;
   setPreset: (preset: CopilotWorkflowPreset) => void;
-  setToolsEnabled: (enabled: boolean) => void;
   setShowDiffPreview: (show: boolean) => void;
   sendMessage: (text: string) => void;
   openWithPrompt: (prompt: string) => void;
@@ -62,6 +62,8 @@ export type CopilotContextValue = {
   applySelfHeal: () => void;
   applyToolMutations: (mutation: AgentToolMutation) => void;
   translateSql: (sqlQuery: string) => void;
+  /** Registers the chat textarea focus handler (sidebar mounts/unmounts with open state). */
+  registerChatInputFocus: (focus: (() => void) | null) => void;
 };
 
 const CopilotContext = createContext<CopilotContextValue | null>(null);
@@ -95,8 +97,8 @@ export function CopilotProvider({
   onClearOverrides,
   onReRunPipeline,
 }: CopilotProviderProps) {
-  const [open, setOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<'chat' | 'translator'>('chat');
+  const [open, setOpenState] = useState(false);
+  const [activeTab, setActiveTabState] = useState<'chat' | 'translator'>('chat');
   const [status, setStatus] = useState<AgentStatus>('idle');
   const [preset, setPreset] = useState<CopilotWorkflowPreset>('schema-design');
   const [messages, setMessages] = useState<CopilotMessage[]>([]);
@@ -107,12 +109,80 @@ export function CopilotProvider({
   const [pipelineError, setPipelineError] = useState<string | null>(null);
   const [selfHealSuggestion, setSelfHealSuggestion] = useState<string | null>(null);
   const [showDiffPreview, setShowDiffPreview] = useState(false);
-  const [toolsEnabled, setToolsEnabled] = useState(true);
   const [llmConfigured, setLlmConfigured] = useState(false);
   const [llmModel, setLlmModel] = useState<string | null>(null);
   const [mongoInspectAvailable, setMongoInspectAvailable] = useState(false);
   const [mongoInspectMessage, setMongoInspectMessage] = useState<string | null>(null);
   const [llmHistory, setLlmHistory] = useState<CopilotLlmMessage[]>([]);
+  const chatInputFocusRef = useRef<(() => void) | null>(null);
+  const chatInputFocusTimersRef = useRef<number[]>([]);
+
+  const registerChatInputFocus = useCallback((focus: (() => void) | null) => {
+    chatInputFocusRef.current = focus;
+  }, []);
+
+  const scheduleChatInputFocus = useCallback(() => {
+    chatInputFocusTimersRef.current.forEach((timerId) => window.clearTimeout(timerId));
+    chatInputFocusTimersRef.current = [];
+
+    const attempt = () => {
+      chatInputFocusRef.current?.();
+    };
+
+    attempt();
+    requestAnimationFrame(attempt);
+    for (const delayMs of [0, 50, 150, 320]) {
+      chatInputFocusTimersRef.current.push(window.setTimeout(attempt, delayMs));
+    }
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      chatInputFocusTimersRef.current.forEach((timerId) => window.clearTimeout(timerId));
+    };
+  }, []);
+
+  const setOpen = useCallback(
+    (next: boolean) => {
+      setOpenState(next);
+      if (next) {
+        scheduleChatInputFocus();
+      }
+    },
+    [scheduleChatInputFocus],
+  );
+
+  const toggleOpen = useCallback(() => {
+    setOpenState((prev) => {
+      const next = !prev;
+      if (next) {
+        scheduleChatInputFocus();
+      }
+      return next;
+    });
+  }, [scheduleChatInputFocus]);
+
+  const setActiveTab = useCallback(
+    (tab: 'chat' | 'translator') => {
+      setActiveTabState(tab);
+      if (tab === 'chat') {
+        scheduleChatInputFocus();
+      }
+    },
+    [scheduleChatInputFocus],
+  );
+
+  useEffect(() => {
+    if (open && activeTab === 'chat') {
+      scheduleChatInputFocus();
+    }
+  }, [open, activeTab, scheduleChatInputFocus]);
+
+  useEffect(() => {
+    if (open && activeTab === 'chat' && status === 'idle') {
+      scheduleChatInputFocus();
+    }
+  }, [open, activeTab, status, scheduleChatInputFocus]);
 
   useEffect(() => {
     fetchCopilotStatus()
@@ -190,6 +260,11 @@ export function CopilotProvider({
         }
       }
 
+      if (mutation.sqlTranslation) {
+        result.sqlTranslation = mutation.sqlTranslation;
+        result.data ??= mutation.sqlTranslation;
+      }
+
       return result;
     },
     [applyToolMutations, model, toolContext],
@@ -201,7 +276,7 @@ export function CopilotProvider({
       const result = executeTool(call);
       appendMessage({
         role: 'agent',
-        content: result.summary,
+        content: toolExecutionHasStructuredOutput(result) ? '' : result.summary,
         toolExecution: result,
       });
       setStatus('idle');
@@ -252,13 +327,13 @@ export function CopilotProvider({
         const response = await sendCopilotChat({
           messages,
           schemaContext,
-          toolsEnabled,
         });
 
         const assistant = response.message;
         messages = [...messages, assistant];
 
-        if (assistant.content?.trim()) {
+        const toolCalls = assistant.tool_calls ?? [];
+        if (assistant.content?.trim() && !toolCalls.length) {
           appendMessage({
             role: 'agent',
             content: assistant.content.trim(),
@@ -266,18 +341,14 @@ export function CopilotProvider({
           });
         }
 
-        const toolCalls = assistant.tool_calls ?? [];
         if (!toolCalls.length) {
           setStatus('idle');
           return messages;
         }
 
-        let inspectOnlyBatch = toolCalls.length > 0;
-
         for (const toolCall of toolCalls) {
           const parsed = parseOpenAiToolCall(toolCall);
           if (!parsed) {
-            inspectOnlyBatch = false;
             continue;
           }
 
@@ -304,11 +375,10 @@ export function CopilotProvider({
             continue;
           }
 
-          inspectOnlyBatch = false;
           const result = executeTool(parsed);
           appendMessage({
             role: 'agent',
-            content: result.summary,
+            content: toolExecutionHasStructuredOutput(result) ? '' : result.summary,
             toolExecution: result,
           });
           messages = [
@@ -316,14 +386,9 @@ export function CopilotProvider({
             {
               role: 'tool',
               tool_call_id: toolCall.id,
-              content: JSON.stringify(result),
+              content: serializeCanvasToolResult(result),
             },
           ];
-        }
-
-        if (inspectOnlyBatch) {
-          setStatus('idle');
-          return messages;
         }
       }
 
@@ -339,7 +404,6 @@ export function CopilotProvider({
       model,
       plan,
       runMongoInspectTool,
-      toolsEnabled,
     ],
   );
 
@@ -365,7 +429,7 @@ export function CopilotProvider({
         }
       }
 
-      if (parsed && 'tool' in parsed && toolsEnabled) {
+      if (parsed && 'tool' in parsed) {
         runTool(parsed);
         return;
       }
@@ -402,7 +466,7 @@ export function CopilotProvider({
         setStatus('idle');
       }, 400);
     },
-    [appendMessage, llmConfigured, llmHistory, model, onClearOverrides, runLlmTurn, runTool, toolsEnabled],
+    [appendMessage, llmConfigured, llmHistory, model, onClearOverrides, runLlmTurn, runTool],
   );
 
   const openWithPrompt = useCallback(
@@ -468,16 +532,14 @@ export function CopilotProvider({
       pipelineError,
       selfHealSuggestion,
       showDiffPreview,
-      toolsEnabled,
       llmConfigured,
       llmModel,
       mongoInspectAvailable,
       mongoInspectMessage,
-      toggleOpen: () => setOpen((prev) => !prev),
+      toggleOpen,
       setOpen,
       setActiveTab,
       setPreset,
-      setToolsEnabled,
       setShowDiffPreview,
       sendMessage,
       openWithPrompt,
@@ -502,6 +564,7 @@ export function CopilotProvider({
       },
       applyToolMutations,
       translateSql,
+      registerChatInputFocus,
     }),
     [
       open,
@@ -518,17 +581,21 @@ export function CopilotProvider({
       pipelineError,
       selfHealSuggestion,
       showDiffPreview,
-      toolsEnabled,
       llmConfigured,
       llmModel,
       mongoInspectAvailable,
       mongoInspectMessage,
+      toggleOpen,
+      setOpen,
+      setActiveTab,
       sendMessage,
       openWithPrompt,
       openGuardrailPrompt,
+      reportPipelineError,
       onReRunPipeline,
       applyToolMutations,
       translateSql,
+      registerChatInputFocus,
       runTool,
       appendMessage,
     ],

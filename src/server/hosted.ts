@@ -2,7 +2,12 @@ import type { Request } from 'express';
 
 /** True when the API is serving hvymetl.studio (or explicitly marked hosted). */
 export function isHostedStudioRequest(req: Request): boolean {
-  const requestHost = String(req.get('host') ?? '').toLowerCase();
+  const requestHost =
+    typeof req.get === 'function'
+      ? String(req.get('host') ?? '').toLowerCase()
+      : typeof req.headers?.host === 'string'
+        ? req.headers.host.toLowerCase()
+        : '';
   return (
     process.env.HVYMETL_HOSTED === '1' ||
     Boolean(process.env.HVYMETL_HOSTED_URL?.trim()) ||

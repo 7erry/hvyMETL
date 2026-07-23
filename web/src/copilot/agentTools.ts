@@ -260,6 +260,8 @@ function executeTranslateSql(
       summary: 'SQL translated to MongoDB aggregation pipeline',
       delta: [`pipeline stages: ${sqlTranslation.aggregationPipeline.split('\n').length} lines`],
       ok: true,
+      data: sqlTranslation,
+      sqlTranslation,
     },
     mutation: { sqlTranslation },
   };

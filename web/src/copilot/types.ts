@@ -70,6 +70,8 @@ export type ToolExecutionResult = {
   ok: boolean;
   /** Structured inspect payload from /api/copilot/mongo/inspect (logical DB names, collections, etc.). */
   data?: unknown;
+  /** SQL translation payload when tool is translateSQLToMongo. */
+  sqlTranslation?: SqlTranslationOutput;
 };
 
 export type FoldTableArgs = {

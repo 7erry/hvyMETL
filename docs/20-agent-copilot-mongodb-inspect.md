@@ -41,6 +41,8 @@ Hosted users import into logical names such as `csv_to_atlas`. The server maps t
 
 ## Configuration
 
+Inspect uses the **same MongoDB URI as pipeline imports** (tenant secrets on hosted studio, or `MONGODB_URI` locally). Each inspect request opens an ephemeral MCP connection via the `connect` tool — the MCP server's global `MDB_MCP_CONNECTION_STRING` is only a fallback for local dev when no URI is configured.
+
 ```bash
 # Default when unset: http://127.0.0.1:3000/mcp
 HVYMETL_MCP_MONGODB_URL=http://127.0.0.1:3000/mcp
@@ -66,6 +68,7 @@ When the MCP server is down, inspect calls return HTTP 503 with a user-friendly 
 
 | Module | Role |
 |--------|------|
+| `src/copilot/mongoInspectConnection.ts` | Tenant URI resolution + MCP `connect` / `disconnect` |
 | `src/copilot/mongoMcpClient.ts` | Streamable HTTP MCP client |
 | `src/copilot/mongoInspectScope.ts` | Tenant prefix / logical DB mapping |
 | `src/copilot/mongoInspectService.ts` | Tool dispatch + response sanitization |

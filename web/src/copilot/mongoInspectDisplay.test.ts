@@ -39,5 +39,23 @@ describe('mongoInspectDisplay', () => {
         },
       }),
     ).toEqual(['mytrains.routes', 'mytrains.stations', 'mytrains.trains']);
+
+    expect(
+      buildMongoInspectDelta('listMongoCollectionIndexes', {
+        ok: true,
+        tool: 'listMongoCollectionIndexes',
+        summary: 'Listed 2 indexes for salesChannels in fromoraclewithlove.',
+        data: {
+          database: 'fromoraclewithlove',
+          collection: 'salesChannels',
+          classicIndexes: [{ name: '_id_', key: { _id: 1 } }, { name: 'code_1', key: { code: 1 } }],
+          searchIndexes: [],
+          totalCount: 2,
+        },
+      }),
+    ).toEqual([
+      'fromoraclewithlove.salesChannels classic _id_',
+      'fromoraclewithlove.salesChannels classic code_1',
+    ]);
   });
 });

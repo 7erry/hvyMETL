@@ -9,6 +9,12 @@ function mockInspectMcp(
   const callTool = vi.fn(async (name: string, args: Record<string, unknown>) => {
     const result = await handler(name, args);
     if (result !== undefined) return result;
+    if (name === 'connect') {
+      return { connectionId: 'preconfigured' };
+    }
+    if (name === 'disconnect') {
+      return { outcome: 'removed' };
+    }
     if (name === 'count') return { count: 0 };
     if (name === 'collection-storage-size') return { size: 0, units: 'bytes' };
     if (name === 'collection-indexes') return { classicIndexesCount: 1, searchIndexesCount: 0 };
@@ -322,5 +328,181 @@ describe('mongoInspectService', () => {
     expect(result.ok).toBe(true);
     expect(result.summary).toContain('Compared orders');
     expect((result.data as { rows: unknown[] }).rows.length).toBeGreaterThan(0);
+  });
+
+  it('dials MCP connect with MONGODB_URI instead of relying on preconfigured', async () => {
+    process.env.MONGODB_URI = 'mongodb+srv://user:pass@cluster.example.net/';
+    vi.spyOn(mongoMcpClient, 'isMongoMcpEnabled').mockReturnValue(true);
+    const callTool = mockInspectMcp(async (name, args) => {
+      if (name === 'connect') {
+        return { connectionId: 'hvymetl-session' };
+      }
+      if (name === 'disconnect') return { outcome: 'removed' };
+      if (name === 'list-databases') {
+        expect(args).toEqual({ connectionId: 'hvymetl-session' });
+        return { databases: [{ name: 'mytrains', size: 1 }], totalCount: 1 };
+      }
+      throw new Error(`Unexpected tool ${name}`);
+    });
+
+    const req = { auth: undefined, headers: {} } as import('express').Request;
+    const result = await invokeMongoInspectTool(req, 'listMongoDatabases', {});
+    expect(result.ok).toBe(true);
+    expect(callTool).toHaveBeenCalledWith('connect', {
+      connectionString: 'mongodb+srv://user:pass@cluster.example.net/',
+      connectionName: 'hvymetl',
+    });
+    expect(callTool).toHaveBeenCalledWith('disconnect', { connectionId: 'hvymetl-session' });
+    delete process.env.MONGODB_URI;
+  });
+
+  it('sanitizes collection indexes for the copilot UI', async () => {
+    vi.spyOn(mongoMcpClient, 'isMongoMcpEnabled').mockReturnValue(true);
+    mockInspectMcp(async (name, args) => {
+      if (name === 'list-databases') {
+        return {
+          databases: [{ name: 'terry_walters__fromoraclewithlove', size: 900 }],
+          totalCount: 1,
+        };
+      }
+      if (name === 'collection-indexes') {
+        expect(args).toEqual({
+          connectionId: 'preconfigured',
+          database: 'terry_walters__fromoraclewithlove',
+          collection: 'salesChannels',
+        });
+        return {
+          classicIndexes: [
+            { name: '_id_', key: { _id: 1 } },
+            { name: 'code_1', key: { code: 1 } },
+          ],
+          searchIndexes: [{ name: 'search_idx', type: 'search', status: 'READY', queryable: true, latestDefinition: {} }],
+          classicIndexesCount: 2,
+          searchIndexesCount: 1,
+        };
+      }
+      throw new Error(`Unexpected tool ${name}`);
+    });
+    vi.spyOn(auth, 'isAuthConfigured').mockReturnValue(true);
+    vi.spyOn(auth, 'resolveAuthDisplayName').mockResolvedValue('Terry Walters');
+
+    const req = {
+      auth: { payload: { sub: 'google-oauth2|abc' } },
+      headers: { authorization: 'Bearer token', 'x-hvymetl-db-prefix': 'terry_walters' },
+    } as import('express').Request;
+
+    const result = await invokeMongoInspectTool(req, 'listMongoCollectionIndexes', {
+      database: 'fromoraclewithlove',
+      collection: 'salesChannels',
+    });
+
+    expect(result.ok).toBe(true);
+    expect(result.summary).toBe('Listed 3 indexes for salesChannels in fromoraclewithlove.');
+    expect(result.data).toEqual({
+      database: 'fromoraclewithlove',
+      collection: 'salesChannels',
+      classicIndexes: [
+        { name: '_id_', key: { _id: 1 } },
+        { name: 'code_1', key: { code: 1 } },
+      ],
+      searchIndexes: [{ name: 'search_idx', type: 'search', status: 'READY', queryable: true }],
+      totalCount: 3,
+    });
+  });
+
+  it('resolves the database for explain when collection exists in one tenant database', async () => {
+    vi.spyOn(mongoMcpClient, 'isMongoMcpEnabled').mockReturnValue(true);
+    mockInspectMcp(async (name, args) => {
+      if (name === 'list-databases') {
+        return {
+          databases: [
+            { name: 'terry_walters__fromoraclewithlove', size: 900 },
+            { name: 'terry_walters__mytrains', size: 500 },
+            { name: 'terry_walters__moretrains', size: 400 },
+          ],
+          totalCount: 3,
+        };
+      }
+      if (name === 'list-collections') {
+        const database = (args as { database?: string }).database;
+        if (database === 'terry_walters__fromoraclewithlove') {
+          return { collections: [{ name: 'orders' }], totalCount: 1 };
+        }
+        if (database === 'terry_walters__mytrains') {
+          return { collections: [{ name: 'trains' }, { name: 'routes' }], totalCount: 2 };
+        }
+        if (database === 'terry_walters__moretrains') {
+          return { collections: [{ name: 'stations' }], totalCount: 1 };
+        }
+        return { collections: [], totalCount: 0 };
+      }
+      if (name === 'explain') {
+        expect(args).toMatchObject({
+          connectionId: 'preconfigured',
+          database: 'terry_walters__mytrains',
+          collection: 'trains',
+        });
+        return {
+          winningPlan: { stage: 'IXSCAN', indexName: 'status_1' },
+          executionStats: { totalDocsExamined: 12, nReturned: 12, executionTimeMillis: 3 },
+        };
+      }
+      throw new Error(`Unexpected tool ${name}`);
+    });
+    vi.spyOn(auth, 'isAuthConfigured').mockReturnValue(true);
+    vi.spyOn(auth, 'resolveAuthDisplayName').mockResolvedValue('Terry Walters');
+
+    const req = {
+      auth: { payload: { sub: 'google-oauth2|abc' } },
+      headers: { authorization: 'Bearer token', 'x-hvymetl-db-prefix': 'terry_walters' },
+    } as import('express').Request;
+
+    const result = await invokeMongoInspectTool(req, 'explainMongoOperation', {
+      collection: 'trains',
+      method: 'find',
+      filter: { status: 'active' },
+      verbosity: 'executionStats',
+    });
+
+    expect(result.ok).toBe(true);
+    expect(result.summary).toContain('trains');
+    expect(result.summary).toContain('mytrains');
+  });
+
+  it('requires database when the same collection exists in multiple tenant databases', async () => {
+    vi.spyOn(mongoMcpClient, 'isMongoMcpEnabled').mockReturnValue(true);
+    mockInspectMcp(async (name, args) => {
+      if (name === 'list-databases') {
+        return {
+          databases: [
+            { name: 'terry_walters__mytrains', size: 500 },
+            { name: 'terry_walters__moretrains', size: 400 },
+          ],
+          totalCount: 2,
+        };
+      }
+      if (name === 'list-collections') {
+        return { collections: [{ name: 'trains' }, { name: 'routes' }], totalCount: 2 };
+      }
+      throw new Error(`Unexpected tool ${name}`);
+    });
+    vi.spyOn(auth, 'isAuthConfigured').mockReturnValue(true);
+    vi.spyOn(auth, 'resolveAuthDisplayName').mockResolvedValue('Terry Walters');
+
+    const req = {
+      auth: { payload: { sub: 'google-oauth2|abc' } },
+      headers: { authorization: 'Bearer token', 'x-hvymetl-db-prefix': 'terry_walters' },
+    } as import('express').Request;
+
+    const result = await invokeMongoInspectTool(req, 'explainMongoOperation', {
+      collection: 'trains',
+      method: 'find',
+      filter: { status: 'active' },
+    });
+
+    expect(result.ok).toBe(false);
+    expect(result.error).toMatch(/multiple databases/i);
+    expect(result.error).toMatch(/mytrains/);
+    expect(result.error).toMatch(/moretrains/);
   });
 });

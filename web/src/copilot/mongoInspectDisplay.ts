@@ -1,5 +1,5 @@
 import type { MongoInspectInvokeResponse, MongoInspectToolName } from './types';
-import { readMongoInspectCollectionRows, readMongoInspectDatabaseRows } from './mongoInspectFormat';
+import { readMongoInspectCollectionRows, readMongoInspectDatabaseRows, readMongoInspectIndexRows } from './mongoInspectFormat';
 
 /** Human-readable delta lines for MongoDB inspect tool cards. */
 export function buildMongoInspectDelta(
@@ -15,6 +15,15 @@ export function buildMongoInspectDelta(
   if (tool === 'listMongoCollections') {
     const { database, collections } = readMongoInspectCollectionRows(response.data);
     return collections.map((entry) => `${database}.${entry.name}`);
+  }
+
+  if (tool === 'listMongoCollectionIndexes') {
+    const summary = readMongoInspectIndexRows(response.data);
+    const lines = [
+      ...summary.classicIndexes.map((index) => `${summary.database}.${summary.collection} classic ${index.name}`),
+      ...summary.searchIndexes.map((index) => `${summary.database}.${summary.collection} search ${index.name}`),
+    ];
+    return lines.length ? lines : [`${summary.database}.${summary.collection}: no indexes`];
   }
 
   if (tool === 'compareMongoCollectionToPlan' && response.data && typeof response.data === 'object') {

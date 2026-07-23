@@ -1,96 +1,104 @@
-import { useState } from 'react';
-import { CopyButton } from '../CopyButton';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useCopilot } from '../../copilot/CopilotContext';
+import { ResizableVerticalSplit } from '../ResizableVerticalSplit';
+import { SqlTranslationOutputView } from './SqlTranslationOutputView';
 
-type TranslatorTab = 'pipeline' | 'mongoose' | 'shell';
+const MIN_OUTPUT_PANEL_HEIGHT = 120;
+const MIN_INPUT_PANEL_HEIGHT = 140;
 
 /** SQL → MongoDB query translator drawer tab. */
 export function QueryTranslatorPanel() {
   const copilot = useCopilot();
   const [sql, setSql] = useState('');
-  const [activeTab, setActiveTab] = useState<TranslatorTab>('pipeline');
-
+  const [outputPanelHeight, setOutputPanelHeight] = useState(280);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const sqlInputRef = useRef<HTMLTextAreaElement>(null);
   const output = copilot.sqlTranslation;
+
+  const syncOutputHeight = useCallback(() => {
+    const container = containerRef.current;
+    if (!container) return;
+    const available = container.clientHeight;
+    if (available <= 0) return;
+    setOutputPanelHeight((current) => {
+      const maxBottom = Math.max(MIN_OUTPUT_PANEL_HEIGHT, available - MIN_INPUT_PANEL_HEIGHT);
+      return Math.min(maxBottom, Math.max(MIN_OUTPUT_PANEL_HEIGHT, current));
+    });
+  }, []);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const observer = new ResizeObserver(() => {
+      syncOutputHeight();
+    });
+    observer.observe(container);
+    syncOutputHeight();
+
+    return () => observer.disconnect();
+  }, [syncOutputHeight]);
+
+  useEffect(() => {
+    if (output) {
+      syncOutputHeight();
+    }
+  }, [output, syncOutputHeight]);
+
+  useEffect(() => {
+    const focus = () => sqlInputRef.current?.focus({ preventScroll: true });
+    focus();
+    const timerIds = [0, 50, 150].map((delayMs) => window.setTimeout(focus, delayMs));
+    return () => timerIds.forEach((timerId) => window.clearTimeout(timerId));
+  }, []);
 
   const handleTranslate = () => {
     if (!sql.trim()) return;
     copilot.translateSql(sql);
   };
 
-  const code =
-    activeTab === 'pipeline'
-      ? output?.aggregationPipeline ?? ''
-      : activeTab === 'mongoose'
-        ? output?.mongooseScript ?? ''
-        : output?.shellScript ?? '';
-
-  return (
-    <div className="copilot-translator">
+  const inputPane = (
+    <div className="copilot-translator__pane copilot-translator__pane--input">
       <label className="copilot-translator__label" htmlFor="copilot-sql-input">
-        Paste T-SQL / PostgreSQL
+        Paste T-SQL / PostgreSQL / Oracle SQL
       </label>
       <textarea
+        ref={sqlInputRef}
         id="copilot-sql-input"
         className="copilot-translator__input"
         value={sql}
         onChange={(e) => setSql(e.target.value)}
         placeholder="SELECT t.id, s.name FROM trips t JOIN trip_stops s ON ..."
-        rows={6}
         spellCheck={false}
       />
-      <div className="button-row">
+      <div className="copilot-translator__actions button-row">
         <button type="button" className="primary" onClick={handleTranslate}>
           Translate
         </button>
       </div>
+    </div>
+  );
 
-      {output ? (
-        <>
-          <div className="copilot-translator__tabs" role="tablist">
-            {(['pipeline', 'mongoose', 'shell'] as const).map((tab) => (
-              <button
-                key={tab}
-                type="button"
-                role="tab"
-                aria-selected={activeTab === tab}
-                className={activeTab === tab ? 'active' : ''}
-                onClick={() => setActiveTab(tab)}
-              >
-                {tab === 'pipeline' ? 'Aggregation JSON' : tab === 'mongoose' ? 'Mongoose' : 'Shell'}
-              </button>
-            ))}
+  return (
+    <div ref={containerRef} className="copilot-translator copilot-translator--split">
+      <ResizableVerticalSplit
+        bottomHeight={outputPanelHeight}
+        onBottomHeightChange={setOutputPanelHeight}
+        minBottom={MIN_OUTPUT_PANEL_HEIGHT}
+        minTop={MIN_INPUT_PANEL_HEIGHT}
+        top={inputPane}
+        bottom={
+          <div className="copilot-translator__pane copilot-translator__pane--output">
+            {output ? (
+              <SqlTranslationOutputView output={output} layout="panel" />
+            ) : (
+              <p className="copilot-translator__placeholder">
+                Drag the divider above to resize panels. Translation output appears here after you click Translate.
+              </p>
+            )}
           </div>
-          <div className="copilot-translator__code-wrap">
-            <CopyButton text={code} label="Copy Code" />
-            <pre className="copilot-translator__code">
-              <code>{code}</code>
-            </pre>
-          </div>
-          {output.indexRecommendations.length > 0 ? (
-            <div className="copilot-translator__indexes">
-              <strong>Index recommendations</strong>
-              <ul>
-                {output.indexRecommendations.map((idx) => (
-                  <li key={idx}>
-                    <code>{idx}</code>
-                    <CopyButton text={idx} label="Copy" />
-                    <button
-                      type="button"
-                      className="secondary copilot-translator__apply-index"
-                      onClick={() => {
-                        void navigator.clipboard.writeText(idx);
-                      }}
-                      title="Copy index definition for your migration plan"
-                    >
-                      Apply Index Recommendation
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ) : null}
-        </>
-      ) : null}
+        }
+      />
     </div>
   );
 }

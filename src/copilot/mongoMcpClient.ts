@@ -171,6 +171,11 @@ function normalizeMongoMcpError(error: unknown): Error {
       'MongoDB inspect returned an unexpected HTML response. The inspection service may be overloaded — try again in a moment.',
     );
   }
+  if (/configured connection string is not valid|invalid connection string/i.test(message)) {
+    return new Error(
+      'MongoDB inspect could not connect to Atlas. Add your connection string under Pipeline settings, or configure MDB_MCP_CONNECTION_STRING on the MCP server.',
+    );
+  }
   if (/fetch failed|ECONNREFUSED|ENOTFOUND|timed out|aborted/i.test(message)) {
     return new Error(MCP_INSPECT_UNAVAILABLE_MESSAGE);
   }

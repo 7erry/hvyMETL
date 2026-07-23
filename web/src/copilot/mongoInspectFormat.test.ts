@@ -1,9 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import {
   formatInspectBytes,
+  formatInspectIndexKey,
   formatInspectStorageSize,
   readMongoInspectCollectionRows,
   readMongoInspectDatabaseRows,
+  readMongoInspectIndexRows,
 } from './mongoInspectFormat.js';
 
 describe('mongoInspectFormat', () => {
@@ -21,6 +23,22 @@ describe('mongoInspectFormat', () => {
     ).toEqual({
       database: 'mytrains',
       collections: [{ name: 'routes', documentCount: 10, storageSize: 1.2, storageSizeUnits: 'MB', indexCount: 2 }],
+    });
+    expect(formatInspectIndexKey({ status: 1, createdAt: -1 })).toBe('createdAt: -1, status: 1');
+    expect(
+      readMongoInspectIndexRows({
+        database: 'fromoraclewithlove',
+        collection: 'salesChannels',
+        classicIndexes: [{ name: '_id_', key: { _id: 1 } }, { name: 'code_1', key: { code: 1 } }],
+        searchIndexes: [],
+        totalCount: 2,
+      }),
+    ).toEqual({
+      database: 'fromoraclewithlove',
+      collection: 'salesChannels',
+      classicIndexes: [{ name: '_id_', key: { _id: 1 } }, { name: 'code_1', key: { code: 1 } }],
+      searchIndexes: [],
+      totalCount: 2,
     });
   });
 });
