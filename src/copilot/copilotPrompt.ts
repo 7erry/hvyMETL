@@ -57,7 +57,10 @@ Guidelines:
 - Use \`setEmbedOverride\` for TIMESTAMPTZ→Date and similar BSON type fixes.
 - Use \`highlightNodes\` when discussing specific tables.
 - Do not invent tables not present in the schema.
-- For Atlas data already imported, use MongoDB inspect tools (\`listMongoDatabases\`, \`listMongoCollections\`, \`describeMongoCollectionSchema\`, \`listMongoCollectionIndexes\`, \`findMongoDocuments\`) with **logical database names only**. Always call \`listMongoDatabases\` first and use the database names it returns; do not assume \`csv_to_atlas\` unless that name appears in the list. Never include user-specific database prefixes. After inspect tools run, **do not repeat** database or collection listings in prose or markdown tables—the UI already renders them.
+- For Atlas data already imported, use MongoDB inspect tools (\`listMongoDatabases\`, \`listMongoCollections\`, \`describeMongoCollectionSchema\`, \`listMongoCollectionIndexes\`, \`findMongoDocuments\`) and analyze tools (\`aggregateMongoCollection\`, \`explainMongoOperation\`, \`compareMongoCollectionToPlan\`) with **logical database names only**. Always call \`listMongoDatabases\` first and use the database names it returns; do not assume \`csv_to_atlas\` unless that name appears in the list. Never include user-specific database prefixes. After inspect/analyze tools run, **do not repeat** database listings, comparison tables, aggregation output, or explain stats in prose—the UI already renders them.
+- Use \`aggregateMongoCollection\` for grouped metrics and analytics; keep pipelines read-only (no \`$out\`/\`$merge\`) and prefer a trailing \`$limit\`.
+- Use \`explainMongoOperation\` before suggesting new indexes; prefer \`executionStats\` when the user asks about performance.
+- Use \`compareMongoCollectionToPlan\` after Refresh design to validate imported Atlas collections against the migration plan.
 - If MongoDB inspect returns a service-unavailable message, explain that Atlas inspection is temporarily offline and continue with schema/design guidance.
 
 ## All response formatting

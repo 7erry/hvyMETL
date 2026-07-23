@@ -17,6 +17,11 @@ export function buildMongoInspectDelta(
     return collections.map((entry) => `${database}.${entry.name}`);
   }
 
+  if (tool === 'compareMongoCollectionToPlan' && response.data && typeof response.data === 'object') {
+    const summary = (response.data as { summary?: { matches?: number; missing?: number } }).summary;
+    if (summary) return [`matches: ${summary.matches ?? 0}`, `missing: ${summary.missing ?? 0}`];
+  }
+
   return [`Inspect tool ${tool} completed.`];
 }
 

@@ -240,4 +240,87 @@ describe('mongoInspectService', () => {
     expect(callTool.mock.calls.length).toBeGreaterThan(19);
     vi.restoreAllMocks();
   });
+
+  it('runs aggregate analyze tool through MCP', async () => {
+    vi.spyOn(mongoMcpClient, 'isMongoMcpEnabled').mockReturnValue(true);
+    const callTool = mockInspectMcp(async (name, args) => {
+      if (name === 'list-databases') {
+        return { databases: [{ name: 'terry_walters__myshop', size: 100 }], totalCount: 1 };
+      }
+      if (name === 'aggregate') {
+        expect(args).toMatchObject({
+          connectionId: 'preconfigured',
+          database: 'terry_walters__myshop',
+          collection: 'orders',
+        });
+        return { documents: [{ _id: 'open', total: 3 }], count: 1, appliedLimits: [] };
+      }
+      throw new Error(`Unexpected tool ${name}`);
+    });
+    vi.spyOn(auth, 'isAuthConfigured').mockReturnValue(true);
+    vi.spyOn(auth, 'resolveAuthDisplayName').mockResolvedValue('Terry Walters');
+
+    const req = {
+      auth: { payload: { sub: 'google-oauth2|abc' } },
+      headers: { 'x-hvymetl-db-prefix': 'terry_walters' },
+    } as import('express').Request;
+
+    const result = await invokeMongoInspectTool(req, 'aggregateMongoCollection', {
+      database: 'myshop',
+      collection: 'orders',
+      pipeline: [{ $group: { _id: '$status', total: { $sum: 1 } } }],
+    });
+
+    expect(result.ok).toBe(true);
+    expect(result.summary).toContain('Aggregation returned');
+    expect((result.data as { documents: unknown[] }).documents).toHaveLength(1);
+    expect(callTool).toHaveBeenCalled();
+  });
+
+  it('compares a live collection against plan context', async () => {
+    vi.spyOn(mongoMcpClient, 'isMongoMcpEnabled').mockReturnValue(true);
+    mockInspectMcp(async (name) => {
+      if (name === 'list-databases') {
+        return { databases: [{ name: 'terry_walters__myshop', size: 100 }], totalCount: 1 };
+      }
+      if (name === 'collection-schema') {
+        return { schema: { properties: { status: { bsonType: 'string' } } }, fieldsCount: 1 };
+      }
+      if (name === 'collection-indexes') {
+        return { classicIndexes: [{ name: 'status_1', key: { status: 1 } }], classicIndexesCount: 1 };
+      }
+      if (name === 'count') return { count: 4 };
+      throw new Error(`Unexpected tool ${name}`);
+    });
+    vi.spyOn(auth, 'isAuthConfigured').mockReturnValue(true);
+    vi.spyOn(auth, 'resolveAuthDisplayName').mockResolvedValue('Terry Walters');
+
+    const req = {
+      auth: { payload: { sub: 'google-oauth2|abc' } },
+      headers: { 'x-hvymetl-db-prefix': 'terry_walters' },
+    } as import('express').Request;
+
+    const result = await invokeMongoInspectTool(
+      req,
+      'compareMongoCollectionToPlan',
+      { database: 'myshop', collection: 'orders' },
+      {
+        planContext: {
+          collections: [
+            {
+              name: 'orders',
+              sourceTable: 'orders',
+              topLevelFields: ['status', 'customerId'],
+              embeddedFields: [],
+              indexKeys: ['status:1'],
+            },
+          ],
+        },
+      },
+    );
+
+    expect(result.ok).toBe(true);
+    expect(result.summary).toContain('Compared orders');
+    expect((result.data as { rows: unknown[] }).rows.length).toBeGreaterThan(0);
+  });
 });

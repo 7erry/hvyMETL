@@ -5,6 +5,11 @@ import {
   readMongoInspectDatabaseRows,
 } from '../../copilot/mongoInspectFormat';
 import { MongoInspectCollectionTable, MongoInspectDatabaseTable } from './MongoInspectTable';
+import {
+  MongoAnalyzeAggregateTable,
+  MongoAnalyzeCompareTable,
+  MongoAnalyzeExplainTable,
+} from './MongoAnalyzeTables';
 
 type ToolExecutionCardProps = {
   execution: ToolExecutionResult;
@@ -30,6 +35,19 @@ export function ToolExecutionCard({ execution }: ToolExecutionCardProps) {
           database={collectionSummary.database}
           collections={collectionSummary.collections}
         />
+      ) : null}
+      {execution.tool === 'aggregateMongoCollection' && execution.data ? (
+        <MongoAnalyzeAggregateTable
+          database={String((execution.data as { database?: string }).database ?? '')}
+          collection={String((execution.data as { collection?: string }).collection ?? '')}
+          data={execution.data}
+        />
+      ) : null}
+      {execution.tool === 'explainMongoOperation' && execution.data ? (
+        <MongoAnalyzeExplainTable data={execution.data} />
+      ) : null}
+      {execution.tool === 'compareMongoCollectionToPlan' && execution.data ? (
+        <MongoAnalyzeCompareTable data={execution.data} />
       ) : null}
       {databaseRows.length === 0 && !(collectionSummary && collectionSummary.collections.length > 0) && execution.delta.length > 0 ? (
         <ul className="copilot-tool-card__delta">

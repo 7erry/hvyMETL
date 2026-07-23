@@ -10,6 +10,7 @@ import {
   type CopilotSchemaContext,
 } from '../copilot/groveChat.js';
 import { invokeMongoInspectTool } from '../copilot/mongoInspectService.js';
+import { parseMongoPlanContext } from '../copilot/mongoPlanContext.js';
 import { isMongoInspectToolName } from '../copilot/mongoInspectToolSchemas.js';
 import { isMongoMcpEnabled, probeMongoMcpAvailability } from '../copilot/mongoMcpClient.js';
 
@@ -89,7 +90,9 @@ export function createCopilotRouter(): Router {
         return;
       }
 
-      const result = await invokeMongoInspectTool(req, tool, args);
+      const planContext = parseMongoPlanContext(req.body?.planContext);
+
+      const result = await invokeMongoInspectTool(req, tool, args, { planContext });
       const status = result.serviceUnavailable ? 503 : result.ok ? 200 : 400;
       res.status(status).json(result);
     } catch (error) {

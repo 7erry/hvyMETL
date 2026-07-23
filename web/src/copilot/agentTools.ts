@@ -336,6 +336,9 @@ export function toolDisplayName(tool: CopilotToolName): string {
     describeMongoCollectionSchema: 'Collection Schema',
     listMongoCollectionIndexes: 'Collection Indexes',
     findMongoDocuments: 'Find Documents',
+    aggregateMongoCollection: 'Aggregate',
+    explainMongoOperation: 'Explain Query',
+    compareMongoCollectionToPlan: 'Compare to Plan',
   };
   return names[tool];
 }

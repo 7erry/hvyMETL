@@ -21,6 +21,10 @@ import {
   sanitizeDatabaseListForClient,
   type TenantMongoInspectScope,
 } from './mongoInspectScope.js';
+import { compareCollectionToPlan } from './mongoAnalyzeComparison.js';
+import { summarizeExplainPayload } from './mongoAnalyzeExplain.js';
+import { normalizeAggregationPipeline } from './mongoAnalyzePipeline.js';
+import { findPlanCollection, type MongoPlanContext } from './mongoPlanContext.js';
 import { enrichCollectionSummaries } from './mongoInspectEnrichment.js';
 import {
   MONGO_INSPECT_MCP_TOOL_MAP,
@@ -169,11 +173,12 @@ function resolveInspectLogicalDatabase(
   return scope.defaultLogicalDatabase;
 }
 
-/** Build MCP arguments and sanitize the response for one inspect tool. */
+/** Build MCP arguments and sanitize the response for one inspect/analyze tool. */
 export async function invokeMongoInspectTool(
   req: Request,
   tool: MongoInspectToolName,
   args: Record<string, unknown>,
+  options: { planContext?: MongoPlanContext } = {},
 ): Promise<MongoInspectInvokeResult> {
   if (!isMongoMcpEnabled()) {
     return unavailableResult(tool);
@@ -222,6 +227,24 @@ export async function invokeMongoInspectTool(
       if (physicalDatabase) {
         assertPhysicalDatabaseOnCluster(scope, logicalDatabase, physicalDatabase, clusterNames);
       }
+
+      if (tool === 'compareMongoCollectionToPlan') {
+        const collection = String(args.collection ?? '').trim();
+        const data = await runCompareCollectionToPlan({
+          callTool,
+          logicalDatabase,
+          physicalDatabase: physicalDatabase!,
+          collection,
+          planContext: options.planContext,
+        });
+        return {
+          ok: true,
+          tool,
+          summary: summarizeInspectResult(tool, data),
+          data,
+        };
+      }
+
       const mcpName = MONGO_INSPECT_MCP_TOOL_MAP[tool];
       const raw = await callTool(mcpName, mcpArgs);
       if (tool === 'listMongoDatabases') {
@@ -356,6 +379,87 @@ async function buildMcpArguments(
     };
   }
 
+  if (tool === 'aggregateMongoCollection') {
+    const pipeline = normalizeAggregationPipeline(args.pipeline);
+    return {
+      mcpArgs: {
+        connectionId,
+        database: physicalDatabase,
+        collection,
+        pipeline,
+        responseBytesLimit: 512_000,
+      },
+      logicalDatabase,
+      physicalDatabase,
+    };
+  }
+
+  if (tool === 'explainMongoOperation') {
+    const method = String(args.method ?? 'find').trim();
+    const verbosity =
+      typeof args.verbosity === 'string' &&
+      ['queryPlanner', 'queryPlannerExtended', 'executionStats', 'allPlansExecution'].includes(args.verbosity)
+        ? args.verbosity
+        : 'queryPlanner';
+
+    if (method === 'aggregate') {
+      const pipeline = normalizeAggregationPipeline(args.pipeline);
+      return {
+        mcpArgs: {
+          connectionId,
+          database: physicalDatabase,
+          collection,
+          method: [{ name: 'aggregate', arguments: { pipeline } }],
+          verbosity,
+        },
+        logicalDatabase,
+        physicalDatabase,
+      };
+    }
+
+    if (method === 'count') {
+      const countArgs: Record<string, unknown> = {};
+      if (args.filter && typeof args.filter === 'object') countArgs.query = args.filter;
+      return {
+        mcpArgs: {
+          connectionId,
+          database: physicalDatabase,
+          collection,
+          method: [{ name: 'count', arguments: countArgs }],
+          verbosity,
+        },
+        logicalDatabase,
+        physicalDatabase,
+      };
+    }
+
+    const findArgs: Record<string, unknown> = {};
+    if (args.filter && typeof args.filter === 'object') findArgs.filter = args.filter;
+    if (args.projection && typeof args.projection === 'object') findArgs.projection = args.projection;
+    if (args.sort && typeof args.sort === 'object') findArgs.sort = args.sort;
+    findArgs.limit = clampNumber(args.limit, 10, 1, MAX_FIND_LIMIT);
+
+    return {
+      mcpArgs: {
+        connectionId,
+        database: physicalDatabase,
+        collection,
+        method: [{ name: 'find', arguments: findArgs }],
+        verbosity,
+      },
+      logicalDatabase,
+      physicalDatabase,
+    };
+  }
+
+  if (tool === 'compareMongoCollectionToPlan') {
+    return {
+      mcpArgs: { connectionId, database: physicalDatabase, collection },
+      logicalDatabase,
+      physicalDatabase,
+    };
+  }
+
   const limit = clampNumber(args.limit, 10, 1, MAX_FIND_LIMIT);
   const mcpArgs: Record<string, unknown> = {
     connectionId,
@@ -409,6 +513,40 @@ function sanitizeInspectPayload(
     };
   }
 
+  if (tool === 'aggregateMongoCollection') {
+    const payload = raw as { documents?: unknown[]; count?: number | 'indeterminate' };
+    const documents = Array.isArray(payload.documents) ? payload.documents : [];
+    const count =
+      typeof payload.count === 'number'
+        ? payload.count
+        : typeof payload.count === 'string' && payload.count === 'indeterminate'
+          ? documents.length
+          : documents.length;
+    return {
+      database: logicalDatabase,
+      collection: typeof args.collection === 'string' ? args.collection : '',
+      documents,
+      count,
+      pipeline: args.pipeline,
+    };
+  }
+
+  if (tool === 'explainMongoOperation') {
+    const summary = summarizeExplainPayload(raw);
+    return {
+      database: logicalDatabase,
+      collection: typeof args.collection === 'string' ? args.collection : '',
+      method: summary.method,
+      verbosity: summary.verbosity,
+      winningStage: summary.winningStage,
+      indexName: summary.indexName,
+      docsExamined: summary.docsExamined,
+      docsReturned: summary.docsReturned,
+      executionTimeMillis: summary.executionTimeMillis,
+      explainResult: summary.explainResult,
+    };
+  }
+
   return {
     database: logicalDatabase,
     collection: typeof args.collection === 'string' ? args.collection : '',
@@ -448,6 +586,22 @@ function summarizeInspectResult(tool: MongoInspectToolName, data: unknown): stri
     const result = record.result as { queryResultsCount?: number } | undefined;
     const count = result?.queryResultsCount ?? 0;
     return `Returned ${count} document(s) from ${record.collection} in ${record.database}.`;
+  }
+  if (tool === 'aggregateMongoCollection') {
+    const count = typeof record.count === 'number' ? record.count : 0;
+    return `Aggregation returned ${count} document(s) from ${record.collection} in ${record.database}.`;
+  }
+  if (tool === 'explainMongoOperation') {
+    const stage = typeof record.winningStage === 'string' ? record.winningStage : 'plan';
+    const index = typeof record.indexName === 'string' ? ` using ${record.indexName}` : '';
+    return `Explained ${record.method} on ${record.collection} in ${record.database} (${stage}${index}).`;
+  }
+  if (tool === 'compareMongoCollectionToPlan') {
+    const summary = record.summary as { matches?: number; missing?: number; extra?: number } | undefined;
+    const matches = summary?.matches ?? 0;
+    const missing = summary?.missing ?? 0;
+    const extra = summary?.extra ?? 0;
+    return `Compared ${record.collection} in ${record.database}: ${matches} match(es), ${missing} missing, ${extra} extra.`;
   }
   return `${tool} completed.`;
 }
@@ -515,4 +669,38 @@ async function resolveAccessiblePhysicalDatabase(
   }
 
   return resolved.scope.resolvePhysicalDatabase(logicalDatabase);
+}
+
+async function runCompareCollectionToPlan(input: {
+  callTool: MongoMcpToolCaller;
+  logicalDatabase: string;
+  physicalDatabase: string;
+  collection: string;
+  planContext?: MongoPlanContext;
+}): Promise<unknown> {
+  const baseArgs = {
+    connectionId: MCP_CONNECTION_ID,
+    database: input.physicalDatabase,
+    collection: input.collection,
+  };
+
+  const [schemaPayload, indexesPayload, countPayload] = await Promise.all([
+    input.callTool('collection-schema', { ...baseArgs, sampleSize: 50, responseBytesLimit: 512_000 }),
+    input.callTool('collection-indexes', baseArgs),
+    input.callTool('count', baseArgs),
+  ]);
+
+  const documentCount =
+    countPayload && typeof countPayload === 'object' && typeof (countPayload as { count?: unknown }).count === 'number'
+      ? (countPayload as { count: number }).count
+      : undefined;
+
+  return compareCollectionToPlan({
+    database: input.logicalDatabase,
+    collection: input.collection,
+    plan: findPlanCollection(input.planContext, input.collection),
+    schemaPayload,
+    indexesPayload,
+    documentCount,
+  });
 }

@@ -19,7 +19,10 @@ export type CopilotToolName =
   | 'listMongoCollections'
   | 'describeMongoCollectionSchema'
   | 'listMongoCollectionIndexes'
-  | 'findMongoDocuments';
+  | 'findMongoDocuments'
+  | 'aggregateMongoCollection'
+  | 'explainMongoOperation'
+  | 'compareMongoCollectionToPlan';
 
 /** Tools executed server-side via the MongoDB MCP proxy. */
 export type MongoInspectToolName =
@@ -27,7 +30,10 @@ export type MongoInspectToolName =
   | 'listMongoCollections'
   | 'describeMongoCollectionSchema'
   | 'listMongoCollectionIndexes'
-  | 'findMongoDocuments';
+  | 'findMongoDocuments'
+  | 'aggregateMongoCollection'
+  | 'explainMongoOperation'
+  | 'compareMongoCollectionToPlan';
 
 export const MONGO_INSPECT_TOOL_NAMES = new Set<MongoInspectToolName>([
   'listMongoDatabases',
@@ -35,6 +41,9 @@ export const MONGO_INSPECT_TOOL_NAMES = new Set<MongoInspectToolName>([
   'describeMongoCollectionSchema',
   'listMongoCollectionIndexes',
   'findMongoDocuments',
+  'aggregateMongoCollection',
+  'explainMongoOperation',
+  'compareMongoCollectionToPlan',
 ]);
 
 export function isMongoInspectToolName(name: string): name is MongoInspectToolName {

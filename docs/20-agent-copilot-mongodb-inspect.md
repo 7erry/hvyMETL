@@ -1,8 +1,8 @@
-# Agent Copilot — MongoDB inspect (Phase 1)
+# Agent Copilot — MongoDB inspect & analyze (MCP)
 
-Read-only Atlas inspection tools for the **Agent Copilot** sidebar. The hvyMETL API proxies requests to a co-hosted [MongoDB MCP Server](https://github.com/mongodb-js/mongodb-mcp-server) over streamable HTTP.
+Read-only Atlas inspection and analysis tools for the **Agent Copilot** sidebar. The hvyMETL API proxies requests to a co-hosted [MongoDB MCP Server](https://github.com/mongodb-js/mongodb-mcp-server) over streamable HTTP.
 
-## Tools (Phase 1)
+## Tools (Phase 1 — Inspect)
 
 | Copilot tool | MCP tool | Purpose |
 |--------------|----------|---------|
@@ -12,7 +12,28 @@ Read-only Atlas inspection tools for the **Agent Copilot** sidebar. The hvyMETL 
 | `listMongoCollectionIndexes` | `collection-indexes` | Classic + Atlas Search indexes |
 | `findMongoDocuments` | `find` | Read-only find (max 25 docs) |
 
-Canvas mutation tools (`foldTable`, etc.) still run in the browser. Inspect tools run **server-side** so `MONGODB_URI` never reaches the client.
+## Tools (Phase 2 — Analyze)
+
+| Copilot tool | MCP tool | Purpose |
+|--------------|----------|---------|
+| `aggregateMongoCollection` | `aggregate` | Read-only aggregation (max 20 stages, 50 docs) |
+| `explainMongoOperation` | `explain` | Query planner / execution stats for find, count, or aggregate |
+| `compareMongoCollectionToPlan` | `collection-schema`, `collection-indexes`, `count` | Compare live Atlas shape vs current migration plan |
+
+Canvas mutation tools (`foldTable`, etc.) still run in the browser. Inspect/analyze tools run **server-side** so `MONGODB_URI` never reaches the client.
+
+### Compare to plan
+
+`compareMongoCollectionToPlan` uses the **current migration plan** from the studio session (sent as `planContext` on `/api/copilot/mongo/inspect`). Run **Refresh design** first so field, embed, and index expectations are available.
+
+Comparison rows:
+
+| Status | Meaning |
+|--------|---------|
+| Match | Planned field or index key found in Atlas |
+| Missing | Expected from plan but not inferred on cluster |
+| Extra | Present in Atlas sample but not in plan |
+| Warn | No plan loaded or empty collection |
 
 ## Multi-tenant isolation
 
@@ -37,7 +58,7 @@ npx -y mongodb-mcp-server@latest --transport http --readOnly --httpHost=127.0.0.
 ## API
 
 - `GET /api/copilot/status` — includes `mongoInspect.enabled` and `mongoInspect.available`
-- `POST /api/copilot/mongo/inspect` — `{ tool, args }` for direct invocation (used by the copilot UI)
+- `POST /api/copilot/mongo/inspect` — `{ tool, args, planContext? }` for direct invocation (used by the copilot UI). `planContext` is required for meaningful `compareMongoCollectionToPlan` results.
 
 When the MCP server is down, inspect calls return HTTP 503 with a user-friendly message; the copilot header shows **Atlas inspect offline**.
 
@@ -48,12 +69,15 @@ When the MCP server is down, inspect calls return HTTP 503 with a user-friendly 
 | `src/copilot/mongoMcpClient.ts` | Streamable HTTP MCP client |
 | `src/copilot/mongoInspectScope.ts` | Tenant prefix / logical DB mapping |
 | `src/copilot/mongoInspectService.ts` | Tool dispatch + response sanitization |
+| `src/copilot/mongoAnalyzePipeline.ts` | Read-only aggregation pipeline guards |
+| `src/copilot/mongoAnalyzeComparison.ts` | Plan vs Atlas comparison rows |
+| `src/copilot/mongoPlanContext.ts` | Migration plan snapshot parsing |
 | `src/copilot/mongoInspectToolSchemas.ts` | OpenAI tool definitions |
 | `src/server/copilotRoutes.ts` | `/api/copilot/mongo/inspect` |
-| `web/src/copilot/CopilotContext.tsx` | Routes inspect tool calls to the API |
+| `web/src/components/copilot/MongoAnalyzeTables.tsx` | Aggregate, explain, and compare result tables |
 
 ## Verification
 
 ```bash
-npm test -- src/copilot/mongoInspectScope.test.ts src/copilot/mongoInspectService.test.ts src/server/copilotRoutes.test.ts
+npm test -- src/copilot/mongoAnalyzePipeline.test.ts src/copilot/mongoAnalyzeComparison.test.ts src/copilot/mongoInspectScope.test.ts src/copilot/mongoInspectService.test.ts src/server/copilotRoutes.test.ts web/src/copilot/mongoAnalyzeFormat.test.ts
 ```

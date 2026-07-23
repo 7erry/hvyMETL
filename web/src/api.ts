@@ -851,11 +851,12 @@ export async function fetchCopilotStatus(): Promise<CopilotStatusResponse> {
 export async function invokeCopilotMongoInspect(
   tool: import('./copilot/types').MongoInspectToolName,
   args: Record<string, unknown>,
+  planContext?: import('./copilot/mongoPlanContextPayload').MongoPlanContextPayload,
 ): Promise<import('./copilot/types').MongoInspectInvokeResponse> {
   const res = await copilotApiFetch(`${base}/api/copilot/mongo/inspect`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ tool, args }),
+    body: JSON.stringify({ tool, args, ...(planContext ? { planContext } : {}) }),
   });
   const contentType = res.headers.get('content-type') ?? '';
   const body = await res.text();

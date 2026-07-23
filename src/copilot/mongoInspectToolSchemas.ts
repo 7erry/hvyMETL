@@ -1,4 +1,4 @@
-/** Read-only MongoDB inspect tools exposed to the Agent Copilot LLM (logical database names only). */
+/** Read-only MongoDB inspect + analyze tools exposed to the Agent Copilot LLM (logical database names only). */
 
 export const MONGO_INSPECT_TOOL_NAMES = [
   'listMongoDatabases',
@@ -6,6 +6,9 @@ export const MONGO_INSPECT_TOOL_NAMES = [
   'describeMongoCollectionSchema',
   'listMongoCollectionIndexes',
   'findMongoDocuments',
+  'aggregateMongoCollection',
+  'explainMongoOperation',
+  'compareMongoCollectionToPlan',
 ] as const;
 
 export type MongoInspectToolName = (typeof MONGO_INSPECT_TOOL_NAMES)[number];
@@ -108,6 +111,93 @@ export const COPILOT_MONGO_INSPECT_OPENAI_TOOLS = [
       },
     },
   },
+  {
+    type: 'function' as const,
+    function: {
+      name: 'aggregateMongoCollection',
+      description:
+        'Run a read-only aggregation pipeline against a collection (max 20 stages, results capped at 50 documents).',
+      parameters: {
+        type: 'object',
+        required: ['database', 'collection', 'pipeline'],
+        properties: {
+          database: LOGICAL_DB_PROPERTY,
+          collection: { type: 'string', description: 'Collection name' },
+          pipeline: {
+            type: 'array',
+            description: 'MongoDB aggregation pipeline stages. Write stages such as $out and $merge are rejected.',
+            items: { type: 'object', additionalProperties: true },
+          },
+        },
+      },
+    },
+  },
+  {
+    type: 'function' as const,
+    function: {
+      name: 'explainMongoOperation',
+      description:
+        'Explain a find, count, or aggregate operation and return the winning plan (optionally with executionStats).',
+      parameters: {
+        type: 'object',
+        required: ['database', 'collection', 'method'],
+        properties: {
+          database: LOGICAL_DB_PROPERTY,
+          collection: { type: 'string', description: 'Collection name' },
+          method: {
+            type: 'string',
+            enum: ['find', 'count', 'aggregate'],
+            description: 'Operation to explain',
+          },
+          filter: {
+            type: 'object',
+            description: 'Find/count filter document',
+            additionalProperties: true,
+          },
+          projection: {
+            type: 'object',
+            description: 'Find projection document',
+            additionalProperties: true,
+          },
+          sort: {
+            type: 'object',
+            description: 'Find sort document',
+            additionalProperties: true,
+          },
+          limit: {
+            type: 'number',
+            description: 'Find limit (default 10, max 25)',
+          },
+          pipeline: {
+            type: 'array',
+            description: 'Aggregation pipeline when method is aggregate',
+            items: { type: 'object', additionalProperties: true },
+          },
+          verbosity: {
+            type: 'string',
+            enum: ['queryPlanner', 'queryPlannerExtended', 'executionStats', 'allPlansExecution'],
+            description: 'Explain verbosity (default queryPlanner; use executionStats for timing)',
+          },
+        },
+      },
+    },
+  },
+  {
+    type: 'function' as const,
+    function: {
+      name: 'compareMongoCollectionToPlan',
+      description:
+        'Compare a live Atlas collection against the current hvyMETL migration plan (fields, embeds, indexes). Requires Refresh design first.',
+      parameters: {
+        type: 'object',
+        required: ['database', 'collection'],
+        properties: {
+          database: LOGICAL_DB_PROPERTY,
+          collection: { type: 'string', description: 'Collection name' },
+        },
+      },
+    },
+  },
 ];
 
 /** MCP tool name invoked server-side for each copilot inspect tool. */
@@ -117,6 +207,9 @@ export const MONGO_INSPECT_MCP_TOOL_MAP: Record<MongoInspectToolName, string> = 
   describeMongoCollectionSchema: 'collection-schema',
   listMongoCollectionIndexes: 'collection-indexes',
   findMongoDocuments: 'find',
+  aggregateMongoCollection: 'aggregate',
+  explainMongoOperation: 'explain',
+  compareMongoCollectionToPlan: 'collection-schema',
 };
 
 export function isMongoInspectToolName(value: string): value is MongoInspectToolName {

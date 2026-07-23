@@ -11,6 +11,7 @@ import { executeAgentTool, parseCopilotCommand, type AgentToolContext, type Agen
 import { analyzeMigrationRisks } from './guardrails';
 import { parseOpenAiToolCall, isServerMongoInspectToolCall } from './llmTools';
 import { buildMongoInspectDelta, serializeMongoInspectToolResult } from './mongoInspectDisplay';
+import { buildMongoPlanContext } from './mongoPlanContextPayload';
 import { buildSchemaContextPayload } from './schemaContext';
 import { fetchCopilotStatus, invokeCopilotMongoInspect, sendCopilotChat } from '../api';
 import type {
@@ -212,7 +213,7 @@ export function CopilotProvider({
   const runMongoInspectTool = useCallback(
     async (tool: MongoInspectToolName, args: Record<string, unknown>): Promise<ToolExecutionResult> => {
       try {
-        const response = await invokeCopilotMongoInspect(tool, args);
+        const response = await invokeCopilotMongoInspect(tool, args, buildMongoPlanContext(plan));
         return {
           tool,
           summary: response.summary,
@@ -230,7 +231,7 @@ export function CopilotProvider({
         };
       }
     },
-    [],
+    [plan],
   );
 
   const runLlmTurn = useCallback(
