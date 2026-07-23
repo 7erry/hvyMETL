@@ -6,6 +6,10 @@ const LIST_COLLECTIONS_NAMED_DB =
 const COLLECTIONS_IN_DB = /(?:^|\b)collections?\s+in\s+([^\s,.;!?]+)/i;
 const WHAT_COLLECTIONS_IN_DB =
   /(?:^|\b)what\s+collections?\s+(?:are\s+)?(?:in|from)\s+([^\s,.;!?]+)/i;
+const LIST_DATABASES =
+  /^(?:show\s+me\s+(?:the\s+)?|list\s+(?:the\s+)?|what\s+are\s+(?:the\s+)?|what\s+(?:mongo(?:db)?\s+)?)?databases?\??$/i;
+const SHOW_COLLECTIONS_IN_DB =
+  /^(?:show\s+me\s+(?:the\s+)?|list\s+(?:the\s+)?)?collections?\s+(?:in|from)\s+\S+/i;
 
 /** Strips trailing punctuation from a captured database name token. */
 function normalizeDatabaseToken(raw: string): string {
@@ -38,6 +42,27 @@ export function shouldSuppressListMongoDatabasesDisplay(
   );
 }
 
+/** True when the user only asked to list databases or collections (no analysis follow-up). */
+export function isInspectOnlyUserMessage(userMessage: string): boolean {
+  const trimmed = userMessage.trim();
+  if (!trimmed) return false;
+  if (parseDirectMongoInspectCommand(trimmed)) return true;
+  if (LIST_DATABASES.test(trimmed)) return true;
+  if (extractNamedDatabaseForListCollectionsRequest(trimmed)) return true;
+  if (SHOW_COLLECTIONS_IN_DB.test(trimmed)) return true;
+  return false;
+}
+
+/** True when assistant prose repeats structured inspect output already shown in a tool card. */
+export function looksLikeInspectListingEcho(content: string): boolean {
+  const trimmed = content.trim();
+  if (!trimmed) return false;
+  if (/^\s*#+\s*(available|listed|mongodb|atlas|collections?|databases?)\b/i.test(trimmed)) return true;
+  if (/\|\s*database\s*\|/i.test(trimmed) || /\|\s*collection\s*\|/i.test(trimmed)) return true;
+  if (/\|\s*size\s*\|/i.test(trimmed) && /\|\s*database\s*\|/i.test(trimmed)) return true;
+  return false;
+}
+
 /** Maps natural-language inspect requests to a single server-side tool call (bypasses LLM). */
 export function parseDirectMongoInspectCommand(input: string): ServerMongoInspectToolCall | null {
   const trimmed = input.trim();
@@ -52,7 +77,7 @@ export function parseDirectMongoInspectCommand(input: string): ServerMongoInspec
     };
   }
 
-  if (/^(?:list|show)\s+databases?$/i.test(trimmed)) {
+  if (LIST_DATABASES.test(trimmed)) {
     return { kind: 'mongoInspect', tool: 'listMongoDatabases', args: {} };
   }
 

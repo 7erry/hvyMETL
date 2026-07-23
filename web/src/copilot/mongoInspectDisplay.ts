@@ -41,6 +41,24 @@ export function serializeMongoInspectToolResult(result: {
   summary: string;
   data?: unknown;
 }): string {
+  const uiRenderedTools: MongoInspectToolName[] = [
+    'listMongoDatabases',
+    'listMongoCollections',
+    'listMongoCollectionIndexes',
+    'aggregateMongoCollection',
+    'explainMongoOperation',
+    'compareMongoCollectionToPlan',
+  ];
+
+  if (uiRenderedTools.includes(result.tool)) {
+    return JSON.stringify({
+      ok: result.ok,
+      tool: result.tool,
+      summary: result.summary,
+      uiRendered: true,
+    });
+  }
+
   return JSON.stringify({
     ok: result.ok,
     tool: result.tool,

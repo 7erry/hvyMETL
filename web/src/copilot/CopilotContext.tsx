@@ -14,6 +14,8 @@ import { parseOpenAiToolCall, isServerMongoInspectToolCall } from './llmTools';
 import {
   parseDirectMongoInspectCommand,
   shouldSuppressListMongoDatabasesDisplay,
+  isInspectOnlyUserMessage,
+  looksLikeInspectListingEcho,
 } from './inspectCommandRouting';
 import { buildMongoInspectDelta, serializeMongoInspectToolResult } from './mongoInspectDisplay';
 import { buildMongoPlanContext } from './mongoPlanContextPayload';
@@ -342,6 +344,7 @@ export function CopilotProvider({
 
       let messages = [...history];
       const maxIterations = 6;
+      let structuredInspectOutputShown = false;
 
       for (let i = 0; i < maxIterations; i += 1) {
         setStatus(i === 0 ? 'analyzing' : 'mutating');
@@ -360,11 +363,16 @@ export function CopilotProvider({
         const suppressListMongoDatabases = shouldSuppressListMongoDatabasesDisplay(userMessage, parsedBatch);
 
         if (assistant.content?.trim() && !toolCalls.length) {
-          appendMessage({
-            role: 'agent',
-            content: assistant.content.trim(),
-            markdown: true,
-          });
+          const suppressFollowUpProse =
+            structuredInspectOutputShown &&
+            (isInspectOnlyUserMessage(userMessage) || looksLikeInspectListingEcho(assistant.content));
+          if (!suppressFollowUpProse) {
+            appendMessage({
+              role: 'agent',
+              content: assistant.content.trim(),
+              markdown: true,
+            });
+          }
         }
 
         if (!toolCalls.length) {
@@ -398,6 +406,9 @@ export function CopilotProvider({
             }
 
             const result = await runMongoInspectTool(parsed.tool, parsed.args);
+            if (toolExecutionHasStructuredOutput(result)) {
+              structuredInspectOutputShown = true;
+            }
             appendMessage({
               role: 'agent',
               content: '',

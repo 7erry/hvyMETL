@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { buildMongoInspectDelta, serializeMongoInspectToolResult } from './mongoInspectDisplay.js';
 
 describe('mongoInspectDisplay', () => {
-  it('includes database names in the LLM tool payload', () => {
+  it('omits full listing payloads from the LLM tool result when the UI renders a table', () => {
     const payload = serializeMongoInspectToolResult({
       ok: true,
       tool: 'listMongoDatabases',
@@ -13,7 +13,7 @@ describe('mongoInspectDisplay', () => {
       ok: true,
       tool: 'listMongoDatabases',
       summary: 'Found 1 database: mytrains.',
-      data: { databases: [{ name: 'mytrains' }], totalCount: 1 },
+      uiRendered: true,
     });
   });
 

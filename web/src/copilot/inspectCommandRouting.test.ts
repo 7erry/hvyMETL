@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
   extractNamedDatabaseForListCollectionsRequest,
+  isInspectOnlyUserMessage,
+  looksLikeInspectListingEcho,
   parseDirectMongoInspectCommand,
   shouldSuppressListMongoDatabasesDisplay,
 } from './inspectCommandRouting';
@@ -29,6 +31,22 @@ describe('inspectCommandRouting', () => {
       tool: 'listMongoDatabases',
       args: {},
     });
+    expect(parseDirectMongoInspectCommand('show me databases')).toEqual({
+      kind: 'mongoInspect',
+      tool: 'listMongoDatabases',
+      args: {},
+    });
+  });
+
+  it('detects inspect-only list requests', () => {
+    expect(isInspectOnlyUserMessage('show me databases')).toBe(true);
+    expect(isInspectOnlyUserMessage('list collections from fromoraclewithlove')).toBe(true);
+    expect(isInspectOnlyUserMessage('show me databases and recommend one for analytics')).toBe(false);
+  });
+
+  it('detects assistant listing echoes', () => {
+    expect(looksLikeInspectListingEcho('## Available MongoDB Databases\n\n| Database | Size |')).toBe(true);
+    expect(looksLikeInspectListingEcho('Use fromoraclewithlove for the Oracle import.')).toBe(false);
   });
 
   it('suppresses redundant listMongoDatabases when the user named a database', () => {
