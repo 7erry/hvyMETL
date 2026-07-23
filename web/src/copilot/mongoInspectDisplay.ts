@@ -1,17 +1,5 @@
 import type { MongoInspectInvokeResponse, MongoInspectToolName } from './types';
-
-function readNamedEntries(value: unknown, key: 'databases' | 'collections'): string[] {
-  if (!value || typeof value !== 'object') return [];
-  const record = value as Record<string, unknown>;
-  const entries = record[key];
-  if (!Array.isArray(entries)) return [];
-  return entries
-    .filter(
-      (entry): entry is { name: string } =>
-        Boolean(entry && typeof entry === 'object' && typeof (entry as { name?: unknown }).name === 'string'),
-    )
-    .map((entry) => entry.name);
-}
+import { readMongoInspectCollectionRows, readMongoInspectDatabaseRows } from './mongoInspectFormat';
 
 /** Human-readable delta lines for MongoDB inspect tool cards. */
 export function buildMongoInspectDelta(
@@ -21,15 +9,12 @@ export function buildMongoInspectDelta(
   if (!response.ok) return [];
 
   if (tool === 'listMongoDatabases') {
-    return readNamedEntries(response.data, 'databases').map((name) => `database: ${name}`);
+    return readMongoInspectDatabaseRows(response.data).map((entry) => `database: ${entry.name}`);
   }
 
   if (tool === 'listMongoCollections') {
-    const database =
-      response.data && typeof response.data === 'object' && typeof (response.data as { database?: unknown }).database === 'string'
-        ? (response.data as { database: string }).database
-        : 'database';
-    return readNamedEntries(response.data, 'collections').map((name) => `${database}.${name}`);
+    const { database, collections } = readMongoInspectCollectionRows(response.data);
+    return collections.map((entry) => `${database}.${entry.name}`);
   }
 
   return [`Inspect tool ${tool} completed.`];

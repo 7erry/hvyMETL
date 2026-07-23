@@ -31,7 +31,7 @@ describe('mongoInspectDisplay', () => {
       buildMongoInspectDelta('listMongoCollections', {
         ok: true,
         tool: 'listMongoCollections',
-        summary: 'Listed 3 collection(s) in mytrains: routes, stations, trains.',
+        summary: 'Listed 3 collection(s) in mytrains.',
         data: {
           database: 'mytrains',
           collections: [{ name: 'routes' }, { name: 'stations' }, { name: 'trains' }],

@@ -19,6 +19,7 @@ import {
   sanitizeDatabaseListForClient,
   type TenantMongoInspectScope,
 } from './mongoInspectScope.js';
+import { enrichCollectionSummaries } from './mongoInspectEnrichment.js';
 import {
   MONGO_INSPECT_MCP_TOOL_MAP,
   isMongoInspectToolName,
@@ -102,6 +103,7 @@ function normalizeListCollectionsPayload(raw: unknown): ListCollectionsPayload {
 type BuildMcpArgumentsResult = {
   mcpArgs: Record<string, unknown>;
   logicalDatabase: string;
+  physicalDatabase?: string;
 };
 
 async function loadTenantLogicalTargetDatabases(tenantId: string | null): Promise<string[]> {
@@ -205,7 +207,7 @@ export async function invokeMongoInspectTool(
   }
 
   try {
-    const { mcpArgs, logicalDatabase } = await buildMcpArguments(
+    const { mcpArgs, logicalDatabase, physicalDatabase } = await buildMcpArguments(
       scope,
       tool,
       args,
@@ -221,7 +223,7 @@ export async function invokeMongoInspectTool(
         databaseSizes.set(entry.name, entry.size);
       }
     }
-    const data = sanitizeInspectPayload(
+    let data = sanitizeInspectPayload(
       scope,
       tool,
       logicalDatabase,
@@ -231,6 +233,15 @@ export async function invokeMongoInspectTool(
       knownLogicalDatabases,
       databaseSizes,
     );
+    if (tool === 'listMongoCollections' && physicalDatabase) {
+      const payload = data as { database: string; collections: Array<{ name: string }>; totalCount: number };
+      const collections = await enrichCollectionSummaries(physicalDatabase, payload.collections ?? []);
+      data = {
+        database: payload.database,
+        collections,
+        totalCount: collections.length,
+      };
+    }
     return {
       ok: true,
       tool,
@@ -301,6 +312,7 @@ async function buildMcpArguments(
     return {
       mcpArgs: { connectionId, database: physicalDatabase },
       logicalDatabase,
+      physicalDatabase,
     };
   }
 
@@ -320,6 +332,7 @@ async function buildMcpArguments(
         responseBytesLimit: 512_000,
       },
       logicalDatabase,
+      physicalDatabase,
     };
   }
 
@@ -327,6 +340,7 @@ async function buildMcpArguments(
     return {
       mcpArgs: { connectionId, database: physicalDatabase, collection },
       logicalDatabase,
+      physicalDatabase,
     };
   }
 
@@ -341,7 +355,7 @@ async function buildMcpArguments(
   if (args.filter && typeof args.filter === 'object') mcpArgs.filter = args.filter;
   if (args.projection && typeof args.projection === 'object') mcpArgs.projection = args.projection;
   if (args.sort && typeof args.sort === 'object') mcpArgs.sort = args.sort;
-  return { mcpArgs, logicalDatabase };
+  return { mcpArgs, logicalDatabase, physicalDatabase };
 }
 
 function sanitizeInspectPayload(
@@ -410,17 +424,6 @@ function summarizeInspectResult(tool: MongoInspectToolName, data: unknown): stri
   if (tool === 'listMongoCollections') {
     const count = typeof record.totalCount === 'number' ? record.totalCount : 0;
     const db = typeof record.database === 'string' ? record.database : 'database';
-    const collections = Array.isArray(record.collections)
-      ? record.collections
-          .filter(
-            (entry): entry is { name: string } =>
-              Boolean(entry && typeof entry === 'object' && typeof (entry as { name?: unknown }).name === 'string'),
-          )
-          .map((entry) => entry.name)
-      : [];
-    if (collections.length > 0) {
-      return `Listed ${count} collection(s) in ${db}: ${collections.join(', ')}.`;
-    }
     return `Listed ${count} collection(s) in ${db}.`;
   }
   if (tool === 'describeMongoCollectionSchema') {
