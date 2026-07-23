@@ -174,6 +174,25 @@ export async function tenantDbPrefixFromRequest(req: RequestWithAuth): Promise<s
   return sub ? tenantDbPrefixFromSub(sub) : LOCAL_DEV_TENANT_ID;
 }
 
+/** All import-database prefixes that may belong to one Auth0 user (display name, sub hash, legacy). */
+export function tenantDbPrefixCandidates(
+  payload: Record<string, unknown> | undefined,
+  displayName?: string,
+): string[] {
+  const prefixes = new Set<string>();
+  const resolvedDisplay = displayName?.trim() || readAuthDisplayName(payload);
+  const fromDisplay = resolvedDisplay ? tenantDbPrefixFromDisplayName(resolvedDisplay) : null;
+  if (fromDisplay) prefixes.add(fromDisplay);
+  const rawSub = typeof payload?.sub === 'string' ? payload.sub.trim() : '';
+  if (rawSub) prefixes.add(tenantDbPrefixFromSub(rawSub));
+  return [...prefixes];
+}
+
+/** Legacy pipeline import database name before `{prefix}__{logical}` naming (hvymetl_{tenantId}). */
+export function legacyTenantImportDatabaseName(tenantId: string): string {
+  return `hvymetl_${tenantId}`.slice(0, atlasDbNameMaxLength());
+}
+
 /** Parse user input into a logical database name (strip own prefix if pasted accidentally). */
 export function parseLogicalTargetDb(input: string | undefined, userPrefix: string): string {
   if (!input?.trim()) {

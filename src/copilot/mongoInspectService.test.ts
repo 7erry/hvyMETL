@@ -14,9 +14,14 @@ describe('mongoInspectService', () => {
 
   it('maps logical database names to physical names before calling MCP', async () => {
     vi.spyOn(mongoMcpClient, 'isMongoMcpEnabled').mockReturnValue(true);
-    vi.spyOn(mongoMcpClient, 'callMongoMcpTool').mockResolvedValue({
-      collections: [{ name: 'stations' }],
-      totalCount: 1,
+    vi.spyOn(mongoMcpClient, 'callMongoMcpTool').mockImplementation(async (name) => {
+      if (name === 'list-databases') {
+        return { databases: [{ name: 'csv_to_atlas', size: 1 }], totalCount: 1 };
+      }
+      return {
+        collections: [{ name: 'stations' }],
+        totalCount: 1,
+      };
     });
 
     const req = { auth: undefined } as import('express').Request;

@@ -10,6 +10,7 @@ import {
 } from './mongoMcpClient.js';
 import {
   assertDatabaseAccess,
+  mergeDiscoveredLogicalDatabases,
   resolveTenantMongoInspectScope,
   sanitizeDatabaseListForClient,
   type TenantMongoInspectScope,
@@ -75,10 +76,10 @@ export async function invokeMongoInspectTool(
   }
 
   try {
-    const mcpArgs = buildMcpArguments(scope, tool, args);
+    const mcpArgs = await buildMcpArguments(scope, tool, args);
     const mcpName = MONGO_INSPECT_MCP_TOOL_MAP[tool];
     const raw = await callMongoMcpTool(mcpName, mcpArgs);
-    const data = sanitizeInspectPayload(scope, tool, args, raw);
+    const data = await sanitizeInspectPayload(scope, tool, args, raw);
     return {
       ok: true,
       tool,
@@ -115,11 +116,11 @@ function isServiceUnavailableError(message: string): boolean {
   );
 }
 
-function buildMcpArguments(
+async function buildMcpArguments(
   scope: TenantMongoInspectScope,
   tool: MongoInspectToolName,
   args: Record<string, unknown>,
-): Record<string, unknown> {
+): Promise<Record<string, unknown>> {
   const connectionId = MCP_CONNECTION_ID;
 
   if (tool === 'listMongoDatabases') {
@@ -130,7 +131,7 @@ function buildMcpArguments(
     typeof args.database === 'string' && args.database.trim()
       ? args.database.trim()
       : scope.defaultLogicalDatabase;
-  const physicalDatabase = scope.resolvePhysicalDatabase(logicalDatabase);
+  const physicalDatabase = await resolveAccessiblePhysicalDatabase(scope, logicalDatabase);
   assertDatabaseAccess(scope, physicalDatabase);
 
   if (tool === 'listMongoCollections') {
@@ -171,19 +172,21 @@ function buildMcpArguments(
   return mcpArgs;
 }
 
-function sanitizeInspectPayload(
+async function sanitizeInspectPayload(
   scope: TenantMongoInspectScope,
   tool: MongoInspectToolName,
   args: Record<string, unknown>,
   raw: unknown,
-): unknown {
+): Promise<unknown> {
   const logicalDatabase = scope.resolveLogicalDatabase(
     typeof args.database === 'string' ? args.database : undefined,
   );
 
   if (tool === 'listMongoDatabases') {
     const payload = (raw ?? {}) as ListDatabasesPayload;
-    const databases = sanitizeDatabaseListForClient(scope, payload.databases ?? []);
+    const clusterNames = (payload.databases ?? []).map((entry) => entry.name);
+    const sanitized = sanitizeDatabaseListForClient(scope, payload.databases ?? []);
+    const databases = mergeDiscoveredLogicalDatabases(scope, clusterNames, sanitized);
     return {
       databases,
       totalCount: databases.length,
@@ -236,4 +239,28 @@ function summarizeInspectResult(tool: MongoInspectToolName, data: unknown): stri
 function clampNumber(value: unknown, fallback: number, min: number, max: number): number {
   const numeric = typeof value === 'number' && Number.isFinite(value) ? value : fallback;
   return Math.min(max, Math.max(min, Math.round(numeric)));
+}
+
+async function fetchClusterDatabaseNames(): Promise<string[]> {
+  const raw = await callMongoMcpTool('list-databases', { connectionId: MCP_CONNECTION_ID });
+  const payload = (raw ?? {}) as ListDatabasesPayload;
+  return (payload.databases ?? []).map((entry) => entry.name);
+}
+
+/** Pick the physical database that exists on the cluster for a logical import name. */
+async function resolveAccessiblePhysicalDatabase(
+  scope: TenantMongoInspectScope,
+  logicalDatabase: string,
+): Promise<string> {
+  const clusterNames = await fetchClusterDatabaseNames();
+  const discovered = scope.findPhysicalDatabaseForLogical(logicalDatabase, clusterNames);
+  if (discovered) return discovered;
+
+  for (const candidate of scope.resolvePhysicalDatabaseCandidates(logicalDatabase)) {
+    if (clusterNames.includes(candidate)) {
+      return candidate;
+    }
+  }
+
+  return scope.resolvePhysicalDatabase(logicalDatabase);
 }
