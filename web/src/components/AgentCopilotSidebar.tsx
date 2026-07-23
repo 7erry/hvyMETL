@@ -148,7 +148,9 @@ export function AgentCopilotSidebar({ beforeJson = '', afterJson = '' }: AgentCo
                 className={`copilot-message copilot-message--${message.role}`}
               >
                 {message.toolExecution ? <ToolExecutionCard execution={message.toolExecution} /> : null}
-                <CopilotMessageBody content={message.content} markdown={message.markdown} />
+                {message.content.trim() ? (
+                  <CopilotMessageBody content={message.content} markdown={message.markdown} />
+                ) : null}
               </article>
             ))}
 

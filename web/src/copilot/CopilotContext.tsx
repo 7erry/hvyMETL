@@ -271,15 +271,20 @@ export function CopilotProvider({
           return messages;
         }
 
+        let inspectOnlyBatch = toolCalls.length > 0;
+
         for (const toolCall of toolCalls) {
           const parsed = parseOpenAiToolCall(toolCall);
-          if (!parsed) continue;
+          if (!parsed) {
+            inspectOnlyBatch = false;
+            continue;
+          }
 
           if (isServerMongoInspectToolCall(parsed)) {
             const result = await runMongoInspectTool(parsed.tool, parsed.args);
             appendMessage({
               role: 'agent',
-              content: result.summary,
+              content: '',
               toolExecution: result,
             });
             messages = [
@@ -298,6 +303,7 @@ export function CopilotProvider({
             continue;
           }
 
+          inspectOnlyBatch = false;
           const result = executeTool(parsed);
           appendMessage({
             role: 'agent',
@@ -312,6 +318,11 @@ export function CopilotProvider({
               content: JSON.stringify(result),
             },
           ];
+        }
+
+        if (inspectOnlyBatch) {
+          setStatus('idle');
+          return messages;
         }
       }
 
