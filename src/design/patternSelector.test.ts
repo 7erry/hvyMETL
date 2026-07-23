@@ -545,6 +545,108 @@ describe('buildMigrationPlan', () => {
     expect(plan.collections.some((collection) => collection.sourceTable === 'department_contacts')).toBe(false);
   });
 
+  it('does not default-embed multi-parent time-series children without force embed', () => {
+    const model: SqlStructuralModel = {
+      source: 'ddl:postgresql',
+      tables: [
+        table({ name: 'trains', rowCount: 0 }),
+        table({ name: 'trips', rowCount: 0 }),
+        table({
+          name: 'train_telemetry',
+          rowCount: 0,
+          columns: [
+            { name: 'id', sqlType: 'INTEGER', bsonType: 'long', nullable: false, isPrimaryKey: true },
+            { name: 'train_id', sqlType: 'INTEGER', bsonType: 'long', nullable: false, isPrimaryKey: false },
+            { name: 'trip_id', sqlType: 'INTEGER', bsonType: 'long', nullable: false, isPrimaryKey: false },
+            { name: 'recorded_at', sqlType: 'TIMESTAMP', bsonType: 'date', nullable: false, isPrimaryKey: false },
+            { name: 'speed_kmh', sqlType: 'REAL', bsonType: 'double', nullable: false, isPrimaryKey: false },
+          ],
+          foreignKeys: [
+            { column: 'train_id', referencesTable: 'trains', referencesColumn: 'id' },
+            { column: 'trip_id', referencesTable: 'trips', referencesColumn: 'id' },
+          ],
+        }),
+      ],
+      relationships: [
+        relationship({
+          parentTable: 'trains',
+          childTable: 'train_telemetry',
+          fkColumn: 'train_id',
+          avgChildrenPerParent: 0,
+          maxChildrenPerParent: 0,
+          isBounded: false,
+        }),
+        relationship({
+          parentTable: 'trips',
+          childTable: 'train_telemetry',
+          fkColumn: 'trip_id',
+          avgChildrenPerParent: 0,
+          maxChildrenPerParent: 0,
+          isBounded: false,
+        }),
+      ],
+    };
+
+    const plan = buildMigrationPlan(model, WORKLOAD_PROFILES.catalog);
+    const trains = plan.collections.find((collection) => collection.sourceTable === 'trains');
+
+    expect(trains?.embeddedArrays.some((array) => array.sourceTable === 'train_telemetry')).toBe(false);
+    expect(plan.collections.some((collection) => collection.sourceTable === 'train_telemetry')).toBe(true);
+    expect(trains?.patterns.some((decision) => decision.pattern === 'reference' && decision.target.includes('train_telemetry'))).toBe(
+      true,
+    );
+  });
+
+  it('still embeds multi-parent time-series children when developer force embed is set', () => {
+    const model: SqlStructuralModel = {
+      source: 'ddl:postgresql',
+      tables: [
+        table({ name: 'trains', rowCount: 0 }),
+        table({ name: 'trips', rowCount: 0 }),
+        table({
+          name: 'train_telemetry',
+          rowCount: 0,
+          columns: [
+            { name: 'id', sqlType: 'INTEGER', bsonType: 'long', nullable: false, isPrimaryKey: true },
+            { name: 'train_id', sqlType: 'INTEGER', bsonType: 'long', nullable: false, isPrimaryKey: false },
+            { name: 'trip_id', sqlType: 'INTEGER', bsonType: 'long', nullable: false, isPrimaryKey: false },
+            { name: 'recorded_at', sqlType: 'TIMESTAMP', bsonType: 'date', nullable: false, isPrimaryKey: false },
+            { name: 'speed_kmh', sqlType: 'REAL', bsonType: 'double', nullable: false, isPrimaryKey: false },
+          ],
+          foreignKeys: [
+            { column: 'train_id', referencesTable: 'trains', referencesColumn: 'id' },
+            { column: 'trip_id', referencesTable: 'trips', referencesColumn: 'id' },
+          ],
+        }),
+      ],
+      relationships: [
+        relationship({
+          parentTable: 'trains',
+          childTable: 'train_telemetry',
+          fkColumn: 'train_id',
+          avgChildrenPerParent: 0,
+          maxChildrenPerParent: 0,
+          isBounded: false,
+          forceEmbed: true,
+        }),
+        relationship({
+          parentTable: 'trips',
+          childTable: 'train_telemetry',
+          fkColumn: 'trip_id',
+          avgChildrenPerParent: 0,
+          maxChildrenPerParent: 0,
+          isBounded: false,
+        }),
+      ],
+    };
+
+    const plan = buildMigrationPlan(model, WORKLOAD_PROFILES.catalog);
+    const trains = plan.collections.find((collection) => collection.sourceTable === 'trains');
+
+    expect(trains?.embeddedArrays.some((array) => array.sourceTable === 'train_telemetry')).toBe(true);
+    expect(plan.collections.some((collection) => collection.sourceTable === 'train_telemetry')).toBe(false);
+  });
+
   it('detects self-referencing tables as the Tree pattern', () => {
     const model: SqlStructuralModel = {
       source: 'synthetic.db',

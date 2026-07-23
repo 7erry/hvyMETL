@@ -17,6 +17,7 @@
  *   Strict line-item children (orders_items)    -> embed by default (checklist)
  *   Bounded 1:N child                           -> embed (read-heavy no longer required)
  *   Unknown-cardinality dependent child         -> embed when workload is not write-heavy
+ *     (excludes multi-parent and time-series children without volume stats)
  *   Unbounded 1:N child + embed-leaning         -> Subset (+ overflow ref)
  *   Unbounded 1:N child + write-heavy           -> reference
  *   Heavily skewed child counts                 -> Outlier flag
@@ -684,13 +685,20 @@ function planChildRelationships(
       relationship.avgChildrenPerParent === 0 &&
       relationship.cardinalitySource !== 'developer';
 
-    // DDL-only or missing stats: embed dependent children when the workload is not write-heavy.
+    const timeSeriesWithoutStats =
+      findDateColumn(childTable) !== undefined &&
+      unknownCardinality &&
+      !relationship.forceEmbed;
+
+    // DDL-only or missing stats: embed small single-parent dependents when the workload is not write-heavy.
+    // Multi-parent and time-series children stay separate unless the developer forces embed or supplies max cardinality.
     if (
       unknownCardinality &&
       !childHasDependents &&
       !isWriteHeavy &&
       !isFirehoseTable(childTable) &&
-      childTable.foreignKeys.length <= 2 &&
+      !timeSeriesWithoutStats &&
+      nonSelfForeignKeys.length <= 1 &&
       !skewed
     ) {
       const field = toCamelCase(childTable.name);
@@ -731,7 +739,8 @@ function planChildRelationships(
 
     // Rule 5: unbounded (or skewed) children on read-leaning workloads get the
     // Subset pattern: newest N embedded, full set referenced.
-    if (isEmbedLeaning || !isWriteHeavy) {
+    // Time-series children without volume stats reference outright — subset/full embed need measured fan-out.
+    if ((isEmbedLeaning || !isWriteHeavy) && !timeSeriesWithoutStats) {
       const field = `recent${toPascalCase(childTable.name)}`;
       embeddedArrays.push({
         field,
