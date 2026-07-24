@@ -27,7 +27,6 @@ type ArtifactTab = {
 type MigrationArtifactsViewProps = {
   artifacts: MigrationArtifacts;
   onChange: (next: MigrationArtifacts) => void;
-  onBack: () => void;
 };
 
 const DEFAULT_API_PANEL_HEIGHT = 300;
@@ -68,7 +67,7 @@ function buildTabs(artifacts: MigrationArtifacts): ArtifactTab[] {
   return tabs;
 }
 
-export function MigrationArtifactsView({ artifacts, onChange, onBack }: MigrationArtifactsViewProps) {
+export function MigrationArtifactsView({ artifacts, onChange }: MigrationArtifactsViewProps) {
   const tabs = useMemo(() => buildTabs(artifacts), [artifacts]);
   const repoFiles = artifacts.repositories?.files ?? [];
   const [activeId, setActiveId] = useState(tabs[0]?.id ?? 'plan');
@@ -221,9 +220,6 @@ export function MigrationArtifactsView({ artifacts, onChange, onBack }: Migratio
     <div className="migration-view">
       <header className="migration-toolbar migration-toolbar--compact">
         <div className="migration-toolbar__start">
-          <button type="button" className="tertiary" onClick={onBack}>
-            Back to dashboard
-          </button>
           <div className="migration-toolbar__title">
             <h2>Migration export</h2>
             {metaParts.length > 0 ? (

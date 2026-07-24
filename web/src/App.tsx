@@ -805,6 +805,24 @@ export default function App() {
     }
   };
 
+  const handleWorkflowPhaseChange = (phase: SchemaPhase) => {
+    if (view !== 'diagram') {
+      setSessionField('view', 'diagram');
+    }
+    handleSchemaPhaseChange(phase);
+  };
+
+  const handleExportMigrationStep = () => {
+    if (view === 'migration' && migrationArtifacts) {
+      return;
+    }
+    if (migrationArtifacts) {
+      setSessionField('view', 'migration');
+      return;
+    }
+    void handleAiExport();
+  };
+
   const handlePlanJsonChange = (planJson: string) => {
     setSession((prev) => ({
       ...prev,
@@ -1040,13 +1058,7 @@ export default function App() {
               </button>
             </>
           ) : null}
-          {view === 'migration' ? (
-            <button type="button" className="tertiary" onClick={() => setSessionField('view', 'diagram')}>
-              Back to dashboard
-            </button>
-          ) : uiRole === 'developer' ? (
-            <CopilotHeaderToggle />
-          ) : null}
+          {uiRole === 'developer' ? <CopilotHeaderToggle /> : null}
           {uiRole === 'developer' ? (
             <span className="app-header__cli-hint">
               CLI: <code>npm run hvymetl</code>
@@ -1377,13 +1389,14 @@ export default function App() {
                 <div className="schema-phase-bar">
                   <MigrationWorkflowBar
                     phase={schemaPhase}
-                    onPhaseChange={handleSchemaPhaseChange}
+                    onPhaseChange={handleWorkflowPhaseChange}
                     hasAfter={Boolean(migrationPlan)}
                     hasModel={Boolean(model)}
                     designingPlan={designingPlan}
                     exporting={exporting}
+                    exportActive={false}
                     onImportDdl={() => setSchemaImportModalOpen(true)}
-                    onExportMigration={() => void handleAiExport()}
+                    onExportMigration={handleExportMigrationStep}
                     onRunPipeline={() => setPipelineOpen(true)}
                   />
                   {schemaPhase === 'after' && migrationPlan ? (
@@ -1440,11 +1453,24 @@ export default function App() {
           )
         ) : (
           <main style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+            <div className="schema-phase-bar">
+              <MigrationWorkflowBar
+                phase={schemaPhase}
+                onPhaseChange={handleWorkflowPhaseChange}
+                hasAfter={Boolean(migrationPlan)}
+                hasModel={Boolean(model)}
+                designingPlan={designingPlan}
+                exporting={exporting}
+                exportActive
+                onImportDdl={() => setSchemaImportModalOpen(true)}
+                onExportMigration={handleExportMigrationStep}
+                onRunPipeline={() => setPipelineOpen(true)}
+              />
+            </div>
             {migrationArtifacts ? (
               <MigrationArtifactsView
                 artifacts={migrationArtifacts}
                 onChange={(next) => setSessionField('migrationArtifacts', next)}
-                onBack={() => setSessionField('view', 'diagram')}
               />
             ) : null}
             <DiagramStatusFooter status={status} />

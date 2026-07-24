@@ -7,6 +7,7 @@ type MigrationWorkflowBarProps = {
   hasModel: boolean;
   designingPlan: boolean;
   exporting: boolean;
+  exportActive?: boolean;
   onImportDdl: () => void;
   onExportMigration: () => void;
   onRunPipeline: () => void;
@@ -55,6 +56,7 @@ export function MigrationWorkflowBar({
   hasModel,
   designingPlan,
   exporting,
+  exportActive = false,
   onImportDdl,
   onExportMigration,
   onRunPipeline,
@@ -66,14 +68,14 @@ export function MigrationWorkflowBar({
       <WorkflowStep
         label="Before · SQL"
         onClick={() => onPhaseChange('before')}
-        active={hasModel && phase === 'before'}
+        active={!exportActive && hasModel && phase === 'before'}
         disabled={!hasModel}
       />
       <WorkflowArrow />
       <WorkflowStep
         label="After · MongoDB"
         onClick={() => onPhaseChange('after')}
-        active={hasModel && phase === 'after'}
+        active={!exportActive && hasModel && phase === 'after'}
         disabled={!hasModel}
         loading={designingPlan}
         title={hasAfter ? 'MongoDB collections from migration plan' : 'Generate a migration plan first'}
@@ -82,6 +84,7 @@ export function MigrationWorkflowBar({
       <WorkflowStep
         label={exporting ? 'Exporting…' : 'Export migration'}
         onClick={onExportMigration}
+        active={exportActive}
         disabled={!hasModel || exporting}
       />
       <WorkflowArrow />
