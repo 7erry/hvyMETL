@@ -46,6 +46,19 @@ export const COMPACT_GRAPH_LAYOUT_OPTIONS: GraphLayoutOptions = {
   maxRowWidth: 720,
 };
 
+/** Default After · MongoDB spacing — two grid dots (40px) between collections. */
+export const MONGO_GRAPH_LAYOUT_OPTIONS: GraphLayoutOptions = {
+  nodeWidth: 260,
+  nodeHeight: 170,
+  gapX: 40,
+  gapY: 40,
+  padding: 40,
+  componentGapX: 40,
+  componentGapY: 40,
+  grid: 20,
+  maxRowWidth: 1600,
+};
+
 function snap(value: number, grid: number): number {
   return Math.round(value / grid) * grid;
 }

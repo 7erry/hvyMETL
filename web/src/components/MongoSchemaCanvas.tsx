@@ -24,12 +24,14 @@ import {
   relatedCollectionNames,
   type MongoCollectionEdge,
 } from '../migrationPlanDisplay';
-import { COMPACT_GRAPH_LAYOUT_OPTIONS, layoutMigrationPlan } from '../graphLayout';
+import { MONGO_GRAPH_LAYOUT_OPTIONS, layoutMigrationPlan } from '../graphLayout';
 import { useCompactDiagramLayout } from '../hooks/useCompactDiagramLayout';
 import type { RelationshipConnectionType, RelationshipNotation } from '../relationshipDisplay';
 import type { MigrationPlan } from '../migrationPlanTypes';
 
 const GRID = 20;
+const MONGO_FIT_PADDING = 0.04;
+const MONGO_FIT_MAX_ZOOM = 1.85;
 const nodeTypes = { collection: CollectionNode };
 const edgeTypes = { relationship: RelationshipEdge };
 
@@ -70,7 +72,7 @@ function planToFlow(
   const planEdges = edgesForPlan(plan);
   const related = relatedCollectionNames(plan, selectedCollection);
   const hasSelection = Boolean(selectedCollection);
-  const autoLayout = layoutMigrationPlan(plan, compactLayout ? COMPACT_GRAPH_LAYOUT_OPTIONS : undefined);
+  const autoLayout = layoutMigrationPlan(plan, MONGO_GRAPH_LAYOUT_OPTIONS);
 
   const incomingTargets = new Set(planEdges.map((e) => e.target));
   const outgoingSources = new Set(planEdges.map((e) => e.source));
@@ -159,9 +161,9 @@ export function MongoSchemaCanvas({
 
   const handleAutoLayout = useCallback(() => {
     if (!plan) return;
-    const autoLayout = layoutMigrationPlan(plan, compactLayout ? COMPACT_GRAPH_LAYOUT_OPTIONS : undefined);
+    const autoLayout = layoutMigrationPlan(plan, MONGO_GRAPH_LAYOUT_OPTIONS);
     onPositionsChange(autoLayout);
-  }, [plan, compactLayout, onPositionsChange]);
+  }, [plan, onPositionsChange]);
 
   const [nodes, setNodes, onNodesChange] = useNodesState(flow.nodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(flow.edges);
@@ -211,16 +213,18 @@ export function MongoSchemaCanvas({
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}
         fitView
-        fitViewOptions={{ padding: compactLayout ? 0.1 : 0.2 }}
+        fitViewOptions={{ padding: MONGO_FIT_PADDING, maxZoom: MONGO_FIT_MAX_ZOOM }}
         snapToGrid={snapToGrid}
         snapGrid={[GRID, GRID]}
-        minZoom={0.15}
-        maxZoom={compactLayout ? 1.25 : 1.5}
+        minZoom={0.2}
+        maxZoom={2}
+        defaultViewport={{ x: 0, y: 0, zoom: 1 }}
         proOptions={{ hideAttribution: true }}
       >
         <DiagramCanvasFitView
-          fitKey={`${collectionCount}-${compactLayout ? 'compact' : 'wide'}`}
-          padding={compactLayout ? 0.1 : 0.15}
+          fitKey={`${collectionCount}-mongo-${compactLayout ? 'compact' : 'wide'}`}
+          padding={MONGO_FIT_PADDING}
+          maxZoom={MONGO_FIT_MAX_ZOOM}
           containerRef={wrapRef}
         />
         <Background variant={BackgroundVariant.Dots} gap={GRID} size={1} color="#00684A" />

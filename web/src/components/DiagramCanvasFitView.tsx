@@ -5,6 +5,7 @@ type DiagramCanvasFitViewProps = {
   /** Refit when node count or layout mode changes. */
   fitKey: string | number;
   padding?: number;
+  maxZoom?: number;
   containerRef: RefObject<HTMLElement | null>;
 };
 
@@ -12,6 +13,7 @@ type DiagramCanvasFitViewProps = {
 export function DiagramCanvasFitView({
   fitKey,
   padding = 0.12,
+  maxZoom,
   containerRef,
 }: DiagramCanvasFitViewProps) {
   const { fitView } = useReactFlow();
@@ -20,10 +22,10 @@ export function DiagramCanvasFitView({
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
-      void fitViewRef.current({ padding, duration: 120 });
+      void fitViewRef.current({ padding, maxZoom, duration: 120 });
     }, 60);
     return () => clearTimeout(timer);
-  }, [fitKey, padding]);
+  }, [fitKey, padding, maxZoom]);
 
   return null;
 }

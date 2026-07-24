@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { layoutGraph, layoutSqlModel } from './graphLayout';
+import { layoutGraph, layoutSqlModel, MONGO_GRAPH_LAYOUT_OPTIONS } from './graphLayout';
 import type { SqlStructuralModel } from './types';
 
 describe('graphLayout', () => {
@@ -63,5 +63,15 @@ describe('graphLayout', () => {
     );
     expect(positions.b.x).toBeGreaterThan(positions.a.x);
     expect(positions.c.x - positions.b.x).toBeGreaterThan(250);
+  });
+
+  it('uses forty pixel gaps for mongo default layout options', () => {
+    const positions = layoutGraph(
+      ['users', 'orders'],
+      [{ source: 'orders', target: 'users' }],
+      undefined,
+      MONGO_GRAPH_LAYOUT_OPTIONS,
+    );
+    expect(positions.orders.x - positions.users.x).toBe(300);
   });
 });

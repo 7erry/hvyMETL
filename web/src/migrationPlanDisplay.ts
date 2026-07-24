@@ -1,6 +1,6 @@
 import type { CollectionPlan, MigrationPlan } from './migrationPlanTypes';
 import type { SqlStructuralModel } from './types';
-import { layoutMigrationPlan } from './graphLayout';
+import { layoutMigrationPlan, MONGO_GRAPH_LAYOUT_OPTIONS } from './graphLayout';
 
 type JsonSchemaProperty = {
   bsonType?: string | string[];
@@ -232,6 +232,6 @@ export function initialCollectionPositions(
   if (plan.collections.every((collection) => saved[collection.name])) {
     return { ...saved };
   }
-  const auto = layoutMigrationPlan(plan);
+  const auto = layoutMigrationPlan(plan, MONGO_GRAPH_LAYOUT_OPTIONS);
   return { ...auto, ...saved };
 }
