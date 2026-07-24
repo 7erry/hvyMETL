@@ -875,4 +875,25 @@ export async function sendCopilotChat(request: {
   return data;
 }
 
+export type ArchitectureReviewExportResponse = {
+  token: string;
+  filename: string;
+  downloadPath: string;
+};
+
+/** Stage an architecture review markdown file for Google Save to Drive export. */
+export async function createArchitectureReviewExport(request: {
+  content: string;
+  filename: string;
+}): Promise<ArchitectureReviewExportResponse> {
+  const res = await copilotApiFetch(`${base}/api/copilot/architecture-export`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(request),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error ?? res.statusText);
+  return data as ArchitectureReviewExportResponse;
+}
+
 export type { DiagramExport, MongoDiagramExport };

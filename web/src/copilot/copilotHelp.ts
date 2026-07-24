@@ -57,7 +57,7 @@ export function buildCopilotCommandsResponse(): string {
     '- `/translate` or **Translate SQL** — open Query Translator',
     '- `/highlight table1 table2` — focus tables on the canvas',
     '- `/clear-overrides` — reset embed overrides',
-    '- **Optimize Schema** — architecture review of the current design',
+    '- **Optimize Schema** — architecture review of the current design (use **Save to Drive** on the review to open in Google Docs)',
     '',
     '### MongoDB inspect (Atlas)',
     '- **list databases** / **show me databases**',

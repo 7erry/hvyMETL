@@ -6,6 +6,8 @@ import rehypeSanitize, { defaultSchema } from 'rehype-sanitize';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { formatCopilotResponse } from '../../copilot/formatCopilotResponse';
+import { isArchitectureReviewContent } from '../../copilot/architectureReviewExport';
+import { ArchitectureReviewSaveToDrive } from './ArchitectureReviewSaveToDrive';
 
 type CopilotMessageBodyProps = {
   content: string;
@@ -29,6 +31,7 @@ export function CopilotMessageBody({ content, markdown = false }: CopilotMessage
     () => (markdown ? formatCopilotResponse(content) : content),
     [content, markdown],
   );
+  const showSaveToDrive = markdown && isArchitectureReviewContent(content);
 
   if (!markdown) {
     return <div className="copilot-message__body">{content}</div>;
@@ -78,6 +81,7 @@ export function CopilotMessageBody({ content, markdown = false }: CopilotMessage
       >
         {formatted}
       </ReactMarkdown>
+      {showSaveToDrive ? <ArchitectureReviewSaveToDrive content={content} /> : null}
     </div>
   );
 }

@@ -5054,6 +5054,38 @@ textarea {
   padding: 0 0.55rem 0.45rem;
 }
 
+.copilot-save-to-drive {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+  margin-top: 0.65rem;
+  padding-top: 0.55rem;
+  border-top: 1px solid var(--copilot-border);
+}
+
+.copilot-save-to-drive__label {
+  font-size: 0.62rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-muted, #8b949e);
+}
+
+.copilot-save-to-drive__hint {
+  font-size: 0.68rem;
+  color: var(--text-muted, #8b949e);
+}
+
+.copilot-save-to-drive__widget {
+  min-height: 28px;
+}
+
+.copilot-save-to-drive__error {
+  margin: 0;
+  font-size: 0.68rem;
+  color: #ffabab;
+}
+
 .copilot-message__body--markdown ul,
 .copilot-message__body--markdown ol {
   margin: 0.35rem 0;

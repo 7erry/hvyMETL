@@ -103,4 +103,32 @@ describe('copilot routes', () => {
     expect(status).toBe(200);
     expect((body.message as { content: string }).content).toBe('OK');
   });
+
+  it('creates and serves architecture review exports for Save to Drive', async () => {
+    const review = '# Trains — Architecture Review\n\n> Verdict\n\n## 1. Executive summary\n\nBody';
+    const created = await postJson('/api/copilot/architecture-export', {
+      content: review,
+      filename: 'Trains — Architecture Review.md',
+    });
+    expect(created.status).toBe(200);
+    expect(typeof created.body.downloadPath).toBe('string');
+
+    const app = express();
+    app.use(express.json());
+    app.use('/api/copilot', createCopilotRouter());
+    const server = app.listen(0);
+    await new Promise<void>((resolve) => server.once('listening', resolve));
+    const address = server.address();
+    const port = typeof address === 'object' && address ? address.port : 0;
+    const response = await fetch(`http://127.0.0.1:${port}${created.body.downloadPath}`);
+    const text = await response.text();
+    await new Promise<void>((resolve, reject) => server.close((err) => (err ? reject(err) : resolve())));
+
+    if (response.status !== 200) {
+      throw new Error(`Expected 200, got ${response.status}: ${text}`);
+    }
+    expect(response.headers.get('access-control-allow-origin')).toBe('*');
+    expect(response.headers.get('access-control-expose-headers')).toContain('Content-Range');
+    expect(text).toContain('Trains — Architecture Review');
+  });
 });

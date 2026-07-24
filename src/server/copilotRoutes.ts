@@ -13,6 +13,12 @@ import { invokeMongoInspectTool } from '../copilot/mongoInspectService.js';
 import { parseMongoPlanContext } from '../copilot/mongoPlanContext.js';
 import { isMongoInspectToolName } from '../copilot/mongoInspectToolSchemas.js';
 import { isMongoMcpEnabled, probeMongoMcpAvailability } from '../copilot/mongoMcpClient.js';
+import {
+  architectureReviewFilename,
+  createArchitectureExport,
+  isArchitectureReviewContent,
+  readArchitectureExport,
+} from '../copilot/architectureReviewExport.js';
 
 function parseChatMessages(raw: unknown): CopilotChatMessage[] {
   if (!Array.isArray(raw)) return [];
@@ -58,6 +64,48 @@ function handleCopilotError(res: Response, error: unknown): void {
     return;
   }
   res.status(502).json({ error: message });
+}
+
+/** Headers required when Google Save to Drive fetches export URLs (same-origin or CORS). */
+function applySaveToDriveCors(res: Response): void {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Headers', 'Range');
+  res.setHeader('Access-Control-Expose-Headers', 'Cache-Control, Content-Encoding, Content-Range');
+}
+
+function sendArchitectureExport(req: import('express').Request, res: Response, token: string): void {
+  const entry = readArchitectureExport(token);
+  if (!entry) {
+    res.status(404).json({ error: 'Architecture review export expired or not found.' });
+    return;
+  }
+
+  applySaveToDriveCors(res);
+  const buffer = Buffer.from(entry.content, 'utf8');
+  const rangeHeader = req.headers.range;
+
+  res.setHeader('Cache-Control', 'private, max-age=60');
+  res.setHeader('Content-Type', 'text/markdown; charset=utf-8');
+  const asciiFilename = entry.filename.replace(/[^\x20-\x7E]+/g, '-').replace(/"/g, '') || 'architecture-review.md';
+  res.setHeader('Content-Disposition', `attachment; filename="${asciiFilename}"`);
+
+  if (rangeHeader) {
+    const match = /^bytes=(\d*)-(\d*)$/.exec(rangeHeader);
+    if (match) {
+      const start = match[1] ? Number.parseInt(match[1], 10) : 0;
+      const end = match[2] ? Number.parseInt(match[2], 10) : buffer.length - 1;
+      if (Number.isFinite(start) && Number.isFinite(end) && start <= end && end < buffer.length) {
+        res.status(206);
+        res.setHeader('Content-Range', `bytes ${start}-${end}/${buffer.length}`);
+        res.setHeader('Content-Length', String(end - start + 1));
+        res.send(buffer.subarray(start, end + 1));
+        return;
+      }
+    }
+  }
+
+  res.setHeader('Content-Length', String(buffer.length));
+  res.send(buffer);
 }
 
 export function createCopilotRouter(): Router {
@@ -116,6 +164,40 @@ export function createCopilotRouter(): Router {
     } catch (error) {
       handleCopilotError(res, error);
     }
+  });
+
+  router.post('/architecture-export', (req, res) => {
+    try {
+      const content = typeof req.body?.content === 'string' ? req.body.content.trim() : '';
+      if (!isArchitectureReviewContent(content)) {
+        res.status(400).json({ error: 'Content must be an Architecture Review response.' });
+        return;
+      }
+
+      const filename =
+        typeof req.body?.filename === 'string' && req.body.filename.trim()
+          ? req.body.filename.trim()
+          : architectureReviewFilename(content);
+
+      const { token } = createArchitectureExport({ content, filename });
+      res.json({
+        token,
+        filename,
+        downloadPath: `/api/copilot/architecture-export/${token}`,
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      res.status(400).json({ error: message });
+    }
+  });
+
+  router.options('/architecture-export/:token', (_req, res) => {
+    applySaveToDriveCors(res);
+    res.status(204).end();
+  });
+
+  router.get('/architecture-export/:token', (req, res) => {
+    sendArchitectureExport(req, res, String(req.params.token ?? '').trim());
   });
 
   return router;
