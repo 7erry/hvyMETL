@@ -1,5 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 import { createArchitectureReviewExport } from '../../api';
+import {
+  buildArchitectureExportSrc,
+  buildSaveToDriveFilename,
+  validateArchitectureExportDownload,
+} from '../../copilot/architectureExportDownload';
 import { architectureReviewFilename } from '../../copilot/architectureReviewExport';
 import { loadGoogleSaveToDriveScript, renderSaveToDriveButton } from '../../copilot/googleSaveToDrive';
 
@@ -29,13 +34,16 @@ export function ArchitectureReviewSaveToDrive({ content }: ArchitectureReviewSav
         });
         if (cancelled) return;
 
+        const src = buildArchitectureExportSrc(exportInfo.downloadPath);
+        await validateArchitectureExportDownload(src);
+        if (cancelled) return;
+
         await loadGoogleSaveToDriveScript();
         if (cancelled) return;
 
-        const src = `${window.location.origin}${exportInfo.downloadPath}`;
         renderSaveToDriveButton(container, {
           src,
-          filename: exportInfo.filename,
+          filename: buildSaveToDriveFilename(content, exportInfo.filename),
           sitename: 'hvyMETL',
         });
         setLoading(false);

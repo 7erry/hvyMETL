@@ -69,14 +69,16 @@ function handleCopilotError(res: Response, error: unknown): void {
 /** Headers required when Google Save to Drive fetches export URLs (same-origin or CORS). */
 function applySaveToDriveCors(res: Response): void {
   res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Range');
-  res.setHeader('Access-Control-Expose-Headers', 'Cache-Control, Content-Encoding, Content-Range');
+  res.setHeader('Access-Control-Expose-Headers', 'Cache-Control, Content-Encoding, Content-Range, Content-Length, Accept-Ranges');
 }
 
 function sendArchitectureExport(req: import('express').Request, res: Response, token: string): void {
   const entry = readArchitectureExport(token);
   if (!entry) {
-    res.status(404).json({ error: 'Architecture review export expired or not found.' });
+    applySaveToDriveCors(res);
+    res.status(404).type('text/plain').send('Architecture review export expired or not found.');
     return;
   }
 
@@ -84,10 +86,17 @@ function sendArchitectureExport(req: import('express').Request, res: Response, t
   const buffer = Buffer.from(entry.content, 'utf8');
   const rangeHeader = req.headers.range;
 
-  res.setHeader('Cache-Control', 'private, max-age=60');
+  res.setHeader('Cache-Control', 'private, max-age=900');
+  res.setHeader('Accept-Ranges', 'bytes');
   res.setHeader('Content-Type', 'text/markdown; charset=utf-8');
   const asciiFilename = entry.filename.replace(/[^\x20-\x7E]+/g, '-').replace(/"/g, '') || 'architecture-review.md';
   res.setHeader('Content-Disposition', `attachment; filename="${asciiFilename}"`);
+
+  if (req.method === 'HEAD') {
+    res.setHeader('Content-Length', String(buffer.length));
+    res.status(200).end();
+    return;
+  }
 
   if (rangeHeader) {
     const match = /^bytes=(\d*)-(\d*)$/.exec(rangeHeader);
@@ -106,6 +115,22 @@ function sendArchitectureExport(req: import('express').Request, res: Response, t
 
   res.setHeader('Content-Length', String(buffer.length));
   res.send(buffer);
+}
+
+/** Public download routes for Google Save to Drive (secured by short-lived UUID token). */
+export function createArchitectureExportDownloadRouter(): Router {
+  const router = Router();
+  router.options('/architecture-export/:token', (_req, res) => {
+    applySaveToDriveCors(res);
+    res.status(204).end();
+  });
+  router.head('/architecture-export/:token', (req, res) => {
+    sendArchitectureExport(req, res, String(req.params.token ?? '').trim());
+  });
+  router.get('/architecture-export/:token', (req, res) => {
+    sendArchitectureExport(req, res, String(req.params.token ?? '').trim());
+  });
+  return router;
 }
 
 export function createCopilotRouter(): Router {
@@ -189,15 +214,6 @@ export function createCopilotRouter(): Router {
       const message = error instanceof Error ? error.message : String(error);
       res.status(400).json({ error: message });
     }
-  });
-
-  router.options('/architecture-export/:token', (_req, res) => {
-    applySaveToDriveCors(res);
-    res.status(204).end();
-  });
-
-  router.get('/architecture-export/:token', (req, res) => {
-    sendArchitectureExport(req, res, String(req.params.token ?? '').trim());
   });
 
   return router;

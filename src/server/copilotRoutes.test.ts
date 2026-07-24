@@ -1,6 +1,6 @@
 import express from 'express';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { createCopilotRouter } from './copilotRoutes.js';
+import { createArchitectureExportDownloadRouter, createCopilotRouter } from './copilotRoutes.js';
 import * as mongoInspectService from '../copilot/mongoInspectService.js';
 import * as mongoMcpClient from '../copilot/mongoMcpClient.js';
 
@@ -114,8 +114,7 @@ describe('copilot routes', () => {
     expect(typeof created.body.downloadPath).toBe('string');
 
     const app = express();
-    app.use(express.json());
-    app.use('/api/copilot', createCopilotRouter());
+    app.use('/api/copilot', createArchitectureExportDownloadRouter());
     const server = app.listen(0);
     await new Promise<void>((resolve) => server.once('listening', resolve));
     const address = server.address();
@@ -130,5 +129,28 @@ describe('copilot routes', () => {
     expect(response.headers.get('access-control-allow-origin')).toBe('*');
     expect(response.headers.get('access-control-expose-headers')).toContain('Content-Range');
     expect(text).toContain('Trains — Architecture Review');
+  });
+
+  it('serves architecture exports without Authorization (Save to Drive browser fetch)', async () => {
+    const review = '# Sensors — Architecture Review\n\nSummary body';
+    const created = await postJson('/api/copilot/architecture-export', {
+      content: review,
+      filename: 'Sensors — Architecture Review.md',
+    });
+    expect(created.status).toBe(200);
+
+    const app = express();
+    app.use('/api/copilot', createArchitectureExportDownloadRouter());
+    const server = app.listen(0);
+    await new Promise<void>((resolve) => server.once('listening', resolve));
+    const address = server.address();
+    const port = typeof address === 'object' && address ? address.port : 0;
+    const response = await fetch(`http://127.0.0.1:${port}${created.body.downloadPath}`);
+    const text = await response.text();
+    await new Promise<void>((resolve, reject) => server.close((err) => (err ? reject(err) : resolve())));
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get('accept-ranges')).toBe('bytes');
+    expect(text).toContain('Sensors — Architecture Review');
   });
 });

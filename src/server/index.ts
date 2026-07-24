@@ -28,7 +28,7 @@ import type { MigrationPlan, SqlStructuralModel } from '../types.js';
 import { readCsvToAtlasPathFromEnv } from '../utilities/csvToAtlas.js';
 import { getPipelineConfigStatus } from './pipelineConfig.js';
 import { createAtlasLogsRouter } from './atlasLogsRoutes.js';
-import { createCopilotRouter } from './copilotRoutes.js';
+import { createArchitectureExportDownloadRouter, createCopilotRouter } from './copilotRoutes.js';
 import { runFullPipeline } from './runPipeline.js';
 import { runFullPipelineWithStream } from './pipelineStream.js';
 import {
@@ -265,6 +265,7 @@ app.use('/api/pipeline', ...requireRole(['admin', 'developer']));
 app.use('/api/mock-csv', ...requireRole(['admin', 'developer']));
 app.use('/api/workspace', ...requireRole(['admin', 'developer', 'manager']));
 app.use('/api/atlas', ...requireRole(['admin', 'developer', 'manager']), createAtlasLogsRouter());
+app.use('/api/copilot', createArchitectureExportDownloadRouter());
 app.use('/api/copilot', ...requireRole(['admin', 'developer']), createCopilotRouter());
 
 registerApiArtifactRoutes(app, ROOT);
