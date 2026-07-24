@@ -1,71 +1,102 @@
-import { useEffect, useRef, useState } from 'react';
-import { createArchitectureReviewExport } from '../../api';
+import { useCallback, useEffect, useState } from 'react';
+import { fetchCopilotStatus } from '../../api';
 import {
-  buildArchitectureExportSrc,
-  buildSaveToDriveFilename,
-  validateArchitectureExportDownload,
-} from '../../copilot/architectureExportDownload';
-import { architectureReviewFilename } from '../../copilot/architectureReviewExport';
-import { loadGoogleSaveToDriveScript, renderSaveToDriveButton } from '../../copilot/googleSaveToDrive';
+  architectureReviewDocTitle,
+  architectureReviewToHtml,
+  downloadArchitectureReviewMarkdown,
+} from '../../copilot/architectureReviewHtml';
+import {
+  loadGoogleIdentityScript,
+  openGoogleDoc,
+  uploadArchitectureReviewToGoogleDocs,
+} from '../../copilot/googleDriveExport';
 
 type ArchitectureReviewSaveToDriveProps = {
   content: string;
 };
 
-/** Google Save to Drive button for Agent Copilot architecture review responses. */
+/** Exports an architecture review to Google Docs via Drive API (replaces broken Save to Drive widget). */
 export function ArchitectureReviewSaveToDrive({ content }: ArchitectureReviewSaveToDriveProps) {
-  const containerRef = useRef<HTMLDivElement>(null);
+  const [googleClientId, setGoogleClientId] = useState<string | null>(null);
+  const [statusLoaded, setStatusLoaded] = useState(false);
+  const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
-  const [loading, setLoading] = useState(true);
+  const [success, setSuccess] = useState('');
 
   useEffect(() => {
     let cancelled = false;
-    const container = containerRef.current;
-    if (!container) return;
-
-    setLoading(true);
-    setError('');
-
-    void (async () => {
-      try {
-        const exportInfo = await createArchitectureReviewExport({
-          content,
-          filename: architectureReviewFilename(content),
-        });
-        if (cancelled) return;
-
-        const src = buildArchitectureExportSrc(exportInfo.downloadPath);
-        await validateArchitectureExportDownload(src);
-        if (cancelled) return;
-
-        await loadGoogleSaveToDriveScript();
-        if (cancelled) return;
-
-        renderSaveToDriveButton(container, {
-          src,
-          filename: buildSaveToDriveFilename(content, exportInfo.filename),
-          sitename: 'hvyMETL',
-        });
-        setLoading(false);
-      } catch (e) {
+    void fetchCopilotStatus()
+      .then((status) => {
         if (!cancelled) {
-          setError(e instanceof Error ? e.message : String(e));
-          setLoading(false);
+          setGoogleClientId(status.googleDrive?.clientId ?? null);
+          setStatusLoaded(true);
         }
-      }
-    })();
-
+      })
+      .catch(() => {
+        if (!cancelled) setStatusLoaded(true);
+      });
     return () => {
       cancelled = true;
-      container.replaceChildren();
     };
+  }, []);
+
+  const handleSaveToGoogleDocs = useCallback(async () => {
+    if (!googleClientId) {
+      setError('Google Docs export is not configured. Download the markdown file instead.');
+      return;
+    }
+
+    setBusy(true);
+    setError('');
+    setSuccess('');
+    try {
+      await loadGoogleIdentityScript();
+      const result = await uploadArchitectureReviewToGoogleDocs({
+        clientId: googleClientId,
+        title: architectureReviewDocTitle(content),
+        html: architectureReviewToHtml(content),
+      });
+      openGoogleDoc(result);
+      setSuccess('Saved to Google Docs.');
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setBusy(false);
+    }
+  }, [content, googleClientId]);
+
+  const handleDownload = useCallback(() => {
+    setError('');
+    downloadArchitectureReviewMarkdown(content);
   }, [content]);
 
   return (
     <div className="copilot-save-to-drive">
       <span className="copilot-save-to-drive__label">Export</span>
-      {loading && !error ? <span className="copilot-save-to-drive__hint">Preparing Google Drive export…</span> : null}
-      <div ref={containerRef} className="copilot-save-to-drive__widget" aria-live="polite" />
+      <div className="copilot-save-to-drive__actions">
+        <button
+          type="button"
+          className="primary copilot-save-to-drive__btn"
+          disabled={busy || !statusLoaded || !googleClientId}
+          onClick={() => void handleSaveToGoogleDocs()}
+          title={
+            googleClientId
+              ? 'Create a Google Doc in your Drive'
+              : 'Set GOOGLE_DRIVE_CLIENT_ID on the server to enable Google Docs export'
+          }
+        >
+          {busy ? 'Saving…' : 'Save to Google Docs'}
+        </button>
+        <button type="button" className="secondary copilot-save-to-drive__btn" disabled={busy} onClick={handleDownload}>
+          Download markdown
+        </button>
+      </div>
+      {!googleClientId && statusLoaded ? (
+        <p className="copilot-save-to-drive__hint">
+          Google Docs export requires <code>GOOGLE_DRIVE_CLIENT_ID</code> in the server environment.
+        </p>
+      ) : null}
+      {success ? <p className="copilot-save-to-drive__success">{success}</p> : null}
       {error ? <p className="copilot-save-to-drive__error">{error}</p> : null}
     </div>
   );

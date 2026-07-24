@@ -73,6 +73,16 @@ describe('copilot routes', () => {
     expect((body.mongoInspect as { available: boolean }).available).toBe(true);
   });
 
+  it('exposes Google Drive client id on status when configured', async () => {
+    process.env.GOOGLE_DRIVE_CLIENT_ID = 'test-client-id.apps.googleusercontent.com';
+    const { status, body } = await getJson('/api/copilot/status');
+    expect(status).toBe(200);
+    expect(body.googleDrive).toEqual({
+      enabled: true,
+      clientId: 'test-client-id.apps.googleusercontent.com',
+    });
+  });
+
   it('invokes mongo inspect tools via API', async () => {
     vi.spyOn(mongoInspectService, 'invokeMongoInspectTool').mockResolvedValue({
       ok: true,

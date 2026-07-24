@@ -19,6 +19,7 @@ import {
   isArchitectureReviewContent,
   readArchitectureExport,
 } from '../copilot/architectureReviewExport.js';
+import { readGoogleDriveClientId } from '../copilot/googleDriveConfig.js';
 
 function parseChatMessages(raw: unknown): CopilotChatMessage[] {
   if (!Array.isArray(raw)) return [];
@@ -139,6 +140,7 @@ export function createCopilotRouter(): Router {
   router.get('/status', async (_req, res) => {
     const mongoInspectEnabled = isMongoMcpEnabled();
     const mongoInspectProbe = mongoInspectEnabled ? await probeMongoMcpAvailability() : { available: false };
+    const googleDriveClientId = readGoogleDriveClientId();
     res.json({
       configured: isGroveConfigured(),
       model: process.env.GROVE_MODEL?.trim() || 'gpt-5.6-luna',
@@ -147,6 +149,9 @@ export function createCopilotRouter(): Router {
         available: mongoInspectProbe.available,
         message: mongoInspectProbe.available ? undefined : mongoInspectProbe.message,
       },
+      googleDrive: googleDriveClientId
+        ? { enabled: true, clientId: googleDriveClientId }
+        : { enabled: false },
     });
   });
 

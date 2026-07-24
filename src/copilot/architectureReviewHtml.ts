@@ -1,0 +1,133 @@
+import { architectureReviewExportMarkdown, architectureReviewTitle } from './architectureReviewExport.js';
+
+function escapeHtml(text: string): string {
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+function inlineMarkdown(text: string): string {
+  return escapeHtml(text)
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/`([^`]+)`/g, '<code>$1</code>');
+}
+
+function splitTableRow(line: string): string[] {
+  return line
+    .trim()
+    .replace(/^\|/, '')
+    .replace(/\|$/, '')
+    .split('|')
+    .map((cell) => cell.trim());
+}
+
+function isTableSeparator(line: string): boolean {
+  const cells = splitTableRow(line);
+  return cells.length > 0 && cells.every((cell) => /^:?-{3,}:?$/.test(cell));
+}
+
+/** Converts an architecture review markdown response into HTML for Google Docs import. */
+export function architectureReviewToHtml(markdown: string): string {
+  const normalized = architectureReviewExportMarkdown(markdown);
+  const title = architectureReviewTitle(markdown) ?? 'Architecture Review';
+  const lines = normalized.split('\n');
+  const bodyParts: string[] = [];
+
+  let index = 0;
+  while (index < lines.length) {
+    const line = lines[index] ?? '';
+
+    if (!line.trim()) {
+      index += 1;
+      continue;
+    }
+
+    if (line.startsWith('```')) {
+      index += 1;
+      const codeLines: string[] = [];
+      while (index < lines.length && !lines[index]?.startsWith('```')) {
+        codeLines.push(lines[index] ?? '');
+        index += 1;
+      }
+      index += 1;
+      bodyParts.push(`<pre><code>${escapeHtml(codeLines.join('\n'))}</code></pre>`);
+      continue;
+    }
+
+    if (line.includes('|') && index + 1 < lines.length && isTableSeparator(lines[index + 1] ?? '')) {
+      const header = splitTableRow(line);
+      index += 2;
+      const rows: string[][] = [];
+      while (index < lines.length && lines[index]?.includes('|')) {
+        rows.push(splitTableRow(lines[index] ?? ''));
+        index += 1;
+      }
+      const thead = `<tr>${header.map((cell) => `<th>${inlineMarkdown(cell)}</th>`).join('')}</tr>`;
+      const tbody = rows
+        .map((row) => `<tr>${row.map((cell) => `<td>${inlineMarkdown(cell)}</td>`).join('')}</tr>`)
+        .join('');
+      bodyParts.push(`<table border="1" cellpadding="6" cellspacing="0"><thead>${thead}</thead><tbody>${tbody}</tbody></table>`);
+      continue;
+    }
+
+    if (line.startsWith('### ')) {
+      bodyParts.push(`<h3>${inlineMarkdown(line.slice(4).trim())}</h3>`);
+      index += 1;
+      continue;
+    }
+    if (line.startsWith('## ')) {
+      bodyParts.push(`<h2>${inlineMarkdown(line.slice(3).trim())}</h2>`);
+      index += 1;
+      continue;
+    }
+    if (line.startsWith('# ')) {
+      bodyParts.push(`<h1>${inlineMarkdown(line.slice(2).trim())}</h1>`);
+      index += 1;
+      continue;
+    }
+    if (line.startsWith('> ')) {
+      bodyParts.push(`<blockquote>${inlineMarkdown(line.slice(2).trim())}</blockquote>`);
+      index += 1;
+      continue;
+    }
+    if (/^[-*]\s+/.test(line)) {
+      const items: string[] = [];
+      while (index < lines.length && /^[-*]\s+/.test(lines[index] ?? '')) {
+        items.push(`<li>${inlineMarkdown((lines[index] ?? '').replace(/^[-*]\s+/, '').trim())}</li>`);
+        index += 1;
+      }
+      bodyParts.push(`<ul>${items.join('')}</ul>`);
+      continue;
+    }
+
+    bodyParts.push(`<p>${inlineMarkdown(line.trim())}</p>`);
+    index += 1;
+  }
+
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>${escapeHtml(title)} — Architecture Review</title>
+  <style>
+    body { font-family: Arial, Helvetica, sans-serif; line-height: 1.45; color: #111; }
+    table { border-collapse: collapse; margin: 1rem 0; width: 100%; }
+    th { background: #f5f5f5; text-align: left; }
+    pre { background: #f6f8fa; padding: 12px; overflow-x: auto; border-radius: 6px; }
+    code { font-family: Menlo, Consolas, monospace; font-size: 0.92em; }
+    blockquote { border-left: 4px solid #13aa52; margin: 1rem 0; padding-left: 1rem; color: #333; }
+  </style>
+</head>
+<body>
+${bodyParts.join('\n')}
+</body>
+</html>`;
+}
+
+/** Document title used when creating a Google Doc from an architecture review. */
+export function architectureReviewDocTitle(markdown: string): string {
+  const title = architectureReviewTitle(markdown);
+  return title ? `${title} — Architecture Review` : 'Architecture Review';
+}

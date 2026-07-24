@@ -184,6 +184,10 @@ export type CopilotStatusResponse = {
     available: boolean;
     message?: string;
   };
+  googleDrive?: {
+    enabled: boolean;
+    clientId?: string;
+  };
 };
 
 export type MongoInspectInvokeResponse = {

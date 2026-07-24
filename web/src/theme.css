@@ -5076,6 +5076,23 @@ textarea {
   color: var(--text-muted, #8b949e);
 }
 
+.copilot-save-to-drive__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.copilot-save-to-drive__btn {
+  font-size: 0.72rem;
+  padding: 0.28rem 0.65rem;
+}
+
+.copilot-save-to-drive__success {
+  margin: 0;
+  font-size: 0.68rem;
+  color: #7ee787;
+}
+
 .copilot-save-to-drive__widget {
   min-height: 28px;
 }
