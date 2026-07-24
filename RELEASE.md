@@ -54,7 +54,7 @@ HVYMETL_MCP_MONGODB_ENABLED=1
 # HVYMETL_MCP_MONGODB_HEADERS={"x-api-key":"shared-secret"}
 ```
 
-See [docs/20-agent-copilot-mongodb-inspect.md](docs/20-agent-copilot-mongodb-inspect.md).
+See [docs/20-agent-copilot.md](docs/20-agent-copilot.md) and [docs/20-agent-copilot-mongodb-inspect.md](docs/20-agent-copilot-mongodb-inspect.md).
 
 ### Verification
 
