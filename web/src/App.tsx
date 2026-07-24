@@ -1470,7 +1470,7 @@ export default function App() {
       ) : null}
 
       <SchemaImportModal
-        open={!model && schemaImportModalOpen}
+        open={schemaImportModalOpen}
         dialects={dialects}
         dialect={dialect}
         ddl={ddl}

@@ -61,7 +61,7 @@ export function MigrationWorkflowBar({
 }: MigrationWorkflowBarProps) {
   return (
     <nav className="migration-workflow-bar" aria-label="Migration workflow">
-      <WorkflowStep label="Import DDL" onClick={onImportDdl} active={!hasModel} />
+      <WorkflowStep label="Import DDL" onClick={onImportDdl} />
       <WorkflowArrow />
       <WorkflowStep
         label="Before · SQL"

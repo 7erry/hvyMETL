@@ -668,7 +668,7 @@ textarea {
   border: 1px solid var(--mdb-green-dark-2);
   border-radius: var(--btn-border-radius);
   background: transparent;
-  color: var(--mdb-spring-green);
+  color: var(--mdb-green-base);
   padding: var(--btn-padding-y) 0.85rem;
   font-size: 0.78rem;
   font-weight: 500;
@@ -679,6 +679,8 @@ textarea {
 
 .migration-workflow-bar__step:hover:not(:disabled) {
   background: rgba(0, 104, 74, 0.35);
+  border-color: var(--mdb-green-base);
+  color: var(--mdb-green-base);
   box-shadow: none;
 }
 
@@ -700,7 +702,8 @@ textarea {
 }
 
 .migration-workflow-bar__step--primary:not(.migration-workflow-bar__step--active) {
-  border-color: var(--mdb-spring-green);
+  border-color: var(--mdb-green-base);
+  color: var(--mdb-green-base);
 }
 
 .migration-workflow-bar__step:disabled {
