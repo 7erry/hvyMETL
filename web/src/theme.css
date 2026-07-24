@@ -5480,21 +5480,6 @@ textarea {
   margin: 0;
 }
 
-.copilot-diff-viewer__panes {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.35rem;
-}
-
-.copilot-diff-viewer__panes pre {
-  max-height: 140px;
-  overflow: auto;
-  font-size: 0.62rem;
-  padding: 0.35rem;
-  border: 1px solid var(--copilot-border);
-  border-radius: 4px;
-}
-
 .table-node.highlighted {
   box-shadow: 0 0 0 2px var(--copilot-accent), 0 0 18px rgba(0, 255, 136, 0.35);
 }

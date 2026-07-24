@@ -5,12 +5,10 @@ import { useCopilot } from '../copilot/CopilotContext';
 
 type WorkspaceCanvasShellProps = {
   children: ReactNode;
-  beforeJson?: string;
-  afterJson?: string;
 };
 
 /** Wraps the ERD canvas and copilot drawer; canvas resizes without refitting viewport. */
-export function WorkspaceCanvasShell({ children, beforeJson, afterJson }: WorkspaceCanvasShellProps) {
+export function WorkspaceCanvasShell({ children }: WorkspaceCanvasShellProps) {
   const copilot = useCopilot();
   const shellRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -35,7 +33,7 @@ export function WorkspaceCanvasShell({ children, beforeJson, afterJson }: Worksp
           onDraggingChange={setIsDragging}
         />
       ) : null}
-      <AgentCopilotSidebar beforeJson={beforeJson} afterJson={afterJson} />
+      <AgentCopilotSidebar />
     </div>
   );
 }

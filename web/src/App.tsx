@@ -1401,10 +1401,7 @@ export default function App() {
               </div>
             }
             main={
-              <WorkspaceCanvasShell
-                beforeJson={model ? JSON.stringify(model, null, 2) : ''}
-                afterJson={migrationArtifacts?.planJson ?? ''}
-              >
+              <WorkspaceCanvasShell>
               <>
                 <div className="schema-phase-bar">
                   <MigrationWorkflowBar
@@ -1472,10 +1469,7 @@ export default function App() {
           />
           )
         ) : (
-          <WorkspaceCanvasShell
-            beforeJson={model ? JSON.stringify(model, null, 2) : ''}
-            afterJson={migrationArtifacts?.planJson ?? ''}
-          >
+          <WorkspaceCanvasShell>
             <main className="migration-export-shell">
               <div className="schema-phase-bar">
                 <MigrationWorkflowBar

@@ -10,6 +10,12 @@ const LIST_DATABASES =
   /^(?:show\s+me\s+(?:the\s+)?|list\s+(?:the\s+)?|what\s+are\s+(?:the\s+)?|what\s+(?:mongo(?:db)?\s+)?)?databases?\??$/i;
 const SHOW_COLLECTIONS_IN_DB =
   /^(?:show\s+me\s+(?:the\s+)?|list\s+(?:the\s+)?)?collections?\s+(?:in|from)\s+\S+/i;
+const DESCRIBE_DB_COLLECTION =
+  /^describe\s+(?:the\s+)?(?:schema\s+(?:for|of)\s+)?([^\s.?,!]+)\.([^\s.?,!]+)\??$/i;
+const DESCRIBE_COLLECTION_IN_DB =
+  /^describe\s+(?:the\s+)?(?:schema\s+(?:for|of)\s+)?([^\s.?,!]+)\s+in\s+([^\s.?,!]+)\??$/i;
+const SHOW_SCHEMA_DB_COLLECTION =
+  /^(?:show|get)\s+(?:me\s+)?(?:the\s+)?schema\s+(?:for|of)\s+([^\s.?,!]+)\.([^\s.?,!]+)\??$/i;
 
 /** Strips trailing punctuation from a captured database name token. */
 function normalizeDatabaseToken(raw: string): string {
@@ -60,6 +66,16 @@ export function looksLikeInspectListingEcho(content: string): boolean {
   if (/^\s*#+\s*(available|listed|mongodb|atlas|collections?|databases?)\b/i.test(trimmed)) return true;
   if (/\|\s*database\s*\|/i.test(trimmed) || /\|\s*collection\s*\|/i.test(trimmed)) return true;
   if (/\|\s*size\s*\|/i.test(trimmed) && /\|\s*database\s*\|/i.test(trimmed)) return true;
+  if (/displayed in the tool result above/i.test(trimmed)) return true;
+  if (/^\s*the inferred schema for .+ (?:is )?(?:displayed|shown)/i.test(trimmed)) return true;
+  if (
+    /^\s*inferred schema for .+ in .+\.?$/i.test(trimmed) &&
+    trimmed.length < 240 &&
+    !trimmed.includes('|')
+  ) {
+    return true;
+  }
+  if (/\|\s*field\s*\|/i.test(trimmed) && /\|\s*bson\s*type/i.test(trimmed)) return true;
   return false;
 }
 
@@ -79,6 +95,42 @@ export function parseDirectMongoInspectCommand(input: string): ServerMongoInspec
 
   if (LIST_DATABASES.test(trimmed)) {
     return { kind: 'mongoInspect', tool: 'listMongoDatabases', args: {} };
+  }
+
+  const describeDbCollection = trimmed.match(DESCRIBE_DB_COLLECTION);
+  if (describeDbCollection?.[1] && describeDbCollection[2]) {
+    return {
+      kind: 'mongoInspect',
+      tool: 'describeMongoCollectionSchema',
+      args: {
+        database: normalizeDatabaseToken(describeDbCollection[1]),
+        collection: normalizeDatabaseToken(describeDbCollection[2]),
+      },
+    };
+  }
+
+  const showSchemaDbCollection = trimmed.match(SHOW_SCHEMA_DB_COLLECTION);
+  if (showSchemaDbCollection?.[1] && showSchemaDbCollection[2]) {
+    return {
+      kind: 'mongoInspect',
+      tool: 'describeMongoCollectionSchema',
+      args: {
+        database: normalizeDatabaseToken(showSchemaDbCollection[1]),
+        collection: normalizeDatabaseToken(showSchemaDbCollection[2]),
+      },
+    };
+  }
+
+  const describeCollectionInDb = trimmed.match(DESCRIBE_COLLECTION_IN_DB);
+  if (describeCollectionInDb?.[1] && describeCollectionInDb[2]) {
+    return {
+      kind: 'mongoInspect',
+      tool: 'describeMongoCollectionSchema',
+      args: {
+        database: normalizeDatabaseToken(describeCollectionInDb[2]),
+        collection: normalizeDatabaseToken(describeCollectionInDb[1]),
+      },
+    };
   }
 
   return null;

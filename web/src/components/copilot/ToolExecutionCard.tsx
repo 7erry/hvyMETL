@@ -5,9 +5,15 @@ import {
   readMongoInspectCollectionRows,
   readMongoInspectDatabaseRows,
   readMongoInspectIndexRows,
+  readMongoInspectSchemaSummary,
 } from '../../copilot/mongoInspectFormat';
 import { resolveSqlTranslationOutput, toolExecutionHasStructuredOutput } from '../../copilot/toolExecutionDisplay';
-import { MongoInspectCollectionTable, MongoInspectDatabaseTable, MongoInspectIndexTable } from './MongoInspectTable';
+import {
+  MongoInspectCollectionTable,
+  MongoInspectDatabaseTable,
+  MongoInspectIndexTable,
+  MongoInspectSchemaTable,
+} from './MongoInspectTable';
 import {
   MongoAnalyzeAggregateTable,
   MongoAnalyzeCompareTable,
@@ -28,12 +34,15 @@ export function ToolExecutionCard({ execution }: ToolExecutionCardProps) {
     execution.tool === 'listMongoCollections' ? readMongoInspectCollectionRows(execution.data) : null;
   const indexSummary =
     execution.tool === 'listMongoCollectionIndexes' ? readMongoInspectIndexRows(execution.data) : null;
+  const schemaSummary =
+    execution.tool === 'describeMongoCollectionSchema' ? readMongoInspectSchemaSummary(execution.data) : null;
   const sqlTranslation = resolveSqlTranslationOutput(execution, copilot.sqlTranslation);
   const hasStructuredOutput =
     toolExecutionHasStructuredOutput(execution) ||
     Boolean(sqlTranslation) ||
     databaseRows.length > 0 ||
-    Boolean(collectionSummary && collectionSummary.collections.length > 0);
+    Boolean(collectionSummary && collectionSummary.collections.length > 0) ||
+    Boolean(schemaSummary && schemaSummary.fields.length > 0);
 
   return (
     <div className={`copilot-tool-card copilot-tool-card--${execution.ok ? 'ok' : 'error'}`}>
@@ -50,6 +59,7 @@ export function ToolExecutionCard({ execution }: ToolExecutionCardProps) {
         />
       ) : null}
       {indexSummary ? <MongoInspectIndexTable summary={indexSummary} /> : null}
+      {schemaSummary ? <MongoInspectSchemaTable summary={schemaSummary} /> : null}
       {execution.tool === 'aggregateMongoCollection' && execution.data ? (
         <MongoAnalyzeAggregateTable
           database={String((execution.data as { database?: string }).database ?? '')}

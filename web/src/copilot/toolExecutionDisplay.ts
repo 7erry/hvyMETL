@@ -43,6 +43,7 @@ export function toolExecutionHasStructuredOutput(execution: ToolExecutionResult)
     return Boolean(resolveSqlTranslationOutput(execution));
   }
   if (execution.tool === 'listMongoCollectionIndexes') return true;
+  if (execution.tool === 'describeMongoCollectionSchema') return true;
   if (execution.data !== undefined && execution.data !== null) {
     return [
       'listMongoDatabases',

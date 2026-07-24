@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildCopilotHelpResponse, isCopilotHelpQuestion } from './copilotHelp';
+import { buildCopilotCommandsResponse, buildCopilotHelpResponse, isCopilotCommandsQuestion, isCopilotHelpQuestion } from './copilotHelp';
 
 describe('copilotHelp', () => {
   it('detects help questions', () => {
@@ -9,8 +9,20 @@ describe('copilotHelp', () => {
     expect(isCopilotHelpQuestion('list collections from mytrains')).toBe(false);
   });
 
+  it('detects commands list questions', () => {
+    expect(isCopilotCommandsQuestion('what are all the commands you know?')).toBe(true);
+    expect(isCopilotCommandsQuestion('list all commands')).toBe(true);
+    expect(isCopilotCommandsQuestion('describe csv_to_atlas.sensors')).toBe(false);
+  });
+
   it('suggests the migration workflow prompt', () => {
     expect(buildCopilotHelpResponse()).toContain('Guide me through the migration workflow');
     expect(buildCopilotHelpResponse()).toContain('Next step');
+  });
+
+  it('lists slash commands and inspect prompts', () => {
+    expect(buildCopilotCommandsResponse()).toContain('/refresh-design');
+    expect(buildCopilotCommandsResponse()).toContain('describe `{db}.{collection}`');
+    expect(buildCopilotCommandsResponse()).toContain('list databases');
   });
 });

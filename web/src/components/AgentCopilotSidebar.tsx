@@ -1,9 +1,8 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useCopilot } from '../copilot/CopilotContext';
-import { COPILOT_SLASH_COMMANDS, QUICK_ACTION_CHIPS, type AgentStatus } from '../copilot/types';
+import { COPILOT_SLASH_COMMANDS, COPILOT_COMMANDS_USER_PROMPT, QUICK_ACTION_CHIPS, type AgentStatus } from '../copilot/types';
 import { ToolExecutionCard } from './copilot/ToolExecutionCard';
 import { QueryTranslatorPanel } from './copilot/QueryTranslatorPanel';
-import { SchemaDiffViewer } from './copilot/SchemaDiffViewer';
 import { CopilotMessageBody } from './copilot/CopilotMessageBody';
 import { CopilotTypingIndicator } from './copilot/CopilotTypingIndicator';
 
@@ -20,13 +19,8 @@ const PRESET_LABEL = {
   'self-heal': 'Self-Heal',
 } as const;
 
-type AgentCopilotSidebarProps = {
-  beforeJson?: string;
-  afterJson?: string;
-};
-
 /** Collapsible right-hand agent copilot drawer. */
-export function AgentCopilotSidebar({ beforeJson = '', afterJson = '' }: AgentCopilotSidebarProps) {
+export function AgentCopilotSidebar() {
   const copilot = useCopilot();
   const { registerChatInputFocus } = copilot;
   const [input, setInput] = useState('');
@@ -197,13 +191,17 @@ export function AgentCopilotSidebar({ beforeJson = '', afterJson = '' }: AgentCo
                 </div>
               ) : null}
 
-              {beforeJson && afterJson ? (
-                <SchemaDiffViewer beforeJson={beforeJson} afterJson={afterJson} />
-              ) : null}
             </div>
 
             <footer className="agent-copilot-sidebar__action-bar">
               <div className="copilot-quick-chips">
+                <button
+                  type="button"
+                  className="copilot-chip"
+                  onClick={() => copilot.sendMessage(COPILOT_COMMANDS_USER_PROMPT)}
+                >
+                  Available Commands
+                </button>
                 {QUICK_ACTION_CHIPS.map((chip) => (
                   <button
                     key={chip.label}

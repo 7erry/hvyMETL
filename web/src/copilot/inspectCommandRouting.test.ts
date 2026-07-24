@@ -38,14 +38,34 @@ describe('inspectCommandRouting', () => {
     });
   });
 
+  it('routes describe db.collection commands directly to describeMongoCollectionSchema', () => {
+    expect(parseDirectMongoInspectCommand('describe csv_to_atlas.sensors')).toEqual({
+      kind: 'mongoInspect',
+      tool: 'describeMongoCollectionSchema',
+      args: { database: 'csv_to_atlas', collection: 'sensors' },
+    });
+    expect(parseDirectMongoInspectCommand('show schema for csv_to_atlas.sensors')).toEqual({
+      kind: 'mongoInspect',
+      tool: 'describeMongoCollectionSchema',
+      args: { database: 'csv_to_atlas', collection: 'sensors' },
+    });
+    expect(parseDirectMongoInspectCommand('describe sensors in csv_to_atlas')).toEqual({
+      kind: 'mongoInspect',
+      tool: 'describeMongoCollectionSchema',
+      args: { database: 'csv_to_atlas', collection: 'sensors' },
+    });
+  });
+
   it('detects inspect-only list requests', () => {
     expect(isInspectOnlyUserMessage('show me databases')).toBe(true);
     expect(isInspectOnlyUserMessage('list collections from fromoraclewithlove')).toBe(true);
+    expect(isInspectOnlyUserMessage('describe csv_to_atlas.sensors')).toBe(true);
     expect(isInspectOnlyUserMessage('show me databases and recommend one for analytics')).toBe(false);
   });
 
   it('detects assistant listing echoes', () => {
     expect(looksLikeInspectListingEcho('## Available MongoDB Databases\n\n| Database | Size |')).toBe(true);
+    expect(looksLikeInspectListingEcho('The inferred schema for csv_to_atlas.sensors is displayed in the tool result above.')).toBe(true);
     expect(looksLikeInspectListingEcho('Use fromoraclewithlove for the Oracle import.')).toBe(false);
   });
 

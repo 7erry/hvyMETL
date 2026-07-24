@@ -6,6 +6,7 @@ import {
   type MongoInspectCollectionRow,
   type MongoInspectDatabaseRow,
   type MongoInspectIndexSummary,
+  type MongoInspectSchemaSummary,
 } from '../../copilot/mongoInspectFormat';
 
 type MongoInspectDatabaseTableProps = {
@@ -132,6 +133,48 @@ export function MongoInspectIndexTable({ summary }: MongoInspectIndexTableProps)
               </td>
               <td>{row.detail}</td>
               <td>{row.status}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+type MongoInspectSchemaTableProps = {
+  summary: MongoInspectSchemaSummary;
+};
+
+/** Tabular summary for inferred fields on one MongoDB collection. */
+export function MongoInspectSchemaTable({ summary }: MongoInspectSchemaTableProps) {
+  if (!summary.fields.length) {
+    return (
+      <p className="copilot-inspect-table__empty">
+        No inferred fields found on <code>{summary.collection}</code> in <code>{summary.database}</code>.
+      </p>
+    );
+  }
+
+  return (
+    <div className="copilot-inspect-table-wrap">
+      <table className="copilot-inspect-table">
+        <caption className="copilot-inspect-table__caption">
+          Inferred schema for {summary.database}.{summary.collection} ({summary.fieldsCount.toLocaleString()} field
+          {summary.fieldsCount === 1 ? '' : 's'})
+        </caption>
+        <thead>
+          <tr>
+            <th scope="col">Field</th>
+            <th scope="col">BSON type</th>
+          </tr>
+        </thead>
+        <tbody>
+          {summary.fields.map((field) => (
+            <tr key={field.path}>
+              <td>
+                <code>{field.path}</code>
+              </td>
+              <td>{field.types}</td>
             </tr>
           ))}
         </tbody>

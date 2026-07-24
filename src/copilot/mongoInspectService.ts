@@ -28,6 +28,7 @@ import {
   type TenantMongoInspectScope,
 } from './mongoInspectScope.js';
 import { compareCollectionToPlan } from './mongoAnalyzeComparison.js';
+import { normalizeCollectionSchemaPayload } from './mongoSchemaFormat.js';
 import { summarizeExplainPayload } from './mongoAnalyzeExplain.js';
 import { normalizeAggregationPipeline } from './mongoAnalyzePipeline.js';
 import { findPlanCollection, type MongoPlanContext } from './mongoPlanContext.js';
@@ -648,6 +649,11 @@ function sanitizeInspectPayload(
 
   if (tool === 'listMongoCollectionIndexes') {
     return normalizeCollectionIndexesPayload(logicalDatabase, args, raw);
+  }
+
+  if (tool === 'describeMongoCollectionSchema') {
+    const collection = typeof args.collection === 'string' ? args.collection : '';
+    return normalizeCollectionSchemaPayload(logicalDatabase, collection, raw);
   }
 
   return {

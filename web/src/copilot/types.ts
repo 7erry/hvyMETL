@@ -64,7 +64,6 @@ export type CopilotMessage = {
   createdAt: string;
   toolExecution?: ToolExecutionResult;
   codeBlocks?: { language: string; code: string }[];
-  diffPreview?: { before: string; after: string };
 };
 
 /** Result returned after executing an agent tool on the canvas. */
@@ -218,6 +217,8 @@ export const QUICK_ACTION_CHIPS: CopilotQuickAction[] = [
   { label: 'Optimize Schema', prompt: OPTIMIZE_SCHEMA_USER_PROMPT },
   { label: 'Translate SQL', prompt: 'Translate SQL' },
 ];
+
+export { COPILOT_COMMANDS_USER_PROMPT } from './copilotHelp.js';
 
 export {
   COPILOT_WIDTH_DEFAULT,

@@ -283,6 +283,56 @@ describe('mongoInspectService', () => {
     expect(callTool).toHaveBeenCalled();
   });
 
+  it('describes a collection schema through MCP', async () => {
+    vi.spyOn(mongoMcpClient, 'isMongoMcpEnabled').mockReturnValue(true);
+    mockInspectMcp(async (name, args) => {
+      if (name === 'list-databases') {
+        return { databases: [{ name: 'terry_walters__csv_to_atlas', size: 100 }], totalCount: 1 };
+      }
+      if (name === 'collection-schema') {
+        expect(args).toMatchObject({
+          connectionId: 'preconfigured',
+          database: 'terry_walters__csv_to_atlas',
+          collection: 'sensors',
+        });
+        return {
+          schema: {
+            properties: {
+              status: { bsonType: 'string' },
+              value: { bsonType: 'double' },
+            },
+          },
+          fieldsCount: 2,
+        };
+      }
+      throw new Error(`Unexpected tool ${name}`);
+    });
+    vi.spyOn(auth, 'isAuthConfigured').mockReturnValue(true);
+    vi.spyOn(auth, 'resolveAuthDisplayName').mockResolvedValue('Terry Walters');
+
+    const req = {
+      auth: { payload: { sub: 'google-oauth2|abc' } },
+      headers: { 'x-hvymetl-db-prefix': 'terry_walters' },
+    } as import('express').Request;
+
+    const result = await invokeMongoInspectTool(req, 'describeMongoCollectionSchema', {
+      database: 'csv_to_atlas',
+      collection: 'sensors',
+    });
+
+    expect(result.ok).toBe(true);
+    expect(result.summary).toBe('Inferred schema for sensors in csv_to_atlas.');
+    expect(result.data).toEqual({
+      database: 'csv_to_atlas',
+      collection: 'sensors',
+      fieldsCount: 2,
+      fields: [
+        { path: 'status', types: 'string' },
+        { path: 'value', types: 'double' },
+      ],
+    });
+  });
+
   it('compares a live collection against plan context', async () => {
     vi.spyOn(mongoMcpClient, 'isMongoMcpEnabled').mockReturnValue(true);
     mockInspectMcp(async (name) => {

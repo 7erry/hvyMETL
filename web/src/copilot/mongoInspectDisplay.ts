@@ -1,5 +1,10 @@
 import type { MongoInspectInvokeResponse, MongoInspectToolName } from './types';
-import { readMongoInspectCollectionRows, readMongoInspectDatabaseRows, readMongoInspectIndexRows } from './mongoInspectFormat';
+import {
+  readMongoInspectCollectionRows,
+  readMongoInspectDatabaseRows,
+  readMongoInspectIndexRows,
+  readMongoInspectSchemaSummary,
+} from './mongoInspectFormat';
 
 /** Human-readable delta lines for MongoDB inspect tool cards. */
 export function buildMongoInspectDelta(
@@ -26,6 +31,13 @@ export function buildMongoInspectDelta(
     return lines.length ? lines : [`${summary.database}.${summary.collection}: no indexes`];
   }
 
+  if (tool === 'describeMongoCollectionSchema') {
+    const summary = readMongoInspectSchemaSummary(response.data);
+    return summary.fields.length
+      ? summary.fields.map((field) => `${summary.database}.${summary.collection} ${field.path}: ${field.types}`)
+      : [`${summary.database}.${summary.collection}: no inferred fields`];
+  }
+
   if (tool === 'compareMongoCollectionToPlan' && response.data && typeof response.data === 'object') {
     const summary = (response.data as { summary?: { matches?: number; missing?: number } }).summary;
     if (summary) return [`matches: ${summary.matches ?? 0}`, `missing: ${summary.missing ?? 0}`];
@@ -45,6 +57,7 @@ export function serializeMongoInspectToolResult(result: {
     'listMongoDatabases',
     'listMongoCollections',
     'listMongoCollectionIndexes',
+    'describeMongoCollectionSchema',
     'aggregateMongoCollection',
     'explainMongoOperation',
     'compareMongoCollectionToPlan',

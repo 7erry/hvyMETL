@@ -1,3 +1,8 @@
+import {
+  flattenInferredSchemaFields,
+  type MongoCollectionSchemaSummary,
+} from '../../../src/copilot/mongoSchemaFormat.ts';
+
 export function formatInspectBytes(bytes: number | undefined): string {
   if (bytes === undefined || !Number.isFinite(bytes)) return '—';
   if (bytes === 0) return '0 B';
@@ -128,6 +133,66 @@ export function readMongoInspectDatabaseRows(data: unknown): MongoInspectDatabas
     (entry): entry is MongoInspectDatabaseRow =>
       Boolean(entry && typeof entry === 'object' && typeof (entry as { name?: unknown }).name === 'string'),
   );
+}
+
+export type MongoInspectSchemaFieldRow = MongoCollectionSchemaSummary['fields'][number];
+
+export type MongoInspectSchemaSummary = MongoCollectionSchemaSummary;
+
+/** Read normalized collection schema rows from an inspect tool payload. */
+export function readMongoInspectSchemaSummary(data: unknown): MongoInspectSchemaSummary {
+  const empty: MongoInspectSchemaSummary = {
+    database: 'database',
+    collection: 'collection',
+    fieldsCount: 0,
+    fields: [],
+  };
+  if (!data || typeof data !== 'object') return empty;
+
+  const record = data as {
+    database?: unknown;
+    collection?: unknown;
+    fieldsCount?: unknown;
+    fields?: unknown;
+    result?: unknown;
+  };
+
+  if (Array.isArray(record.fields)) {
+    const fields = record.fields.filter(
+      (entry): entry is MongoInspectSchemaFieldRow =>
+        Boolean(
+          entry &&
+            typeof entry === 'object' &&
+            typeof (entry as { path?: unknown }).path === 'string' &&
+            typeof (entry as { types?: unknown }).types === 'string',
+        ),
+    );
+    return {
+      database: typeof record.database === 'string' ? record.database : empty.database,
+      collection: typeof record.collection === 'string' ? record.collection : empty.collection,
+      fieldsCount:
+        typeof record.fieldsCount === 'number' && Number.isFinite(record.fieldsCount)
+          ? record.fieldsCount
+          : fields.length,
+      fields,
+    };
+  }
+
+  if (record.result && typeof record.result === 'object') {
+    const legacy = record.result as { schema?: unknown; fieldsCount?: unknown };
+    const fields = flattenInferredSchemaFields(legacy.schema);
+    return {
+      database: typeof record.database === 'string' ? record.database : empty.database,
+      collection: typeof record.collection === 'string' ? record.collection : empty.collection,
+      fieldsCount:
+        typeof legacy.fieldsCount === 'number' && Number.isFinite(legacy.fieldsCount)
+          ? legacy.fieldsCount
+          : fields.length,
+      fields,
+    };
+  }
+
+  return empty;
 }
 
 export function readMongoInspectCollectionRows(data: unknown): { database: string; collections: MongoInspectCollectionRow[] } {

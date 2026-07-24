@@ -24,7 +24,7 @@ import {
   serializeWorkflowToolResult,
   type CopilotWorkflowHandlers,
 } from './workflowTools';
-import { buildCopilotHelpResponse, isCopilotHelpQuestion } from './copilotHelp';
+import { buildCopilotHelpResponse, buildCopilotCommandsResponse, isCopilotCommandsQuestion, isCopilotHelpQuestion } from './copilotHelp';
 import { buildMongoInspectDelta, serializeMongoInspectToolResult } from './mongoInspectDisplay';
 import { buildMongoPlanContext } from './mongoPlanContextPayload';
 import { buildSchemaContextPayload } from './schemaContext';
@@ -59,7 +59,6 @@ export type CopilotContextValue = {
   sqlTranslation: SqlTranslationOutput | null;
   pipelineError: string | null;
   selfHealSuggestion: string | null;
-  showDiffPreview: boolean;
   llmConfigured: boolean;
   llmModel: string | null;
   mongoInspectAvailable: boolean;
@@ -68,7 +67,6 @@ export type CopilotContextValue = {
   setOpen: (open: boolean) => void;
   setActiveTab: (tab: 'chat' | 'translator') => void;
   setPreset: (preset: CopilotWorkflowPreset) => void;
-  setShowDiffPreview: (show: boolean) => void;
   sendMessage: (text: string) => void;
   openWithPrompt: (prompt: string) => void;
   openGuardrailPrompt: (issue: GuardrailIssue) => void;
@@ -129,7 +127,6 @@ export function CopilotProvider({
   const [sqlTranslation, setSqlTranslation] = useState<SqlTranslationOutput | null>(null);
   const [pipelineError, setPipelineError] = useState<string | null>(null);
   const [selfHealSuggestion, setSelfHealSuggestion] = useState<string | null>(null);
-  const [showDiffPreview, setShowDiffPreview] = useState(false);
   const [llmConfigured, setLlmConfigured] = useState(false);
   const [llmModel, setLlmModel] = useState<string | null>(null);
   const [mongoInspectAvailable, setMongoInspectAvailable] = useState(false);
@@ -526,6 +523,15 @@ export function CopilotProvider({
         return;
       }
 
+      if (isCopilotCommandsQuestion(trimmed)) {
+        appendMessage({
+          role: 'agent',
+          content: buildCopilotCommandsResponse(),
+          markdown: true,
+        });
+        return;
+      }
+
       const directWorkflow = parseDirectWorkflowCommand(trimmed);
       if (directWorkflow) {
         void runWorkflowDirect(directWorkflow);
@@ -681,7 +687,6 @@ export function CopilotProvider({
       sqlTranslation,
       pipelineError,
       selfHealSuggestion,
-      showDiffPreview,
       llmConfigured,
       llmModel,
       mongoInspectAvailable,
@@ -690,7 +695,6 @@ export function CopilotProvider({
       setOpen,
       setActiveTab,
       setPreset,
-      setShowDiffPreview,
       sendMessage,
       openWithPrompt,
       openGuardrailPrompt,
@@ -732,7 +736,6 @@ export function CopilotProvider({
       sqlTranslation,
       pipelineError,
       selfHealSuggestion,
-      showDiffPreview,
       llmConfigured,
       llmModel,
       mongoInspectAvailable,

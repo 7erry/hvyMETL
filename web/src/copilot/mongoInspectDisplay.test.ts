@@ -57,5 +57,45 @@ describe('mongoInspectDisplay', () => {
       'fromoraclewithlove.salesChannels classic _id_',
       'fromoraclewithlove.salesChannels classic code_1',
     ]);
+
+    expect(
+      buildMongoInspectDelta('describeMongoCollectionSchema', {
+        ok: true,
+        tool: 'describeMongoCollectionSchema',
+        summary: 'Inferred schema for sensors in csv_to_atlas.',
+        data: {
+          database: 'csv_to_atlas',
+          collection: 'sensors',
+          fieldsCount: 2,
+          fields: [
+            { path: 'status', types: 'string' },
+            { path: 'value', types: 'double' },
+          ],
+        },
+      }),
+    ).toEqual([
+      'csv_to_atlas.sensors status: string',
+      'csv_to_atlas.sensors value: double',
+    ]);
+  });
+
+  it('omits schema payloads from the LLM tool result when the UI renders a table', () => {
+    const payload = serializeMongoInspectToolResult({
+      ok: true,
+      tool: 'describeMongoCollectionSchema',
+      summary: 'Inferred schema for sensors in csv_to_atlas.',
+      data: {
+        database: 'csv_to_atlas',
+        collection: 'sensors',
+        fieldsCount: 1,
+        fields: [{ path: 'status', types: 'string' }],
+      },
+    });
+    expect(JSON.parse(payload)).toEqual({
+      ok: true,
+      tool: 'describeMongoCollectionSchema',
+      summary: 'Inferred schema for sensors in csv_to_atlas.',
+      uiRendered: true,
+    });
   });
 });

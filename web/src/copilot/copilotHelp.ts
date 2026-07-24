@@ -7,6 +7,18 @@ export function isCopilotHelpQuestion(input: string): boolean {
   );
 }
 
+/** User prompt and chip label for the full command reference. */
+export const COPILOT_COMMANDS_USER_PROMPT = 'what are all the commands you know?';
+
+/** Detects requests for the full slash / natural-language command list. */
+export function isCopilotCommandsQuestion(input: string): boolean {
+  const trimmed = input.trim();
+  if (!trimmed) return false;
+  return /^(?:what\s+are\s+(?:all\s+)?(?:the\s+)?commands(?:\s+you\s+know)?|list\s+(?:all\s+)?commands)\??$/i.test(
+    trimmed,
+  );
+}
+
 /** Static help reply when the user asks what the copilot can do. */
 export function buildCopilotHelpResponse(): string {
   return [
@@ -24,5 +36,36 @@ export function buildCopilotHelpResponse(): string {
     '**Try:** Guide me through the migration workflow',
     '',
     'Or use quick actions below, slash commands like `/refresh-design`, or ask naturally (e.g. *show me databases*).',
+  ].join('\n');
+}
+
+/** Static command reference when the user asks for all known commands. */
+export function buildCopilotCommandsResponse(): string {
+  return [
+    'Here are the commands and prompts I recognize:',
+    '',
+    '### Migration workflow',
+    '- `/clear-session` or **clear session** — wipe session and open schema import',
+    '- `/refresh-design` or **refresh design** — regenerate MongoDB target schema',
+    '- `/run-pipeline` or **run pipeline** — open the Atlas import panel',
+    '- **Guide me through the migration workflow** — step-by-step with **Next step** buttons',
+    '- **import oracle example** (also analytics, cms, iot, ledger, mobile, catalog, personalization, singleview)',
+    '',
+    '### Canvas & schema tools',
+    '- `/fold child -> parent [array|single]` — embed a child table into a parent collection',
+    '- `/guardrails` or **Check Guardrails** — migration risk analysis on the ERD',
+    '- `/translate` or **Translate SQL** — open Query Translator',
+    '- `/highlight table1 table2` — focus tables on the canvas',
+    '- `/clear-overrides` — reset embed overrides',
+    '- **Optimize Schema** — architecture review of the current design',
+    '',
+    '### MongoDB inspect (Atlas)',
+    '- **list databases** / **show me databases**',
+    '- **list collections from `{db}`** / **list collections in `{db}`**',
+    '- **describe `{db}.{collection}`** / **describe `{collection}` in `{db}`**',
+    '- **show schema for `{db}.{collection}`**',
+    '- Natural language also works for indexes, find, aggregate, explain, and compare-to-plan',
+    '',
+    'Use logical database names only (e.g. `csv_to_atlas`). After workflow or inspect tools run, use **Next step** on the tool card to continue.',
   ].join('\n');
 }
