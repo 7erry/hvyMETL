@@ -685,19 +685,20 @@ textarea {
 }
 
 .migration-workflow-bar__step:focus-visible {
-  outline: 2px solid var(--mdb-spring-green);
+  outline: 2px solid var(--mdb-green-base);
   outline-offset: 2px;
 }
 
 .migration-workflow-bar__step--active {
-  background: var(--mdb-spring-green);
+  background: var(--mdb-green-base);
   color: var(--mdb-black);
-  border-color: var(--mdb-spring-green);
+  border-color: var(--mdb-green-base);
   font-weight: 600;
 }
 
 .migration-workflow-bar__step--active:hover:not(:disabled) {
-  background: var(--mdb-spring-green);
+  background: var(--btn-primary-bg-hover);
+  border-color: var(--btn-primary-bg-hover);
   color: var(--mdb-black);
 }
 
