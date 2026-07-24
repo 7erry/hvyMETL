@@ -139,7 +139,8 @@ export default function App() {
   const [designCsvLabel, setDesignCsvLabel] = useState<string | null>(null);
   const [pipelineOpen, setPipelineOpen] = useState(false);
   const [customTelemetryOpen, setCustomTelemetryOpen] = useState(false);
-  const [schemaImportModalOpen, setSchemaImportModalOpen] = useState(() => !session.model);
+  const [schemaImportModalOpen, setSchemaImportModalOpen] = useState(false);
+  const [schemaImportUserOpened, setSchemaImportUserOpened] = useState(false);
   const [embedOverridesPanelOpen, setEmbedOverridesPanelOpen] = useState(false);
   const diagramFileInputRef = useRef<HTMLInputElement>(null);
   const mongoDiagramFileInputRef = useRef<HTMLInputElement>(null);
@@ -180,6 +181,23 @@ export default function App() {
   const setSessionField = useCallback(<K extends keyof SessionState>(key: K, value: SessionState[K]) => {
     setSession((prev) => ({ ...prev, [key]: value }));
   }, []);
+
+  const openSchemaImportDialog = useCallback(() => {
+    setSchemaImportUserOpened(true);
+    setSchemaImportModalOpen(true);
+  }, []);
+
+  const closeSchemaImportDialog = useCallback(() => {
+    setSchemaImportModalOpen(false);
+    setSchemaImportUserOpened(false);
+  }, []);
+
+  useEffect(() => {
+    if (access.isLoading) return;
+    if (!session.model) {
+      setSchemaImportModalOpen(true);
+    }
+  }, [access.isLoading, session.model]);
 
   const designModel = useMemo(
     () => (model ? applyCardinalityOverrides(model, cardinalityOverrides, forceEmbedOverrides) : null),
@@ -424,6 +442,7 @@ export default function App() {
       setStatus(`Imported ${nextModel.tables.length} tables.`);
     }
     setSchemaImportModalOpen(false);
+    setSchemaImportUserOpened(false);
   }, [profiles]);
 
   const handleImportQuery = async (ddlText = ddl) => {
@@ -919,6 +938,7 @@ export default function App() {
     setSession(next);
     saveSessionState(next);
     setSchemaImportModalOpen(true);
+    setSchemaImportUserOpened(false);
     setStatus('Session cleared.');
   };
 
@@ -1395,7 +1415,7 @@ export default function App() {
                     designingPlan={designingPlan}
                     exporting={exporting}
                     exportActive={false}
-                    onImportDdl={() => setSchemaImportModalOpen(true)}
+                    onImportDdl={openSchemaImportDialog}
                     onExportMigration={handleExportMigrationStep}
                     onRunPipeline={() => setPipelineOpen(true)}
                   />
@@ -1452,29 +1472,34 @@ export default function App() {
           />
           )
         ) : (
-          <main style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-            <div className="schema-phase-bar">
-              <MigrationWorkflowBar
-                phase={schemaPhase}
-                onPhaseChange={handleWorkflowPhaseChange}
-                hasAfter={Boolean(migrationPlan)}
-                hasModel={Boolean(model)}
-                designingPlan={designingPlan}
-                exporting={exporting}
-                exportActive
-                onImportDdl={() => setSchemaImportModalOpen(true)}
-                onExportMigration={handleExportMigrationStep}
-                onRunPipeline={() => setPipelineOpen(true)}
-              />
-            </div>
-            {migrationArtifacts ? (
-              <MigrationArtifactsView
-                artifacts={migrationArtifacts}
-                onChange={(next) => setSessionField('migrationArtifacts', next)}
-              />
-            ) : null}
-            <DiagramStatusFooter status={status} />
-          </main>
+          <WorkspaceCanvasShell
+            beforeJson={model ? JSON.stringify(model, null, 2) : ''}
+            afterJson={migrationArtifacts?.planJson ?? ''}
+          >
+            <main className="migration-export-shell">
+              <div className="schema-phase-bar">
+                <MigrationWorkflowBar
+                  phase={schemaPhase}
+                  onPhaseChange={handleWorkflowPhaseChange}
+                  hasAfter={Boolean(migrationPlan)}
+                  hasModel={Boolean(model)}
+                  designingPlan={designingPlan}
+                  exporting={exporting}
+                  exportActive
+                  onImportDdl={openSchemaImportDialog}
+                  onExportMigration={handleExportMigrationStep}
+                  onRunPipeline={() => setPipelineOpen(true)}
+                />
+              </div>
+              {migrationArtifacts ? (
+                <MigrationArtifactsView
+                  artifacts={migrationArtifacts}
+                  onChange={(next) => setSessionField('migrationArtifacts', next)}
+                />
+              ) : null}
+              <DiagramStatusFooter status={status} />
+            </main>
+          </WorkspaceCanvasShell>
         )}
       </div>
 
@@ -1496,7 +1521,7 @@ export default function App() {
       ) : null}
 
       <SchemaImportModal
-        open={schemaImportModalOpen}
+        open={schemaImportModalOpen && (!model || schemaImportUserOpened)}
         dialects={dialects}
         dialect={dialect}
         ddl={ddl}
@@ -1506,7 +1531,7 @@ export default function App() {
         onImportQuery={() => void handleImportQuery()}
         onSchemaFile={(file) => void handleSchemaFileUpload(file)}
         onImportBuiltinExample={(id) => void handleImportBuiltinExample(id)}
-        onClose={() => setSchemaImportModalOpen(false)}
+        onClose={closeSchemaImportDialog}
       />
 
       <CustomTelemetryModal
