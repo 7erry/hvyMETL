@@ -102,4 +102,14 @@ describe('repogen multi-language', () => {
       }
     });
   }
+
+  it('maps secondary read preference into the Node client module', () => {
+    const result = generateFromPlan({
+      plan: { ...samplePlan, readPreference: 'secondary', compression: 'zstd' },
+      language: 'node',
+    });
+    const client = result.files.find((file) => file.relativePath === 'mongoClient.ts');
+    expect(client?.content).toContain('readPreference: ReadPreference.secondary');
+    expect(client?.content).toContain("compressors: ['zstd']");
+  });
 });

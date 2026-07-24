@@ -73,6 +73,30 @@ export function parseMigrationPlan(planJson: string | null | undefined): Migrati
   }
 }
 
+/** Driver and telemetry fields stamped on migration-plan.json from the active workload profile. */
+export type MigrationPlanProfilePatch = Pick<
+  MigrationPlan,
+  'profileId' | 'telemetry' | 'writeConcern' | 'readPreference' | 'compression' | 'pool'
+>;
+
+/** Apply workload profile driver settings to an existing migration plan JSON string. */
+export function patchMigrationPlanJsonWithProfile(planJson: string, profile: MigrationPlanProfilePatch): string {
+  const plan = parseMigrationPlan(planJson);
+  if (!plan) return planJson;
+
+  const next: MigrationPlan = {
+    ...plan,
+    profileId: profile.profileId,
+    telemetry: profile.telemetry,
+    writeConcern: profile.writeConcern,
+    readPreference: profile.readPreference,
+    compression: profile.compression,
+    pool: profile.pool,
+  };
+
+  return JSON.stringify(next, null, 2);
+}
+
 function formatBsonType(prop: JsonSchemaProperty): string {
   if (Array.isArray(prop.bsonType)) return prop.bsonType.join(' | ');
   if (prop.bsonType === 'array') {

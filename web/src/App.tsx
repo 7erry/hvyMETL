@@ -78,6 +78,7 @@ import {
   formatTransformSummary,
   initialCollectionPositions,
   parseMigrationPlan,
+  patchMigrationPlanJsonWithProfile,
 } from './migrationPlanDisplay';
 import { layoutSqlModel } from './graphLayout';
 import { pickCsvDirectory } from './directoryPicker';
@@ -1533,12 +1534,22 @@ export default function App() {
         initial={customTelemetryInput}
         onClose={() => setCustomTelemetryOpen(false)}
         onApply={(profile, input) => {
-          setSession((prev) => ({
-            ...prev,
-            profileId: 'custom',
-            customProfile: profile,
-            customTelemetryInput: input,
-          }));
+          setSession((prev) => {
+            const migrationArtifacts = prev.migrationArtifacts
+              ? {
+                  ...prev.migrationArtifacts,
+                  planJson: patchMigrationPlanJsonWithProfile(prev.migrationArtifacts.planJson, profile),
+                  repositories: undefined,
+                }
+              : prev.migrationArtifacts;
+            return {
+              ...prev,
+              profileId: 'custom',
+              customProfile: profile,
+              customTelemetryInput: input,
+              migrationArtifacts,
+            };
+          });
           setStatus(
             `Custom profile: ${profile.telemetry.readPercent}:${profile.telemetry.writePercent} R:W, readPreference=${profile.readPreference}, compression=${profile.compression}.`,
           );
