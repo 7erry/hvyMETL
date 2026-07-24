@@ -16,7 +16,7 @@ import { TableDetails } from './components/TableDetails';
 import { CollectionDetails } from './components/CollectionDetails';
 import { TransformationSummaryPanel } from './components/TransformationSummaryPanel';
 import { PipelineHistoryPanel } from './components/PipelineHistoryPanel';
-import { SchemaPhaseToggle } from './components/SchemaPhaseToggle';
+import { MigrationWorkflowBar } from './components/MigrationWorkflowBar';
 import type { SchemaPhase } from './components/SchemaPhaseToggle';
 import { ResizableSplit } from './components/ResizableSplit';
 import { PipelinePanel } from './components/PipelinePanel';
@@ -1040,25 +1040,12 @@ export default function App() {
               </button>
             </>
           ) : null}
-          {view === 'diagram' && !model ? (
-            <button type="button" className="primary" onClick={() => setSchemaImportModalOpen(true)}>
-              Import schema
-            </button>
-          ) : null}
           {view === 'migration' ? (
             <button type="button" className="tertiary" onClick={() => setSessionField('view', 'diagram')}>
               Back to dashboard
             </button>
           ) : uiRole === 'developer' ? (
-            <>
-              <button type="button" className="primary" onClick={() => setPipelineOpen(true)} disabled={!model}>
-                Run pipeline
-              </button>
-              <CopilotHeaderToggle />
-              <button type="button" className="secondary" onClick={() => void handleAiExport()} disabled={!model || exporting}>
-                {exporting ? 'Exporting…' : 'Export migration'}
-              </button>
-            </>
+            <CopilotHeaderToggle />
           ) : null}
           {uiRole === 'developer' ? (
             <span className="app-header__cli-hint">
@@ -1388,10 +1375,16 @@ export default function App() {
               >
               <>
                 <div className="schema-phase-bar">
-                  <SchemaPhaseToggle
+                  <MigrationWorkflowBar
                     phase={schemaPhase}
-                    onChange={handleSchemaPhaseChange}
+                    onPhaseChange={handleSchemaPhaseChange}
                     hasAfter={Boolean(migrationPlan)}
+                    hasModel={Boolean(model)}
+                    designingPlan={designingPlan}
+                    exporting={exporting}
+                    onImportDdl={() => setSchemaImportModalOpen(true)}
+                    onExportMigration={() => void handleAiExport()}
+                    onRunPipeline={() => setPipelineOpen(true)}
                   />
                   {schemaPhase === 'after' && migrationPlan ? (
                     <span className="schema-phase-bar__meta">

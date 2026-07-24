@@ -648,6 +648,66 @@ textarea {
   background: var(--btn-primary-bg-hover);
 }
 
+.migration-workflow-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem 0.5rem;
+}
+
+.migration-workflow-bar__arrow {
+  color: rgba(0, 237, 100, 0.45);
+  font-size: 0.85rem;
+  line-height: 1;
+  user-select: none;
+  padding: 0 0.1rem;
+}
+
+.migration-workflow-bar__step {
+  min-height: var(--btn-min-height);
+  border: 1px solid var(--mdb-green-dark-2);
+  border-radius: var(--btn-border-radius);
+  background: transparent;
+  color: var(--mdb-spring-green);
+  padding: var(--btn-padding-y) 0.85rem;
+  font-size: 0.78rem;
+  font-weight: 500;
+  cursor: pointer;
+  box-shadow: none;
+  white-space: nowrap;
+}
+
+.migration-workflow-bar__step:hover:not(:disabled) {
+  background: rgba(0, 104, 74, 0.35);
+  box-shadow: none;
+}
+
+.migration-workflow-bar__step:focus-visible {
+  outline: 2px solid var(--mdb-spring-green);
+  outline-offset: 2px;
+}
+
+.migration-workflow-bar__step--active {
+  background: var(--mdb-spring-green);
+  color: var(--mdb-black);
+  border-color: var(--mdb-spring-green);
+  font-weight: 600;
+}
+
+.migration-workflow-bar__step--active:hover:not(:disabled) {
+  background: var(--mdb-spring-green);
+  color: var(--mdb-black);
+}
+
+.migration-workflow-bar__step--primary:not(.migration-workflow-bar__step--active) {
+  border-color: var(--mdb-spring-green);
+}
+
+.migration-workflow-bar__step:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
 .schema-canvas-empty button {
   margin-top: 0.75rem;
 }
@@ -4444,6 +4504,11 @@ textarea {
   .schema-phase-bar__meta {
     flex: 1 1 100%;
     order: 2;
+  }
+
+  .migration-workflow-bar {
+    flex: 1 1 100%;
+    order: 1;
   }
 
   .schema-phase-toggle {
