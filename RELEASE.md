@@ -1,3 +1,35 @@
+## hvyMETL 2.1.0
+
+Minor release focused on **Query Translator execution**, **aggregate result UX**, **Manager ↔ Copilot sizing context**, **Google Docs export**, and **studio build reliability** since 2.0.0.
+
+### Highlights
+
+- **Query Translator Run Code:** execute translated aggregation pipelines against Atlas directly from the translator tab; results use the same tool-card layout as chat (summary, collapsible paginated table, total/returned counts).
+- **Aggregate & analyze results UI:** collapsible scrollable tables with sticky headers, Previous/Next pagination (10 rows per page), explicit **total matched** vs **returned in preview** labels, and truncation hints when Atlas inspect byte limits apply.
+- **SQL translator fixes:** comparison operators in `WHERE` (`>`, `>=`, `<`, `<=`, `!=`) map to MongoDB `$match` predicates; literal case preserved (no lowercasing `'ACTIVE'`); empty Run Code results fixed when match count was present but previews were truncated.
+- **Manager dataset scale → Copilot:** Manager **Dataset scale — raw data** slider feeds copilot `schemaContext` for sizing and sharding guidance when CSV row counts are unavailable.
+- **Copilot polish:** collection schema tables in chat, **Available Commands** chip, architecture review **Save to Google Docs** (Drive API + OAuth), migration workflow bar on export view, clickable next-step buttons, and custom profile `readPreference` patch when applied to migration plans.
+- **Pipeline reliability:** fix first-run pipeline failure from SSE stream parsing.
+- **Studio build (`build:ui`):** replace `react-syntax-highlighter` (594 grammars) with selective Prism highlighting; split Vite chunks, raise Node heap for minification, and add step progress via `scripts/build-ui.mjs` — builds complete in ~1s (~643 modules vs ~1444).
+
+### Configuration
+
+Google Docs export for architecture reviews requires a server OAuth Web client ID:
+
+```bash
+GOOGLE_DRIVE_CLIENT_ID=your_google_oauth_web_client_id
+```
+
+See [docs/20-agent-copilot.md](docs/20-agent-copilot.md).
+
+### Verification
+
+- `npm test`
+- `npm run build`
+- `npm run -s build:ui`
+
+---
+
 ## hvyMETL 2.0.0
 
 Major release focused on **guided migration workflow in Agent Copilot**, MongoDB inspect/analyze maturity, schema import breadth, and studio polish since 1.9.0.
