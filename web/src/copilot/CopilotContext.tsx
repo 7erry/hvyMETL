@@ -20,17 +20,19 @@ import {
 import {
   executeWorkflowTool,
   attachPostVerifyArchitectureReviewNextStep,
+  isWorkflowToolName,
   nextStepToWorkflowCall,
   parseDirectWorkflowCommand,
-  serializeWorkflowToolResult,
   parseWorkflowToolCall,
+  resolveWorkflowNextStep,
+  serializeWorkflowToolResult,
   workflowToolDisplayName,
   type CopilotWorkflowHandlers,
 } from './workflowTools';
 import { buildCopilotHelpResponse, buildCopilotCommandsResponse, isCopilotCommandsQuestion, isCopilotHelpQuestion } from './copilotHelp';
 import {
   buildMigrationWorkflowGuideMessage,
-  formatWorkflowToolMessage,
+  buildNextStepMessage,
   isMigrationWorkflowGuideRequest,
   type CopilotAction,
 } from './copilotActionLinks';
@@ -55,6 +57,7 @@ import type {
   MongoInspectToolName,
   SqlTranslationOutput,
   ToolExecutionResult,
+  WorkflowToolName,
 } from './types';
 import type { MigrationPlan } from '../migrationPlanTypes';
 import type { CardinalityOverrides, ForceEmbedOverrides } from '../cardinalityOverrides';
@@ -157,6 +160,9 @@ export function CopilotProvider({
   const [llmHistory, setLlmHistory] = useState<CopilotLlmMessage[]>([]);
   const chatInputFocusRef = useRef<(() => void) | null>(null);
   const chatInputFocusTimersRef = useRef<number[]>([]);
+  const prevTableCountRef = useRef(model?.tables.length ?? 0);
+  const lastCompletedWorkflowToolRef = useRef<WorkflowToolName | null>(null);
+  const skipSchemaImportNotifyRef = useRef(false);
 
   const registerChatInputFocus = useCallback((focus: (() => void) | null) => {
     chatInputFocusRef.current = focus;
@@ -357,7 +363,7 @@ export function CopilotProvider({
       const result = await runMongoInspectTool(tool, args);
       appendMessage({
         role: 'agent',
-        content: result.nextStep ? formatWorkflowToolMessage(result.summary, result.nextStep) : '',
+        content: buildNextStepMessage(result.nextStep),
         toolExecution: result,
       });
       setStatus('idle');
@@ -369,9 +375,15 @@ export function CopilotProvider({
     async (call: Parameters<typeof executeWorkflowTool>[0]) => {
       setStatus('mutating');
       const result = await executeWorkflowTool(call, workflowHandlers);
+      if (result.ok && isWorkflowToolName(result.tool)) {
+        lastCompletedWorkflowToolRef.current = result.tool;
+        if (result.tool === 'importSchemaDdl' || result.tool === 'importBuiltinExample') {
+          skipSchemaImportNotifyRef.current = true;
+        }
+      }
       appendMessage({
         role: 'agent',
-        content: formatWorkflowToolMessage(result.summary, result.nextStep),
+        content: buildNextStepMessage(result.nextStep),
         toolExecution: result,
       });
       setStatus('idle');
@@ -485,7 +497,7 @@ export function CopilotProvider({
             const result = await executeWorkflowTool(parsed, workflowHandlers);
             appendMessage({
               role: 'agent',
-              content: formatWorkflowToolMessage(result.summary, result.nextStep),
+              content: buildNextStepMessage(result.nextStep),
               toolExecution: result,
             });
             messages = [
@@ -724,14 +736,38 @@ export function CopilotProvider({
 
   const showWorkflowResult = useCallback(
     (result: ToolExecutionResult) => {
+      if (result.ok && isWorkflowToolName(result.tool)) {
+        lastCompletedWorkflowToolRef.current = result.tool;
+      }
       appendMessage({
         role: 'agent',
-        content: formatWorkflowToolMessage(result.summary, result.nextStep),
+        content: buildNextStepMessage(result.nextStep),
         toolExecution: result,
       });
     },
     [appendMessage],
   );
+
+  useEffect(() => {
+    const count = model?.tables.length ?? 0;
+    const previousCount = prevTableCountRef.current;
+    if (
+      count > previousCount &&
+      lastCompletedWorkflowToolRef.current === 'clearSession' &&
+      !skipSchemaImportNotifyRef.current
+    ) {
+      showWorkflowResult({
+        tool: 'importSchemaDdl',
+        summary: `Step 2 complete: imported ${count} table(s).`,
+        delta: [`tables: ${count}`],
+        ok: true,
+        nextStep: resolveWorkflowNextStep('importSchemaDdl'),
+      });
+      lastCompletedWorkflowToolRef.current = 'importSchemaDdl';
+    }
+    prevTableCountRef.current = count;
+    skipSchemaImportNotifyRef.current = false;
+  }, [model?.tables.length, showWorkflowResult]);
 
   const translateSql = useCallback(
     (sqlQuery: string) => {

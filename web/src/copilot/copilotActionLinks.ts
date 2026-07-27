@@ -3,6 +3,15 @@ import type { CopilotNextStep, MongoInspectToolName, WorkflowToolName } from './
 /** Prefix for markdown links that trigger copilot actions when clicked. */
 export const COPILOT_ACTION_HREF_PREFIX = 'copilot-action:';
 
+export const VERIFY_IMPORTED_COLLECTIONS_PROMPT =
+  'List collections in the logical database I just imported to with the pipeline.';
+
+export const POST_IMPORT_ARCHITECTURE_REVIEW_PROMPT = [
+  'Produce a collective **Architecture Review** of all collections I just imported into Atlas.',
+  'Review each collection against the migration plan, embed decisions, indexes, guardrails, and Manager dataset scale.',
+  'Use the required architecture review format with collapsible sections.',
+].join(' ');
+
 export type CopilotPromptAction = {
   type: 'prompt';
   prompt: string;
@@ -75,6 +84,15 @@ export function buildPromptActionLink(label: string, prompt: string): string {
   return buildCopilotActionLink(label, { type: 'prompt', prompt });
 }
 
+/** Builds a markdown link for importing a built-in example. */
+export function buildImportExampleActionLink(label: string, exampleId: string): string {
+  return buildCopilotActionLink(label, {
+    type: 'workflow',
+    tool: 'importBuiltinExample',
+    args: { exampleId },
+  });
+}
+
 const WORKFLOW_STEP_LINKS: Array<{ pattern: RegExp; action: CopilotAction; label: string }> = [
   {
     pattern: /\bGuide me through the migration workflow\b/gi,
@@ -95,6 +113,16 @@ const WORKFLOW_STEP_LINKS: Array<{ pattern: RegExp; action: CopilotAction; label
     pattern: /\bClear session\b/g,
     action: { type: 'workflow', tool: 'clearSession' },
     label: 'Clear session',
+  },
+  {
+    pattern: /\bArchitecture Review\b/g,
+    action: { type: 'prompt', prompt: POST_IMPORT_ARCHITECTURE_REVIEW_PROMPT },
+    label: 'Architecture Review',
+  },
+  {
+    pattern: /\bVerify collections\b/g,
+    action: { type: 'prompt', prompt: VERIFY_IMPORTED_COLLECTIONS_PROMPT },
+    label: 'Verify collections',
   },
 ];
 
@@ -125,19 +153,27 @@ export function buildMigrationWorkflowGuideMessage(): string {
     'Follow these steps in order (click to run each step):',
     '',
     `1. ${buildWorkflowActionLink('Clear session', 'clearSession')} — reset the canvas and open schema import`,
-    '2. **Import schema** — paste SQL DDL in the dialog (or load a built-in example from the import panel)',
+    `2. ${buildImportExampleActionLink('Import ledger example', 'ledger')} — or paste SQL DDL in the import dialog`,
     `3. ${buildWorkflowActionLink('Refresh design', 'refreshDesign')} — generate the MongoDB target schema (ML/RAG)`,
     `4. ${buildWorkflowActionLink('Run pipeline', 'runPipeline')} — open the Atlas import panel for CSV/SQLite`,
-    '5. **Verify Atlas** — after pipeline import, verify collections in your logical database',
-    '6. **Architecture Review** — collective review of all imported collections (click **Next step** after verify)',
+    `5. ${buildPromptActionLink('Verify collections', VERIFY_IMPORTED_COLLECTIONS_PROMPT)} — list collections in your logical database`,
+    `6. ${buildPromptActionLink('Architecture Review', POST_IMPORT_ARCHITECTURE_REVIEW_PROMPT)} — collective review of imported collections`,
     '',
-    `Start with ${buildPromptActionLink('step 1', MIGRATION_WORKFLOW_GUIDE_PROMPT)} or ${buildWorkflowActionLink('Clear session', 'clearSession')}.`,
+    `Start with ${buildWorkflowActionLink('Clear session', 'clearSession')}.`,
   ].join('\n');
+}
+
+/** Markdown for a clickable next-step line under a tool result (summary lives on the tool card). */
+export function buildNextStepMessage(nextStep?: CopilotNextStep): string {
+  if (!nextStep) return '';
+  return `**Next step:** ${buildCopilotActionLink(nextStep.label, copilotActionFromNextStep(nextStep))}`;
 }
 
 /** Appends a clickable next-step link to a workflow tool summary. */
 export function formatWorkflowToolMessage(summary: string, nextStep?: CopilotNextStep): string {
   const linkedSummary = linkifyCopilotWorkflowSteps(summary);
-  if (!nextStep) return linkedSummary;
-  return `${linkedSummary}\n\n**Next step:** ${buildCopilotActionLink(nextStep.label, copilotActionFromNextStep(nextStep))}`;
+  const nextStepLine = buildNextStepMessage(nextStep);
+  if (!nextStepLine) return linkedSummary;
+  if (!linkedSummary.trim()) return nextStepLine;
+  return `${linkedSummary}\n\n${nextStepLine}`;
 }

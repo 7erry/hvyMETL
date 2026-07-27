@@ -2,29 +2,18 @@ import { useMemo } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
-import rehypeSanitize, { defaultSchema } from 'rehype-sanitize';
+import rehypeSanitize from 'rehype-sanitize';
 import { PrismCodeBlock } from '../PrismCodeBlock';
 import { formatCopilotResponse } from '../../copilot/formatCopilotResponse';
 import { isArchitectureReviewContent } from '../../copilot/architectureReviewExport';
 import { ArchitectureReviewSaveToDrive } from './ArchitectureReviewSaveToDrive';
 import { useCopilot } from '../../copilot/CopilotContext';
 import { decodeCopilotActionHref } from '../../copilot/copilotActionLinks';
+import { copilotMarkdownSanitizeSchema } from '../../copilot/copilotMarkdownSanitize';
 
 type CopilotMessageBodyProps = {
   content: string;
   markdown?: boolean;
-};
-
-const sanitizeSchema = {
-  ...defaultSchema,
-  tagNames: [...(defaultSchema.tagNames ?? []), 'details', 'summary'],
-  attributes: {
-    ...defaultSchema.attributes,
-    details: ['className', 'class', 'open'],
-    summary: ['className', 'class'],
-    code: [...(defaultSchema.attributes?.code ?? []), 'className', 'class'],
-    a: [...(defaultSchema.attributes?.a ?? []), 'href', 'className', 'class'],
-  },
 };
 
 /** Renders copilot chat content as formatted markdown with collapsible sections. */
@@ -44,7 +33,7 @@ export function CopilotMessageBody({ content, markdown = false }: CopilotMessage
     <div className="copilot-message__body copilot-message__body--markdown">
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
-        rehypePlugins={[rehypeRaw, [rehypeSanitize, sanitizeSchema]]}
+        rehypePlugins={[rehypeRaw, [rehypeSanitize, copilotMarkdownSanitizeSchema]]}
         components={{
           a: ({ href, children }) => {
             const action = href ? decodeCopilotActionHref(href) : null;

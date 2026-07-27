@@ -1,5 +1,6 @@
 import {
   buildMigrationWorkflowGuideLink,
+  buildImportExampleActionLink,
   buildPromptActionLink,
   buildWorkflowActionLink,
 } from './copilotActionLinks';
@@ -31,7 +32,7 @@ export function buildCopilotHelpResponse(): string {
     'I can help you migrate SQL to MongoDB end-to-end:',
     '',
     `1. ${buildWorkflowActionLink('Clear session', 'clearSession')} — wipe canvas and open schema import`,
-    '2. **Import SQL** — paste DDL or load a built-in example',
+    `2. ${buildImportExampleActionLink('Import ledger example', 'ledger')} — or paste SQL DDL in the import dialog`,
     `3. ${buildWorkflowActionLink('Refresh design', 'refreshDesign')} — generate the MongoDB target schema (ML/RAG)`,
     `4. ${buildWorkflowActionLink('Run pipeline', 'runPipeline')} — load CSV/SQLite data into Atlas`,
     '5. **Inspect Atlas** — list databases and collections, compare to plan',

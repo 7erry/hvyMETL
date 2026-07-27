@@ -75,7 +75,8 @@ export async function executeWorkflowTool(
       handlers.clearSession();
       result = {
         tool: 'clearSession',
-        summary: 'Session cleared. Schema import dialog opened — paste DDL or pick a built-in example.',
+        summary:
+          'Step 1 complete: Session cleared. Schema import dialog opened — paste DDL or pick a built-in example.',
         delta: ['session reset', 'schema import modal open'],
         ok: true,
       };
@@ -143,6 +144,8 @@ export function workflowToolDisplayName(tool: WorkflowToolName): string {
 /** Maps a completed workflow tool to the recommended one-click next step. */
 export function resolveWorkflowNextStep(completedTool: WorkflowToolName): CopilotNextStep | undefined {
   switch (completedTool) {
+    case 'clearSession':
+      return { kind: 'workflow', label: 'Refresh design', tool: 'refreshDesign', args: {} };
     case 'importSchemaDdl':
     case 'importBuiltinExample':
       return { kind: 'workflow', label: 'Refresh design', tool: 'refreshDesign', args: {} };

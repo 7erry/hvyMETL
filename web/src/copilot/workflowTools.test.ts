@@ -52,6 +52,12 @@ describe('workflowTools', () => {
   });
 
   it('suggests clickable next steps after import and design workflow tools', () => {
+    expect(resolveWorkflowNextStep('clearSession')).toEqual({
+      kind: 'workflow',
+      label: 'Refresh design',
+      tool: 'refreshDesign',
+      args: {},
+    });
     expect(resolveWorkflowNextStep('importBuiltinExample')).toEqual({
       kind: 'workflow',
       label: 'Refresh design',

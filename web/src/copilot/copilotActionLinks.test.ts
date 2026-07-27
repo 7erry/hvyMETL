@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   buildCopilotActionLink,
   buildMigrationWorkflowGuideMessage,
+  buildNextStepMessage,
   decodeCopilotActionHref,
   encodeCopilotActionHref,
   formatWorkflowToolMessage,
@@ -33,8 +34,21 @@ describe('copilotActionLinks', () => {
   it('builds a migration guide with clickable steps', () => {
     const guide = buildMigrationWorkflowGuideMessage();
     expect(guide).toContain('Clear session');
+    expect(guide).toContain('Import ledger example');
+    expect(guide).toContain('Verify collections');
+    expect(guide).toContain('Architecture Review');
     expect(guide).toContain('copilot-action:');
-    expect(guide).toContain('Refresh design');
+  });
+
+  it('builds a standalone next-step message', () => {
+    expect(
+      buildNextStepMessage({
+        kind: 'workflow',
+        label: 'Refresh design',
+        tool: 'refreshDesign',
+        args: {},
+      }),
+    ).toContain('**Next step:**');
   });
 
   it('appends a clickable next step to workflow summaries', () => {
