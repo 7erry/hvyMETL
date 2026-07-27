@@ -423,7 +423,7 @@ const FAMILY_RENDERERS: Record<string, FamilyRenderer> = {
 /** Render SQL DDL for a dialect id and assigned design pattern. */
 export function renderDialectExampleDdl(dialectId: string, pattern: PatternId): string {
   const header = dialectExampleHeader(dialectId, pattern);
-  const family = getDialectParserFamily(dialectId);
+  const family = getDialectParserFamily(dialectId) ?? 'postgresql';
   const renderer = FAMILY_RENDERERS[family] ?? postgresRenderer;
   return renderer(pattern, header);
 }
