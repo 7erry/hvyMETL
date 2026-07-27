@@ -21,9 +21,9 @@ export function translateSQLToMongo(context: TranslateContext): SqlTranslationOu
     primaryTable.replace(/_([a-z])/g, (_, c: string) => c.toUpperCase());
 
   const hasJoin = /\bjoin\b/i.test(lower);
-  const whereClause = extractClause(lower, 'where');
-  const orderClause = extractClause(lower, 'order by');
-  const groupClause = extractClause(lower, 'group by');
+  const whereClause = extractClause(normalized, 'where');
+  const orderClause = extractClause(normalized, 'order by');
+  const groupClause = extractClause(normalized, 'group by');
 
   const pipeline: Record<string, unknown>[] = [{ $match: { _archived: { $ne: true } } }];
 
@@ -78,9 +78,16 @@ export function translateSQLToMongo(context: TranslateContext): SqlTranslationOu
 
   const indexRecommendations: string[] = [];
   if (whereClause) {
-    const fields = [...whereClause.matchAll(/(\w+)\s*=/g)].map((m) => m[1]).filter(Boolean);
-    if (fields.length) {
-      indexRecommendations.push(`db.${collectionName}.createIndex({ ${fields.map((f) => `${f}: 1`).join(', ')} })`);
+    const fields = [
+      ...whereClause.matchAll(/([\w.]+)\s*(?:=|>=|<=|<>|!=|>|<)/gi),
+    ]
+      .map((match) => normalizeQualifiedSqlIdentifier(match[1] ?? ''))
+      .filter(Boolean);
+    const uniqueFields = [...new Set(fields)];
+    if (uniqueFields.length) {
+      indexRecommendations.push(
+        `db.${collectionName}.createIndex({ ${uniqueFields.map((field) => `${field}: 1`).join(', ')} })`,
+      );
     }
   }
 
@@ -94,9 +101,10 @@ export function translateSQLToMongo(context: TranslateContext): SqlTranslationOu
 }
 
 function extractClause(sql: string, keyword: string): string | null {
-  const idx = sql.indexOf(keyword);
-  if (idx === -1) return null;
-  const rest = sql.slice(idx + keyword.length).trim();
+  const pattern = new RegExp(`\\b${keyword.replace(/\s+/g, '\\s+')}\\b`, 'i');
+  const match = pattern.exec(sql);
+  if (!match) return null;
+  const rest = sql.slice(match.index + match[0].length).trim();
   const stop = rest.search(/\b(group by|order by|limit|offset)\b/i);
   const clause = (stop === -1 ? rest : rest.slice(0, stop)).trim();
   return clause.replace(/[;\s]+$/g, '').trim() || null;
@@ -138,10 +146,89 @@ function normalizeQualifiedSqlIdentifier(identifier: string): string {
   return dotIndex === -1 ? unquoted : unquoted.slice(dotIndex + 1);
 }
 
+function sqlComparisonToMongo(operator: string): '$gt' | '$gte' | '$lt' | '$lte' | '$ne' | '$eq' {
+  switch (operator.toLowerCase()) {
+    case '>':
+      return '$gt';
+    case '>=':
+      return '$gte';
+    case '<':
+      return '$lt';
+    case '<=':
+      return '$lte';
+    case '!=':
+    case '<>':
+      return '$ne';
+    default:
+      return '$eq';
+  }
+}
+
+function parseSqlLiteral(raw: string): string | number | boolean | null {
+  const trimmed = raw.replace(/[;,]\s*$/g, '').trim();
+  if (/^'.*'$/.test(trimmed)) {
+    return trimmed.slice(1, -1);
+  }
+  if (/^null$/i.test(trimmed)) return null;
+  if (/^true$/i.test(trimmed)) return true;
+  if (/^false$/i.test(trimmed)) return false;
+  const numeric = Number(trimmed);
+  if (trimmed.length > 0 && !Number.isNaN(numeric)) return numeric;
+  return trimmed;
+}
+
+function splitWhereOnLogicalOperator(clause: string, operator: 'and' | 'or'): string[] {
+  const pattern = operator === 'and' ? /\s+and\s+/i : /\s+or\s+/i;
+  return clause
+    .split(pattern)
+    .map((part) => part.trim())
+    .filter(Boolean);
+}
+
 function parseWhereHeuristic(where: string): Record<string, unknown> {
-  const eq = where.match(/([\w.]+)\s*=\s*'([^']+)'/);
-  if (eq) return { [normalizeQualifiedSqlIdentifier(eq[1])]: eq[2] };
-  const num = where.match(/([\w.]+)\s*=\s*(\d+)/);
-  if (num) return { [normalizeQualifiedSqlIdentifier(num[1])]: Number(num[2]) };
+  const trimmed = where.trim().replace(/[;\s]+$/g, '');
+
+  if (/\sand\s/i.test(trimmed)) {
+    const parts = splitWhereOnLogicalOperator(trimmed, 'and');
+    if (parts.length > 1) {
+      return { $and: parts.map(parseWhereHeuristic) };
+    }
+  }
+
+  if (/\sor\s/i.test(trimmed)) {
+    const parts = splitWhereOnLogicalOperator(trimmed, 'or');
+    if (parts.length > 1) {
+      return { $or: parts.map(parseWhereHeuristic) };
+    }
+  }
+
+  const comparison = trimmed.match(/^([\w.]+)\s*(>=|<=|<>|!=|>|<)\s*(.+)$/i);
+  if (comparison) {
+    const field = normalizeQualifiedSqlIdentifier(comparison[1]);
+    const operator = sqlComparisonToMongo(comparison[2]);
+    const value = parseSqlLiteral(comparison[3]);
+    return { [field]: { [operator]: value } };
+  }
+
+  const eqString = trimmed.match(/^([\w.]+)\s*=\s*'([^']*)'$/i);
+  if (eqString) {
+    return { [normalizeQualifiedSqlIdentifier(eqString[1])]: eqString[2] };
+  }
+
+  const eqNumber = trimmed.match(/^([\w.]+)\s*=\s*(\d+(?:\.\d+)?)$/i);
+  if (eqNumber) {
+    return { [normalizeQualifiedSqlIdentifier(eqNumber[1])]: Number(eqNumber[2]) };
+  }
+
+  const isNull = trimmed.match(/^([\w.]+)\s+is\s+null$/i);
+  if (isNull) {
+    return { [normalizeQualifiedSqlIdentifier(isNull[1])]: null };
+  }
+
+  const isNotNull = trimmed.match(/^([\w.]+)\s+is\s+not\s+null$/i);
+  if (isNotNull) {
+    return { [normalizeQualifiedSqlIdentifier(isNotNull[1])]: { $ne: null } };
+  }
+
   return { $expr: { $literal: true }, _note: `Review WHERE: ${where}` };
 }
