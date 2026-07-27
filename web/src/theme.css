@@ -4881,6 +4881,38 @@ textarea {
   cursor: pointer;
 }
 
+.copilot-action-link {
+  display: inline;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--copilot-accent);
+  font: inherit;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+
+.copilot-action-link:hover:not(:disabled) {
+  color: #7dffb8;
+}
+
+.copilot-action-link:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.copilot-action-link--inline {
+  font-size: inherit;
+  font-style: italic;
+  font-weight: 500;
+}
+
+.copilot-message__body--markdown .copilot-action-link {
+  vertical-align: baseline;
+}
+
 .copilot-input-row {
   display: grid;
   grid-template-columns: 1fr auto;

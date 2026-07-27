@@ -1,3 +1,9 @@
+import {
+  buildMigrationWorkflowGuideLink,
+  buildPromptActionLink,
+  buildWorkflowActionLink,
+} from './copilotActionLinks';
+
 /** Detects general copilot capability / help questions. */
 export function isCopilotHelpQuestion(input: string): boolean {
   const trimmed = input.trim();
@@ -24,16 +30,17 @@ export function buildCopilotHelpResponse(): string {
   return [
     'I can help you migrate SQL to MongoDB end-to-end:',
     '',
-    '1. **Clear session & import SQL** — paste DDL or load a built-in example',
-    '2. **Refresh design** — generate the MongoDB target schema (ML/RAG)',
-    '3. **Run pipeline** — load CSV/SQLite data into Atlas',
-    '4. **Inspect Atlas** — list databases and collections, compare to plan',
+    `1. ${buildWorkflowActionLink('Clear session', 'clearSession')} — wipe canvas and open schema import`,
+    '2. **Import SQL** — paste DDL or load a built-in example',
+    `3. ${buildWorkflowActionLink('Refresh design', 'refreshDesign')} — generate the MongoDB target schema (ML/RAG)`,
+    `4. ${buildWorkflowActionLink('Run pipeline', 'runPipeline')} — load CSV/SQLite data into Atlas`,
+    '5. **Inspect Atlas** — list databases and collections, compare to plan',
     '',
     'I also fold embeds on the ERD, run guardrails, translate SQL queries, and explain MongoDB operations.',
     '',
-    'After each workflow step, use the **Next step** button on the tool result card — no need to type commands.',
+    'After each workflow step, click **Next step** on the tool card or the linked step in the message.',
     '',
-    '**Try:** Guide me through the migration workflow',
+    `**Try:** ${buildMigrationWorkflowGuideLink()}`,
     '',
     'Or use quick actions below, slash commands like `/refresh-design`, or ask naturally (e.g. *show me databases*).',
   ].join('\n');
@@ -45,10 +52,10 @@ export function buildCopilotCommandsResponse(): string {
     'Here are the commands and prompts I recognize:',
     '',
     '### Migration workflow',
-    '- `/clear-session` or **clear session** — wipe session and open schema import',
-    '- `/refresh-design` or **refresh design** — regenerate MongoDB target schema',
-    '- `/run-pipeline` or **run pipeline** — open the Atlas import panel',
-    '- **Guide me through the migration workflow** — step-by-step with **Next step** buttons',
+    `- \`/clear-session\` or ${buildWorkflowActionLink('clear session', 'clearSession')} — wipe session and open schema import`,
+    `- \`/refresh-design\` or ${buildWorkflowActionLink('refresh design', 'refreshDesign')} — regenerate MongoDB target schema`,
+    `- \`/run-pipeline\` or ${buildWorkflowActionLink('run pipeline', 'runPipeline')} — open the Atlas import panel`,
+    `- ${buildMigrationWorkflowGuideLink()} — step-by-step with clickable **Next step** links`,
     '- **import oracle example** (also analytics, cms, iot, ledger, mobile, catalog, personalization, singleview)',
     '',
     '### Canvas & schema tools',
@@ -68,7 +75,7 @@ export function buildCopilotCommandsResponse(): string {
     '- **count in `{db}.{collection}` where …** — total matches via aggregation',
     '- Natural language also works for indexes, aggregate, explain, and compare-to-plan',
     '',
-    'Use logical database names only (e.g. `csv_to_atlas`). After workflow or inspect tools run, use **Next step** on the tool card to continue.',
+    'Use logical database names only (e.g. `csv_to_atlas`). After workflow or inspect tools run, click **Next step** on the tool card or the linked step in the message.',
     '',
     '### Manager dataset scale',
     '- **what is the current raw data size?** / **dataset scale — raw data** — reports Manager slider override or schema estimate',

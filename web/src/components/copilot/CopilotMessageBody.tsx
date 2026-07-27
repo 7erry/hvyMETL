@@ -7,6 +7,8 @@ import { PrismCodeBlock } from '../PrismCodeBlock';
 import { formatCopilotResponse } from '../../copilot/formatCopilotResponse';
 import { isArchitectureReviewContent } from '../../copilot/architectureReviewExport';
 import { ArchitectureReviewSaveToDrive } from './ArchitectureReviewSaveToDrive';
+import { useCopilot } from '../../copilot/CopilotContext';
+import { decodeCopilotActionHref } from '../../copilot/copilotActionLinks';
 
 type CopilotMessageBodyProps = {
   content: string;
@@ -21,11 +23,13 @@ const sanitizeSchema = {
     details: ['className', 'class', 'open'],
     summary: ['className', 'class'],
     code: [...(defaultSchema.attributes?.code ?? []), 'className', 'class'],
+    a: [...(defaultSchema.attributes?.a ?? []), 'href', 'className', 'class'],
   },
 };
 
 /** Renders copilot chat content as formatted markdown with collapsible sections. */
 export function CopilotMessageBody({ content, markdown = false }: CopilotMessageBodyProps) {
+  const copilot = useCopilot();
   const formatted = useMemo(
     () => (markdown ? formatCopilotResponse(content) : content),
     [content, markdown],
@@ -42,6 +46,29 @@ export function CopilotMessageBody({ content, markdown = false }: CopilotMessage
         remarkPlugins={[remarkGfm]}
         rehypePlugins={[rehypeRaw, [rehypeSanitize, sanitizeSchema]]}
         components={{
+          a: ({ href, children }) => {
+            const action = href ? decodeCopilotActionHref(href) : null;
+            if (action) {
+              return (
+                <button
+                  type="button"
+                  className="copilot-action-link"
+                  disabled={copilot.status !== 'idle'}
+                  onClick={() => copilot.runCopilotAction(action)}
+                >
+                  {children}
+                </button>
+              );
+            }
+            if (!href) {
+              return <span>{children}</span>;
+            }
+            return (
+              <a href={href} target="_blank" rel="noreferrer">
+                {children}
+              </a>
+            );
+          },
           h1: ({ children }) => <h1 className="copilot-md-h1">{children}</h1>,
           h2: ({ children }) => <h2 className="copilot-md-h2">{children}</h2>,
           h3: ({ children }) => <h3 className="copilot-md-h3">{children}</h3>,

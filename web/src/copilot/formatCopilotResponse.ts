@@ -3,6 +3,8 @@
  * for long architecture responses.
  */
 
+import { linkifyCopilotWorkflowSteps } from './copilotActionLinks';
+
 const NUMBERED_SECTION = /^## (\d+)\.\s+(.+)$/;
 
 /** Ensures blank lines around headings, lists, tables, and fenced code blocks. */
@@ -75,6 +77,7 @@ export function wrapCollapsibleSections(markdown: string): string {
 /** Formats copilot markdown for display (spacing + collapsible sections). */
 export function formatCopilotResponse(content: string, options: { collapsible?: boolean } = {}): string {
   const normalized = normalizeMarkdownSpacing(content);
-  if (options.collapsible === false) return normalized;
-  return wrapCollapsibleSections(normalized);
+  const withLinks = linkifyCopilotWorkflowSteps(normalized);
+  if (options.collapsible === false) return withLinks;
+  return wrapCollapsibleSections(withLinks);
 }

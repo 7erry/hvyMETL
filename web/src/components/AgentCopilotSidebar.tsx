@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useCopilot } from '../copilot/CopilotContext';
+import { MIGRATION_WORKFLOW_GUIDE_PROMPT } from '../copilot/copilotActionLinks';
 import { COPILOT_SLASH_COMMANDS, COPILOT_COMMANDS_USER_PROMPT, QUICK_ACTION_CHIPS, type AgentStatus } from '../copilot/types';
 import { ToolExecutionCard } from './copilot/ToolExecutionCard';
 import { QueryTranslatorPanel } from './copilot/QueryTranslatorPanel';
@@ -159,8 +160,16 @@ export function AgentCopilotSidebar() {
             <div className="agent-copilot-sidebar__thread" ref={threadRef}>
               {copilot.messages.length === 0 ? (
                 <p className="agent-copilot-sidebar__empty">
-                  Ask about embeds, run <code>/guardrails</code>, or say{' '}
-                  <em>Guide me through the migration workflow</em>. <kbd>⌘K</kbd> toggles this panel.
+                  Ask about embeds, run <code>/guardrails</code>, or{' '}
+                  <button
+                    type="button"
+                    className="copilot-action-link copilot-action-link--inline"
+                    disabled={isWaiting}
+                    onClick={() => copilot.sendMessage(MIGRATION_WORKFLOW_GUIDE_PROMPT)}
+                  >
+                    guide me through the migration workflow
+                  </button>
+                  . <kbd>⌘K</kbd> toggles this panel.
                 </p>
               ) : null}
               {copilot.messages.map((message) => (

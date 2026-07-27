@@ -956,7 +956,7 @@ export default function App() {
           await applySchema(ddlText, importedModel, inferred?.profileId);
           return {
             ok: true,
-            summary: `Imported ${importedModel.tables.length} table(s).`,
+            summary: `Step 1 complete: imported ${importedModel.tables.length} table(s).`,
             delta: [`tables: ${importedModel.tables.length}`],
           };
         } catch (e) {
@@ -975,7 +975,7 @@ export default function App() {
           await applySchema(result.ddl, result.model, nextProfileId);
           return {
             ok: true,
-            summary: `Loaded example "${result.label}" (${result.model.tables.length} tables).`,
+            summary: `Step 1 complete: loaded example "${result.label}" (${result.model.tables.length} tables).`,
             delta: [`example: ${exampleId}`, `tables: ${result.model.tables.length}`],
           };
         } catch (e) {
@@ -984,7 +984,15 @@ export default function App() {
           return { ok: false, summary };
         }
       },
-      refreshDesign: () => handleGeneratePlan(),
+      refreshDesign: async () => {
+        const outcome = await handleGeneratePlan();
+        if (!outcome.ok) return outcome;
+        return {
+          ok: true,
+          summary: `Step 2 complete: Refresh design finished. ${outcome.summary}`,
+          delta: ['design refreshed'],
+        };
+      },
       runPipeline: () => {
         if (!model) {
           return {
@@ -995,7 +1003,7 @@ export default function App() {
         setPipelineOpen(true);
         return {
           ok: true,
-          summary: 'Opened Run pipeline panel. Confirm settings, then click Run.',
+          summary: 'Step 3 complete: Opened Run pipeline panel. Confirm settings, then click Run.',
           delta: ['pipeline modal open'],
         };
       },

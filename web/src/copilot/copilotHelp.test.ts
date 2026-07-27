@@ -17,11 +17,13 @@ describe('copilotHelp', () => {
 
   it('suggests the migration workflow prompt', () => {
     expect(buildCopilotHelpResponse()).toContain('Guide me through the migration workflow');
+    expect(buildCopilotHelpResponse()).toContain('copilot-action:');
     expect(buildCopilotHelpResponse()).toContain('Next step');
   });
 
   it('lists slash commands and inspect prompts', () => {
     expect(buildCopilotCommandsResponse()).toContain('/refresh-design');
+    expect(buildCopilotCommandsResponse()).toContain('copilot-action:');
     expect(buildCopilotCommandsResponse()).toContain('describe `{db}.{collection}`');
     expect(buildCopilotCommandsResponse()).toContain('list databases');
   });

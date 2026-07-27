@@ -22,9 +22,17 @@ import {
   nextStepToWorkflowCall,
   parseDirectWorkflowCommand,
   serializeWorkflowToolResult,
+  parseWorkflowToolCall,
+  workflowToolDisplayName,
   type CopilotWorkflowHandlers,
 } from './workflowTools';
 import { buildCopilotHelpResponse, buildCopilotCommandsResponse, isCopilotCommandsQuestion, isCopilotHelpQuestion } from './copilotHelp';
+import {
+  buildMigrationWorkflowGuideMessage,
+  formatWorkflowToolMessage,
+  isMigrationWorkflowGuideRequest,
+  type CopilotAction,
+} from './copilotActionLinks';
 import {
   buildCopilotDatasetScaleResponse,
   isCopilotDatasetScaleQuestion,
@@ -83,6 +91,8 @@ export type CopilotContextValue = {
   applySelfHeal: () => void;
   applyToolMutations: (mutation: AgentToolMutation) => void;
   translateSql: (sqlQuery: string) => void;
+  /** Run a clickable copilot-action from markdown (workflow step, prompt, or inspect). */
+  runCopilotAction: (action: CopilotAction) => void;
   /** Execute the translated aggregation pipeline against Atlas. */
   runSqlTranslationPipeline: (output?: SqlTranslationOutput) => Promise<ToolExecutionResult>;
   /** Run a one-click migration workflow follow-up from a tool result card. */
@@ -359,7 +369,7 @@ export function CopilotProvider({
       const result = await executeWorkflowTool(call, workflowHandlers);
       appendMessage({
         role: 'agent',
-        content: result.summary,
+        content: formatWorkflowToolMessage(result.summary, result.nextStep),
         toolExecution: result,
       });
       setStatus('idle');
@@ -473,7 +483,7 @@ export function CopilotProvider({
             const result = await executeWorkflowTool(parsed, workflowHandlers);
             appendMessage({
               role: 'agent',
-              content: result.summary,
+              content: formatWorkflowToolMessage(result.summary, result.nextStep),
               toolExecution: result,
             });
             messages = [
@@ -527,6 +537,15 @@ export function CopilotProvider({
       if (!trimmed) return;
 
       appendMessage({ role: 'user', content: trimmed });
+
+      if (isMigrationWorkflowGuideRequest(trimmed)) {
+        appendMessage({
+          role: 'agent',
+          content: buildMigrationWorkflowGuideMessage(),
+          markdown: true,
+        });
+        return;
+      }
 
       if (isCopilotHelpQuestion(trimmed)) {
         appendMessage({
@@ -662,6 +681,26 @@ export function CopilotProvider({
     [appendMessage],
   );
 
+  const runCopilotAction = useCallback(
+    (action: CopilotAction) => {
+      if (action.type === 'prompt') {
+        sendMessage(action.prompt);
+        return;
+      }
+      if (action.type === 'workflow') {
+        const call = parseWorkflowToolCall(action.tool, action.args ?? {});
+        if (call) {
+          appendMessage({ role: 'user', content: workflowToolDisplayName(action.tool) });
+          void runWorkflowDirect(call);
+        }
+        return;
+      }
+      appendMessage({ role: 'user', content: action.tool });
+      void runMongoInspectDirect(action.tool, action.args);
+    },
+    [appendMessage, runMongoInspectDirect, runWorkflowDirect, sendMessage],
+  );
+
   const runNextStep = useCallback(
     (step: CopilotNextStep) => {
       appendMessage({ role: 'user', content: step.label });
@@ -681,7 +720,7 @@ export function CopilotProvider({
     (result: ToolExecutionResult) => {
       appendMessage({
         role: 'agent',
-        content: result.summary,
+        content: formatWorkflowToolMessage(result.summary, result.nextStep),
         toolExecution: result,
       });
     },
@@ -773,6 +812,7 @@ export function CopilotProvider({
       applyToolMutations,
       translateSql,
       runSqlTranslationPipeline,
+      runCopilotAction,
       runNextStep,
       showWorkflowResult,
       registerChatInputFocus,
@@ -806,6 +846,7 @@ export function CopilotProvider({
       applyToolMutations,
       translateSql,
       runSqlTranslationPipeline,
+      runCopilotAction,
       runNextStep,
       showWorkflowResult,
       registerChatInputFocus,
