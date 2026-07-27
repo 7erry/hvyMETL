@@ -24,6 +24,7 @@ export type CopilotSchemaContextPayload = {
   forceEmbedOverrides: Record<string, boolean>;
   collections?: { name: string; sourceTable: string }[];
   datasetScale?: CopilotDatasetScaleContext;
+  targetDatabase?: string;
 };
 
 /** Builds the schema context payload sent to /api/copilot/chat. */
@@ -34,8 +35,10 @@ export function buildSchemaContextPayload(input: {
   forceEmbedOverrides: ForceEmbedOverrides;
   guardrailIssues: GuardrailIssue[];
   managerCostInputs?: ManagerCostInputs;
+  targetDatabase?: string;
 }): CopilotSchemaContextPayload {
-  const { model, plan, cardinalityOverrides, forceEmbedOverrides, guardrailIssues, managerCostInputs } = input;
+  const { model, plan, cardinalityOverrides, forceEmbedOverrides, guardrailIssues, managerCostInputs, targetDatabase } =
+    input;
 
   return {
     tables: (model?.tables ?? []).map((table) => ({
@@ -59,5 +62,6 @@ export function buildSchemaContextPayload(input: {
     forceEmbedOverrides,
     collections: plan?.collections.map((c) => ({ name: c.name, sourceTable: c.sourceTable })),
     datasetScale: managerCostInputs ? buildDatasetScaleContext(model, plan, managerCostInputs) : undefined,
+    targetDatabase: targetDatabase?.trim() || undefined,
   };
 }

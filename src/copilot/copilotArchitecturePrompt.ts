@@ -13,7 +13,7 @@ brief** — not a wall of unbroken text.
 
 ### Required output shape (follow exactly)
 
-1. **Title** — one \`#\` heading: \`# {Entity} — Architecture Review\`
+1. **Title** — one \`#\` heading: \`# {Entity} — Architecture Review\`. For whole-schema or post-import reviews, **{Entity} must be the logical MongoDB database name** (e.g. \`finops\`, \`csv_to_atlas\`) — never generic labels like "Loaded Schema".
 2. **Verdict callout** — one blockquote with a single-sentence recommendation
 3. **Comparison table** — compact markdown table (Naive vs Recommended); max 6 rows
 4. **Next actions** — one short bullet list (2–4 items, include tool names when relevant)
@@ -79,12 +79,24 @@ export function buildArchitectureReviewUserPrompt(focus: string): string {
 }
 
 /** Quick-action chip text for whole-schema architecture review. */
-export const OPTIMIZE_SCHEMA_USER_PROMPT = buildArchitectureReviewUserPrompt('the loaded schema');
+export function buildOptimizeSchemaUserPrompt(targetDb: string): string {
+  const db = targetDb.trim() || 'csv_to_atlas';
+  return [
+    `Produce a MongoDB migration **Architecture Review** for all collections targeting logical database \`${db}\`.`,
+    `Use \`# ${db} — Architecture Review\` as the title.`,
+    'Use the required format: title, verdict blockquote, comparison table, next actions,',
+    'then sections 2–7 each inside `<details><summary>…</summary>` collapsible blocks.',
+    'Include Before/After TypeScript + JSON Schema in section 4.',
+    'Ground every recommendation in the current schema context, guardrail issues, and Manager dataset scale when discussing sizing or sharding.',
+  ].join(' ');
+}
 
 /** Copilot prompt after pipeline import — collective review of all collections in a logical database. */
 export function buildPostImportArchitectureReviewPrompt(targetDb: string): string {
+  const db = targetDb.trim() || 'csv_to_atlas';
   return [
-    `Produce a collective **Architecture Review** of all collections imported into \`${targetDb}\`.`,
+    `Produce a collective **Architecture Review** of all collections imported into \`${db}\`.`,
+    `Use \`# ${db} — Architecture Review\` as the title.`,
     'Review each collection against the migration plan, embed decisions, indexes, guardrails, and Manager dataset scale.',
     'Use the required format: title, verdict blockquote, comparison table, next actions,',
     'then sections 2–7 each inside `<details><summary>…</summary>` collapsible blocks.',

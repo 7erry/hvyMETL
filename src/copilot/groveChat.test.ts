@@ -43,6 +43,19 @@ describe('buildCopilotSystemPrompt (groveChat)', () => {
     expect(prompt).toContain('Subset');
     expect(prompt).toContain('<details>');
   });
+
+  it('includes target MongoDB database in system context', () => {
+    const prompt = buildCopilotSystemPrompt({
+      tables: [],
+      relationships: [],
+      guardrailIssues: [],
+      cardinalityOverrides: {},
+      forceEmbedOverrides: {},
+      targetDatabase: 'finops',
+    });
+    expect(prompt).toContain('Target MongoDB database');
+    expect(prompt).toContain('finops');
+  });
 });
 
 describe('groveChat', () => {

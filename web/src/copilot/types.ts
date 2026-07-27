@@ -1,4 +1,4 @@
-import { OPTIMIZE_SCHEMA_USER_PROMPT } from '../../../src/copilot/copilotArchitecturePrompt.js';
+import { buildOptimizeSchemaUserPrompt } from '../../../src/copilot/copilotArchitecturePrompt.js';
 
 /** Agent status shown in the copilot header. */
 export type AgentStatus = 'idle' | 'analyzing' | 'mutating';
@@ -221,12 +221,19 @@ export type CopilotQuickAction = {
   prompt: string;
 };
 
-export const QUICK_ACTION_CHIPS: CopilotQuickAction[] = [
-  { label: 'Migration steps', prompt: 'Guide me through the migration workflow: clear session, import SQL, refresh design, run pipeline, then list collections.' },
-  { label: 'Check Guardrails', prompt: 'Check Guardrails' },
-  { label: 'Optimize Schema', prompt: OPTIMIZE_SCHEMA_USER_PROMPT },
-  { label: 'Translate SQL', prompt: 'Translate SQL' },
-];
+/** Quick-action chips for the copilot chat footer (targetDb drives architecture review titles). */
+export function buildQuickActionChips(targetDb: string): CopilotQuickAction[] {
+  return [
+    {
+      label: 'Migration steps',
+      prompt:
+        'Guide me through the migration workflow: clear session, import SQL, refresh design, run pipeline, then list collections.',
+    },
+    { label: 'Check Guardrails', prompt: 'Check Guardrails' },
+    { label: 'Optimize Schema', prompt: buildOptimizeSchemaUserPrompt(targetDb) },
+    { label: 'Translate SQL', prompt: 'Translate SQL' },
+  ];
+}
 
 export { COPILOT_COMMANDS_USER_PROMPT } from './copilotHelp.js';
 

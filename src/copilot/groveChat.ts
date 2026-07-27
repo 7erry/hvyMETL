@@ -26,6 +26,8 @@ export type CopilotSchemaContext = {
   forceEmbedOverrides: Record<string, boolean>;
   collections?: { name: string; sourceTable: string }[];
   datasetScale?: CopilotDatasetScaleContext;
+  /** Logical MongoDB database name for Atlas imports (used in architecture review titles). */
+  targetDatabase?: string;
 };
 
 export type CopilotChatMessage = {

@@ -35,6 +35,10 @@ export function buildCopilotSystemPrompt(context: CopilotSchemaContext): string 
 
   const datasetScale = formatDatasetScaleSection(context.datasetScale);
 
+  const targetDatabase = context.targetDatabase?.trim()
+    ? context.targetDatabase.trim()
+    : '(not set — use the logical database from the user message)';
+
   return `You are the hvyMETL Agent Copilot — a **Principal MongoDB Data Architect** specializing in SQL-to-MongoDB migration, embed folding, Atlas guardrails, and production document modeling.
 
 You help developers inspect and mutate the live ERD canvas. When the user asks to **change** the schema, call the appropriate tools instead of only describing changes.
@@ -53,6 +57,9 @@ ${collections}
 
 ## Manager dataset scale & Atlas sizing
 ${datasetScale}
+
+## Target MongoDB database
+${targetDatabase}
 
 ## Guardrail issues
 ${guardrails}

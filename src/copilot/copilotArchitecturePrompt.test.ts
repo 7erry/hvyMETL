@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import {
   buildArchitectureReviewUserPrompt,
+  buildOptimizeSchemaUserPrompt,
   buildPostImportArchitectureReviewPrompt,
   COPILOT_ARCHITECTURE_RESPONSE_INSTRUCTIONS,
-  OPTIMIZE_SCHEMA_USER_PROMPT,
 } from './copilotArchitecturePrompt.js';
 import { buildCopilotSystemPrompt } from './copilotPrompt.js';
 
@@ -28,15 +28,23 @@ describe('copilotArchitecturePrompt', () => {
     expect(prompt).toContain('<details>');
   });
 
-  it('defines optimize schema quick-action prompt', () => {
-    expect(OPTIMIZE_SCHEMA_USER_PROMPT).toContain('loaded schema');
+  it('defines optimize schema quick-action prompt with target database title', () => {
+    const prompt = buildOptimizeSchemaUserPrompt('finops');
+    expect(prompt).toContain('finops');
+    expect(prompt).toContain('# finops — Architecture Review');
+    expect(prompt).not.toContain('loaded schema');
   });
 
-  it('builds post-import collective architecture review prompt', () => {
+  it('builds post-import collective architecture review prompt with database title', () => {
     const prompt = buildPostImportArchitectureReviewPrompt('finops');
     expect(prompt).toContain('finops');
+    expect(prompt).toContain('# finops — Architecture Review');
     expect(prompt).toContain('Architecture Review');
     expect(prompt).toContain('collections imported');
+  });
+
+  it('requires database name instead of Loaded Schema in collective review titles', () => {
+    expect(COPILOT_ARCHITECTURE_RESPONSE_INSTRUCTIONS).toContain('never generic labels like "Loaded Schema"');
   });
 });
 

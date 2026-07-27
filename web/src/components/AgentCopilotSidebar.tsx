@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useCopilot } from '../copilot/CopilotContext';
 import { MIGRATION_WORKFLOW_GUIDE_PROMPT } from '../copilot/copilotActionLinks';
-import { COPILOT_SLASH_COMMANDS, COPILOT_COMMANDS_USER_PROMPT, QUICK_ACTION_CHIPS, type AgentStatus } from '../copilot/types';
+import { COPILOT_SLASH_COMMANDS, COPILOT_COMMANDS_USER_PROMPT, buildQuickActionChips, type AgentStatus } from '../copilot/types';
 import { ToolExecutionCard } from './copilot/ToolExecutionCard';
 import { QueryTranslatorPanel } from './copilot/QueryTranslatorPanel';
 import { CopilotMessageBody } from './copilot/CopilotMessageBody';
@@ -54,6 +54,10 @@ export function AgentCopilotSidebar() {
   }, [input]);
 
   const isWaiting = copilot.status !== 'idle';
+  const quickActionChips = useMemo(
+    () => buildQuickActionChips(copilot.targetDatabase),
+    [copilot.targetDatabase],
+  );
 
   useEffect(() => {
     if (!isWaiting) return;
@@ -211,7 +215,7 @@ export function AgentCopilotSidebar() {
                 >
                   Available Commands
                 </button>
-                {QUICK_ACTION_CHIPS.map((chip) => (
+                {quickActionChips.map((chip) => (
                   <button
                     key={chip.label}
                     type="button"

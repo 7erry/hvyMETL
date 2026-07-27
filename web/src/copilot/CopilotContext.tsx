@@ -46,7 +46,7 @@ import { buildMongoPlanContext } from './mongoPlanContextPayload';
 import { buildAggregateInspectArgs } from './runTranslationPipeline';
 import { buildSchemaContextPayload } from './schemaContext';
 import { serializeCanvasToolResult, toolExecutionHasStructuredOutput } from './toolExecutionDisplay';
-import { fetchCopilotStatus, invokeCopilotMongoInspect, sendCopilotChat } from '../api';
+import { fetchCopilotStatus, fetchPipelineConfig, invokeCopilotMongoInspect, sendCopilotChat } from '../api';
 import type {
   AgentStatus,
   CopilotLlmMessage,
@@ -83,6 +83,8 @@ export type CopilotContextValue = {
   llmModel: string | null;
   mongoInspectAvailable: boolean;
   mongoInspectMessage: string | null;
+  /** Logical MongoDB database for pipeline imports and architecture review titles. */
+  targetDatabase: string;
   toggleOpen: () => void;
   setOpen: (open: boolean) => void;
   setActiveTab: (tab: 'chat' | 'translator') => void;
@@ -157,6 +159,7 @@ export function CopilotProvider({
   const [llmModel, setLlmModel] = useState<string | null>(null);
   const [mongoInspectAvailable, setMongoInspectAvailable] = useState(false);
   const [mongoInspectMessage, setMongoInspectMessage] = useState<string | null>(null);
+  const [targetDatabase, setTargetDatabase] = useState('csv_to_atlas');
   const [llmHistory, setLlmHistory] = useState<CopilotLlmMessage[]>([]);
   const chatInputFocusRef = useRef<(() => void) | null>(null);
   const chatInputFocusTimersRef = useRef<number[]>([]);
@@ -244,6 +247,16 @@ export function CopilotProvider({
         setLlmModel(null);
         setMongoInspectAvailable(false);
         setMongoInspectMessage(null);
+      });
+
+    fetchPipelineConfig()
+      .then((config) => {
+        if (config.defaultTargetDb.trim()) {
+          setTargetDatabase(config.defaultTargetDb.trim());
+        }
+      })
+      .catch(() => {
+        // Keep default target database when pipeline config is unavailable.
       });
   }, []);
 
@@ -400,6 +413,7 @@ export function CopilotProvider({
         forceEmbedOverrides,
         guardrailIssues,
         managerCostInputs,
+        targetDatabase,
       });
 
       const userMessage =
@@ -541,6 +555,7 @@ export function CopilotProvider({
       model,
       plan,
       runMongoInspectTool,
+      targetDatabase,
       workflowHandlers,
     ],
   );
@@ -826,6 +841,7 @@ export function CopilotProvider({
       llmModel,
       mongoInspectAvailable,
       mongoInspectMessage,
+      targetDatabase,
       toggleOpen,
       setOpen,
       setActiveTab,
@@ -877,6 +893,7 @@ export function CopilotProvider({
       llmModel,
       mongoInspectAvailable,
       mongoInspectMessage,
+      targetDatabase,
       toggleOpen,
       setOpen,
       setActiveTab,
