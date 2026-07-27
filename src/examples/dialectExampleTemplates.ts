@@ -390,15 +390,15 @@ function sybaseRenderer(pattern: PatternId, header: string): string {
 function clickhouseRenderer(pattern: PatternId, header: string): string {
   const body = SQLITE_RENDERER(pattern, '').trim();
   const adapted = body
-    .replace(/\bINTEGER PRIMARY KEY\b/g, 'Int64')
+    .replace(/\bid INTEGER PRIMARY KEY,?\n/g, 'id Int64,\n')
     .replace(/\bINTEGER NOT NULL\b/g, 'Int64')
     .replace(/\bINTEGER\b/g, 'Int64')
     .replace(/\bVARCHAR\([^)]+\)/g, 'String')
     .replace(/\bTEXT\b/g, 'String')
     .replace(/\bDATETIME\b/g, 'DateTime')
     .replace(/\bREAL\b/g, 'Float64')
-    .replace(/CREATE TABLE (\w+) \(/g, 'CREATE TABLE $1 (\n  id Int64,')
-    .replace(/;\n/g, '\n) ENGINE = MergeTree ORDER BY id;\n');
+    .replace(/\bNUMERIC\([^)]+\)/g, 'Float64')
+    .replace(/\);/g, '\n) ENGINE = MergeTree ORDER BY id;');
   return `${header}\n\n${adapted}\n`;
 }
 

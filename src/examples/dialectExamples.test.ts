@@ -94,6 +94,15 @@ describe('dialect example files', () => {
 });
 
 describe('dialect example generator', () => {
+  it('clickhouse DDL uses unique column names per table', () => {
+    const ddl = renderDialectExampleFile('clickhouse', 'embed');
+    const model = parseDdlToModel(ddl, 'ddl:clickhouse');
+    for (const table of model.tables) {
+      const columnNames = table.columns.map((column) => column.name.toLowerCase());
+      expect(new Set(columnNames).size).toBe(columnNames.length);
+    }
+  });
+
   it('rendered output matches committed files byte-for-byte', () => {
     for (const entry of DIALECT_PATTERN_MANIFEST) {
       const expected = readFileSync(join(EXAMPLES_DIR, entry.fileName), 'utf8');
