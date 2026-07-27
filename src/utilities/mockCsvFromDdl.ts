@@ -5,6 +5,7 @@
 import { spawnSync } from 'node:child_process';
 import { existsSync, readdirSync, rmSync } from 'node:fs';
 import { extname, join } from 'node:path';
+import { prepareMockCsvDdl } from './mockCsvDdlAdapter.js';
 
 /** Sizing knobs passed to generators/ddl_csv_generator.py */
 export type MockCsvOptions = {
@@ -13,6 +14,8 @@ export type MockCsvOptions = {
   minRows?: number;
   maxRows?: number;
   seed?: number;
+  /** When set to dynamodb, CloudFormation templates are converted to CREATE TABLE DDL first. */
+  dialect?: string;
 };
 
 export const MOCK_CSV_DEFAULTS: MockCsvOptions = {
@@ -106,6 +109,7 @@ export function generateMockCsvFromDdl(
 
   const python = process.env.HVYMETL_PYTHON?.trim() || 'python3';
   const sizing = { ...MOCK_CSV_DEFAULTS, ...options };
+  const ddlForGenerator = prepareMockCsvDdl(ddl, sizing.dialect);
 
   if (existsSync(outputDir)) {
     for (const name of readdirSync(outputDir)) {
@@ -118,7 +122,7 @@ export function generateMockCsvFromDdl(
   const args = [
     script,
     '--ddl',
-    ddl,
+    ddlForGenerator,
     '--output',
     outputDir,
     '--base-rows',

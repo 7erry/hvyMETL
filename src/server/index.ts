@@ -1093,7 +1093,8 @@ app.post('/api/mock-csv/generate', (req, res) => {
     }
     const outDir = tenantCsvBatchDir(ROOT, tenantId, 'mock-csv');
     const mockCsvOptions = req.body?.mockCsvOptions as import('../utilities/mockCsvFromDdl.js').MockCsvOptions | undefined;
-    const result = generateMockCsvFromDdl(ddl, outDir, ROOT, mockCsvOptions);
+    const dialect = typeof req.body?.dialect === 'string' ? req.body.dialect : undefined;
+    const result = generateMockCsvFromDdl(ddl, outDir, ROOT, { ...mockCsvOptions, dialect });
     res.json({
       ok: true,
       outputDir: result.outputDir,

@@ -174,7 +174,10 @@ function resolvePipelineCsvRoot(
     stage: 'generating',
     message: 'Generating mock CSV files from DDL (one file per table)…',
   });
-  const generated = generateMockCsvFromDdl(request.ddl, mockDir, request.rootDir, request.mockCsvOptions);
+  const generated = generateMockCsvFromDdl(request.ddl, mockDir, request.rootDir, {
+    ...request.mockCsvOptions,
+    dialect: request.dialect,
+  });
   reportProgress(request, {
     stage: 'generating',
     message: `Generated ${generated.tables.length} CSV file(s) in ${generated.outputDir}`,
