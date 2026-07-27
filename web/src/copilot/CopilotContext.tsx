@@ -31,7 +31,6 @@ import {
 } from './workflowTools';
 import { buildCopilotHelpResponse, buildCopilotCommandsResponse, isCopilotCommandsQuestion, isCopilotHelpQuestion } from './copilotHelp';
 import {
-  buildMigrationWorkflowGuideMessage,
   buildNextStepMessage,
   isMigrationWorkflowGuideRequest,
   type CopilotAction,
@@ -570,8 +569,8 @@ export function CopilotProvider({
       if (isMigrationWorkflowGuideRequest(trimmed)) {
         appendMessage({
           role: 'agent',
-          content: buildMigrationWorkflowGuideMessage(),
-          markdown: true,
+          content: '',
+          variant: 'workflow-guide',
         });
         return;
       }

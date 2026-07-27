@@ -5,6 +5,7 @@ import { COPILOT_SLASH_COMMANDS, COPILOT_COMMANDS_USER_PROMPT, buildQuickActionC
 import { ToolExecutionCard } from './copilot/ToolExecutionCard';
 import { QueryTranslatorPanel } from './copilot/QueryTranslatorPanel';
 import { CopilotMessageBody } from './copilot/CopilotMessageBody';
+import { MigrationWorkflowGuide } from './copilot/MigrationWorkflowGuide';
 import { CopilotTypingIndicator } from './copilot/CopilotTypingIndicator';
 
 const STATUS_LABEL: Record<AgentStatus, string> = {
@@ -182,7 +183,9 @@ export function AgentCopilotSidebar() {
                   className={`copilot-message copilot-message--${message.role}`}
                 >
                   {message.toolExecution ? <ToolExecutionCard execution={message.toolExecution} /> : null}
-                  {message.content.trim() ? (
+                  {message.variant === 'workflow-guide' ? (
+                    <MigrationWorkflowGuide />
+                  ) : message.content.trim() ? (
                     <CopilotMessageBody content={message.content} markdown={message.markdown} />
                   ) : null}
                 </article>

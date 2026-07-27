@@ -33,11 +33,55 @@ export type CopilotAction = CopilotPromptAction | CopilotWorkflowAction | Copilo
 
 export const MIGRATION_WORKFLOW_GUIDE_PROMPT = 'Guide me through the migration workflow';
 
+/** One step in the guided migration workflow (label, description, runnable action). */
+export type MigrationWorkflowStep = {
+  label: string;
+  description: string;
+  action: CopilotAction;
+};
+
+/** Ordered migration workflow steps shown in the copilot guide. */
+export const MIGRATION_WORKFLOW_STEPS: MigrationWorkflowStep[] = [
+  {
+    label: 'Clear session',
+    description: 'reset the canvas and open schema import',
+    action: { type: 'workflow', tool: 'clearSession' },
+  },
+  {
+    label: 'Import ledger example',
+    description: 'or paste SQL DDL in the import dialog',
+    action: { type: 'workflow', tool: 'importBuiltinExample', args: { exampleId: 'ledger' } },
+  },
+  {
+    label: 'Refresh design',
+    description: 'generate the MongoDB target schema (ML/RAG)',
+    action: { type: 'workflow', tool: 'refreshDesign' },
+  },
+  {
+    label: 'Run pipeline',
+    description: 'open the Atlas import panel for CSV/SQLite',
+    action: { type: 'workflow', tool: 'runPipeline' },
+  },
+  {
+    label: 'Verify collections',
+    description: 'list collections in your logical database',
+    action: { type: 'prompt', prompt: VERIFY_IMPORTED_COLLECTIONS_PROMPT },
+  },
+  {
+    label: 'Architecture Review',
+    description: 'collective review of imported collections',
+    action: { type: 'prompt', prompt: POST_IMPORT_ARCHITECTURE_REVIEW_PROMPT },
+  },
+];
+
 /** True when the user asks for the guided migration workflow. */
 export function isMigrationWorkflowGuideRequest(input: string): boolean {
-  const trimmed = input.trim();
+  const trimmed = input.trim().replace(/[.!?]+$/, '').trim();
   if (!trimmed) return false;
-  return /^guide me through the migration workflow(?:[:\s].*)?$/i.test(trimmed);
+  return (
+    /^guide me through the migration workflow(?:[:\s].*)?$/i.test(trimmed) ||
+    /^migration workflow guide$/i.test(trimmed)
+  );
 }
 
 /** Serializes a copilot action into a markdown link href. */
@@ -147,19 +191,18 @@ export function buildMigrationWorkflowGuideLink(): string {
 
 /** Markdown guide shown when the user starts the migration workflow. */
 export function buildMigrationWorkflowGuideMessage(): string {
+  const stepLines = MIGRATION_WORKFLOW_STEPS.map(
+    (step, index) => `${index + 1}. ${buildCopilotActionLink(step.label, step.action)} — ${step.description}`,
+  );
+  const firstStep = MIGRATION_WORKFLOW_STEPS[0];
   return [
     '## Migration workflow',
     '',
     'Follow these steps in order (click to run each step):',
     '',
-    `1. ${buildWorkflowActionLink('Clear session', 'clearSession')} — reset the canvas and open schema import`,
-    `2. ${buildImportExampleActionLink('Import ledger example', 'ledger')} — or paste SQL DDL in the import dialog`,
-    `3. ${buildWorkflowActionLink('Refresh design', 'refreshDesign')} — generate the MongoDB target schema (ML/RAG)`,
-    `4. ${buildWorkflowActionLink('Run pipeline', 'runPipeline')} — open the Atlas import panel for CSV/SQLite`,
-    `5. ${buildPromptActionLink('Verify collections', VERIFY_IMPORTED_COLLECTIONS_PROMPT)} — list collections in your logical database`,
-    `6. ${buildPromptActionLink('Architecture Review', POST_IMPORT_ARCHITECTURE_REVIEW_PROMPT)} — collective review of imported collections`,
+    ...stepLines,
     '',
-    `Start with ${buildWorkflowActionLink('Clear session', 'clearSession')}.`,
+    `Start with ${buildCopilotActionLink(firstStep.label, firstStep.action)}.`,
   ].join('\n');
 }
 

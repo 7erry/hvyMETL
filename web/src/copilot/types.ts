@@ -55,12 +55,17 @@ export function isMongoInspectToolName(name: string): name is MongoInspectToolNa
   return MONGO_INSPECT_TOOL_NAMES.has(name as MongoInspectToolName);
 }
 
+/** Specialized agent message layouts (static UI instead of markdown). */
+export type CopilotMessageVariant = 'workflow-guide';
+
 /** One chat message in the copilot thread. */
 export type CopilotMessage = {
   id: string;
   role: CopilotMessageRole;
   content: string;
   markdown?: boolean;
+  /** When set, the sidebar renders a dedicated component instead of plain/markdown body. */
+  variant?: CopilotMessageVariant;
   createdAt: string;
   toolExecution?: ToolExecutionResult;
   codeBlocks?: { language: string; code: string }[];

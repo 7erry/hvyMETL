@@ -13,7 +13,9 @@ import {
 describe('copilotActionLinks', () => {
   it('detects migration workflow guide requests', () => {
     expect(isMigrationWorkflowGuideRequest('Guide me through the migration workflow')).toBe(true);
+    expect(isMigrationWorkflowGuideRequest('Guide me through the migration workflow.')).toBe(true);
     expect(isMigrationWorkflowGuideRequest('guide me through the migration workflow: clear session')).toBe(true);
+    expect(isMigrationWorkflowGuideRequest('Migration workflow guide')).toBe(true);
     expect(isMigrationWorkflowGuideRequest('refresh design')).toBe(false);
   });
 

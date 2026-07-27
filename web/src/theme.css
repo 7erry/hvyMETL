@@ -4913,6 +4913,17 @@ textarea {
   vertical-align: baseline;
 }
 
+.copilot-workflow-guide {
+  margin: 0.5rem 0 0.75rem;
+  padding-left: 1.25rem;
+  display: grid;
+  gap: 0.35rem;
+}
+
+.copilot-workflow-guide li {
+  line-height: 1.45;
+}
+
 .copilot-input-row {
   display: grid;
   grid-template-columns: 1fr auto;
