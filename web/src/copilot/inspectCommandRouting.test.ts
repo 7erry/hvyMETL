@@ -56,6 +56,31 @@ describe('inspectCommandRouting', () => {
     });
   });
 
+  it('routes find in db.collection where commands directly to findMongoDocuments', () => {
+    expect(parseDirectMongoInspectCommand('find in finops.accounts where current balance > 9000')).toEqual({
+      kind: 'mongoInspect',
+      tool: 'findMongoDocuments',
+      args: {
+        database: 'finops',
+        collection: 'accounts',
+        limit: 25,
+        filter: { 'current balance': { $gt: 9000 } },
+      },
+    });
+  });
+
+  it('routes count in db.collection where commands to aggregateMongoCollection', () => {
+    expect(parseDirectMongoInspectCommand('count in finops.accounts where current balance > 9000')).toEqual({
+      kind: 'mongoInspect',
+      tool: 'aggregateMongoCollection',
+      args: {
+        database: 'finops',
+        collection: 'accounts',
+        pipeline: [{ $match: { 'current balance': { $gt: 9000 } } }, { $count: 'total' }],
+      },
+    });
+  });
+
   it('detects inspect-only list requests', () => {
     expect(isInspectOnlyUserMessage('show me databases')).toBe(true);
     expect(isInspectOnlyUserMessage('list collections from fromoraclewithlove')).toBe(true);

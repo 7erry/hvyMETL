@@ -1,5 +1,6 @@
 import type { ParsedCopilotToolCall, ServerMongoInspectToolCall } from './llmTools';
 import { isServerMongoInspectToolCall } from './llmTools';
+import { parseNaturalLanguageFindQuery } from '../../../src/copilot/naturalLanguageFind.ts';
 
 const LIST_COLLECTIONS_NAMED_DB =
   /(?:^|\b)(?:list|show)\s+collections?\s+(?:from|in)\s+([^\s,.;!?]+)/i;
@@ -95,6 +96,11 @@ export function parseDirectMongoInspectCommand(input: string): ServerMongoInspec
 
   if (LIST_DATABASES.test(trimmed)) {
     return { kind: 'mongoInspect', tool: 'listMongoDatabases', args: {} };
+  }
+
+  const naturalLanguageFind = parseNaturalLanguageFindQuery(trimmed);
+  if (naturalLanguageFind) {
+    return naturalLanguageFind;
   }
 
   const describeDbCollection = trimmed.match(DESCRIBE_DB_COLLECTION);

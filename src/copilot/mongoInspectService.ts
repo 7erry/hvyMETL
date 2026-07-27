@@ -35,6 +35,10 @@ import { findPlanCollection, type MongoPlanContext } from './mongoPlanContext.js
 import { enrichCollectionSummaries } from './mongoInspectEnrichment.js';
 import { normalizeAggregateInspectPayload } from './mongoAggregateFormat.js';
 import {
+  normalizeAggregationPipelineFilters,
+  normalizeMongoFilter,
+} from './mongoFilterFieldNormalize.js';
+import {
   MONGO_INSPECT_MCP_TOOL_MAP,
   isMongoInspectToolName,
   type MongoInspectToolName,
@@ -42,6 +46,50 @@ import {
 
 const MAX_FIND_LIMIT = 25;
 const MAX_SCHEMA_SAMPLE = 100;
+
+async function loadCollectionSchemaFieldPaths(
+  callTool: MongoMcpToolCaller,
+  connectionId: string,
+  physicalDatabase: string,
+  collection: string,
+): Promise<string[]> {
+  try {
+    const raw = await callTool('collection-schema', {
+      connectionId,
+      database: physicalDatabase,
+      collection,
+      sampleSize: 30,
+    });
+    const summary = normalizeCollectionSchemaPayload('', collection, raw);
+    return summary.fields.map((field) => field.path);
+  } catch {
+    return [];
+  }
+}
+
+async function normalizeInspectFilter(
+  filter: unknown,
+  callTool: MongoMcpToolCaller,
+  connectionId: string,
+  physicalDatabase: string,
+  collection: string,
+): Promise<Record<string, unknown> | undefined> {
+  if (!filter || typeof filter !== 'object' || Array.isArray(filter)) return undefined;
+  const knownFields = await loadCollectionSchemaFieldPaths(
+    callTool,
+    connectionId,
+    physicalDatabase,
+    collection,
+  );
+  return normalizeMongoFilter(filter as Record<string, unknown>, knownFields);
+}
+
+function readMcpCountResult(raw: unknown): number | undefined {
+  if (typeof raw === 'number' && Number.isFinite(raw)) return raw;
+  if (!raw || typeof raw !== 'object') return undefined;
+  const count = (raw as { count?: unknown }).count;
+  return typeof count === 'number' && Number.isFinite(count) ? count : undefined;
+}
 
 export type MongoInspectInvokeResult = {
   ok: boolean;
@@ -339,6 +387,17 @@ export async function invokeMongoInspectTool(
           };
         }
 
+        let totalMatchedCount: number | undefined;
+        if (tool === 'findMongoDocuments' && physicalDatabase && mcpArgs.filter) {
+          const countRaw = await callTool('count', {
+            connectionId,
+            database: physicalDatabase,
+            collection: mcpArgs.collection,
+            query: mcpArgs.filter,
+          });
+          totalMatchedCount = readMcpCountResult(countRaw);
+        }
+
         const mcpName = MONGO_INSPECT_MCP_TOOL_MAP[tool];
         const raw = await callTool(mcpName, mcpArgs);
         if (tool === 'listMongoDatabases') {
@@ -370,6 +429,9 @@ export async function invokeMongoInspectTool(
             collections,
             totalCount: collections.length,
           };
+        }
+        if (tool === 'findMongoDocuments' && totalMatchedCount !== undefined) {
+          data = { ...(data as Record<string, unknown>), totalMatchedCount };
         }
         return {
           ok: true,
@@ -481,7 +543,14 @@ async function buildMcpArguments(
   }
 
   if (tool === 'aggregateMongoCollection') {
-    const pipeline = normalizeAggregationPipeline(args.pipeline);
+    let pipeline = normalizeAggregationPipeline(args.pipeline);
+    const knownFields = await loadCollectionSchemaFieldPaths(
+      callTool,
+      connectionId,
+      physicalDatabase,
+      collection,
+    );
+    pipeline = normalizeAggregationPipelineFilters(pipeline, knownFields);
     return {
       mcpArgs: {
         connectionId,
@@ -502,9 +571,23 @@ async function buildMcpArguments(
       ['queryPlanner', 'queryPlannerExtended', 'executionStats', 'allPlansExecution'].includes(args.verbosity)
         ? args.verbosity
         : 'queryPlanner';
+    const normalizedFilter = await normalizeInspectFilter(
+      args.filter,
+      callTool,
+      connectionId,
+      physicalDatabase,
+      collection,
+    );
 
     if (method === 'aggregate') {
-      const pipeline = normalizeAggregationPipeline(args.pipeline);
+      let pipeline = normalizeAggregationPipeline(args.pipeline);
+      const knownFields = await loadCollectionSchemaFieldPaths(
+        callTool,
+        connectionId,
+        physicalDatabase,
+        collection,
+      );
+      pipeline = normalizeAggregationPipelineFilters(pipeline, knownFields);
       return {
         mcpArgs: {
           connectionId,
@@ -520,7 +603,7 @@ async function buildMcpArguments(
 
     if (method === 'count') {
       const countArgs: Record<string, unknown> = {};
-      if (args.filter && typeof args.filter === 'object') countArgs.query = args.filter;
+      if (normalizedFilter) countArgs.query = normalizedFilter;
       return {
         mcpArgs: {
           connectionId,
@@ -535,7 +618,7 @@ async function buildMcpArguments(
     }
 
     const findArgs: Record<string, unknown> = {};
-    if (args.filter && typeof args.filter === 'object') findArgs.filter = args.filter;
+    if (normalizedFilter) findArgs.filter = normalizedFilter;
     if (args.projection && typeof args.projection === 'object') findArgs.projection = args.projection;
     if (args.sort && typeof args.sort === 'object') findArgs.sort = args.sort;
     findArgs.limit = clampNumber(args.limit, 10, 1, MAX_FIND_LIMIT);
@@ -562,6 +645,13 @@ async function buildMcpArguments(
   }
 
   const limit = clampNumber(args.limit, 10, 1, MAX_FIND_LIMIT);
+  const normalizedFilter = await normalizeInspectFilter(
+    args.filter,
+    callTool,
+    connectionId,
+    physicalDatabase,
+    collection,
+  );
   const mcpArgs: Record<string, unknown> = {
     connectionId,
     database: physicalDatabase,
@@ -569,7 +659,7 @@ async function buildMcpArguments(
     limit,
     responseBytesLimit: 512_000,
   };
-  if (args.filter && typeof args.filter === 'object') mcpArgs.filter = args.filter;
+  if (normalizedFilter) mcpArgs.filter = normalizedFilter;
   if (args.projection && typeof args.projection === 'object') mcpArgs.projection = args.projection;
   if (args.sort && typeof args.sort === 'object') mcpArgs.sort = args.sort;
   return { mcpArgs, logicalDatabase, physicalDatabase };
@@ -692,9 +782,16 @@ function summarizeInspectResult(tool: MongoInspectToolName, data: unknown): stri
       : `Listed ${count} indexes for ${collection} in ${db}.`;
   }
   if (tool === 'findMongoDocuments') {
+    const totalMatched =
+      typeof record.totalMatchedCount === 'number' ? record.totalMatchedCount : undefined;
     const result = record.result as { queryResultsCount?: number } | undefined;
-    const count = result?.queryResultsCount ?? 0;
-    return `Returned ${count} document(s) from ${record.collection} in ${record.database}.`;
+    const returned = result?.queryResultsCount ?? 0;
+    const collection = typeof record.collection === 'string' ? record.collection : 'collection';
+    const db = typeof record.database === 'string' ? record.database : 'database';
+    if (totalMatched !== undefined && totalMatched > returned) {
+      return `Matched ${totalMatched} document(s); showing ${returned} from ${collection} in ${db}.`;
+    }
+    return `Returned ${returned} document(s) from ${collection} in ${db}.`;
   }
   if (tool === 'aggregateMongoCollection') {
     const count = typeof record.count === 'number' ? record.count : 0;
