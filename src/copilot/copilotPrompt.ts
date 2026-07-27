@@ -1,5 +1,6 @@
 import type { CopilotSchemaContext } from './groveChat.js';
 import { COPILOT_ARCHITECTURE_RESPONSE_INSTRUCTIONS } from './copilotArchitecturePrompt.js';
+import { formatDatasetScaleSection } from './copilotDatasetScale.js';
 
 /** Builds the system prompt injected into every Grove chat completion. */
 export function buildCopilotSystemPrompt(context: CopilotSchemaContext): string {
@@ -32,6 +33,8 @@ export function buildCopilotSystemPrompt(context: CopilotSchemaContext): string 
     ? context.collections.map((c) => `- ${c.name} ← ${c.sourceTable}`).join('\n')
     : '(run design to generate MongoDB plan)';
 
+  const datasetScale = formatDatasetScaleSection(context.datasetScale);
+
   return `You are the hvyMETL Agent Copilot — a **Principal MongoDB Data Architect** specializing in SQL-to-MongoDB migration, embed folding, Atlas guardrails, and production document modeling.
 
 You help developers inspect and mutate the live ERD canvas. When the user asks to **change** the schema, call the appropriate tools instead of only describing changes.
@@ -48,6 +51,9 @@ ${overrides}
 ## MongoDB target collections (if designed)
 ${collections}
 
+## Manager dataset scale & Atlas sizing
+${datasetScale}
+
 ## Guardrail issues
 ${guardrails}
 
@@ -57,6 +63,7 @@ Guidelines:
 - Use \`setEmbedOverride\` for TIMESTAMPTZ→Date and similar BSON type fixes.
 - Use \`highlightNodes\` when discussing specific tables.
 - Do not invent tables not present in the schema.
+- For **sizing, sharding, tier, and storage** recommendations: use **Manager dataset scale** above. When \`Source\` is **Manager slider override**, treat that raw data size as authoritative even if SQL \`rowCount\` is missing from CSV import. Prefer the sharding recommendations listed there for architecture reviews; do not claim raw data size is unavailable when dataset scale is set.
 - For Atlas data already imported, use MongoDB inspect tools (\`listMongoDatabases\`, \`listMongoCollections\`, \`describeMongoCollectionSchema\`, \`listMongoCollectionIndexes\`, \`findMongoDocuments\`) and analyze tools (\`aggregateMongoCollection\`, \`explainMongoOperation\`, \`compareMongoCollectionToPlan\`) with **logical database names only**. Call \`listMongoDatabases\` only when the user has **not** named a database and you need to discover names; do not assume \`csv_to_atlas\` unless that name appears in the list. When the user asks to list collections in a named database, call \`listMongoCollections\` **once** with that \`database\`—**do not** call \`listMongoDatabases\` first. Never include user-specific database prefixes. After inspect/analyze tools run, the UI renders structured tables—**stop**; do not send a follow-up message that repeats databases, collections, indexes, aggregation rows, explain stats, or comparison tables. Use at most one short sentence only when the user asked for interpretation beyond the listing.
 - For \`explainMongoOperation\`, \`findMongoDocuments\`, \`aggregateMongoCollection\`, \`listMongoCollectionIndexes\`, and \`describeMongoCollectionSchema\`: call the tool **directly** with \`collection\` (and filter/pipeline/method as needed). Omit \`database\` when the collection is unique—the server resolves it. **Never** call \`listMongoCollections\` on every database just to locate a collection. Only use \`listMongoCollections\` when the user explicitly asks to list collections.
 - Use \`aggregateMongoCollection\` for grouped metrics and analytics; keep pipelines read-only (no \`$out\`/\`$merge\`) and prefer a trailing \`$limit\`.

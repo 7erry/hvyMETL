@@ -76,6 +76,21 @@ These bypass the LLM and return static reference text:
 | --- | --- |
 | *how can you help?* / *what can you do?* | Capability overview + suggested *Guide me through the migration workflow* |
 | *what are all the commands you know?* / *list commands* | Full slash commands, workflow phrases, canvas tools, and inspect phrases |
+| *what is the current raw data size?* / *dataset scale — raw data* | Manager **Dataset scale — raw data** override or schema estimate |
+
+## Manager dataset scale in copilot
+
+The **Dataset scale — raw data** slider in Manager view (`Migration Cost Projection`) is sent to Agent Copilot on every LLM turn as `schemaContext.datasetScale`. Use it when CSV import has not loaded real row counts but you still need sizing, tier, or sharding guidance.
+
+| Source | When used |
+| --- | --- |
+| **Manager slider override** | `estimatedDataGb > 0` — authoritative raw data size (up to 21 TB) |
+| **Schema estimate** | DDL loaded, no slider override — heuristics from column types and default/plan row counts |
+| **Unavailable** | No schema and no slider override |
+
+The system prompt includes projected storage, workload profile, illustrative Atlas tier, and sharding recommendations derived from the same projection engine as Manager view. Architecture reviews (**Optimize Schema**) should cite this context for §5–§6 sizing and sharding sections.
+
+Manager settings persist in session state (`managerCostInputs`) and sync to hosted workspace storage when enabled.
 
 ## Canvas & schema tools
 
@@ -216,7 +231,8 @@ When MCP is down, inspect returns HTTP 503; chat and canvas tools continue to wo
 | `web/src/copilot/workflowTools.ts` | Workflow tools, next-step chaining |
 | `web/src/components/copilot/ToolExecutionCard.tsx` | Tool result cards + structured tables |
 | `web/src/components/copilot/ArchitectureReviewSaveToDrive.tsx` | Google Docs + markdown export |
-| `web/src/copilot/googleDriveExport.ts` | GIS OAuth + Drive multipart upload |
+| `web/src/copilot/buildDatasetScaleContext.ts` | Maps Manager inputs → copilot dataset scale payload |
+| `src/copilot/copilotDatasetScale.ts` | Prompt formatting and dataset scale Q&A |
 | `src/copilot/architectureReviewHtml.ts` | Markdown → HTML for Google Docs |
 | `src/copilot/groveChat.ts` | Grove LLM proxy |
 | `src/copilot/mongoInspectService.ts` | MCP inspect/analyze dispatch |
@@ -225,7 +241,8 @@ When MCP is down, inspect returns HTTP 503; chat and canvas tools continue to wo
 ## Verification
 
 ```bash
-npm test -- web/src/copilot/copilotHelp.test.ts web/src/copilot/workflowTools.test.ts \
+npm test -- web/src/copilot/copilotHelp.test.ts web/src/copilot/schemaContext.test.ts \
+  tests/copilot/copilotDatasetScale.test.ts web/src/copilot/workflowTools.test.ts \
   tests/copilot/architectureReviewHtml.test.ts src/server/copilotRoutes.test.ts \
   src/copilot/mongoInspectService.test.ts
 npm run build --prefix web

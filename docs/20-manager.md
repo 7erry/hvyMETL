@@ -93,6 +93,18 @@ That distinction matters because the expensive tier is the data serving operatio
 reads and writes. Older data can remain queryable through Atlas Data Federation without
 forcing the primary cluster to carry the full historical footprint.
 
+### Dataset scale — raw data slider
+
+When CSV import has not populated SQL `rowCount` statistics, managers can set **Dataset scale — raw data** (up to 21 TB) on the cost panel slider. This override scales storage, tier, sharding, and manpower projections as if that raw relational footprint were imported.
+
+The same value is persisted in session state as `managerCostInputs.estimatedDataGb` and forwarded to **Agent Copilot** on every chat turn. Copilot uses it for:
+
+- Direct answers to *what is the current raw data size?*
+- Atlas tier and storage guidance in architecture reviews
+- Sharding recommendations when projected hot storage exceeds the 2 TB heuristic threshold
+
+See [20-agent-copilot.md](20-agent-copilot.md#manager-dataset-scale-in-copilot).
+
 ## 5. Estimated Monthly Savings Formula
 
 The **Estimated monthly savings** headline is an all-in directional estimate. It

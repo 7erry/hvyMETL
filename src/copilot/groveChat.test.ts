@@ -19,10 +19,27 @@ describe('buildCopilotSystemPrompt (groveChat)', () => {
       ],
       cardinalityOverrides: {},
       forceEmbedOverrides: {},
+      datasetScale: {
+        rawDataSource: 'manager-override',
+        managerRawDataGb: 1024,
+        rawDataGb: 1024,
+        totalStorageGb: 1400,
+        activeStorageGb: 1300,
+        archiveStorageGb: 100,
+        estimatedTotalRows: 20_000_000,
+        averageDocumentBytes: 512,
+        workloadLabel: 'Write-heavy',
+        growthRatePercent: 15,
+        recommendedTierLabel: 'M50',
+        requiresSharding: false,
+        shardingRecommendations: [],
+      },
     });
     expect(prompt).toContain('trips');
     expect(prompt).toContain('train_telemetry');
     expect(prompt).toContain('Unbounded Array');
+    expect(prompt).toContain('Manager dataset scale');
+    expect(prompt).toContain('1 TB');
     expect(prompt).toContain('Subset');
     expect(prompt).toContain('<details>');
   });

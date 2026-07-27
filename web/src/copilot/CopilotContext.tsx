@@ -25,6 +25,11 @@ import {
   type CopilotWorkflowHandlers,
 } from './workflowTools';
 import { buildCopilotHelpResponse, buildCopilotCommandsResponse, isCopilotCommandsQuestion, isCopilotHelpQuestion } from './copilotHelp';
+import {
+  buildCopilotDatasetScaleResponse,
+  isCopilotDatasetScaleQuestion,
+} from '../../../src/copilot/copilotDatasetScale.ts';
+import { buildDatasetScaleContext } from './buildDatasetScaleContext';
 import { buildMongoInspectDelta, serializeMongoInspectToolResult } from './mongoInspectDisplay';
 import { buildMongoPlanContext } from './mongoPlanContextPayload';
 import { buildSchemaContextPayload } from './schemaContext';
@@ -44,6 +49,8 @@ import type {
 import type { MigrationPlan } from '../migrationPlanTypes';
 import type { CardinalityOverrides, ForceEmbedOverrides } from '../cardinalityOverrides';
 import type { SqlStructuralModel } from '../types';
+import type { ManagerCostInputs } from '../managerCostEstimate';
+import { DEFAULT_MANAGER_COST_INPUTS } from '../managerCostEstimate';
 
 export type CopilotContextValue = {
   open: boolean;
@@ -101,6 +108,7 @@ type CopilotProviderProps = {
   onClearOverrides: () => void;
   onReRunPipeline?: () => void;
   workflowHandlers: CopilotWorkflowHandlers;
+  managerCostInputs?: ManagerCostInputs;
 };
 
 export function CopilotProvider({
@@ -115,6 +123,7 @@ export function CopilotProvider({
   onClearOverrides,
   onReRunPipeline,
   workflowHandlers,
+  managerCostInputs = DEFAULT_MANAGER_COST_INPUTS,
 }: CopilotProviderProps) {
   const [open, setOpenState] = useState(false);
   const [activeTab, setActiveTabState] = useState<'chat' | 'translator'>('chat');
@@ -363,6 +372,7 @@ export function CopilotProvider({
         cardinalityOverrides,
         forceEmbedOverrides,
         guardrailIssues,
+        managerCostInputs,
       });
 
       const userMessage =
@@ -500,6 +510,7 @@ export function CopilotProvider({
       executeTool,
       forceEmbedOverrides,
       guardrailIssues,
+      managerCostInputs,
       model,
       plan,
       runMongoInspectTool,
@@ -527,6 +538,15 @@ export function CopilotProvider({
         appendMessage({
           role: 'agent',
           content: buildCopilotCommandsResponse(),
+          markdown: true,
+        });
+        return;
+      }
+
+      if (isCopilotDatasetScaleQuestion(trimmed)) {
+        appendMessage({
+          role: 'agent',
+          content: buildCopilotDatasetScaleResponse(buildDatasetScaleContext(model, plan, managerCostInputs)),
           markdown: true,
         });
         return;
@@ -596,7 +616,7 @@ export function CopilotProvider({
         setStatus('idle');
       }, 400);
     },
-    [appendMessage, llmConfigured, llmHistory, model, onClearOverrides, runLlmTurn, runMongoInspectDirect, runWorkflowDirect, runTool],
+    [appendMessage, llmConfigured, llmHistory, managerCostInputs, model, onClearOverrides, plan, runLlmTurn, runMongoInspectDirect, runWorkflowDirect, runTool],
   );
 
   const openWithPrompt = useCallback(

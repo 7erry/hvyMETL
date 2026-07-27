@@ -1038,6 +1038,7 @@ export default function App() {
       onClearOverrides={handleClearCopilotOverrides}
       onReRunPipeline={() => setPipelineOpen(true)}
       workflowHandlers={copilotWorkflowHandlers}
+      managerCostInputs={managerCostInputs}
     >
     <CopilotHotkeys />
     <div

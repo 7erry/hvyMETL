@@ -20,6 +20,7 @@ import {
   readArchitectureExport,
 } from '../copilot/architectureReviewExport.js';
 import { readGoogleDriveClientId } from '../copilot/googleDriveConfig.js';
+import type { CopilotDatasetScaleContext } from '../copilot/copilotDatasetScale.js';
 
 function parseChatMessages(raw: unknown): CopilotChatMessage[] {
   if (!Array.isArray(raw)) return [];
@@ -32,6 +33,43 @@ function parseChatMessages(raw: unknown): CopilotChatMessage[] {
       ...(Array.isArray(item.tool_calls) ? { tool_calls: item.tool_calls as CopilotChatMessage['tool_calls'] } : {}),
     }))
     .filter((msg) => ['system', 'user', 'assistant', 'tool'].includes(msg.role));
+}
+
+function parseDatasetScale(raw: unknown): CopilotDatasetScaleContext | undefined {
+  if (!raw || typeof raw !== 'object') return undefined;
+  const body = raw as Record<string, unknown>;
+  const rawDataSource = body.rawDataSource;
+  if (rawDataSource !== 'manager-override' && rawDataSource !== 'schema-estimate' && rawDataSource !== 'unavailable') {
+    return undefined;
+  }
+  const shardingRecommendations = Array.isArray(body.shardingRecommendations)
+    ? body.shardingRecommendations
+        .filter((item): item is Record<string, unknown> => item !== null && typeof item === 'object')
+        .map((item) => ({
+          collectionName: String(item.collectionName ?? ''),
+          strategy: String(item.strategy ?? ''),
+          shardKeySummary: String(item.shardKeySummary ?? ''),
+          estimatedHotStorageGb: Number(item.estimatedHotStorageGb ?? 0),
+          rationale: String(item.rationale ?? ''),
+        }))
+        .filter((item) => item.collectionName.length > 0)
+    : [];
+
+  return {
+    rawDataSource,
+    managerRawDataGb: typeof body.managerRawDataGb === 'number' ? body.managerRawDataGb : null,
+    rawDataGb: typeof body.rawDataGb === 'number' ? body.rawDataGb : null,
+    totalStorageGb: typeof body.totalStorageGb === 'number' ? body.totalStorageGb : null,
+    activeStorageGb: typeof body.activeStorageGb === 'number' ? body.activeStorageGb : null,
+    archiveStorageGb: typeof body.archiveStorageGb === 'number' ? body.archiveStorageGb : null,
+    estimatedTotalRows: typeof body.estimatedTotalRows === 'number' ? body.estimatedTotalRows : null,
+    averageDocumentBytes: typeof body.averageDocumentBytes === 'number' ? body.averageDocumentBytes : null,
+    workloadLabel: typeof body.workloadLabel === 'string' ? body.workloadLabel : null,
+    growthRatePercent: typeof body.growthRatePercent === 'number' ? body.growthRatePercent : null,
+    recommendedTierLabel: typeof body.recommendedTierLabel === 'string' ? body.recommendedTierLabel : null,
+    requiresSharding: body.requiresSharding === true,
+    shardingRecommendations,
+  };
 }
 
 function parseSchemaContext(raw: unknown): CopilotSchemaContext {
@@ -55,6 +93,7 @@ function parseSchemaContext(raw: unknown): CopilotSchemaContext {
     collections: Array.isArray(body.collections)
       ? (body.collections as CopilotSchemaContext['collections'])
       : undefined,
+    datasetScale: parseDatasetScale(body.datasetScale),
   };
 }
 

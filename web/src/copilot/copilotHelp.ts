@@ -67,5 +67,9 @@ export function buildCopilotCommandsResponse(): string {
     '- Natural language also works for indexes, find, aggregate, explain, and compare-to-plan',
     '',
     'Use logical database names only (e.g. `csv_to_atlas`). After workflow or inspect tools run, use **Next step** on the tool card to continue.',
+    '',
+    '### Manager dataset scale',
+    '- **what is the current raw data size?** / **dataset scale — raw data** — reports Manager slider override or schema estimate',
+    '- Manager **Dataset scale — raw data** (up to 21 TB) feeds Atlas sizing and sharding guidance in architecture reviews when CSV row counts are unavailable',
   ].join('\n');
 }

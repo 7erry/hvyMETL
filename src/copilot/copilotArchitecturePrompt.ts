@@ -63,6 +63,7 @@ so the user sees the answer immediately. Sections 2–7 must each be a separate 
 - **Never** output one continuous paragraph — break content into bullets and tables
 - **Never** invent SQL tables not in the live schema context
 - Keep §1 under ~120 words; put depth in collapsible sections
+- For sizing, sharding, and Atlas tier guidance, cite **Manager dataset scale** from the system context (Manager slider override takes precedence over missing CSV row counts)
 - For simple tool requests (fold, highlight, translate) — 1–3 short paragraphs, no architecture template
 `.trim();
 
@@ -73,7 +74,7 @@ export function buildArchitectureReviewUserPrompt(focus: string): string {
     'Use the required format: title, verdict blockquote, comparison table, next actions,',
     'then sections 2–7 each inside `<details><summary>…</summary>` collapsible blocks.',
     'Include Before/After TypeScript + JSON Schema in section 4.',
-    'Ground every recommendation in the current schema context and guardrail issues.',
+    'Ground every recommendation in the current schema context, guardrail issues, and Manager dataset scale when discussing sizing or sharding.',
   ].join(' ');
 }
 

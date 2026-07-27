@@ -1,5 +1,6 @@
 import { buildCopilotSystemPrompt } from './copilotPrompt.js';
 import { COPILOT_OPENAI_TOOLS } from './agentToolSchemas.js';
+import type { CopilotDatasetScaleContext } from './copilotDatasetScale.js';
 
 const DEFAULT_GROVE_URL =
   'https://grove-gateway-prod.azure-api.net/grove-foundry-prod/openai/v1/chat/completions';
@@ -24,6 +25,7 @@ export type CopilotSchemaContext = {
   cardinalityOverrides: Record<string, number>;
   forceEmbedOverrides: Record<string, boolean>;
   collections?: { name: string; sourceTable: string }[];
+  datasetScale?: CopilotDatasetScaleContext;
 };
 
 export type CopilotChatMessage = {

@@ -2,6 +2,9 @@ import type { MigrationPlan } from '../migrationPlanTypes';
 import type { CardinalityOverrides, ForceEmbedOverrides } from '../cardinalityOverrides';
 import type { SqlStructuralModel } from '../types';
 import type { GuardrailIssue } from './types';
+import type { CopilotDatasetScaleContext } from '../../../src/copilot/copilotDatasetScale.ts';
+import type { ManagerCostInputs } from '../managerCostEstimate';
+import { buildDatasetScaleContext } from './buildDatasetScaleContext';
 
 export type CopilotSchemaContextPayload = {
   tables: { name: string; columnCount: number; rowCount?: number }[];
@@ -20,6 +23,7 @@ export type CopilotSchemaContextPayload = {
   cardinalityOverrides: Record<string, number>;
   forceEmbedOverrides: Record<string, boolean>;
   collections?: { name: string; sourceTable: string }[];
+  datasetScale?: CopilotDatasetScaleContext;
 };
 
 /** Builds the schema context payload sent to /api/copilot/chat. */
@@ -29,8 +33,9 @@ export function buildSchemaContextPayload(input: {
   cardinalityOverrides: CardinalityOverrides;
   forceEmbedOverrides: ForceEmbedOverrides;
   guardrailIssues: GuardrailIssue[];
+  managerCostInputs?: ManagerCostInputs;
 }): CopilotSchemaContextPayload {
-  const { model, plan, cardinalityOverrides, forceEmbedOverrides, guardrailIssues } = input;
+  const { model, plan, cardinalityOverrides, forceEmbedOverrides, guardrailIssues, managerCostInputs } = input;
 
   return {
     tables: (model?.tables ?? []).map((table) => ({
@@ -53,5 +58,6 @@ export function buildSchemaContextPayload(input: {
     cardinalityOverrides,
     forceEmbedOverrides,
     collections: plan?.collections.map((c) => ({ name: c.name, sourceTable: c.sourceTable })),
+    datasetScale: managerCostInputs ? buildDatasetScaleContext(model, plan, managerCostInputs) : undefined,
   };
 }
