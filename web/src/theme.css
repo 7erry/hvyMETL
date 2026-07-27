@@ -5126,6 +5126,10 @@ textarea {
   padding: 0 0.55rem 0.45rem;
 }
 
+.copilot-details.copilot-results > .copilot-results__body {
+  padding: 0 0.55rem 0.45rem;
+}
+
 .copilot-save-to-drive {
   display: flex;
   flex-wrap: wrap;
@@ -5348,6 +5352,91 @@ textarea {
   overflow-x: auto;
 }
 
+.copilot-inspect-table-wrap--scroll {
+  margin-top: 0;
+  max-height: min(280px, 42vh);
+  overflow: auto;
+  border: 1px solid var(--copilot-border);
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.2);
+  -webkit-overflow-scrolling: touch;
+}
+
+.copilot-inspect-table-wrap--panel {
+  max-height: none;
+  flex: 1;
+  min-height: 120px;
+}
+
+.copilot-results {
+  margin-top: 0.45rem;
+}
+
+.copilot-results--panel {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.copilot-results--panel[open] {
+  min-height: 140px;
+}
+
+.copilot-results__body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-height: 0;
+  padding: 0 0.55rem 0.45rem;
+}
+
+.copilot-results--panel .copilot-results__body {
+  flex: 1;
+  overflow: hidden;
+}
+
+.copilot-results__meta {
+  margin: 0;
+  font-size: 0.62rem;
+  color: var(--copilot-accent-dim);
+  line-height: 1.45;
+}
+
+.copilot-results__meta--warn {
+  color: #ffe082;
+}
+
+.copilot-analyze__row--match td:nth-child(2) {
+  color: var(--copilot-accent);
+}
+
+.copilot-analyze__row--missing td:nth-child(2),
+.copilot-analyze__row--extra td:nth-child(2) {
+  color: #ffabab;
+}
+
+.copilot-analyze__row--warn td:nth-child(2) {
+  color: #ffe082;
+}
+
+.copilot-inspect-table--kv th {
+  width: 38%;
+  color: var(--copilot-accent-dim);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.copilot-sql-translation--panel .copilot-translator__code-wrap--fill {
+  flex: 0 1 45%;
+  min-height: 100px;
+}
+
+.copilot-sql-translation--panel .copilot-results--panel {
+  flex: 1 1 55%;
+}
+
 .copilot-inspect-table {
   width: 100%;
   border-collapse: collapse;
@@ -5376,10 +5465,12 @@ textarea {
   vertical-align: top;
 }
 
-.copilot-inspect-table thead th {
-  color: var(--copilot-accent-dim);
-  font-weight: 600;
-  border-top: none;
+.copilot-inspect-table-wrap--scroll .copilot-inspect-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: #0a1210;
+  box-shadow: 0 1px 0 var(--copilot-border);
 }
 
 .copilot-inspect-table tbody tr:first-child td {
@@ -5527,6 +5618,7 @@ textarea {
   height: 100%;
   margin-top: 0;
   overflow: hidden;
+  gap: 0.35rem;
 }
 
 .copilot-tool-card .copilot-details {

@@ -123,6 +123,7 @@ export function SqlTranslationOutputView({
           database={String((runResult.data as { database?: string }).database ?? '')}
           collection={String((runResult.data as { collection?: string }).collection ?? output.collectionName)}
           data={runResult.data}
+          variant={layout === 'panel' ? 'panel' : 'inline'}
         />
       ) : null}
       {output.indexRecommendations.length > 0 ? (
