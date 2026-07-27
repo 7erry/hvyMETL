@@ -86,14 +86,24 @@ function flattenDocument(value: unknown, prefix = ''): Record<string, string> {
 }
 
 export function readMongoAggregateRows(data: unknown): {
-  count: number;
+  totalCount: number;
+  returnedCount: number;
   rows: MongoAggregateRow[];
   columns: string[];
   appliedLimits: string[];
   previewTruncated: boolean;
+  hasMoreThanReturned: boolean;
 } {
   if (!data || typeof data !== 'object') {
-    return { count: 0, rows: [], columns: [], appliedLimits: [], previewTruncated: false };
+    return {
+      totalCount: 0,
+      returnedCount: 0,
+      rows: [],
+      columns: [],
+      appliedLimits: [],
+      previewTruncated: false,
+      hasMoreThanReturned: false,
+    };
   }
 
   const record = data as Record<string, unknown>;
@@ -105,14 +115,18 @@ export function readMongoAggregateRows(data: unknown): {
     result: record.result,
   });
 
-  const rows = normalized.documents.slice(0, 20).map((document) => flattenDocument(document));
-  const columns = [...new Set(rows.flatMap((row) => Object.keys(row)))].slice(0, 8);
+  const rows = normalized.documents.map((document) => flattenDocument(document));
+  const columns = [...new Set(rows.flatMap((row) => Object.keys(row)))].slice(0, 12);
+  const returnedCount = normalized.documents.length;
+  const totalCount = normalized.count;
 
   return {
-    count: normalized.count,
+    totalCount,
+    returnedCount,
     rows,
     columns,
     appliedLimits: normalized.appliedLimits,
     previewTruncated: isAggregatePreviewTruncated(normalized),
+    hasMoreThanReturned: totalCount > returnedCount,
   };
 }

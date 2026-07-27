@@ -1,3 +1,4 @@
+import { useEffect, useMemo, useState } from 'react';
 import {
   readMongoAggregateRows,
   readMongoCompareRows,
@@ -6,7 +7,66 @@ import {
 } from '../../copilot/mongoAnalyzeFormat';
 import { CopilotCollapsibleResults, ScrollableInspectTable } from './CopilotCollapsibleResults';
 
+const AGGREGATE_PAGE_SIZE = 10;
+
 type AnalyzeVariant = 'inline' | 'panel';
+
+function formatRowRange(start: number, end: number, total: number): string {
+  if (total === 0) return 'No rows';
+  if (start === end) return `Row ${start} of ${total.toLocaleString()}`;
+  return `Rows ${start.toLocaleString()}–${end.toLocaleString()} of ${total.toLocaleString()}`;
+}
+
+type AggregateResultsPaginationProps = {
+  page: number;
+  pageSize: number;
+  rowCount: number;
+  onPageChange: (page: number) => void;
+};
+
+/** Previous/next controls for paginated aggregate result tables. */
+function AggregateResultsPagination({
+  page,
+  pageSize,
+  rowCount,
+  onPageChange,
+}: AggregateResultsPaginationProps) {
+  if (rowCount <= pageSize) {
+    return null;
+  }
+
+  const totalPages = Math.max(1, Math.ceil(rowCount / pageSize));
+  const safePage = Math.min(page, totalPages - 1);
+  const rangeStart = safePage * pageSize + 1;
+  const rangeEnd = Math.min(rowCount, (safePage + 1) * pageSize);
+
+  return (
+    <div className="copilot-results-pagination" role="navigation" aria-label="Aggregate results pages">
+      <span className="copilot-results-pagination__range">{formatRowRange(rangeStart, rangeEnd, rowCount)}</span>
+      <div className="copilot-results-pagination__controls">
+        <button
+          type="button"
+          className="secondary copilot-results-pagination__btn"
+          disabled={safePage <= 0}
+          onClick={() => onPageChange(safePage - 1)}
+        >
+          Previous
+        </button>
+        <span className="copilot-results-pagination__page">
+          Page {safePage + 1} of {totalPages}
+        </span>
+        <button
+          type="button"
+          className="secondary copilot-results-pagination__btn"
+          disabled={safePage >= totalPages - 1}
+          onClick={() => onPageChange(safePage + 1)}
+        >
+          Next
+        </button>
+      </div>
+    </div>
+  );
+}
 
 type MongoAnalyzeAggregateTableProps = {
   database: string;
@@ -23,19 +83,38 @@ export function MongoAnalyzeAggregateTable({
   defaultOpen = true,
   variant = 'inline',
 }: MongoAnalyzeAggregateTableProps) {
-  const { count, rows, columns, appliedLimits, previewTruncated } = readMongoAggregateRows(data);
+  const { totalCount, returnedCount, rows, columns, appliedLimits, previewTruncated, hasMoreThanReturned } =
+    readMongoAggregateRows(data);
+  const [page, setPage] = useState(0);
   const target = `${database}.${collection}`;
   const panelClass = variant === 'panel' ? 'copilot-results--panel' : undefined;
 
+  useEffect(() => {
+    setPage(0);
+  }, [data, totalCount, returnedCount]);
+
+  const totalPages = Math.max(1, Math.ceil(rows.length / AGGREGATE_PAGE_SIZE));
+  const safePage = Math.min(page, totalPages - 1);
+
+  const pageRows = useMemo(() => {
+    const start = safePage * AGGREGATE_PAGE_SIZE;
+    return rows.slice(start, start + AGGREGATE_PAGE_SIZE);
+  }, [rows, safePage]);
+
+  const summaryLabel =
+    totalCount === returnedCount
+      ? `Aggregation results — ${totalCount.toLocaleString()} total`
+      : `Aggregation results — ${totalCount.toLocaleString()} total (${returnedCount.toLocaleString()} returned)`;
+
   if (rows.length === 0) {
-    if (count > 0) {
+    if (totalCount > 0) {
       return (
         <CopilotCollapsibleResults
           defaultOpen={defaultOpen}
           className={panelClass}
           summary={
             <>
-              Aggregation results — {count.toLocaleString()} document{count === 1 ? '' : 's'} matched
+              Aggregation results — {totalCount.toLocaleString()} total matched
             </>
           }
         >
@@ -54,32 +133,43 @@ export function MongoAnalyzeAggregateTable({
     return <p className="copilot-inspect-table__empty">No aggregation results returned.</p>;
   }
 
-  const showing = rows.length;
-  const summaryLabel =
-    count > showing
-      ? `Aggregation results — showing ${showing} of ${count.toLocaleString()}`
-      : `Aggregation results — ${count.toLocaleString()} row${count === 1 ? '' : 's'}`;
+  const rangeStart = safePage * AGGREGATE_PAGE_SIZE + 1;
+  const rangeEnd = Math.min(rows.length, (safePage + 1) * AGGREGATE_PAGE_SIZE);
+  const tableCaption = hasMoreThanReturned
+    ? `${formatRowRange(rangeStart, rangeEnd, rows.length)} returned · ${totalCount.toLocaleString()} total matched`
+    : formatRowRange(rangeStart, rangeEnd, rows.length);
 
   return (
     <CopilotCollapsibleResults defaultOpen={defaultOpen} className={panelClass} summary={summaryLabel}>
       <p className="copilot-results__meta">
         <code>{target}</code>
         {columns.length > 0 ? ` · ${columns.length} column${columns.length === 1 ? '' : 's'}` : null}
+        {' · '}
+        {totalCount.toLocaleString()} total
+        {hasMoreThanReturned ? ` · ${returnedCount.toLocaleString()} returned in preview` : null}
       </p>
       <ScrollableInspectTable
         scrollVariant={variant}
-        caption={
-          count > showing
-            ? `Previewing ${showing} of ${count.toLocaleString()} documents`
-            : undefined
-        }
+        caption={tableCaption}
         columns={columns}
-        rows={rows}
-        rowKey={(row, index) => `${index}-${columns.map((column) => row[column] ?? '').join('|')}`}
+        rows={pageRows}
+        rowKey={(row, index) => `${safePage}-${index}-${columns.map((column) => row[column] ?? '').join('|')}`}
       />
+      <AggregateResultsPagination
+        page={safePage}
+        pageSize={AGGREGATE_PAGE_SIZE}
+        rowCount={rows.length}
+        onPageChange={setPage}
+      />
+      {hasMoreThanReturned ? (
+        <p className="copilot-results__meta copilot-results__meta--warn">
+          {totalCount.toLocaleString()} documents matched — only {returnedCount.toLocaleString()} fit in the inspect
+          preview. Add <code>$limit</code> or narrow with <code>$project</code> to browse specific rows.
+        </p>
+      ) : null}
       {previewTruncated ? (
         <p className="copilot-results__meta copilot-results__meta--warn">
-          Additional rows may exist — response was truncated by Atlas inspect limits.
+          Document previews were omitted because the first result exceeded Atlas inspect byte limits.
         </p>
       ) : null}
       {appliedLimits.length > 0 ? (

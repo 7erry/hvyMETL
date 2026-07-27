@@ -5408,6 +5408,38 @@ textarea {
   color: #ffe082;
 }
 
+.copilot-results-pagination {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.45rem 0.75rem;
+}
+
+.copilot-results-pagination__range {
+  font-size: 0.62rem;
+  color: var(--copilot-accent-dim);
+}
+
+.copilot-results-pagination__controls {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin-left: auto;
+}
+
+.copilot-results-pagination__btn {
+  font-size: 0.68rem;
+  padding: 0.22rem 0.55rem;
+}
+
+.copilot-results-pagination__page {
+  font-size: 0.62rem;
+  color: #c8d6d2;
+  min-width: 5.5rem;
+  text-align: center;
+}
+
 .copilot-analyze__row--match td:nth-child(2) {
   color: var(--copilot-accent);
 }

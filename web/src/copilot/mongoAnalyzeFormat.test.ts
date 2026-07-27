@@ -19,7 +19,27 @@ describe('mongoAnalyzeFormat', () => {
       documents: [{ _id: 'open', total: 4 }, { _id: 'closed', total: 9 }],
     });
     expect(view.rows).toHaveLength(2);
+    expect(view.totalCount).toBe(2);
+    expect(view.returnedCount).toBe(2);
     expect(view.columns).toContain('_id');
+  });
+
+  it('returns all returned documents without an arbitrary preview cap', () => {
+    const documents = Array.from({ length: 25 }, (_, index) => ({ _id: index, total: index * 2 }));
+    const view = readMongoAggregateRows({ count: 25, documents });
+    expect(view.rows).toHaveLength(25);
+    expect(view.totalCount).toBe(25);
+    expect(view.hasMoreThanReturned).toBe(false);
+  });
+
+  it('flags when total count exceeds returned preview rows', () => {
+    const view = readMongoAggregateRows({
+      count: 148,
+      documents: Array.from({ length: 50 }, (_, index) => ({ _id: index })),
+    });
+    expect(view.returnedCount).toBe(50);
+    expect(view.totalCount).toBe(148);
+    expect(view.hasMoreThanReturned).toBe(true);
   });
 
   it('reports truncated previews when count exceeds returned documents', () => {
@@ -29,7 +49,7 @@ describe('mongoAnalyzeFormat', () => {
       appliedLimits: ['tool.responseBytesLimit'],
     });
     expect(view.previewTruncated).toBe(true);
-    expect(view.count).toBe(148);
+    expect(view.totalCount).toBe(148);
     expect(view.rows).toHaveLength(0);
   });
 
