@@ -297,8 +297,12 @@ export function CopilotProvider({
   }, []);
 
   const executeTool = useCallback(
-    (call: Parameters<typeof executeAgentTool>[0]): ToolExecutionResult => {
-      const { result, mutation } = executeAgentTool(call, toolContext);
+    (
+      call: Parameters<typeof executeAgentTool>[0],
+      contextOverride?: Partial<AgentToolContext>,
+    ): { result: ToolExecutionResult; mutation: AgentToolMutation } => {
+      const ctx = { ...toolContext, ...contextOverride };
+      const { result, mutation } = executeAgentTool(call, ctx);
       applyToolMutations(mutation);
 
       const isCanvasMutation =
@@ -308,11 +312,11 @@ export function CopilotProvider({
 
       if (isCanvasMutation && model) {
         const guardrailMutation = executeAgentTool({ tool: 'runGuardrailCheck', args: {} }, {
-          ...toolContext,
+          ...ctx,
           ...mutation,
-          forceEmbedOverrides: mutation.forceEmbedOverrides ?? toolContext.forceEmbedOverrides,
-          cardinalityOverrides: mutation.cardinalityOverrides ?? toolContext.cardinalityOverrides,
-          embedFieldOverrides: mutation.embedFieldOverrides ?? toolContext.embedFieldOverrides,
+          forceEmbedOverrides: mutation.forceEmbedOverrides ?? ctx.forceEmbedOverrides,
+          cardinalityOverrides: mutation.cardinalityOverrides ?? ctx.cardinalityOverrides,
+          embedFieldOverrides: mutation.embedFieldOverrides ?? ctx.embedFieldOverrides,
         }).mutation;
         if (guardrailMutation.guardrailIssues) {
           setGuardrailIssues(guardrailMutation.guardrailIssues);
@@ -324,7 +328,7 @@ export function CopilotProvider({
         result.data ??= mutation.sqlTranslation;
       }
 
-      return result;
+      return { result, mutation };
     },
     [applyToolMutations, model, toolContext],
   );
@@ -332,7 +336,7 @@ export function CopilotProvider({
   const runTool = useCallback(
     (call: Parameters<typeof executeAgentTool>[0]) => {
       setStatus('mutating');
-      const result = executeTool(call);
+      const { result } = executeTool(call);
       appendMessage({
         role: 'agent',
         content: toolExecutionHasStructuredOutput(result) ? '' : result.summary,
@@ -456,6 +460,10 @@ export function CopilotProvider({
           return messages;
         }
 
+        let canvasForceEmbed = forceEmbedOverrides;
+        let canvasCardinality = cardinalityOverrides;
+        let canvasEmbedFields = embedFieldOverrides;
+
         for (const toolCall of toolCalls) {
           const parsed = parseOpenAiToolCall(toolCall);
           if (!parsed) {
@@ -524,7 +532,14 @@ export function CopilotProvider({
             continue;
           }
 
-          const result = executeTool(parsed);
+          const { result, mutation } = executeTool(parsed, {
+            forceEmbedOverrides: canvasForceEmbed,
+            cardinalityOverrides: canvasCardinality,
+            embedFieldOverrides: canvasEmbedFields,
+          });
+          if (mutation.forceEmbedOverrides) canvasForceEmbed = mutation.forceEmbedOverrides;
+          if (mutation.cardinalityOverrides) canvasCardinality = mutation.cardinalityOverrides;
+          if (mutation.embedFieldOverrides) canvasEmbedFields = mutation.embedFieldOverrides;
           appendMessage({
             role: 'agent',
             content: toolExecutionHasStructuredOutput(result) ? '' : result.summary,
@@ -547,6 +562,7 @@ export function CopilotProvider({
     [
       appendMessage,
       cardinalityOverrides,
+      embedFieldOverrides,
       executeTool,
       forceEmbedOverrides,
       guardrailIssues,

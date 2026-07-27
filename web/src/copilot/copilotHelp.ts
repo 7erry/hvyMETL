@@ -61,6 +61,7 @@ export function buildCopilotCommandsResponse(): string {
     '',
     '### Canvas & schema tools',
     '- `/fold child -> parent [array|single]` — embed a child table into a parent collection',
+    '- `/fold-all` or **fold all tables** — force-embed every FK relationship (same as Embed Overrides → Force All)',
     '- `/guardrails` or **Check Guardrails** — migration risk analysis on the ERD',
     '- `/translate` or **Translate SQL** — open Query Translator',
     '- `/highlight table1 table2` — focus tables on the canvas',

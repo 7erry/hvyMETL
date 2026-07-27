@@ -10,6 +10,7 @@ export type CopilotMessageRole = 'user' | 'agent' | 'system';
 
 export type CopilotToolName =
   | 'foldTable'
+  | 'foldAllTables'
   | 'setEmbedOverride'
   | 'highlightNodes'
   | 'detachTable'
@@ -137,6 +138,7 @@ export type CopilotNextStep =
 
 export type AgentToolCall =
   | { tool: 'foldTable'; args: FoldTableArgs }
+  | { tool: 'foldAllTables'; args: Record<string, never> }
   | { tool: 'setEmbedOverride'; args: SetEmbedOverrideArgs }
   | { tool: 'highlightNodes'; args: HighlightNodesArgs }
   | { tool: 'detachTable'; args: DetachTableArgs }
@@ -212,6 +214,7 @@ export type MongoInspectInvokeResponse = {
 
 export const COPILOT_SLASH_COMMANDS = [
   { command: '/fold', description: 'Embed a child table into a parent collection' },
+  { command: '/fold-all', description: 'Force-embed every FK relationship (Embed Overrides → Force All)' },
   { command: '/guardrails', description: 'Run migration risk analysis' },
   { command: '/translate', description: 'Open SQL query translator' },
   { command: '/clear-overrides', description: 'Clear embed overrides' },

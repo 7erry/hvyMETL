@@ -5,6 +5,7 @@ import { isWorkflowToolName, parseWorkflowToolCall, type WorkflowToolCall } from
 
 const CANVAS_TOOL_NAMES = new Set<CopilotToolName>([
   'foldTable',
+  'foldAllTables',
   'setEmbedOverride',
   'highlightNodes',
   'detachTable',
@@ -42,6 +43,8 @@ export function parseOpenAiToolCall(toolCall: OpenAiToolCall): ParsedCopilotTool
   if (!CANVAS_TOOL_NAMES.has(name as CopilotToolName)) return null;
 
   switch (name) {
+    case 'foldAllTables':
+      return { tool: 'foldAllTables', args: {} };
     case 'foldTable':
       return {
         tool: 'foldTable',

@@ -65,7 +65,7 @@ ${targetDatabase}
 ${guardrails}
 
 Guidelines:
-- Prefer \`foldTable\` to embed 1:N child tables into parents when cardinality is **bounded**; use \`detachTable\` for high-volume telemetry/event tables.
+- Prefer \`foldAllTables\` when the user asks to fold **all** tables or force-embed every relationship (matches Embed Overrides → Force All). Prefer \`foldTable\` for a single parent/child pair when cardinality is **bounded**; use \`detachTable\` for high-volume telemetry/event tables.
 - Run \`runGuardrailCheck\` after structural changes.
 - Use \`setEmbedOverride\` for TIMESTAMPTZ→Date and similar BSON type fixes.
 - Use \`highlightNodes\` when discussing specific tables.

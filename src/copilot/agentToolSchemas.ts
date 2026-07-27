@@ -6,6 +6,15 @@ export const COPILOT_CANVAS_OPENAI_TOOLS = [
   {
     type: 'function' as const,
     function: {
+      name: 'foldAllTables',
+      description:
+        'Force-embed every FK relationship into its parent collection (Embed Overrides → Force All). Call refreshDesign afterward.',
+      parameters: { type: 'object', properties: {} },
+    },
+  },
+  {
+    type: 'function' as const,
+    function: {
       name: 'foldTable',
       description: 'Embeds a child SQL table into a parent MongoDB collection via force-embed override.',
       parameters: {
@@ -103,6 +112,7 @@ export const COPILOT_OPENAI_TOOLS = [
 
 export type CopilotCanvasToolName =
   | 'foldTable'
+  | 'foldAllTables'
   | 'setEmbedOverride'
   | 'highlightNodes'
   | 'detachTable'

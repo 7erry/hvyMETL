@@ -1,4 +1,5 @@
 import {
+  buildForceEmbedOverridesForAll,
   relationshipOverrideKey,
   type CardinalityOverrides,
   type ForceEmbedOverrides,
@@ -32,6 +33,12 @@ export const AGENT_TOOL_SCHEMAS = {
         embedType: { type: 'string', enum: ['array', 'single'], description: 'Embed as array or single subdocument' },
       },
     },
+  },
+  foldAllTables: {
+    name: 'foldAllTables',
+    description:
+      'Force-embed every FK relationship into its parent collection (same as Embed Overrides → Force All). Call refreshDesign after applying.',
+    parameters: { type: 'object', properties: {} },
   },
   setEmbedOverride: {
     name: 'setEmbedOverride',
@@ -110,6 +117,48 @@ function findRelationship(model: SqlStructuralModel, sourceTable: string, target
   return model.relationships.find(
     (rel) => rel.childTable === sourceTable && rel.parentTable === targetTable,
   );
+}
+
+function executeFoldAllTables(ctx: AgentToolContext): { result: ToolExecutionResult; mutation: AgentToolMutation } {
+  if (!ctx.model) {
+    return {
+      result: { tool: 'foldAllTables', summary: 'No schema loaded', delta: [], ok: false },
+      mutation: {},
+    };
+  }
+  if (ctx.model.relationships.length === 0) {
+    return {
+      result: {
+        tool: 'foldAllTables',
+        summary: 'No foreign-key relationships to fold',
+        delta: [],
+        ok: false,
+      },
+      mutation: {},
+    };
+  }
+
+  const nextForce = buildForceEmbedOverridesForAll(ctx.model, true);
+  const delta = ctx.model.relationships.map(
+    (relationship) => `forceEmbed[${relationshipOverrideKey(relationship)}] = true`,
+  );
+  const highlightedTables = [
+    ...new Set(ctx.model.relationships.flatMap((relationship) => [relationship.parentTable, relationship.childTable])),
+  ];
+
+  return {
+    result: {
+      tool: 'foldAllTables',
+      summary: `Force-embed enabled for all ${ctx.model.relationships.length} FK relationship(s)`,
+      delta,
+      ok: true,
+    },
+    mutation: {
+      forceEmbedOverrides: nextForce,
+      highlightedTables,
+      selectedTable: highlightedTables[0] ?? null,
+    },
+  };
 }
 
 function executeFoldTable(args: FoldTableArgs, ctx: AgentToolContext): { result: ToolExecutionResult; mutation: AgentToolMutation } {
@@ -275,6 +324,8 @@ export function executeAgentTool(
   switch (call.tool) {
     case 'foldTable':
       return executeFoldTable(call.args, ctx);
+    case 'foldAllTables':
+      return executeFoldAllTables(ctx);
     case 'detachTable':
       return executeDetachTable(call.args, ctx);
     case 'setEmbedOverride':
@@ -292,9 +343,24 @@ export function executeAgentTool(
   }
 }
 
+/** True when the user wants to force-embed every FK relationship. */
+export function isFoldAllTablesRequest(input: string): boolean {
+  const trimmed = input.trim().replace(/[.!?]+$/, '').trim();
+  if (!trimmed) return false;
+  return (
+    /^\/fold-all$/i.test(trimmed) ||
+    /^fold all(?:\s+tables?|\s+relationships?)?(?:\s+into\s+parents?)?$/i.test(trimmed) ||
+    /^force embed all$/i.test(trimmed) ||
+    /^embed overrides?\s*→?\s*force all$/i.test(trimmed)
+  );
+}
+
 /** Parse slash commands and quick actions into tool calls. */
 export function parseCopilotCommand(input: string): AgentToolCall | { message: string } | null {
   const trimmed = input.trim();
+  if (isFoldAllTablesRequest(trimmed)) {
+    return { tool: 'foldAllTables', args: {} };
+  }
   if (trimmed === '/guardrails' || trimmed === 'Check Guardrails') {
     return { tool: 'runGuardrailCheck', args: {} };
   }
@@ -328,6 +394,7 @@ export function parseCopilotCommand(input: string): AgentToolCall | { message: s
 export function toolDisplayName(tool: CopilotToolName): string {
   const names: Record<CopilotToolName, string> = {
     foldTable: 'Fold Table',
+    foldAllTables: 'Fold All Tables',
     setEmbedOverride: 'Set Embed Override',
     highlightNodes: 'Highlight Nodes',
     detachTable: 'Detach Table',
