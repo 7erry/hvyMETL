@@ -12,8 +12,23 @@ type MongoAnalyzeAggregateTableProps = {
 };
 
 export function MongoAnalyzeAggregateTable({ database, collection, data }: MongoAnalyzeAggregateTableProps) {
-  const { count, rows, columns } = readMongoAggregateRows(data);
+  const { count, rows, columns, appliedLimits, previewTruncated } = readMongoAggregateRows(data);
   if (rows.length === 0) {
+    if (count > 0) {
+      return (
+        <div className="mongo-analyze">
+          <p className="mongo-analyze__caption">
+            {count.toLocaleString()} document(s) matched in <code>{database}.{collection}</code>
+            {previewTruncated
+              ? ' — preview omitted because the first result exceeded Atlas inspect byte limits. Add a $project stage or lower payload size, then run again.'
+              : '.'}
+          </p>
+          {appliedLimits.length > 0 ? (
+            <p className="mongo-analyze__hint">Applied limits: {appliedLimits.join(', ')}</p>
+          ) : null}
+        </div>
+      );
+    }
     return <p className="mongo-analyze__empty">No aggregation results returned.</p>;
   }
 

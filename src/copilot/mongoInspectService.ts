@@ -33,6 +33,7 @@ import { summarizeExplainPayload } from './mongoAnalyzeExplain.js';
 import { normalizeAggregationPipeline } from './mongoAnalyzePipeline.js';
 import { findPlanCollection, type MongoPlanContext } from './mongoPlanContext.js';
 import { enrichCollectionSummaries } from './mongoInspectEnrichment.js';
+import { normalizeAggregateInspectPayload } from './mongoAggregateFormat.js';
 import {
   MONGO_INSPECT_MCP_TOOL_MAP,
   isMongoInspectToolName,
@@ -487,7 +488,7 @@ async function buildMcpArguments(
         database: physicalDatabase,
         collection,
         pipeline,
-        responseBytesLimit: 512_000,
+        responseBytesLimit: 2_097_152,
       },
       logicalDatabase,
       physicalDatabase,
@@ -614,19 +615,13 @@ function sanitizeInspectPayload(
   }
 
   if (tool === 'aggregateMongoCollection') {
-    const payload = raw as { documents?: unknown[]; count?: number | 'indeterminate' };
-    const documents = Array.isArray(payload.documents) ? payload.documents : [];
-    const count =
-      typeof payload.count === 'number'
-        ? payload.count
-        : typeof payload.count === 'string' && payload.count === 'indeterminate'
-          ? documents.length
-          : documents.length;
+    const { documents, count, appliedLimits } = normalizeAggregateInspectPayload(raw);
     return {
       database: logicalDatabase,
       collection: typeof args.collection === 'string' ? args.collection : '',
       documents,
       count,
+      appliedLimits,
       pipeline: args.pipeline,
     };
   }

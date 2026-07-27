@@ -33,8 +33,9 @@ export function buildAggregateInspectArgs(output: SqlTranslationOutput): {
   pipeline: Record<string, unknown>[];
 } {
   const collection = output.collectionName || inferCollectionNameFromShell(output.shellScript);
-  return {
-    collection,
-    pipeline: parseTranslationPipeline(output.aggregationPipeline),
-  };
+  const pipeline = parseTranslationPipeline(output.aggregationPipeline);
+  if (!pipeline.some((stage) => '$limit' in stage)) {
+    pipeline.push({ $limit: 25 });
+  }
+  return { collection, pipeline };
 }

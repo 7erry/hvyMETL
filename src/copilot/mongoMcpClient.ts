@@ -60,7 +60,22 @@ type McpToolCallResult = {
 /** Prefer MCP structuredContent; fall back to parsing human-readable content blocks. */
 export function extractMongoMcpToolPayload(result: McpToolCallResult): unknown {
   if (result.structuredContent && typeof result.structuredContent === 'object') {
-    return result.structuredContent;
+    const structured = result.structuredContent as Record<string, unknown>;
+    const documents = structured.documents;
+    const count = structured.count;
+    if (
+      Array.isArray(documents) &&
+      documents.length === 0 &&
+      typeof count === 'number' &&
+      count > 0 &&
+      result.content
+    ) {
+      const fromText = parseMongoMcpToolPayload(result.content);
+      if (Array.isArray(fromText) && fromText.length > 0) {
+        return { ...structured, documents: fromText };
+      }
+    }
+    return structured;
   }
   return parseMongoMcpToolPayload(result.content);
 }

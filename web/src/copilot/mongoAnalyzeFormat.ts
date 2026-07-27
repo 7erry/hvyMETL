@@ -1,3 +1,8 @@
+import {
+  isAggregatePreviewTruncated,
+  normalizeAggregateInspectPayload,
+} from '../../../src/copilot/mongoAggregateFormat.ts';
+
 export type MongoCompareRow = {
   aspect: string;
   status: 'match' | 'missing' | 'extra' | 'warn';
@@ -80,12 +85,34 @@ function flattenDocument(value: unknown, prefix = ''): Record<string, string> {
   return entries;
 }
 
-export function readMongoAggregateRows(data: unknown): { count: number; rows: MongoAggregateRow[]; columns: string[] } {
-  if (!data || typeof data !== 'object') return { count: 0, rows: [], columns: [] };
-  const record = data as { count?: unknown; documents?: unknown };
-  const documents = Array.isArray(record.documents) ? record.documents : [];
-  const rows = documents.slice(0, 20).map((document) => flattenDocument(document));
+export function readMongoAggregateRows(data: unknown): {
+  count: number;
+  rows: MongoAggregateRow[];
+  columns: string[];
+  appliedLimits: string[];
+  previewTruncated: boolean;
+} {
+  if (!data || typeof data !== 'object') {
+    return { count: 0, rows: [], columns: [], appliedLimits: [], previewTruncated: false };
+  }
+
+  const record = data as Record<string, unknown>;
+  const normalized = normalizeAggregateInspectPayload({
+    count: record.count,
+    documents: record.documents,
+    appliedLimits: record.appliedLimits,
+    results: record.results,
+    result: record.result,
+  });
+
+  const rows = normalized.documents.slice(0, 20).map((document) => flattenDocument(document));
   const columns = [...new Set(rows.flatMap((row) => Object.keys(row)))].slice(0, 8);
-  const count = typeof record.count === 'number' ? record.count : documents.length;
-  return { count, rows, columns };
+
+  return {
+    count: normalized.count,
+    rows,
+    columns,
+    appliedLimits: normalized.appliedLimits,
+    previewTruncated: isAggregatePreviewTruncated(normalized),
+  };
 }

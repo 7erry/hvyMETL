@@ -30,6 +30,7 @@ describe('runTranslationPipeline', () => {
       indexRecommendations: [],
     });
     expect(args.collection).toBe('orders');
-    expect(args.pipeline).toHaveLength(1);
+    expect(args.pipeline).toHaveLength(2);
+    expect(args.pipeline[1]).toEqual({ $limit: 25 });
   });
 });

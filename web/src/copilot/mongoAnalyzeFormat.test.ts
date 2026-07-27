@@ -22,6 +22,17 @@ describe('mongoAnalyzeFormat', () => {
     expect(view.columns).toContain('_id');
   });
 
+  it('reports truncated previews when count exceeds returned documents', () => {
+    const view = readMongoAggregateRows({
+      count: 148,
+      documents: [],
+      appliedLimits: ['tool.responseBytesLimit'],
+    });
+    expect(view.previewTruncated).toBe(true);
+    expect(view.count).toBe(148);
+    expect(view.rows).toHaveLength(0);
+  });
+
   it('reads explain summaries', () => {
     const view = readMongoExplainView({
       method: 'find',

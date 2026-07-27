@@ -41,6 +41,33 @@ Use the information above to respond to the user's question.`,
     ]);
     expect(payload).toEqual([{ name: 'terry_walters__mytrains', size: 8192 }]);
   });
+
+  it('fills aggregate documents from text blocks when structured previews are empty', () => {
+    const payload = extractMongoMcpToolPayload({
+      structuredContent: {
+        count: 148,
+        documents: [],
+        appliedLimits: ['tool.responseBytesLimit'],
+      },
+      content: [
+        { type: 'text', text: 'The aggregation resulted in 148 documents.' },
+        {
+          type: 'text',
+          text: `<untrusted-user-data-xyz>
+[{"_id":"1","status":"open"},{"_id":"2","status":"closed"}]
+</untrusted-user-data-xyz>`,
+        },
+      ],
+    });
+    expect(payload).toEqual({
+      count: 148,
+      documents: [
+        { _id: '1', status: 'open' },
+        { _id: '2', status: 'closed' },
+      ],
+      appliedLimits: ['tool.responseBytesLimit'],
+    });
+  });
 });
 
 describe('mongoInspectToolSchemas', () => {
