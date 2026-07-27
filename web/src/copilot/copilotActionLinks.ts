@@ -54,6 +54,9 @@ export function copilotActionFromNextStep(step: CopilotNextStep): CopilotAction 
   if (step.kind === 'workflow') {
     return { type: 'workflow', tool: step.tool, args: step.args };
   }
+  if (step.kind === 'prompt') {
+    return { type: 'prompt', prompt: step.prompt };
+  }
   return { type: 'inspect', tool: step.tool, args: step.args };
 }
 
@@ -125,7 +128,8 @@ export function buildMigrationWorkflowGuideMessage(): string {
     '2. **Import schema** — paste SQL DDL in the dialog (or load a built-in example from the import panel)',
     `3. ${buildWorkflowActionLink('Refresh design', 'refreshDesign')} — generate the MongoDB target schema (ML/RAG)`,
     `4. ${buildWorkflowActionLink('Run pipeline', 'runPipeline')} — open the Atlas import panel for CSV/SQLite`,
-    '5. **Verify Atlas** — after pipeline import, list collections in your logical database name',
+    '5. **Verify Atlas** — after pipeline import, verify collections in your logical database',
+    '6. **Architecture Review** — collective review of all imported collections (click **Next step** after verify)',
     '',
     `Start with ${buildPromptActionLink('step 1', MIGRATION_WORKFLOW_GUIDE_PROMPT)} or ${buildWorkflowActionLink('Clear session', 'clearSession')}.`,
   ].join('\n');

@@ -80,3 +80,15 @@ export function buildArchitectureReviewUserPrompt(focus: string): string {
 
 /** Quick-action chip text for whole-schema architecture review. */
 export const OPTIMIZE_SCHEMA_USER_PROMPT = buildArchitectureReviewUserPrompt('the loaded schema');
+
+/** Copilot prompt after pipeline import — collective review of all collections in a logical database. */
+export function buildPostImportArchitectureReviewPrompt(targetDb: string): string {
+  return [
+    `Produce a collective **Architecture Review** of all collections imported into \`${targetDb}\`.`,
+    'Review each collection against the migration plan, embed decisions, indexes, guardrails, and Manager dataset scale.',
+    'Use the required format: title, verdict blockquote, comparison table, next actions,',
+    'then sections 2–7 each inside `<details><summary>…</summary>` collapsible blocks.',
+    'Include Before/After TypeScript + JSON Schema in section 4 where applicable.',
+    'Ground recommendations in the current schema context and the live Atlas collections listed above.',
+  ].join(' ');
+}

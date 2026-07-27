@@ -123,6 +123,11 @@ export type CopilotNextStep =
       label: string;
       tool: MongoInspectToolName;
       args: Record<string, unknown>;
+    }
+  | {
+      kind: 'prompt';
+      label: string;
+      prompt: string;
     };
 
 export type AgentToolCall =

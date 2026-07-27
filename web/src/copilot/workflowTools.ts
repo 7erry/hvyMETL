@@ -1,4 +1,5 @@
 import type { CopilotNextStep, ToolExecutionResult, WorkflowToolName } from './types';
+import { buildPostImportArchitectureReviewPrompt } from '../../../src/copilot/copilotArchitecturePrompt.js';
 
 export type WorkflowToolResult = Pick<ToolExecutionResult, 'tool' | 'summary' | 'delta' | 'ok'> & {
   delta?: string[];
@@ -169,6 +170,30 @@ export function buildPipelineVerifyNextStep(targetDb: string): CopilotNextStep {
     tool: 'listMongoCollections',
     args: { database: targetDb },
   };
+}
+
+/** Build an architecture-review prompt next step after collections are listed post-import. */
+export function buildPostImportArchitectureReviewNextStep(targetDb: string): CopilotNextStep {
+  return {
+    kind: 'prompt',
+    label: 'Architecture Review',
+    prompt: buildPostImportArchitectureReviewPrompt(targetDb),
+  };
+}
+
+/** Attach architecture review follow-up after a successful listMongoCollections inspect. */
+export function attachPostVerifyArchitectureReviewNextStep(
+  result: ToolExecutionResult,
+  args: Record<string, unknown>,
+): ToolExecutionResult {
+  if (!result.ok || result.tool !== 'listMongoCollections') {
+    return result;
+  }
+  const database = typeof args.database === 'string' ? args.database.trim() : '';
+  if (!database) {
+    return result;
+  }
+  return { ...result, nextStep: buildPostImportArchitectureReviewNextStep(database) };
 }
 
 /** Converts a stored next-step action back into a workflow tool call. */

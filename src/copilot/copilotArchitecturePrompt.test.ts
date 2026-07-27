@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   buildArchitectureReviewUserPrompt,
+  buildPostImportArchitectureReviewPrompt,
   COPILOT_ARCHITECTURE_RESPONSE_INSTRUCTIONS,
   OPTIMIZE_SCHEMA_USER_PROMPT,
 } from './copilotArchitecturePrompt.js';
@@ -29,6 +30,13 @@ describe('copilotArchitecturePrompt', () => {
 
   it('defines optimize schema quick-action prompt', () => {
     expect(OPTIMIZE_SCHEMA_USER_PROMPT).toContain('loaded schema');
+  });
+
+  it('builds post-import collective architecture review prompt', () => {
+    const prompt = buildPostImportArchitectureReviewPrompt('finops');
+    expect(prompt).toContain('finops');
+    expect(prompt).toContain('Architecture Review');
+    expect(prompt).toContain('collections imported');
   });
 });
 

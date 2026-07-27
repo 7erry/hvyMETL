@@ -113,7 +113,7 @@ function PipelinePanelConnected(
           const imported = result.imports.filter((entry) => entry.ok).length;
           copilot.showWorkflowResult({
             tool: 'runPipeline',
-            summary: `Pipeline imported ${imported} collection${imported === 1 ? '' : 's'} into ${result.targetDb}.`,
+            summary: `Step 4 complete: Pipeline imported ${imported} collection${imported === 1 ? '' : 's'} into ${result.targetDb}.`,
             delta: result.imports.map(
               (entry) => `${entry.collection}: ${entry.ok ? `${entry.insertedCount ?? '?'} docs` : entry.error ?? 'failed'}`,
             ),

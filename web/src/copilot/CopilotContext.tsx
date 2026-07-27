@@ -19,6 +19,7 @@ import {
 } from './inspectCommandRouting';
 import {
   executeWorkflowTool,
+  attachPostVerifyArchitectureReviewNextStep,
   nextStepToWorkflowCall,
   parseDirectWorkflowCommand,
   serializeWorkflowToolResult,
@@ -329,13 +330,14 @@ export function CopilotProvider({
     async (tool: MongoInspectToolName, args: Record<string, unknown>): Promise<ToolExecutionResult> => {
       try {
         const response = await invokeCopilotMongoInspect(tool, args, buildMongoPlanContext(plan));
-        return {
+        const result: ToolExecutionResult = {
           tool,
           summary: response.summary,
           delta: buildMongoInspectDelta(tool, response),
           ok: response.ok,
           data: response.data,
         };
+        return attachPostVerifyArchitectureReviewNextStep(result, args);
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
         return {
@@ -355,7 +357,7 @@ export function CopilotProvider({
       const result = await runMongoInspectTool(tool, args);
       appendMessage({
         role: 'agent',
-        content: '',
+        content: result.nextStep ? formatWorkflowToolMessage(result.summary, result.nextStep) : '',
         toolExecution: result,
       });
       setStatus('idle');
@@ -703,6 +705,10 @@ export function CopilotProvider({
 
   const runNextStep = useCallback(
     (step: CopilotNextStep) => {
+      if (step.kind === 'prompt') {
+        sendMessage(step.prompt);
+        return;
+      }
       appendMessage({ role: 'user', content: step.label });
       if (step.kind === 'workflow') {
         const call = nextStepToWorkflowCall(step);
@@ -713,7 +719,7 @@ export function CopilotProvider({
       }
       void runMongoInspectDirect(step.tool, step.args);
     },
-    [appendMessage, runMongoInspectDirect, runWorkflowDirect],
+    [appendMessage, runMongoInspectDirect, runWorkflowDirect, sendMessage],
   );
 
   const showWorkflowResult = useCallback(

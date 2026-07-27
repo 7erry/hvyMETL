@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import {
+  attachPostVerifyArchitectureReviewNextStep,
   attachWorkflowNextStep,
   buildPipelineVerifyNextStep,
+  buildPostImportArchitectureReviewNextStep,
   parseDirectWorkflowCommand,
   parseWorkflowToolCall,
   resolveWorkflowNextStep,
@@ -80,5 +82,24 @@ describe('workflowTools', () => {
       tool: 'listMongoCollections',
       args: { database: 'finops' },
     });
+  });
+
+  it('builds an architecture review next step after verifying imported collections', () => {
+    expect(buildPostImportArchitectureReviewNextStep('finops')).toEqual({
+      kind: 'prompt',
+      label: 'Architecture Review',
+      prompt: expect.stringContaining('finops'),
+    });
+
+    const enriched = attachPostVerifyArchitectureReviewNextStep(
+      {
+        tool: 'listMongoCollections',
+        summary: 'Listed 5 collection(s) in finops.',
+        delta: [],
+        ok: true,
+      },
+      { database: 'finops' },
+    );
+    expect(enriched.nextStep?.label).toBe('Architecture Review');
   });
 });
