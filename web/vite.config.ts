@@ -3,14 +3,29 @@ import react from '@vitejs/plugin-react';
 
 const apiPort = process.env.HVYMETL_UI_PORT ?? '3847';
 
-/** Log when Rollup starts generating/minifying output chunks (after module transform). */
+/** Log chunk render/minify progress — "rendering chunks (N)" can look stuck without output. */
 function buildProgressPlugin() {
+  let chunkCount = 0;
+
   return {
     name: 'hvymetl-build-progress',
-    generateBundle() {
-      console.log('[vite] minifying output chunks…');
+    renderStart() {
+      chunkCount = 0;
+      console.log('[vite] rendering chunks…');
+    },
+    renderChunk(_code: string, chunk: { fileName: string }) {
+      chunkCount += 1;
+      console.log(`[vite] rendering chunks (${chunkCount}) — ${chunk.fileName}`);
+      return null;
+    },
+    closeBundle() {
+      console.log(`[vite] finished rendering ${chunkCount} chunk(s)`);
     },
   };
+}
+
+function isNodeModule(id: string, segment: string): boolean {
+  return id.includes(`node_modules/${segment}`);
 }
 
 export default defineConfig({
@@ -18,14 +33,24 @@ export default defineConfig({
   build: {
     sourcemap: false,
     reportCompressedSize: false,
+    minify: 'esbuild',
+    cssMinify: 'esbuild',
     rollupOptions: {
+      maxParallelFileOps: 1,
       output: {
         manualChunks(id) {
-          if (id.includes('node_modules/@xyflow/react') || id.includes('node_modules/@xyflow/system')) {
+          if (
+            isNodeModule(id, 'react/')
+            || isNodeModule(id, 'react-dom/')
+            || isNodeModule(id, 'scheduler/')
+          ) {
+            return 'vendor-react';
+          }
+          if (isNodeModule(id, '@xyflow/react') || isNodeModule(id, '@xyflow/system')) {
             return 'xyflow';
           }
           if (
-            id.includes('node_modules/react-markdown')
+            isNodeModule(id, 'react-markdown')
             || id.includes('node_modules/remark-')
             || id.includes('node_modules/rehype-')
             || id.includes('node_modules/micromark')
@@ -36,15 +61,21 @@ export default defineConfig({
             return 'markdown';
           }
           if (
-            id.includes('node_modules/prismjs')
-            || id.includes('node_modules/react-simple-code-editor')
-            || id.includes('node_modules/react-syntax-highlighter')
-            || id.includes('node_modules/refractor')
+            isNodeModule(id, 'prismjs')
+            || isNodeModule(id, 'react-simple-code-editor')
+            || isNodeModule(id, 'react-syntax-highlighter')
+            || isNodeModule(id, 'refractor')
           ) {
             return 'prism';
           }
-          if (id.includes('node_modules/@auth0/auth0-react')) {
+          if (isNodeModule(id, '@auth0/auth0-react')) {
             return 'auth0';
+          }
+          if (isNodeModule(id, 'fflate')) {
+            return 'vendor-fflate';
+          }
+          if (id.includes('/src/copilot/') || id.includes('\\src\\copilot\\')) {
+            return 'copilot';
           }
         },
       },

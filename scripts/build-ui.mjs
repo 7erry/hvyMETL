@@ -100,7 +100,7 @@ if (needsWebInstall()) {
 }
 
 log('Step 3/3 — building web UI with Vite (expect ~642 modules, not 1444)…');
-log('Minifying split chunks — usually finishes in a few seconds…');
-run('npm', ['run', 'build'], web);
+log('Minifying split chunks — progress lines appear as each chunk renders…');
+run('node', ['scripts/vite-build.mjs'], web);
 
 log('Done.');
