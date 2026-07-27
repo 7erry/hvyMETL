@@ -25,6 +25,8 @@ import 'prismjs/components/prism-rust.js';
 import 'prismjs/components/prism-scala.js';
 import 'prismjs/components/prism-swift.js';
 import 'prismjs/components/prism-typescript.js';
+import 'prismjs/components/prism-sql.js';
+import 'prismjs/components/prism-bash.js';
 
 export const highlight = Prism.highlight;
 export const languages = Prism.languages;

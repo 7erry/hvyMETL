@@ -3,8 +3,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
 import rehypeSanitize, { defaultSchema } from 'rehype-sanitize';
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import { PrismCodeBlock } from '../PrismCodeBlock';
 import { formatCopilotResponse } from '../../copilot/formatCopilotResponse';
 import { isArchitectureReviewContent } from '../../copilot/architectureReviewExport';
 import { ArchitectureReviewSaveToDrive } from './ArchitectureReviewSaveToDrive';
@@ -57,19 +56,16 @@ export function CopilotMessageBody({ content, markdown = false }: CopilotMessage
             const language = /language-(\w+)/.exec(className ?? '')?.[1];
             if (language) {
               return (
-                <SyntaxHighlighter
-                  style={oneDark}
+                <PrismCodeBlock
+                  code={text}
                   language={language}
-                  PreTag="div"
-                  customStyle={{
+                  style={{
                     margin: '0.5rem 0',
                     borderRadius: '6px',
                     fontSize: '0.65rem',
                     border: '1px solid var(--copilot-border)',
                   }}
-                >
-                  {text}
-                </SyntaxHighlighter>
+                />
               );
             }
             return <code className="copilot-md-inline-code">{children}</code>;

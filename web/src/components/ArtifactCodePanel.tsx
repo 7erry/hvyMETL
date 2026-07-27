@@ -1,7 +1,6 @@
 import Editor from 'react-simple-code-editor';
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
-import { highlight, languages } from '../prismSetup';
+import { highlightPrismCode } from '../prismHighlight';
+import { PrismCodeBlock } from './PrismCodeBlock';
 
 type ArtifactCodePanelProps = {
   value: string;
@@ -51,61 +50,12 @@ export function languageForArtifact(fileName: string, mime: string, isJson?: boo
 }
 
 function highlighterLanguage(language: string): string {
-  if (language === 'plain' || language === 'plaintext') return 'text';
+  if (language === 'plain' || language === 'plaintext') return 'plain';
   return language;
 }
 
-type PrismGrammar = typeof languages.json;
-
-function grammarForLanguage(language: string): { grammar: PrismGrammar; id: string } | null {
-  switch (language) {
-    case 'json':
-      return { grammar: languages.json, id: 'json' };
-    case 'markdown':
-      return { grammar: languages.markdown, id: 'markdown' };
-    case 'yaml':
-      return { grammar: languages.yaml, id: 'yaml' };
-    case 'typescript':
-      return { grammar: languages.typescript, id: 'typescript' };
-    case 'javascript':
-      return { grammar: languages.javascript, id: 'javascript' };
-    case 'python':
-      return { grammar: languages.python, id: 'python' };
-    case 'go':
-      return { grammar: languages.go, id: 'go' };
-    case 'java':
-      return { grammar: languages.java, id: 'java' };
-    case 'kotlin':
-      return { grammar: languages.kotlin, id: 'kotlin' };
-    case 'csharp':
-      return { grammar: languages.csharp, id: 'csharp' };
-    case 'rust':
-      return { grammar: languages.rust, id: 'rust' };
-    case 'ruby':
-      return { grammar: languages.ruby, id: 'ruby' };
-    case 'php':
-      return { grammar: languages.php, id: 'php' };
-    case 'swift':
-      return { grammar: languages.swift, id: 'swift' };
-    case 'c':
-      return { grammar: languages.c, id: 'c' };
-    case 'cpp':
-      return { grammar: languages.cpp, id: 'cpp' };
-    case 'scala':
-      return { grammar: languages.scala, id: 'scala' };
-    default:
-      return null;
-  }
-}
-
 function highlightCode(code: string, language: string): string {
-  const grammar = grammarForLanguage(language);
-  if (!grammar) return code;
-  try {
-    return highlight(code, grammar.grammar, grammar.id);
-  } catch {
-    return code;
-  }
+  return highlightPrismCode(code, language);
 }
 
 const EDITOR_FONT_FAMILY = 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace';
@@ -137,26 +87,9 @@ const editorSurfaceStyle = {
   minHeight: '100%',
 };
 
-const highlighterStyle = {
-  ...oneDark,
-  'pre[class*="language-"]': {
-    ...oneDark['pre[class*="language-"]'],
-    margin: 0,
-    padding: 12,
-    background: '#0d1117',
-  },
-  'code[class*="language-"]': {
-    ...oneDark['code[class*="language-"]'],
-    background: 'none',
-    fontFamily: editorSurfaceStyle.fontFamily,
-    fontSize: editorSurfaceStyle.fontSize,
-    lineHeight: editorSurfaceStyle.lineHeight,
-  },
-};
-
 /**
  * Syntax-highlighted artifact view (oneDark / Chroma-style tokens).
- * Read-only files use react-syntax-highlighter; editable tabs use a transparent textarea over Prism HTML.
+ * Read-only files use PrismCodeBlock; editable tabs use a transparent textarea over Prism HTML.
  */
 export function ArtifactCodePanel({
   value,
@@ -174,22 +107,18 @@ export function ArtifactCodePanel({
       <div className="artifact-code-panel artifact-code-panel--readonly artifact-code-panel--with-lines" data-language={language}>
         <CodeLineNumbers value={value} />
         <div className="artifact-code-panel__body">
-          <SyntaxHighlighter
+          <PrismCodeBlock
+            code={value}
             language={displayLanguage}
-            style={highlighterStyle}
-            customStyle={{
+            preClassName="artifact-code-pre"
+            style={{
               margin: 0,
               padding: 12,
               background: '#0d1117',
               fontSize: editorSurfaceStyle.fontSize,
               lineHeight: editorSurfaceStyle.lineHeight,
             }}
-            showLineNumbers={false}
-            wrapLongLines
-            PreTag="div"
-          >
-            {value}
-          </SyntaxHighlighter>
+          />
         </div>
       </div>
     );
