@@ -64,7 +64,7 @@ describe('repo bundled examples', () => {
   it('includes all seven seeded SQLite domains from the repository', () => {
     const { path } = resolveBuiltinExamplesDir();
     const ids = listBuiltinExamples(path)
-      .filter((example) => example.dialect === 'sqlite')
+      .filter((example) => example.dialect === 'sqlite' && !example.id.includes('/'))
       .map((example) => example.id)
       .sort();
     expect(ids).toEqual([
@@ -94,5 +94,16 @@ describe('repo bundled examples', () => {
     const { ddl, summary } = readBuiltinExample(path, 'ledger');
     expect(summary.label).toBe('Financial Ledger (Enterprise)');
     expect(ddl).toContain('CREATE TABLE journal_entries');
+  });
+
+  it('lists one design-pattern example per supported dialect', () => {
+    const { path } = resolveBuiltinExamplesDir();
+    const dialectExamples = listBuiltinExamples(path)
+      .filter((item) => item.id.startsWith('dialects/'))
+      .map((item) => item.id)
+      .sort();
+    expect(dialectExamples).toHaveLength(23);
+    expect(dialectExamples).toContain('dialects/postgresql.sql');
+    expect(dialectExamples).toContain('dialects/dynamodb.yaml');
   });
 });

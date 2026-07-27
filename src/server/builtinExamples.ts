@@ -119,6 +119,29 @@ function labelFromOracleFile(fileName: string): string {
   return `Oracle ${base.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())}`;
 }
 
+/** Extract suggested profile id from a dialect example header comment. */
+function inferDialectExampleProfile(description: string): string | undefined {
+  const match = description.match(/—\s*(\S+)\s+pattern/i);
+  if (!match) return undefined;
+  const pattern = match[1]!.toLowerCase();
+  const byPattern: Record<string, string> = {
+    embed: 'catalog',
+    reference: 'mobile',
+    bucket: 'iot',
+    outlier: 'catalog',
+    'extended-reference': 'catalog',
+    computed: 'ledger',
+    subset: 'catalog',
+    attribute: 'catalog',
+    polymorphic: 'cms',
+    tree: 'catalog',
+    archive: 'catalog',
+    'single-collection': 'mobile',
+    'schema-versioning': 'catalog',
+  };
+  return byPattern[pattern];
+}
+
 /** List every built-in example DDL available under the resolved examples directory. */
 export function listBuiltinExamples(examplesDir: string): BuiltinExampleSummary[] {
   if (!existsSync(examplesDir)) return [];
@@ -157,6 +180,28 @@ export function listBuiltinExamples(examplesDir: string): BuiltinExampleSummary[
           label: `DynamoDB ${baseName.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())}`,
           description: readCloudFormationDescription(filePath) ?? 'DynamoDB CloudFormation template example.',
           dialect: 'dynamodb',
+        });
+      }
+      continue;
+    }
+
+    if (domain === 'dialects') {
+      const dialectDir = join(examplesDir, domain);
+      for (const fileName of readdirSync(dialectDir).sort()) {
+        if (!/\.(sql|ya?ml)$/i.test(fileName)) continue;
+        const filePath = join(dialectDir, fileName);
+        const dialectId = fileName.replace(/\.(sql|ya?ml)$/i, '');
+        const id = `${domain}/${fileName}`;
+        const description =
+          dialectId === 'dynamodb'
+            ? readCloudFormationDescription(filePath)
+            : readFirstCommentLine(filePath);
+        summaries.push({
+          id,
+          label: `Dialect Demo (${dialectId})`,
+          description: description ?? `Design-pattern example for ${dialectId}.`,
+          dialect: dialectId === 'dynamodb' ? 'dynamodb' : dialectId,
+          suggestedProfileId: inferDialectExampleProfile(description ?? ''),
         });
       }
       continue;

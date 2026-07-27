@@ -1,0 +1,31 @@
+# dynamodb dialect example — subset pattern: recent reviews embedded on products with overflow collection.
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'DynamoDB tables demonstrating the subset migration pattern.'
+
+Resources:
+  Table1:
+    Type: 'AWS::DynamoDB::Table'
+    Properties:
+      TableName: 'Products'
+      BillingMode: 'PAY_PER_REQUEST'
+      AttributeDefinitions:
+        - AttributeName: 'ProductId'
+          AttributeType: 'S'
+      KeySchema:
+        - AttributeName: 'ProductId'
+          KeyType: 'HASH'
+  Table2:
+    Type: 'AWS::DynamoDB::Table'
+    Properties:
+      TableName: 'Reviews'
+      BillingMode: 'PAY_PER_REQUEST'
+      AttributeDefinitions:
+        - AttributeName: 'ReviewId'
+          AttributeType: 'S'
+        - AttributeName: 'ProductId'
+          AttributeType: 'S'
+      KeySchema:
+        - AttributeName: 'ReviewId'
+          KeyType: 'HASH'
+        - AttributeName: 'ProductId'
+          KeyType: 'RANGE'

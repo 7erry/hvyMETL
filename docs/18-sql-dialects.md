@@ -180,6 +180,19 @@ Generate Oracle mock CSVs before pipeline import:
 cd examples/oracle && python generate_mock_data.py
 ```
 
+### Dialect pattern examples (all 23 import dialects)
+
+```text
+examples/dialects/
+  README.md               # dialect → pattern matrix
+  {dialect}.sql           # one file per SQL dialect
+  dynamodb.yaml           # CloudFormation for DynamoDB
+```
+
+Each file demonstrates one MongoDB design pattern (embed, bucket, tree, …).
+Load from Migration Studio **Load example** (`Dialect Demo ({dialect})`) or paste
+with the matching dialect selected. Regenerate: `npm run generate-dialect-examples`.
+
 ## 6. Refactoring / Roadmap
 
 - Add `SqlSourceAdapter` implementations for PostgreSQL (`pg`) and MySQL to unlock
@@ -188,3 +201,8 @@ cd examples/oracle && python generate_mock_data.py
   they affect MongoDB design decisions.
 - Document per-dialect `CREATE TABLE` minimal examples in `examples/` (PostgreSQL,
   MySQL, Snowflake) mirroring the Oracle bundle.
+
+**Done:** [`examples/dialects/`](../examples/dialects/) ships one design-pattern
+example per supported dialect (23 files). Pattern assignments are deterministically
+shuffled (seed `20260711`); regenerate with `npm run generate-dialect-examples`.
+Regression tests: `src/examples/dialectExamples.test.ts`.

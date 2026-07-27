@@ -97,6 +97,10 @@ reference shape when reviewing plans for write-heavy dashboards.
 dialect demos. [`ledger/ledger.sql`](ledger/ledger.sql) is PostgreSQL enterprise
 financial ledger DDL for the **ledger** profile. Neither is part of `seed-examples`.
 
+**Per-dialect pattern demos:** [`dialects/`](dialects/) — one DDL (or CloudFormation)
+file per import dialect, each illustrating a single design pattern. See
+[`dialects/README.md`](dialects/README.md).
+
 ## Domain folders
 
 | Folder | Diagram JSON | CSV generator |
