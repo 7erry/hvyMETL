@@ -112,7 +112,7 @@ export const PATTERN_PICKER_LABELS: Record<PatternId, string> = {
   archive: 'Archive',
   'single-collection': 'Single Collection',
   'schema-versioning': 'Schema Versioning',
-  'pre-allocation': 'Pre-allocation',
+  preallocation: 'Pre-allocation',
 };
 
 /** Human-readable Load example label for a dialect design-pattern bundle. */
