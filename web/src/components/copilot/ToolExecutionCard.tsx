@@ -15,10 +15,10 @@ import {
   MongoInspectSchemaTable,
 } from './MongoInspectTable';
 import {
-  MongoAnalyzeAggregateTable,
   MongoAnalyzeCompareTable,
   MongoAnalyzeExplainTable,
 } from './MongoAnalyzeTables';
+import { AggregateToolExecutionResults } from './AggregateToolExecutionResults';
 import { SqlTranslationOutputView } from './SqlTranslationOutputView';
 
 type ToolExecutionCardProps = {
@@ -61,7 +61,8 @@ export function ToolExecutionCard({ execution }: ToolExecutionCardProps) {
       {indexSummary ? <MongoInspectIndexTable summary={indexSummary} /> : null}
       {schemaSummary ? <MongoInspectSchemaTable summary={schemaSummary} /> : null}
       {execution.tool === 'aggregateMongoCollection' && execution.data ? (
-        <MongoAnalyzeAggregateTable
+        <AggregateToolExecutionResults
+          embedded
           database={String((execution.data as { database?: string }).database ?? '')}
           collection={String((execution.data as { collection?: string }).collection ?? '')}
           data={execution.data}

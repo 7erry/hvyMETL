@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { CopyButton } from '../CopyButton';
 import type { SqlTranslationOutput, ToolExecutionResult } from '../../copilot/types';
 import { countSqlTranslationLines } from '../../copilot/toolExecutionDisplay';
-import { MongoAnalyzeAggregateTable } from './MongoAnalyzeTables';
+import { AggregateToolExecutionResults } from './AggregateToolExecutionResults';
 
 type TranslatorTab = 'pipeline' | 'mongoose' | 'shell';
 
@@ -88,9 +88,7 @@ export function SqlTranslationOutputView({
           </button>
         ))}
       </div>
-      <div
-        className={`copilot-translator__code-wrap${layout === 'panel' ? ' copilot-translator__code-wrap--fill' : ''}`}
-      >
+      <div className="copilot-translator__code-wrap">
         <div className="copilot-translator__code-actions">
           <CopyButton text={code} label="Copy Code" />
           {onRunPipeline ? (
@@ -111,19 +109,17 @@ export function SqlTranslationOutputView({
             </button>
           ) : null}
         </div>
-        <pre
-          className={`copilot-translator__code${layout === 'panel' ? ' copilot-translator__code--fill' : ''}`}
-        >
+        <pre className="copilot-translator__code">
           <code>{code}</code>
         </pre>
       </div>
       {runError ? <p className="copilot-translator__run-error">{runError}</p> : null}
       {runResult?.ok && runResult.data ? (
-        <MongoAnalyzeAggregateTable
+        <AggregateToolExecutionResults
           database={String((runResult.data as { database?: string }).database ?? '')}
           collection={String((runResult.data as { collection?: string }).collection ?? output.collectionName)}
           data={runResult.data}
-          variant={layout === 'panel' ? 'panel' : 'inline'}
+          summary={runResult.summary}
         />
       ) : null}
       {output.indexRecommendations.length > 0 ? (

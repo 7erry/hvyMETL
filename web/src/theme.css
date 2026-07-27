@@ -5319,6 +5319,13 @@ textarea {
   color: var(--copilot-accent-dim);
 }
 
+.copilot-tool-card__summary {
+  margin: 0 0 0.35rem;
+  font-size: 0.65rem;
+  color: #c8d6d2;
+  line-height: 1.45;
+}
+
 .copilot-tool-card__delta {
   margin: 0;
   padding-left: 1rem;
@@ -5460,15 +5467,6 @@ textarea {
   white-space: nowrap;
 }
 
-.copilot-sql-translation--panel .copilot-translator__code-wrap--fill {
-  flex: 0 1 45%;
-  min-height: 100px;
-}
-
-.copilot-sql-translation--panel .copilot-results--panel {
-  flex: 1 1 55%;
-}
-
 .copilot-inspect-table {
   width: 100%;
   border-collapse: collapse;
@@ -5608,7 +5606,7 @@ textarea {
 }
 
 .copilot-translator__pane--output {
-  overflow: hidden;
+  overflow: auto;
 }
 
 .copilot-translator__pane--output:focus {
@@ -5649,8 +5647,17 @@ textarea {
   min-height: 0;
   height: 100%;
   margin-top: 0;
-  overflow: hidden;
-  gap: 0.35rem;
+  overflow: auto;
+  gap: 0.45rem;
+}
+
+.copilot-translator-run-results {
+  flex-shrink: 0;
+  margin-top: 0;
+}
+
+.copilot-translator-run-results .copilot-results {
+  margin-top: 0.35rem;
 }
 
 .copilot-tool-card .copilot-details {
