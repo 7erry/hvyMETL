@@ -54,6 +54,7 @@ export function toolExecutionHasStructuredOutput(execution: ToolExecutionResult)
     return [
       'listMongoDatabases',
       'listMongoCollections',
+      'findMongoDocuments',
       'aggregateMongoCollection',
       'explainMongoOperation',
       'compareMongoCollectionToPlan',

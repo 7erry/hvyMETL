@@ -11,9 +11,11 @@ import { resolveSqlTranslationOutput, toolExecutionHasStructuredOutput } from '.
 import {
   MongoInspectCollectionTable,
   MongoInspectDatabaseTable,
+  MongoInspectFindTable,
   MongoInspectIndexTable,
   MongoInspectSchemaTable,
 } from './MongoInspectTable';
+import { CopilotCollapsibleResults } from './CopilotCollapsibleResults';
 import {
   MongoAnalyzeCompareTable,
   MongoAnalyzeExplainTable,
@@ -42,7 +44,8 @@ export function ToolExecutionCard({ execution }: ToolExecutionCardProps) {
     Boolean(sqlTranslation) ||
     databaseRows.length > 0 ||
     Boolean(collectionSummary && collectionSummary.collections.length > 0) ||
-    Boolean(schemaSummary && schemaSummary.fields.length > 0);
+    Boolean(schemaSummary && schemaSummary.fields.length > 0) ||
+    execution.tool === 'findMongoDocuments';
 
   return (
     <div className={`copilot-tool-card copilot-tool-card--${execution.ok ? 'ok' : 'error'}`}>
@@ -60,6 +63,9 @@ export function ToolExecutionCard({ execution }: ToolExecutionCardProps) {
       ) : null}
       {indexSummary ? <MongoInspectIndexTable summary={indexSummary} /> : null}
       {schemaSummary ? <MongoInspectSchemaTable summary={schemaSummary} /> : null}
+      {execution.tool === 'findMongoDocuments' && execution.data ? (
+        <MongoInspectFindTable data={execution.data} />
+      ) : null}
       {execution.tool === 'aggregateMongoCollection' && execution.data ? (
         <AggregateToolExecutionResults
           embedded
@@ -96,13 +102,17 @@ export function ToolExecutionCard({ execution }: ToolExecutionCardProps) {
         </div>
       ) : null}
       {!hasStructuredOutput && execution.delta.length > 0 ? (
-        <ul className="copilot-tool-card__delta">
-          {execution.delta.map((line) => (
-            <li key={line}>
-              <code>{line}</code>
-            </li>
-          ))}
-        </ul>
+        <CopilotCollapsibleResults
+          summary={`Details — ${execution.delta.length.toLocaleString()} item${execution.delta.length === 1 ? '' : 's'}`}
+        >
+          <ul className="copilot-tool-card__delta">
+            {execution.delta.map((line) => (
+              <li key={line}>
+                <code>{line}</code>
+              </li>
+            ))}
+          </ul>
+        </CopilotCollapsibleResults>
       ) : null}
     </div>
   );

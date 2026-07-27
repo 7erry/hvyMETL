@@ -58,6 +58,7 @@ export function serializeMongoInspectToolResult(result: {
     'listMongoCollections',
     'listMongoCollectionIndexes',
     'describeMongoCollectionSchema',
+    'findMongoDocuments',
     'aggregateMongoCollection',
     'explainMongoOperation',
     'compareMongoCollectionToPlan',

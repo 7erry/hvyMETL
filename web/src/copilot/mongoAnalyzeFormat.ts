@@ -130,3 +130,60 @@ export function readMongoAggregateRows(data: unknown): {
     hasMoreThanReturned: totalCount > returnedCount,
   };
 }
+
+/** Read find query document rows from an inspect tool payload. */
+export function readMongoFindRows(data: unknown): {
+  database: string;
+  collection: string;
+  totalCount: number;
+  returnedCount: number;
+  rows: MongoAggregateRow[];
+  columns: string[];
+  previewTruncated: boolean;
+  hasMoreThanReturned: boolean;
+} {
+  const empty = {
+    database: '',
+    collection: '',
+    totalCount: 0,
+    returnedCount: 0,
+    rows: [] as MongoAggregateRow[],
+    columns: [] as string[],
+    previewTruncated: false,
+    hasMoreThanReturned: false,
+  };
+  if (!data || typeof data !== 'object') return empty;
+
+  const record = data as Record<string, unknown>;
+  const database = typeof record.database === 'string' ? record.database : '';
+  const collection = typeof record.collection === 'string' ? record.collection : '';
+  const totalMatchedCount =
+    typeof record.totalMatchedCount === 'number' && Number.isFinite(record.totalMatchedCount)
+      ? record.totalMatchedCount
+      : undefined;
+
+  const normalized = normalizeAggregateInspectPayload(record.result ?? record);
+  const resultMeta =
+    record.result && typeof record.result === 'object'
+      ? (record.result as { queryResultsCount?: number })
+      : {};
+  const returnedCount =
+    typeof resultMeta.queryResultsCount === 'number' && Number.isFinite(resultMeta.queryResultsCount)
+      ? resultMeta.queryResultsCount
+      : normalized.documents.length;
+  const totalCount = totalMatchedCount ?? normalized.count ?? returnedCount;
+
+  const rows = normalized.documents.map((document) => flattenDocument(document));
+  const columns = [...new Set(rows.flatMap((row) => Object.keys(row)))].slice(0, 12);
+
+  return {
+    database,
+    collection,
+    totalCount,
+    returnedCount,
+    rows,
+    columns,
+    previewTruncated: isAggregatePreviewTruncated(normalized),
+    hasMoreThanReturned: totalCount > returnedCount,
+  };
+}

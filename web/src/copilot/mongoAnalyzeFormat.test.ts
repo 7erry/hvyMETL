@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { readMongoAggregateRows, readMongoCompareRows, readMongoExplainView } from './mongoAnalyzeFormat';
+import {
+  readMongoAggregateRows,
+  readMongoCompareRows,
+  readMongoExplainView,
+  readMongoFindRows,
+} from './mongoAnalyzeFormat';
 
 describe('mongoAnalyzeFormat', () => {
   it('reads compare rows from inspect payloads', () => {
@@ -51,6 +56,25 @@ describe('mongoAnalyzeFormat', () => {
     expect(view.previewTruncated).toBe(true);
     expect(view.totalCount).toBe(148);
     expect(view.rows).toHaveLength(0);
+  });
+
+  it('reads find documents with total matched count from inspect payloads', () => {
+    const view = readMongoFindRows({
+      database: 'finops',
+      collection: 'accounts',
+      totalMatchedCount: 148,
+      result: {
+        queryResultsCount: 25,
+        documents: Array.from({ length: 25 }, (_, index) => ({ _id: index, current_balance: index * 1000 })),
+      },
+    });
+    expect(view.database).toBe('finops');
+    expect(view.collection).toBe('accounts');
+    expect(view.totalCount).toBe(148);
+    expect(view.returnedCount).toBe(25);
+    expect(view.rows).toHaveLength(25);
+    expect(view.hasMoreThanReturned).toBe(true);
+    expect(view.columns).toContain('current_balance');
   });
 
   it('reads explain summaries', () => {
