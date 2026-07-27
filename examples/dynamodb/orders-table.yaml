@@ -1,0 +1,51 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'AWS CloudFormation template to deploy a DynamoDB Orders table.'
+
+Resources:
+  OrdersTable:
+    Type: 'AWS::DynamoDB::Table'
+    Properties:
+      TableName: 'Production-Orders'
+      BillingMode: 'PAY_PER_REQUEST'
+
+      AttributeDefinitions:
+        - AttributeName: 'CustomerId'
+          AttributeType: 'S'
+        - AttributeName: 'OrderId'
+          AttributeType: 'S'
+        - AttributeName: 'OrderDate'
+          AttributeType: 'S'
+
+      KeySchema:
+        - AttributeName: 'CustomerId'
+          KeyType: 'HASH'
+        - AttributeName: 'OrderId'
+          KeyType: 'RANGE'
+
+      GlobalSecondaryIndexes:
+        - IndexName: 'DateIndex'
+          KeySchema:
+            - AttributeName: 'OrderDate'
+              KeyType: 'HASH'
+            - AttributeName: 'OrderId'
+              KeyType: 'RANGE'
+          Projection:
+            ProjectionType: 'ALL'
+
+      TimeToLiveSpecification:
+        AttributeName: 'ExpirationTime'
+        Enabled: true
+
+      SSESpecification:
+        SSEEnabled: true
+
+      Tags:
+        - Key: 'Environment'
+          Value: 'Production'
+        - Key: 'ManagedBy'
+          Value: 'CloudFormation'
+
+Outputs:
+  TableArn:
+    Description: 'The ARN of the created DynamoDB orders table.'
+    Value: !GetAtt OrdersTable.Arn

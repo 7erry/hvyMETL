@@ -6,7 +6,7 @@ import { readFileSync, mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { createSqliteAdapter } from '../adapters/sqlite.js';
 import type { MigrationPlan, SqlStructuralModel, WorkloadProfile } from '../types.js';
-import { parseDdlToModel } from '../utilities/ddlParser.js';
+import { parseSchemaImport } from '../utilities/schemaImport.js';
 import { enrichModelFromCsv } from '../utilities/csvModelEnrichment.js';
 import { resolveCsvSourcePath } from '../utilities/csvSource.js';
 import { buildMigrationPlan } from './patternSelector.js';
@@ -47,7 +47,7 @@ function loadModelFromOptions(options: ExplainOptions): SqlStructuralModel {
     throw new Error('Provide --source, --ddl, or --ddl-file.');
   }
   const dialect = options.dialect?.trim() || 'import';
-  return parseDdlToModel(ddlText, `ddl:${dialect}`);
+  return parseSchemaImport(ddlText, dialect, `ddl:${dialect}`);
 }
 
 /** Build or load a plan, then return a transformation summary. */

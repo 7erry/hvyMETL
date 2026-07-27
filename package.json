@@ -50,7 +50,8 @@
     "mongodb": "^7.3.0",
     "multer": "^2.0.2",
     "onnxruntime-node": "^1.26.0",
-    "swagger-ui-express": "^5.0.1"
+    "swagger-ui-express": "^5.0.1",
+    "yaml": "^2.9.0"
   },
   "devDependencies": {
     "@types/archiver": "^8.0.0",

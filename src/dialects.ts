@@ -30,6 +30,7 @@ const DIALECT_DEFINITIONS: DialectDefinition[] = [
   { id: 'bigquery', label: 'Google BigQuery', live: false, parserFamily: 'bigquery' },
   { id: 'spanner', label: 'Google Cloud Spanner', live: false, parserFamily: 'spanner' },
   { id: 'databricks', label: 'Databricks SQL / Spark SQL', live: false, parserFamily: 'spark' },
+  { id: 'dynamodb', label: 'Amazon DynamoDB (CloudFormation)', live: false, parserFamily: 'dynamodb' },
   { id: 'singlestore', label: 'SingleStore (MemSQL)', live: false, parserFamily: 'mysql' },
   { id: 'sap-hana', label: 'SAP HANA', live: false, parserFamily: 'hana' },
   { id: 'teradata', label: 'Teradata', live: false, parserFamily: 'teradata' },
@@ -54,6 +55,8 @@ const DIALECT_ALIASES: Record<string, string> = {
   'sap hana': 'sap-hana',
   'google-bigquery': 'bigquery',
   yugabytedb: 'yugabyte',
+  'aws-dynamodb': 'dynamodb',
+  'dynamo-db': 'dynamodb',
 };
 
 /** Normalize a dialect id or alias to a canonical supported id. */

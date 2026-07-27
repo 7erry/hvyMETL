@@ -85,6 +85,17 @@ export function resolveBuiltinExamplesDir(options?: {
   return { path: join(repoRoot, 'examples'), source: 'repo' };
 }
 
+/** Read the Description field from a CloudFormation template header. */
+function readCloudFormationDescription(filePath: string): string | undefined {
+  try {
+    const head = readFileSync(filePath, 'utf8').slice(0, 1200);
+    const descriptionMatch = head.match(/^Description:\s*(?:'([^']+)'|"([^"]+)"|(.+))$/m);
+    return descriptionMatch?.[1] ?? descriptionMatch?.[2] ?? descriptionMatch?.[3]?.trim();
+  } catch {
+    return undefined;
+  }
+}
+
 /** Read the first `--` comment line from a DDL file for list descriptions. */
 function readFirstCommentLine(filePath: string): string | undefined {
   try {
@@ -129,6 +140,23 @@ export function listBuiltinExamples(examplesDir: string): BuiltinExampleSummary[
           label: labelFromOracleFile(fileName),
           description: readFirstCommentLine(filePath) ?? 'Oracle DDL paste example.',
           dialect: 'oracle',
+        });
+      }
+      continue;
+    }
+
+    if (domain === 'dynamodb') {
+      const dynamoDir = join(examplesDir, domain);
+      for (const fileName of readdirSync(dynamoDir).sort()) {
+        if (!/\.(ya?ml|json|template)$/i.test(fileName)) continue;
+        const filePath = join(dynamoDir, fileName);
+        const baseName = fileName.replace(/\.(ya?ml|json|template)$/i, '');
+        const id = `${domain}/${fileName}`;
+        summaries.push({
+          id,
+          label: `DynamoDB ${baseName.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())}`,
+          description: readCloudFormationDescription(filePath) ?? 'DynamoDB CloudFormation template example.',
+          dialect: 'dynamodb',
         });
       }
       continue;

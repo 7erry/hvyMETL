@@ -13,14 +13,15 @@ import {
 } from './dialects.js';
 
 describe('dialects', () => {
-  it('registers twenty-two supported dialects including new warehouse and OLTP imports', () => {
-    expect(SUPPORTED_DIALECT_IDS).toHaveLength(22);
+  it('registers twenty-three supported dialects including DynamoDB CloudFormation import', () => {
+    expect(SUPPORTED_DIALECT_IDS).toHaveLength(23);
     expect(SUPPORTED_DIALECT_IDS).toEqual(
       expect.arrayContaining([
         'snowflake',
         'bigquery',
         'redshift',
         'databricks',
+        'dynamodb',
         'mariadb',
         'yugabyte',
         'singlestore',
@@ -51,6 +52,7 @@ describe('dialects', () => {
     expect(normalizeDialectId('hana')).toBe('sap-hana');
     expect(normalizeDialectId('google-bigquery')).toBe('bigquery');
     expect(normalizeDialectId('yugabytedb')).toBe('yugabyte');
+    expect(normalizeDialectId('aws-dynamodb')).toBe('dynamodb');
   });
 
   it('validates supported dialect ids', () => {
@@ -68,6 +70,7 @@ describe('dialects', () => {
 
   it('maps dialect labels and parser families', () => {
     expect(getDialectLabel('databricks')).toBe('Databricks SQL / Spark SQL');
+    expect(getDialectLabel('dynamodb')).toBe('Amazon DynamoDB (CloudFormation)');
     expect(getDialectParserFamily('redshift')).toBe('postgresql');
     expect(getDialectParserFamily('singlestore')).toBe('mysql');
     expect(getDialectParserFamily('sap-hana')).toBe('hana');

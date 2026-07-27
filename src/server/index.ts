@@ -23,6 +23,7 @@ import { loadKnowledgeBase } from '../rag/chunker.js';
 import { createRetrievalConfigFromEnv, retrieve } from '../rag/retrieval.js';
 import { buildPromptBundle, buildRetrievalQuery } from '../rag/promptBundle.js';
 import { parseDdlToModel } from '../utilities/ddlParser.js';
+import { parseSchemaImport } from '../utilities/schemaImport.js';
 import { generateMockCsvFromDdl, verifyMockCsvGenerator } from '../utilities/mockCsvFromDdl.js';
 import type { MigrationPlan, SqlStructuralModel } from '../types.js';
 import { readCsvToAtlasPathFromEnv } from '../utilities/csvToAtlas.js';
@@ -375,7 +376,7 @@ app.post('/api/schema/import-ddl', (req, res) => {
     return;
   }
   try {
-    const model = parseDdlToModel(ddl, `ddl:${dialect}`);
+    const model = parseSchemaImport(ddl, dialect, `ddl:${dialect}`);
     const inferred = inferWorkloadProfile(model);
     res.json({ model, dialect, tableCount: model.tables.length, inferred });
   } catch (error) {
@@ -404,7 +405,7 @@ app.post('/api/schema/import-builtin-example', (req, res) => {
   try {
     const location = resolveBuiltinExamplesDir();
     const { ddl, dialect, summary } = readBuiltinExample(location.path, exampleId);
-    const model = parseDdlToModel(ddl, `example:${exampleId}`);
+    const model = parseSchemaImport(ddl, dialect, `example:${exampleId}`);
     const inferred = inferWorkloadProfile(model);
     res.json({
       model,
@@ -461,7 +462,7 @@ app.post('/api/design', async (req, res) => {
     const { tenantId, csvAllowedRoots } = tenantContextFromRequest(req);
     let model: SqlStructuralModel;
     if (req.body?.ddl) {
-      model = parseDdlToModel(String(req.body.ddl), `ddl:${req.body?.dialect ?? 'import'}`);
+      model = parseSchemaImport(String(req.body.ddl), String(req.body?.dialect ?? 'import'));
     } else if (req.body?.model) {
       model = req.body.model as SqlStructuralModel;
     } else {
@@ -558,7 +559,7 @@ app.post('/api/design/explain', (req, res) => {
   try {
     let model: SqlStructuralModel;
     if (req.body?.ddl) {
-      model = parseDdlToModel(String(req.body.ddl), `ddl:${req.body?.dialect ?? 'import'}`);
+      model = parseSchemaImport(String(req.body.ddl), String(req.body?.dialect ?? 'import'));
     } else if (req.body?.model) {
       model = req.body.model as SqlStructuralModel;
     } else {
