@@ -85,6 +85,7 @@ export function translateSQLToMongo(context: TranslateContext): SqlTranslationOu
   }
 
   return {
+    collectionName,
     aggregationPipeline: pipelineJson,
     mongooseScript,
     shellScript,

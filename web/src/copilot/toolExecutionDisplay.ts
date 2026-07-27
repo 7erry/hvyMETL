@@ -1,4 +1,5 @@
 import type { SqlTranslationOutput, ToolExecutionResult } from './types';
+import { inferCollectionNameFromShell } from './runTranslationPipeline';
 
 /** Parse SqlTranslationOutput from a tool execution payload. */
 export function readSqlTranslationOutput(data: unknown): SqlTranslationOutput | null {
@@ -12,7 +13,12 @@ export function readSqlTranslationOutput(data: unknown): SqlTranslationOutput | 
   ) {
     return null;
   }
+  const collectionName =
+    typeof record.collectionName === 'string' && record.collectionName.trim()
+      ? record.collectionName
+      : inferCollectionNameFromShell(record.shellScript);
   return {
+    collectionName,
     aggregationPipeline: record.aggregationPipeline,
     mongooseScript: record.mongooseScript,
     shellScript: record.shellScript,

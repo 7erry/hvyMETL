@@ -5506,6 +5506,24 @@ textarea {
   position: relative;
 }
 
+.copilot-translator__code-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.45rem;
+  margin-bottom: 0.35rem;
+}
+
+.copilot-translator__run-btn {
+  font-size: 0.72rem;
+  padding: 0.28rem 0.65rem;
+}
+
+.copilot-translator__run-error {
+  margin: 0.35rem 0 0;
+  font-size: 0.72rem;
+  color: #ffabab;
+}
+
 .copilot-translator__code-wrap--fill {
   flex: 1;
   min-height: 0;

@@ -73,7 +73,14 @@ export function ToolExecutionCard({ execution }: ToolExecutionCardProps) {
       {execution.tool === 'compareMongoCollectionToPlan' && execution.data ? (
         <MongoAnalyzeCompareTable data={execution.data} />
       ) : null}
-      {sqlTranslation ? <SqlTranslationOutputView output={sqlTranslation} showTranslatorTabHint /> : null}
+      {sqlTranslation ? (
+        <SqlTranslationOutputView
+          output={sqlTranslation}
+          showTranslatorTabHint
+          onRunPipeline={copilot.runSqlTranslationPipeline}
+          mongoInspectAvailable={copilot.mongoInspectAvailable}
+        />
+      ) : null}
       {execution.nextStep ? (
         <div className="copilot-tool-card__next-step">
           <span className="copilot-tool-card__next-step-label">Next step</span>

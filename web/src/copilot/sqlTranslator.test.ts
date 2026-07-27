@@ -21,6 +21,7 @@ ORDER BY o.order_date DESC, o.order_id;
       order_date: -1,
       order_id: 1,
     });
+    expect(result.collectionName).toBe('orders');
   });
 
   it('maps ASC explicitly to 1', () => {

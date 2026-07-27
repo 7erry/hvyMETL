@@ -9,7 +9,7 @@ Open it with **⌘K** / **Ctrl+K** or the **◈ Agent** launcher. The header sho
 | Tab | Purpose |
 | --- | --- |
 | **Chat** | Natural language, slash commands, quick-action chips, tool execution cards |
-| **Query Translator** | Paste T-SQL / PostgreSQL and get aggregation pipeline JSON, Mongoose script, shell code, and index recommendations |
+| **Query Translator** | Paste T-SQL / PostgreSQL and get aggregation pipeline JSON, Mongoose script, shell code, and index recommendations. Use **Run Code** on the Aggregation JSON tab to execute the pipeline against Atlas (requires MongoDB inspect). |
 
 ## Guided migration workflow
 

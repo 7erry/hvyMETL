@@ -32,6 +32,7 @@ import {
 import { buildDatasetScaleContext } from './buildDatasetScaleContext';
 import { buildMongoInspectDelta, serializeMongoInspectToolResult } from './mongoInspectDisplay';
 import { buildMongoPlanContext } from './mongoPlanContextPayload';
+import { buildAggregateInspectArgs } from './runTranslationPipeline';
 import { buildSchemaContextPayload } from './schemaContext';
 import { serializeCanvasToolResult, toolExecutionHasStructuredOutput } from './toolExecutionDisplay';
 import { fetchCopilotStatus, invokeCopilotMongoInspect, sendCopilotChat } from '../api';
@@ -82,6 +83,8 @@ export type CopilotContextValue = {
   applySelfHeal: () => void;
   applyToolMutations: (mutation: AgentToolMutation) => void;
   translateSql: (sqlQuery: string) => void;
+  /** Execute the translated aggregation pipeline against Atlas. */
+  runSqlTranslationPipeline: (output?: SqlTranslationOutput) => Promise<ToolExecutionResult>;
   /** Run a one-click migration workflow follow-up from a tool result card. */
   runNextStep: (step: CopilotNextStep) => void;
   /** Append a workflow-style tool result card (e.g. after pipeline import completes). */
@@ -692,6 +695,37 @@ export function CopilotProvider({
     [runTool],
   );
 
+  const runSqlTranslationPipeline = useCallback(
+    async (output?: SqlTranslationOutput): Promise<ToolExecutionResult> => {
+      const translation = output ?? sqlTranslation;
+      if (!translation) {
+        return {
+          tool: 'aggregateMongoCollection',
+          summary: 'Translate SQL first to generate an aggregation pipeline.',
+          delta: [],
+          ok: false,
+        };
+      }
+
+      setStatus('mutating');
+      try {
+        const args = buildAggregateInspectArgs(translation);
+        return await runMongoInspectTool('aggregateMongoCollection', args);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        return {
+          tool: 'aggregateMongoCollection',
+          summary: message,
+          delta: [],
+          ok: false,
+        };
+      } finally {
+        setStatus('idle');
+      }
+    },
+    [runMongoInspectTool, sqlTranslation],
+  );
+
   const value = useMemo<CopilotContextValue>(
     () => ({
       open,
@@ -738,6 +772,7 @@ export function CopilotProvider({
       },
       applyToolMutations,
       translateSql,
+      runSqlTranslationPipeline,
       runNextStep,
       showWorkflowResult,
       registerChatInputFocus,
@@ -770,6 +805,7 @@ export function CopilotProvider({
       onReRunPipeline,
       applyToolMutations,
       translateSql,
+      runSqlTranslationPipeline,
       runNextStep,
       showWorkflowResult,
       registerChatInputFocus,

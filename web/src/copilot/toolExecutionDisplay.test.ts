@@ -3,6 +3,7 @@ import { countSqlTranslationLines, readSqlTranslationOutput, resolveSqlTranslati
 
 describe('toolExecutionDisplay sql translation', () => {
   const sample = {
+    collectionName: 'orders',
     aggregationPipeline: '[\n  { "$match": {} }\n]',
     mongooseScript: 'await Model.aggregate([])',
     shellScript: 'db.orders.aggregate([])',

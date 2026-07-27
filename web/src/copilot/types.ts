@@ -147,6 +147,7 @@ export type GuardrailIssue = {
 };
 
 export type SqlTranslationOutput = {
+  collectionName: string;
   aggregationPipeline: string;
   mongooseScript: string;
   shellScript: string;

@@ -111,7 +111,12 @@ export function QueryTranslatorPanel() {
             aria-label="Translation output"
           >
             {output ? (
-              <SqlTranslationOutputView output={output} layout="panel" />
+              <SqlTranslationOutputView
+                output={output}
+                layout="panel"
+                onRunPipeline={copilot.runSqlTranslationPipeline}
+                mongoInspectAvailable={copilot.mongoInspectAvailable}
+              />
             ) : (
               <p className="copilot-translator__placeholder">
                 Drag the divider above to resize panels. Translation output appears here after you click Translate.
