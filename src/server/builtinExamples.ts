@@ -7,6 +7,7 @@ import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { dirname, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { dialectExampleFor, dialectExamplePickerLabel } from '../examples/dialectPatternManifest.js';
 
 const REPO_ROOT = join(dirname(fileURLToPath(import.meta.url)), '../..');
 
@@ -192,16 +193,17 @@ export function listBuiltinExamples(examplesDir: string): BuiltinExampleSummary[
         const filePath = join(dialectDir, fileName);
         const dialectId = fileName.replace(/\.(sql|ya?ml)$/i, '');
         const id = `${domain}/${fileName}`;
+        const manifestEntry = dialectExampleFor(dialectId);
         const description =
           dialectId === 'dynamodb'
             ? readCloudFormationDescription(filePath)
             : readFirstCommentLine(filePath);
         summaries.push({
           id,
-          label: `Dialect Demo (${dialectId})`,
+          label: manifestEntry ? dialectExamplePickerLabel(manifestEntry) : dialectId,
           description: description ?? `Design-pattern example for ${dialectId}.`,
           dialect: dialectId === 'dynamodb' ? 'dynamodb' : dialectId,
-          suggestedProfileId: inferDialectExampleProfile(description ?? ''),
+          suggestedProfileId: manifestEntry?.suggestedProfileId ?? inferDialectExampleProfile(description ?? ''),
         });
       }
       continue;

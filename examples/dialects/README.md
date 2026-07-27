@@ -45,7 +45,7 @@ npm test -- src/examples/dialectExamples.test.ts
 | `teradata` | archive | catalog | [`teradata.sql`](teradata.sql) |
 | `yugabyte` | schema-versioning | catalog | [`yugabyte.sql`](yugabyte.sql) |
 
-Load any row from Migration Studio **Load example** (picker label: `Dialect Demo ({dialect})`)
+Load any row from Migration Studio **Load example** (picker label: `{Dialect} - {Profile}`, e.g. `IBM Db2 - CMS`)
 or paste the file into **Import DDL** with the matching dialect selected.
 
 See also [`docs/18-sql-dialects.md`](../docs/18-sql-dialects.md) §6 and

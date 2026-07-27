@@ -190,7 +190,7 @@ examples/dialects/
 ```
 
 Each file demonstrates one MongoDB design pattern (embed, bucket, tree, …).
-Load from Migration Studio **Load example** (`Dialect Demo ({dialect})`) or paste
+Load from Migration Studio **Load example** (`{Dialect} - {Profile}`, e.g. `IBM Db2 - CMS`) or paste
 with the matching dialect selected. Regenerate: `npm run generate-dialect-examples`.
 
 ## 6. Refactoring / Roadmap

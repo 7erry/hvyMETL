@@ -4,7 +4,7 @@
  * randomized pick while remaining reproducible in tests and docs.
  */
 
-import { SUPPORTED_DIALECT_IDS } from '../dialects.js';
+import { SUPPORTED_DIALECT_IDS, getDialectLabel } from '../dialects.js';
 import type { PatternId } from '../types.js';
 
 /** Design patterns emitted by the rule engine (excludes profile-only preallocation). */
@@ -87,6 +87,41 @@ export const DIALECT_PATTERN_MANIFEST: DialectExampleEntry[] = SHUFFLED_DIALECTS
     fileName: `${dialectId}.${extension}`,
   };
 });
+
+/** Short workload profile titles for Load example picker labels (`{Dialect} - {Profile}`). */
+export const PROFILE_PICKER_LABELS: Record<string, string> = {
+  catalog: 'Catalog',
+  cms: 'CMS',
+  iot: 'IoT',
+  mobile: 'Mobile',
+  ledger: 'Ledger',
+};
+
+/** Short pattern titles (used in docs and file headers). */
+export const PATTERN_PICKER_LABELS: Record<PatternId, string> = {
+  embed: 'Embed',
+  reference: 'Reference',
+  bucket: 'Bucket',
+  outlier: 'Outlier',
+  'extended-reference': 'Extended Reference',
+  computed: 'Computed',
+  subset: 'Subset',
+  attribute: 'Attribute',
+  polymorphic: 'Polymorphic',
+  tree: 'Tree',
+  archive: 'Archive',
+  'single-collection': 'Single Collection',
+  'schema-versioning': 'Schema Versioning',
+  'pre-allocation': 'Pre-allocation',
+};
+
+/** Human-readable Load example label for a dialect design-pattern bundle. */
+export function dialectExamplePickerLabel(entry: DialectExampleEntry): string {
+  const profileLabel =
+    PROFILE_PICKER_LABELS[entry.suggestedProfileId] ??
+    entry.suggestedProfileId.replace(/\b\w/g, (character) => character.toUpperCase());
+  return `${getDialectLabel(entry.dialectId)} - ${profileLabel}`;
+}
 
 /** Lookup pattern assignment for a dialect id. */
 export function dialectExampleFor(dialectId: string): DialectExampleEntry | undefined {

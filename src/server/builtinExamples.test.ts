@@ -96,6 +96,16 @@ describe('repo bundled examples', () => {
     expect(ddl).toContain('CREATE TABLE journal_entries');
   });
 
+  it('labels dialect examples as Dialect - Profile in the Load example picker', () => {
+    const { path } = resolveBuiltinExamplesDir();
+    const db2 = listBuiltinExamples(path).find((item) => item.id === 'dialects/db2.sql');
+    expect(db2?.label).toBe('IBM Db2 - CMS');
+    expect(db2?.suggestedProfileId).toBe('cms');
+
+    const clickhouse = listBuiltinExamples(path).find((item) => item.id === 'dialects/clickhouse.sql');
+    expect(clickhouse?.label).toBe('ClickHouse - Catalog');
+  });
+
   it('lists one design-pattern example per supported dialect', () => {
     const { path } = resolveBuiltinExamplesDir();
     const dialectExamples = listBuiltinExamples(path)
