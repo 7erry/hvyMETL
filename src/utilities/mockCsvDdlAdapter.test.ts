@@ -54,8 +54,45 @@ describe('generateMockCsvFromDdl dynamodb', () => {
       expect.fail(`expected mock generator ready: ${status.message}`);
     }
 
-    const outDir = join(ROOT, '.tmp-mock-csv-dynamodb-test');
-    const result = generateMockCsvFromDdl(DYNAMODB_EXAMPLE, outDir, ROOT, { dialect: 'dynamodb' });
-    expect(result.tables.sort()).toEqual(['Products', 'Reviews']);
+    const outDir = mkdtempSync(join(tmpdir(), 'hvymetl-mock-csv-dynamodb-'));
+    try {
+      const result = generateMockCsvFromDdl(DYNAMODB_EXAMPLE, outDir, ROOT, { dialect: 'dynamodb' });
+      expect(result.tables.sort()).toEqual(['Products', 'Reviews']);
+    } finally {
+      rmSync(outDir, { recursive: true, force: true });
+    }
+  });
+});
+
+describe('generateMockCsvFromDdl composite keys', () => {
+  it('keeps checksum_type_id columns that start with "check"', () => {
+    const status = verifyMockCsvGenerator(ROOT);
+    if (!status.ok) {
+      expect.fail(`expected mock generator ready: ${status.message}`);
+    }
+
+    const ddl = `
+CREATE TABLE refdata_checksum_type (id UUID PRIMARY KEY, code VARCHAR(255));
+CREATE TABLE container (id UUID PRIMARY KEY, file_size BIGINT);
+CREATE TABLE checksum (
+    checksum_type_id UUID REFERENCES refdata_checksum_type(id),
+    container_id UUID REFERENCES container(id),
+    value VARCHAR(255),
+    PRIMARY KEY (container_id, checksum_type_id)
+);
+`;
+
+    const outDir = mkdtempSync(join(tmpdir(), 'hvymetl-mock-csv-checksum-'));
+    try {
+      const result = generateMockCsvFromDdl(ddl, outDir, ROOT);
+      expect(result.tables).toContain('checksum');
+
+      const header = readFileSync(join(outDir, 'checksum.csv'), 'utf8').split('\n')[0];
+      expect(header).toContain('checksum_type_id');
+      expect(header).toContain('container_id');
+      expect(header).toContain('value');
+    } finally {
+      rmSync(outDir, { recursive: true, force: true });
+    }
   });
 });

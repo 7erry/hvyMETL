@@ -230,9 +230,22 @@ def parse_foreign_key_line(line: str) -> Optional[ForeignKey]:
     return None
 
 
+def is_standalone_table_constraint_line(trimmed: str) -> bool:
+    """True for table-level constraint clauses, not column definitions like checksum_type_id."""
+    upper = trimmed.upper()
+    if upper.startswith(("PRIMARY KEY", "CONSTRAINT", "FOREIGN KEY")):
+        return True
+    if re.match(r"^UNIQUE\s*\(", trimmed, re.I):
+        return True
+    # Match CHECK (...) constraints only — not column names such as checksum_type_id or checkpoint_id.
+    if re.match(r"^CHECK\s*\(", trimmed, re.I):
+        return True
+    return False
+
+
 def parse_column_line(line: str) -> Optional[Column]:
     trimmed = strip_sql_line_comment(line.strip())
-    if not trimmed or trimmed.upper().startswith(("PRIMARY KEY", "UNIQUE", "CHECK", "CONSTRAINT", "FOREIGN KEY")):
+    if not trimmed or is_standalone_table_constraint_line(trimmed):
         return None
 
     name_match = re.match(r'^["\']?([\w$#@]+)["\']?\s+(.+)$', trimmed, re.S)
