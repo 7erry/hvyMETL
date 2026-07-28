@@ -14,10 +14,10 @@ describe('translateSQLToMongo WHERE', () => {
     expect(result.shellScript).toContain('db.accounts.aggregate(');
     expect(pipeline[1]).toEqual({
       $match: {
-        current_balance: { $gt: 9000 },
+        currentBalance: { $gt: 9000 },
       },
     });
-    expect(result.indexRecommendations[0]).toContain('current_balance');
+    expect(result.indexRecommendations[0]).toContain('currentBalance');
   });
 
   it('translates AND-combined predicates', () => {
@@ -30,9 +30,39 @@ describe('translateSQLToMongo WHERE', () => {
     const pipeline = JSON.parse(result.aggregationPipeline) as Record<string, unknown>[];
     expect(pipeline[1]).toEqual({
       $match: {
-        $and: [{ current_balance: { $gt: 9000 } }, { status: 'ACTIVE' }],
+        $and: [{ currentBalance: { $gt: 9000 } }, { status: 'ACTIVE' }],
       },
     });
+  });
+
+  it('translates IN lists on joined tables after lookups', () => {
+    const result = translateSQLToMongo({
+      sqlQuery: `
+SELECT comp.id
+FROM component comp
+JOIN approval a ON comp.id = a.component_id
+LEFT JOIN refdata_approval_status ras ON a.status = ras.id
+WHERE ras.code IN ('APPROVED', 'PENDING');
+`.trim(),
+      model: null,
+      plan: null,
+    });
+
+    const pipeline = JSON.parse(result.aggregationPipeline) as Record<string, unknown>[];
+    const joinedMatch = pipeline.find(
+      (stage) =>
+        '$match' in stage &&
+        typeof stage.$match === 'object' &&
+        stage.$match !== null &&
+        'refdataApprovalStatus.code' in (stage.$match as Record<string, unknown>),
+    ) as { $match: Record<string, unknown> };
+
+    expect(joinedMatch.$match).toEqual({
+      'refdataApprovalStatus.code': { $in: ['APPROVED', 'PENDING'] },
+    });
+    expect(pipeline.some((stage) => '$lookup' in stage && (stage.$lookup as { from: string }).from === 'approval')).toBe(
+      true,
+    );
   });
 });
 
@@ -53,8 +83,8 @@ ORDER BY o.order_date DESC, o.order_id;
     const sortStage = pipeline.find((stage) => '$sort' in stage) as { $sort: Record<string, number> };
 
     expect(sortStage.$sort).toEqual({
-      order_date: -1,
-      order_id: 1,
+      orderDate: -1,
+      orderId: 1,
     });
     expect(result.collectionName).toBe('orders');
   });
@@ -69,6 +99,51 @@ ORDER BY o.order_date DESC, o.order_id;
     const pipeline = JSON.parse(result.aggregationPipeline) as Record<string, unknown>[];
     const sortStage = pipeline.find((stage) => '$sort' in stage) as { $sort: Record<string, number> };
 
-    expect(sortStage.$sort).toEqual({ created_at: 1 });
+    expect(sortStage.$sort).toEqual({ createdAt: 1 });
+  });
+});
+
+describe('translateSQLToMongo joins and projection', () => {
+  it('translates a multi-join approval query with project and sort', () => {
+    const result = translateSQLToMongo({
+      sqlQuery: `
+SELECT
+    comp.id AS component_id,
+    rct.label AS component_type,
+    app.first_name || ' ' || app.last_name AS approver_full_name,
+    app.email AS approver_email,
+    ras.label AS approval_status,
+    a.last_modified_date_time AS approval_date
+FROM component comp
+JOIN approval a ON comp.id = a.component_id
+JOIN approver app ON a.approver = app.id
+LEFT JOIN refdata_approval_status ras ON a.status = ras.id
+LEFT JOIN refdata_component_type rct ON comp.component_type_id = rct.id
+WHERE ras.code IN ('APPROVED', 'PENDING')
+ORDER BY a.last_modified_date_time DESC;
+`.trim(),
+      model: null,
+      plan: null,
+    });
+
+    const pipeline = JSON.parse(result.aggregationPipeline) as Record<string, unknown>[];
+    expect(result.collectionName).toBe('component');
+    expect(pipeline.some((stage) => '$lookup' in stage && (stage.$lookup as { from: string }).from === 'approver')).toBe(
+      true,
+    );
+
+    const projectStage = pipeline.find((stage) => '$project' in stage) as { $project: Record<string, unknown> };
+    expect(projectStage.$project.componentId).toBe('$_id');
+    expect(projectStage.$project.approverFullName).toEqual({
+      $concat: ['$approver.firstName', ' ', '$approver.lastName'],
+    });
+
+    const sortStage = pipeline.find((stage) => '$sort' in stage) as { $sort: Record<string, number> };
+    expect(sortStage.$sort).toEqual({ 'approval.lastModifiedDateTime': -1 });
+
+    const fallback = pipeline.find(
+      (stage) => '$match' in stage && JSON.stringify(stage).includes('Review WHERE'),
+    );
+    expect(fallback).toBeUndefined();
   });
 });
