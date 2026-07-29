@@ -926,6 +926,29 @@ function planBucketCollection(
 }
 
 /**
+ * Direct embed plans for every table that acts as a parent in the model.
+ * Used by the CSV shaper to nest grandchildren inside embedded array cells
+ * when intermediate tables were absorbed into a top-level collection.
+ */
+export function buildDirectEmbedPlansByTable(
+  model: SqlStructuralModel,
+  profile: WorkloadProfile,
+): Map<string, EmbeddedArrayPlan[]> {
+  const tablesByName = new Map(model.tables.map((table) => [table.name, table]));
+  const embedPlansByTable = new Map<string, EmbeddedArrayPlan[]>();
+
+  for (const table of model.tables) {
+    if (isEavTable(table) || isJunctionTable(table)) continue;
+    const childPlan = planChildRelationships(table, model, profile, tablesByName, new Set());
+    if (childPlan.embeddedArrays.length > 0) {
+      embedPlansByTable.set(table.name, childPlan.embeddedArrays);
+    }
+  }
+
+  return embedPlansByTable;
+}
+
+/**
  * Build the full migration plan for a structural model under a profile.
  * This function is pure and deterministic: same inputs, same plan.
  */

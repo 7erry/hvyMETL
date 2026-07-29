@@ -8,12 +8,14 @@
  */
 
 import { writeFileSync } from 'node:fs';
-import type { CollectionPlan, SqlStructuralModel, TableModel } from '../types.js';
+import type { CollectionPlan, EmbeddedArrayPlan, SqlStructuralModel, TableModel } from '../types.js';
 import { findDateColumn, isEavTable, isJunctionTable } from '../design/patternSelector.js';
-import { toCamelCase, singularize } from './naming.js';
+import { toCamelCase } from './naming.js';
 import { loadTableCsvRows } from './csvModelEnrichment.js';
 import { formatCsvRow } from './csv.js';
 import { deriveId } from './ids.js';
+
+const MAX_EMBED_DEPTH = 12;
 
 function requireTable(model: SqlStructuralModel, name: string): TableModel {
   const table = model.tables.find((candidate) => candidate.name === name);
@@ -29,16 +31,6 @@ export function collectionNeedsShapedCsv(collection: CollectionPlan): boolean {
     collection.computedFields.length > 0 ||
     Boolean(collection.bucket)
   );
-}
-
-/** Build one child object for embedding, camelCasing keys and omitting the join FK. */
-function childRowToEmbeddedObject(child: TableModel, row: Record<string, string>, joinColumn: string): Record<string, string> {
-  const object: Record<string, string> = {};
-  for (const column of child.columns) {
-    if (column.name === joinColumn) continue;
-    object[toCamelCase(column.name)] = row[column.name] ?? '';
-  }
-  return object;
 }
 
 function findEavColumns(child: TableModel): { keyColumn: string; valueColumn: string } {
@@ -57,6 +49,31 @@ function normalizeJoinKey(value: string | undefined): string {
   return trimmed;
 }
 
+function sortChildRows(child: TableModel, rows: Record<string, string>[]): Record<string, string>[] {
+  const dateColumn = findDateColumn(child);
+  const orderColumn = dateColumn?.name ?? child.primaryKey[0] ?? child.columns[0]?.name;
+  if (!orderColumn) return rows;
+  return [...rows].sort((left, right) => String(right[orderColumn]).localeCompare(String(left[orderColumn])));
+}
+
+/** Lazily load and index child CSV rows keyed by parent join column. */
+class ChildRowIndexCache {
+  private readonly indexes = new Map<string, Map<string, Record<string, string>[]>>();
+
+  constructor(private readonly csvRoot: string) {}
+
+  get(sourceTable: string, joinColumn: string): Map<string, Record<string, string>[]> {
+    const cacheKey = `${sourceTable}::${joinColumn}`;
+    const cached = this.indexes.get(cacheKey);
+    if (cached) return cached;
+
+    const childRows = loadTableCsvRows(this.csvRoot, sourceTable);
+    const indexed = indexChildRows(childRows, joinColumn);
+    this.indexes.set(cacheKey, indexed);
+    return indexed;
+  }
+}
+
 function indexChildRows(childRows: Record<string, string>[], joinColumn: string): Map<string, Record<string, string>[]> {
   const byParent = new Map<string, Record<string, string>[]>();
   for (const row of childRows) {
@@ -69,34 +86,65 @@ function indexChildRows(childRows: Record<string, string>[], joinColumn: string)
   return byParent;
 }
 
-function sortChildRows(child: TableModel, rows: Record<string, string>[]): Record<string, string>[] {
-  const dateColumn = findDateColumn(child);
-  const orderColumn = dateColumn?.name ?? child.primaryKey[0] ?? child.columns[0]?.name;
-  if (!orderColumn) return rows;
-  return [...rows].sort((left, right) => String(right[orderColumn]).localeCompare(String(left[orderColumn])));
+function buildEmbeddedObject(
+  child: TableModel,
+  row: Record<string, string>,
+  joinColumn: string,
+  embedPlansByTable: Map<string, EmbeddedArrayPlan[]>,
+  model: SqlStructuralModel,
+  rowIndexCache: ChildRowIndexCache,
+  depth: number,
+): Record<string, unknown> {
+  const object: Record<string, unknown> = {};
+  for (const column of child.columns) {
+    if (column.name === joinColumn) continue;
+    object[toCamelCase(column.name)] = row[column.name] ?? '';
+  }
+
+  if (depth >= MAX_EMBED_DEPTH) return object;
+
+  for (const nestedPlan of embedPlansByTable.get(child.name) ?? []) {
+    const nestedChild = requireTable(model, nestedPlan.sourceTable);
+    const nestedIndex = rowIndexCache.get(nestedPlan.sourceTable, nestedPlan.joinColumn);
+    object[nestedPlan.field] = buildEmbeddedArrayItems(
+      nestedPlan,
+      nestedChild,
+      child,
+      row,
+      nestedIndex,
+      embedPlansByTable,
+      model,
+      rowIndexCache,
+      depth + 1,
+    );
+  }
+
+  return object;
 }
 
-function buildEmbeddedArrayValue(
-  arrayPlan: CollectionPlan['embeddedArrays'][number],
+function buildEmbeddedArrayItems(
+  arrayPlan: EmbeddedArrayPlan,
   child: TableModel,
   parentTable: TableModel,
   parentRow: Record<string, string>,
   childIndex: Map<string, Record<string, string>[]>,
-): string {
+  embedPlansByTable: Map<string, EmbeddedArrayPlan[]>,
+  model: SqlStructuralModel,
+  rowIndexCache: ChildRowIndexCache,
+  depth: number,
+): unknown[] {
   const parentPk = parentTable.primaryKey[0] ?? parentTable.columns[0]?.name;
   const parentKey = normalizeJoinKey(parentPk ? parentRow[parentPk] : '');
   let children = childIndex.get(parentKey) ?? [];
 
   if (isEavTable(child)) {
     const { keyColumn, valueColumn } = findEavColumns(child);
-    const items = children.map((row) => ({ k: row[keyColumn] ?? '', v: row[valueColumn] ?? '' }));
-    return JSON.stringify(items);
+    return children.map((row) => ({ k: row[keyColumn] ?? '', v: row[valueColumn] ?? '' }));
   }
 
   if (isJunctionTable(child)) {
     const otherFk = child.foreignKeys.find((fk) => fk.referencesTable !== parentTable.name) ?? child.foreignKeys[1];
-    const ids = children.map((row) => (otherFk ? row[otherFk.column] ?? '' : ''));
-    return JSON.stringify(ids);
+    return children.map((row) => (otherFk ? row[otherFk.column] ?? '' : ''));
   }
 
   children = sortChildRows(child, children);
@@ -104,7 +152,32 @@ function buildEmbeddedArrayValue(
     children = children.slice(0, arrayPlan.subsetLimit);
   }
 
-  const items = children.map((row) => childRowToEmbeddedObject(child, row, arrayPlan.joinColumn));
+  return children.map((row) =>
+    buildEmbeddedObject(child, row, arrayPlan.joinColumn, embedPlansByTable, model, rowIndexCache, depth),
+  );
+}
+
+function buildEmbeddedArrayValue(
+  arrayPlan: EmbeddedArrayPlan,
+  child: TableModel,
+  parentTable: TableModel,
+  parentRow: Record<string, string>,
+  childIndex: Map<string, Record<string, string>[]>,
+  embedPlansByTable: Map<string, EmbeddedArrayPlan[]>,
+  model: SqlStructuralModel,
+  rowIndexCache: ChildRowIndexCache,
+): string {
+  const items = buildEmbeddedArrayItems(
+    arrayPlan,
+    child,
+    parentTable,
+    parentRow,
+    childIndex,
+    embedPlansByTable,
+    model,
+    rowIndexCache,
+    0,
+  );
   return JSON.stringify(items);
 }
 
@@ -123,10 +196,13 @@ export function shapeCollectionCsv(
   model: SqlStructuralModel,
   csvRoot: string,
   outputPath: string,
+  embedPlansByTable: Map<string, EmbeddedArrayPlan[]> = new Map(),
 ): string | null {
   const parentTable = requireTable(model, collection.sourceTable);
   const parentRows = loadTableCsvRows(csvRoot, parentTable.name);
   if (parentRows.length === 0) return null;
+
+  const rowIndexCache = new ChildRowIndexCache(csvRoot);
 
   const singlePk =
     collection.idDerivation.strategy === 'direct' ? collection.idDerivation.sourceColumns[0] : null;
@@ -154,8 +230,7 @@ export function shapeCollectionCsv(
   const childIndexes = new Map<string, Map<string, Record<string, string>[]>>();
   for (const arrayPlan of collection.embeddedArrays) {
     if (!childIndexes.has(arrayPlan.sourceTable)) {
-      const childRows = loadTableCsvRows(csvRoot, arrayPlan.sourceTable);
-      childIndexes.set(arrayPlan.sourceTable, indexChildRows(childRows, arrayPlan.joinColumn));
+      childIndexes.set(arrayPlan.sourceTable, rowIndexCache.get(arrayPlan.sourceTable, arrayPlan.joinColumn));
     }
   }
 
@@ -163,8 +238,7 @@ export function shapeCollectionCsv(
   for (const computed of collection.computedFields) {
     const parsed = parseComputedCountExpression(computed.initialExpression);
     if (!parsed || computedChildIndexes.has(parsed.childTable)) continue;
-    const childRows = loadTableCsvRows(csvRoot, parsed.childTable);
-    computedChildIndexes.set(parsed.childTable, indexChildRows(childRows, parsed.fkColumn));
+    computedChildIndexes.set(parsed.childTable, rowIndexCache.get(parsed.childTable, parsed.fkColumn));
   }
 
   const arrayHeaders = collection.embeddedArrays.map((array) => `${array.field}[]`);
@@ -204,7 +278,18 @@ export function shapeCollectionCsv(
     for (const arrayPlan of collection.embeddedArrays) {
       const child = requireTable(model, arrayPlan.sourceTable);
       const childIndex = childIndexes.get(arrayPlan.sourceTable)!;
-      values.push(buildEmbeddedArrayValue(arrayPlan, child, parentTable, parentRow, childIndex));
+      values.push(
+        buildEmbeddedArrayValue(
+          arrayPlan,
+          child,
+          parentTable,
+          parentRow,
+          childIndex,
+          embedPlansByTable,
+          model,
+          rowIndexCache,
+        ),
+      );
     }
 
     values.push(1);

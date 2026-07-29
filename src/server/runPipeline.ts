@@ -8,6 +8,7 @@ import { runInScopedEnv } from '../runtime/scopedEnv.js';
 import { DEFAULT_LOGICAL_TARGET_DB, tenantArtifactDir, tenantPipelineRunDir } from './tenant.js';
 import { writeDesignArtifacts, type DesignFromModelResult } from '../design/designFromModel.js';
 import { designFromModelWithMlEngine } from '../ml_engine/pipelinePatch.js';
+import { buildDirectEmbedPlansByTable } from '../design/patternSelector.js';
 import { triggerPostMigrationReflection } from '../ml_engine/feedbackHooks.js';
 import {
   configureMigrationStore,
@@ -297,13 +298,14 @@ async function runFullPipelineInner(
   const allCsvFiles = listCsvFiles(csvRoot);
   const shapedDir = join(outDir, 'csv-shaped');
   mkdirSync(shapedDir, { recursive: true });
+  const embedPlansByTable = buildDirectEmbedPlansByTable(enrichedModel, profile);
 
   reportProgress(request, { stage: 'shaping', message: 'Shaping CSV files with embedded arrays and references…' });
 
   const csvCollections = design.plan.collections.map((collection) => {
     if (collectionNeedsShapedCsv(collection)) {
       const shapedPath = join(shapedDir, `${collection.name}.csv`);
-      const written = shapeCollectionCsv(collection, enrichedModel, csvRoot, shapedPath);
+      const written = shapeCollectionCsv(collection, enrichedModel, csvRoot, shapedPath, embedPlansByTable);
       if (written) {
         return { name: collection.name, files: [written] };
       }
