@@ -125,4 +125,9 @@ describe('repo bundled examples', () => {
     expect(dialectExamples).toContain('dialects/dynamodb.yaml');
     expect(dialectExamples).toContain('dialects/json-schema.json');
   });
+
+  it('documents the full Load example catalog count (examples/README.md)', () => {
+    const { path } = resolveBuiltinExamplesDir();
+    expect(listBuiltinExamples(path)).toHaveLength(40);
+  });
 });
