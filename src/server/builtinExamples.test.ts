@@ -2,6 +2,11 @@ import { mkdtempSync, mkdirSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
+import { SUPPORTED_DIALECT_IDS } from '../dialects.js';
+import {
+  dialectExampleFor,
+  dialectExamplePickerLabel,
+} from '../examples/dialectPatternManifest.js';
 import {
   listBuiltinExamples,
   readBuiltinExample,
@@ -98,12 +103,15 @@ describe('repo bundled examples', () => {
 
   it('labels dialect examples as Dialect - Profile in the Load example picker', () => {
     const { path } = resolveBuiltinExamplesDir();
+    const db2Entry = dialectExampleFor('db2');
+    expect(db2Entry).toBeDefined();
     const db2 = listBuiltinExamples(path).find((item) => item.id === 'dialects/db2.sql');
-    expect(db2?.label).toBe('IBM Db2 - CMS');
-    expect(db2?.suggestedProfileId).toBe('cms');
+    expect(db2?.label).toBe(dialectExamplePickerLabel(db2Entry!));
+    expect(db2?.suggestedProfileId).toBe(db2Entry?.suggestedProfileId);
 
+    const clickhouseEntry = dialectExampleFor('clickhouse');
     const clickhouse = listBuiltinExamples(path).find((item) => item.id === 'dialects/clickhouse.sql');
-    expect(clickhouse?.label).toBe('ClickHouse - Catalog');
+    expect(clickhouse?.label).toBe(dialectExamplePickerLabel(clickhouseEntry!));
   });
 
   it('lists one design-pattern example per supported dialect', () => {
@@ -112,8 +120,9 @@ describe('repo bundled examples', () => {
       .filter((item) => item.id.startsWith('dialects/'))
       .map((item) => item.id)
       .sort();
-    expect(dialectExamples).toHaveLength(23);
+    expect(dialectExamples).toHaveLength(SUPPORTED_DIALECT_IDS.length);
     expect(dialectExamples).toContain('dialects/postgresql.sql');
     expect(dialectExamples).toContain('dialects/dynamodb.yaml');
+    expect(dialectExamples).toContain('dialects/json-schema.json');
   });
 });

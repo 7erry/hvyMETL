@@ -1,57 +1,56 @@
--- teradata dialect example — archive pattern: active orders plus orders_archive for Atlas Online Archive routing.
+-- teradata dialect example — outlier pattern: catalog products with skewed review volume and supporting merchandising tables.
 
-CREATE MULTISET TABLE customers (
+CREATE MULTISET TABLE brands (
   id INTEGER NOT NULL,
-  email VARCHAR(255) NOT NULL,
-  full_name VARCHAR(160) NOT NULL,
-  country CHAR(2) NOT NULL,
+  name VARCHAR(120) NOT NULL,
+  country VARCHAR(60) NOT NULL
+),
+  PRIMARY KEY (id)
+);
+CREATE MULTISET TABLE categories (
+  id INTEGER NOT NULL,
+  name VARCHAR(120) NOT NULL,
+  slug VARCHAR(140) NOT NULL
+),
+  PRIMARY KEY (id)
+);
+CREATE MULTISET TABLE products (
+  id INTEGER NOT NULL,
+  brand_id INTEGER NOT NULL REFERENCES brands(id),
+  category_id INTEGER NOT NULL REFERENCES categories(id),
+  sku VARCHAR(40) NOT NULL,
+  name VARCHAR(200) NOT NULL,
+  base_price_cents INTEGER NOT NULL,
+  review_count INTEGER NOT NULL DEFAULT 0,
+  is_active BOOLEAN NOT NULL DEFAULT 1
+),
+  PRIMARY KEY (id)
+);
+CREATE MULTISET TABLE product_variants (
+  id INTEGER NOT NULL,
+  product_id INTEGER NOT NULL REFERENCES products(id),
+  variant_sku VARCHAR(48) NOT NULL,
+  color VARCHAR(40),
+  size VARCHAR(20),
+  price_cents INTEGER NOT NULL
+),
+  PRIMARY KEY (id)
+);
+CREATE MULTISET TABLE reviews (
+  id INTEGER NOT NULL,
+  product_id INTEGER NOT NULL REFERENCES products(id),
+  reviewer_name VARCHAR(120) NOT NULL,
+  stars INTEGER NOT NULL,
+  title VARCHAR(200),
+  body TEXT,
   created_at DATETIME NOT NULL
 ),
   PRIMARY KEY (id)
 );
-CREATE MULTISET TABLE orders (
+CREATE MULTISET TABLE inventory_levels (
   id INTEGER NOT NULL,
-  customer_id INTEGER NOT NULL REFERENCES customers(id),
-  order_number VARCHAR(40) NOT NULL,
-  status VARCHAR(20) NOT NULL,
-  currency CHAR(3) NOT NULL DEFAULT 'USD',
-  placed_at DATETIME NOT NULL,
-  total_cents INTEGER NOT NULL
-),
-  PRIMARY KEY (id)
-);
-CREATE MULTISET TABLE order_lines (
-  id INTEGER NOT NULL,
-  order_id INTEGER NOT NULL REFERENCES orders(id),
-  sku VARCHAR(40) NOT NULL,
-  quantity INTEGER NOT NULL,
-  unit_price_cents INTEGER NOT NULL
-),
-  PRIMARY KEY (id)
-);
-CREATE MULTISET TABLE order_payments (
-  id INTEGER NOT NULL,
-  order_id INTEGER NOT NULL REFERENCES orders(id),
-  method VARCHAR(30) NOT NULL,
-  amount_cents INTEGER NOT NULL,
-  captured_at DATETIME NOT NULL
-),
-  PRIMARY KEY (id)
-);
-CREATE MULTISET TABLE shipments (
-  id INTEGER NOT NULL,
-  order_id INTEGER NOT NULL REFERENCES orders(id),
-  carrier VARCHAR(40) NOT NULL,
-  shipped_at DATETIME,
-  tracking_number VARCHAR(80)
-),
-  PRIMARY KEY (id)
-);
-CREATE MULTISET TABLE orders_archive (
-  id INTEGER NOT NULL,
-  order_number VARCHAR(40) NOT NULL,
-  customer_email VARCHAR(255) NOT NULL,
-  placed_at DATETIME NOT NULL,
-  total_cents INTEGER NOT NULL,
-  archived_at DATETIME NOT NULL
+  variant_id INTEGER NOT NULL REFERENCES product_variants(id),
+  warehouse_code VARCHAR(20) NOT NULL,
+  quantity_on_hand INTEGER NOT NULL,
+  updated_at DATETIME NOT NULL
 );

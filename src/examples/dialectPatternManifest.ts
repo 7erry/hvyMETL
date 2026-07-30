@@ -77,10 +77,15 @@ export type DialectExampleEntry = {
   fileName: string;
 };
 
+const NON_SQL_DIALECT_EXTENSIONS: Record<string, string> = {
+  dynamodb: 'yaml',
+  'json-schema': 'json',
+};
+
 /** Stable manifest: one randomized design pattern per supported dialect. */
 export const DIALECT_PATTERN_MANIFEST: DialectExampleEntry[] = SHUFFLED_DIALECTS.map((dialectId, index) => {
   const pattern = SHUFFLED_PATTERNS[index % SHUFFLED_PATTERNS.length]!;
-  const extension = dialectId === 'dynamodb' ? 'yaml' : 'sql';
+  const extension = NON_SQL_DIALECT_EXTENSIONS[dialectId] ?? 'sql';
   return {
     dialectId,
     pattern,

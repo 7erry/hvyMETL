@@ -1,83 +1,91 @@
-# dynamodb dialect example — subset pattern: product catalog with recent reviews embedded and full review history elsewhere.
+# dynamodb dialect example — reference pattern: high-volume customer_events kept separate from CRM core tables.
 AWSTemplateFormatVersion: '2010-09-09'
-Description: 'DynamoDB tables demonstrating the subset migration pattern.'
+Description: 'DynamoDB tables demonstrating the reference migration pattern.'
 
 Resources:
   Table1:
     Type: 'AWS::DynamoDB::Table'
     Properties:
-      TableName: 'Brands'
+      TableName: 'Customers'
       BillingMode: 'PAY_PER_REQUEST'
       AttributeDefinitions:
-        - AttributeName: 'BrandId'
+        - AttributeName: 'CustomerId'
           AttributeType: 'S'
       KeySchema:
-        - AttributeName: 'BrandId'
+        - AttributeName: 'CustomerId'
           KeyType: 'HASH'
   Table2:
     Type: 'AWS::DynamoDB::Table'
     Properties:
-      TableName: 'Categories'
+      TableName: 'CustomerProfiles'
       BillingMode: 'PAY_PER_REQUEST'
       AttributeDefinitions:
-        - AttributeName: 'CategoryId'
+        - AttributeName: 'CustomerId'
+          AttributeType: 'S'
+        - AttributeName: 'ProfileId'
           AttributeType: 'S'
       KeySchema:
-        - AttributeName: 'CategoryId'
+        - AttributeName: 'CustomerId'
           KeyType: 'HASH'
+        - AttributeName: 'ProfileId'
+          KeyType: 'RANGE'
   Table3:
     Type: 'AWS::DynamoDB::Table'
     Properties:
-      TableName: 'Products'
+      TableName: 'Subscriptions'
       BillingMode: 'PAY_PER_REQUEST'
       AttributeDefinitions:
-        - AttributeName: 'ProductId'
+        - AttributeName: 'CustomerId'
+          AttributeType: 'S'
+        - AttributeName: 'SubscriptionId'
           AttributeType: 'S'
       KeySchema:
-        - AttributeName: 'ProductId'
+        - AttributeName: 'CustomerId'
           KeyType: 'HASH'
+        - AttributeName: 'SubscriptionId'
+          KeyType: 'RANGE'
   Table4:
     Type: 'AWS::DynamoDB::Table'
     Properties:
-      TableName: 'ProductImages'
+      TableName: 'PaymentMethods'
       BillingMode: 'PAY_PER_REQUEST'
       AttributeDefinitions:
-        - AttributeName: 'ImageId'
+        - AttributeName: 'CustomerId'
           AttributeType: 'S'
-        - AttributeName: 'ProductId'
+        - AttributeName: 'PaymentMethodId'
           AttributeType: 'S'
       KeySchema:
-        - AttributeName: 'ImageId'
+        - AttributeName: 'CustomerId'
           KeyType: 'HASH'
-        - AttributeName: 'ProductId'
+        - AttributeName: 'PaymentMethodId'
           KeyType: 'RANGE'
   Table5:
     Type: 'AWS::DynamoDB::Table'
     Properties:
-      TableName: 'Reviews'
+      TableName: 'CustomerEvents'
       BillingMode: 'PAY_PER_REQUEST'
       AttributeDefinitions:
-        - AttributeName: 'ReviewId'
+        - AttributeName: 'CustomerId'
           AttributeType: 'S'
-        - AttributeName: 'ProductId'
+        - AttributeName: 'EventId'
           AttributeType: 'S'
       KeySchema:
-        - AttributeName: 'ReviewId'
+        - AttributeName: 'CustomerId'
           KeyType: 'HASH'
-        - AttributeName: 'ProductId'
+        - AttributeName: 'EventId'
           KeyType: 'RANGE'
   Table6:
     Type: 'AWS::DynamoDB::Table'
     Properties:
-      TableName: 'ReviewVotes'
+      TableName: 'SupportTickets'
       BillingMode: 'PAY_PER_REQUEST'
       AttributeDefinitions:
-        - AttributeName: 'VoteId'
+        - AttributeName: 'CustomerId'
           AttributeType: 'S'
-        - AttributeName: 'ReviewId'
+        - AttributeName: 'TicketId'
           AttributeType: 'S'
       KeySchema:
-        - AttributeName: 'VoteId'
+        - AttributeName: 'CustomerId'
           KeyType: 'HASH'
-        - AttributeName: 'ReviewId'
+        - AttributeName: 'TicketId'
           KeyType: 'RANGE'

@@ -1,39 +1,57 @@
--- redshift dialect example — tree pattern: self-referencing category hierarchy with products and brand assignments.
+-- redshift dialect example — polymorphic pattern: CMS pages with block_type variants, assets, revisions, and tags.
 
-CREATE TABLE brands (
+CREATE TABLE authors (
   id SERIAL PRIMARY KEY,
-  name VARCHAR(120) NOT NULL,
-  country VARCHAR(60) NOT NULL
-);
-CREATE TABLE categories (
-  id SERIAL PRIMARY KEY,
-  parent_id INTEGER REFERENCES categories(id),
-  brand_id INTEGER REFERENCES brands(id),
-  name VARCHAR(120) NOT NULL,
-  slug VARCHAR(140) NOT NULL,
-  sort_order INTEGER NOT NULL DEFAULT 0
-);
-CREATE TABLE category_managers (
-  id SERIAL PRIMARY KEY,
-  category_id INTEGER NOT NULL REFERENCES categories(id),
-  manager_name VARCHAR(120) NOT NULL,
+  display_name VARCHAR(120) NOT NULL,
   email VARCHAR(255) NOT NULL,
-  assigned_at TIMESTAMPTZ NOT NULL
+  role VARCHAR(40) NOT NULL DEFAULT 'editor'
 );
-CREATE TABLE products (
+CREATE TABLE assets (
   id SERIAL PRIMARY KEY,
-  category_id INTEGER NOT NULL REFERENCES categories(id),
-  brand_id INTEGER NOT NULL REFERENCES brands(id),
-  sku VARCHAR(40) NOT NULL,
-  name VARCHAR(200) NOT NULL,
-  base_price_cents INTEGER NOT NULL,
-  is_active BOOLEAN NOT NULL DEFAULT 1
+  file_name VARCHAR(255) NOT NULL,
+  mime_type VARCHAR(100) NOT NULL,
+  byte_size INTEGER NOT NULL,
+  storage_url VARCHAR(500) NOT NULL,
+  uploaded_at TIMESTAMPTZ NOT NULL
 );
-CREATE TABLE product_variants (
+CREATE TABLE pages (
   id SERIAL PRIMARY KEY,
-  product_id INTEGER NOT NULL REFERENCES products(id),
-  variant_sku VARCHAR(48) NOT NULL,
-  color VARCHAR(40),
-  size VARCHAR(20),
-  price_cents INTEGER NOT NULL
+  author_id INTEGER NOT NULL REFERENCES authors(id),
+  slug VARCHAR(200) NOT NULL,
+  title VARCHAR(255) NOT NULL,
+  status VARCHAR(20) NOT NULL DEFAULT 'draft',
+  published_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ NOT NULL
+);
+CREATE TABLE content_blocks (
+  id SERIAL PRIMARY KEY,
+  page_id INTEGER NOT NULL REFERENCES pages(id),
+  position INTEGER NOT NULL,
+  block_type VARCHAR(40) NOT NULL,
+  title_text VARCHAR(200),
+  text_body TEXT,
+  image_asset_id INTEGER REFERENCES assets(id),
+  image_url VARCHAR(500),
+  video_asset_id INTEGER REFERENCES assets(id),
+  video_duration_sec INTEGER,
+  embed_url VARCHAR(500)
+);
+CREATE TABLE page_revisions (
+  id SERIAL PRIMARY KEY,
+  page_id INTEGER NOT NULL REFERENCES pages(id),
+  author_id INTEGER NOT NULL REFERENCES authors(id),
+  revision_number INTEGER NOT NULL,
+  change_summary VARCHAR(500),
+  snapshot_json TEXT NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL
+);
+CREATE TABLE tags (
+  id SERIAL PRIMARY KEY,
+  name VARCHAR(60) NOT NULL,
+  slug VARCHAR(80) NOT NULL
+);
+CREATE TABLE page_tags (
+  id SERIAL PRIMARY KEY,
+  page_id INTEGER NOT NULL REFERENCES pages(id),
+  tag_id INTEGER NOT NULL REFERENCES tags(id)
 );

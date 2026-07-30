@@ -1,11 +1,11 @@
 # Per-dialect design-pattern examples
 
-One **Load example** DDL (or CloudFormation) bundle per supported import dialect.
+One **Load example** DDL (or CloudFormation / JSON Schema) bundle per supported import dialect.
 Each file demonstrates a single MongoDB design pattern from [`knowledge/`](../../knowledge/)
 using a **multi-table schema** aligned with the seeded domain examples under
 [`examples/catalog`](../catalog/), [`examples/iot`](../iot/), [`examples/cms`](../cms/), and
 [`examples/ledger`](../ledger/) — not toy two-table stubs.
-pattern assignments are **deterministically shuffled** (seed `20260711`) so every dialect
+Pattern assignments are **deterministically shuffled** (seed `20260711`) so every dialect
 gets a unique pick while staying reproducible in tests.
 
 Regenerate committed files after editing templates:
@@ -20,33 +20,37 @@ Validate:
 npm test -- src/examples/dialectExamples.test.ts
 ```
 
+JSON Schema import is documented in [`docs/19-json-schema-import.md`](../docs/19-json-schema-import.md).
+Example shapes follow [JSON Schema examples](https://json-schema.org/learn/json-schema-examples).
+
 ## Dialect → pattern matrix
 
 | Dialect | Pattern | Suggested profile | File |
 | --- | --- | --- | --- |
-| `aurora-postgresql` | extended-reference | catalog | [`aurora-postgresql.sql`](aurora-postgresql.sql) |
 | `aurora-mysql` | schema-versioning | catalog | [`aurora-mysql.sql`](aurora-mysql.sql) |
-| `bigquery` | bucket | iot | [`bigquery.sql`](bigquery.sql) |
-| `clickhouse` | embed | catalog | [`clickhouse.sql`](clickhouse.sql) |
-| `cockroachdb` | extended-reference | catalog | [`cockroachdb.sql`](cockroachdb.sql) |
-| `databricks` | reference | mobile | [`databricks.sql`](databricks.sql) |
-| `db2` | polymorphic | cms | [`db2.sql`](db2.sql) |
-| `dynamodb` | subset | catalog | [`dynamodb.yaml`](dynamodb.yaml) |
-| `firebird` | archive | catalog | [`firebird.sql`](firebird.sql) |
-| `mariadb` | embed | catalog | [`mariadb.sql`](mariadb.sql) |
-| `mssql` | single-collection | mobile | [`mssql.sql`](mssql.sql) |
-| `mysql` | reference | mobile | [`mysql.sql`](mysql.sql) |
-| `oracle` | attribute | catalog | [`oracle.sql`](oracle.sql) |
-| `postgresql` | outlier | catalog | [`postgresql.sql`](postgresql.sql) |
-| `redshift` | tree | catalog | [`redshift.sql`](redshift.sql) |
-| `sap-hana` | computed | ledger | [`sap-hana.sql`](sap-hana.sql) |
-| `singlestore` | single-collection | mobile | [`singlestore.sql`](singlestore.sql) |
-| `snowflake` | outlier | catalog | [`snowflake.sql`](snowflake.sql) |
-| `spanner` | attribute | catalog | [`spanner.sql`](spanner.sql) |
-| `sqlite` | subset | catalog | [`sqlite.sql`](sqlite.sql) |
-| `sybase` | computed | ledger | [`sybase.sql`](sybase.sql) |
-| `teradata` | archive | catalog | [`teradata.sql`](teradata.sql) |
-| `yugabyte` | schema-versioning | catalog | [`yugabyte.sql`](yugabyte.sql) |
+| `aurora-postgresql` | tree | catalog | [`aurora-postgresql.sql`](aurora-postgresql.sql) |
+| `bigquery` | computed | ledger | [`bigquery.sql`](bigquery.sql) |
+| `clickhouse` | schema-versioning | catalog | [`clickhouse.sql`](clickhouse.sql) |
+| `cockroachdb` | tree | catalog | [`cockroachdb.sql`](cockroachdb.sql) |
+| `databricks` | archive | catalog | [`databricks.sql`](databricks.sql) |
+| `db2` | extended-reference | catalog | [`db2.sql`](db2.sql) |
+| `dynamodb` | reference | mobile | [`dynamodb.yaml`](dynamodb.yaml) |
+| `firebird` | attribute | catalog | [`firebird.sql`](firebird.sql) |
+| `json-schema` | bucket | iot | [`json-schema.json`](json-schema.json) |
+| `mariadb` | single-collection | mobile | [`mariadb.sql`](mariadb.sql) |
+| `mssql` | reference | mobile | [`mssql.sql`](mssql.sql) |
+| `mysql` | archive | catalog | [`mysql.sql`](mysql.sql) |
+| `oracle` | extended-reference | catalog | [`oracle.sql`](oracle.sql) |
+| `postgresql` | attribute | catalog | [`postgresql.sql`](postgresql.sql) |
+| `redshift` | polymorphic | cms | [`redshift.sql`](redshift.sql) |
+| `sap-hana` | outlier | catalog | [`sap-hana.sql`](sap-hana.sql) |
+| `singlestore` | subset | catalog | [`singlestore.sql`](singlestore.sql) |
+| `snowflake` | embed | catalog | [`snowflake.sql`](snowflake.sql) |
+| `spanner` | computed | ledger | [`spanner.sql`](spanner.sql) |
+| `sqlite` | embed | catalog | [`sqlite.sql`](sqlite.sql) |
+| `sybase` | subset | catalog | [`sybase.sql`](sybase.sql) |
+| `teradata` | outlier | catalog | [`teradata.sql`](teradata.sql) |
+| `yugabyte` | single-collection | mobile | [`yugabyte.sql`](yugabyte.sql) |
 
 Load any row from Migration Studio **Load example** (picker label: `{Dialect} - {Profile}`, e.g. `IBM Db2 - CMS`)
 or paste the file into **Import DDL** with the matching dialect selected.

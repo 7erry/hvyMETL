@@ -1,62 +1,63 @@
--- spanner dialect example — attribute pattern: EAV product_attributes on a normalized merchandising schema.
+-- spanner dialect example — computed pattern: ledger accounts with running balances and posting audit tables.
 
-CREATE TABLE brands (
+CREATE TABLE legal_entities (
   id INT64 NOT NULL,
 
-    name STRING(120) NOT NULL,
-  country STRING(60) NOT NULL
+    legal_name STRING(255) NOT NULL,
+  tax_id STRING(40) NOT NULL,
+  country CHAR(2) NOT NULL,
+  is_active BOOL NOT NULL DEFAULT 1
 
 ) PRIMARY KEY (id);
-CREATE TABLE categories (
+CREATE TABLE accounts (
   id INT64 NOT NULL,
 
-    name STRING(120) NOT NULL,
-  slug STRING(140) NOT NULL
+    entity_id INT64 NOT NULL REFERENCES legal_entities(id),
+  account_number STRING(40) NOT NULL,
+  account_name STRING(160) NOT NULL,
+  currency CHAR(3) NOT NULL DEFAULT 'USD',
+  current_balance NUMERIC NOT NULL DEFAULT 0,
+  transaction_count INT64 NOT NULL DEFAULT 0,
+  opened_at TIMESTAMP NOT NULL
 
 ) PRIMARY KEY (id);
-CREATE TABLE products (
+CREATE TABLE posting_batches (
   id INT64 NOT NULL,
 
-    brand_id INT64 NOT NULL REFERENCES brands(id),
-  category_id INT64 NOT NULL REFERENCES categories(id),
-  sku STRING(40) NOT NULL,
-  name STRING(200) NOT NULL,
-  description STRING(MAX),
-  base_price_cents INT64 NOT NULL
+    entity_id INT64 NOT NULL REFERENCES legal_entities(id),
+  batch_ref STRING(40) NOT NULL,
+  status STRING(20) NOT NULL,
+  submitted_at TIMESTAMP NOT NULL,
+  posted_at TIMESTAMP
 
 ) PRIMARY KEY (id);
-CREATE TABLE product_variants (
+CREATE TABLE ledger_entries (
   id INT64 NOT NULL,
 
-    product_id INT64 NOT NULL REFERENCES products(id),
-  variant_sku STRING(48) NOT NULL,
-  color STRING(40),
-  size STRING(20),
-  price_cents INT64 NOT NULL
+    account_id INT64 NOT NULL REFERENCES accounts(id),
+  batch_id INT64 NOT NULL REFERENCES posting_batches(id),
+  amount NUMERIC NOT NULL,
+  posting_type STRING(10) NOT NULL,
+  memo STRING(255),
+  posted_at TIMESTAMP NOT NULL
 
 ) PRIMARY KEY (id);
-CREATE TABLE product_attributes (
+CREATE TABLE account_daily_snapshots (
   id INT64 NOT NULL,
 
-    product_id INT64 NOT NULL REFERENCES products(id),
-  attr_key STRING(60) NOT NULL,
-  attr_value STRING(255) NOT NULL
+    account_id INT64 NOT NULL REFERENCES accounts(id),
+  snapshot_date DATE NOT NULL,
+  opening_balance NUMERIC NOT NULL,
+  closing_balance NUMERIC NOT NULL
 
 ) PRIMARY KEY (id);
-CREATE TABLE reviews (
+CREATE TABLE audit_events (
   id INT64 NOT NULL,
 
-    product_id INT64 NOT NULL REFERENCES products(id),
-  stars INT64 NOT NULL,
-  body STRING(MAX),
-  created_at TIMESTAMP NOT NULL
-
-) PRIMARY KEY (id);
-CREATE TABLE inventory_levels (
-  id INT64 NOT NULL,
-
-    variant_id INT64 NOT NULL REFERENCES product_variants(id),
-  warehouse_code STRING(20) NOT NULL,
-  quantity_on_hand INT64 NOT NULL
+    entity_id INT64 NOT NULL REFERENCES legal_entities(id),
+  actor STRING(120) NOT NULL,
+  action STRING(60) NOT NULL,
+  occurred_at TIMESTAMP NOT NULL,
+  details STRING(MAX)
 
 ) PRIMARY KEY (id);

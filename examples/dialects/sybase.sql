@@ -1,57 +1,49 @@
--- sybase dialect example — computed pattern: ledger accounts with running balances and posting audit tables.
+-- sybase dialect example — subset pattern: product catalog with recent reviews embedded and full review history elsewhere.
 
-CREATE TABLE dbo.legal_entities (
+CREATE TABLE dbo.brands (
   id INT IDENTITY NOT NULL,
   PRIMARY KEY (id),
-  legal_name VARCHAR(255) NOT NULL,
-  tax_id VARCHAR(40) NOT NULL,
-  country CHAR(2) NOT NULL,
-  is_active BOOLEAN NOT NULL DEFAULT 1
+  name VARCHAR(120) NOT NULL
 );
-CREATE TABLE dbo.accounts (
+CREATE TABLE dbo.categories (
   id INT IDENTITY NOT NULL,
   PRIMARY KEY (id),
-  entity_id INT NOT NULL REFERENCES legal_entities(id),
-  account_number VARCHAR(40) NOT NULL,
-  account_name VARCHAR(160) NOT NULL,
-  currency CHAR(3) NOT NULL DEFAULT 'USD',
-  current_balance NUMERIC(14,2) NOT NULL DEFAULT 0,
-  transaction_count INT NOT NULL DEFAULT 0,
-  opened_at DATETIME NOT NULL
+  name VARCHAR(120) NOT NULL,
+  slug VARCHAR(140) NOT NULL
 );
-CREATE TABLE dbo.posting_batches (
+CREATE TABLE dbo.products (
   id INT IDENTITY NOT NULL,
   PRIMARY KEY (id),
-  entity_id INT NOT NULL REFERENCES legal_entities(id),
-  batch_ref VARCHAR(40) NOT NULL,
-  status VARCHAR(20) NOT NULL,
-  submitted_at DATETIME NOT NULL,
-  posted_at DATETIME
+  brand_id INT NOT NULL REFERENCES brands(id),
+  category_id INT NOT NULL REFERENCES categories(id),
+  sku VARCHAR(40) NOT NULL,
+  name VARCHAR(200) NOT NULL,
+  description TEXT,
+  base_price_cents INT NOT NULL
 );
-CREATE TABLE dbo.ledger_entries (
+CREATE TABLE dbo.product_images (
   id INT IDENTITY NOT NULL,
   PRIMARY KEY (id),
-  account_id INT NOT NULL REFERENCES accounts(id),
-  batch_id INT NOT NULL REFERENCES posting_batches(id),
-  amount NUMERIC(14,2) NOT NULL,
-  posting_type VARCHAR(10) NOT NULL,
-  memo VARCHAR(255),
-  posted_at DATETIME NOT NULL
+  product_id INT NOT NULL REFERENCES products(id),
+  url VARCHAR(500) NOT NULL,
+  sort_order INT NOT NULL DEFAULT 0,
+  alt_text VARCHAR(255)
 );
-CREATE TABLE dbo.account_daily_snapshots (
+CREATE TABLE dbo.reviews (
   id INT IDENTITY NOT NULL,
   PRIMARY KEY (id),
-  account_id INT NOT NULL REFERENCES accounts(id),
-  snapshot_date DATE NOT NULL,
-  opening_balance NUMERIC(14,2) NOT NULL,
-  closing_balance NUMERIC(14,2) NOT NULL
+  product_id INT NOT NULL REFERENCES products(id),
+  reviewer_name VARCHAR(120) NOT NULL,
+  stars INT NOT NULL,
+  title VARCHAR(200),
+  body TEXT,
+  created_at DATETIME NOT NULL
 );
-CREATE TABLE dbo.audit_events (
+CREATE TABLE dbo.review_votes (
   id INT IDENTITY NOT NULL,
   PRIMARY KEY (id),
-  entity_id INT NOT NULL REFERENCES legal_entities(id),
-  actor VARCHAR(120) NOT NULL,
-  action VARCHAR(60) NOT NULL,
-  occurred_at DATETIME NOT NULL,
-  details TEXT
+  review_id INT NOT NULL REFERENCES reviews(id),
+  voter_email VARCHAR(255) NOT NULL,
+  vote_value INT NOT NULL,
+  voted_at DATETIME NOT NULL
 );

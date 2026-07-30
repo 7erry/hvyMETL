@@ -2,6 +2,7 @@ import { normalizeDialectId } from '../dialects.js';
 import type { SqlStructuralModel } from '../types.js';
 import { parseDdlToModel } from './ddlParser.js';
 import { parseDynamoDbCloudFormationToModel } from './dynamodbCloudFormationParser.js';
+import { parseJsonSchemaToModel } from './jsonSchemaParser.js';
 
 /**
  * Parse pasted schema import content for the requested dialect.
@@ -17,6 +18,10 @@ export function parseSchemaImport(
 
   if (normalized === 'dynamodb') {
     return parseDynamoDbCloudFormationToModel(content, label);
+  }
+
+  if (normalized === 'json-schema') {
+    return parseJsonSchemaToModel(content, label);
   }
 
   return parseDdlToModel(content, label);

@@ -1,47 +1,48 @@
--- firebird dialect example — archive pattern: active orders plus orders_archive for Atlas Online Archive routing.
+-- firebird dialect example — attribute pattern: EAV product_attributes on a normalized merchandising schema.
 
-CREATE TABLE customers (
+CREATE TABLE brands (
   id INTEGER PRIMARY KEY,
-  email VARCHAR(255) NOT NULL,
-  full_name VARCHAR(160) NOT NULL,
-  country CHAR(2) NOT NULL,
+  name VARCHAR(120) NOT NULL,
+  country VARCHAR(60) NOT NULL
+);
+CREATE TABLE categories (
+  id INTEGER PRIMARY KEY,
+  name VARCHAR(120) NOT NULL,
+  slug VARCHAR(140) NOT NULL
+);
+CREATE TABLE products (
+  id INTEGER PRIMARY KEY,
+  brand_id INTEGER NOT NULL REFERENCES brands(id),
+  category_id INTEGER NOT NULL REFERENCES categories(id),
+  sku VARCHAR(40) NOT NULL,
+  name VARCHAR(200) NOT NULL,
+  description TEXT,
+  base_price_cents INTEGER NOT NULL
+);
+CREATE TABLE product_variants (
+  id INTEGER PRIMARY KEY,
+  product_id INTEGER NOT NULL REFERENCES products(id),
+  variant_sku VARCHAR(48) NOT NULL,
+  color VARCHAR(40),
+  size VARCHAR(20),
+  price_cents INTEGER NOT NULL
+);
+CREATE TABLE product_attributes (
+  id INTEGER PRIMARY KEY,
+  product_id INTEGER NOT NULL REFERENCES products(id),
+  attr_key VARCHAR(60) NOT NULL,
+  attr_value VARCHAR(255) NOT NULL
+);
+CREATE TABLE reviews (
+  id INTEGER PRIMARY KEY,
+  product_id INTEGER NOT NULL REFERENCES products(id),
+  stars INTEGER NOT NULL,
+  body TEXT,
   created_at DATETIME NOT NULL
 );
-CREATE TABLE orders (
+CREATE TABLE inventory_levels (
   id INTEGER PRIMARY KEY,
-  customer_id INTEGER NOT NULL REFERENCES customers(id),
-  order_number VARCHAR(40) NOT NULL,
-  status VARCHAR(20) NOT NULL,
-  currency CHAR(3) NOT NULL DEFAULT 'USD',
-  placed_at DATETIME NOT NULL,
-  total_cents INTEGER NOT NULL
-);
-CREATE TABLE order_lines (
-  id INTEGER PRIMARY KEY,
-  order_id INTEGER NOT NULL REFERENCES orders(id),
-  sku VARCHAR(40) NOT NULL,
-  quantity INTEGER NOT NULL,
-  unit_price_cents INTEGER NOT NULL
-);
-CREATE TABLE order_payments (
-  id INTEGER PRIMARY KEY,
-  order_id INTEGER NOT NULL REFERENCES orders(id),
-  method VARCHAR(30) NOT NULL,
-  amount_cents INTEGER NOT NULL,
-  captured_at DATETIME NOT NULL
-);
-CREATE TABLE shipments (
-  id INTEGER PRIMARY KEY,
-  order_id INTEGER NOT NULL REFERENCES orders(id),
-  carrier VARCHAR(40) NOT NULL,
-  shipped_at DATETIME,
-  tracking_number VARCHAR(80)
-);
-CREATE TABLE orders_archive (
-  id INTEGER PRIMARY KEY,
-  order_number VARCHAR(40) NOT NULL,
-  customer_email VARCHAR(255) NOT NULL,
-  placed_at DATETIME NOT NULL,
-  total_cents INTEGER NOT NULL,
-  archived_at DATETIME NOT NULL
+  variant_id INTEGER NOT NULL REFERENCES product_variants(id),
+  warehouse_code VARCHAR(20) NOT NULL,
+  quantity_on_hand INTEGER NOT NULL
 );

@@ -1,0 +1,209 @@
+{
+  "description": "json-schema dialect example — bucket pattern: IoT sensor_readings time series with sites, devices, and operational metadata.",
+  "schemas": [
+    {
+      "$id": "https://example.com/sites.schema.json",
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "title": "sites",
+      "type": "object",
+      "required": [
+        "id"
+      ],
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "name": {
+          "type": "string"
+        },
+        "timezone": {
+          "type": "string"
+        },
+        "latitude": {
+          "type": "number"
+        },
+        "longitude": {
+          "type": "number"
+        }
+      }
+    },
+    {
+      "$id": "https://example.com/firmware-versions.schema.json",
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "title": "firmware_versions",
+      "type": "object",
+      "required": [
+        "id"
+      ],
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "version": {
+          "type": "string"
+        },
+        "released_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "changelog": {
+          "type": "string"
+        }
+      }
+    },
+    {
+      "$id": "https://example.com/devices.schema.json",
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "title": "devices",
+      "type": "object",
+      "required": [
+        "id"
+      ],
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "site_id": {
+          "$ref": "https://example.com/sites.schema.json"
+        },
+        "firmware_id": {
+          "$ref": "https://example.com/firmware-versions.schema.json"
+        },
+        "serial_number": {
+          "type": "string"
+        },
+        "model": {
+          "type": "string"
+        },
+        "installed_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "is_online": {
+          "type": "boolean"
+        }
+      }
+    },
+    {
+      "$id": "https://example.com/sensors.schema.json",
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "title": "sensors",
+      "type": "object",
+      "required": [
+        "id"
+      ],
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "device_id": {
+          "$ref": "https://example.com/devices.schema.json"
+        },
+        "label": {
+          "type": "string"
+        },
+        "kind": {
+          "type": "string"
+        },
+        "unit": {
+          "type": "string"
+        },
+        "precision_digits": {
+          "type": "integer"
+        }
+      }
+    },
+    {
+      "$id": "https://example.com/sensor-readings.schema.json",
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "title": "sensor_readings",
+      "type": "object",
+      "required": [
+        "id"
+      ],
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "sensor_id": {
+          "$ref": "https://example.com/sensors.schema.json"
+        },
+        "device_id": {
+          "$ref": "https://example.com/devices.schema.json"
+        },
+        "recorded_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "value": {
+          "type": "number"
+        },
+        "quality_flag": {
+          "type": "integer"
+        }
+      }
+    },
+    {
+      "$id": "https://example.com/device-alerts.schema.json",
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "title": "device_alerts",
+      "type": "object",
+      "required": [
+        "id"
+      ],
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "device_id": {
+          "$ref": "https://example.com/devices.schema.json"
+        },
+        "severity": {
+          "type": "string"
+        },
+        "message": {
+          "type": "string"
+        },
+        "raised_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "acknowledged_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    {
+      "$id": "https://example.com/maintenance-visits.schema.json",
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "title": "maintenance_visits",
+      "type": "object",
+      "required": [
+        "id"
+      ],
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "site_id": {
+          "$ref": "https://example.com/sites.schema.json"
+        },
+        "technician": {
+          "type": "string"
+        },
+        "scheduled_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "completed_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "notes": {
+          "type": "string"
+        }
+      }
+    }
+  ]
+}

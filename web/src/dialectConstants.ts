@@ -25,6 +25,7 @@ const UNSORTED_FALLBACK_DIALECTS: Dialect[] = [
   { id: 'spanner', label: 'Google Cloud Spanner', live: false },
   { id: 'databricks', label: 'Databricks SQL / Spark SQL', live: false },
   { id: 'dynamodb', label: 'Amazon DynamoDB (CloudFormation)', live: false },
+  { id: 'json-schema', label: 'JSON Schema', live: false },
   { id: 'singlestore', label: 'SingleStore (MemSQL)', live: false },
   { id: 'sap-hana', label: 'SAP HANA', live: false },
   { id: 'teradata', label: 'Teradata', live: false },

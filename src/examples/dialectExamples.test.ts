@@ -21,12 +21,24 @@ import {
   renderDialectExampleFile,
 } from './dialectExampleTemplates.js';
 
+const SCHEMA_IMPORT_DIALECTS = new Set(['dynamodb', 'json-schema']);
+
+function parseDialectExampleFile(dialectId: string, ddl: string) {
+  return SCHEMA_IMPORT_DIALECTS.has(dialectId)
+    ? parseSchemaImport(ddl, dialectId, `ddl:${dialectId}`)
+    : parseDdlToModel(ddl, `ddl:${dialectId}`);
+}
+
 const EXAMPLES_DIR = join(dirname(fileURLToPath(import.meta.url)), '../../examples/dialects');
 
-/** Strip schema/database qualifiers from parsed table names. */
+/** Strip schema/database qualifiers and normalize PascalCase table names for signature checks. */
 function baseTableName(name: string): string {
   const segment = name.split('.').pop() ?? name;
-  return segment.replace(/"/g, '').toLowerCase();
+  const cleaned = segment.replace(/"/g, '');
+  return cleaned
+    .replace(/([a-z0-9])([A-Z])/g, '$1_$2')
+    .replace(/-/g, '_')
+    .toLowerCase();
 }
 
 /** Patterns the rule engine can detect from DDL shape alone (no live row counts). */
@@ -40,8 +52,9 @@ describe('dialectPatternManifest', () => {
   });
 
   it('lookup returns manifest entry by dialect id', () => {
-    expect(dialectExampleFor('postgresql')?.pattern).toBe('outlier');
+    expect(dialectExampleFor('postgresql')?.dialectId).toBe('postgresql');
     expect(dialectExampleFor('dynamodb')?.fileName).toBe('dynamodb.yaml');
+    expect(dialectExampleFor('json-schema')?.fileName).toBe('json-schema.json');
   });
 });
 
@@ -53,13 +66,10 @@ describe('dialect example files', () => {
       const ddl = readFileSync(filePath, 'utf8');
       expect(ddl).toContain(entry.pattern);
 
-      const model =
-        dialectId === 'dynamodb'
-          ? parseSchemaImport(ddl, dialectId, `ddl:${dialectId}`)
-          : parseDdlToModel(ddl, `ddl:${dialectId}`);
+      const model = parseDialectExampleFile(dialectId, ddl);
 
       expect(model.tables.length).toBeGreaterThan(0);
-      if (dialectId !== 'dynamodb') {
+      if (!SCHEMA_IMPORT_DIALECTS.has(dialectId)) {
         expect(model.tables.length).toBeGreaterThanOrEqual(5);
       }
 
@@ -74,10 +84,7 @@ describe('dialect example files', () => {
     (entry) => [entry.dialectId, entry] as const,
   ))('%s example triggers %s in the design engine', (dialectId, entry) => {
     const ddl = readFileSync(join(EXAMPLES_DIR, entry.fileName), 'utf8');
-    const model =
-      dialectId === 'dynamodb'
-        ? parseSchemaImport(ddl, dialectId, `ddl:${dialectId}`)
-        : parseDdlToModel(ddl, `ddl:${dialectId}`);
+    const model = parseDialectExampleFile(dialectId, ddl);
 
     const plan = buildMigrationPlan(model, getProfile(entry.suggestedProfileId));
 

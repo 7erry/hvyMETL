@@ -20,16 +20,18 @@ describe('mockCsvDdlAdapter', () => {
   });
 
   it('converts DynamoDB CloudFormation into CREATE TABLE DDL', () => {
+    const model = parseSchemaImport(DYNAMODB_EXAMPLE, 'dynamodb');
     const ddl = prepareMockCsvDdl(DYNAMODB_EXAMPLE, 'dynamodb');
-    expect(ddl).toContain('CREATE TABLE Products');
-    expect(ddl).toContain('CREATE TABLE Reviews');
-    expect(ddl).toContain('ProductId VARCHAR(255) PRIMARY KEY');
-    expect(ddl).toContain('ReviewId VARCHAR(255) PRIMARY KEY');
+    for (const table of model.tables) {
+      expect(ddl).toContain(`CREATE TABLE ${table.name}`);
+    }
+    expect(ddl).toContain('PRIMARY KEY');
   });
 
   it('auto-detects CloudFormation without an explicit dialect', () => {
+    const model = parseSchemaImport(DYNAMODB_EXAMPLE, 'dynamodb');
     const ddl = prepareMockCsvDdl(DYNAMODB_EXAMPLE);
-    expect(ddl).toContain('CREATE TABLE Products');
+    expect(ddl).toContain(`CREATE TABLE ${model.tables[0]?.name}`);
   });
 
   it('passes SQL DDL through unchanged', () => {
@@ -56,15 +58,9 @@ describe('generateMockCsvFromDdl dynamodb', () => {
 
     const outDir = mkdtempSync(join(tmpdir(), 'hvymetl-mock-csv-dynamodb-'));
     try {
+      const model = parseSchemaImport(DYNAMODB_EXAMPLE, 'dynamodb');
       const result = generateMockCsvFromDdl(DYNAMODB_EXAMPLE, outDir, ROOT, { dialect: 'dynamodb' });
-      expect(result.tables.sort()).toEqual([
-        'Brands',
-        'Categories',
-        'ProductImages',
-        'Products',
-        'ReviewVotes',
-        'Reviews',
-      ]);
+      expect(result.tables.sort()).toEqual(model.tables.map((table) => table.name).sort());
     } finally {
       rmSync(outDir, { recursive: true, force: true });
     }

@@ -1,51 +1,47 @@
--- mysql dialect example — reference pattern: high-volume customer_events kept separate from CRM core tables.
+-- mysql dialect example — archive pattern: active orders plus orders_archive for Atlas Online Archive routing.
 
 CREATE TABLE customers (
   id INT AUTO_INCREMENT PRIMARY KEY,
   email VARCHAR(255) NOT NULL,
   full_name VARCHAR(160) NOT NULL,
   country CHAR(2) NOT NULL,
-  lifecycle_stage VARCHAR(30) NOT NULL DEFAULT 'prospect',
   created_at DATETIME NOT NULL
 );
-CREATE TABLE customer_profiles (
+CREATE TABLE orders (
   id INT AUTO_INCREMENT PRIMARY KEY,
   customer_id INT NOT NULL REFERENCES customers(id),
-  industry VARCHAR(80),
-  employee_count INT,
-  annual_revenue_usd INT,
-  updated_at DATETIME NOT NULL
-);
-CREATE TABLE subscriptions (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  customer_id INT NOT NULL REFERENCES customers(id),
-  plan_code VARCHAR(40) NOT NULL,
+  order_number VARCHAR(40) NOT NULL,
   status VARCHAR(20) NOT NULL,
-  started_at DATETIME NOT NULL,
-  renews_at DATETIME
+  currency CHAR(3) NOT NULL DEFAULT 'USD',
+  placed_at DATETIME NOT NULL,
+  total_cents INT NOT NULL
 );
-CREATE TABLE payment_methods (
+CREATE TABLE order_lines (
   id INT AUTO_INCREMENT PRIMARY KEY,
-  customer_id INT NOT NULL REFERENCES customers(id),
-  method_type VARCHAR(20) NOT NULL,
-  last_four VARCHAR(4),
-  expires_on DATE,
-  is_default BOOLEAN NOT NULL DEFAULT 0
+  order_id INT NOT NULL REFERENCES orders(id),
+  sku VARCHAR(40) NOT NULL,
+  quantity INT NOT NULL,
+  unit_price_cents INT NOT NULL
 );
-CREATE TABLE customer_events (
+CREATE TABLE order_payments (
   id INT AUTO_INCREMENT PRIMARY KEY,
-  customer_id INT NOT NULL REFERENCES customers(id),
-  event_type VARCHAR(60) NOT NULL,
-  event_at DATETIME NOT NULL,
-  channel VARCHAR(30),
-  payload TEXT
+  order_id INT NOT NULL REFERENCES orders(id),
+  method VARCHAR(30) NOT NULL,
+  amount_cents INT NOT NULL,
+  captured_at DATETIME NOT NULL
 );
-CREATE TABLE support_tickets (
+CREATE TABLE shipments (
   id INT AUTO_INCREMENT PRIMARY KEY,
-  customer_id INT NOT NULL REFERENCES customers(id),
-  subject VARCHAR(255) NOT NULL,
-  status VARCHAR(20) NOT NULL,
-  priority VARCHAR(10) NOT NULL DEFAULT 'normal',
-  opened_at DATETIME NOT NULL,
-  closed_at DATETIME
+  order_id INT NOT NULL REFERENCES orders(id),
+  carrier VARCHAR(40) NOT NULL,
+  shipped_at DATETIME,
+  tracking_number VARCHAR(80)
+);
+CREATE TABLE orders_archive (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  order_number VARCHAR(40) NOT NULL,
+  customer_email VARCHAR(255) NOT NULL,
+  placed_at DATETIME NOT NULL,
+  total_cents INT NOT NULL,
+  archived_at DATETIME NOT NULL
 );

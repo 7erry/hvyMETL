@@ -1,60 +1,40 @@
--- mariadb dialect example — embed pattern: bounded order line items embedded in parent orders (fulfillment-style schema).
+-- mariadb dialect example — single-collection pattern: articles and tags linked through article_tags for hub merge.
 
-CREATE TABLE customers (
+CREATE TABLE authors (
   id INT AUTO_INCREMENT PRIMARY KEY,
-  email VARCHAR(255) NOT NULL,
-  company_name VARCHAR(200),
-  tier VARCHAR(20) NOT NULL DEFAULT 'standard',
+  display_name VARCHAR(120) NOT NULL,
+  email VARCHAR(255) NOT NULL
+);
+CREATE TABLE articles (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  author_id INT NOT NULL REFERENCES authors(id),
+  slug VARCHAR(140) NOT NULL,
+  title VARCHAR(200) NOT NULL,
+  summary VARCHAR(500),
+  published_at DATETIME
+);
+CREATE TABLE tags (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(80) NOT NULL,
+  slug VARCHAR(100) NOT NULL
+);
+CREATE TABLE article_tags (
+  article_id INT NOT NULL REFERENCES articles(id),
+  tag_id INT NOT NULL REFERENCES tags(id),
+  PRIMARY KEY (article_id, tag_id)
+);
+CREATE TABLE article_revisions (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  article_id INT NOT NULL REFERENCES articles(id),
+  revision_number INT NOT NULL,
+  body_markdown TEXT NOT NULL,
   created_at DATETIME NOT NULL
 );
-CREATE TABLE customer_addresses (
+CREATE TABLE media_assets (
   id INT AUTO_INCREMENT PRIMARY KEY,
-  customer_id INT NOT NULL REFERENCES customers(id),
-  label VARCHAR(40) NOT NULL,
-  line1 VARCHAR(200) NOT NULL,
-  city VARCHAR(80) NOT NULL,
-  region VARCHAR(80),
-  postal_code VARCHAR(20) NOT NULL,
-  country CHAR(2) NOT NULL
-);
-CREATE TABLE orders (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  customer_id INT NOT NULL REFERENCES customers(id),
-  ship_to_address_id INT NOT NULL REFERENCES customer_addresses(id),
-  order_number VARCHAR(40) NOT NULL,
-  status VARCHAR(20) NOT NULL DEFAULT 'open',
-  currency CHAR(3) NOT NULL DEFAULT 'USD',
-  placed_at DATETIME NOT NULL,
-  promised_ship_at DATETIME
-);
-CREATE TABLE order_lines (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  order_id INT NOT NULL REFERENCES orders(id),
-  sku VARCHAR(40) NOT NULL,
-  description VARCHAR(255) NOT NULL,
-  quantity INT NOT NULL,
-  unit_price_cents INT NOT NULL,
-  tax_cents INT NOT NULL DEFAULT 0
-);
-CREATE TABLE order_payments (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  order_id INT NOT NULL REFERENCES orders(id),
-  method VARCHAR(30) NOT NULL,
-  amount_cents INT NOT NULL,
-  captured_at DATETIME NOT NULL,
-  processor_ref VARCHAR(80)
-);
-CREATE TABLE shipments (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  order_id INT NOT NULL REFERENCES orders(id),
-  carrier VARCHAR(40) NOT NULL,
-  tracking_number VARCHAR(80),
-  shipped_at DATETIME,
-  delivered_at DATETIME
-);
-CREATE TABLE shipment_items (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  shipment_id INT NOT NULL REFERENCES shipments(id),
-  order_line_id INT NOT NULL REFERENCES order_lines(id),
-  quantity INT NOT NULL
+  article_id INT REFERENCES articles(id),
+  file_name VARCHAR(255) NOT NULL,
+  mime_type VARCHAR(80) NOT NULL,
+  byte_size INT NOT NULL,
+  cdn_url VARCHAR(500) NOT NULL
 );

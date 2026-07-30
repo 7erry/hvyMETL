@@ -1,40 +1,51 @@
--- mssql dialect example — single-collection pattern: articles and tags linked through article_tags for hub merge.
+-- mssql dialect example — reference pattern: high-volume customer_events kept separate from CRM core tables.
 
-CREATE TABLE authors (
+CREATE TABLE customers (
   id INT IDENTITY(1,1) PRIMARY KEY,
-  display_name NVARCHAR(120) NOT NULL,
-  email NVARCHAR(255) NOT NULL
-);
-CREATE TABLE articles (
-  id INT IDENTITY(1,1) PRIMARY KEY,
-  author_id INT NOT NULL REFERENCES authors(id),
-  slug NVARCHAR(140) NOT NULL,
-  title NVARCHAR(200) NOT NULL,
-  summary NVARCHAR(500),
-  published_at DATETIME2
-);
-CREATE TABLE tags (
-  id INT IDENTITY(1,1) PRIMARY KEY,
-  name NVARCHAR(80) NOT NULL,
-  slug NVARCHAR(100) NOT NULL
-);
-CREATE TABLE article_tags (
-  article_id INT NOT NULL REFERENCES articles(id),
-  tag_id INT NOT NULL REFERENCES tags(id),
-  PRIMARY KEY (article_id, tag_id)
-);
-CREATE TABLE article_revisions (
-  id INT IDENTITY(1,1) PRIMARY KEY,
-  article_id INT NOT NULL REFERENCES articles(id),
-  revision_number INT NOT NULL,
-  body_markdown NVARCHAR(MAX) NOT NULL,
+  email NVARCHAR(255) NOT NULL,
+  full_name NVARCHAR(160) NOT NULL,
+  country CHAR(2) NOT NULL,
+  lifecycle_stage NVARCHAR(30) NOT NULL DEFAULT 'prospect',
   created_at DATETIME2 NOT NULL
 );
-CREATE TABLE media_assets (
+CREATE TABLE customer_profiles (
   id INT IDENTITY(1,1) PRIMARY KEY,
-  article_id INT REFERENCES articles(id),
-  file_name NVARCHAR(255) NOT NULL,
-  mime_type NVARCHAR(80) NOT NULL,
-  byte_size INT NOT NULL,
-  cdn_url NVARCHAR(500) NOT NULL
+  customer_id INT NOT NULL REFERENCES customers(id),
+  industry NVARCHAR(80),
+  employee_count INT,
+  annual_revenue_usd INT,
+  updated_at DATETIME2 NOT NULL
+);
+CREATE TABLE subscriptions (
+  id INT IDENTITY(1,1) PRIMARY KEY,
+  customer_id INT NOT NULL REFERENCES customers(id),
+  plan_code NVARCHAR(40) NOT NULL,
+  status NVARCHAR(20) NOT NULL,
+  started_at DATETIME2 NOT NULL,
+  renews_at DATETIME2
+);
+CREATE TABLE payment_methods (
+  id INT IDENTITY(1,1) PRIMARY KEY,
+  customer_id INT NOT NULL REFERENCES customers(id),
+  method_type NVARCHAR(20) NOT NULL,
+  last_four NVARCHAR(4),
+  expires_on DATE,
+  is_default BOOLEAN NOT NULL DEFAULT 0
+);
+CREATE TABLE customer_events (
+  id INT IDENTITY(1,1) PRIMARY KEY,
+  customer_id INT NOT NULL REFERENCES customers(id),
+  event_type NVARCHAR(60) NOT NULL,
+  event_at DATETIME2 NOT NULL,
+  channel NVARCHAR(30),
+  payload NVARCHAR(MAX)
+);
+CREATE TABLE support_tickets (
+  id INT IDENTITY(1,1) PRIMARY KEY,
+  customer_id INT NOT NULL REFERENCES customers(id),
+  subject NVARCHAR(255) NOT NULL,
+  status NVARCHAR(20) NOT NULL,
+  priority NVARCHAR(10) NOT NULL DEFAULT 'normal',
+  opened_at DATETIME2 NOT NULL,
+  closed_at DATETIME2
 );

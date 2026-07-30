@@ -1,56 +1,51 @@
--- bigquery dialect example — bucket pattern: IoT sensor_readings time series with sites, devices, and operational metadata.
+-- bigquery dialect example — computed pattern: ledger accounts with running balances and posting audit tables.
 
-CREATE TABLE `demo.sites` (
+CREATE TABLE `demo.legal_entities` (
   id 
-  name STRING(120) NOT NULL,
-  timezone STRING(60) NOT NULL,
-  latitude FLOAT64,
-  longitude FLOAT64
+  legal_name STRING(255) NOT NULL,
+  tax_id STRING(40) NOT NULL,
+  country CHAR(2) NOT NULL,
+  is_active BOOLEAN NOT NULL DEFAULT 1
 ) PRIMARY KEY (id);
-CREATE TABLE `demo.firmware_versions` (
+CREATE TABLE `demo.accounts` (
   id 
-  version STRING(40) NOT NULL,
-  released_at TIMESTAMP NOT NULL,
-  changelog STRING
+  entity_id INT64 NOT NULL REFERENCES legal_entities(id),
+  account_number STRING(40) NOT NULL,
+  account_name STRING(160) NOT NULL,
+  currency CHAR(3) NOT NULL DEFAULT 'USD',
+  current_balance NUMERIC(14,2) NOT NULL DEFAULT 0,
+  transaction_count INT64 NOT NULL DEFAULT 0,
+  opened_at TIMESTAMP NOT NULL
 ) PRIMARY KEY (id);
-CREATE TABLE `demo.devices` (
+CREATE TABLE `demo.posting_batches` (
   id 
-  site_id INT64 NOT NULL REFERENCES sites(id),
-  firmware_id INT64 NOT NULL REFERENCES firmware_versions(id),
-  serial_number STRING(64) NOT NULL,
-  model STRING(80) NOT NULL,
-  installed_at TIMESTAMP NOT NULL,
-  is_online BOOLEAN NOT NULL DEFAULT 1
+  entity_id INT64 NOT NULL REFERENCES legal_entities(id),
+  batch_ref STRING(40) NOT NULL,
+  status STRING(20) NOT NULL,
+  submitted_at TIMESTAMP NOT NULL,
+  posted_at TIMESTAMP
 ) PRIMARY KEY (id);
-CREATE TABLE `demo.sensors` (
+CREATE TABLE `demo.ledger_entries` (
   id 
-  device_id INT64 NOT NULL REFERENCES devices(id),
-  label STRING(80) NOT NULL,
-  kind STRING(40) NOT NULL,
-  unit STRING(20) NOT NULL,
-  precision_digits INT64 NOT NULL DEFAULT 2
+  account_id INT64 NOT NULL REFERENCES accounts(id),
+  batch_id INT64 NOT NULL REFERENCES posting_batches(id),
+  amount NUMERIC(14,2) NOT NULL,
+  posting_type STRING(10) NOT NULL,
+  memo STRING(255),
+  posted_at TIMESTAMP NOT NULL
 ) PRIMARY KEY (id);
-CREATE TABLE `demo.sensor_readings` (
+CREATE TABLE `demo.account_daily_snapshots` (
   id 
-  sensor_id INT64 NOT NULL REFERENCES sensors(id),
-  device_id INT64 NOT NULL REFERENCES devices(id),
-  recorded_at TIMESTAMP NOT NULL,
-  value FLOAT64 NOT NULL,
-  quality_flag INT64 NOT NULL DEFAULT 0
+  account_id INT64 NOT NULL REFERENCES accounts(id),
+  snapshot_date DATE NOT NULL,
+  opening_balance NUMERIC(14,2) NOT NULL,
+  closing_balance NUMERIC(14,2) NOT NULL
 ) PRIMARY KEY (id);
-CREATE TABLE `demo.device_alerts` (
+CREATE TABLE `demo.audit_events` (
   id 
-  device_id INT64 NOT NULL REFERENCES devices(id),
-  severity STRING(20) NOT NULL,
-  message STRING(500) NOT NULL,
-  raised_at TIMESTAMP NOT NULL,
-  acknowledged_at TIMESTAMP
-) PRIMARY KEY (id);
-CREATE TABLE `demo.maintenance_visits` (
-  id 
-  site_id INT64 NOT NULL REFERENCES sites(id),
-  technician STRING(120) NOT NULL,
-  scheduled_at TIMESTAMP NOT NULL,
-  completed_at TIMESTAMP,
-  notes STRING
+  entity_id INT64 NOT NULL REFERENCES legal_entities(id),
+  actor STRING(120) NOT NULL,
+  action STRING(60) NOT NULL,
+  occurred_at TIMESTAMP NOT NULL,
+  details STRING
 ) PRIMARY KEY (id);

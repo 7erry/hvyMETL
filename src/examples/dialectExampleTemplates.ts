@@ -5,6 +5,8 @@
 
 import { getDialectParserFamily } from '../dialects.js';
 import type { PatternId } from '../types.js';
+import { parseDdlToModel } from '../utilities/ddlParser.js';
+import { renderJsonSchemaBundleText } from '../utilities/jsonSchemaParser.js';
 
 const PATTERN_DESCRIPTIONS: Record<PatternId, string> = {
   embed: 'bounded order line items embedded in parent orders (fulfillment-style schema)',
@@ -1026,10 +1028,21 @@ export function renderDynamoDbSingleCollectionExample(header: string): string {
   return renderDynamoDbExample('single-collection', header);
 }
 
-/** Render example file contents (SQL or CloudFormation YAML). */
+/** JSON Schema bundle illustrating a design pattern (canonical table shapes from SQLite templates). */
+export function renderJsonSchemaExample(pattern: PatternId, header: string): string {
+  const description = header.replace(/^-- /, '');
+  const ddl = renderDialectExampleDdl('sqlite', pattern);
+  const model = parseDdlToModel(ddl, 'ddl:json-schema');
+  return renderJsonSchemaBundleText(model, description);
+}
+
+/** Render example file contents (SQL, CloudFormation YAML, or JSON Schema bundle). */
 export function renderDialectExampleFile(dialectId: string, pattern: PatternId): string {
   if (dialectId === 'dynamodb') {
     return renderDynamoDbExample(pattern, dialectExampleHeader(dialectId, pattern));
+  }
+  if (dialectId === 'json-schema') {
+    return renderJsonSchemaExample(pattern, dialectExampleHeader(dialectId, pattern));
   }
   return renderDialectExampleDdl(dialectId, pattern);
 }

@@ -1,4 +1,4 @@
--- postgresql dialect example — outlier pattern: catalog products with skewed review volume and supporting merchandising tables.
+-- postgresql dialect example — attribute pattern: EAV product_attributes on a normalized merchandising schema.
 
 CREATE TABLE brands (
   id SERIAL PRIMARY KEY,
@@ -16,9 +16,8 @@ CREATE TABLE products (
   category_id INTEGER NOT NULL REFERENCES categories(id),
   sku VARCHAR(40) NOT NULL,
   name VARCHAR(200) NOT NULL,
-  base_price_cents INTEGER NOT NULL,
-  review_count INTEGER NOT NULL DEFAULT 0,
-  is_active BOOLEAN NOT NULL DEFAULT 1
+  description TEXT,
+  base_price_cents INTEGER NOT NULL
 );
 CREATE TABLE product_variants (
   id SERIAL PRIMARY KEY,
@@ -28,12 +27,16 @@ CREATE TABLE product_variants (
   size VARCHAR(20),
   price_cents INTEGER NOT NULL
 );
+CREATE TABLE product_attributes (
+  id SERIAL PRIMARY KEY,
+  product_id INTEGER NOT NULL REFERENCES products(id),
+  attr_key VARCHAR(60) NOT NULL,
+  attr_value VARCHAR(255) NOT NULL
+);
 CREATE TABLE reviews (
   id SERIAL PRIMARY KEY,
   product_id INTEGER NOT NULL REFERENCES products(id),
-  reviewer_name VARCHAR(120) NOT NULL,
   stars INTEGER NOT NULL,
-  title VARCHAR(200),
   body TEXT,
   created_at TIMESTAMPTZ NOT NULL
 );
@@ -41,6 +44,5 @@ CREATE TABLE inventory_levels (
   id SERIAL PRIMARY KEY,
   variant_id INTEGER NOT NULL REFERENCES product_variants(id),
   warehouse_code VARCHAR(20) NOT NULL,
-  quantity_on_hand INTEGER NOT NULL,
-  updated_at TIMESTAMPTZ NOT NULL
+  quantity_on_hand INTEGER NOT NULL
 );

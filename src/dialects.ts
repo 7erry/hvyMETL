@@ -31,6 +31,7 @@ const DIALECT_DEFINITIONS: DialectDefinition[] = [
   { id: 'spanner', label: 'Google Cloud Spanner', live: false, parserFamily: 'spanner' },
   { id: 'databricks', label: 'Databricks SQL / Spark SQL', live: false, parserFamily: 'spark' },
   { id: 'dynamodb', label: 'Amazon DynamoDB (CloudFormation)', live: false, parserFamily: 'dynamodb' },
+  { id: 'json-schema', label: 'JSON Schema', live: false, parserFamily: 'json-schema' },
   { id: 'singlestore', label: 'SingleStore (MemSQL)', live: false, parserFamily: 'mysql' },
   { id: 'sap-hana', label: 'SAP HANA', live: false, parserFamily: 'hana' },
   { id: 'teradata', label: 'Teradata', live: false, parserFamily: 'teradata' },
@@ -57,6 +58,8 @@ const DIALECT_ALIASES: Record<string, string> = {
   yugabytedb: 'yugabyte',
   'aws-dynamodb': 'dynamodb',
   'dynamo-db': 'dynamodb',
+  jsonschema: 'json-schema',
+  'json_schema': 'json-schema',
 };
 
 /** Normalize a dialect id or alias to a canonical supported id. */

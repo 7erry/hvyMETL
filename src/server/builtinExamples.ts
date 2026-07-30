@@ -97,6 +97,16 @@ function readCloudFormationDescription(filePath: string): string | undefined {
   }
 }
 
+/** Read the description field from an hvyMETL JSON Schema bundle. */
+function readJsonBundleDescription(filePath: string): string | undefined {
+  try {
+    const document = JSON.parse(readFileSync(filePath, 'utf8')) as { description?: string };
+    return typeof document.description === 'string' ? document.description.trim() : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 /** Read the first `--` comment line from a DDL file for list descriptions. */
 function readFirstCommentLine(filePath: string): string | undefined {
   try {
@@ -189,20 +199,22 @@ export function listBuiltinExamples(examplesDir: string): BuiltinExampleSummary[
     if (domain === 'dialects') {
       const dialectDir = join(examplesDir, domain);
       for (const fileName of readdirSync(dialectDir).sort()) {
-        if (!/\.(sql|ya?ml)$/i.test(fileName)) continue;
+        if (!/\.(sql|ya?ml|json)$/i.test(fileName)) continue;
         const filePath = join(dialectDir, fileName);
-        const dialectId = fileName.replace(/\.(sql|ya?ml)$/i, '');
+        const dialectId = fileName.replace(/\.(sql|ya?ml|json)$/i, '');
         const id = `${domain}/${fileName}`;
         const manifestEntry = dialectExampleFor(dialectId);
         const description =
           dialectId === 'dynamodb'
             ? readCloudFormationDescription(filePath)
-            : readFirstCommentLine(filePath);
+            : dialectId === 'json-schema'
+              ? readJsonBundleDescription(filePath)
+              : readFirstCommentLine(filePath);
         summaries.push({
           id,
           label: manifestEntry ? dialectExamplePickerLabel(manifestEntry) : dialectId,
           description: description ?? `Design-pattern example for ${dialectId}.`,
-          dialect: dialectId === 'dynamodb' ? 'dynamodb' : dialectId,
+          dialect: dialectId,
           suggestedProfileId: manifestEntry?.suggestedProfileId ?? inferDialectExampleProfile(description ?? ''),
         });
       }

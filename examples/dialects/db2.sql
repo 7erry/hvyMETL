@@ -1,57 +1,57 @@
--- db2 dialect example — polymorphic pattern: CMS pages with block_type variants, assets, revisions, and tags.
+-- db2 dialect example — extended-reference pattern: read-heavy product catalog with duplicated brand lookup fields.
 
-CREATE TABLE authors (
+CREATE TABLE brands (
   id INTEGER NOT NULL GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-  display_name VARCHAR(120) NOT NULL,
-  email VARCHAR(255) NOT NULL,
-  role VARCHAR(40) NOT NULL DEFAULT 'editor'
+  name VARCHAR(120) NOT NULL,
+  country VARCHAR(60) NOT NULL,
+  website VARCHAR(255)
 );
-CREATE TABLE assets (
+CREATE TABLE categories (
   id INTEGER NOT NULL GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-  file_name VARCHAR(255) NOT NULL,
-  mime_type VARCHAR(100) NOT NULL,
-  byte_size INTEGER NOT NULL,
-  storage_url VARCHAR(500) NOT NULL,
-  uploaded_at TIMESTAMP NOT NULL
+  name VARCHAR(120) NOT NULL,
+  slug VARCHAR(140) NOT NULL
 );
-CREATE TABLE pages (
+CREATE TABLE suppliers (
   id INTEGER NOT NULL GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-  author_id INTEGER NOT NULL REFERENCES authors(id),
-  slug VARCHAR(200) NOT NULL,
-  title VARCHAR(255) NOT NULL,
-  status VARCHAR(20) NOT NULL DEFAULT 'draft',
-  published_at TIMESTAMP,
-  created_at TIMESTAMP NOT NULL
+  name VARCHAR(160) NOT NULL,
+  contact_email VARCHAR(255) NOT NULL,
+  lead_time_days INTEGER NOT NULL DEFAULT 7
 );
-CREATE TABLE content_blocks (
+CREATE TABLE warehouses (
   id INTEGER NOT NULL GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-  page_id INTEGER NOT NULL REFERENCES pages(id),
-  position INTEGER NOT NULL,
-  block_type VARCHAR(40) NOT NULL,
-  title_text VARCHAR(200),
-  text_body CLOB,
-  image_asset_id INTEGER REFERENCES assets(id),
-  image_url VARCHAR(500),
-  video_asset_id INTEGER REFERENCES assets(id),
-  video_duration_sec INTEGER,
-  embed_url VARCHAR(500)
+  code VARCHAR(20) NOT NULL,
+  region VARCHAR(40) NOT NULL,
+  address_line VARCHAR(200) NOT NULL
 );
-CREATE TABLE page_revisions (
+CREATE TABLE products (
   id INTEGER NOT NULL GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-  page_id INTEGER NOT NULL REFERENCES pages(id),
-  author_id INTEGER NOT NULL REFERENCES authors(id),
-  revision_number INTEGER NOT NULL,
-  change_summary VARCHAR(500),
-  snapshot_json CLOB NOT NULL,
-  created_at TIMESTAMP NOT NULL
+  brand_id INTEGER NOT NULL REFERENCES brands(id),
+  category_id INTEGER NOT NULL REFERENCES categories(id),
+  sku VARCHAR(40) NOT NULL,
+  name VARCHAR(200) NOT NULL,
+  description CLOB,
+  base_price_cents INTEGER NOT NULL,
+  currency CHAR(3) NOT NULL DEFAULT 'USD'
 );
-CREATE TABLE tags (
+CREATE TABLE product_variants (
   id INTEGER NOT NULL GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-  name VARCHAR(60) NOT NULL,
-  slug VARCHAR(80) NOT NULL
+  product_id INTEGER NOT NULL REFERENCES products(id),
+  variant_sku VARCHAR(48) NOT NULL,
+  barcode VARCHAR(32),
+  price_cents INTEGER NOT NULL,
+  weight_grams INTEGER
 );
-CREATE TABLE page_tags (
+CREATE TABLE supplier_products (
   id INTEGER NOT NULL GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-  page_id INTEGER NOT NULL REFERENCES pages(id),
-  tag_id INTEGER NOT NULL REFERENCES tags(id)
+  supplier_id INTEGER NOT NULL REFERENCES suppliers(id),
+  variant_id INTEGER NOT NULL REFERENCES product_variants(id),
+  supplier_sku VARCHAR(60) NOT NULL,
+  cost_cents INTEGER NOT NULL
+);
+CREATE TABLE inventory_levels (
+  id INTEGER NOT NULL GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  variant_id INTEGER NOT NULL REFERENCES product_variants(id),
+  warehouse_id INTEGER NOT NULL REFERENCES warehouses(id),
+  quantity_on_hand INTEGER NOT NULL,
+  updated_at TIMESTAMP NOT NULL
 );

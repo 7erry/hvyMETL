@@ -1,40 +1,43 @@
--- singlestore dialect example — single-collection pattern: articles and tags linked through article_tags for hub merge.
+-- singlestore dialect example — subset pattern: product catalog with recent reviews embedded and full review history elsewhere.
 
-CREATE TABLE authors (
+CREATE TABLE brands (
   id INT AUTO_INCREMENT PRIMARY KEY,
-  display_name VARCHAR(120) NOT NULL,
-  email VARCHAR(255) NOT NULL
+  name VARCHAR(120) NOT NULL
 );
-CREATE TABLE articles (
+CREATE TABLE categories (
   id INT AUTO_INCREMENT PRIMARY KEY,
-  author_id INT NOT NULL REFERENCES authors(id),
-  slug VARCHAR(140) NOT NULL,
-  title VARCHAR(200) NOT NULL,
-  summary VARCHAR(500),
-  published_at DATETIME
+  name VARCHAR(120) NOT NULL,
+  slug VARCHAR(140) NOT NULL
 );
-CREATE TABLE tags (
+CREATE TABLE products (
   id INT AUTO_INCREMENT PRIMARY KEY,
-  name VARCHAR(80) NOT NULL,
-  slug VARCHAR(100) NOT NULL
+  brand_id INT NOT NULL REFERENCES brands(id),
+  category_id INT NOT NULL REFERENCES categories(id),
+  sku VARCHAR(40) NOT NULL,
+  name VARCHAR(200) NOT NULL,
+  description TEXT,
+  base_price_cents INT NOT NULL
 );
-CREATE TABLE article_tags (
-  article_id INT NOT NULL REFERENCES articles(id),
-  tag_id INT NOT NULL REFERENCES tags(id),
-  PRIMARY KEY (article_id, tag_id)
-);
-CREATE TABLE article_revisions (
+CREATE TABLE product_images (
   id INT AUTO_INCREMENT PRIMARY KEY,
-  article_id INT NOT NULL REFERENCES articles(id),
-  revision_number INT NOT NULL,
-  body_markdown TEXT NOT NULL,
+  product_id INT NOT NULL REFERENCES products(id),
+  url VARCHAR(500) NOT NULL,
+  sort_order INT NOT NULL DEFAULT 0,
+  alt_text VARCHAR(255)
+);
+CREATE TABLE reviews (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  product_id INT NOT NULL REFERENCES products(id),
+  reviewer_name VARCHAR(120) NOT NULL,
+  stars INT NOT NULL,
+  title VARCHAR(200),
+  body TEXT,
   created_at DATETIME NOT NULL
 );
-CREATE TABLE media_assets (
+CREATE TABLE review_votes (
   id INT AUTO_INCREMENT PRIMARY KEY,
-  article_id INT REFERENCES articles(id),
-  file_name VARCHAR(255) NOT NULL,
-  mime_type VARCHAR(80) NOT NULL,
-  byte_size INT NOT NULL,
-  cdn_url VARCHAR(500) NOT NULL
+  review_id INT NOT NULL REFERENCES reviews(id),
+  voter_email VARCHAR(255) NOT NULL,
+  vote_value INT NOT NULL,
+  voted_at DATETIME NOT NULL
 );

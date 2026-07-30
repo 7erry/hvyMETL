@@ -6,6 +6,19 @@
 import type { SqlStructuralModel, TableModel } from '../types.js';
 import { parseSchemaImport } from './schemaImport.js';
 
+/** True when pasted content is a JSON Schema bundle rather than SQL DDL. */
+export function isJsonSchemaBundleImport(content: string): boolean {
+  const trimmed = content.trim();
+  if (!trimmed.startsWith('{')) return false;
+  try {
+    const document = JSON.parse(trimmed) as Record<string, unknown>;
+    if (Array.isArray(document.schemas)) return true;
+    return String(document.$schema ?? '').includes('json-schema.org');
+  } catch {
+    return false;
+  }
+}
+
 /** True when pasted content is a CloudFormation template rather than SQL DDL. */
 export function isCloudFormationImport(content: string): boolean {
   const trimmed = content.trim();
@@ -89,6 +102,12 @@ export function prepareMockCsvDdl(content: string, dialect?: string): string {
   const trimmed = content.trim();
   if (!trimmed) {
     throw new Error('DDL is required to generate mock CSV data.');
+  }
+
+  const useJsonSchema = dialect === 'json-schema' || isJsonSchemaBundleImport(trimmed);
+  if (useJsonSchema) {
+    const model = parseSchemaImport(trimmed, 'json-schema', 'mock-csv:json-schema');
+    return structuralModelToMockDdl(model);
   }
 
   const useCloudFormation = dialect === 'dynamodb' || isCloudFormationImport(trimmed);
