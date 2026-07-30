@@ -286,6 +286,11 @@ export function MigrationArtifactsView({ artifacts, onChange }: MigrationArtifac
                 {promptTabs.length > 0 ? (
                   <span className="artifact-tabs__divider" aria-hidden="true" />
                 ) : null}
+                {promptTabs.length === 0 ? (
+                  <span className="artifact-tabs__hint" title="RAG prompts load via Export migration or After · MongoDB design">
+                    RAG prompts (not loaded)
+                  </span>
+                ) : null}
                 {promptTabs.map((tab) => (
                   <button
                     key={tab.id}

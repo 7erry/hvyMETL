@@ -1751,6 +1751,13 @@ textarea {
   flex-shrink: 0;
 }
 
+.artifact-tabs__hint {
+  font-size: 0.72rem;
+  opacity: 0.65;
+  padding: 0 0.35rem;
+  white-space: nowrap;
+}
+
 .artifact-tabs button {
   min-height: 2.25rem;
   min-width: auto;
@@ -1884,6 +1891,7 @@ textarea {
   font-size: 13px;
   line-height: 19.5px;
   tab-size: 2;
+  overflow: auto !important;
 }
 
 /* Transparent textarea overlay — padding must match <pre> (set via Editor padding prop) */
@@ -1934,7 +1942,11 @@ textarea {
   outline: none !important;
 }
 
-/* Prism / oneDark-style tokens for editable overlay */
+/* Prism / oneDark-style tokens for editable overlay and readonly pre */
+.artifact-code-panel .token.comment,
+.artifact-code-panel .token.prolog,
+.artifact-code-panel .token.doctype,
+.artifact-code-panel .token.cdata,
 .artifact-code-panel--editable .token.comment,
 .artifact-code-panel--editable .token.prolog,
 .artifact-code-panel--editable .token.doctype,
@@ -1942,10 +1954,17 @@ textarea {
   color: #8b949e;
 }
 
+.artifact-code-panel .token.punctuation,
 .artifact-code-panel--editable .token.punctuation {
   color: #e6edf3;
 }
 
+.artifact-code-panel .token.property,
+.artifact-code-panel .token.tag,
+.artifact-code-panel .token.boolean,
+.artifact-code-panel .token.number,
+.artifact-code-panel .token.constant,
+.artifact-code-panel .token.symbol,
 .artifact-code-panel--editable .token.property,
 .artifact-code-panel--editable .token.tag,
 .artifact-code-panel--editable .token.boolean,
@@ -1955,6 +1974,11 @@ textarea {
   color: #79c0ff;
 }
 
+.artifact-code-panel .token.selector,
+.artifact-code-panel .token.attr-name,
+.artifact-code-panel .token.string,
+.artifact-code-panel .token.char,
+.artifact-code-panel .token.builtin,
 .artifact-code-panel--editable .token.selector,
 .artifact-code-panel--editable .token.attr-name,
 .artifact-code-panel--editable .token.string,
@@ -1963,37 +1987,51 @@ textarea {
   color: #a5d6ff;
 }
 
+.artifact-code-panel .token.operator,
 .artifact-code-panel--editable .token.operator {
   color: #e6edf3;
 }
 
+.artifact-code-panel .token.atrule,
+.artifact-code-panel .token.attr-value,
+.artifact-code-panel .token.keyword,
 .artifact-code-panel--editable .token.atrule,
 .artifact-code-panel--editable .token.attr-value,
 .artifact-code-panel--editable .token.keyword {
   color: #ff7b72;
 }
 
-/* Syntax tokens — links/urls use MongoDB green instead of default purple/blue */
+.artifact-code-panel .token.url,
+.artifact-code-panel .token.selector,
+.artifact-code-panel .token.entity,
 .artifact-code-panel--readonly .token.url,
 .artifact-code-panel--readonly .token.selector,
-.artifact-code-panel--readonly .token.entity {
-  color: var(--mdb-green-base) !important;
-}
-
+.artifact-code-panel--readonly .token.entity,
 .artifact-code-panel--editable .token.url,
 .artifact-code-panel--editable .token.selector,
 .artifact-code-panel--editable .token.entity {
   color: var(--mdb-green-base);
 }
 
+.artifact-code-panel .token.function,
+.artifact-code-panel .token.class-name,
 .artifact-code-panel--editable .token.function,
 .artifact-code-panel--editable .token.class-name {
   color: #d2a8ff;
 }
 
+.artifact-code-panel .token.regex,
+.artifact-code-panel .token.variable,
 .artifact-code-panel--editable .token.regex,
 .artifact-code-panel--editable .token.variable {
   color: #ffa657;
+}
+
+.artifact-code-panel pre code {
+  background: none;
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
 }
 
 .artifact-textarea {

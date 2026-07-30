@@ -80,6 +80,7 @@ import {
   parseMigrationPlan,
   patchMigrationPlanJsonWithProfile,
 } from './migrationPlanDisplay';
+import { fetchMigrationPrompts, mapPromptExportResponse } from './migrationPrompts';
 import { layoutSqlModel } from './graphLayout';
 import { pickCsvDirectory } from './directoryPicker';
 import type { CollectionPlan, MigrationPlan } from './migrationPlanTypes';
@@ -715,6 +716,23 @@ export default function App() {
       collectionPositions: initialCollectionPositions(plan, prev.positions, {}),
     }));
     setStatus(`Loaded pipeline run ${execution.executionId}.`);
+    if (ddl.trim()) {
+      void fetchMigrationPrompts(ddl, profileFields)
+        .then((promptBundle) => {
+          setSession((prev) => ({
+            ...prev,
+            migrationArtifacts: prev.migrationArtifacts
+              ? {
+                  ...prev.migrationArtifacts,
+                  prompts: promptBundle.prompts,
+                  retrievalStrategy:
+                    promptBundle.retrievalStrategy ?? prev.migrationArtifacts.retrievalStrategy,
+                }
+              : null,
+          }));
+        })
+        .catch(() => undefined);
+    }
     if (designModel) {
       void explainDesignTransformation({
         model: designModel,
@@ -752,10 +770,15 @@ export default function App() {
         csvSourcePath:
           designCsvFiles.length === 0 && csvSourcePath?.trim() ? csvSourcePath.trim() : undefined,
       };
+      const promptsPromise = fetchMigrationPrompts(ddl, profileFields).catch(() => ({
+        prompts: [] as MigrationArtifacts['prompts'],
+        retrievalStrategy: undefined as string | undefined,
+      }));
       const result =
         designCsvFiles.length > 0
           ? await runDesignWithCsv(designCsvFiles, designRequest)
           : await runDesign(designRequest);
+      const promptBundle = await promptsPromise;
       const planJson = JSON.stringify(result.plan, null, 2);
       const meta = result.designMeta as DesignMeta;
       setSession((prev) => ({
@@ -763,8 +786,11 @@ export default function App() {
         migrationArtifacts: {
           planJson,
           designReportMarkdown: result.designReport ?? prev.migrationArtifacts?.designReportMarkdown ?? '',
-          prompts: prev.migrationArtifacts?.prompts ?? [],
-          retrievalStrategy: result.retrievalStrategy ?? prev.migrationArtifacts?.retrievalStrategy,
+          prompts: promptBundle.prompts.length > 0 ? promptBundle.prompts : (prev.migrationArtifacts?.prompts ?? []),
+          retrievalStrategy:
+            promptBundle.retrievalStrategy
+            ?? result.retrievalStrategy
+            ?? prev.migrationArtifacts?.retrievalStrategy,
           designMeta: meta,
           transformationSummary: result.transformationSummary,
           modelTokenUsage: result.modelTokenUsage
@@ -837,6 +863,34 @@ export default function App() {
       return;
     }
     if (migrationArtifacts) {
+      if (!migrationArtifacts.prompts?.length && ddl.trim()) {
+        void (async () => {
+          try {
+            setExporting(true);
+            setStatus('Loading RAG migration prompts…');
+            const promptBundle = await fetchMigrationPrompts(ddl, profileFields);
+            setSession((prev) => ({
+              ...prev,
+              view: 'migration',
+              migrationArtifacts: prev.migrationArtifacts
+                ? {
+                    ...prev.migrationArtifacts,
+                    prompts: promptBundle.prompts,
+                    retrievalStrategy:
+                      promptBundle.retrievalStrategy ?? prev.migrationArtifacts.retrievalStrategy,
+                  }
+                : null,
+            }));
+            setStatus(`Opened migration export · ${promptBundle.prompts.length} RAG prompt(s).`);
+          } catch (e) {
+            setSessionField('view', 'migration');
+            setStatus(`Could not load RAG prompts: ${describeApiError(e)}`);
+          } finally {
+            setExporting(false);
+          }
+        })();
+        return;
+      }
       setSessionField('view', 'migration');
       return;
     }
@@ -869,14 +923,12 @@ export default function App() {
         forceEmbedOverrides,
       });
       const promptsResult = await exportPrompts(ddl, profileFields);
+      const promptBundle = mapPromptExportResponse(promptsResult);
       const artifacts: MigrationArtifacts = {
         planJson: JSON.stringify(result.migrationPlanJson ?? result.plan, null, 2),
         designReportMarkdown: result.designReportMarkdown ?? '',
-        prompts: (promptsResult.prompts ?? []).map((p: { fileName: string; content: string }) => ({
-          fileName: p.fileName,
-          content: p.content,
-        })),
-        retrievalStrategy: promptsResult.retrievalStrategy,
+        prompts: promptBundle.prompts,
+        retrievalStrategy: promptBundle.retrievalStrategy,
         generatedAt: new Date().toISOString(),
         apiArtifacts: result.apiArtifacts ?? undefined,
       };
@@ -918,6 +970,23 @@ export default function App() {
           apiArtifacts: result.apiArtifacts ?? undefined,
         },
       }));
+      if (ddl.trim()) {
+        void fetchMigrationPrompts(ddl, profileFields)
+          .then((promptBundle) => {
+            setSession((prev) => ({
+              ...prev,
+              migrationArtifacts: prev.migrationArtifacts
+                ? {
+                    ...prev.migrationArtifacts,
+                    prompts: promptBundle.prompts,
+                    retrievalStrategy:
+                      promptBundle.retrievalStrategy ?? prev.migrationArtifacts.retrievalStrategy,
+                  }
+                : null,
+            }));
+          })
+          .catch(() => undefined);
+      }
     }
     setStatus(result.ok ? 'Full pipeline completed.' : `Pipeline finished with errors: ${result.errors.join('; ')}`);
   };
