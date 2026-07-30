@@ -73,9 +73,11 @@ describe('example pattern coverage', () => {
     expect(blocks?.patterns.some((decision) => decision.pattern === 'polymorphic')).toBe(true);
   });
 
-  it('iot buckets the sensor_readings firehose', () => {
+  it('iot uses native time series for the sensor_readings firehose', () => {
     const plan = designExample('iot', 'iot');
-    expectPatterns(plan, ['bucket', 'computed', 'schema-versioning']);
+    expectPatterns(plan, ['time-series', 'computed', 'schema-versioning']);
+    const readings = plan.collections.find((collection) => collection.sourceTable === 'sensor_readings');
+    expect(readings?.timeSeries?.timeField).toBeTruthy();
     expect(plan.collections.some((collection) => collection.sourceTable === 'sensor_readings')).toBe(true);
   });
 
@@ -89,9 +91,11 @@ describe('example pattern coverage', () => {
     expectPatterns(plan, ['attribute', 'computed', 'schema-versioning']);
   });
 
-  it('analytics buckets page_events', () => {
+  it('analytics uses native time series for page_events', () => {
     const plan = designExample('analytics', 'realtime-analytics');
-    expectPatterns(plan, ['bucket', 'computed', 'schema-versioning']);
+    expectPatterns(plan, ['time-series', 'computed', 'schema-versioning']);
+    const events = plan.collections.find((collection) => collection.sourceTable === 'page_events');
+    expect(events?.timeSeries?.granularity).toBe('minutes');
   });
 
   it('singleview denormalizes customer-360 reads with extended-reference', () => {
@@ -145,6 +149,7 @@ describe('example pattern coverage', () => {
       'schema-versioning',
       'single-collection',
       'subset',
+      'time-series',
       'tree',
     ];
 

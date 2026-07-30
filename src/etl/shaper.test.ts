@@ -125,9 +125,26 @@ describe('buildShapedQuery (document collections)', () => {
   });
 });
 
-describe('buildShapedQuery (bucket collections)', () => {
+describe('buildShapedQuery (native time series collections)', () => {
   const model = buildIotModel();
   const plan = buildMigrationPlan(model, WORKLOAD_PROFILES.iot);
+  const readings = plan.collections.find((collection) => collection.sourceTable === 'readings');
+  if (!readings) throw new Error('readings collection missing from plan');
+  const shaped = buildShapedQuery(readings, model);
+
+  it('exports flat measurement rows for time series import (no bucket GROUP BY)', () => {
+    expect(readings.timeSeries?.timeField).toBe('recordedAt');
+    expect(readings.bucket).toBeUndefined();
+    expect(shaped.sql).not.toContain('GROUP BY 1, 2');
+    expect(shaped.columns).toContain('recordedAt');
+    expect(shaped.columns).toContain('deviceId');
+    expect(shaped.splitsOnTime).toBe(false);
+  });
+});
+
+describe('buildShapedQuery (bucket collections)', () => {
+  const model = buildIotModel();
+  const plan = buildMigrationPlan(model, WORKLOAD_PROFILES.mobile);
   const readings = plan.collections.find((collection) => collection.sourceTable === 'readings');
   if (!readings) throw new Error('readings collection missing from plan');
   const shaped = buildShapedQuery(readings, model);

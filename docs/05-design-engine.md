@@ -33,7 +33,7 @@ lessons-learned memory injection. See [17-ml-engine.md](17-ml-engine.md). For wh
 `CollectionPlan`: `name`, `sourceTable`, `mergedTables`, `idDerivation`
 (`direct` / `composite` / `bucket`), `patterns[]` (with `knowledgeSource` citations),
 `jsonSchema`, `indexes[]`, `embeddedArrays[]`, `extendedReferences[]`,
-`computedFields[]`, and optional `bucket`.
+`computedFields[]`, and optional `bucket` or `timeSeries`.
 
 ### `runDesign(options: DesignOptions): Promise<MigrationPlan>`
 
@@ -52,7 +52,8 @@ Orchestrates introspect → retrieve → plan → write, and always closes the a
 | --- | --- | --- | --- |
 | EAV child table (key/value payload) | always | **Attribute** (k/v array + compound index) | `attribute.md` |
 | Junction table (two FKs, no payload) | always | embedded id array | `embed-vs-reference.md` |
-| Timestamped child ≥ 10,000 rows | write-heavy or profile prefers bucket | **Bucket** collection + parent Computed counter | `bucket.md` |
+| Timestamped child ≥ 10,000 rows | write-heavy + profile prefers **time-series** (IoT, Real-Time Analytics) | **Native time series** collection + parent Computed counter | `time-series.md` |
+| Timestamped child ≥ 10,000 rows | write-heavy + profile prefers **bucket** (no time-series) | **Bucket** collection + parent Computed counter | `bucket.md` |
 | Child is a "hub" (other tables reference it) | always | reference (never embedded) | `embed-vs-reference.md` |
 | Child has multiple parents | non-primary parent | reference + Computed counter | `embed-vs-reference.md` |
 | Unknown-cardinality single-parent child (DDL-only) | not write-heavy, not time-series, one FK parent | default **embed** (assumed small dependent) | `embed-vs-reference.md` |
@@ -87,7 +88,7 @@ Internal: `src/adapters/sqlite.ts`, `src/rag/*` (for the report's cited context)
 ## 3. Edge Cases & Error Handling
 
 - **The 16MB guard.** No rule can produce an unbounded embedded array: unbounded
-  children either become Subset (hard-capped at 10), a Bucket collection
+  children either become Subset (hard-capped at 10), a native **time series** or **Bucket** collection
   (window-bounded), or a reference. This is the "Avoid the Monolith" constraint.
 - **Developer override guard.** Migration Studio can send `cardinalityOverrides` and
   `forceEmbedOverrides` for DDL-only relationships when CSV/live stats are
@@ -114,7 +115,7 @@ Internal: `src/adapters/sqlite.ts`, `src/rag/*` (for the report's cited context)
 
 ## 4. Code Breakdown
 
-1. **Pass 1 — classification.** Identify firehose tables to bucket and prepare the
+1. **Pass 1 — classification.** Identify firehose tables for native time series or bucket collections and prepare the
    `absorbedTables` set that tracks children folded into parents.
 2. **Pass 2 — per-table planning** (sorted by FK count so lookups plan first):
    - `planChildRelationships` walks every relationship where the table is the

@@ -85,13 +85,32 @@ export function bsonSchemaToJsonSchema(node: unknown): Record<string, unknown> {
 }
 
 /** MongoDB collection validator document (createCollection / collMod). */
+export function buildMongoCreateCollectionOptions(collection: CollectionPlan): Record<string, unknown> | undefined {
+  if (!collection.timeSeries) return undefined;
+  const timeseries: Record<string, unknown> = {
+    timeField: collection.timeSeries.timeField,
+    granularity: collection.timeSeries.granularity,
+  };
+  if (collection.timeSeries.metaField) {
+    timeseries.metaField = collection.timeSeries.metaField;
+  }
+  const options: Record<string, unknown> = { timeseries };
+  if (collection.timeSeries.expireAfterSeconds !== undefined) {
+    options.expireAfterSeconds = collection.timeSeries.expireAfterSeconds;
+  }
+  return options;
+}
+
+/** MongoDB collection validator document (createCollection / collMod). */
 export function buildCollectionValidatorDocument(collection: CollectionPlan, plan: MigrationPlan): Record<string, unknown> {
+  const createCollectionOptions = buildMongoCreateCollectionOptions(collection);
   return {
     collection: collection.name,
     sourceTable: collection.sourceTable,
     mergedTables: collection.mergedTables,
     profileId: plan.profileId,
     generatedAt: plan.generatedAt,
+    ...(createCollectionOptions ? { createCollectionOptions } : {}),
     validationLevel: 'moderate',
     validationAction: 'warn',
     validator: {

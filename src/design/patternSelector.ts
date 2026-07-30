@@ -11,7 +11,7 @@
  * The decision table (telemetry x structure -> pattern):
  *
  *   EAV-shaped child table                      -> Attribute
- *   Timestamped firehose child + write-heavy    -> Bucket
+ *   Timestamped firehose child + write-heavy    -> Time Series (native) or Bucket
  *   Junction table (two FKs, no payload)        -> embedded id array
  *   Meta / *meta extension tables               -> nested object or Attribute (Rule 1)
  *   Strict line-item children (orders_items)    -> embed by default (checklist)
@@ -45,6 +45,8 @@ import type {
   SingleCollectionPlan,
   SqlStructuralModel,
   TableModel,
+  TimeSeriesGranularity,
+  TimeSeriesPlan,
   WorkloadProfile,
 } from '../types.js';
 import { singularize, toCamelCase, toPascalCase } from '../utilities/naming.js';
@@ -204,13 +206,37 @@ export function isFirehoseTable(table: TableModel): boolean {
   return table.rowCount >= FIREHOSE_MIN_ROWS && findDateColumn(table) !== undefined;
 }
 
+/** True when the workload profile prefers MongoDB native time series collections. */
+export function shouldUseNativeTimeSeries(profile: WorkloadProfile): boolean {
+  return profile.preferredPatterns.includes('time-series');
+}
+
+/** Whether a firehose table should become its own collection (time series or bucket). */
+function firehoseGetsOwnCollection(profile: WorkloadProfile, isWriteHeavy: boolean): boolean {
+  if (shouldUseNativeTimeSeries(profile) && (isWriteHeavy || profile.preferredPatterns.includes('time-series'))) {
+    return true;
+  }
+  return isWriteHeavy || profile.preferredPatterns.includes('bucket');
+}
+
+function inferTimeSeriesGranularity(profile: WorkloadProfile): TimeSeriesGranularity {
+  if (profile.id === 'realtime-analytics') return 'minutes';
+  return 'seconds';
+}
+
+function inferTimeSeriesExpireAfterSeconds(profile: WorkloadProfile): number | undefined {
+  if (profile.id === 'iot') return 90 * 24 * 60 * 60;
+  if (profile.id === 'realtime-analytics') return 30 * 24 * 60 * 60;
+  return undefined;
+}
+
 /** Tables with dated history on read-heavy workloads qualify for Archive (not ledger). */
 export function isArchiveCandidate(
   table: TableModel,
   profile: WorkloadProfile,
-  bucketedTables: Set<string>,
+  separatedFirehoseTables: Set<string>,
 ): boolean {
-  if (bucketedTables.has(table.name)) return false;
+  if (separatedFirehoseTables.has(table.name)) return false;
   if (profile.id === 'ledger') return false;
   if (!findDateColumn(table)) return false;
   if (table.rowCount < ARCHIVE_MIN_ROWS) return false;
@@ -589,12 +615,12 @@ function planChildRelationships(
     // Rule 3: timestamped firehose children on bucket-friendly workloads
     // become their own bucketed collection (handled when the child table is
     // planned); the parent just gets a computed counter.
-    const childIsBucketed = isFirehoseTable(childTable) && (isWriteHeavy || profile.preferredPatterns.includes('bucket'));
-    if (childIsBucketed) {
+    const childIsFirehoseSeparated = isFirehoseTable(childTable) && firehoseGetsOwnCollection(profile, isWriteHeavy);
+    if (childIsFirehoseSeparated) {
       addComputedCounter(
         childTable,
         relationship,
-        `${childTable.name} is bucketed separately; the parent keeps a pre-computed counter so dashboards never scan raw measurements (${ratioLabel}).`,
+        `${childTable.name} is stored in a dedicated time-series or bucket collection; the parent keeps a pre-computed counter so dashboards never scan raw measurements (${ratioLabel}).`,
       );
       continue;
     }
@@ -925,6 +951,91 @@ function planBucketCollection(
   };
 }
 
+/** Build a MongoDB native time series collection plan for one firehose measurement table. */
+function planTimeSeriesCollection(table: TableModel, profile: WorkloadProfile): CollectionPlan {
+  const dateColumn = findDateColumn(table);
+  if (!dateColumn) {
+    throw new Error(`Time series plan requires a timestamp column on ${table.name}.`);
+  }
+  const timeField = toCamelCase(dateColumn.name);
+  const metaFk = table.foreignKeys.find((fk) => fk.referencesTable !== table.name);
+  const metaField = metaFk ? toCamelCase(metaFk.column) : undefined;
+  const granularity = inferTimeSeriesGranularity(profile);
+  const expireAfterSeconds = inferTimeSeriesExpireAfterSeconds(profile);
+  const timeSeries: TimeSeriesPlan = {
+    timeField,
+    ...(metaField ? { metaField } : {}),
+    granularity,
+    ...(expireAfterSeconds !== undefined ? { expireAfterSeconds } : {}),
+  };
+
+  const collectionName = toCamelCase(table.name);
+  const ratioLabel = `${profile.telemetry.readPercent}:${profile.telemetry.writePercent} R:W at ${profile.telemetry.peakRpm.toLocaleString('en-US')} RPM`;
+  const properties = buildBaseProperties(table);
+  properties[timeField] = {
+    bsonType: 'date',
+    description: `Time series timeField (from ${table.name}.${dateColumn.name}).`,
+  };
+  properties.schemaVersion = { bsonType: 'int', description: 'Schema versioning stamp (1 on import).' };
+  if (metaField && metaFk) {
+    const existing = properties[metaField];
+    properties[metaField] = {
+      ...(typeof existing === 'object' && existing !== null ? (existing as Record<string, unknown>) : { bsonType: 'string' }),
+      description: `Time series metaField labeling the measurement series (from ${metaFk.column} → ${metaFk.referencesTable}).`,
+    };
+  }
+
+  const primaryKeyColumns = table.primaryKey.length > 0 ? table.primaryKey : [table.columns[0].name];
+  const indexes: IndexSpec[] = [];
+  if (metaField) {
+    indexes.push({
+      keys: { [metaField]: 1, [timeField]: -1 },
+      options: { name: `idx_${collectionName}_${metaField}_${timeField}` },
+      reason: 'Compound index on metaField + timeField (MongoDB creates this automatically for time series collections with metaField).',
+    });
+  } else {
+    indexes.push({
+      keys: { [timeField]: -1 },
+      options: { name: `idx_${collectionName}_${timeField}` },
+      reason: 'Range scans on the timeField for time-bounded queries.',
+    });
+  }
+
+  return {
+    name: collectionName,
+    sourceTable: table.name,
+    mergedTables: [table.name],
+    idDerivation: {
+      sourceColumns: primaryKeyColumns,
+      strategy: primaryKeyColumns.length === 1 ? 'direct' : 'composite',
+    },
+    patterns: [
+      {
+        pattern: 'time-series',
+        target: collectionName,
+        reason: `${table.name} holds ${table.rowCount.toLocaleString('en-US')} timestamped rows under ${ratioLabel}; a native MongoDB time series collection with timeField \`${timeField}\`${metaField ? ` and metaField \`${metaField}\`` : ''} uses server-side bucketing and compression per the Manual.`,
+        knowledgeSource: 'time-series.md',
+      },
+      {
+        pattern: 'schema-versioning',
+        target: collectionName,
+        reason: 'Every document is stamped with schemaVersion: 1 so future shape changes can migrate lazily.',
+        knowledgeSource: 'schema-versioning.md',
+      },
+    ],
+    jsonSchema: {
+      bsonType: 'object',
+      required: ['_id', timeField, 'schemaVersion'],
+      properties,
+    },
+    indexes,
+    embeddedArrays: [],
+    extendedReferences: [],
+    computedFields: [],
+    timeSeries,
+  };
+}
+
 /**
  * Direct embed plans for every table that acts as a parent in the model.
  * Used by the CSV shaper to nest grandchildren inside embedded array cells
@@ -959,11 +1070,28 @@ export function buildMigrationPlan(model: SqlStructuralModel, profile: WorkloadP
   // Pass 1: find tables that disappear into other collections (EAV, junction,
   // fully embedded children) and tables that become bucketed collections.
   const absorbedTables = new Set<string>();
-  const bucketedTables = new Set<string>(
+  const timeSeriesTables = new Set<string>(
     model.tables
-      .filter((table) => isFirehoseTable(table) && (isWriteHeavy || profile.preferredPatterns.includes('bucket')))
+      .filter(
+        (table) =>
+          isFirehoseTable(table) &&
+          shouldUseNativeTimeSeries(profile) &&
+          firehoseGetsOwnCollection(profile, isWriteHeavy),
+      )
       .map((table) => table.name),
   );
+  const bucketedTables = new Set<string>(
+    model.tables
+      .filter(
+        (table) =>
+          isFirehoseTable(table) &&
+          !timeSeriesTables.has(table.name) &&
+          firehoseGetsOwnCollection(profile, isWriteHeavy) &&
+          profile.preferredPatterns.includes('bucket'),
+      )
+      .map((table) => table.name),
+  );
+  const separatedFirehoseTables = new Set<string>([...timeSeriesTables, ...bucketedTables]);
 
   const collections: CollectionPlan[] = [];
   const singleCollectionAbsorbed = new Set<string>();
@@ -986,6 +1114,10 @@ export function buildMigrationPlan(model: SqlStructuralModel, profile: WorkloadP
 
   for (const table of orderedTables) {
     if (singleCollectionAbsorbed.has(table.name)) continue;
+    if (timeSeriesTables.has(table.name)) {
+      collections.push(planTimeSeriesCollection(table, profile));
+      continue;
+    }
     if (bucketedTables.has(table.name)) {
       collections.push(planBucketCollection(table, profile));
       continue;
@@ -1057,7 +1189,7 @@ export function buildMigrationPlan(model: SqlStructuralModel, profile: WorkloadP
     const primaryKeyColumns = table.primaryKey.length > 0 ? table.primaryKey : [table.columns[0].name];
 
     let archive: ArchivePlan | undefined;
-    if (isArchiveCandidate(table, profile, bucketedTables)) {
+    if (isArchiveCandidate(table, profile, separatedFirehoseTables)) {
       const dateColumn = findDateColumn(table)!;
       const ratioLabel = `${profile.telemetry.readPercent}:${profile.telemetry.writePercent} R:W at ${profile.telemetry.peakRpm.toLocaleString('en-US')} RPM`;
       const retentionYears = archiveRetentionYears(profile);

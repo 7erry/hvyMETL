@@ -90,7 +90,8 @@ Think of it as a build spec: the design engine writes it once; ETL, csvToAtlas, 
 | `embeddedArrays[]` | Embed / Subset plans (field, source table, cap) |
 | `extendedReferences[]` | Lookup columns to pre-join and duplicate |
 | `computedFields[]` | Counters initialized during ETL, maintained with `$inc` |
-| `bucket` | Time-window grouping for time-series collections |
+| `bucket` | Application-level time-window grouping (legacy/compatibility path) |
+| `timeSeries` | MongoDB native `createCollection` time series options (`timeField`, `metaField`, `granularity`, optional TTL) |
 | `writeConcern` / `pool` | Profile-tuned connection settings |
 
 ### Who uses it

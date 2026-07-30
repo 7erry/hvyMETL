@@ -73,6 +73,46 @@ describe('collectionApiSchemas', () => {
     expect(comment.nullable).toBe(true);
   });
 
+  it('includes createCollection timeseries options for native time series plans', () => {
+    const plan: MigrationPlan = {
+      ...samplePlan,
+      collections: [
+        {
+          name: 'sensorReadings',
+          sourceTable: 'sensor_readings',
+          mergedTables: ['sensor_readings'],
+          idDerivation: { strategy: 'direct', sourceColumns: ['id'] },
+          patterns: [{ pattern: 'time-series', target: 'sensorReadings', reason: 'test', knowledgeSource: 'time-series.md' }],
+          jsonSchema: {
+            bsonType: 'object',
+            required: ['_id', 'recordedAt'],
+            properties: {
+              _id: { bsonType: 'string' },
+              recordedAt: { bsonType: 'date' },
+              sensorId: { bsonType: 'string' },
+            },
+          },
+          indexes: [],
+          embeddedArrays: [],
+          extendedReferences: [],
+          computedFields: [],
+          timeSeries: {
+            timeField: 'recordedAt',
+            metaField: 'sensorId',
+            granularity: 'seconds',
+            expireAfterSeconds: 86400,
+          },
+        },
+      ],
+    };
+    const validator = buildCollectionValidatorDocument(plan.collections[0], plan);
+    const opts = validator.createCollectionOptions as { timeseries: Record<string, unknown>; expireAfterSeconds: number };
+    expect(opts.timeseries.timeField).toBe('recordedAt');
+    expect(opts.timeseries.metaField).toBe('sensorId');
+    expect(opts.timeseries.granularity).toBe('seconds');
+    expect(opts.expireAfterSeconds).toBe(86400);
+  });
+
   it('builds MongoDB validator wrapper with $jsonSchema', () => {
     const validator = buildCollectionValidatorDocument(samplePlan.collections[0], samplePlan);
     expect(validator.collection).toBe('products');

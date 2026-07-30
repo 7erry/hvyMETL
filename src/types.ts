@@ -115,6 +115,7 @@ export type PatternId =
   | 'embed'
   | 'reference'
   | 'bucket'
+  | 'time-series'
   | 'outlier'
   | 'extended-reference'
   | 'computed'
@@ -292,6 +293,20 @@ export type BucketPlan = {
   measurementsField: string;
 };
 
+/** MongoDB native time series collection options (Manual: timeseries.timeField / metaField). */
+export type TimeSeriesGranularity = 'seconds' | 'minutes' | 'hours';
+
+export type TimeSeriesPlan = {
+  /** Document field holding the measurement timestamp (maps to timeseries.timeField). */
+  timeField: string;
+  /** Optional series key field (maps to timeseries.metaField). */
+  metaField?: string;
+  /** Bucket granularity hint for the server (timeseries.granularity). */
+  granularity: TimeSeriesGranularity;
+  /** Optional TTL in seconds (expireAfterSeconds on createCollection). */
+  expireAfterSeconds?: number;
+};
+
 /** Cold-storage routing for the Archive pattern (MongoDB Manual). */
 export type ArchivePlan = {
   /** Timestamp column used to decide when a document is eligible to move. */
@@ -343,6 +358,8 @@ export type CollectionPlan = {
   computedFields: ComputedFieldPlan[];
   /** Present only when the Bucket pattern was applied to this collection. */
   bucket?: BucketPlan;
+  /** Present when the collection is created as a MongoDB time series collection. */
+  timeSeries?: TimeSeriesPlan;
   /** Present when hot data stays active and cold data routes to a mirror collection. */
   archive?: ArchivePlan;
   /** Present when multiple SQL entity tables share one MongoDB collection. */

@@ -245,6 +245,11 @@ function buildCollectionNotes(
     if (collection.bucket) {
       notes.push(`Bucket pattern on ${collection.bucket.measurementsField} (${collection.bucket.windowMinutes}m windows).`);
     }
+    if (collection.timeSeries) {
+      notes.push(
+        `Native time series: timeField=${collection.timeSeries.timeField}${collection.timeSeries.metaField ? `, metaField=${collection.timeSeries.metaField}` : ''}, granularity=${collection.timeSeries.granularity}.`,
+      );
+    }
     if (collection.archive) {
       notes.push(
         `Archive mirror -> ${collection.archive.archiveCollection} after ${collection.archive.retentionYears} year${collection.archive.retentionYears === 1 ? '' : 's'}; partitions: ${collection.archive.partitionFields.join(', ')}.`,

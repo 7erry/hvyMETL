@@ -291,7 +291,7 @@ Full matrix, parser limits, and examples: **[docs/18-sql-dialects.md](docs/18-sq
 | --- | --- | --- |
 | `examples/catalog/catalog.db` | `catalog` (95:5) | Attribute (EAV), Subset + Outlier reviews, Extended Reference, Tree, Archive |
 | `examples/cms/cms.db` | `cms` (90:10) | Polymorphic blocks, Tree pages, Outlier, embeds; Single Collection with `--profile mobile` |
-| `examples/iot/iot.db` | `iot` (10:90) | Bucket (60k readings), Computed counters, embed/reference |
+| `examples/iot/iot.db` | `iot` (10:90) | Native time series (60k readings), Computed counters, embed/reference |
 | `examples/mobile/mobile.db` | `mobile` (80:20) | Bucket events, Extended Reference, Computed |
 | `examples/personalization/personalization.db` | `personalization` (70:30) | Attribute traits, Computed; Single Collection with `--profile mobile` |
 | `examples/analytics/analytics.db` | `realtime-analytics` (30:70) | Bucket firehose, rollup-shaped pre-allocation demo, Computed |

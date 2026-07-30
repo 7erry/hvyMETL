@@ -4,6 +4,7 @@ export type PatternId =
   | 'embed'
   | 'reference'
   | 'bucket'
+  | 'time-series'
   | 'outlier'
   | 'extended-reference'
   | 'computed'
@@ -62,6 +63,15 @@ export type BucketPlan = {
   measurementsField: string;
 };
 
+export type TimeSeriesGranularity = 'seconds' | 'minutes' | 'hours';
+
+export type TimeSeriesPlan = {
+  timeField: string;
+  metaField?: string;
+  granularity: TimeSeriesGranularity;
+  expireAfterSeconds?: number;
+};
+
 export type ArchivePlan = {
   timeColumn: string;
   retentionYears: number;
@@ -84,6 +94,7 @@ export type CollectionPlan = {
   extendedReferences: ExtendedReferencePlan[];
   computedFields: ComputedFieldPlan[];
   bucket?: BucketPlan;
+  timeSeries?: TimeSeriesPlan;
   archive?: ArchivePlan;
 };
 

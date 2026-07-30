@@ -65,6 +65,20 @@ function renderIndexModule(plan: MigrationPlan): string {
     'export async function ensureIndexes(db: Db): Promise<void> {',
   ];
   for (const collection of plan.collections) {
+    if (collection.timeSeries) {
+      const opts: Record<string, unknown> = {
+        timeseries: {
+          timeField: collection.timeSeries.timeField,
+          granularity: collection.timeSeries.granularity,
+          ...(collection.timeSeries.metaField ? { metaField: collection.timeSeries.metaField } : {}),
+        },
+      };
+      if (collection.timeSeries.expireAfterSeconds !== undefined) {
+        opts.expireAfterSeconds = collection.timeSeries.expireAfterSeconds;
+      }
+      lines.push(`  // Native time series collection (${collection.sourceTable})`);
+      lines.push(`  await db.createCollection('${collection.name}', ${JSON.stringify(opts)});`);
+    }
     for (const index of collection.indexes) {
       lines.push(`  // ${index.reason}`);
       lines.push(

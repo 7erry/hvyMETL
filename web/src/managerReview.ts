@@ -45,6 +45,7 @@ export type ManagerReviewAcceptances = {
 const COMPLEX_PATTERNS = new Set<PatternId>([
   'embed',
   'bucket',
+  'time-series',
   'subset',
   'archive',
   'extended-reference',
@@ -257,6 +258,15 @@ export function buildRecommendationsForCollection(
       category: 'structure',
       title: 'Time-series bucket',
       detail: `Group by ${collection.bucket.groupByColumn} with ${collection.bucket.windowMinutes}-minute windows on ${collection.bucket.timeColumn}.`,
+    });
+  }
+
+  if (collection.timeSeries) {
+    items.push({
+      id: 'time-series',
+      category: 'structure',
+      title: 'Native time series collection',
+      detail: `createCollection timeseries.timeField=${collection.timeSeries.timeField}${collection.timeSeries.metaField ? `, metaField=${collection.timeSeries.metaField}` : ''}, granularity=${collection.timeSeries.granularity}.`,
     });
   }
 

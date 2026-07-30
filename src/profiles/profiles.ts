@@ -53,7 +53,7 @@ export const WORKLOAD_PROFILES: Record<Exclude<WorkloadProfileId, 'custom'>, Wor
     label: 'IoT Telemetry',
     description: 'Massive sensor ingest; dashboards read aggregates occasionally.',
     telemetry: { readPercent: 10, writePercent: 90, peakRpm: 600000, growthRate: '1TB/week' },
-    preferredPatterns: ['bucket', 'computed', 'preallocation', 'reference'],
+    preferredPatterns: ['time-series', 'computed', 'preallocation', 'reference', 'bucket'],
     writeConcern: { w: 1, journal: false },
     readPreference: 'primary',
     compression: 'zstd',
@@ -86,7 +86,7 @@ export const WORKLOAD_PROFILES: Record<Exclude<WorkloadProfileId, 'custom'>, Wor
     label: 'Real-Time Analytics',
     description: 'High-velocity event ingest with live dashboard rollups.',
     telemetry: { readPercent: 30, writePercent: 70, peakRpm: 300000, growthRate: '500GB/month' },
-    preferredPatterns: ['bucket', 'computed', 'preallocation', 'reference', 'single-collection'],
+    preferredPatterns: ['time-series', 'computed', 'preallocation', 'reference', 'single-collection', 'bucket'],
     writeConcern: { w: 1, journal: false },
     readPreference: 'secondaryPreferred',
     compression: 'zstd',
@@ -150,7 +150,7 @@ export function buildCustomProfile(telemetry: WorkloadTelemetry, isCritical: boo
     description: `User-supplied telemetry: ${telemetry.readPercent}:${telemetry.writePercent} R:W at ${telemetry.peakRpm} RPM.`,
     telemetry,
     preferredPatterns: isWriteHeavy
-      ? ['bucket', 'computed', 'reference', 'preallocation']
+      ? ['time-series', 'bucket', 'computed', 'reference', 'preallocation']
       : ['extended-reference', 'computed', 'subset', 'attribute', 'archive'],
     writeConcern: isCritical ? { w: 'majority', journal: true } : { w: 1, journal: false },
     readPreference: 'primary',

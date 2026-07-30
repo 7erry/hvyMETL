@@ -318,7 +318,7 @@ describe('buildMigrationPlan', () => {
     );
   });
 
-  it('applies the Bucket pattern to timestamped firehose tables on write-heavy workloads', () => {
+  it('applies native Time Series to timestamped firehose tables on IoT workloads', () => {
     const model: SqlStructuralModel = {
       source: 'synthetic.db',
       tables: [
@@ -343,15 +343,48 @@ describe('buildMigrationPlan', () => {
     const plan = buildMigrationPlan(model, WORKLOAD_PROFILES.iot);
     const readings = plan.collections.find((collection) => collection.sourceTable === 'readings');
 
-    expect(readings?.bucket).toBeDefined();
-    expect(readings?.bucket?.groupByColumn).toBe('device_id');
-    expect(readings?.bucket?.timeColumn).toBe('recorded_at');
-    expect(readings?.idDerivation.strategy).toBe('bucket');
-    expect(readings?.patterns.some((decision) => decision.pattern === 'bucket')).toBe(true);
+    expect(readings?.timeSeries).toBeDefined();
+    expect(readings?.timeSeries?.timeField).toBe('recordedAt');
+    expect(readings?.timeSeries?.metaField).toBe('deviceId');
+    expect(readings?.timeSeries?.granularity).toBe('seconds');
+    expect(readings?.bucket).toBeUndefined();
+    expect(readings?.idDerivation.strategy).toBe('direct');
+    expect(readings?.patterns.some((decision) => decision.pattern === 'time-series')).toBe(true);
 
     // The parent keeps a Computed counter instead of embedding the firehose.
     const devices = plan.collections.find((collection) => collection.sourceTable === 'devices');
     expect(devices?.computedFields.some((field) => field.field === 'totalReadings')).toBe(true);
+  });
+
+  it('applies the Bucket pattern to firehose tables when the profile prefers bucket without time-series', () => {
+    const model: SqlStructuralModel = {
+      source: 'synthetic.db',
+      tables: [
+        table({ name: 'devices' }),
+        table({
+          name: 'readings',
+          rowCount: 500000,
+          columns: [
+            { name: 'id', sqlType: 'INTEGER', bsonType: 'long', nullable: false, isPrimaryKey: true },
+            { name: 'device_id', sqlType: 'INTEGER', bsonType: 'long', nullable: false, isPrimaryKey: false },
+            { name: 'recorded_at', sqlType: 'DATETIME', bsonType: 'date', nullable: false, isPrimaryKey: false },
+            { name: 'value', sqlType: 'REAL', bsonType: 'double', nullable: false, isPrimaryKey: false },
+          ],
+          foreignKeys: [{ column: 'device_id', referencesTable: 'devices', referencesColumn: 'id' }],
+        }),
+      ],
+      relationships: [
+        relationship({ parentTable: 'devices', childTable: 'readings', fkColumn: 'device_id', avgChildrenPerParent: 8000, maxChildrenPerParent: 9000, isBounded: false }),
+      ],
+    };
+
+    const plan = buildMigrationPlan(model, WORKLOAD_PROFILES.mobile);
+    const readings = plan.collections.find((collection) => collection.sourceTable === 'readings');
+
+    expect(readings?.bucket).toBeDefined();
+    expect(readings?.timeSeries).toBeUndefined();
+    expect(readings?.idDerivation.strategy).toBe('bucket');
+    expect(readings?.patterns.some((decision) => decision.pattern === 'bucket')).toBe(true);
   });
 
   it('applies Subset + Outlier to skewed unbounded children on read-heavy workloads', () => {

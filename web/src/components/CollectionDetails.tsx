@@ -133,6 +133,17 @@ export function CollectionDetails({ collection, fields, onClose }: CollectionDet
         </p>
       ) : null}
 
+      {collection.timeSeries ? (
+        <p style={{ margin: '0.5rem 0 0', fontSize: '0.8rem', opacity: 0.85 }}>
+          Time series: timeField={collection.timeSeries.timeField}
+          {collection.timeSeries.metaField ? `, metaField=${collection.timeSeries.metaField}` : ''}, granularity=
+          {collection.timeSeries.granularity}
+          {collection.timeSeries.expireAfterSeconds
+            ? `, expireAfterSeconds=${collection.timeSeries.expireAfterSeconds}`
+            : ''}
+        </p>
+      ) : null}
+
       {collection.archive ? (
         <p style={{ margin: '0.5rem 0 0', fontSize: '0.8rem', opacity: 0.85 }}>
           Archive: {collection.archive.archiveAfterDays}d → {collection.archive.archiveCollection}

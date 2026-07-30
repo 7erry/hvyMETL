@@ -29,9 +29,9 @@ ids match [`PatternId`](../src/types.ts) and the design engine output.
 | [`attribute.md`](../knowledge/attribute.md) | `attribute` | `catalog` | `catalog` | EAV `product_attributes` folded into `products` | `design --source examples/catalog/catalog.db --profile catalog` |
 | [`attribute.md`](../knowledge/attribute.md) | `attribute` | `personalization` | `personalization` | Sparse `profile_traits` on `profiles` | `design --source examples/personalization/personalization.db --profile personalization` |
 | [`archive.md`](../knowledge/archive.md) | `archive` | `catalog` | `catalog` | Hot `reviews` + cold `reviews_archive` | same as catalog row above |
-| [`bucket.md`](../knowledge/bucket.md) | `bucket` | `iot` | `iot` | 60k-row `sensor_readings` → `sensorReadings` buckets | `design --source examples/iot/iot.db --profile iot` |
-| [`bucket.md`](../knowledge/bucket.md) | `bucket` | `mobile` | `mobile` | `app_events` event stream | `design --source examples/mobile/mobile.db --profile mobile` |
-| [`bucket.md`](../knowledge/bucket.md) | `bucket` | `analytics` | `realtime-analytics` | `page_events` firehose | `design --source examples/analytics/analytics.db --profile realtime-analytics` |
+| [`bucket.md`](../knowledge/bucket.md) | `bucket` | `mobile` | `mobile` | `app_events` event stream (when time-series not preferred) | `design --source examples/mobile/mobile.db --profile mobile` |
+| [`time-series.md`](../knowledge/time-series.md) | `time-series` | `iot` | `iot` | 60k-row `sensor_readings` → native time series collection | `design --source examples/iot/iot.db --profile iot` |
+| [`time-series.md`](../knowledge/time-series.md) | `time-series` | `analytics` | `realtime-analytics` | `page_events` firehose | `design --source examples/analytics/analytics.db --profile realtime-analytics` |
 | [`computed.md`](../knowledge/computed.md) | `computed` | `ledger` | `ledger` | `current_balance` / `cleared_balance` on `accounts` | `design --ddl-file examples/ledger/ledger.sql --profile ledger` |
 | [`computed.md`](../knowledge/computed.md) | `computed` | *(all seven seeded)* | each domain’s default profile | Counter fields on parents (e.g. `totalReviews`, `count` on buckets) | any seeded `design` run |
 | [`embed-vs-reference.md`](../knowledge/embed-vs-reference.md) | `embed` / `reference` | `ledger` | `ledger` | `journal_lines` embedded under `journal_entries` (line-item pattern) | ledger `design` |

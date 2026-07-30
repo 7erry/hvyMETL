@@ -93,7 +93,8 @@ starting point for understanding *why* the design engine makes the choices it ma
 | `schema-versioning` | `knowledge/schema-versioning.md` | Schema Versioning | Zero-downtime migrations; transient dual indexes |
 | `subset` | `knowledge/subset.md` | Subset | Smaller working set; the subset must be managed |
 | `tree` | `knowledge/tree.md` | Tree | No recursive JOINs; app-managed graph updates |
-| `bucket` | `knowledge/bucket.md` | Group Data ([Manual](https://www.mongodb.com/docs/manual/data-modeling/design-patterns/)) | Far fewer documents/index entries for time-series |
+| `bucket` | `knowledge/bucket.md` | Group Data ([Manual](https://www.mongodb.com/docs/manual/data-modeling/design-patterns/)) | Application-level time windows for high-volume measurements |
+| `time-series` | `knowledge/time-series.md` | [Time Series Collections](https://www.mongodb.com/docs/manual/core/timeseries/) | Server-managed bucketing via `createCollection` `timeseries` options |
 | `embed` / `reference` | `knowledge/embed-vs-reference.md` | Foundational modeling guidance | Locality vs. unbounded growth (16MB limit) |
 | `archive` | `knowledge/archive.md` | [Archive Pattern](https://www.mongodb.com/docs/manual/data-modeling/design-patterns/archive/) | Hot working set stays fast; cold tier holds history |
 | `single-collection` | `knowledge/single-collection.md` | [Single Collection Pattern](https://www.mongodb.com/docs/manual/data-modeling/design-patterns/single-collection/) | One copy of each entity; graph reads without `$lookup` |

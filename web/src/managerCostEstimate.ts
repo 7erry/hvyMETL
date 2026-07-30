@@ -251,7 +251,7 @@ export function buildArchiveCollectionOptions(
   if (!model || !plan?.collections.length) return [];
   const mirrorNames = archiveMirrorNames(plan);
   return plan.collections
-    .filter((collection) => !mirrorNames.has(collection.name) && !collection.bucket)
+    .filter((collection) => !mirrorNames.has(collection.name) && !collection.bucket && !collection.timeSeries)
     .map((collection): ArchiveCollectionOption | null => {
       const timeField = findArchiveTimeField(model, collection);
       if (!timeField) return null;
@@ -521,6 +521,21 @@ export function buildShardingRecommendations(
           'Ranged sharding on metadata plus time co-locates bucket windows for efficient range reads per device or entity.';
       }
       supportingIndex = { [groupField]: 1, [bucketTimeField]: -1 };
+    } else if (collection.timeSeries) {
+      const tsTime = collection.timeSeries.timeField;
+      const meta = collection.timeSeries.metaField;
+      if (meta) {
+        shardKey = writeHeavy ? { [meta]: 1, [tsTime]: 'hashed' } : { [meta]: 1, [tsTime]: 1 };
+        strategy = writeHeavy ? 'compound-hashed' : 'ranged';
+        rationale =
+          'Native time series collections shard well on metaField plus a hashed timeField under heavy write load.';
+        supportingIndex = { [meta]: 1, [tsTime]: -1 };
+      } else {
+        shardKey = writeHeavy ? { [tsTime]: 'hashed' } : { [tsTime]: 1 };
+        strategy = writeHeavy ? 'hashed' : 'ranged';
+        rationale = 'Time series without metaField uses timeField for shard key selection.';
+        supportingIndex = { [tsTime]: -1 };
+      }
     } else if (tenantField && timeField) {
       shardKey = writeHeavy
         ? { [tenantField]: 1, [timeField]: 'hashed' }
@@ -638,7 +653,7 @@ export function computeManagerCostProjection(
 
       const timeField = findArchiveTimeField(model, collection);
       const retentionYears = retentionYearsForCollection(collection, inputs, Boolean(timeField));
-      const canArchive = !collection.bucket && retentionYears > 0 && Boolean(timeField);
+      const canArchive = !collection.bucket && !collection.timeSeries && retentionYears > 0 && Boolean(timeField);
       if (canArchive) {
         archiveCollectionCount += 1;
         const activeFraction = Math.min(1, retentionYears / ARCHIVE_ASSUMED_HISTORY_YEARS);
