@@ -12,7 +12,7 @@ function asRecord(value: unknown): Record<string, unknown> {
     : {};
 }
 
-/** Slug from $id URL or title for table naming. */
+/** Slug from $id URL, title, or $defs key for table naming. */
 export function schemaDocumentToTableName(schema: Record<string, unknown>): string {
   const title = String(schema.title ?? '').trim();
   if (title) return title;
@@ -26,6 +26,28 @@ export function schemaDocumentToTableName(schema: Record<string, unknown>): stri
   return 'Document';
 }
 
+/** Register $id, $anchor, and JSON Pointer keys for $ref resolution. */
+function registerSchemaIdentifiers(
+  schema: Record<string, unknown>,
+  tableName: string,
+  idBySchemaId: Map<string, string>,
+  defKey?: string,
+): void {
+  const id = String(schema.$id ?? '').trim();
+  if (id) {
+    idBySchemaId.set(id, tableName);
+  }
+
+  const anchor = String(schema.$anchor ?? '').trim();
+  if (anchor) {
+    idBySchemaId.set(`#${anchor}`, tableName);
+  }
+
+  if (defKey) {
+    idBySchemaId.set(`#/$defs/${defKey}`, tableName);
+  }
+}
+
 /** Canonical $id for a table when exporting from a structural model. */
 export function tableNameToSchemaId(tableName: string): string {
   const slug = tableName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
@@ -36,13 +58,20 @@ function resolveRefTarget(ref: string, idBySchemaId: Map<string, string>): { tab
   const trimmed = ref.trim();
   if (!trimmed) return null;
 
-  const table = idBySchemaId.get(trimmed);
-  if (table) {
-    return { table, column: 'id' };
+  const direct = idBySchemaId.get(trimmed);
+  if (direct) {
+    return { table: direct, column: 'id' };
+  }
+
+  if (trimmed.startsWith('#/')) {
+    const pointer = idBySchemaId.get(trimmed);
+    if (pointer) {
+      return { table: pointer, column: 'id' };
+    }
   }
 
   const segment = trimmed.split('/').pop()?.replace(/\.schema\.json$/i, '') ?? '';
-  const guessed = segment.replace(/-/g, '_');
+  const guessed = segment.replace(/^#/, '').replace(/-/g, '_');
   if (guessed) {
     return { table: guessed, column: 'id' };
   }
@@ -100,10 +129,10 @@ function jsonSchemaTypeToColumn(name: string, spec: Record<string, unknown>, isP
 function buildTableFromSchema(
   schema: Record<string, unknown>,
   idBySchemaId: Map<string, string>,
+  defKey?: string,
 ): TableModel {
   const name = schemaDocumentToTableName(schema);
-  const schemaId = String(schema.$id ?? tableNameToSchemaId(name));
-  idBySchemaId.set(schemaId, name);
+  registerSchemaIdentifiers(schema, name, idBySchemaId, defKey);
 
   const properties = asRecord(schema.properties);
   const required = new Set(
@@ -112,7 +141,9 @@ function buildTableFromSchema(
 
   const primaryKey = [...required];
   if (primaryKey.length === 0) {
-    const idProp = Object.keys(properties).find((key) => /^id$/i.test(key));
+    const idProp =
+      Object.keys(properties).find((key) => /^id$/i.test(key))
+      ?? Object.keys(properties).find((key) => /Id$/.test(key));
     if (idProp) primaryKey.push(idProp);
     else if (Object.keys(properties).length > 0) primaryKey.push(Object.keys(properties)[0]!);
   }
@@ -217,6 +248,22 @@ function buildRelationships(tables: TableModel[]): RelationshipModel[] {
   return relationships;
 }
 
+/** Pull object-shaped entries from a document `$defs` map (draft 2020-12). */
+function objectSchemasFromDefs(defs: Record<string, unknown>): Record<string, unknown>[] {
+  const schemas: Record<string, unknown>[] = [];
+
+  for (const [defKey, defValue] of Object.entries(defs)) {
+    const def = asRecord(defValue);
+    if (def.type !== 'object' && !def.properties) continue;
+    schemas.push({
+      ...def,
+      title: String(def.title ?? defKey),
+    });
+  }
+
+  return schemas;
+}
+
 /** Extract schema objects from pasted JSON text. */
 export function parseJsonSchemaDocuments(jsonText: string): Record<string, unknown>[] {
   const trimmed = jsonText.trim();
@@ -240,26 +287,79 @@ export function parseJsonSchemaDocuments(jsonText: string): Record<string, unkno
     return schemas;
   }
 
+  const defs = asRecord(root.$defs);
+  const fromDefs = objectSchemasFromDefs(defs);
+  if (fromDefs.length > 0) {
+    return fromDefs;
+  }
+
   if (root.type === 'object' || root.properties) {
     return [root];
   }
 
-  throw new Error('JSON Schema import must be an object schema or a { "schemas": [...] } bundle.');
+  throw new Error(
+    'JSON Schema import must be an object schema, a { "schemas": [...] } bundle, or a document with object-shaped "$defs".',
+  );
+}
+
+type SchemaDocumentEntry = {
+  schema: Record<string, unknown>;
+  defKey?: string;
+};
+
+function listSchemaDocumentEntries(jsonText: string): SchemaDocumentEntry[] {
+  const trimmed = jsonText.trim();
+  const document = JSON.parse(trimmed) as unknown;
+  const root = asRecord(document);
+
+  if (Array.isArray(root.schemas)) {
+    return root.schemas
+      .map((entry) => asRecord(entry))
+      .filter((entry) => entry.type === 'object' || entry.properties)
+      .map((schema) => ({ schema }));
+  }
+
+  const defs = asRecord(root.$defs);
+  const entries: SchemaDocumentEntry[] = [];
+  for (const [defKey, defValue] of Object.entries(defs)) {
+    const def = asRecord(defValue);
+    if (def.type !== 'object' && !def.properties) continue;
+    entries.push({
+      schema: {
+        ...def,
+        title: String(def.title ?? defKey),
+      },
+      defKey,
+    });
+  }
+  if (entries.length > 0) {
+    return entries;
+  }
+
+  if (root.type === 'object' || root.properties) {
+    return [{ schema: root }];
+  }
+
+  return [];
 }
 
 /** Convert JSON Schema bundle text into the shared structural model. */
 export function parseJsonSchemaToModel(jsonText: string, sourceLabel = 'ddl:json-schema'): SqlStructuralModel {
-  const schemas = parseJsonSchemaDocuments(jsonText);
-  const idBySchemaId = new Map<string, string>();
-
-  for (const schema of schemas) {
-    const id = String(schema.$id ?? '').trim();
-    if (id) {
-      idBySchemaId.set(id, schemaDocumentToTableName(schema));
-    }
+  const entries = listSchemaDocumentEntries(jsonText);
+  if (entries.length === 0) {
+    throw new Error(
+      'JSON Schema import must be an object schema, a { "schemas": [...] } bundle, or a document with object-shaped "$defs".',
+    );
   }
 
-  const tables = schemas.map((schema) => buildTableFromSchema(schema, idBySchemaId));
+  const idBySchemaId = new Map<string, string>();
+
+  for (const { schema, defKey } of entries) {
+    const name = schemaDocumentToTableName(schema);
+    registerSchemaIdentifiers(schema, name, idBySchemaId, defKey);
+  }
+
+  const tables = entries.map(({ schema, defKey }) => buildTableFromSchema(schema, idBySchemaId, defKey));
   normalizeForeignKeys(tables);
 
   if (tables.length === 0) {

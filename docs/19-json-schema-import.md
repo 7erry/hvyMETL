@@ -20,6 +20,7 @@ the JSON Schema site: [JSON Schema examples](https://json-schema.org/learn/json-
 | --- | --- |
 | **Single schema** | One root document with `"type": "object"` and `"properties"`. |
 | **hvyMETL bundle** | `{ "description": "…", "schemas": [ … ] }` — preferred for multi-entity models. |
+| **`$defs` document** | Root document whose `"$defs"` contains object schemas (e.g. [ecommerce example](https://json-schema.org/learn/json-schema-examples)); `$anchor` and `#Anchor` `$ref` values are resolved. |
 
 Table names come from each schema’s **`title`**, or from the last segment of **`$id`**
 (for example `https://example.com/user-profile.schema.json` → `user_profile`).

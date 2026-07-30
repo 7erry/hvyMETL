@@ -77,6 +77,41 @@ describe('parseJsonSchemaToModel', () => {
     );
   });
 
+  it('parses ecommerce-style $defs with $anchor refs (json-schema.org example)', () => {
+    const ecommerce = {
+      $id: 'https://example.com/ecommerce.schema.json',
+      $schema: 'https://json-schema.org/draft/2020-12/schema',
+      $defs: {
+        product: {
+          $anchor: 'ProductSchema',
+          type: 'object',
+          properties: {
+            name: { type: 'string' },
+            price: { type: 'number', minimum: 0 },
+          },
+        },
+        order: {
+          $anchor: 'OrderSchema',
+          type: 'object',
+          properties: {
+            orderId: { type: 'string' },
+            items: {
+              type: 'array',
+              items: { $ref: '#ProductSchema' },
+            },
+          },
+        },
+      },
+    };
+
+    const model = parseJsonSchemaToModel(JSON.stringify(ecommerce));
+    expect(model.tables.map((table) => table.name)).toEqual(['product', 'order']);
+    expect(model.tables.find((table) => table.name === 'order')?.primaryKey).toEqual(['orderId']);
+    expect(model.tables.find((table) => table.name === 'order')?.columns.some((column) => column.name === 'items')).toBe(
+      true,
+    );
+  });
+
   it('routes json-schema dialect imports through parseSchemaImport', () => {
     const model = parseSchemaImport(JSON.stringify(ADDRESS_SCHEMA), 'json-schema', 'ddl:json-schema');
     expect(model.source).toBe('ddl:json-schema');
