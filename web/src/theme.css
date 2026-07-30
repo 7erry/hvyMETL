@@ -4420,27 +4420,6 @@ textarea {
   flex: 1 1 16rem;
 }
 
-.app-header__cli-hint {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  font-size: 0.75rem;
-  opacity: 0.85;
-  color: var(--accent-secondary);
-}
-
-.app-header__cli-hint code {
-  color: var(--mdb-spring-green);
-  font-size: 0.75rem;
-}
-
-.app-header__cli-copy.copy-button {
-  min-height: 1.75rem;
-  min-width: auto;
-  padding: 0.15rem 0.45rem;
-  font-size: 0.68rem;
-}
-
 .role-toggle--locked {
   display: inline-flex;
   align-items: center;
@@ -4526,11 +4505,6 @@ textarea {
   .app-header__actions > .terms-link {
     flex: 1 1 calc(50% - 0.25rem);
     min-width: 0;
-  }
-
-  .app-header__cli-hint {
-    flex: 1 1 100%;
-    text-align: center;
   }
 
   .auth-user {

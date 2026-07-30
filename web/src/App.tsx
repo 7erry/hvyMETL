@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ComponentProps } from 'react';
 import { MongoLogo } from './components/MongoLogo';
-import { CopyButton } from './components/CopyButton';
 import { MigrationArtifactsView } from './components/MigrationArtifactsView';
 import { SchemaCanvas, deleteTableFromModel, duplicateTableInModel } from './components/SchemaCanvas';
 import { SchemaCanvasWithCopilot } from './components/SchemaCanvasWithCopilot';
@@ -1176,12 +1175,6 @@ export default function App() {
             </>
           ) : null}
           {uiRole === 'developer' ? <CopilotHeaderToggle /> : null}
-          {uiRole === 'developer' ? (
-            <span className="app-header__cli-hint">
-              CLI: <code>npm run hvymetl</code>
-              <CopyButton text="npm run hvymetl" label="Copy" className="app-header__cli-copy" />
-            </span>
-          ) : null}
           {access.enabled ? (
             <div className="auth-user">
               <span>{access.userName}</span>
