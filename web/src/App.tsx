@@ -87,6 +87,7 @@ import type { CollectionPlan, MigrationPlan } from './migrationPlanTypes';
 import type { PipelineExecutionDetail } from './transformationSummaryTypes';
 import { EMBED_OVERRIDES_PANEL_ID } from './transformationSummaryTypes';
 import type { Dialect, Profile, SqlStructuralModel } from './types';
+import { COPILOT_WIDTH_MAX } from './layoutConstants';
 
 function CopilotHeaderToggle() {
   const copilot = useCopilot();
@@ -110,6 +111,9 @@ function PipelinePanelConnected(
       }}
       onComplete={(result) => {
         props.onComplete(result);
+        copilot.setWidth(COPILOT_WIDTH_MAX);
+        copilot.setOpen(true);
+        copilot.setActiveTab('chat');
         if (result.ok && result.targetDb) {
           const imported = result.imports.filter((entry) => entry.ok).length;
           copilot.showWorkflowResult({
