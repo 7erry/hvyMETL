@@ -59,6 +59,9 @@ describe('dialect example files', () => {
           : parseDdlToModel(ddl, `ddl:${dialectId}`);
 
       expect(model.tables.length).toBeGreaterThan(0);
+      if (dialectId !== 'dynamodb') {
+        expect(model.tables.length).toBeGreaterThanOrEqual(5);
+      }
 
       const tableNames = new Set(model.tables.map((table) => baseTableName(table.name)));
       for (const expected of PATTERN_SIGNATURE_TABLES[entry.pattern]) {

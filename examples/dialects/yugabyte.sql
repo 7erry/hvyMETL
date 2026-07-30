@@ -1,12 +1,42 @@
--- yugabyte dialect example — schema-versioning pattern: schemaVersion stamp applied to every planned collection.
+-- yugabyte dialect example — schema-versioning pattern: versioned catalog entities stamped on every MongoDB collection.
 
 CREATE TABLE brands (
   id SERIAL PRIMARY KEY,
-  name VARCHAR(120) NOT NULL
+  name VARCHAR(120) NOT NULL,
+  country VARCHAR(60) NOT NULL,
+  website VARCHAR(255)
+);
+CREATE TABLE categories (
+  id SERIAL PRIMARY KEY,
+  name VARCHAR(120) NOT NULL,
+  slug VARCHAR(140) NOT NULL
+);
+CREATE TABLE suppliers (
+  id SERIAL PRIMARY KEY,
+  name VARCHAR(160) NOT NULL,
+  contact_email VARCHAR(255) NOT NULL
 );
 CREATE TABLE products (
   id SERIAL PRIMARY KEY,
   brand_id INTEGER NOT NULL REFERENCES brands(id),
+  category_id INTEGER NOT NULL REFERENCES categories(id),
+  supplier_id INTEGER REFERENCES suppliers(id),
   sku VARCHAR(40) NOT NULL,
-  name VARCHAR(200) NOT NULL
+  name VARCHAR(200) NOT NULL,
+  description TEXT,
+  base_price_cents INTEGER NOT NULL,
+  currency CHAR(3) NOT NULL DEFAULT 'USD'
+);
+CREATE TABLE product_variants (
+  id SERIAL PRIMARY KEY,
+  product_id INTEGER NOT NULL REFERENCES products(id),
+  variant_sku VARCHAR(48) NOT NULL,
+  barcode VARCHAR(32),
+  price_cents INTEGER NOT NULL
+);
+CREATE TABLE product_images (
+  id SERIAL PRIMARY KEY,
+  product_id INTEGER NOT NULL REFERENCES products(id),
+  url VARCHAR(500) NOT NULL,
+  sort_order INTEGER NOT NULL DEFAULT 0
 );

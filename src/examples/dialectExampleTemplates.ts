@@ -7,20 +7,20 @@ import { getDialectParserFamily } from '../dialects.js';
 import type { PatternId } from '../types.js';
 
 const PATTERN_DESCRIPTIONS: Record<PatternId, string> = {
-  embed: 'bounded order line items embedded in parent order documents',
-  reference: 'unbounded customer_events kept in a separate collection',
-  bucket: 'time-series sensor_readings grouped into time-window buckets',
-  outlier: 'skewed review counts on blockbuster products',
-  'extended-reference': 'brand lookup fields duplicated on products for read-heavy paths',
-  computed: 'account balances and counters maintained at write time',
-  subset: 'recent reviews embedded on products with overflow collection',
-  attribute: 'EAV product_attributes collapsed into a key/value array',
-  polymorphic: 'content_blocks with block_type discriminator and sparse variant columns',
-  tree: 'self-referencing category hierarchy via parent_id',
-  archive: 'hot orders vs cold orders_archive for Atlas Online Archive',
-  'single-collection': 'article_tags junction merged into a single hub collection',
-  'schema-versioning': 'schemaVersion stamp applied to every planned collection',
-  preallocation: 'pre-allocated dashboard slots for write-heavy analytics',
+  embed: 'bounded order line items embedded in parent orders (fulfillment-style schema)',
+  reference: 'high-volume customer_events kept separate from CRM core tables',
+  bucket: 'IoT sensor_readings time series with sites, devices, and operational metadata',
+  outlier: 'catalog products with skewed review volume and supporting merchandising tables',
+  'extended-reference': 'read-heavy product catalog with duplicated brand lookup fields',
+  computed: 'ledger accounts with running balances and posting audit tables',
+  subset: 'product catalog with recent reviews embedded and full review history elsewhere',
+  attribute: 'EAV product_attributes on a normalized merchandising schema',
+  polymorphic: 'CMS pages with block_type variants, assets, revisions, and tags',
+  tree: 'self-referencing category hierarchy with products and brand assignments',
+  archive: 'active orders plus orders_archive for Atlas Online Archive routing',
+  'single-collection': 'articles and tags linked through article_tags for hub merge',
+  'schema-versioning': 'versioned catalog entities stamped on every MongoDB collection',
+  preallocation: 'analytics rollups and event streams for dashboard pre-allocation',
 };
 
 /** Human-readable first-line comment for a dialect example file. */
@@ -35,50 +35,393 @@ const SQLITE_RENDERER: FamilyRenderer = (pattern, header) => {
     embed: `
 CREATE TABLE customers (
   id INTEGER PRIMARY KEY,
-  email VARCHAR(255) NOT NULL
+  email VARCHAR(255) NOT NULL,
+  company_name VARCHAR(200),
+  tier VARCHAR(20) NOT NULL DEFAULT 'standard',
+  created_at DATETIME NOT NULL
+);
+CREATE TABLE customer_addresses (
+  id INTEGER PRIMARY KEY,
+  customer_id INTEGER NOT NULL REFERENCES customers(id),
+  label VARCHAR(40) NOT NULL,
+  line1 VARCHAR(200) NOT NULL,
+  city VARCHAR(80) NOT NULL,
+  region VARCHAR(80),
+  postal_code VARCHAR(20) NOT NULL,
+  country CHAR(2) NOT NULL
 );
 CREATE TABLE orders (
   id INTEGER PRIMARY KEY,
   customer_id INTEGER NOT NULL REFERENCES customers(id),
+  ship_to_address_id INTEGER NOT NULL REFERENCES customer_addresses(id),
   order_number VARCHAR(40) NOT NULL,
-  placed_at DATETIME NOT NULL
+  status VARCHAR(20) NOT NULL DEFAULT 'open',
+  currency CHAR(3) NOT NULL DEFAULT 'USD',
+  placed_at DATETIME NOT NULL,
+  promised_ship_at DATETIME
 );
 CREATE TABLE order_lines (
   id INTEGER PRIMARY KEY,
   order_id INTEGER NOT NULL REFERENCES orders(id),
   sku VARCHAR(40) NOT NULL,
+  description VARCHAR(255) NOT NULL,
   quantity INTEGER NOT NULL,
-  unit_price_cents INTEGER NOT NULL
+  unit_price_cents INTEGER NOT NULL,
+  tax_cents INTEGER NOT NULL DEFAULT 0
+);
+CREATE TABLE order_payments (
+  id INTEGER PRIMARY KEY,
+  order_id INTEGER NOT NULL REFERENCES orders(id),
+  method VARCHAR(30) NOT NULL,
+  amount_cents INTEGER NOT NULL,
+  captured_at DATETIME NOT NULL,
+  processor_ref VARCHAR(80)
+);
+CREATE TABLE shipments (
+  id INTEGER PRIMARY KEY,
+  order_id INTEGER NOT NULL REFERENCES orders(id),
+  carrier VARCHAR(40) NOT NULL,
+  tracking_number VARCHAR(80),
+  shipped_at DATETIME,
+  delivered_at DATETIME
+);
+CREATE TABLE shipment_items (
+  id INTEGER PRIMARY KEY,
+  shipment_id INTEGER NOT NULL REFERENCES shipments(id),
+  order_line_id INTEGER NOT NULL REFERENCES order_lines(id),
+  quantity INTEGER NOT NULL
 );`,
     reference: `
 CREATE TABLE customers (
   id INTEGER PRIMARY KEY,
-  email VARCHAR(255) NOT NULL
+  email VARCHAR(255) NOT NULL,
+  full_name VARCHAR(160) NOT NULL,
+  country CHAR(2) NOT NULL,
+  lifecycle_stage VARCHAR(30) NOT NULL DEFAULT 'prospect',
+  created_at DATETIME NOT NULL
+);
+CREATE TABLE customer_profiles (
+  id INTEGER PRIMARY KEY,
+  customer_id INTEGER NOT NULL REFERENCES customers(id),
+  industry VARCHAR(80),
+  employee_count INTEGER,
+  annual_revenue_usd INTEGER,
+  updated_at DATETIME NOT NULL
+);
+CREATE TABLE subscriptions (
+  id INTEGER PRIMARY KEY,
+  customer_id INTEGER NOT NULL REFERENCES customers(id),
+  plan_code VARCHAR(40) NOT NULL,
+  status VARCHAR(20) NOT NULL,
+  started_at DATETIME NOT NULL,
+  renews_at DATETIME
+);
+CREATE TABLE payment_methods (
+  id INTEGER PRIMARY KEY,
+  customer_id INTEGER NOT NULL REFERENCES customers(id),
+  method_type VARCHAR(20) NOT NULL,
+  last_four VARCHAR(4),
+  expires_on DATE,
+  is_default BOOLEAN NOT NULL DEFAULT 0
 );
 CREATE TABLE customer_events (
   id INTEGER PRIMARY KEY,
   customer_id INTEGER NOT NULL REFERENCES customers(id),
   event_type VARCHAR(60) NOT NULL,
   event_at DATETIME NOT NULL,
+  channel VARCHAR(30),
   payload TEXT
+);
+CREATE TABLE support_tickets (
+  id INTEGER PRIMARY KEY,
+  customer_id INTEGER NOT NULL REFERENCES customers(id),
+  subject VARCHAR(255) NOT NULL,
+  status VARCHAR(20) NOT NULL,
+  priority VARCHAR(10) NOT NULL DEFAULT 'normal',
+  opened_at DATETIME NOT NULL,
+  closed_at DATETIME
 );`,
     bucket: `
+CREATE TABLE sites (
+  id INTEGER PRIMARY KEY,
+  name VARCHAR(120) NOT NULL,
+  timezone VARCHAR(60) NOT NULL,
+  latitude REAL,
+  longitude REAL
+);
+CREATE TABLE firmware_versions (
+  id INTEGER PRIMARY KEY,
+  version VARCHAR(40) NOT NULL,
+  released_at DATETIME NOT NULL,
+  changelog TEXT
+);
+CREATE TABLE devices (
+  id INTEGER PRIMARY KEY,
+  site_id INTEGER NOT NULL REFERENCES sites(id),
+  firmware_id INTEGER NOT NULL REFERENCES firmware_versions(id),
+  serial_number VARCHAR(64) NOT NULL,
+  model VARCHAR(80) NOT NULL,
+  installed_at DATETIME NOT NULL,
+  is_online BOOLEAN NOT NULL DEFAULT 1
+);
 CREATE TABLE sensors (
   id INTEGER PRIMARY KEY,
-  label VARCHAR(80) NOT NULL
+  device_id INTEGER NOT NULL REFERENCES devices(id),
+  label VARCHAR(80) NOT NULL,
+  kind VARCHAR(40) NOT NULL,
+  unit VARCHAR(20) NOT NULL,
+  precision_digits INTEGER NOT NULL DEFAULT 2
 );
 CREATE TABLE sensor_readings (
   id INTEGER PRIMARY KEY,
   sensor_id INTEGER NOT NULL REFERENCES sensors(id),
+  device_id INTEGER NOT NULL REFERENCES devices(id),
   recorded_at DATETIME NOT NULL,
-  value REAL NOT NULL
+  value REAL NOT NULL,
+  quality_flag INTEGER NOT NULL DEFAULT 0
+);
+CREATE TABLE device_alerts (
+  id INTEGER PRIMARY KEY,
+  device_id INTEGER NOT NULL REFERENCES devices(id),
+  severity VARCHAR(20) NOT NULL,
+  message VARCHAR(500) NOT NULL,
+  raised_at DATETIME NOT NULL,
+  acknowledged_at DATETIME
+);
+CREATE TABLE maintenance_visits (
+  id INTEGER PRIMARY KEY,
+  site_id INTEGER NOT NULL REFERENCES sites(id),
+  technician VARCHAR(120) NOT NULL,
+  scheduled_at DATETIME NOT NULL,
+  completed_at DATETIME,
+  notes TEXT
 );`,
     outlier: `
+CREATE TABLE brands (
+  id INTEGER PRIMARY KEY,
+  name VARCHAR(120) NOT NULL,
+  country VARCHAR(60) NOT NULL
+);
+CREATE TABLE categories (
+  id INTEGER PRIMARY KEY,
+  name VARCHAR(120) NOT NULL,
+  slug VARCHAR(140) NOT NULL
+);
 CREATE TABLE products (
   id INTEGER PRIMARY KEY,
+  brand_id INTEGER NOT NULL REFERENCES brands(id),
+  category_id INTEGER NOT NULL REFERENCES categories(id),
   sku VARCHAR(40) NOT NULL,
   name VARCHAR(200) NOT NULL,
-  review_count INTEGER NOT NULL DEFAULT 0
+  base_price_cents INTEGER NOT NULL,
+  review_count INTEGER NOT NULL DEFAULT 0,
+  is_active BOOLEAN NOT NULL DEFAULT 1
+);
+CREATE TABLE product_variants (
+  id INTEGER PRIMARY KEY,
+  product_id INTEGER NOT NULL REFERENCES products(id),
+  variant_sku VARCHAR(48) NOT NULL,
+  color VARCHAR(40),
+  size VARCHAR(20),
+  price_cents INTEGER NOT NULL
+);
+CREATE TABLE reviews (
+  id INTEGER PRIMARY KEY,
+  product_id INTEGER NOT NULL REFERENCES products(id),
+  reviewer_name VARCHAR(120) NOT NULL,
+  stars INTEGER NOT NULL,
+  title VARCHAR(200),
+  body TEXT,
+  created_at DATETIME NOT NULL
+);
+CREATE TABLE inventory_levels (
+  id INTEGER PRIMARY KEY,
+  variant_id INTEGER NOT NULL REFERENCES product_variants(id),
+  warehouse_code VARCHAR(20) NOT NULL,
+  quantity_on_hand INTEGER NOT NULL,
+  updated_at DATETIME NOT NULL
+);`,
+    'extended-reference': `
+CREATE TABLE brands (
+  id INTEGER PRIMARY KEY,
+  name VARCHAR(120) NOT NULL,
+  country VARCHAR(60) NOT NULL,
+  website VARCHAR(255)
+);
+CREATE TABLE categories (
+  id INTEGER PRIMARY KEY,
+  name VARCHAR(120) NOT NULL,
+  slug VARCHAR(140) NOT NULL
+);
+CREATE TABLE suppliers (
+  id INTEGER PRIMARY KEY,
+  name VARCHAR(160) NOT NULL,
+  contact_email VARCHAR(255) NOT NULL,
+  lead_time_days INTEGER NOT NULL DEFAULT 7
+);
+CREATE TABLE warehouses (
+  id INTEGER PRIMARY KEY,
+  code VARCHAR(20) NOT NULL,
+  region VARCHAR(40) NOT NULL,
+  address_line VARCHAR(200) NOT NULL
+);
+CREATE TABLE products (
+  id INTEGER PRIMARY KEY,
+  brand_id INTEGER NOT NULL REFERENCES brands(id),
+  category_id INTEGER NOT NULL REFERENCES categories(id),
+  sku VARCHAR(40) NOT NULL,
+  name VARCHAR(200) NOT NULL,
+  description TEXT,
+  base_price_cents INTEGER NOT NULL,
+  currency CHAR(3) NOT NULL DEFAULT 'USD'
+);
+CREATE TABLE product_variants (
+  id INTEGER PRIMARY KEY,
+  product_id INTEGER NOT NULL REFERENCES products(id),
+  variant_sku VARCHAR(48) NOT NULL,
+  barcode VARCHAR(32),
+  price_cents INTEGER NOT NULL,
+  weight_grams INTEGER
+);
+CREATE TABLE supplier_products (
+  id INTEGER PRIMARY KEY,
+  supplier_id INTEGER NOT NULL REFERENCES suppliers(id),
+  variant_id INTEGER NOT NULL REFERENCES product_variants(id),
+  supplier_sku VARCHAR(60) NOT NULL,
+  cost_cents INTEGER NOT NULL
+);
+CREATE TABLE inventory_levels (
+  id INTEGER PRIMARY KEY,
+  variant_id INTEGER NOT NULL REFERENCES product_variants(id),
+  warehouse_id INTEGER NOT NULL REFERENCES warehouses(id),
+  quantity_on_hand INTEGER NOT NULL,
+  updated_at DATETIME NOT NULL
+);`,
+    computed: `
+CREATE TABLE legal_entities (
+  id INTEGER PRIMARY KEY,
+  legal_name VARCHAR(255) NOT NULL,
+  tax_id VARCHAR(40) NOT NULL,
+  country CHAR(2) NOT NULL,
+  is_active BOOLEAN NOT NULL DEFAULT 1
+);
+CREATE TABLE accounts (
+  id INTEGER PRIMARY KEY,
+  entity_id INTEGER NOT NULL REFERENCES legal_entities(id),
+  account_number VARCHAR(40) NOT NULL,
+  account_name VARCHAR(160) NOT NULL,
+  currency CHAR(3) NOT NULL DEFAULT 'USD',
+  current_balance NUMERIC(14,2) NOT NULL DEFAULT 0,
+  transaction_count INTEGER NOT NULL DEFAULT 0,
+  opened_at DATETIME NOT NULL
+);
+CREATE TABLE posting_batches (
+  id INTEGER PRIMARY KEY,
+  entity_id INTEGER NOT NULL REFERENCES legal_entities(id),
+  batch_ref VARCHAR(40) NOT NULL,
+  status VARCHAR(20) NOT NULL,
+  submitted_at DATETIME NOT NULL,
+  posted_at DATETIME
+);
+CREATE TABLE ledger_entries (
+  id INTEGER PRIMARY KEY,
+  account_id INTEGER NOT NULL REFERENCES accounts(id),
+  batch_id INTEGER NOT NULL REFERENCES posting_batches(id),
+  amount NUMERIC(14,2) NOT NULL,
+  posting_type VARCHAR(10) NOT NULL,
+  memo VARCHAR(255),
+  posted_at DATETIME NOT NULL
+);
+CREATE TABLE account_daily_snapshots (
+  id INTEGER PRIMARY KEY,
+  account_id INTEGER NOT NULL REFERENCES accounts(id),
+  snapshot_date DATE NOT NULL,
+  opening_balance NUMERIC(14,2) NOT NULL,
+  closing_balance NUMERIC(14,2) NOT NULL
+);
+CREATE TABLE audit_events (
+  id INTEGER PRIMARY KEY,
+  entity_id INTEGER NOT NULL REFERENCES legal_entities(id),
+  actor VARCHAR(120) NOT NULL,
+  action VARCHAR(60) NOT NULL,
+  occurred_at DATETIME NOT NULL,
+  details TEXT
+);`,
+    subset: `
+CREATE TABLE brands (
+  id INTEGER PRIMARY KEY,
+  name VARCHAR(120) NOT NULL
+);
+CREATE TABLE categories (
+  id INTEGER PRIMARY KEY,
+  name VARCHAR(120) NOT NULL,
+  slug VARCHAR(140) NOT NULL
+);
+CREATE TABLE products (
+  id INTEGER PRIMARY KEY,
+  brand_id INTEGER NOT NULL REFERENCES brands(id),
+  category_id INTEGER NOT NULL REFERENCES categories(id),
+  sku VARCHAR(40) NOT NULL,
+  name VARCHAR(200) NOT NULL,
+  description TEXT,
+  base_price_cents INTEGER NOT NULL
+);
+CREATE TABLE product_images (
+  id INTEGER PRIMARY KEY,
+  product_id INTEGER NOT NULL REFERENCES products(id),
+  url VARCHAR(500) NOT NULL,
+  sort_order INTEGER NOT NULL DEFAULT 0,
+  alt_text VARCHAR(255)
+);
+CREATE TABLE reviews (
+  id INTEGER PRIMARY KEY,
+  product_id INTEGER NOT NULL REFERENCES products(id),
+  reviewer_name VARCHAR(120) NOT NULL,
+  stars INTEGER NOT NULL,
+  title VARCHAR(200),
+  body TEXT,
+  created_at DATETIME NOT NULL
+);
+CREATE TABLE review_votes (
+  id INTEGER PRIMARY KEY,
+  review_id INTEGER NOT NULL REFERENCES reviews(id),
+  voter_email VARCHAR(255) NOT NULL,
+  vote_value INTEGER NOT NULL,
+  voted_at DATETIME NOT NULL
+);`,
+    attribute: `
+CREATE TABLE brands (
+  id INTEGER PRIMARY KEY,
+  name VARCHAR(120) NOT NULL,
+  country VARCHAR(60) NOT NULL
+);
+CREATE TABLE categories (
+  id INTEGER PRIMARY KEY,
+  name VARCHAR(120) NOT NULL,
+  slug VARCHAR(140) NOT NULL
+);
+CREATE TABLE products (
+  id INTEGER PRIMARY KEY,
+  brand_id INTEGER NOT NULL REFERENCES brands(id),
+  category_id INTEGER NOT NULL REFERENCES categories(id),
+  sku VARCHAR(40) NOT NULL,
+  name VARCHAR(200) NOT NULL,
+  description TEXT,
+  base_price_cents INTEGER NOT NULL
+);
+CREATE TABLE product_variants (
+  id INTEGER PRIMARY KEY,
+  product_id INTEGER NOT NULL REFERENCES products(id),
+  variant_sku VARCHAR(48) NOT NULL,
+  color VARCHAR(40),
+  size VARCHAR(20),
+  price_cents INTEGER NOT NULL
+);
+CREATE TABLE product_attributes (
+  id INTEGER PRIMARY KEY,
+  product_id INTEGER NOT NULL REFERENCES products(id),
+  attr_key VARCHAR(60) NOT NULL,
+  attr_value VARCHAR(255) NOT NULL
 );
 CREATE TABLE reviews (
   id INTEGER PRIMARY KEY,
@@ -86,91 +429,144 @@ CREATE TABLE reviews (
   stars INTEGER NOT NULL,
   body TEXT,
   created_at DATETIME NOT NULL
+);
+CREATE TABLE inventory_levels (
+  id INTEGER PRIMARY KEY,
+  variant_id INTEGER NOT NULL REFERENCES product_variants(id),
+  warehouse_code VARCHAR(20) NOT NULL,
+  quantity_on_hand INTEGER NOT NULL
 );`,
-    'extended-reference': `
+    polymorphic: `
+CREATE TABLE authors (
+  id INTEGER PRIMARY KEY,
+  display_name VARCHAR(120) NOT NULL,
+  email VARCHAR(255) NOT NULL,
+  role VARCHAR(40) NOT NULL DEFAULT 'editor'
+);
+CREATE TABLE assets (
+  id INTEGER PRIMARY KEY,
+  file_name VARCHAR(255) NOT NULL,
+  mime_type VARCHAR(100) NOT NULL,
+  byte_size INTEGER NOT NULL,
+  storage_url VARCHAR(500) NOT NULL,
+  uploaded_at DATETIME NOT NULL
+);
+CREATE TABLE pages (
+  id INTEGER PRIMARY KEY,
+  author_id INTEGER NOT NULL REFERENCES authors(id),
+  slug VARCHAR(200) NOT NULL,
+  title VARCHAR(255) NOT NULL,
+  status VARCHAR(20) NOT NULL DEFAULT 'draft',
+  published_at DATETIME,
+  created_at DATETIME NOT NULL
+);
+CREATE TABLE content_blocks (
+  id INTEGER PRIMARY KEY,
+  page_id INTEGER NOT NULL REFERENCES pages(id),
+  position INTEGER NOT NULL,
+  block_type VARCHAR(40) NOT NULL,
+  title_text VARCHAR(200),
+  text_body TEXT,
+  image_asset_id INTEGER REFERENCES assets(id),
+  image_url VARCHAR(500),
+  video_asset_id INTEGER REFERENCES assets(id),
+  video_duration_sec INTEGER,
+  embed_url VARCHAR(500)
+);
+CREATE TABLE page_revisions (
+  id INTEGER PRIMARY KEY,
+  page_id INTEGER NOT NULL REFERENCES pages(id),
+  author_id INTEGER NOT NULL REFERENCES authors(id),
+  revision_number INTEGER NOT NULL,
+  change_summary VARCHAR(500),
+  snapshot_json TEXT NOT NULL,
+  created_at DATETIME NOT NULL
+);
+CREATE TABLE tags (
+  id INTEGER PRIMARY KEY,
+  name VARCHAR(60) NOT NULL,
+  slug VARCHAR(80) NOT NULL
+);
+CREATE TABLE page_tags (
+  id INTEGER PRIMARY KEY,
+  page_id INTEGER NOT NULL REFERENCES pages(id),
+  tag_id INTEGER NOT NULL REFERENCES tags(id)
+);`,
+    tree: `
 CREATE TABLE brands (
   id INTEGER PRIMARY KEY,
   name VARCHAR(120) NOT NULL,
   country VARCHAR(60) NOT NULL
 );
-CREATE TABLE products (
-  id INTEGER PRIMARY KEY,
-  brand_id INTEGER NOT NULL REFERENCES brands(id),
-  sku VARCHAR(40) NOT NULL,
-  name VARCHAR(200) NOT NULL
-);`,
-    computed: `
-CREATE TABLE accounts (
-  id INTEGER PRIMARY KEY,
-  account_number VARCHAR(40) NOT NULL,
-  current_balance NUMERIC(14,2) NOT NULL DEFAULT 0,
-  transaction_count INTEGER NOT NULL DEFAULT 0
-);
-CREATE TABLE ledger_entries (
-  id INTEGER PRIMARY KEY,
-  account_id INTEGER NOT NULL REFERENCES accounts(id),
-  amount NUMERIC(14,2) NOT NULL,
-  posted_at DATETIME NOT NULL
-);`,
-    subset: `
-CREATE TABLE products (
-  id INTEGER PRIMARY KEY,
-  sku VARCHAR(40) NOT NULL,
-  name VARCHAR(200) NOT NULL
-);
-CREATE TABLE reviews (
-  id INTEGER PRIMARY KEY,
-  product_id INTEGER NOT NULL REFERENCES products(id),
-  stars INTEGER NOT NULL,
-  title VARCHAR(200),
-  created_at DATETIME NOT NULL
-);`,
-    attribute: `
-CREATE TABLE products (
-  id INTEGER PRIMARY KEY,
-  sku VARCHAR(40) NOT NULL,
-  name VARCHAR(200) NOT NULL
-);
-CREATE TABLE product_attributes (
-  id INTEGER PRIMARY KEY,
-  product_id INTEGER NOT NULL REFERENCES products(id),
-  attr_key VARCHAR(60) NOT NULL,
-  attr_value VARCHAR(255) NOT NULL
-);`,
-    polymorphic: `
-CREATE TABLE pages (
-  id INTEGER PRIMARY KEY,
-  slug VARCHAR(140) NOT NULL,
-  title VARCHAR(200) NOT NULL
-);
-CREATE TABLE assets (
-  id INTEGER PRIMARY KEY,
-  file_name VARCHAR(255) NOT NULL,
-  mime_type VARCHAR(80) NOT NULL
-);
-CREATE TABLE content_blocks (
-  id INTEGER PRIMARY KEY,
-  page_id INTEGER NOT NULL REFERENCES pages(id),
-  asset_id INTEGER REFERENCES assets(id),
-  block_type VARCHAR(40) NOT NULL,
-  title_text VARCHAR(200),
-  image_url VARCHAR(500),
-  body_html TEXT
-);`,
-    tree: `
 CREATE TABLE categories (
   id INTEGER PRIMARY KEY,
   parent_id INTEGER REFERENCES categories(id),
+  brand_id INTEGER REFERENCES brands(id),
   name VARCHAR(120) NOT NULL,
-  slug VARCHAR(140) NOT NULL
+  slug VARCHAR(140) NOT NULL,
+  sort_order INTEGER NOT NULL DEFAULT 0
+);
+CREATE TABLE category_managers (
+  id INTEGER PRIMARY KEY,
+  category_id INTEGER NOT NULL REFERENCES categories(id),
+  manager_name VARCHAR(120) NOT NULL,
+  email VARCHAR(255) NOT NULL,
+  assigned_at DATETIME NOT NULL
+);
+CREATE TABLE products (
+  id INTEGER PRIMARY KEY,
+  category_id INTEGER NOT NULL REFERENCES categories(id),
+  brand_id INTEGER NOT NULL REFERENCES brands(id),
+  sku VARCHAR(40) NOT NULL,
+  name VARCHAR(200) NOT NULL,
+  base_price_cents INTEGER NOT NULL,
+  is_active BOOLEAN NOT NULL DEFAULT 1
+);
+CREATE TABLE product_variants (
+  id INTEGER PRIMARY KEY,
+  product_id INTEGER NOT NULL REFERENCES products(id),
+  variant_sku VARCHAR(48) NOT NULL,
+  color VARCHAR(40),
+  size VARCHAR(20),
+  price_cents INTEGER NOT NULL
 );`,
     archive: `
+CREATE TABLE customers (
+  id INTEGER PRIMARY KEY,
+  email VARCHAR(255) NOT NULL,
+  full_name VARCHAR(160) NOT NULL,
+  country CHAR(2) NOT NULL,
+  created_at DATETIME NOT NULL
+);
 CREATE TABLE orders (
   id INTEGER PRIMARY KEY,
+  customer_id INTEGER NOT NULL REFERENCES customers(id),
   order_number VARCHAR(40) NOT NULL,
-  customer_email VARCHAR(255) NOT NULL,
+  status VARCHAR(20) NOT NULL,
+  currency CHAR(3) NOT NULL DEFAULT 'USD',
   placed_at DATETIME NOT NULL,
   total_cents INTEGER NOT NULL
+);
+CREATE TABLE order_lines (
+  id INTEGER PRIMARY KEY,
+  order_id INTEGER NOT NULL REFERENCES orders(id),
+  sku VARCHAR(40) NOT NULL,
+  quantity INTEGER NOT NULL,
+  unit_price_cents INTEGER NOT NULL
+);
+CREATE TABLE order_payments (
+  id INTEGER PRIMARY KEY,
+  order_id INTEGER NOT NULL REFERENCES orders(id),
+  method VARCHAR(30) NOT NULL,
+  amount_cents INTEGER NOT NULL,
+  captured_at DATETIME NOT NULL
+);
+CREATE TABLE shipments (
+  id INTEGER PRIMARY KEY,
+  order_id INTEGER NOT NULL REFERENCES orders(id),
+  carrier VARCHAR(40) NOT NULL,
+  shipped_at DATETIME,
+  tracking_number VARCHAR(80)
 );
 CREATE TABLE orders_archive (
   id INTEGER PRIMARY KEY,
@@ -181,37 +577,127 @@ CREATE TABLE orders_archive (
   archived_at DATETIME NOT NULL
 );`,
     'single-collection': `
+CREATE TABLE authors (
+  id INTEGER PRIMARY KEY,
+  display_name VARCHAR(120) NOT NULL,
+  email VARCHAR(255) NOT NULL
+);
 CREATE TABLE articles (
   id INTEGER PRIMARY KEY,
+  author_id INTEGER NOT NULL REFERENCES authors(id),
   slug VARCHAR(140) NOT NULL,
-  title VARCHAR(200) NOT NULL
+  title VARCHAR(200) NOT NULL,
+  summary VARCHAR(500),
+  published_at DATETIME
 );
 CREATE TABLE tags (
   id INTEGER PRIMARY KEY,
-  name VARCHAR(80) NOT NULL
+  name VARCHAR(80) NOT NULL,
+  slug VARCHAR(100) NOT NULL
 );
 CREATE TABLE article_tags (
   article_id INTEGER NOT NULL REFERENCES articles(id),
   tag_id INTEGER NOT NULL REFERENCES tags(id),
   PRIMARY KEY (article_id, tag_id)
+);
+CREATE TABLE article_revisions (
+  id INTEGER PRIMARY KEY,
+  article_id INTEGER NOT NULL REFERENCES articles(id),
+  revision_number INTEGER NOT NULL,
+  body_markdown TEXT NOT NULL,
+  created_at DATETIME NOT NULL
+);
+CREATE TABLE media_assets (
+  id INTEGER PRIMARY KEY,
+  article_id INTEGER REFERENCES articles(id),
+  file_name VARCHAR(255) NOT NULL,
+  mime_type VARCHAR(80) NOT NULL,
+  byte_size INTEGER NOT NULL,
+  cdn_url VARCHAR(500) NOT NULL
 );`,
     'schema-versioning': `
 CREATE TABLE brands (
   id INTEGER PRIMARY KEY,
-  name VARCHAR(120) NOT NULL
+  name VARCHAR(120) NOT NULL,
+  country VARCHAR(60) NOT NULL,
+  website VARCHAR(255)
+);
+CREATE TABLE categories (
+  id INTEGER PRIMARY KEY,
+  name VARCHAR(120) NOT NULL,
+  slug VARCHAR(140) NOT NULL
+);
+CREATE TABLE suppliers (
+  id INTEGER PRIMARY KEY,
+  name VARCHAR(160) NOT NULL,
+  contact_email VARCHAR(255) NOT NULL
 );
 CREATE TABLE products (
   id INTEGER PRIMARY KEY,
   brand_id INTEGER NOT NULL REFERENCES brands(id),
+  category_id INTEGER NOT NULL REFERENCES categories(id),
+  supplier_id INTEGER REFERENCES suppliers(id),
   sku VARCHAR(40) NOT NULL,
-  name VARCHAR(200) NOT NULL
+  name VARCHAR(200) NOT NULL,
+  description TEXT,
+  base_price_cents INTEGER NOT NULL,
+  currency CHAR(3) NOT NULL DEFAULT 'USD'
+);
+CREATE TABLE product_variants (
+  id INTEGER PRIMARY KEY,
+  product_id INTEGER NOT NULL REFERENCES products(id),
+  variant_sku VARCHAR(48) NOT NULL,
+  barcode VARCHAR(32),
+  price_cents INTEGER NOT NULL
+);
+CREATE TABLE product_images (
+  id INTEGER PRIMARY KEY,
+  product_id INTEGER NOT NULL REFERENCES products(id),
+  url VARCHAR(500) NOT NULL,
+  sort_order INTEGER NOT NULL DEFAULT 0
 );`,
     preallocation: `
+CREATE TABLE tenants (
+  id INTEGER PRIMARY KEY,
+  name VARCHAR(120) NOT NULL,
+  plan VARCHAR(30) NOT NULL DEFAULT 'standard',
+  created_at DATETIME NOT NULL
+);
+CREATE TABLE dashboards (
+  id INTEGER PRIMARY KEY,
+  tenant_id INTEGER NOT NULL REFERENCES tenants(id),
+  title VARCHAR(160) NOT NULL,
+  owner_email VARCHAR(255) NOT NULL,
+  created_at DATETIME NOT NULL
+);
+CREATE TABLE dashboard_widgets (
+  id INTEGER PRIMARY KEY,
+  dashboard_id INTEGER NOT NULL REFERENCES dashboards(id),
+  widget_type VARCHAR(40) NOT NULL,
+  metric_name VARCHAR(80) NOT NULL,
+  position INTEGER NOT NULL DEFAULT 0
+);
+CREATE TABLE metric_definitions (
+  id INTEGER PRIMARY KEY,
+  metric_name VARCHAR(80) NOT NULL,
+  unit VARCHAR(20) NOT NULL,
+  description VARCHAR(255)
+);
 CREATE TABLE hourly_rollups (
   id INTEGER PRIMARY KEY,
   metric_name VARCHAR(80) NOT NULL,
+  tenant_id INTEGER NOT NULL REFERENCES tenants(id),
   hour_start DATETIME NOT NULL,
-  value NUMERIC(14,4) NOT NULL DEFAULT 0
+  value NUMERIC(14,4) NOT NULL DEFAULT 0,
+  sample_count INTEGER NOT NULL DEFAULT 0
+);
+CREATE TABLE page_events (
+  id INTEGER PRIMARY KEY,
+  tenant_id INTEGER NOT NULL REFERENCES tenants(id),
+  session_id VARCHAR(64) NOT NULL,
+  page_path VARCHAR(500) NOT NULL,
+  occurred_at DATETIME NOT NULL,
+  properties_json TEXT
 );`,
   };
   return `${header}\n${blocks[pattern] ?? blocks['schema-versioning']}\n`;
@@ -311,16 +797,6 @@ function bigqueryRenderer(pattern: PatternId, header: string): string {
 }
 
 function spannerRenderer(pattern: PatternId, header: string): string {
-  if (pattern === 'tree') {
-    return `${header}
-
-CREATE TABLE Categories (
-  CategoryId INT64 NOT NULL,
-  ParentCategoryId INT64,
-  Name STRING(120) NOT NULL
-) PRIMARY KEY (CategoryId);
-`;
-  }
   const body = SQLITE_RENDERER(pattern, '').trim();
   const adapted = body
     .replace(/CREATE TABLE (\w+) \([\s\S]*?\);/g, (block, tableName) => {
@@ -328,12 +804,16 @@ CREATE TABLE Categories (
         .replace(/CREATE TABLE \w+ \(/, '')
         .replace(/\);$/, '')
         .replace(/\bid INTEGER PRIMARY KEY,\n?/g, '')
+        .replace(/\bPRIMARY KEY \([^)]+\),?\n?/g, '')
         .replace(/\bINTEGER NOT NULL\b/g, 'INT64 NOT NULL')
         .replace(/\bINTEGER\b/g, 'INT64')
+        .replace(/\bBOOLEAN\b/g, 'BOOL')
+        .replace(/\bDATE\b/g, 'DATE')
         .replace(/\bVARCHAR\(/g, 'STRING(')
         .replace(/\bTEXT\b/g, 'STRING(MAX)')
         .replace(/\bDATETIME\b/g, 'TIMESTAMP')
-        .replace(/\bREAL\b/g, 'FLOAT64');
+        .replace(/\bREAL\b/g, 'FLOAT64')
+        .replace(/\bNUMERIC\([^)]+\)/g, 'NUMERIC');
       return `CREATE TABLE ${tableName} (\n  id INT64 NOT NULL,\n${inner}\n) PRIMARY KEY (id);`;
     });
   return `${header}\n\n${adapted}\n`;
@@ -470,20 +950,36 @@ Resources:
 
   const tableSets: Partial<Record<PatternId, Array<{ name: string; hash: string; range?: string }>>> = {
     subset: [
+      { name: 'Brands', hash: 'BrandId' },
+      { name: 'Categories', hash: 'CategoryId' },
       { name: 'Products', hash: 'ProductId' },
+      { name: 'ProductImages', hash: 'ImageId', range: 'ProductId' },
       { name: 'Reviews', hash: 'ReviewId', range: 'ProductId' },
+      { name: 'ReviewVotes', hash: 'VoteId', range: 'ReviewId' },
     ],
     embed: [
+      { name: 'Customers', hash: 'CustomerId' },
+      { name: 'CustomerAddresses', hash: 'AddressId', range: 'CustomerId' },
       { name: 'Orders', hash: 'CustomerId', range: 'OrderId' },
       { name: 'OrderLines', hash: 'OrderId', range: 'LineId' },
+      { name: 'OrderPayments', hash: 'OrderId', range: 'PaymentId' },
+      { name: 'Shipments', hash: 'OrderId', range: 'ShipmentId' },
     ],
     reference: [
       { name: 'Customers', hash: 'CustomerId' },
+      { name: 'CustomerProfiles', hash: 'CustomerId', range: 'ProfileId' },
+      { name: 'Subscriptions', hash: 'CustomerId', range: 'SubscriptionId' },
+      { name: 'PaymentMethods', hash: 'CustomerId', range: 'PaymentMethodId' },
       { name: 'CustomerEvents', hash: 'CustomerId', range: 'EventId' },
+      { name: 'SupportTickets', hash: 'CustomerId', range: 'TicketId' },
     ],
     bucket: [
-      { name: 'Sensors', hash: 'SensorId' },
+      { name: 'Sites', hash: 'SiteId' },
+      { name: 'Devices', hash: 'SiteId', range: 'DeviceId' },
+      { name: 'Sensors', hash: 'DeviceId', range: 'SensorId' },
       { name: 'SensorReadings', hash: 'SensorId', range: 'RecordedAt' },
+      { name: 'DeviceAlerts', hash: 'DeviceId', range: 'AlertId' },
+      { name: 'MaintenanceVisits', hash: 'SiteId', range: 'VisitId' },
     ],
   };
 

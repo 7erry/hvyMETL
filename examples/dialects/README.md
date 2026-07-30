@@ -1,7 +1,10 @@
 # Per-dialect design-pattern examples
 
 One **Load example** DDL (or CloudFormation) bundle per supported import dialect.
-Each file demonstrates a single MongoDB design pattern from [`knowledge/`](../../knowledge/);
+Each file demonstrates a single MongoDB design pattern from [`knowledge/`](../../knowledge/)
+using a **multi-table schema** aligned with the seeded domain examples under
+[`examples/catalog`](../catalog/), [`examples/iot`](../iot/), [`examples/cms`](../cms/), and
+[`examples/ledger`](../ledger/) — not toy two-table stubs.
 pattern assignments are **deterministically shuffled** (seed `20260711`) so every dialect
 gets a unique pick while staying reproducible in tests.
 

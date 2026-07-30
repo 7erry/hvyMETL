@@ -57,7 +57,14 @@ describe('generateMockCsvFromDdl dynamodb', () => {
     const outDir = mkdtempSync(join(tmpdir(), 'hvymetl-mock-csv-dynamodb-'));
     try {
       const result = generateMockCsvFromDdl(DYNAMODB_EXAMPLE, outDir, ROOT, { dialect: 'dynamodb' });
-      expect(result.tables.sort()).toEqual(['Products', 'Reviews']);
+      expect(result.tables.sort()).toEqual([
+        'Brands',
+        'Categories',
+        'ProductImages',
+        'Products',
+        'ReviewVotes',
+        'Reviews',
+      ]);
     } finally {
       rmSync(outDir, { recursive: true, force: true });
     }
