@@ -256,18 +256,126 @@ function sqlEdges(model: SqlStructuralModel): GraphLayoutEdge[] {
   return edges;
 }
 
+/** How a SQL table participates in FK relationships (Before canvas columns). */
+type SqlReferenceRole = 'outgoingOnly' | 'both' | 'incomingOnly' | 'isolated';
+
+function classifySqlReferenceRole(
+  table: TableModel,
+  tableNames: Set<string>,
+  incomingFkCount: Map<string, number>,
+): SqlReferenceRole {
+  const hasOutgoing = table.foreignKeys.some((fk) => tableNames.has(fk.referencesTable));
+  const hasIncoming = (incomingFkCount.get(table.name) ?? 0) > 0;
+  if (hasOutgoing && hasIncoming) return 'both';
+  if (hasOutgoing) return 'outgoingOnly';
+  if (hasIncoming) return 'incomingOnly';
+  return 'isolated';
+}
+
+const SQL_ROLE_COLUMN: Record<SqlReferenceRole, number> = {
+  outgoingOnly: 0,
+  both: 1,
+  incomingOnly: 2,
+  isolated: 1,
+};
+
+/**
+ * Before · SQL canvas: left = outgoing-only, center = hub/isolated, right = incoming-only.
+ */
+function layoutSqlTablesByReferenceRole(
+  nodeIds: string[],
+  model: SqlStructuralModel,
+  sizes: Map<string, GraphLayoutNodeSize>,
+  options: Required<GraphLayoutOptions>,
+): Record<string, { x: number; y: number }> {
+  const { nodeWidth, nodeHeight, gapX, gapY, padding, grid } = options;
+  const tableNames = new Set(nodeIds);
+  const tablesByName = new Map(model.tables.map((table) => [table.name, table]));
+
+  const incomingFkCount = new Map<string, number>();
+  for (const id of nodeIds) incomingFkCount.set(id, 0);
+  for (const id of nodeIds) {
+    const table = tablesByName.get(id);
+    if (!table) continue;
+    for (const fk of table.foreignKeys) {
+      if (tableNames.has(fk.referencesTable)) {
+        incomingFkCount.set(fk.referencesTable, (incomingFkCount.get(fk.referencesTable) ?? 0) + 1);
+      }
+    }
+  }
+
+  const columns: string[][] = [[], [], []];
+  for (const id of nodeIds) {
+    const table = tablesByName.get(id);
+    if (!table) continue;
+    const role = classifySqlReferenceRole(table, tableNames, incomingFkCount);
+    columns[SQL_ROLE_COLUMN[role]]!.push(id);
+  }
+  for (const column of columns) column.sort();
+
+  const positions: Record<string, { x: number; y: number }> = {};
+  let x = padding;
+  for (const column of columns) {
+    let maxWidth = nodeWidth;
+    let y = padding;
+    for (const id of column) {
+      const size = sizes.get(id) ?? { width: nodeWidth, height: nodeHeight };
+      maxWidth = Math.max(maxWidth, size.width);
+      positions[id] = { x: snap(x, grid), y: snap(y, grid) };
+      y += size.height + gapY;
+    }
+    x += maxWidth + gapX;
+  }
+
+  return positions;
+}
+
 function mongoEdges(plan: MigrationPlan): GraphLayoutEdge[] {
   return edgesForPlan(plan).map((edge) => ({ source: edge.source, target: edge.target }));
 }
 
-/** Layout SQL tables grouped by foreign-key relationships. */
+/** Layout SQL tables: FK role columns (sources left, hubs center, sinks right) per connected cluster. */
 export function layoutSqlModel(model: SqlStructuralModel, opts?: GraphLayoutOptions): Record<string, { x: number; y: number }> {
+  const options: Required<GraphLayoutOptions> = { ...DEFAULTS, ...opts };
   const nodeIds = model.tables.map((table) => table.name);
   const sizes = new Map<string, GraphLayoutNodeSize>();
   for (const table of model.tables) {
     sizes.set(table.name, estimateTableNodeSize(table));
   }
-  return layoutGraph(nodeIds, sqlEdges(model), sizes, opts);
+  if (nodeIds.length === 0) return {};
+
+  const edges = sqlEdges(model);
+  const components = connectedComponents(nodeIds, edges).sort((a, b) => b.length - a.length);
+  const allPositions: Record<string, { x: number; y: number }> = {};
+
+  let cursorX = options.padding;
+  let cursorY = options.padding;
+  let rowMaxHeight = 0;
+
+  for (const component of components) {
+    const local = layoutSqlTablesByReferenceRole(component, model, sizes, options);
+    const bbox = boundingBox(local, component, sizes, options);
+
+    if (cursorX + bbox.width > options.maxRowWidth && cursorX > options.padding) {
+      cursorX = options.padding;
+      cursorY += rowMaxHeight + options.componentGapY;
+      rowMaxHeight = 0;
+    }
+
+    for (const id of component) {
+      const point = local[id];
+      if (!point) continue;
+      allPositions[id] = {
+        x: snap(cursorX + point.x - options.padding, options.grid),
+        y: snap(cursorY + point.y - options.padding, options.grid),
+      };
+    }
+
+    cursorX += bbox.width + options.componentGapX;
+    rowMaxHeight = Math.max(rowMaxHeight, bbox.height);
+  }
+
+  return allPositions;
 }
 
 /** Layout MongoDB collections grouped by embed / reference / overflow edges. */
