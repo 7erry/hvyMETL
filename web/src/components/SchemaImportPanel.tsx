@@ -106,7 +106,6 @@ export function SchemaImportPanel({
           sortedDialects.map((d) => (
             <option key={d.id} value={d.id}>
               {d.label}
-              {!d.live ? ' (DDL paste)' : ''}
             </option>
           ))
         )}
