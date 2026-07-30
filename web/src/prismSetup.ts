@@ -8,6 +8,7 @@ globalScope.Prism = Prism;
 
 import 'prismjs/components/prism-clike.js';
 import 'prismjs/components/prism-markup.js';
+import 'prismjs/components/prism-markup-templating.js';
 import 'prismjs/components/prism-yaml.js';
 import 'prismjs/components/prism-c.js';
 import 'prismjs/components/prism-cpp.js';
