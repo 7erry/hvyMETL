@@ -57,6 +57,7 @@ const PATTERN_LABELS: Record<PatternId, string> = {
   embed: 'Embedded document',
   reference: 'Document reference',
   bucket: 'Time-series bucket',
+  'time-series': 'Native MongoDB time series',
   outlier: 'Outlier separation',
   'extended-reference': 'Extended reference',
   computed: 'Computed field',

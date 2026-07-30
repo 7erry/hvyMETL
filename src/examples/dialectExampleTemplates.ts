@@ -10,6 +10,7 @@ const PATTERN_DESCRIPTIONS: Record<PatternId, string> = {
   embed: 'bounded order line items embedded in parent orders (fulfillment-style schema)',
   reference: 'high-volume customer_events kept separate from CRM core tables',
   bucket: 'IoT sensor_readings time series with sites, devices, and operational metadata',
+  'time-series': 'native MongoDB time series measurement tables (IoT sensor_readings shape)',
   outlier: 'catalog products with skewed review volume and supporting merchandising tables',
   'extended-reference': 'read-heavy product catalog with duplicated brand lookup fields',
   computed: 'ledger accounts with running balances and posting audit tables',
@@ -23,6 +24,8 @@ const PATTERN_DESCRIPTIONS: Record<PatternId, string> = {
   preallocation: 'analytics rollups and event streams for dashboard pre-allocation',
 };
 
+
+
 /** Human-readable first-line comment for a dialect example file. */
 export function dialectExampleHeader(dialectId: string, pattern: PatternId): string {
   return `-- ${dialectId} dialect example — ${pattern} pattern: ${PATTERN_DESCRIPTIONS[pattern]}.`;
@@ -31,7 +34,7 @@ export function dialectExampleHeader(dialectId: string, pattern: PatternId): str
 type FamilyRenderer = (pattern: PatternId, header: string) => string;
 
 const SQLITE_RENDERER: FamilyRenderer = (pattern, header) => {
-  const blocks: Record<PatternId, string> = {
+  const blocks: Record<Exclude<PatternId, 'time-series'>, string> = {
     embed: `
 CREATE TABLE customers (
   id INTEGER PRIMARY KEY,
@@ -700,7 +703,9 @@ CREATE TABLE page_events (
   properties_json TEXT
 );`,
   };
-  return `${header}\n${blocks[pattern] ?? blocks['schema-versioning']}\n`;
+  const body =
+    pattern === 'time-series' ? blocks.bucket : (blocks[pattern as Exclude<PatternId, 'time-series'>] ?? blocks['schema-versioning']);
+  return `${header}\n${body}\n`;
 };
 
 function postgresRenderer(pattern: PatternId, header: string): string {
@@ -983,7 +988,7 @@ Resources:
     ],
   };
 
-  const tables = tableSets[pattern] ?? tableSets.subset!;
+  const tables = tableSets[pattern] ?? (pattern === 'time-series' ? tableSets.bucket : undefined) ?? tableSets.subset!;
   const resources = tables
     .map((table, index) => {
       const attrs = [
@@ -1034,6 +1039,7 @@ export const PATTERN_SIGNATURE_TABLES: Record<PatternId, string[]> = {
   embed: ['orders', 'order_lines'],
   reference: ['customers', 'customer_events'],
   bucket: ['sensors', 'sensor_readings'],
+  'time-series': ['sensors', 'sensor_readings'],
   outlier: ['products', 'reviews'],
   'extended-reference': ['brands', 'products'],
   computed: ['accounts', 'ledger_entries'],
