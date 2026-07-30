@@ -205,7 +205,7 @@ export async function fetchDialects(): Promise<Dialect[]> {
 export async function importDdl(
   ddl: string,
   dialect: string,
-): Promise<{ model: SqlStructuralModel; ddl: string; inferred?: ProfileInference }> {
+): Promise<{ model: SqlStructuralModel; ddl: string; dialect: string; inferred?: ProfileInference }> {
   const res = await apiFetch(`${base}/api/schema/import-ddl`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
@@ -213,7 +213,7 @@ export async function importDdl(
   });
   if (!res.ok) throw new Error(await readApiError(res));
   const data = await res.json();
-  return { model: data.model, ddl, inferred: data.inferred };
+  return { model: data.model, ddl, dialect: data.dialect ?? dialect, inferred: data.inferred };
 }
 
 export type BuiltinExampleSummary = {

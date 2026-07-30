@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { renderDialectExampleDdl } from '../examples/dialectExampleTemplates.js';
 import { parseDdlToModel } from './ddlParser.js';
-import { parseJsonSchemaDocuments, parseJsonSchemaToModel, renderJsonSchemaBundleText } from './jsonSchemaParser.js';
-import { parseSchemaImport } from './schemaImport.js';
+import { parseJsonSchemaDocuments, parseJsonSchemaToModel, renderJsonSchemaBundleText, looksLikeJsonSchemaImport } from './jsonSchemaParser.js';
+import { parseSchemaImport, resolveSchemaImportDialect } from './schemaImport.js';
 
 /** Address schema from https://json-schema.org/learn/json-schema-examples */
 const ADDRESS_SCHEMA = {
@@ -116,6 +116,47 @@ describe('parseJsonSchemaToModel', () => {
     const model = parseSchemaImport(JSON.stringify(ADDRESS_SCHEMA), 'json-schema', 'ddl:json-schema');
     expect(model.source).toBe('ddl:json-schema');
     expect(model.tables[0]?.name).toBe('address');
+  });
+
+  it('detects $defs-only JSON Schema documents', () => {
+    const ecommerce = {
+      $id: 'https://example.com/ecommerce.schema.json',
+      $schema: 'https://json-schema.org/draft/2020-12/schema',
+      $defs: {
+        product: { type: 'object', properties: { name: { type: 'string' } } },
+      },
+    };
+    expect(looksLikeJsonSchemaImport(JSON.stringify(ecommerce))).toBe(true);
+  });
+
+  it('auto-resolves JSON Schema when dialect is still postgresql', () => {
+    const ecommerce = {
+      $id: 'https://example.com/ecommerce.schema.json',
+      $schema: 'https://json-schema.org/draft/2020-12/schema',
+      $defs: {
+        product: { type: 'object', properties: { name: { type: 'string' } } },
+        order: { type: 'object', properties: { orderId: { type: 'string' } } },
+      },
+    };
+    const text = JSON.stringify(ecommerce);
+    expect(resolveSchemaImportDialect(text, 'postgresql')).toBe('json-schema');
+    const model = parseSchemaImport(text, 'postgresql');
+    expect(model.tables.map((table) => table.name)).toEqual(['product', 'order']);
+  });
+
+  it('parses JSON Schema when paste is prefixed with null or false (invalid whole-document JSON)', () => {
+    const ecommerce = {
+      $id: 'https://example.com/ecommerce.schema.json',
+      $schema: 'https://json-schema.org/draft/2020-12/schema',
+      $defs: {
+        product: { type: 'object', properties: { name: { type: 'string' } } },
+      },
+    };
+    const body = JSON.stringify(ecommerce);
+    for (const prefix of ['null ', 'false', 'null']) {
+      const model = parseJsonSchemaToModel(`${prefix}${body}`);
+      expect(model.tables.map((table) => table.name)).toContain('product');
+    }
   });
 });
 

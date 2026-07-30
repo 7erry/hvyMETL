@@ -23,7 +23,7 @@ import { loadKnowledgeBase } from '../rag/chunker.js';
 import { createRetrievalConfigFromEnv, retrieve } from '../rag/retrieval.js';
 import { buildPromptBundle, buildRetrievalQuery } from '../rag/promptBundle.js';
 import { parseDdlToModel } from '../utilities/ddlParser.js';
-import { parseSchemaImport } from '../utilities/schemaImport.js';
+import { parseSchemaImport, resolveSchemaImportDialect } from '../utilities/schemaImport.js';
 import { generateMockCsvFromDdl, verifyMockCsvGenerator } from '../utilities/mockCsvFromDdl.js';
 import type { MigrationPlan, SqlStructuralModel } from '../types.js';
 import { readCsvToAtlasPathFromEnv } from '../utilities/csvToAtlas.js';
@@ -376,9 +376,13 @@ app.post('/api/schema/import-ddl', (req, res) => {
     return;
   }
   try {
-    const model = parseSchemaImport(ddl, dialect, `ddl:${dialect}`);
+    const resolvedDialect = resolveSchemaImportDialect(ddl, dialect);
+    const model = parseSchemaImport(ddl, resolvedDialect, `ddl:${resolvedDialect}`);
+    if (model.tables.length === 0) {
+      throw new Error('No tables found in schema import. Check dialect and content.');
+    }
     const inferred = inferWorkloadProfile(model);
-    res.json({ model, dialect, tableCount: model.tables.length, inferred });
+    res.json({ model, dialect: resolvedDialect, tableCount: model.tables.length, inferred });
   } catch (error) {
     res.status(400).json({ error: String(error) });
   }

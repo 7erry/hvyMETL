@@ -18,6 +18,17 @@ function asRecord(value: unknown): Record<string, unknown> {
     : {};
 }
 
+/** True when pasted content is a CloudFormation template rather than SQL DDL. */
+export function looksLikeCloudFormationImport(content: string): boolean {
+  const trimmed = content.trim();
+  if (!trimmed) return false;
+  return (
+    /AWSTemplateFormatVersion/i.test(trimmed) ||
+    /AWS::DynamoDB::Table/.test(trimmed) ||
+    (trimmed.startsWith('{') && trimmed.includes('AWS::DynamoDB::Table'))
+  );
+}
+
 function asArray<T = unknown>(value: unknown): T[] {
   return Array.isArray(value) ? (value as T[]) : [];
 }

@@ -453,9 +453,17 @@ export default function App() {
 
   const handleImportQuery = async (ddlText = ddl) => {
     try {
+      const payload = String(ddlText ?? '').trim();
+      if (!payload) {
+        setStatus('Import failed: paste a schema or DDL script first.');
+        return;
+      }
       setStatus('Importing schema…');
-      const { model: m, inferred } = await importDdl(ddlText, dialect);
-      await applySchema(ddlText, m, inferred?.profileId);
+      const { model: m, inferred, dialect: resolvedDialect } = await importDdl(payload, dialect);
+      if (resolvedDialect !== dialect) {
+        setSessionField('dialect', resolvedDialect);
+      }
+      await applySchema(payload, m, inferred?.profileId);
     } catch (e) {
       setStatus(`Import failed: ${describeApiError(e)}`);
     }
@@ -1025,7 +1033,13 @@ export default function App() {
         try {
           setStatus('Importing schema…');
           const resolvedDialect = importDialect ?? dialect;
-          const { model: importedModel, inferred } = await importDdl(ddlText, resolvedDialect);
+          const { model: importedModel, inferred, dialect: importResolvedDialect } = await importDdl(
+            ddlText,
+            resolvedDialect,
+          );
+          if (importResolvedDialect !== resolvedDialect) {
+            setSessionField('dialect', importResolvedDialect);
+          }
           await applySchema(ddlText, importedModel, inferred?.profileId);
           return {
             ok: true,

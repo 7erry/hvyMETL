@@ -4,30 +4,18 @@
  */
 
 import type { SqlStructuralModel, TableModel } from '../types.js';
+import { looksLikeCloudFormationImport } from './dynamodbCloudFormationParser.js';
+import { looksLikeJsonSchemaImport } from './jsonSchemaParser.js';
 import { parseSchemaImport } from './schemaImport.js';
 
-/** True when pasted content is a JSON Schema bundle rather than SQL DDL. */
+/** @deprecated Use looksLikeJsonSchemaImport */
 export function isJsonSchemaBundleImport(content: string): boolean {
-  const trimmed = content.trim();
-  if (!trimmed.startsWith('{')) return false;
-  try {
-    const document = JSON.parse(trimmed) as Record<string, unknown>;
-    if (Array.isArray(document.schemas)) return true;
-    return String(document.$schema ?? '').includes('json-schema.org');
-  } catch {
-    return false;
-  }
+  return looksLikeJsonSchemaImport(content);
 }
 
-/** True when pasted content is a CloudFormation template rather than SQL DDL. */
+/** @deprecated Use looksLikeCloudFormationImport */
 export function isCloudFormationImport(content: string): boolean {
-  const trimmed = content.trim();
-  if (!trimmed) return false;
-  return (
-    /AWSTemplateFormatVersion/i.test(trimmed) ||
-    /AWS::DynamoDB::Table/.test(trimmed) ||
-    (trimmed.startsWith('{') && trimmed.includes('AWS::DynamoDB::Table'))
-  );
+  return looksLikeCloudFormationImport(content);
 }
 
 /** Quote SQL identifiers that are not simple unquoted names. */

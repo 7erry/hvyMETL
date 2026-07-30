@@ -243,10 +243,12 @@ export function SchemaCanvas({
     [snapToGrid, positions, onPositionsChange, setNodes],
   );
 
-  if (!model) {
+  if (!model || model.tables.length === 0) {
     return (
       <div className="schema-canvas-empty">
-        Import a schema query or file to visualize your ER diagram.
+        {model && model.tables.length === 0
+          ? 'Import did not produce any tables. Choose JSON Schema for JSON documents or paste valid CREATE TABLE DDL.'
+          : 'Import a schema query or file to visualize your ER diagram.'}
       </div>
     );
   }

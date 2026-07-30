@@ -12,6 +12,100 @@ function asRecord(value: unknown): Record<string, unknown> {
     : {};
 }
 
+/** Strip BOM, fenced markdown blocks, and stray `null`/`false`/`true` before `{`. */
+export function normalizeJsonSchemaPaste(raw: string): string {
+  let text = raw.trim().replace(/^\uFEFF/, '');
+  const fenced = text.match(/^```(?:json|json-schema)?\s*\r?\n([\s\S]*?)\r?\n```\s*$/i);
+  if (fenced) {
+    text = fenced[1]!.trim();
+  }
+  text = text.replace(/^(?:null|false|true)\s*(?=[{\[])/i, '');
+  return text;
+}
+
+function extractBalancedJsonSlice(text: string, startIndex: number): string | null {
+  const open = text[startIndex];
+  if (open !== '{' && open !== '[') return null;
+  const close = open === '{' ? '}' : ']';
+  let depth = 0;
+  let inString = false;
+  let escaped = false;
+
+  for (let i = startIndex; i < text.length; i++) {
+    const ch = text[i]!;
+    if (inString) {
+      if (escaped) escaped = false;
+      else if (ch === '\\') escaped = true;
+      else if (ch === '"') inString = false;
+      continue;
+    }
+    if (ch === '"') {
+      inString = true;
+      continue;
+    }
+    if (ch === open) depth++;
+    else if (ch === close) {
+      depth--;
+      if (depth === 0) return text.slice(startIndex, i + 1);
+    }
+  }
+
+  return null;
+}
+
+/** Parse pasted JSON Schema text, tolerating common copy/paste noise before the root object. */
+export function parseJsonSchemaRootDocument(jsonText: string): unknown {
+  const normalized = normalizeJsonSchemaPaste(jsonText);
+  if (!normalized) {
+    throw new Error('JSON Schema document is empty.');
+  }
+
+  try {
+    return JSON.parse(normalized);
+  } catch (firstError) {
+    const objectStart = normalized.indexOf('{');
+    const arrayStart = normalized.indexOf('[');
+    let start = -1;
+    if (objectStart >= 0 && arrayStart >= 0) start = Math.min(objectStart, arrayStart);
+    else start = Math.max(objectStart, arrayStart);
+
+    if (start >= 0) {
+      const slice = extractBalancedJsonSlice(normalized, start);
+      if (slice) {
+        try {
+          return JSON.parse(slice);
+        } catch {
+          // fall through to error below
+        }
+      }
+    }
+
+    const detail = firstError instanceof Error ? firstError.message : String(firstError);
+    throw new Error(`JSON Schema import must be valid JSON. ${detail}`);
+  }
+}
+
+/** True when pasted text is JSON Schema (bundle, root object schema, or $defs document). */
+export function looksLikeJsonSchemaImport(content: string): boolean {
+  const trimmed = content.trim();
+  if (!trimmed.includes('{') && !trimmed.includes('[')) return false;
+
+  try {
+    const root = asRecord(parseJsonSchemaRootDocument(content));
+    if (Array.isArray(root.schemas)) return true;
+    if (String(root.$schema ?? '').includes('json-schema.org')) return true;
+    if (root.type === 'object' || root.properties) return true;
+
+    const defs = asRecord(root.$defs);
+    return Object.values(defs).some((entry) => {
+      const def = asRecord(entry);
+      return def.type === 'object' || def.properties;
+    });
+  } catch {
+    return false;
+  }
+}
+
 /** Slug from $id URL, title, or $defs key for table naming. */
 export function schemaDocumentToTableName(schema: Record<string, unknown>): string {
   const title = String(schema.title ?? '').trim();
@@ -266,18 +360,11 @@ function objectSchemasFromDefs(defs: Record<string, unknown>): Record<string, un
 
 /** Extract schema objects from pasted JSON text. */
 export function parseJsonSchemaDocuments(jsonText: string): Record<string, unknown>[] {
-  const trimmed = jsonText.trim();
-  if (!trimmed) {
+  if (!jsonText.trim()) {
     throw new Error('JSON Schema document is empty.');
   }
 
-  let document: unknown;
-  try {
-    document = JSON.parse(trimmed) as unknown;
-  } catch {
-    throw new Error('JSON Schema import must be valid JSON.');
-  }
-
+  const document = parseJsonSchemaRootDocument(jsonText);
   const root = asRecord(document);
   if (Array.isArray(root.schemas)) {
     const schemas = root.schemas.map((entry) => asRecord(entry)).filter((entry) => entry.type === 'object' || entry.properties);
@@ -308,8 +395,7 @@ type SchemaDocumentEntry = {
 };
 
 function listSchemaDocumentEntries(jsonText: string): SchemaDocumentEntry[] {
-  const trimmed = jsonText.trim();
-  const document = JSON.parse(trimmed) as unknown;
+  const document = parseJsonSchemaRootDocument(jsonText);
   const root = asRecord(document);
 
   if (Array.isArray(root.schemas)) {
