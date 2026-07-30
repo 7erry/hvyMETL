@@ -183,15 +183,17 @@ export function SchemaImportPanel({
             </p>
           ) : (
             <p className="schema-import-panel__hint">
-              Examples are read from <code>~/hvymetl/examples</code> on the server (or the repo{' '}
-              <code>examples/</code> folder locally).
+              <a
+                href="https://github.com/7erry/hvyMETL/tree/main/examples#example-domains-and-design-pattern-coverage"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Example domains and design-pattern coverage
+              </a>
             </p>
           )}
         </div>
       ) : null}
-      <p className="schema-import-panel__hint">
-        Use <code>.sql</code> / <code>.ddl</code> for scripts, or <code>.db</code> for SQLite uploads.
-      </p>
     </>
   );
 
