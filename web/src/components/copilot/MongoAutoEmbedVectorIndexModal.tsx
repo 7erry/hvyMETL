@@ -31,6 +31,7 @@ import {
   readMongoInspectSchemaSummary,
 } from '../../copilot/mongoInspectFormat';
 import { useCopilot } from '../../copilot/CopilotContext';
+import { copilotVectorSearchIndexFromCreateResult } from '../../../../src/copilot/copilotVectorSearchContext.ts';
 import type { MigrationPlan } from '../../migrationPlanTypes';
 
 export type MongoAutoEmbedVectorIndexModalProps = {
@@ -371,6 +372,10 @@ function MongoAutoEmbedVectorIndexModalPanel({
       if (!result.ok) {
         setError(result.error ?? result.summary);
         return;
+      }
+      const recorded = copilotVectorSearchIndexFromCreateResult(payload, result);
+      if (recorded) {
+        copilot.recordVectorSearchIndex(recorded);
       }
       onCreated?.(result.summary);
       onClose();

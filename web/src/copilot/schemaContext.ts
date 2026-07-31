@@ -3,6 +3,7 @@ import type { CardinalityOverrides, ForceEmbedOverrides } from '../cardinalityOv
 import type { SqlStructuralModel } from '../types';
 import type { GuardrailIssue } from './types';
 import type { CopilotDatasetScaleContext } from '../../../src/copilot/copilotDatasetScale.ts';
+import type { CopilotVectorSearchIndexRecord } from '../../../src/copilot/copilotVectorSearchContext.ts';
 import type { ManagerCostInputs } from '../managerCostEstimate';
 import { buildDatasetScaleContext } from './buildDatasetScaleContext';
 
@@ -25,6 +26,7 @@ export type CopilotSchemaContextPayload = {
   collections?: { name: string; sourceTable: string }[];
   datasetScale?: CopilotDatasetScaleContext;
   targetDatabase?: string;
+  vectorSearchIndexes?: CopilotVectorSearchIndexRecord[];
 };
 
 /** Builds the schema context payload sent to /api/copilot/chat. */
@@ -36,9 +38,18 @@ export function buildSchemaContextPayload(input: {
   guardrailIssues: GuardrailIssue[];
   managerCostInputs?: ManagerCostInputs;
   targetDatabase?: string;
+  vectorSearchIndexes?: CopilotVectorSearchIndexRecord[];
 }): CopilotSchemaContextPayload {
-  const { model, plan, cardinalityOverrides, forceEmbedOverrides, guardrailIssues, managerCostInputs, targetDatabase } =
-    input;
+  const {
+    model,
+    plan,
+    cardinalityOverrides,
+    forceEmbedOverrides,
+    guardrailIssues,
+    managerCostInputs,
+    targetDatabase,
+    vectorSearchIndexes,
+  } = input;
 
   return {
     tables: (model?.tables ?? []).map((table) => ({
@@ -63,5 +74,6 @@ export function buildSchemaContextPayload(input: {
     collections: plan?.collections.map((c) => ({ name: c.name, sourceTable: c.sourceTable })),
     datasetScale: managerCostInputs ? buildDatasetScaleContext(model, plan, managerCostInputs) : undefined,
     targetDatabase: targetDatabase?.trim() || undefined,
+    vectorSearchIndexes: vectorSearchIndexes?.length ? vectorSearchIndexes : undefined,
   };
 }

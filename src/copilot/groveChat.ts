@@ -28,6 +28,8 @@ export type CopilotSchemaContext = {
   datasetScale?: CopilotDatasetScaleContext;
   /** Logical MongoDB database name for Atlas imports (used in architecture review titles). */
   targetDatabase?: string;
+  /** autoEmbed vector search indexes created in Migration Studio this session. */
+  vectorSearchIndexes?: import('./copilotVectorSearchContext.js').CopilotVectorSearchIndexRecord[];
 };
 
 export type CopilotChatMessage = {

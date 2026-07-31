@@ -48,6 +48,12 @@ import { buildAggregateInspectArgs } from './runTranslationPipeline';
 import { buildSchemaContextPayload } from './schemaContext';
 import { serializeCanvasToolResult, toolExecutionHasStructuredOutput } from './toolExecutionDisplay';
 import { fetchCopilotStatus, fetchPipelineConfig, createCopilotMongoAutoEmbedVectorIndex, invokeCopilotMongoInspect, sendCopilotChat } from '../api';
+import type { CopilotVectorSearchIndexRecord } from '../../../src/copilot/copilotVectorSearchContext.ts';
+import { copilotVectorSearchIndexFromCreateResult } from '../../../src/copilot/copilotVectorSearchContext.ts';
+import {
+  loadSessionVectorSearchIndexes,
+  saveSessionVectorSearchIndexes,
+} from './vectorSearchIndexSession';
 import type {
   AgentStatus,
   CopilotLlmMessage,
@@ -88,6 +94,9 @@ export type CopilotContextValue = {
   targetDatabase: string;
   /** Remember the logical database from the most recent successful pipeline import. */
   setTargetDatabase: (database: string) => void;
+  /** autoEmbed vector search indexes created in this studio session. */
+  vectorSearchIndexes: CopilotVectorSearchIndexRecord[];
+  recordVectorSearchIndex: (entry: CopilotVectorSearchIndexRecord) => void;
   openVectorIndexDialog: (request: VectorIndexDialogRequest) => void;
   toggleOpen: () => void;
   setOpen: (open: boolean) => void;
@@ -173,7 +182,28 @@ export function CopilotProvider({
   const [mongoInspectAvailable, setMongoInspectAvailable] = useState(false);
   const [mongoInspectMessage, setMongoInspectMessage] = useState<string | null>(null);
   const [targetDatabase, setTargetDatabase] = useState('csv_to_atlas');
+  const [vectorSearchIndexes, setVectorSearchIndexes] = useState<CopilotVectorSearchIndexRecord[]>(() =>
+    loadSessionVectorSearchIndexes(),
+  );
   const [vectorIndexModal, setVectorIndexModal] = useState<VectorIndexDialogRequest | null>(null);
+
+  const recordVectorSearchIndex = useCallback((entry: CopilotVectorSearchIndexRecord) => {
+    setVectorSearchIndexes((previous) => {
+      const next = [
+        ...previous.filter(
+          (existing) =>
+            !(
+              existing.database === entry.database &&
+              existing.collection === entry.collection &&
+              existing.indexName === entry.indexName
+            ),
+        ),
+        entry,
+      ];
+      saveSessionVectorSearchIndexes(next);
+      return next;
+    });
+  }, []);
 
   const openVectorIndexDialog = useCallback(
     (request: VectorIndexDialogRequest) => {
@@ -422,6 +452,22 @@ export function CopilotProvider({
         const response = await createCopilotMongoAutoEmbedVectorIndex(
           payload as import('../../../../src/copilot/mongoVectorAutoEmbedIndex.ts').MongoAutoEmbedVectorIndexInput,
         );
+        const input = payload as import('../../../../src/copilot/mongoVectorAutoEmbedIndex.ts').MongoAutoEmbedVectorIndexInput;
+        if (response.ok) {
+          const recorded = copilotVectorSearchIndexFromCreateResult(
+            {
+              database: input.database,
+              collection: input.collection,
+              path: input.path,
+              model: input.model,
+              quantization: input.quantization,
+              numDimensions: input.numDimensions,
+              similarity: input.similarity,
+            },
+            response,
+          );
+          if (recorded) recordVectorSearchIndex(recorded);
+        }
         return {
           tool,
           summary: response.summary,
@@ -441,7 +487,7 @@ export function CopilotProvider({
         };
       }
     },
-    [targetDatabase],
+    [targetDatabase, recordVectorSearchIndex],
   );
 
   const runMongoInspectDirect = useCallback(
@@ -489,6 +535,7 @@ export function CopilotProvider({
         guardrailIssues,
         managerCostInputs,
         targetDatabase,
+        vectorSearchIndexes,
       });
 
       const userMessage =
@@ -671,6 +718,7 @@ export function CopilotProvider({
       runMongoInspectTool,
       runMongoVectorIndexTool,
       targetDatabase,
+      vectorSearchIndexes,
       workflowHandlers,
     ],
   );
@@ -984,6 +1032,8 @@ export function CopilotProvider({
       mongoInspectMessage,
       targetDatabase,
       setTargetDatabase,
+      vectorSearchIndexes,
+      recordVectorSearchIndex,
       openVectorIndexDialog,
       toggleOpen,
       setOpen,
@@ -1038,6 +1088,8 @@ export function CopilotProvider({
       mongoInspectMessage,
       targetDatabase,
       setTargetDatabase,
+      vectorSearchIndexes,
+      recordVectorSearchIndex,
       openVectorIndexDialog,
       toggleOpen,
       setOpen,

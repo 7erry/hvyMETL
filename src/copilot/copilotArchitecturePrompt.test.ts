@@ -46,6 +46,11 @@ describe('copilotArchitecturePrompt', () => {
   it('requires database name instead of Loaded Schema in collective review titles', () => {
     expect(COPILOT_ARCHITECTURE_RESPONSE_INSTRUCTIONS).toContain('never generic labels like "Loaded Schema"');
   });
+
+  it('requires vector search documentation when indexes exist', () => {
+    expect(COPILOT_ARCHITECTURE_RESPONSE_INSTRUCTIONS).toContain('$vectorSearch');
+    expect(COPILOT_ARCHITECTURE_RESPONSE_INSTRUCTIONS).toContain('numCandidates');
+  });
 });
 
 describe('buildCopilotSystemPrompt', () => {
@@ -72,5 +77,30 @@ describe('buildCopilotSystemPrompt', () => {
     expect(prompt).toContain('train_telemetry');
     expect(prompt).toContain('Architecture & schema analysis responses');
     expect(prompt).toContain('Indexes & query strategy');
+  });
+
+  it('includes studio vector search indexes in system context', () => {
+    const prompt = buildCopilotSystemPrompt({
+      tables: [],
+      relationships: [],
+      guardrailIssues: [],
+      cardinalityOverrides: {},
+      forceEmbedOverrides: {},
+      vectorSearchIndexes: [
+        {
+          database: 'csv_to_atlas',
+          collection: 'products',
+          path: 'description',
+          indexName: 'autoEmbed_description_voyage-4-lite',
+          model: 'voyage-4-lite',
+          quantization: 'scalar',
+          numDimensions: 1024,
+          similarity: 'cosine',
+        },
+      ],
+    });
+    expect(prompt).toContain('Atlas vector search indexes');
+    expect(prompt).toContain('csv_to_atlas.products');
+    expect(prompt).toContain('$vectorSearch');
   });
 });

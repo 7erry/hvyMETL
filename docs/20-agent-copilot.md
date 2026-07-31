@@ -116,6 +116,8 @@ Guardrail warning badges on table nodes open the copilot with an optimization pr
 | **Save to Google Docs** | OAuth sign-in → creates a native Google Doc in your Drive → opens in a new tab |
 | **Download markdown** | Client-side `.md` download (always available) |
 
+When you create **autoEmbed vector search indexes** in the studio (dialog or copilot tool), they are recorded for the session and injected into copilot **schema context**. Architecture reviews and **design-report.md** (export / pipeline artifacts) then include each index, sample `$vectorSearch` aggregations (`query` for autoEmbed), and operational guidance (`numCandidates` vs `limit`, pre-filter vs post-filter, RAM/quantization/tier limits, hybrid RRF).
+
 Implementation: markdown is converted to HTML client-side, then uploaded via the Google Drive API (`application/vnd.google-apps.document`). The legacy Google **Save to Drive** widget is not used.
 
 ### Google Docs setup

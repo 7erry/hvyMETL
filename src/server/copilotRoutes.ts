@@ -95,6 +95,10 @@ function parseSchemaContext(raw: unknown): CopilotSchemaContext {
       ? (body.collections as CopilotSchemaContext['collections'])
       : undefined,
     datasetScale: parseDatasetScale(body.datasetScale),
+    targetDatabase: typeof body.targetDatabase === 'string' ? body.targetDatabase.trim() : undefined,
+    vectorSearchIndexes: Array.isArray(body.vectorSearchIndexes)
+      ? (body.vectorSearchIndexes as CopilotSchemaContext['vectorSearchIndexes'])
+      : undefined,
   };
 }
 

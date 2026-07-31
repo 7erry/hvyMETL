@@ -9,6 +9,7 @@ import { CopilotProvider, useCopilot } from './copilot/CopilotContext';
 import type { AgentToolMutation } from './copilot/agentTools';
 import type { CopilotWorkflowHandlers } from './copilot/workflowTools';
 import { buildPipelineVerifyNextStep } from './copilot/workflowTools';
+import { enrichDesignReportMarkdown } from './copilot/enrichDesignReportMarkdown';
 import { suggestPipelineSelfHeal } from './copilot/selfHeal';
 import { MongoSchemaCanvas } from './components/MongoSchemaCanvas';
 import { TableDetails } from './components/TableDetails';
@@ -979,7 +980,7 @@ export default function App() {
       const promptBundle = mapPromptExportResponse(promptsResult);
       const artifacts: MigrationArtifacts = {
         planJson: JSON.stringify(result.migrationPlanJson ?? result.plan, null, 2),
-        designReportMarkdown: result.designReportMarkdown ?? '',
+        designReportMarkdown: enrichDesignReportMarkdown(result.designReportMarkdown ?? ''),
         prompts: promptBundle.prompts,
         retrievalStrategy: promptBundle.retrievalStrategy,
         generatedAt: new Date().toISOString(),
@@ -1002,7 +1003,7 @@ export default function App() {
         ...prev,
         migrationArtifacts: {
           planJson: JSON.stringify(result.migrationPlanJson, null, 2),
-          designReportMarkdown: result.designReportMarkdown,
+          designReportMarkdown: enrichDesignReportMarkdown(result.designReportMarkdown),
           prompts: [],
           retrievalStrategy: result.retrievalStrategy,
           designMeta: meta,
@@ -1051,7 +1052,11 @@ export default function App() {
       managerReview: managerReviewAcceptances ?? undefined,
     });
     if (migrationArtifacts.designReportMarkdown?.trim()) {
-      downloadText('design-report.md', migrationArtifacts.designReportMarkdown, 'text/markdown');
+      downloadText(
+        'design-report.md',
+        enrichDesignReportMarkdown(migrationArtifacts.designReportMarkdown),
+        'text/markdown',
+      );
     }
     setStatus('Migration blueprint exported (plan + design report).');
   };

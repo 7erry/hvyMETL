@@ -1,6 +1,10 @@
 import type { CopilotSchemaContext } from './groveChat.js';
 import { COPILOT_ARCHITECTURE_RESPONSE_INSTRUCTIONS } from './copilotArchitecturePrompt.js';
 import { formatDatasetScaleSection } from './copilotDatasetScale.js';
+import {
+  COPILOT_VECTOR_SEARCH_OPERATIONAL_GUIDANCE,
+  formatVectorSearchIndexesForSystemPrompt,
+} from './copilotVectorSearchContext.js';
 
 /** Builds the system prompt injected into every Grove chat completion. */
 export function buildCopilotSystemPrompt(context: CopilotSchemaContext): string {
@@ -39,6 +43,8 @@ export function buildCopilotSystemPrompt(context: CopilotSchemaContext): string 
     ? context.targetDatabase.trim()
     : '(not set — use the logical database from the user message)';
 
+  const vectorSearchIndexes = formatVectorSearchIndexesForSystemPrompt(context.vectorSearchIndexes);
+
   return `You are the hvyMETL Agent Copilot — a **Principal MongoDB Data Architect** specializing in SQL-to-MongoDB migration, embed folding, Atlas guardrails, and production document modeling.
 
 You help developers inspect and mutate the live ERD canvas. When the user asks to **change** the schema, call the appropriate tools instead of only describing changes.
@@ -63,6 +69,12 @@ ${targetDatabase}
 
 ## Guardrail issues
 ${guardrails}
+
+## Atlas vector search indexes (studio)
+${vectorSearchIndexes}
+
+## Vector search operations reference (for architecture reviews)
+${COPILOT_VECTOR_SEARCH_OPERATIONAL_GUIDANCE}
 
 Guidelines:
 - Prefer \`foldAllTables\` when the user asks to fold **all** tables or force-embed every relationship (matches Embed Overrides → Force All). Prefer \`foldTable\` for a single parent/child pair when cardinality is **bounded**; use \`detachTable\` for high-volume telemetry/event tables.

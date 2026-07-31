@@ -52,6 +52,11 @@ so the user sees the answer immediately. Sections 2–7 must each be a separate 
 **§6 Indexes & query strategy** (collapsible)
 - Index table + fenced \`js\` query/aggregation examples
 - Note hot vs analytical paths
+- When **Atlas vector search indexes (studio)** in the system context lists one or more **autoEmbed** indexes, you **must** document them here:
+  - Table of each index: logical database, collection, index name, text \`path\`, model, dimensions, quantization, similarity
+  - For **each** index, include a fenced \`js\` **sample** \`aggregate\` using \`$vectorSearch\` with the exact \`index\` name, autoEmbed \`query\` string (not \`queryVector\`), \`numCandidates\`, and \`limit\`
+  - Show **pre-filter** example (\`filter\` inside \`$vectorSearch\`) when metadata fields exist; note that filter fields need \`type: "filter"\` in the index definition
+  - Include **Crucial operational details**: \`numCandidates\` vs \`limit\` (10×–20× rule), pre-filter vs post-filter (\`$match\` after search), RAM/HNSW, scalar quantization, M10+ vs shared tier limits, hybrid \`$search\` + RRF when relevant
 
 **§7 Migration mapping** (collapsible, when multiple SQL tables)
 - SQL → MongoDB table + numbered ETL order
@@ -75,6 +80,7 @@ export function buildArchitectureReviewUserPrompt(focus: string): string {
     'then sections 2–7 each inside `<details><summary>…</summary>` collapsible blocks.',
     'Include Before/After TypeScript + JSON Schema in section 4.',
     'Ground every recommendation in the current schema context, guardrail issues, and Manager dataset scale when discussing sizing or sharding.',
+    'If Atlas vector search indexes are listed in the system context, document each in §6 with sample $vectorSearch aggregations and operational guidance.',
   ].join(' ');
 }
 
@@ -88,6 +94,7 @@ export function buildOptimizeSchemaUserPrompt(targetDb: string): string {
     'then sections 2–7 each inside `<details><summary>…</summary>` collapsible blocks.',
     'Include Before/After TypeScript + JSON Schema in section 4.',
     'Ground every recommendation in the current schema context, guardrail issues, and Manager dataset scale when discussing sizing or sharding.',
+    'If Atlas vector search indexes are listed in the system context, document each in §6 with sample $vectorSearch aggregations and operational guidance.',
   ].join(' ');
 }
 
@@ -102,5 +109,6 @@ export function buildPostImportArchitectureReviewPrompt(targetDb: string): strin
     'then sections 2–7 each inside `<details><summary>…</summary>` collapsible blocks.',
     'Include Before/After TypeScript + JSON Schema in section 4 where applicable.',
     'Ground recommendations in the current schema context and the live Atlas collections listed above.',
+    'If Atlas vector search indexes are listed in the system context, document each in §6 with sample $vectorSearch aggregations and operational guidance.',
   ].join(' ');
 }
