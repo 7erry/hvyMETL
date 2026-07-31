@@ -383,11 +383,20 @@ textarea {
 }
 
 .table-node header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem 0.45rem;
   background: var(--mdb-green-dark-2);
   padding: 0.5rem 0.75rem;
   font-weight: 700;
   color: var(--mdb-green-base);
   border-radius: 6px 6px 0 0;
+}
+
+.table-node header .btn-icon {
+  flex-shrink: 0;
+  margin-left: auto;
 }
 
 .table-node__name {
@@ -5837,7 +5846,9 @@ textarea {
 }
 
 .table-node__guardrail {
-  margin-left: auto;
+  flex: 0 1 auto;
+  max-width: 100%;
+  margin-left: 0;
   padding: 0.1rem 0.35rem;
   border-radius: 4px;
   border: 1px solid rgba(255, 200, 80, 0.45);

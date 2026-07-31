@@ -3,6 +3,7 @@
  */
 
 import { edgesForPlan } from './migrationPlanDisplay';
+import { analyzeMigrationRisks, guardrailsByTable } from './copilot/guardrails';
 import type { MigrationPlan } from './migrationPlanTypes';
 import type { SqlStructuralModel, TableModel } from './types';
 
@@ -253,13 +254,25 @@ export function layoutGraph(
   return allPositions;
 }
 
-export function estimateTableNodeSize(table: TableModel): GraphLayoutNodeSize {
-  const headerHeight = 44;
-  const listPadding = 12;
-  const rowHeight = 24;
+export function estimateTableNodeSize(
+  table: TableModel,
+  options?: { hasGuardrailBadge?: boolean },
+): GraphLayoutNodeSize {
+  const headerHeight = 52;
+  const guardrailSlack = options?.hasGuardrailBadge ? 22 : 0;
+  const duplicateControlSlack = 8;
+  const listPadding = 16;
+  const rowHeight = 30;
+  const borderSlack = 2;
   return {
-    width: 260,
-    height: headerHeight + listPadding + table.columns.length * rowHeight,
+    width: 280,
+    height:
+      headerHeight
+      + guardrailSlack
+      + duplicateControlSlack
+      + listPadding
+      + table.columns.length * rowHeight
+      + borderSlack,
   };
 }
 
@@ -365,9 +378,11 @@ function mongoEdges(plan: MigrationPlan): GraphLayoutEdge[] {
 export function layoutSqlModel(model: SqlStructuralModel, opts?: GraphLayoutOptions): Record<string, { x: number; y: number }> {
   const options: Required<GraphLayoutOptions> = { ...DEFAULTS, ...SQL_GRAPH_LAYOUT_OPTIONS, ...opts };
   const nodeIds = model.tables.map((table) => table.name);
+  const guardrailMap = guardrailsByTable(analyzeMigrationRisks(model));
   const sizes = new Map<string, GraphLayoutNodeSize>();
   for (const table of model.tables) {
-    sizes.set(table.name, estimateTableNodeSize(table));
+    const hasGuardrailBadge = (guardrailMap.get(table.name)?.length ?? 0) > 0;
+    sizes.set(table.name, estimateTableNodeSize(table, { hasGuardrailBadge }));
   }
   if (nodeIds.length === 0) return {};
 

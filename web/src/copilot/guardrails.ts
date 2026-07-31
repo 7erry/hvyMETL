@@ -14,6 +14,8 @@ export function analyzeMigrationRisks(model: SqlStructuralModel | null): Guardra
   const issues: GuardrailIssue[] = [];
   const tableNames = new Set(model.tables.map((table) => table.name));
 
+  const relationships = model.relationships ?? [];
+
   for (const table of model.tables) {
     if (table.primaryKey.length === 0) {
       issues.push({
@@ -45,7 +47,7 @@ export function analyzeMigrationRisks(model: SqlStructuralModel | null): Guardra
       }
     }
 
-    const incoming = model.relationships.filter((rel) => rel.childTable === table.name);
+    const incoming = relationships.filter((rel) => rel.childTable === table.name);
     const isHighVolumeChild =
       FIREHOSE_NAME_PATTERN.test(table.name) ||
       table.rowCount >= 10_000 ||
