@@ -21,7 +21,23 @@ describe('parseVectorSearchIndexCommand', () => {
     });
   });
 
+  it('parses database.collection targets', () => {
+    expect(parseDirectVectorSearchIndexCommand('create vector search index on Vectors.products')).toEqual({
+      database: 'Vectors',
+      collection: 'products',
+    });
+    expect(parseDirectVectorSearchIndexCommand('create vector search on fancy.products')).toEqual({
+      database: 'fancy',
+      collection: 'products',
+    });
+  });
+
   it('parses database.collection.field targets', () => {
+    expect(parseDirectVectorSearchIndexCommand('create vector search on Vectors.products.description')).toEqual({
+      database: 'Vectors',
+      collection: 'products',
+      path: 'description',
+    });
     expect(parseDirectVectorSearchIndexCommand('create vector search on csv_to_atlas.products.description')).toEqual({
       database: 'csv_to_atlas',
       collection: 'products',

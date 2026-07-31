@@ -20,6 +20,37 @@ function looksLikeLogicalDatabase(segment: string): boolean {
   return segment.includes('_') || segment.includes('-');
 }
 
+/** Common single-segment text field names for `collection.field` (not `database.collection`). */
+const AUTO_EMBED_FIELD_SEGMENT = new Set([
+  'bio',
+  'body',
+  'caption',
+  'comment',
+  'content',
+  'description',
+  'details',
+  'headline',
+  'label',
+  'name',
+  'notes',
+  'summary',
+  'text',
+  'title',
+]);
+
+function looksLikeAutoEmbedFieldSegment(segment: string): boolean {
+  return AUTO_EMBED_FIELD_SEGMENT.has(segment.trim().toLowerCase());
+}
+
+/** True when `a.b` is more likely database.collection than collection.field. */
+function looksLikeDatabaseCollectionPair(database: string, collection: string): boolean {
+  if (!database || !collection) return false;
+  if (looksLikeLogicalDatabase(database)) return true;
+  if (looksLikeAutoEmbedFieldSegment(collection)) return false;
+  if (looksLikeAutoEmbedFieldSegment(database)) return false;
+  return !looksLikeAutoEmbedFieldSegment(collection);
+}
+
 /** Split `db.collection`, `collection.field`, or `db.collection.field` into logical parts. */
 export function parseVectorSearchIndexTarget(rawTarget: string): ParsedVectorSearchIndexCommand | null {
   const target = stripQuotes(rawTarget);
@@ -41,14 +72,19 @@ export function parseVectorSearchIndexTarget(rawTarget: string): ParsedVectorSea
     if (looksLikeLogicalDatabase(first)) {
       return { database: first, collection: second, path: third };
     }
+    if (looksLikeAutoEmbedFieldSegment(third) && looksLikeDatabaseCollectionPair(first, second)) {
+      return { database: first, collection: second, path: third };
+    }
     return { collection: first, path: `${second}.${third}` };
   }
 
   if (segments.length === 2) {
-    const collection = segments[0]!;
-    const path = segments[1]!;
-    if (!collection || !path) return null;
-    return { collection, path };
+    const [first, second] = segments as [string, string];
+    if (!first || !second) return null;
+    if (looksLikeDatabaseCollectionPair(first, second)) {
+      return { database: first, collection: second };
+    }
+    return { collection: first, path: second };
   }
 
   const collection = segments[0]!;
