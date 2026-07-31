@@ -1,3 +1,29 @@
+## hvyMETL 3.2.1
+
+Patch release that completes **autoEmbed vector index** studio UX and copilot routing on top of 3.1.2 Phase 3.
+
+### Highlights
+
+- **Database → collection → field pickers:** the **Create autoEmbed vector index…** dialog loads logical databases and collections from inspect, then describes schema for the selected target—no more dead ends on placeholder `database` / `collection` hints.
+- **Multi-database collections:** when a collection name exists in more than one logical database, a **Database** picker appears instead of a blocking error.
+- **Field list quality:** all inferred schema fields (with BSON types) appear in the dropdown; migration-plan `jsonSchema` types fill in when MCP sampling returns `unknown` (e.g. `description` as `string | null`, matching the After Mongo canvas).
+- **Pipeline context:** after a successful **Run Full Pipeline**, copilot remembers the import **target database** and uses it when opening the vector index dialog or calling `createMongoAutoEmbedVectorIndex` without an explicit database.
+- **Natural-language targets:** chat phrases like `create vector search index on Vectors.products` parse as **database.collection**; `products.description` still means collection + text field.
+- **Stability:** single portal dialog, one schema fetch per open, and fixes for copilot tab freezes from modal effect loops; vector search chat routing works when MCP probe messaging differs.
+
+### Copilot vector search (quick reference)
+
+- Studio button or chat: `create vector search on products`, `create vector search on products.description`, `create vector search index on my_db.products`.
+- Requires MongoDB inspect enabled (`HVYMETL_MCP_MONGODB_ENABLED`); index creation uses the MongoDB driver + tenant URI (not read-only MCP).
+
+### Verification
+
+- `npm test`
+- `npm run build`
+- `npm run build --prefix web`
+
+---
+
 ## hvyMETL 3.1.2
 
 Minor release adding **Agent Copilot Phase 3**: create Atlas Vector Search **autoEmbed** indexes from inspect results, with full Automated Embeddings options (Voyage model, quantization, dimensions, similarity).
