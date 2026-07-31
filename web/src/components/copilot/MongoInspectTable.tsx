@@ -11,6 +11,8 @@ import {
   type MongoInspectSchemaSummary,
 } from '../../copilot/mongoInspectFormat';
 import { CopilotCollapsibleResults, ScrollableInspectTable } from './CopilotCollapsibleResults';
+import { MongoAutoEmbedVectorIndexActions } from './MongoAutoEmbedVectorIndexModal';
+import { inferTextFieldPathsFromSchemaTypes } from '../../copilot/mongoVectorAutoEmbedFields';
 
 const FIND_PAGE_SIZE = 10;
 
@@ -147,10 +149,16 @@ export function MongoInspectCollectionTable({ database, collections }: MongoInsp
 
 type MongoInspectIndexTableProps = {
   summary: MongoInspectIndexSummary;
+  vectorIndexEnabled?: boolean;
+  textFieldPaths?: string[];
 };
 
 /** Tabular summary for classic and Atlas Search indexes on one collection. */
-export function MongoInspectIndexTable({ summary }: MongoInspectIndexTableProps) {
+export function MongoInspectIndexTable({
+  summary,
+  vectorIndexEnabled = false,
+  textFieldPaths,
+}: MongoInspectIndexTableProps) {
   const rows = [
     ...summary.classicIndexes.map((index) => ({
       key: `classic:${index.name}`,
@@ -177,12 +185,24 @@ export function MongoInspectIndexTable({ summary }: MongoInspectIndexTableProps)
         <p className="copilot-inspect-table__empty">
           No indexes found on <code>{summary.collection}</code> in <code>{summary.database}</code>.
         </p>
+        <MongoAutoEmbedVectorIndexActions
+          database={summary.database}
+          collection={summary.collection}
+          textFieldPaths={textFieldPaths}
+          vectorIndexEnabled={vectorIndexEnabled}
+        />
       </CopilotCollapsibleResults>
     );
   }
 
   return (
     <CopilotCollapsibleResults summary={`Indexes on ${target} — ${countLabel}`}>
+      <MongoAutoEmbedVectorIndexActions
+        database={summary.database}
+        collection={summary.collection}
+        textFieldPaths={textFieldPaths}
+        vectorIndexEnabled={vectorIndexEnabled}
+      />
       <div className="copilot-inspect-table-wrap">
         <table className="copilot-inspect-table">
           <caption className="copilot-inspect-table__caption">Indexes on {target}</caption>
@@ -214,13 +234,19 @@ export function MongoInspectIndexTable({ summary }: MongoInspectIndexTableProps)
 
 type MongoInspectSchemaTableProps = {
   summary: MongoInspectSchemaSummary;
+  vectorIndexEnabled?: boolean;
 };
 
 /** Tabular summary for inferred fields on one MongoDB collection. */
-export function MongoInspectSchemaTable({ summary }: MongoInspectSchemaTableProps) {
+export function MongoInspectSchemaTable({
+  summary,
+  vectorIndexEnabled = false,
+}: MongoInspectSchemaTableProps) {
   const target = `${summary.database}.${summary.collection}`;
   const fieldLabel =
     summary.fieldsCount === 1 ? '1 field' : `${summary.fieldsCount.toLocaleString()} fields`;
+
+  const textFieldPaths = inferTextFieldPathsFromSchemaTypes(summary.fields);
 
   if (!summary.fields.length) {
     return (
@@ -228,12 +254,23 @@ export function MongoInspectSchemaTable({ summary }: MongoInspectSchemaTableProp
         <p className="copilot-inspect-table__empty">
           No inferred fields found on <code>{summary.collection}</code> in <code>{summary.database}</code>.
         </p>
+        <MongoAutoEmbedVectorIndexActions
+          database={summary.database}
+          collection={summary.collection}
+          vectorIndexEnabled={vectorIndexEnabled}
+        />
       </CopilotCollapsibleResults>
     );
   }
 
   return (
     <CopilotCollapsibleResults summary={`Schema for ${target} — ${fieldLabel}`}>
+      <MongoAutoEmbedVectorIndexActions
+        database={summary.database}
+        collection={summary.collection}
+        textFieldPaths={textFieldPaths}
+        vectorIndexEnabled={vectorIndexEnabled}
+      />
       <div className="copilot-inspect-table-wrap">
         <table className="copilot-inspect-table">
           <caption className="copilot-inspect-table__caption">

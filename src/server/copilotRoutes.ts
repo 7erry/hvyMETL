@@ -10,6 +10,7 @@ import {
   type CopilotSchemaContext,
 } from '../copilot/groveChat.js';
 import { invokeMongoInspectTool } from '../copilot/mongoInspectService.js';
+import { createMongoAutoEmbedVectorIndex } from '../copilot/mongoVectorIndexService.js';
 import { parseMongoPlanContext } from '../copilot/mongoPlanContext.js';
 import { isMongoInspectToolName } from '../copilot/mongoInspectToolSchemas.js';
 import { isMongoMcpEnabled, probeMongoMcpAvailability } from '../copilot/mongoMcpClient.js';
@@ -192,6 +193,16 @@ export function createCopilotRouter(): Router {
         ? { enabled: true, clientId: googleDriveClientId }
         : { enabled: false },
     });
+  });
+
+  router.post('/mongo/vector-index', async (req, res) => {
+    try {
+      const result = await createMongoAutoEmbedVectorIndex(req, req.body);
+      const status = result.serviceUnavailable ? 503 : result.ok ? 200 : 400;
+      res.status(status).json(result);
+    } catch (error) {
+      handleCopilotError(res, error);
+    }
   });
 
   router.post('/mongo/inspect', async (req, res) => {

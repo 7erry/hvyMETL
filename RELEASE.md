@@ -1,3 +1,21 @@
+## hvyMETL 3.1.2
+
+Minor release adding **Agent Copilot Phase 3**: create Atlas Vector Search **autoEmbed** indexes from inspect results, with full Automated Embeddings options (Voyage model, quantization, dimensions, similarity).
+
+### Highlights
+
+- **autoEmbed vector index dialog:** after `describeMongoCollectionSchema` or `listMongoCollectionIndexes`, use **Create autoEmbed vector index…** to pick the text field, model (`voyage-4-lite`, `voyage-4`, `voyage-4-large`, `voyage-code-3`), quantization (`float`, `scalar`, `binary`, `binaryNoRescore`), dimensions (256–2048), and similarity (`cosine`, `dotProduct`, `euclidean`).
+- **`POST /api/copilot/mongo/vector-index`:** server creates the index via the MongoDB driver (tenant URI, logical database names) so options match [Atlas autoEmbed index fields](https://www.mongodb.com/docs/vector-search/index/vector-search-type/?deployment-type=atlas&embedding=auto&interface=driver&language=python#std-label-avs-types-vector-search). Read-only MCP inspect/analyze is unchanged.
+- **Docs & tests:** `docs/20-agent-copilot-mongodb-inspect.md` Phase 3 section, unit tests for index definition validation and the vector-index route.
+
+### Verification
+
+- `npm test`
+- `npm run build`
+- `npm run build --prefix web`
+
+---
+
 ## hvyMETL 2.1.0
 
 Minor release focused on **Query Translator execution**, **aggregate result UX**, **Manager ↔ Copilot sizing context**, **Google Docs export**, and **studio build reliability** since 2.0.0.

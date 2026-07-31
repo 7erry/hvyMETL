@@ -61,8 +61,18 @@ export function ToolExecutionCard({ execution }: ToolExecutionCardProps) {
           collections={collectionSummary.collections}
         />
       ) : null}
-      {indexSummary ? <MongoInspectIndexTable summary={indexSummary} /> : null}
-      {schemaSummary ? <MongoInspectSchemaTable summary={schemaSummary} /> : null}
+      {indexSummary ? (
+        <MongoInspectIndexTable
+          summary={indexSummary}
+          vectorIndexEnabled={copilot.mongoInspectAvailable}
+        />
+      ) : null}
+      {schemaSummary ? (
+        <MongoInspectSchemaTable
+          summary={schemaSummary}
+          vectorIndexEnabled={copilot.mongoInspectAvailable}
+        />
+      ) : null}
       {execution.tool === 'findMongoDocuments' && execution.data ? (
         <MongoInspectFindTable data={execution.data} />
       ) : null}

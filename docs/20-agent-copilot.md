@@ -172,6 +172,10 @@ Run **Refresh design** before compare-to-plan so field, embed, and index expecta
 
 Structured results render in tool cards (schema field tables, aggregate/explain/compare tables) — the LLM does not re-echo those tables in chat.
 
+### Phase 3 — autoEmbed vector index
+
+From schema or index inspect tool cards, **Create autoEmbed vector index…** opens a dialog to configure Automated Embeddings (Preview) on a text field. The API uses the MongoDB driver with the same tenant URI as pipeline imports. Inspect/analyze MCP tools stay read-only.
+
 See [20-agent-copilot-mongodb-inspect.md](20-agent-copilot-mongodb-inspect.md) for MCP configuration, multi-tenant isolation, and API details.
 
 ## Pipeline self-healing

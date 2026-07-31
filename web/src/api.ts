@@ -838,6 +838,41 @@ export async function fetchCopilotStatus(): Promise<CopilotStatusResponse> {
   return res.json();
 }
 
+export type CopilotMongoAutoEmbedVectorIndexResponse = {
+  ok: boolean;
+  summary: string;
+  error?: string;
+  database?: string;
+  collection?: string;
+  indexName?: string;
+};
+
+/** Create an Atlas Vector Search autoEmbed index (Phase 3 — uses MongoDB driver, not read-only MCP). */
+export async function createCopilotMongoAutoEmbedVectorIndex(
+  request: import('../../../../src/copilot/mongoVectorAutoEmbedIndex.ts').MongoAutoEmbedVectorIndexInput,
+): Promise<CopilotMongoAutoEmbedVectorIndexResponse> {
+  const res = await copilotApiFetch(`${base}/api/copilot/mongo/vector-index`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(request),
+  });
+  const contentType = res.headers.get('content-type') ?? '';
+  const body = await res.text();
+  if (!contentType.includes('application/json')) {
+    throw new Error(await readApiError(new Response(body, { status: res.status, headers: res.headers })));
+  }
+  let data: CopilotMongoAutoEmbedVectorIndexResponse;
+  try {
+    data = JSON.parse(body) as CopilotMongoAutoEmbedVectorIndexResponse;
+  } catch {
+    throw new Error('Invalid JSON in API response.');
+  }
+  if (!res.ok && !data.summary) {
+    throw new Error(data.error ?? res.statusText);
+  }
+  return data;
+}
+
 export async function invokeCopilotMongoInspect(
   tool: import('./copilot/types').MongoInspectToolName,
   args: Record<string, unknown>,

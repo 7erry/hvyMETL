@@ -4,6 +4,22 @@
 
 Read-only Atlas inspection and analysis tools for the **Agent Copilot** sidebar. The hvyMETL API proxies requests to a co-hosted [MongoDB MCP Server](https://github.com/mongodb-js/mongodb-mcp-server) over streamable HTTP.
 
+## Tools (Phase 3 — Vector index)
+
+Phase 3 adds **write** capability for Atlas Vector Search **autoEmbed** indexes (Automated Embeddings preview). Inspect/analyze tools remain read-only via MCP; index creation uses the **MongoDB Node driver** with the same tenant URI as pipeline imports so full index options are supported (`numDimensions`, `quantization`, `similarity`).
+
+| Surface | Method | Purpose |
+|---------|--------|---------|
+| Copilot UI | **Create autoEmbed vector index…** on schema/index inspect cards | Dialog: text field, Voyage model, quantization, dimensions, similarity |
+| API | `POST /api/copilot/mongo/vector-index` | Same options as JSON body |
+
+Supported **models:** `voyage-4-lite`, `voyage-4`, `voyage-4-large`, `voyage-code-3`.  
+**Quantization:** `float`, `scalar`, `binary`, `binaryNoRescore`.  
+**Dimensions:** `256`, `512`, `1024`, `2048`.  
+**Similarity:** `cosine`, `dotProduct`, `euclidean`.
+
+See [How to index fields for vector search (autoEmbed)](https://www.mongodb.com/docs/vector-search/index/vector-search-type/?deployment-type=atlas&embedding=auto&interface=driver&language=python#std-label-avs-types-vector-search).
+
 ## Tools (Phase 1 — Inspect)
 
 | Copilot tool | MCP tool | Purpose |
@@ -63,6 +79,7 @@ npx -y mongodb-mcp-server@latest --transport http --readOnly --httpHost=127.0.0.
 
 - `GET /api/copilot/status` — includes `mongoInspect.enabled` and `mongoInspect.available`
 - `POST /api/copilot/mongo/inspect` — `{ tool, args, planContext? }` for direct invocation (used by the copilot UI). `planContext` is required for meaningful `compareMongoCollectionToPlan` results.
+- `POST /api/copilot/mongo/vector-index` — create an Atlas **autoEmbed** vector search index (Phase 3). Body: `database`, `collection`, `path`, `model`, `quantization`, `numDimensions`, `similarity`, optional `name`. Uses the MongoDB driver (not read-only MCP).
 
 When the MCP server is down, inspect calls return HTTP 503 with a user-friendly message; the copilot header shows **Atlas inspect offline**.
 
@@ -78,12 +95,15 @@ When the MCP server is down, inspect calls return HTTP 503 with a user-friendly 
 | `src/copilot/mongoAnalyzeComparison.ts` | Plan vs Atlas comparison rows |
 | `src/copilot/mongoPlanContext.ts` | Migration plan snapshot parsing |
 | `src/copilot/mongoInspectToolSchemas.ts` | OpenAI tool definitions |
-| `src/server/copilotRoutes.ts` | `/api/copilot/mongo/inspect` |
+| `src/copilot/mongoVectorAutoEmbedIndex.ts` | autoEmbed index validation + definition builder |
+| `src/copilot/mongoVectorIndexService.ts` | Driver-based `createSearchIndex` for tenants |
 | `web/src/copilot/CopilotContext.tsx` | Routes inspect/analyze tool calls to the API |
+| `src/server/copilotRoutes.ts` | `/api/copilot/mongo/inspect`, `/api/copilot/mongo/vector-index` |
+| `web/src/components/copilot/MongoAutoEmbedVectorIndexModal.tsx` | autoEmbed index dialog |
 | `web/src/components/copilot/MongoAnalyzeTables.tsx` | Aggregate, explain, and compare result tables |
 
 ## Verification
 
 ```bash
-npm test -- src/copilot/mongoAnalyzePipeline.test.ts src/copilot/mongoAnalyzeComparison.test.ts src/copilot/mongoInspectScope.test.ts src/copilot/mongoInspectService.test.ts src/server/copilotRoutes.test.ts web/src/copilot/mongoAnalyzeFormat.test.ts
+npm test -- src/copilot/mongoVectorAutoEmbedIndex.test.ts src/copilot/mongoAnalyzePipeline.test.ts src/copilot/mongoAnalyzeComparison.test.ts src/copilot/mongoInspectScope.test.ts src/copilot/mongoInspectService.test.ts src/server/copilotRoutes.test.ts src/server/copilotVectorIndexRoutes.test.ts web/src/copilot/mongoAnalyzeFormat.test.ts
 ```
