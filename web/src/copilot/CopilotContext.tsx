@@ -17,6 +17,8 @@ import {
   isInspectOnlyUserMessage,
   looksLikeInspectListingEcho,
 } from './inspectCommandRouting';
+import { parseDirectVectorSearchIndexCommand } from './vectorIndexCommandRouting';
+import { MongoAutoEmbedVectorIndexModal } from '../components/copilot/MongoAutoEmbedVectorIndexModal';
 import {
   executeWorkflowTool,
   attachPostVerifyArchitectureReviewNextStep,
@@ -159,6 +161,11 @@ export function CopilotProvider({
   const [mongoInspectAvailable, setMongoInspectAvailable] = useState(false);
   const [mongoInspectMessage, setMongoInspectMessage] = useState<string | null>(null);
   const [targetDatabase, setTargetDatabase] = useState('csv_to_atlas');
+  const [vectorIndexModal, setVectorIndexModal] = useState<{
+    database: string;
+    collection: string;
+    initialPath?: string;
+  } | null>(null);
   const [llmHistory, setLlmHistory] = useState<CopilotLlmMessage[]>([]);
   const chatInputFocusRef = useRef<(() => void) | null>(null);
   const chatInputFocusTimersRef = useRef<number[]>([]);
@@ -690,6 +697,29 @@ export function CopilotProvider({
         return;
       }
 
+      const directVectorIndex = parseDirectVectorSearchIndexCommand(trimmed);
+      if (directVectorIndex) {
+        if (!mongoInspectAvailable) {
+          appendMessage({
+            role: 'agent',
+            content: mongoInspectMessage ?? 'Atlas inspect is offline — vector index dialog is unavailable.',
+          });
+          return;
+        }
+        setVectorIndexModal({
+          database: directVectorIndex.database?.trim() || targetDatabase.trim() || 'csv_to_atlas',
+          collection: directVectorIndex.collection,
+          initialPath: directVectorIndex.path,
+        });
+        appendMessage({
+          role: 'agent',
+          content: directVectorIndex.path
+            ? `Configure the autoEmbed vector index on \`${directVectorIndex.collection}.${directVectorIndex.path}\` in the dialog.`
+            : `Choose a text field for the autoEmbed vector index on \`${directVectorIndex.collection}\` in the dialog.`,
+        });
+        return;
+      }
+
       const parsed = parseCopilotCommand(trimmed);
       if (parsed && 'message' in parsed) {
         if (parsed.message === '__clear_overrides__') {
@@ -742,7 +772,7 @@ export function CopilotProvider({
         setStatus('idle');
       }, 400);
     },
-    [appendMessage, llmConfigured, llmHistory, managerCostInputs, model, onClearOverrides, plan, runLlmTurn, runMongoInspectDirect, runWorkflowDirect, runTool],
+    [appendMessage, llmConfigured, llmHistory, managerCostInputs, model, mongoInspectAvailable, mongoInspectMessage, onClearOverrides, plan, runLlmTurn, runMongoInspectDirect, runWorkflowDirect, runTool, targetDatabase],
   );
 
   const openWithPrompt = useCallback(
@@ -989,7 +1019,20 @@ export function CopilotProvider({
     ],
   );
 
-  return <CopilotContext.Provider value={value}>{children}</CopilotContext.Provider>;
+  return (
+    <CopilotContext.Provider value={value}>
+      {children}
+      {vectorIndexModal ? (
+        <MongoAutoEmbedVectorIndexModal
+          open
+          database={vectorIndexModal.database}
+          collection={vectorIndexModal.collection}
+          initialPath={vectorIndexModal.initialPath}
+          onClose={() => setVectorIndexModal(null)}
+        />
+      ) : null}
+    </CopilotContext.Provider>
+  );
 }
 
 export function useCopilot(): CopilotContextValue {
