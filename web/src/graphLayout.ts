@@ -22,6 +22,10 @@ export type GraphLayoutOptions = {
   maxRowWidth?: number;
 };
 
+/** Canvas dot grid (px); two dots = minimum gap between stacked nodes. */
+export const DIAGRAM_GRID_UNIT = 20;
+export const DIAGRAM_TWO_DOT_GAP = DIAGRAM_GRID_UNIT * 2;
+
 const DEFAULTS: Required<GraphLayoutOptions> = {
   nodeWidth: 280,
   nodeHeight: 200,
@@ -42,7 +46,7 @@ export const COMPACT_GRAPH_LAYOUT_OPTIONS: GraphLayoutOptions = {
   gapY: 40,
   padding: 28,
   componentGapX: 88,
-  componentGapY: 64,
+  componentGapY: DIAGRAM_TWO_DOT_GAP,
   maxRowWidth: 720,
 };
 
@@ -51,26 +55,30 @@ export const MONGO_GRAPH_LAYOUT_OPTIONS: GraphLayoutOptions = {
   nodeWidth: 260,
   nodeHeight: 170,
   gapX: 40,
-  gapY: 40,
+  gapY: DIAGRAM_TWO_DOT_GAP,
   padding: 40,
   componentGapX: 40,
-  componentGapY: 40,
-  grid: 20,
+  componentGapY: DIAGRAM_TWO_DOT_GAP,
+  grid: DIAGRAM_GRID_UNIT,
   maxRowWidth: 1600,
 };
 
-/** Default Before · SQL spacing — two grid dots (40px) between tables vertically. */
+/** Default Before · SQL spacing — two grid dots between tables vertically. */
 export const SQL_GRAPH_LAYOUT_OPTIONS: GraphLayoutOptions = {
   nodeWidth: 260,
   nodeHeight: 200,
   gapX: 160,
-  gapY: 40,
+  gapY: DIAGRAM_TWO_DOT_GAP,
   padding: 48,
   componentGapX: 200,
-  componentGapY: 40,
-  grid: 20,
+  componentGapY: DIAGRAM_TWO_DOT_GAP,
+  grid: DIAGRAM_GRID_UNIT,
   maxRowWidth: 2600,
 };
+
+function sqlVerticalGap(options: Required<GraphLayoutOptions>): number {
+  return Math.max(options.gapY, options.grid * 2);
+}
 
 function snap(value: number, grid: number): number {
   return Math.round(value / grid) * grid;
@@ -246,8 +254,13 @@ export function layoutGraph(
 }
 
 export function estimateTableNodeSize(table: TableModel): GraphLayoutNodeSize {
-  const visibleRows = Math.min(table.columns.length, 14);
-  return { width: 260, height: 52 + visibleRows * 22 };
+  const headerHeight = 44;
+  const listPadding = 12;
+  const rowHeight = 24;
+  return {
+    width: 260,
+    height: headerHeight + listPadding + table.columns.length * rowHeight,
+  };
 }
 
 export function estimateCollectionNodeSize(fieldCount: number, mergedCount: number): GraphLayoutNodeSize {
@@ -302,6 +315,7 @@ function layoutSqlTablesByReferenceRole(
   options: Required<GraphLayoutOptions>,
 ): Record<string, { x: number; y: number }> {
   const { nodeWidth, nodeHeight, gapX, gapY, padding, grid } = options;
+  const verticalGap = sqlVerticalGap(options);
   const tableNames = new Set(nodeIds);
   const tablesByName = new Map(model.tables.map((table) => [table.name, table]));
 
@@ -335,7 +349,7 @@ function layoutSqlTablesByReferenceRole(
       const size = sizes.get(id) ?? { width: nodeWidth, height: nodeHeight };
       maxWidth = Math.max(maxWidth, size.width);
       positions[id] = { x: snap(x, grid), y: snap(y, grid) };
-      y += size.height + gapY;
+      y += size.height + verticalGap;
     }
     x += maxWidth + gapX;
   }
@@ -349,7 +363,7 @@ function mongoEdges(plan: MigrationPlan): GraphLayoutEdge[] {
 
 /** Layout SQL tables: FK role columns (sources left, hubs center, sinks right) per connected cluster. */
 export function layoutSqlModel(model: SqlStructuralModel, opts?: GraphLayoutOptions): Record<string, { x: number; y: number }> {
-  const options: Required<GraphLayoutOptions> = { ...DEFAULTS, ...opts };
+  const options: Required<GraphLayoutOptions> = { ...DEFAULTS, ...SQL_GRAPH_LAYOUT_OPTIONS, ...opts };
   const nodeIds = model.tables.map((table) => table.name);
   const sizes = new Map<string, GraphLayoutNodeSize>();
   for (const table of model.tables) {

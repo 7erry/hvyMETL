@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { layoutGraph, layoutSqlModel, MONGO_GRAPH_LAYOUT_OPTIONS } from './graphLayout';
+import { layoutGraph, layoutSqlModel, estimateTableNodeSize, MONGO_GRAPH_LAYOUT_OPTIONS, DIAGRAM_TWO_DOT_GAP } from './graphLayout';
 import type { SqlStructuralModel } from './types';
 
 describe('graphLayout', () => {
@@ -52,6 +52,51 @@ describe('graphLayout', () => {
       positions.inventory.y - positions.posts.y,
     );
     expect(inventoryDistance).toBeGreaterThan(usersPostsDistance);
+  });
+
+  it('leaves two canvas dots vertical gap between stacked Before SQL tables', () => {
+    const model: SqlStructuralModel = {
+      source: 'test',
+      tables: [
+        {
+          name: 'parents',
+          columns: [{ name: 'id', sqlType: 'INT', nullable: false, isPrimaryKey: true }],
+          primaryKey: ['id'],
+          foreignKeys: [],
+          rowCount: 0,
+        },
+        {
+          name: 'child_a',
+          columns: [
+            { name: 'id', sqlType: 'INT', nullable: false, isPrimaryKey: true },
+            { name: 'parent_id', sqlType: 'INT', nullable: false, isPrimaryKey: false },
+            { name: 'note', sqlType: 'TEXT', nullable: true, isPrimaryKey: false },
+          ],
+          primaryKey: ['id'],
+          foreignKeys: [{ column: 'parent_id', referencesTable: 'parents', referencesColumn: 'id' }],
+          rowCount: 0,
+        },
+        {
+          name: 'child_b',
+          columns: [
+            { name: 'id', sqlType: 'INT', nullable: false, isPrimaryKey: true },
+            { name: 'parent_id', sqlType: 'INT', nullable: false, isPrimaryKey: false },
+          ],
+          primaryKey: ['id'],
+          foreignKeys: [{ column: 'parent_id', referencesTable: 'parents', referencesColumn: 'id' }],
+          rowCount: 0,
+        },
+      ],
+    };
+
+    const positions = layoutSqlModel(model);
+    const upper = positions.child_a.y <= positions.child_b.y ? 'child_a' : 'child_b';
+    const lower = upper === 'child_a' ? 'child_b' : 'child_a';
+    const upperTable = model.tables.find((table) => table.name === upper)!;
+    const upperSize = estimateTableNodeSize(upperTable);
+    const verticalStep = positions[lower].y - positions[upper].y;
+    expect(verticalStep).toBeGreaterThanOrEqual(upperSize.height + DIAGRAM_TWO_DOT_GAP);
+    expect(positions.child_a.x).toBe(positions.child_b.x);
   });
 
   it('places hub tables between outgoing-only and incoming-only tables', () => {

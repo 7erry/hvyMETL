@@ -18,7 +18,7 @@ import { DiagramCanvasFitView } from './DiagramCanvasFitView';
 import { RelationshipEdge } from './RelationshipEdge';
 import { RelationshipDisplayControls } from './RelationshipDisplayControls';
 import { TableNode, type TableNodeData } from './TableNode';
-import { COMPACT_GRAPH_LAYOUT_OPTIONS, layoutSqlModel, SQL_GRAPH_LAYOUT_OPTIONS } from '../graphLayout';
+import { COMPACT_GRAPH_LAYOUT_OPTIONS, DIAGRAM_GRID_UNIT, layoutSqlModel, SQL_GRAPH_LAYOUT_OPTIONS } from '../graphLayout';
 import { useCompactDiagramLayout } from '../hooks/useCompactDiagramLayout';
 import {
   formatRelationshipLabel,
@@ -29,7 +29,7 @@ import type { SqlStructuralModel, TableModel } from '../types';
 import type { GuardrailIssue } from '../copilot/types';
 import { guardrailsByTable } from '../copilot/guardrails';
 
-const GRID = 20;
+const GRID = DIAGRAM_GRID_UNIT;
 const nodeTypes = { table: TableNode };
 const edgeTypes = { relationship: RelationshipEdge };
 
