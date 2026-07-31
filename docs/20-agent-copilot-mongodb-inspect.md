@@ -10,7 +10,7 @@ Phase 3 adds **write** capability for Atlas Vector Search **autoEmbed** indexes 
 
 | Surface | Method | Purpose |
 |---------|--------|---------|
-| Copilot UI | **Create autoEmbed vector index…** on schema/index inspect cards | Dialog: text field, Voyage model, quantization, dimensions, similarity |
+| Copilot UI / LLM tool | `createMongoAutoEmbedVectorIndex` | Dialog or chat tool: text field, Voyage model, quantization, dimensions, similarity |
 | API | `POST /api/copilot/mongo/vector-index` | Same options as JSON body |
 
 Supported **models:** `voyage-4-lite`, `voyage-4`, `voyage-4-large`, `voyage-code-3`.  

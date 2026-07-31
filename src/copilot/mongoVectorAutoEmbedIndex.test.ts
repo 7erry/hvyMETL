@@ -53,7 +53,7 @@ describe('mongoVectorAutoEmbedIndex', () => {
         numDimensions: AUTO_EMBED_DIMENSIONS[0],
         similarity: AUTO_EMBED_SIMILARITY_FUNCTIONS[0],
       }),
-    ).toThrow(/model must be one of/);
+    ).toThrow(/must be one of: voyage-4-lite/);
 
     expect(() =>
       parseMongoAutoEmbedVectorIndexInput({
@@ -80,5 +80,17 @@ describe('mongoVectorAutoEmbedIndex', () => {
       name: 'my_custom_index',
     });
     expect(input.name).toBe('my_custom_index');
+  });
+
+  it('applies defaults for model, quantization, dimensions, and similarity', () => {
+    const input = parseMongoAutoEmbedVectorIndexInput({
+      collection: 'customers',
+      path: 'description',
+    });
+    expect(input.model).toBe('voyage-4-lite');
+    expect(input.quantization).toBe('scalar');
+    expect(input.numDimensions).toBe(1024);
+    expect(input.similarity).toBe('cosine');
+    expect(input.database).toBeUndefined();
   });
 });

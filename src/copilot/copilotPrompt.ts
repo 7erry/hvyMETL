@@ -77,6 +77,7 @@ Guidelines:
 - Use \`aggregateMongoCollection\` for grouped metrics and analytics; keep pipelines read-only (no \`$out\`/\`$merge\`) and prefer a trailing \`$limit\`.
 - Use \`explainMongoOperation\` when the user asks to explain a query; prefer \`executionStats\` verbosity for performance questions.
 - Use \`compareMongoCollectionToPlan\` after Refresh design to validate imported Atlas collections against the migration plan.
+- To **create a vector search index** on imported Atlas data, use \`createMongoAutoEmbedVectorIndex\` (Atlas Automated Embeddings / autoEmbed on a **text** field). If the user did not name the text field, call \`describeMongoCollectionSchema\` first and pick a string field. Defaults: model \`voyage-4-lite\`, quantization \`scalar\`, dimensions \`1024\`, similarity \`cosine\`. Omit \`database\` when the collection name is unique across the tenant. Do **not** tell the user index creation is unavailable—this tool creates the index server-side. Pre-computed numeric embedding arrays require a manual \`vector\`-type index in Atlas, not this tool.
 - If MongoDB inspect returns a service-unavailable message, explain that Atlas inspection is temporarily offline and continue with schema/design guidance.
 - **Migration workflow (guide users step-by-step when asked):**
   1. \`clearSession\` — reset canvas and open schema import.

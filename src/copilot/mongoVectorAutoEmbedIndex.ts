@@ -28,9 +28,9 @@ export const AUTO_EMBED_SIMILARITY_FUNCTIONS = ['cosine', 'dotProduct', 'euclide
 
 export type AutoEmbedSimilarityFunction = (typeof AUTO_EMBED_SIMILARITY_FUNCTIONS)[number];
 
-/** User-selected autoEmbed vector index settings (logical database name). */
+/** User-selected autoEmbed vector index settings (logical database name when known). */
 export type MongoAutoEmbedVectorIndexInput = {
-  database: string;
+  database?: string;
   collection: string;
   path: string;
   model: AutoEmbedVoyageModel;
@@ -80,6 +80,29 @@ function readDimension(value: unknown): AutoEmbedDimension {
   return num as AutoEmbedDimension;
 }
 
+function readOptionalNonEmptyString(value: unknown): string | undefined {
+  if (typeof value !== 'string' || !value.trim()) return undefined;
+  return value.trim();
+}
+
+function readEnumOptional<T extends readonly string[]>(
+  value: unknown,
+  allowed: T,
+  defaultValue: T[number],
+): T[number] {
+  const raw = readOptionalNonEmptyString(value);
+  if (!raw) return defaultValue;
+  if (!(allowed as readonly string[]).includes(raw)) {
+    throw new Error(`Value must be one of: ${allowed.join(', ')}.`);
+  }
+  return raw as T[number];
+}
+
+function readDimensionOptional(value: unknown, defaultValue: AutoEmbedDimension): AutoEmbedDimension {
+  if (value === undefined || value === null || value === '') return defaultValue;
+  return readDimension(value);
+}
+
 /** Parse and validate a create autoEmbed vector index request body. */
 export function parseMongoAutoEmbedVectorIndexInput(raw: unknown): MongoAutoEmbedVectorIndexInput {
   if (!raw || typeof raw !== 'object') {
@@ -87,7 +110,8 @@ export function parseMongoAutoEmbedVectorIndexInput(raw: unknown): MongoAutoEmbe
   }
   const body = raw as Record<string, unknown>;
 
-  const database = readNonEmptyString(body.database, 'database');
+  const database = readOptionalNonEmptyString(body.database);
+
   const collection = readNonEmptyString(body.collection, 'collection');
   if (!COLLECTION_NAME_PATTERN.test(collection)) {
     throw new Error('collection name is invalid.');
@@ -98,16 +122,16 @@ export function parseMongoAutoEmbedVectorIndexInput(raw: unknown): MongoAutoEmbe
     throw new Error('path must be a valid field path (letters, numbers, underscores, dots).');
   }
 
-  const model = readEnum(body.model, AUTO_EMBED_VOYAGE_MODELS, 'model');
-  const quantization = readEnum(body.quantization, AUTO_EMBED_QUANTIZATION_TYPES, 'quantization');
-  const similarity = readEnum(body.similarity, AUTO_EMBED_SIMILARITY_FUNCTIONS, 'similarity');
-  const numDimensions = readDimension(body.numDimensions);
+  const model = readEnumOptional(body.model, AUTO_EMBED_VOYAGE_MODELS, 'voyage-4-lite');
+  const quantization = readEnumOptional(body.quantization, AUTO_EMBED_QUANTIZATION_TYPES, 'scalar');
+  const similarity = readEnumOptional(body.similarity, AUTO_EMBED_SIMILARITY_FUNCTIONS, 'cosine');
+  const numDimensions = readDimensionOptional(body.numDimensions, 1024);
 
   const name =
     typeof body.name === 'string' && body.name.trim() ? body.name.trim() : undefined;
 
   return {
-    database,
+    ...(database ? { database } : {}),
     collection,
     path,
     model,

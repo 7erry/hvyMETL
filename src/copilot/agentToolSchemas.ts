@@ -1,5 +1,6 @@
 /** OpenAI-compatible function definitions for the hvyMETL agent copilot. */
 import { COPILOT_MONGO_INSPECT_OPENAI_TOOLS } from './mongoInspectToolSchemas.js';
+import { COPILOT_MONGO_VECTOR_INDEX_OPENAI_TOOLS } from './mongoVectorIndexToolSchemas.js';
 import { COPILOT_WORKFLOW_OPENAI_TOOLS } from './workflowToolSchemas.js';
 
 export const COPILOT_CANVAS_OPENAI_TOOLS = [
@@ -108,6 +109,7 @@ export const COPILOT_OPENAI_TOOLS = [
   ...COPILOT_CANVAS_OPENAI_TOOLS,
   ...COPILOT_WORKFLOW_OPENAI_TOOLS,
   ...COPILOT_MONGO_INSPECT_OPENAI_TOOLS,
+  ...COPILOT_MONGO_VECTOR_INDEX_OPENAI_TOOLS,
 ];
 
 export type CopilotCanvasToolName =

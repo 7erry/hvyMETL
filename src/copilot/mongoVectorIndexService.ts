@@ -30,6 +30,46 @@ export type MongoAutoEmbedVectorIndexResult = {
   definition?: ReturnType<typeof buildAutoEmbedVectorSearchIndexDefinition>;
 };
 
+async function resolveLogicalDatabaseForVectorIndex(
+  client: MongoClient,
+  scope: Awaited<ReturnType<typeof resolveTenantMongoInspectScope>>,
+  collectionName: string,
+  databaseArg?: string,
+): Promise<string> {
+  if (databaseArg?.trim()) {
+    return scope.resolveLogicalDatabase(databaseArg.trim());
+  }
+
+  const admin = client.db().admin();
+  const listing = await admin.listDatabases();
+  const clusterNames = (listing.databases ?? []).map((entry) => entry.name);
+  const logicalMatches = new Set<string>();
+
+  for (const physicalDatabase of clusterNames) {
+    if (scope.authEnabled && !scope.ownsPhysicalDatabase(physicalDatabase)) continue;
+    const collections = await client
+      .db(physicalDatabase)
+      .listCollections({ name: collectionName }, { nameOnly: true })
+      .toArray();
+    if (collections.some((entry) => entry.name === collectionName)) {
+      logicalMatches.add(scope.toLogicalDatabase(physicalDatabase));
+    }
+  }
+
+  const matches = [...logicalMatches];
+  if (matches.length === 1) {
+    return matches[0]!;
+  }
+  if (matches.length === 0) {
+    throw new Error(
+      `Collection "${collectionName}" was not found in any of your databases. Run listMongoCollections first.`,
+    );
+  }
+  throw new Error(
+    `Collection "${collectionName}" exists in multiple databases (${matches.join(', ')}). Specify the database argument.`,
+  );
+}
+
 async function resolvePhysicalDatabaseForLogical(
   client: MongoClient,
   scope: Awaited<ReturnType<typeof resolveTenantMongoInspectScope>>,
@@ -97,13 +137,18 @@ export async function createMongoAutoEmbedVectorIndex(
     return { ok: false, summary: message, error: message };
   }
 
-  const logicalDatabase = scope.resolveLogicalDatabase(input.database);
-  const definition = buildAutoEmbedVectorSearchIndexDefinition(input);
-  const indexName = input.name ?? defaultAutoEmbedVectorIndexName(input);
-
   const client = new MongoClient(mongoUri);
   try {
     await client.connect();
+    const logicalDatabase = await resolveLogicalDatabaseForVectorIndex(
+      client,
+      scope,
+      input.collection,
+      input.database,
+    );
+    const definition = buildAutoEmbedVectorSearchIndexDefinition(input);
+    const indexName = input.name ?? defaultAutoEmbedVectorIndexName(input);
+
     const physicalDatabase = await resolvePhysicalDatabaseForLogical(client, scope, logicalDatabase);
     if (scope.authEnabled && !scope.ownsPhysicalDatabase(physicalDatabase)) {
       throw new Error('You do not have access to that database.');

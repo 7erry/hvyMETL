@@ -10,7 +10,7 @@ import {
 } from 'react';
 import { executeAgentTool, parseCopilotCommand, type AgentToolContext, type AgentToolMutation } from './agentTools';
 import { analyzeMigrationRisks } from './guardrails';
-import { parseOpenAiToolCall, isServerMongoInspectToolCall, isWorkflowToolCallParsed } from './llmTools';
+import { parseOpenAiToolCall, isServerMongoInspectToolCall, isServerMongoVectorIndexToolCall, isWorkflowToolCallParsed } from './llmTools';
 import {
   parseDirectMongoInspectCommand,
   shouldSuppressListMongoDatabasesDisplay,
@@ -45,7 +45,7 @@ import { buildMongoPlanContext } from './mongoPlanContextPayload';
 import { buildAggregateInspectArgs } from './runTranslationPipeline';
 import { buildSchemaContextPayload } from './schemaContext';
 import { serializeCanvasToolResult, toolExecutionHasStructuredOutput } from './toolExecutionDisplay';
-import { fetchCopilotStatus, fetchPipelineConfig, invokeCopilotMongoInspect, sendCopilotChat } from '../api';
+import { fetchCopilotStatus, fetchPipelineConfig, createCopilotMongoAutoEmbedVectorIndex, invokeCopilotMongoInspect, sendCopilotChat } from '../api';
 import type {
   AgentStatus,
   CopilotLlmMessage,
@@ -373,6 +373,42 @@ export function CopilotProvider({
     [plan],
   );
 
+  const runMongoVectorIndexTool = useCallback(
+    async (args: Record<string, unknown>): Promise<ToolExecutionResult> => {
+      const tool = 'createMongoAutoEmbedVectorIndex' as const;
+      try {
+        const payload: Record<string, unknown> = { ...args };
+        if (
+          (typeof payload.database !== 'string' || !payload.database.trim()) &&
+          targetDatabase.trim()
+        ) {
+          payload.database = targetDatabase.trim();
+        }
+        const response = await createCopilotMongoAutoEmbedVectorIndex(
+          payload as import('../../../../src/copilot/mongoVectorAutoEmbedIndex.ts').MongoAutoEmbedVectorIndexInput,
+        );
+        return {
+          tool,
+          summary: response.summary,
+          delta: response.indexName
+            ? [`${response.database ?? ''}.${response.collection ?? ''} → ${response.indexName}`]
+            : [],
+          ok: response.ok,
+          data: response,
+        };
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        return {
+          tool,
+          summary: message,
+          delta: [],
+          ok: false,
+        };
+      }
+    },
+    [targetDatabase],
+  );
+
   const runMongoInspectDirect = useCallback(
     async (tool: MongoInspectToolName, args: Record<string, unknown>) => {
       setStatus('mutating');
@@ -514,6 +550,29 @@ export function CopilotProvider({
             continue;
           }
 
+          if (isServerMongoVectorIndexToolCall(parsed)) {
+            const result = await runMongoVectorIndexTool(parsed.args);
+            appendMessage({
+              role: 'agent',
+              content: result.ok ? '' : result.summary,
+              toolExecution: result,
+            });
+            messages = [
+              ...messages,
+              {
+                role: 'tool',
+                tool_call_id: toolCall.id,
+                content: JSON.stringify({
+                  ok: result.ok,
+                  tool: parsed.tool,
+                  summary: result.summary,
+                  indexName: (result.data as { indexName?: string } | undefined)?.indexName,
+                }),
+              },
+            ];
+            continue;
+          }
+
           if (isWorkflowToolCallParsed(parsed)) {
             const result = await executeWorkflowTool(parsed, workflowHandlers);
             appendMessage({
@@ -570,6 +629,7 @@ export function CopilotProvider({
       model,
       plan,
       runMongoInspectTool,
+      runMongoVectorIndexTool,
       targetDatabase,
       workflowHandlers,
     ],

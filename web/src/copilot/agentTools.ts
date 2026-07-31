@@ -413,6 +413,7 @@ export function toolDisplayName(tool: CopilotToolName): string {
     aggregateMongoCollection: 'Aggregate',
     explainMongoOperation: 'Explain Query',
     compareMongoCollectionToPlan: 'Compare to Plan',
+    createMongoAutoEmbedVectorIndex: 'Vector Search Index',
   };
   return names[tool];
 }

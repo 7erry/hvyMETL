@@ -28,7 +28,18 @@ export type CopilotToolName =
   | 'findMongoDocuments'
   | 'aggregateMongoCollection'
   | 'explainMongoOperation'
-  | 'compareMongoCollectionToPlan';
+  | 'compareMongoCollectionToPlan'
+  | 'createMongoAutoEmbedVectorIndex';
+
+export type MongoVectorIndexToolName = 'createMongoAutoEmbedVectorIndex';
+
+export const MONGO_VECTOR_INDEX_TOOL_NAMES = new Set<MongoVectorIndexToolName>([
+  'createMongoAutoEmbedVectorIndex',
+]);
+
+export function isMongoVectorIndexToolName(name: string): name is MongoVectorIndexToolName {
+  return MONGO_VECTOR_INDEX_TOOL_NAMES.has(name as MongoVectorIndexToolName);
+}
 
 /** Tools executed server-side via the MongoDB MCP proxy. */
 export type MongoInspectToolName =
