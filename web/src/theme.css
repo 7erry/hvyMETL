@@ -4337,7 +4337,9 @@ textarea {
 
 .schema-import-panel__textarea {
   width: 100%;
+  max-width: 100%;
   margin-bottom: 0.5rem;
+  resize: both;
 }
 
 .schema-import-panel__warn {

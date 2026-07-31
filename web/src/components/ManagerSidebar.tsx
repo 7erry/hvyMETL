@@ -38,6 +38,7 @@ type ManagerSidebarProps = {
   onImportQuery: () => void;
   onSchemaFile: (file: File) => void;
   onImportBuiltinExample?: (exampleId: string) => void | Promise<void>;
+  onRequestSidebarWidth?: (widthPx: number) => void;
   onOpenReview: () => void;
 };
 
@@ -100,6 +101,7 @@ export function ManagerSidebar({
   onImportQuery,
   onSchemaFile,
   onImportBuiltinExample,
+  onRequestSidebarWidth,
   onOpenReview,
 }: ManagerSidebarProps) {
   const [sidebarTab, setSidebarTab] = useState<'overview' | 'configure'>('overview');
@@ -160,6 +162,7 @@ export function ManagerSidebar({
           onImportQuery={onImportQuery}
           onSchemaFile={onSchemaFile}
           onImportBuiltinExample={onImportBuiltinExample}
+          onRequestSidebarWidth={onRequestSidebarWidth}
           compact
         />
       ) : (

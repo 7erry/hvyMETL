@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect } from 'react';
+import { useMemo, useState, useEffect, useCallback } from 'react';
 import { ResizableSplit } from './ResizableSplit';
 import { SchemaPhaseToggle } from './SchemaPhaseToggle';
 import type { SchemaPhase } from './SchemaPhaseToggle';
@@ -145,6 +145,15 @@ export function ManagerView({
     setReviewOpen(true);
   };
 
+  const handleSchemaImportSidebarWidth = useCallback(
+    (width: number) => {
+      onSidebarWidthChange(
+        Math.min(MANAGER_SIDEBAR_MAX_WIDTH, Math.max(MANAGER_SIDEBAR_MIN_WIDTH, Math.round(width))),
+      );
+    },
+    [onSidebarWidthChange],
+  );
+
   const handleAcceptReview = (collectionName: string) => {
     if (!migrationPlan?.generatedAt) return;
     onReviewAcceptancesChange(
@@ -195,6 +204,7 @@ export function ManagerView({
             onImportQuery={onImportQuery}
             onSchemaFile={onSchemaFile}
             onImportBuiltinExample={onImportBuiltinExample}
+            onRequestSidebarWidth={handleSchemaImportSidebarWidth}
             onOpenReview={() => openReview()}
           />
         }

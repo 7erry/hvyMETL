@@ -88,7 +88,7 @@ import type { CollectionPlan, MigrationPlan } from './migrationPlanTypes';
 import type { PipelineExecutionDetail } from './transformationSummaryTypes';
 import { EMBED_OVERRIDES_PANEL_ID } from './transformationSummaryTypes';
 import type { Dialect, Profile, SqlStructuralModel } from './types';
-import { COPILOT_WIDTH_MAX } from './layoutConstants';
+import { COPILOT_WIDTH_MAX, SIDEBAR_WIDTH_MAX, SIDEBAR_WIDTH_MIN } from './layoutConstants';
 
 function CopilotHeaderToggle() {
   const copilot = useCopilot();
@@ -190,6 +190,16 @@ export default function App() {
   const setSessionField = useCallback(<K extends keyof SessionState>(key: K, value: SessionState[K]) => {
     setSession((prev) => ({ ...prev, [key]: value }));
   }, []);
+
+  const handleSchemaImportSidebarWidth = useCallback(
+    (width: number) => {
+      setSessionField(
+        'sidebarWidth',
+        Math.min(SIDEBAR_WIDTH_MAX, Math.max(SIDEBAR_WIDTH_MIN, Math.round(width))),
+      );
+    },
+    [setSessionField],
+  );
 
   const openSchemaImportDialog = useCallback(() => {
     setSchemaImportUserOpened(true);
@@ -1275,6 +1285,7 @@ export default function App() {
                         onImportQuery={() => void handleImportQuery()}
                         onSchemaFile={(file) => void handleSchemaFileUpload(file)}
                         onImportBuiltinExample={(id) => void handleImportBuiltinExample(id)}
+                        onRequestSidebarWidth={handleSchemaImportSidebarWidth}
                         framed={false}
                       />
                     </CollapsiblePanel>

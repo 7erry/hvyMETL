@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useAccess } from '../auth/HostedAuthProvider';
 import { fetchBuiltinExamples, type BuiltinExampleSummary } from '../api';
 import { sortDialectsByLabel } from '../dialectConstants';
+import { sidebarWidthForSchemaImportTextarea } from '../schemaImportSidebarSync';
 import type { Dialect } from '../types';
 
 type SchemaImportPanelProps = {
@@ -14,6 +15,8 @@ type SchemaImportPanelProps = {
   onImportQuery: () => void;
   onSchemaFile: (file: File) => void;
   onImportBuiltinExample?: (exampleId: string) => void | Promise<void>;
+  /** When the DDL textarea is resized wider than the sidebar, expand the split pane. */
+  onRequestSidebarWidth?: (widthPx: number) => void;
   compact?: boolean;
   framed?: boolean;
 };
@@ -28,11 +31,14 @@ export function SchemaImportPanel({
   onImportQuery,
   onSchemaFile,
   onImportBuiltinExample,
+  onRequestSidebarWidth,
   compact = false,
   framed = true,
 }: SchemaImportPanelProps) {
   const access = useAccess();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const sidebarSyncRafRef = useRef<number | null>(null);
   const sortedDialects = useMemo(() => sortDialectsByLabel(dialects), [dialects]);
   const [builtinExamples, setBuiltinExamples] = useState<BuiltinExampleSummary[]>([]);
   const [selectedExampleId, setSelectedExampleId] = useState('');
@@ -63,6 +69,37 @@ export function SchemaImportPanel({
       cancelled = true;
     };
   }, [apiConnected, onImportBuiltinExample]);
+
+  useEffect(() => {
+    const textarea = textareaRef.current;
+    if (!textarea || !onRequestSidebarWidth) return;
+
+    const syncSidebarWidth = () => {
+      if (sidebarSyncRafRef.current !== null) {
+        cancelAnimationFrame(sidebarSyncRafRef.current);
+      }
+      sidebarSyncRafRef.current = requestAnimationFrame(() => {
+        sidebarSyncRafRef.current = null;
+        const needed = sidebarWidthForSchemaImportTextarea(textarea);
+        if (needed === null) return;
+        const sidebar = textarea.closest('.workspace-sidebar');
+        if (!(sidebar instanceof HTMLElement)) return;
+        const currentWidth = sidebar.getBoundingClientRect().width;
+        if (needed > currentWidth + 2) {
+          onRequestSidebarWidth(needed);
+        }
+      });
+    };
+
+    const observer = new ResizeObserver(syncSidebarWidth);
+    observer.observe(textarea);
+    return () => {
+      observer.disconnect();
+      if (sidebarSyncRafRef.current !== null) {
+        cancelAnimationFrame(sidebarSyncRafRef.current);
+      }
+    };
+  }, [onRequestSidebarWidth]);
 
   const handleLoadExample = async () => {
     if (!selectedExampleId || !onImportBuiltinExample) return;
@@ -111,6 +148,7 @@ export function SchemaImportPanel({
         )}
       </select>
       <textarea
+        ref={textareaRef}
         value={ddl}
         onChange={(e) => onDdlChange(e.target.value)}
         placeholder="Paste CREATE TABLE statements or a full DDL script…"
