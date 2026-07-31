@@ -1,5 +1,5 @@
 /**
- * Creates Atlas Vector Search autoEmbed indexes via the MongoDB driver (full field options).
+ * Creates Atlas MongoDB Search (lexical) indexes via the MongoDB driver.
  */
 
 import { MongoClient } from 'mongodb';
@@ -12,13 +12,17 @@ import {
 } from './mongoInspectConnection.js';
 import { resolveTenantMongoInspectScope } from './mongoInspectScope.js';
 import {
-  buildAutoEmbedVectorSearchIndexDefinition,
-  defaultAutoEmbedVectorIndexName,
-  parseMongoAutoEmbedVectorIndexInput,
-  type MongoAutoEmbedVectorIndexInput,
-} from './mongoVectorAutoEmbedIndex.js';
+  buildAtlasSearchIndexDefinition,
+  defaultAtlasSearchIndexName,
+  parseMongoAtlasSearchIndexInput,
+  type MongoAtlasSearchIndexInput,
+} from './mongoAtlasSearchIndex.js';
+import {
+  resolveLogicalDatabaseForSearchIndex,
+  resolvePhysicalDatabaseForLogical,
+} from './mongoSearchIndexDbResolve.js';
 
-export type MongoAutoEmbedVectorIndexResult = {
+export type MongoAtlasSearchIndexResult = {
   ok: boolean;
   summary: string;
   error?: string;
@@ -26,22 +30,18 @@ export type MongoAutoEmbedVectorIndexResult = {
   database?: string;
   collection?: string;
   indexName?: string;
-  definition?: ReturnType<typeof buildAutoEmbedVectorSearchIndexDefinition>;
+  pattern?: MongoAtlasSearchIndexInput['pattern'];
+  definition?: ReturnType<typeof buildAtlasSearchIndexDefinition>;
 };
 
-import {
-  resolveLogicalDatabaseForSearchIndex,
-  resolvePhysicalDatabaseForLogical,
-} from './mongoSearchIndexDbResolve.js';
-
-/** Create a vectorSearch index with one autoEmbed field on the tenant's Atlas collection. */
-export async function createMongoAutoEmbedVectorIndex(
+/** Create a lexical MongoDB Search index (type search) on the tenant's Atlas collection. */
+export async function createMongoAtlasSearchIndex(
   req: Request,
   rawBody: unknown,
-): Promise<MongoAutoEmbedVectorIndexResult> {
-  let input: MongoAutoEmbedVectorIndexInput;
+): Promise<MongoAtlasSearchIndexResult> {
+  let input: MongoAtlasSearchIndexInput;
   try {
-    input = parseMongoAutoEmbedVectorIndexInput(rawBody);
+    input = parseMongoAtlasSearchIndexInput(rawBody);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     return { ok: false, summary: message, error: message };
@@ -82,8 +82,8 @@ export async function createMongoAutoEmbedVectorIndex(
       input.collection,
       input.database,
     );
-    const definition = buildAutoEmbedVectorSearchIndexDefinition(input);
-    const indexName = input.name ?? defaultAutoEmbedVectorIndexName(input);
+    const definition = buildAtlasSearchIndexDefinition(input);
+    const indexName = input.name ?? defaultAtlasSearchIndexName(input);
 
     const physicalDatabase = await resolvePhysicalDatabaseForLogical(client, scope, logicalDatabase);
     if (scope.authEnabled && !scope.ownsPhysicalDatabase(physicalDatabase)) {
@@ -93,16 +93,17 @@ export async function createMongoAutoEmbedVectorIndex(
     const collection = client.db(physicalDatabase).collection(input.collection);
     const createdName = await collection.createSearchIndex({
       name: indexName,
-      type: 'vectorSearch',
+      type: 'search',
       definition,
     });
 
     return {
       ok: true,
-      summary: `Created autoEmbed vector index "${createdName}" on ${logicalDatabase}.${input.collection} (field ${input.path}).`,
+      summary: `Created MongoDB Search (${input.pattern}) index "${createdName}" on ${logicalDatabase}.${input.collection}.`,
       database: logicalDatabase,
       collection: input.collection,
       indexName: createdName,
+      pattern: input.pattern,
       definition,
     };
   } catch (error) {

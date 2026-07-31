@@ -4,6 +4,7 @@ import type { SqlStructuralModel } from '../types';
 import type { GuardrailIssue } from './types';
 import type { CopilotDatasetScaleContext } from '../../../src/copilot/copilotDatasetScale.ts';
 import type { CopilotVectorSearchIndexRecord } from '../../../src/copilot/copilotVectorSearchContext.ts';
+import type { CopilotAtlasSearchIndexRecord } from '../../../src/copilot/copilotAtlasSearchContext.ts';
 import type { ManagerCostInputs } from '../managerCostEstimate';
 import { buildDatasetScaleContext } from './buildDatasetScaleContext';
 
@@ -27,6 +28,7 @@ export type CopilotSchemaContextPayload = {
   datasetScale?: CopilotDatasetScaleContext;
   targetDatabase?: string;
   vectorSearchIndexes?: CopilotVectorSearchIndexRecord[];
+  atlasSearchIndexes?: CopilotAtlasSearchIndexRecord[];
 };
 
 /** Builds the schema context payload sent to /api/copilot/chat. */
@@ -39,6 +41,7 @@ export function buildSchemaContextPayload(input: {
   managerCostInputs?: ManagerCostInputs;
   targetDatabase?: string;
   vectorSearchIndexes?: CopilotVectorSearchIndexRecord[];
+  atlasSearchIndexes?: CopilotAtlasSearchIndexRecord[];
 }): CopilotSchemaContextPayload {
   const {
     model,
@@ -49,6 +52,7 @@ export function buildSchemaContextPayload(input: {
     managerCostInputs,
     targetDatabase,
     vectorSearchIndexes,
+    atlasSearchIndexes,
   } = input;
 
   return {
@@ -75,5 +79,6 @@ export function buildSchemaContextPayload(input: {
     datasetScale: managerCostInputs ? buildDatasetScaleContext(model, plan, managerCostInputs) : undefined,
     targetDatabase: targetDatabase?.trim() || undefined,
     vectorSearchIndexes: vectorSearchIndexes?.length ? vectorSearchIndexes : undefined,
+    atlasSearchIndexes: atlasSearchIndexes?.length ? atlasSearchIndexes : undefined,
   };
 }

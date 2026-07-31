@@ -8,6 +8,56 @@ Read-only Atlas inspection and analysis tools for the **Agent Copilot** sidebar.
 
 Phase 3 adds **write** capability for Atlas Vector Search **autoEmbed** indexes (Automated Embeddings preview). Inspect/analyze tools remain read-only via MCP; index creation uses the **MongoDB Node driver** with the same tenant URI as pipeline imports so full index options are supported (`numDimensions`, `quantization`, `similarity`).
 
+## Tools (Phase 4 — MongoDB Search lexical)
+
+Atlas **MongoDB Search** indexes power `$search` and `$searchMeta` (keyword, autocomplete, faceted)—not `$vectorSearch`. Index definitions use `mappings.fields` per the [Index reference](https://www.mongodb.com/docs/search/index/index-definitions/).
+
+| Surface | Method | Purpose |
+|---------|--------|---------|
+| Copilot LLM tool | `createMongoAtlasSearchIndex` | Create **keyword**, **autocomplete**, or **faceted** search indexes |
+| API | `POST /api/copilot/mongo/atlas-search-index` | Same `pattern` + field options as JSON body |
+
+**Patterns**
+
+| Pattern | Index fields | Sample query stage |
+|---------|----------------|-------------------|
+| `keyword` | `type: "string"` on `textPaths` | `$search.text` across paths |
+| `autocomplete` | `type: "autocomplete"` with `edgeGram` | `$search.autocomplete` (+ optional `fuzzy`) |
+| `faceted` | `string` + `stringFacet` + `numberFacet` | `$searchMeta` with `facet` operator |
+
+Example **products** collection (keyword):
+
+```json
+{
+  "mappings": {
+    "dynamic": false,
+    "fields": {
+      "title": { "type": "string" },
+      "description": { "type": "string" }
+    }
+  }
+}
+```
+
+```json
+[
+  {
+    "$search": {
+      "index": "search_keyword_title_description",
+      "text": {
+        "query": "ceramic coffee mug",
+        "path": ["title", "description"]
+      }
+    }
+  },
+  { "$limit": 10 }
+]
+```
+
+Implementation: `src/copilot/mongoAtlasSearchIndex.ts` (definitions + sample pipelines), `mongoAtlasSearchIndexService.ts` (`createSearchIndex` with `type: "search"`), `copilotAtlasSearchContext.ts` (architecture / design-report context).
+
+### Vector autoEmbed API
+
 | Surface | Method | Purpose |
 |---------|--------|---------|
 | Copilot UI / LLM tool | `createMongoAutoEmbedVectorIndex` | Dialog or chat tool: text field, Voyage model, quantization, dimensions, similarity |
@@ -80,6 +130,7 @@ npx -y mongodb-mcp-server@latest --transport http --readOnly --httpHost=127.0.0.
 - `GET /api/copilot/status` — includes `mongoInspect.enabled` and `mongoInspect.available`
 - `POST /api/copilot/mongo/inspect` — `{ tool, args, planContext? }` for direct invocation (used by the copilot UI). `planContext` is required for meaningful `compareMongoCollectionToPlan` results.
 - `POST /api/copilot/mongo/vector-index` — create an Atlas **autoEmbed** vector search index (Phase 3). Body: `database`, `collection`, `path`, `model`, `quantization`, `numDimensions`, `similarity`, optional `name`. Uses the MongoDB driver (not read-only MCP).
+- `POST /api/copilot/mongo/atlas-search-index` — create an Atlas **MongoDB Search** lexical index (Phase 4). Body: `database`, `collection`, `pattern` (`keyword` | `autocomplete` | `faceted`), plus pattern-specific fields (`textPaths`, `path`, `textPath`, `stringFacetPaths`, `numberFacets`). Uses the MongoDB driver with `type: "search"`.
 
 When the MCP server is down, inspect calls return HTTP 503 with a user-friendly message; the copilot header shows **Atlas inspect offline**.
 
@@ -96,14 +147,19 @@ When the MCP server is down, inspect calls return HTTP 503 with a user-friendly 
 | `src/copilot/mongoPlanContext.ts` | Migration plan snapshot parsing |
 | `src/copilot/mongoInspectToolSchemas.ts` | OpenAI tool definitions |
 | `src/copilot/mongoVectorAutoEmbedIndex.ts` | autoEmbed index validation + definition builder |
-| `src/copilot/mongoVectorIndexService.ts` | Driver-based `createSearchIndex` for tenants |
-| `web/src/copilot/CopilotContext.tsx` | Routes inspect/analyze tool calls to the API |
-| `src/server/copilotRoutes.ts` | `/api/copilot/mongo/inspect`, `/api/copilot/mongo/vector-index` |
+| `src/copilot/mongoVectorIndexService.ts` | Driver-based `createSearchIndex` for autoEmbed vector indexes |
+| `src/copilot/mongoAtlasSearchIndex.ts` | Lexical Search index definitions + sample `$search` pipelines |
+| `src/copilot/mongoAtlasSearchIndexService.ts` | Driver-based lexical `createSearchIndex` |
+| `src/copilot/copilotAtlasSearchContext.ts` | Lexical index context for prompts and design reports |
+| `src/copilot/mongoAtlasSearchToolSchemas.ts` | `createMongoAtlasSearchIndex` OpenAI tool |
+| `web/src/copilot/CopilotContext.tsx` | Routes inspect/analyze and search-index tool calls to the API |
+| `web/src/copilot/atlasSearchIndexSession.ts` | Session persistence for lexical indexes |
+| `src/server/copilotRoutes.ts` | `/api/copilot/mongo/inspect`, `/api/copilot/mongo/vector-index`, `/api/copilot/mongo/atlas-search-index` |
 | `web/src/components/copilot/MongoAutoEmbedVectorIndexModal.tsx` | autoEmbed index dialog |
 | `web/src/components/copilot/MongoAnalyzeTables.tsx` | Aggregate, explain, and compare result tables |
 
 ## Verification
 
 ```bash
-npm test -- src/copilot/mongoVectorAutoEmbedIndex.test.ts src/copilot/mongoAnalyzePipeline.test.ts src/copilot/mongoAnalyzeComparison.test.ts src/copilot/mongoInspectScope.test.ts src/copilot/mongoInspectService.test.ts src/server/copilotRoutes.test.ts src/server/copilotVectorIndexRoutes.test.ts web/src/copilot/mongoAnalyzeFormat.test.ts
+npm test -- src/copilot/mongoAtlasSearchIndex.test.ts src/copilot/copilotAtlasSearchContext.test.ts src/copilot/mongoAtlasSearchToolSchemas.test.ts src/server/copilotAtlasSearchIndexRoutes.test.ts src/copilot/mongoVectorAutoEmbedIndex.test.ts src/copilot/mongoAnalyzePipeline.test.ts src/copilot/mongoAnalyzeComparison.test.ts src/copilot/mongoInspectScope.test.ts src/copilot/mongoInspectService.test.ts src/server/copilotRoutes.test.ts src/server/copilotVectorIndexRoutes.test.ts web/src/copilot/mongoAnalyzeFormat.test.ts
 ```

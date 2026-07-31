@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   isServerMongoInspectToolCall,
   isServerMongoVectorIndexToolCall,
+  isServerMongoAtlasSearchToolCall,
   parseOpenAiToolCall,
 } from './llmTools';
 
@@ -37,6 +38,27 @@ describe('llmTools mongo inspect parsing', () => {
     if (parsed && isServerMongoVectorIndexToolCall(parsed)) {
       expect(parsed.tool).toBe('createMongoAutoEmbedVectorIndex');
       expect(parsed.args.collection).toBe('customers');
+    }
+  });
+
+  it('routes lexical search index tool calls to the server-side executor', () => {
+    const parsed = parseOpenAiToolCall({
+      id: 'call_3',
+      type: 'function',
+      function: {
+        name: 'createMongoAtlasSearchIndex',
+        arguments: JSON.stringify({
+          collection: 'products',
+          pattern: 'keyword',
+          textPaths: ['title', 'description'],
+        }),
+      },
+    });
+    expect(parsed).not.toBeNull();
+    expect(isServerMongoAtlasSearchToolCall(parsed!)).toBe(true);
+    if (parsed && isServerMongoAtlasSearchToolCall(parsed)) {
+      expect(parsed.tool).toBe('createMongoAtlasSearchIndex');
+      expect(parsed.args.pattern).toBe('keyword');
     }
   });
 });

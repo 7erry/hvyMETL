@@ -873,6 +873,43 @@ export async function createCopilotMongoAutoEmbedVectorIndex(
   return data;
 }
 
+export type CopilotMongoAtlasSearchIndexResponse = {
+  ok: boolean;
+  summary: string;
+  error?: string;
+  database?: string;
+  collection?: string;
+  indexName?: string;
+  pattern?: 'keyword' | 'autocomplete' | 'faceted';
+  definition?: Record<string, unknown>;
+};
+
+/** Create an Atlas MongoDB Search (lexical) index — keyword, autocomplete, or faceted. */
+export async function createCopilotMongoAtlasSearchIndex(
+  request: import('../../../../src/copilot/mongoAtlasSearchIndex.ts').MongoAtlasSearchIndexInput,
+): Promise<CopilotMongoAtlasSearchIndexResponse> {
+  const res = await copilotApiFetch(`${base}/api/copilot/mongo/atlas-search-index`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(request),
+  });
+  const contentType = res.headers.get('content-type') ?? '';
+  const body = await res.text();
+  if (!contentType.includes('application/json')) {
+    throw new Error(await readApiError(new Response(body, { status: res.status, headers: res.headers })));
+  }
+  let data: CopilotMongoAtlasSearchIndexResponse;
+  try {
+    data = JSON.parse(body) as CopilotMongoAtlasSearchIndexResponse;
+  } catch {
+    throw new Error('Invalid JSON in API response.');
+  }
+  if (!res.ok && !data.summary) {
+    throw new Error(data.error ?? res.statusText);
+  }
+  return data;
+}
+
 export async function invokeCopilotMongoInspect(
   tool: import('./copilot/types').MongoInspectToolName,
   args: Record<string, unknown>,

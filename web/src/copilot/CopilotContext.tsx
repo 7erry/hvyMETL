@@ -10,7 +10,7 @@ import {
 } from 'react';
 import { executeAgentTool, parseCopilotCommand, type AgentToolContext, type AgentToolMutation } from './agentTools';
 import { analyzeMigrationRisks } from './guardrails';
-import { parseOpenAiToolCall, isServerMongoInspectToolCall, isServerMongoVectorIndexToolCall, isWorkflowToolCallParsed } from './llmTools';
+import { parseOpenAiToolCall, isServerMongoInspectToolCall, isServerMongoVectorIndexToolCall, isServerMongoAtlasSearchToolCall, isWorkflowToolCallParsed } from './llmTools';
 import {
   parseDirectMongoInspectCommand,
   shouldSuppressListMongoDatabasesDisplay,
@@ -47,13 +47,19 @@ import { buildMongoPlanContext } from './mongoPlanContextPayload';
 import { buildAggregateInspectArgs } from './runTranslationPipeline';
 import { buildSchemaContextPayload } from './schemaContext';
 import { serializeCanvasToolResult, toolExecutionHasStructuredOutput } from './toolExecutionDisplay';
-import { fetchCopilotStatus, fetchPipelineConfig, createCopilotMongoAutoEmbedVectorIndex, invokeCopilotMongoInspect, sendCopilotChat } from '../api';
+import { fetchCopilotStatus, fetchPipelineConfig, createCopilotMongoAutoEmbedVectorIndex, createCopilotMongoAtlasSearchIndex, invokeCopilotMongoInspect, sendCopilotChat } from '../api';
 import type { CopilotVectorSearchIndexRecord } from '../../../src/copilot/copilotVectorSearchContext.ts';
 import { copilotVectorSearchIndexFromCreateResult } from '../../../src/copilot/copilotVectorSearchContext.ts';
+import type { CopilotAtlasSearchIndexRecord } from '../../../src/copilot/copilotAtlasSearchContext.ts';
+import { copilotAtlasSearchIndexFromCreateResult } from '../../../src/copilot/copilotAtlasSearchContext.ts';
 import {
   loadSessionVectorSearchIndexes,
   saveSessionVectorSearchIndexes,
 } from './vectorSearchIndexSession';
+import {
+  loadSessionAtlasSearchIndexes,
+  saveSessionAtlasSearchIndexes,
+} from './atlasSearchIndexSession';
 import type {
   AgentStatus,
   CopilotLlmMessage,
@@ -97,6 +103,9 @@ export type CopilotContextValue = {
   /** autoEmbed vector search indexes created in this studio session. */
   vectorSearchIndexes: CopilotVectorSearchIndexRecord[];
   recordVectorSearchIndex: (entry: CopilotVectorSearchIndexRecord) => void;
+  /** Lexical MongoDB Search indexes created in this studio session. */
+  atlasSearchIndexes: CopilotAtlasSearchIndexRecord[];
+  recordAtlasSearchIndex: (entry: CopilotAtlasSearchIndexRecord) => void;
   openVectorIndexDialog: (request: VectorIndexDialogRequest) => void;
   toggleOpen: () => void;
   setOpen: (open: boolean) => void;
@@ -185,6 +194,9 @@ export function CopilotProvider({
   const [vectorSearchIndexes, setVectorSearchIndexes] = useState<CopilotVectorSearchIndexRecord[]>(() =>
     loadSessionVectorSearchIndexes(),
   );
+  const [atlasSearchIndexes, setAtlasSearchIndexes] = useState<CopilotAtlasSearchIndexRecord[]>(() =>
+    loadSessionAtlasSearchIndexes(),
+  );
   const [vectorIndexModal, setVectorIndexModal] = useState<VectorIndexDialogRequest | null>(null);
 
   const recordVectorSearchIndex = useCallback((entry: CopilotVectorSearchIndexRecord) => {
@@ -201,6 +213,24 @@ export function CopilotProvider({
         entry,
       ];
       saveSessionVectorSearchIndexes(next);
+      return next;
+    });
+  }, []);
+
+  const recordAtlasSearchIndex = useCallback((entry: CopilotAtlasSearchIndexRecord) => {
+    setAtlasSearchIndexes((previous) => {
+      const next = [
+        ...previous.filter(
+          (existing) =>
+            !(
+              existing.database === entry.database &&
+              existing.collection === entry.collection &&
+              existing.indexName === entry.indexName
+            ),
+        ),
+        entry,
+      ];
+      saveSessionAtlasSearchIndexes(next);
       return next;
     });
   }, []);
@@ -490,6 +520,51 @@ export function CopilotProvider({
     [targetDatabase, recordVectorSearchIndex],
   );
 
+  const runMongoAtlasSearchTool = useCallback(
+    async (args: Record<string, unknown>): Promise<ToolExecutionResult> => {
+      const tool = 'createMongoAtlasSearchIndex' as const;
+      try {
+        const payload: Record<string, unknown> = { ...args };
+        if (
+          (typeof payload.database !== 'string' || !payload.database.trim()) &&
+          targetDatabase.trim()
+        ) {
+          payload.database = targetDatabase.trim();
+        }
+        const response = await createCopilotMongoAtlasSearchIndex(
+          payload as import('../../../../src/copilot/mongoAtlasSearchIndex.ts').MongoAtlasSearchIndexInput,
+        );
+        const input = payload as import('../../../../src/copilot/mongoAtlasSearchIndex.ts').MongoAtlasSearchIndexInput;
+        if (response.ok) {
+          const recorded = copilotAtlasSearchIndexFromCreateResult(input, {
+            database: response.database,
+            indexName: response.indexName,
+            definition: response.definition as CopilotAtlasSearchIndexRecord['definition'] | undefined,
+          });
+          if (recorded) recordAtlasSearchIndex(recorded);
+        }
+        return {
+          tool,
+          summary: response.summary,
+          delta: response.indexName
+            ? [`${response.database ?? ''}.${response.collection ?? ''} → ${response.indexName} (${response.pattern ?? input.pattern})`]
+            : [],
+          ok: response.ok,
+          data: response,
+        };
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        return {
+          tool,
+          summary: message,
+          delta: [],
+          ok: false,
+        };
+      }
+    },
+    [targetDatabase, recordAtlasSearchIndex],
+  );
+
   const runMongoInspectDirect = useCallback(
     async (tool: MongoInspectToolName, args: Record<string, unknown>) => {
       setStatus('mutating');
@@ -536,6 +611,7 @@ export function CopilotProvider({
         managerCostInputs,
         targetDatabase,
         vectorSearchIndexes,
+        atlasSearchIndexes,
       });
 
       const userMessage =
@@ -656,6 +732,30 @@ export function CopilotProvider({
             continue;
           }
 
+          if (isServerMongoAtlasSearchToolCall(parsed)) {
+            const result = await runMongoAtlasSearchTool(parsed.args);
+            appendMessage({
+              role: 'agent',
+              content: result.ok ? '' : result.summary,
+              toolExecution: result,
+            });
+            messages = [
+              ...messages,
+              {
+                role: 'tool',
+                tool_call_id: toolCall.id,
+                content: JSON.stringify({
+                  ok: result.ok,
+                  tool: parsed.tool,
+                  summary: result.summary,
+                  indexName: (result.data as { indexName?: string } | undefined)?.indexName,
+                  pattern: (result.data as { pattern?: string } | undefined)?.pattern,
+                }),
+              },
+            ];
+            continue;
+          }
+
           if (isWorkflowToolCallParsed(parsed)) {
             const result = await executeWorkflowTool(parsed, workflowHandlers);
             appendMessage({
@@ -717,8 +817,10 @@ export function CopilotProvider({
       plan,
       runMongoInspectTool,
       runMongoVectorIndexTool,
+      runMongoAtlasSearchTool,
       targetDatabase,
       vectorSearchIndexes,
+      atlasSearchIndexes,
       workflowHandlers,
     ],
   );
@@ -1034,6 +1136,8 @@ export function CopilotProvider({
       setTargetDatabase,
       vectorSearchIndexes,
       recordVectorSearchIndex,
+      atlasSearchIndexes,
+      recordAtlasSearchIndex,
       openVectorIndexDialog,
       toggleOpen,
       setOpen,
@@ -1090,6 +1194,8 @@ export function CopilotProvider({
       setTargetDatabase,
       vectorSearchIndexes,
       recordVectorSearchIndex,
+      atlasSearchIndexes,
+      recordAtlasSearchIndex,
       openVectorIndexDialog,
       toggleOpen,
       setOpen,

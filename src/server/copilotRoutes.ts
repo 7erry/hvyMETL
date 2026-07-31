@@ -11,6 +11,7 @@ import {
 } from '../copilot/groveChat.js';
 import { invokeMongoInspectTool } from '../copilot/mongoInspectService.js';
 import { createMongoAutoEmbedVectorIndex } from '../copilot/mongoVectorIndexService.js';
+import { createMongoAtlasSearchIndex } from '../copilot/mongoAtlasSearchIndexService.js';
 import { parseMongoPlanContext } from '../copilot/mongoPlanContext.js';
 import { isMongoInspectToolName } from '../copilot/mongoInspectToolSchemas.js';
 import { isMongoMcpEnabled, probeMongoMcpAvailability } from '../copilot/mongoMcpClient.js';
@@ -98,6 +99,9 @@ function parseSchemaContext(raw: unknown): CopilotSchemaContext {
     targetDatabase: typeof body.targetDatabase === 'string' ? body.targetDatabase.trim() : undefined,
     vectorSearchIndexes: Array.isArray(body.vectorSearchIndexes)
       ? (body.vectorSearchIndexes as CopilotSchemaContext['vectorSearchIndexes'])
+      : undefined,
+    atlasSearchIndexes: Array.isArray(body.atlasSearchIndexes)
+      ? (body.atlasSearchIndexes as CopilotSchemaContext['atlasSearchIndexes'])
       : undefined,
   };
 }
@@ -202,6 +206,16 @@ export function createCopilotRouter(): Router {
   router.post('/mongo/vector-index', async (req, res) => {
     try {
       const result = await createMongoAutoEmbedVectorIndex(req, req.body);
+      const status = result.serviceUnavailable ? 503 : result.ok ? 200 : 400;
+      res.status(status).json(result);
+    } catch (error) {
+      handleCopilotError(res, error);
+    }
+  });
+
+  router.post('/mongo/atlas-search-index', async (req, res) => {
+    try {
+      const result = await createMongoAtlasSearchIndex(req, req.body);
       const status = result.serviceUnavailable ? 503 : result.ok ? 200 : 400;
       res.status(status).json(result);
     } catch (error) {

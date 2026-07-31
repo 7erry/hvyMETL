@@ -30,6 +30,8 @@ export type CopilotSchemaContext = {
   targetDatabase?: string;
   /** autoEmbed vector search indexes created in Migration Studio this session. */
   vectorSearchIndexes?: import('./copilotVectorSearchContext.js').CopilotVectorSearchIndexRecord[];
+  /** Lexical MongoDB Search indexes created in Migration Studio this session. */
+  atlasSearchIndexes?: import('./copilotAtlasSearchContext.js').CopilotAtlasSearchIndexRecord[];
 };
 
 export type CopilotChatMessage = {

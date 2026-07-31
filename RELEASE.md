@@ -1,3 +1,20 @@
+## hvyMETL 3.2.2
+
+Adds **Atlas MongoDB Search (lexical)** index creation and query samples—keyword, autocomplete, and faceted patterns—alongside existing autoEmbed vector search.
+
+### Highlights
+
+- **`createMongoAtlasSearchIndex` copilot tool** and **`POST /api/copilot/mongo/atlas-search-index`**: build [Search index definitions](https://www.mongodb.com/docs/search/index/index-definitions/) with `mappings.fields` and create indexes via the MongoDB driver (`type: "search"`).
+- **Patterns:** **keyword** (`$search.text`), **autocomplete** (`$search.autocomplete` + fuzzy), **faceted** (`$searchMeta` facet buckets for `stringFacet` / `numberFacet` fields).
+- **Architecture context:** session-recorded lexical indexes inject sample aggregations and JSON definitions into copilot prompts and **design-report.md** exports (with vector search sections).
+- **Unit tests:** index builders, sample pipelines, tool registration, and API route coverage.
+
+### Verification
+
+- `npm test -- src/copilot/mongoAtlasSearchIndex.test.ts src/copilot/copilotAtlasSearchContext.test.ts src/server/copilotAtlasSearchIndexRoutes.test.ts`
+
+---
+
 ## hvyMETL 3.2.1
 
 Patch release that completes **autoEmbed vector index** studio UX and copilot routing on top of 3.1.2 Phase 3.

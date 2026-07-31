@@ -414,6 +414,7 @@ export function toolDisplayName(tool: CopilotToolName): string {
     explainMongoOperation: 'Explain Query',
     compareMongoCollectionToPlan: 'Compare to Plan',
     createMongoAutoEmbedVectorIndex: 'Vector Search Index',
+    createMongoAtlasSearchIndex: 'MongoDB Search Index',
   };
   return names[tool];
 }

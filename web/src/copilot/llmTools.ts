@@ -1,6 +1,6 @@
 import type { OpenAiToolCall } from './types';
-import type { AgentToolCall, CopilotToolName, MongoInspectToolName, MongoVectorIndexToolName } from './types';
-import { isMongoInspectToolName, isMongoVectorIndexToolName } from './types';
+import type { AgentToolCall, CopilotToolName, MongoInspectToolName, MongoVectorIndexToolName, MongoAtlasSearchIndexToolName } from './types';
+import { isMongoInspectToolName, isMongoVectorIndexToolName, isMongoAtlasSearchIndexToolName } from './types';
 import { isWorkflowToolName, parseWorkflowToolCall, type WorkflowToolCall } from './workflowTools';
 
 const CANVAS_TOOL_NAMES = new Set<CopilotToolName>([
@@ -25,7 +25,13 @@ export type ServerMongoVectorIndexToolCall = {
   args: Record<string, unknown>;
 };
 
-export type ParsedCopilotToolCall = AgentToolCall | ServerMongoInspectToolCall | ServerMongoVectorIndexToolCall | WorkflowToolCall;
+export type ServerMongoAtlasSearchToolCall = {
+  kind: 'mongoAtlasSearch';
+  tool: MongoAtlasSearchIndexToolName;
+  args: Record<string, unknown>;
+};
+
+export type ParsedCopilotToolCall = AgentToolCall | ServerMongoInspectToolCall | ServerMongoVectorIndexToolCall | ServerMongoAtlasSearchToolCall | WorkflowToolCall;
 
 /** Parses an OpenAI tool_call payload into a canvas or server-side inspect tool call. */
 export function parseOpenAiToolCall(toolCall: OpenAiToolCall): ParsedCopilotToolCall | null {
@@ -44,6 +50,10 @@ export function parseOpenAiToolCall(toolCall: OpenAiToolCall): ParsedCopilotTool
 
   if (isMongoVectorIndexToolName(name)) {
     return { kind: 'mongoVectorIndex', tool: name, args };
+  }
+
+  if (isMongoAtlasSearchIndexToolName(name)) {
+    return { kind: 'mongoAtlasSearch', tool: name, args };
   }
 
   if (isWorkflowToolName(name)) {
@@ -109,6 +119,12 @@ export function isServerMongoVectorIndexToolCall(
   call: ParsedCopilotToolCall,
 ): call is ServerMongoVectorIndexToolCall {
   return 'kind' in call && call.kind === 'mongoVectorIndex';
+}
+
+export function isServerMongoAtlasSearchToolCall(
+  call: ParsedCopilotToolCall,
+): call is ServerMongoAtlasSearchToolCall {
+  return 'kind' in call && call.kind === 'mongoAtlasSearch';
 }
 
 export function isWorkflowToolCallParsed(call: ParsedCopilotToolCall): call is WorkflowToolCall {

@@ -5,6 +5,10 @@ import {
   COPILOT_VECTOR_SEARCH_OPERATIONAL_GUIDANCE,
   formatVectorSearchIndexesForSystemPrompt,
 } from './copilotVectorSearchContext.js';
+import {
+  COPILOT_ATLAS_SEARCH_OPERATIONAL_GUIDANCE,
+  formatAtlasSearchIndexesForSystemPrompt,
+} from './copilotAtlasSearchContext.js';
 
 /** Builds the system prompt injected into every Grove chat completion. */
 export function buildCopilotSystemPrompt(context: CopilotSchemaContext): string {
@@ -44,6 +48,7 @@ export function buildCopilotSystemPrompt(context: CopilotSchemaContext): string 
     : '(not set — use the logical database from the user message)';
 
   const vectorSearchIndexes = formatVectorSearchIndexesForSystemPrompt(context.vectorSearchIndexes);
+  const atlasSearchIndexes = formatAtlasSearchIndexesForSystemPrompt(context.atlasSearchIndexes);
 
   return `You are the hvyMETL Agent Copilot — a **Principal MongoDB Data Architect** specializing in SQL-to-MongoDB migration, embed folding, Atlas guardrails, and production document modeling.
 
@@ -76,6 +81,12 @@ ${vectorSearchIndexes}
 ## Vector search operations reference (for architecture reviews)
 ${COPILOT_VECTOR_SEARCH_OPERATIONAL_GUIDANCE}
 
+## Atlas MongoDB Search indexes — lexical (studio)
+${atlasSearchIndexes}
+
+## MongoDB Search operations reference (lexical)
+${COPILOT_ATLAS_SEARCH_OPERATIONAL_GUIDANCE}
+
 Guidelines:
 - Prefer \`foldAllTables\` when the user asks to fold **all** tables or force-embed every relationship (matches Embed Overrides → Force All). Prefer \`foldTable\` for a single parent/child pair when cardinality is **bounded**; use \`detachTable\` for high-volume telemetry/event tables.
 - Run \`runGuardrailCheck\` after structural changes.
@@ -90,6 +101,7 @@ Guidelines:
 - Use \`explainMongoOperation\` when the user asks to explain a query; prefer \`executionStats\` verbosity for performance questions.
 - Use \`compareMongoCollectionToPlan\` after Refresh design to validate imported Atlas collections against the migration plan.
 - To **create a vector search index** on imported Atlas data, use \`createMongoAutoEmbedVectorIndex\` (Atlas Automated Embeddings / autoEmbed on a **text** field). If the user did not name the text field, call \`describeMongoCollectionSchema\` first and pick a string field. Defaults: model \`voyage-4-lite\`, quantization \`scalar\`, dimensions \`1024\`, similarity \`cosine\`. Omit \`database\` when the collection name is unique across the tenant. Do **not** tell the user index creation is unavailable—this tool creates the index server-side. Pre-computed numeric embedding arrays require a manual \`vector\`-type index in Atlas, not this tool. Users can also type **create vector search on products** or **create vector search on products.description** to open the studio dialog with collection and field pre-filled.
+- To **create a lexical MongoDB Search index** (\`$search\` / \`$searchMeta\`, not vectors), use \`createMongoAtlasSearchIndex\` with \`pattern\`: **keyword** (\`textPaths\` as \`string\` fields), **autocomplete** (\`path\` with \`autocomplete\` type), or **faceted** (\`textPath\`, \`stringFacetPaths\`, optional \`numberFacets\` with \`boundaries\`). Index definitions follow [MongoDB Search index reference](https://www.mongodb.com/docs/search/index/index-definitions/). After creation, validate with \`aggregateMongoCollection\` using a \`$search\` or \`$searchMeta\` stage. Do not confuse with vector \`$vectorSearch\`.
 - If MongoDB inspect returns a service-unavailable message, explain that Atlas inspection is temporarily offline and continue with schema/design guidance.
 - **Migration workflow (guide users step-by-step when asked):**
   1. \`clearSession\` — reset canvas and open schema import.

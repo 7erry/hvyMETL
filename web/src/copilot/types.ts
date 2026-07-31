@@ -29,16 +29,27 @@ export type CopilotToolName =
   | 'aggregateMongoCollection'
   | 'explainMongoOperation'
   | 'compareMongoCollectionToPlan'
-  | 'createMongoAutoEmbedVectorIndex';
+  | 'createMongoAutoEmbedVectorIndex'
+  | 'createMongoAtlasSearchIndex';
 
 export type MongoVectorIndexToolName = 'createMongoAutoEmbedVectorIndex';
+
+export type MongoAtlasSearchIndexToolName = 'createMongoAtlasSearchIndex';
 
 export const MONGO_VECTOR_INDEX_TOOL_NAMES = new Set<MongoVectorIndexToolName>([
   'createMongoAutoEmbedVectorIndex',
 ]);
 
+export const MONGO_ATLAS_SEARCH_INDEX_TOOL_NAMES = new Set<MongoAtlasSearchIndexToolName>([
+  'createMongoAtlasSearchIndex',
+]);
+
 export function isMongoVectorIndexToolName(name: string): name is MongoVectorIndexToolName {
   return MONGO_VECTOR_INDEX_TOOL_NAMES.has(name as MongoVectorIndexToolName);
+}
+
+export function isMongoAtlasSearchIndexToolName(name: string): name is MongoAtlasSearchIndexToolName {
+  return MONGO_ATLAS_SEARCH_INDEX_TOOL_NAMES.has(name as MongoAtlasSearchIndexToolName);
 }
 
 /** Tools executed server-side via the MongoDB MCP proxy. */
