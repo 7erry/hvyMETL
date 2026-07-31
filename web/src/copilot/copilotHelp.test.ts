@@ -28,6 +28,6 @@ describe('copilotHelp', () => {
     expect(buildCopilotCommandsResponse()).toContain('list databases');
     expect(buildCopilotCommandsResponse()).toContain('create vector search on `{collection}`');
     expect(buildCopilotCommandsResponse()).toContain('Vector search — Phase 3');
-    expect(buildCopilotCommandsResponse()).toContain('createMongoAtlasSearchIndex');
+    expect(buildCopilotCommandsResponse()).toContain('create full text search index on `{collection}`');
   });
 });

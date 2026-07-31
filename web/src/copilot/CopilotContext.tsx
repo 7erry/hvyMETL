@@ -18,7 +18,9 @@ import {
   looksLikeInspectListingEcho,
 } from './inspectCommandRouting';
 import { parseDirectVectorSearchIndexCommand } from './vectorIndexCommandRouting';
+import { parseDirectAtlasSearchIndexCommand } from './atlasSearchCommandRouting';
 import { MongoAutoEmbedVectorIndexModal } from '../components/copilot/MongoAutoEmbedVectorIndexModal';
+import { MongoAtlasSearchIndexModal } from '../components/copilot/MongoAtlasSearchIndexModal';
 import {
   executeWorkflowTool,
   attachPostVerifyArchitectureReviewNextStep,
@@ -51,6 +53,7 @@ import { fetchCopilotStatus, fetchPipelineConfig, createCopilotMongoAutoEmbedVec
 import type { CopilotVectorSearchIndexRecord } from '../../../src/copilot/copilotVectorSearchContext.ts';
 import { copilotVectorSearchIndexFromCreateResult } from '../../../src/copilot/copilotVectorSearchContext.ts';
 import type { CopilotAtlasSearchIndexRecord } from '../../../src/copilot/copilotAtlasSearchContext.ts';
+import type { AtlasSearchPattern } from '../../../src/copilot/mongoAtlasSearchIndex.ts';
 import { copilotAtlasSearchIndexFromCreateResult } from '../../../src/copilot/copilotAtlasSearchContext.ts';
 import {
   loadSessionVectorSearchIndexes,
@@ -107,6 +110,7 @@ export type CopilotContextValue = {
   atlasSearchIndexes: CopilotAtlasSearchIndexRecord[];
   recordAtlasSearchIndex: (entry: CopilotAtlasSearchIndexRecord) => void;
   openVectorIndexDialog: (request: VectorIndexDialogRequest) => void;
+  openAtlasSearchIndexDialog: (request: AtlasSearchDialogRequest) => void;
   toggleOpen: () => void;
   setOpen: (open: boolean) => void;
   setActiveTab: (tab: 'chat' | 'translator') => void;
@@ -138,6 +142,15 @@ export type VectorIndexDialogRequest = {
   /** Logical database when known; omit to resolve from collection name via inspect. */
   database?: string;
   collection: string;
+  initialPath?: string;
+  textFieldPaths?: string[];
+};
+
+/** Target collection for the shared MongoDB Search (lexical) index dialog. */
+export type AtlasSearchDialogRequest = {
+  database?: string;
+  collection: string;
+  pattern?: AtlasSearchPattern;
   initialPath?: string;
   textFieldPaths?: string[];
 };
@@ -198,6 +211,7 @@ export function CopilotProvider({
     loadSessionAtlasSearchIndexes(),
   );
   const [vectorIndexModal, setVectorIndexModal] = useState<VectorIndexDialogRequest | null>(null);
+  const [atlasSearchIndexModal, setAtlasSearchIndexModal] = useState<AtlasSearchDialogRequest | null>(null);
 
   const recordVectorSearchIndex = useCallback((entry: CopilotVectorSearchIndexRecord) => {
     setVectorSearchIndexes((previous) => {
@@ -247,6 +261,20 @@ export function CopilotProvider({
     },
     [targetDatabase],
   );
+
+  const openAtlasSearchIndexDialog = useCallback(
+    (request: AtlasSearchDialogRequest) => {
+      const explicitDatabase = request.database?.trim();
+      const pipelineDatabase = targetDatabase.trim();
+      const database =
+        explicitDatabase && explicitDatabase !== 'database'
+          ? explicitDatabase
+          : pipelineDatabase || undefined;
+      setAtlasSearchIndexModal({ ...request, database });
+    },
+    [targetDatabase],
+  );
+
   const [llmHistory, setLlmHistory] = useState<CopilotLlmMessage[]>([]);
   const chatInputFocusRef = useRef<(() => void) | null>(null);
   const chatInputFocusTimersRef = useRef<number[]>([]);
@@ -906,6 +934,33 @@ export function CopilotProvider({
         return;
       }
 
+      const directAtlasSearchIndex = parseDirectAtlasSearchIndexCommand(trimmed);
+      if (directAtlasSearchIndex) {
+        if (!mongoInspectAvailable) {
+          appendMessage({
+            role: 'agent',
+            content:
+              'MongoDB inspect is disabled on this server. Enable HVYMETL_MCP_MONGODB_ENABLED to create search indexes from the studio.',
+          });
+          return;
+        }
+        openAtlasSearchIndexDialog({
+          ...(directAtlasSearchIndex.database?.trim()
+            ? { database: directAtlasSearchIndex.database.trim() }
+            : {}),
+          collection: directAtlasSearchIndex.collection,
+          pattern: directAtlasSearchIndex.pattern,
+          initialPath: directAtlasSearchIndex.path,
+        });
+        appendMessage({
+          role: 'agent',
+          content: directAtlasSearchIndex.path
+            ? `Configure the MongoDB Search (${directAtlasSearchIndex.pattern}) index on \`${directAtlasSearchIndex.collection}.${directAtlasSearchIndex.path}\` in the dialog — select all fields to index.`
+            : `Choose fields for the MongoDB Search (${directAtlasSearchIndex.pattern}) index on \`${directAtlasSearchIndex.collection}\` in the dialog (nothing is pre-selected).`,
+        });
+        return;
+      }
+
       const parsed = parseCopilotCommand(trimmed);
       if (parsed && 'message' in parsed) {
         if (parsed.message === '__clear_overrides__') {
@@ -958,7 +1013,7 @@ export function CopilotProvider({
         setStatus('idle');
       }, 400);
     },
-    [appendMessage, llmConfigured, llmHistory, managerCostInputs, model, mongoInspectAvailable, mongoInspectMessage, onClearOverrides, openVectorIndexDialog, plan, runLlmTurn, runMongoInspectDirect, runWorkflowDirect, runTool, targetDatabase],
+    [appendMessage, llmConfigured, llmHistory, managerCostInputs, model, mongoInspectAvailable, mongoInspectMessage, onClearOverrides, openAtlasSearchIndexDialog, openVectorIndexDialog, plan, runLlmTurn, runMongoInspectDirect, runWorkflowDirect, runTool, targetDatabase],
   );
 
   const openWithPrompt = useCallback(
@@ -1139,6 +1194,7 @@ export function CopilotProvider({
       atlasSearchIndexes,
       recordAtlasSearchIndex,
       openVectorIndexDialog,
+      openAtlasSearchIndexDialog,
       toggleOpen,
       setOpen,
       setActiveTab,
@@ -1197,6 +1253,7 @@ export function CopilotProvider({
       atlasSearchIndexes,
       recordAtlasSearchIndex,
       openVectorIndexDialog,
+      openAtlasSearchIndexDialog,
       toggleOpen,
       setOpen,
       setActiveTab,
@@ -1229,6 +1286,18 @@ export function CopilotProvider({
           textFieldPaths={vectorIndexModal.textFieldPaths}
           migrationPlan={plan}
           onClose={() => setVectorIndexModal(null)}
+        />
+      ) : null}
+      {atlasSearchIndexModal ? (
+        <MongoAtlasSearchIndexModal
+          open
+          database={atlasSearchIndexModal.database}
+          collection={atlasSearchIndexModal.collection}
+          pattern={atlasSearchIndexModal.pattern}
+          initialPath={atlasSearchIndexModal.initialPath}
+          textFieldPaths={atlasSearchIndexModal.textFieldPaths}
+          migrationPlan={plan}
+          onClose={() => setAtlasSearchIndexModal(null)}
         />
       ) : null}
     </CopilotContext.Provider>

@@ -45,7 +45,7 @@ export function buildCopilotHelpResponse(): string {
     '',
     `**Try:** ${buildMigrationWorkflowGuideLink()}`,
     '',
-    'Or use quick actions below, slash commands like `/refresh-design`, or ask naturally (e.g. *show me databases*, *create vector search on products*).',
+    'Or use quick actions below, slash commands like `/refresh-design`, or ask naturally (e.g. *show me databases*, *create vector search on products*, *create full text search index on products*).',
   ].join('\n');
 }
 
@@ -99,8 +99,11 @@ export function buildCopilotCommandsResponse(): string {
     '### MongoDB Search — lexical (`$search`)',
     'Full-text and faceted search via [Atlas Search index definitions](https://www.mongodb.com/docs/search/index/index-definitions/) — not vector similarity.',
     '',
-    '- Copilot tool **createMongoAtlasSearchIndex** with **pattern**:',
-    '  - **keyword** — `textPaths` (`string` fields); sample `$search.text` across title/description',
+    '- **create full text search index on `{collection}`** — opens studio dialog (database → collection → **you pick fields**; nothing assumed)',
+    '- **create full text search on `{collection}.{field}`** — dialog with that field pre-selected (keyword pattern)',
+    '- **create autocomplete search index on `{collection}`** / **create faceted search index on `{collection}`**',
+    '- **Create full-text search index…** — button on schema/index inspect tool cards',
+    '- Copilot tool **createMongoAtlasSearchIndex** — only after the user confirms fields (otherwise use the dialog phrases above)',
     '  - **autocomplete** — `path` with `autocomplete` + `edgeGram`; sample `$search.autocomplete` with optional fuzzy',
     '  - **faceted** — `textPath`, `stringFacetPaths`, optional `numberFacets` with `boundaries`; sample `$searchMeta` facet buckets',
     '- **POST /api/copilot/mongo/atlas-search-index** — same body as the tool',

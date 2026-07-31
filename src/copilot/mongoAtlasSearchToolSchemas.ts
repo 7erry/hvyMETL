@@ -12,7 +12,7 @@ export const COPILOT_MONGO_ATLAS_SEARCH_INDEX_OPENAI_TOOLS = [
     function: {
       name: MONGO_ATLAS_SEARCH_INDEX_TOOL_NAME,
       description:
-        'Create an Atlas MongoDB Search (lexical) index for $search / $searchMeta — keyword full-text, autocomplete, or faceted search. Not vector search (use createMongoAutoEmbedVectorIndex for autoEmbed). Call describeMongoCollectionSchema when field paths are unknown. Patterns: keyword (textPaths as string fields), autocomplete (path with edgeGram), faceted (textPath + stringFacetPaths + optional numberFacets with boundaries).',
+        'Create an Atlas MongoDB Search (lexical) index for $search / $searchMeta — keyword full-text, autocomplete, or faceted search. Not vector search (use createMongoAutoEmbedVectorIndex for autoEmbed). Do **not** guess textPaths or facet fields: call describeMongoCollectionSchema, then ask the user which fields to index, or tell them to type **create full text search index on {collection}** to open the studio field picker. Only call this tool when the user has confirmed field paths.',
       parameters: {
         type: 'object',
         required: ['collection', 'pattern'],

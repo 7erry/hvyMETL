@@ -1,3 +1,13 @@
+## hvyMETL 3.2.3
+
+Full-text search chat commands open a **field picker dialog** (like vector search) instead of letting the LLM guess indexed fields.
+
+- **NL routing:** `create full text search index on products` → studio dialog with database, collection, pattern, and explicit field selection (no auto-selected fields).
+- **Inspect cards:** **Create full-text search index…** button alongside autoEmbed vector index.
+- **LLM guardrails:** `createMongoAtlasSearchIndex` tool instructions require confirmed field paths or the dialog flow.
+
+---
+
 ## hvyMETL 3.2.2
 
 Adds **Atlas MongoDB Search (lexical)** index creation and query samples—keyword, autocomplete, and faceted patterns—alongside existing autoEmbed vector search.

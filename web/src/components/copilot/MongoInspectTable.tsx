@@ -12,6 +12,7 @@ import {
 } from '../../copilot/mongoInspectFormat';
 import { CopilotCollapsibleResults, ScrollableInspectTable } from './CopilotCollapsibleResults';
 import { MongoAutoEmbedVectorIndexActions } from './MongoAutoEmbedVectorIndexModal';
+import { MongoAtlasSearchIndexActions } from './MongoAtlasSearchIndexModal';
 import { inferTextFieldPathsFromSchemaTypes } from '../../copilot/mongoVectorAutoEmbedFields';
 
 const FIND_PAGE_SIZE = 10;
@@ -191,6 +192,12 @@ export function MongoInspectIndexTable({
           textFieldPaths={textFieldPaths}
           vectorIndexEnabled={vectorIndexEnabled}
         />
+        <MongoAtlasSearchIndexActions
+          database={summary.database}
+          collection={summary.collection}
+          textFieldPaths={textFieldPaths}
+          searchIndexEnabled={vectorIndexEnabled}
+        />
       </CopilotCollapsibleResults>
     );
   }
@@ -202,6 +209,12 @@ export function MongoInspectIndexTable({
         collection={summary.collection}
         textFieldPaths={textFieldPaths}
         vectorIndexEnabled={vectorIndexEnabled}
+      />
+      <MongoAtlasSearchIndexActions
+        database={summary.database}
+        collection={summary.collection}
+        textFieldPaths={textFieldPaths}
+        searchIndexEnabled={vectorIndexEnabled}
       />
       <div className="copilot-inspect-table-wrap">
         <table className="copilot-inspect-table">
@@ -263,6 +276,11 @@ export function MongoInspectSchemaTable({
           collection={summary.collection}
           vectorIndexEnabled={vectorIndexEnabled}
         />
+        <MongoAtlasSearchIndexActions
+          database={summary.database}
+          collection={summary.collection}
+          searchIndexEnabled={vectorIndexEnabled}
+        />
       </CopilotCollapsibleResults>
     );
   }
@@ -274,6 +292,12 @@ export function MongoInspectSchemaTable({
         collection={summary.collection}
         textFieldPaths={textFieldPaths}
         vectorIndexEnabled={vectorIndexEnabled}
+      />
+      <MongoAtlasSearchIndexActions
+        database={summary.database}
+        collection={summary.collection}
+        textFieldPaths={textFieldPaths}
+        searchIndexEnabled={vectorIndexEnabled}
       />
       <div className="copilot-inspect-table-wrap">
         <table className="copilot-inspect-table">
