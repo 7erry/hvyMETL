@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import {
   AUTO_EMBED_DIMENSIONS,
@@ -12,13 +12,17 @@ import {
   type MongoAutoEmbedVectorIndexInput,
 } from '../../../../src/copilot/mongoVectorAutoEmbedIndex.ts';
 import { createCopilotMongoAutoEmbedVectorIndex, invokeCopilotMongoInspect } from '../../api';
-import { inferTextFieldPathsFromSchemaTypes } from '../../copilot/mongoVectorAutoEmbedFields';
+import {
+  formatSchemaFieldPickLabel,
+  listSchemaFieldPickOptions,
+  type SchemaFieldPickOption,
+} from '../../copilot/mongoVectorAutoEmbedFields';
 import { readMongoInspectSchemaSummary } from '../../copilot/mongoInspectFormat';
 import { useCopilot } from '../../copilot/CopilotContext';
 
 export type MongoAutoEmbedVectorIndexModalProps = {
   open: boolean;
-  database: string;
+  database?: string;
   collection: string;
   initialPath?: string;
   textFieldPaths?: string[];
@@ -32,24 +36,30 @@ const DEFAULT_DIMENSIONS: AutoEmbedDimension = 1024;
 const DEFAULT_SIMILARITY: AutoEmbedSimilarityFunction = 'cosine';
 const EMPTY_TEXT_FIELD_PATHS: string[] = [];
 
-function mergeFieldPaths(seeds: string[], loaded: string[], initialPath?: string): string[] {
-  const merged = new Set<string>();
-  for (const path of [...seeds, ...loaded]) {
-    const trimmed = path.trim();
-    if (trimmed) merged.add(trimmed);
+function seedFieldOptions(textFieldPaths: string[], initialPath?: string): SchemaFieldPickOption[] {
+  const options = textFieldPaths.map((path) => ({
+    path,
+    types: 'string',
+    isStringType: true,
+  }));
+  const preferred = initialPath?.trim();
+  if (preferred && !options.some((entry) => entry.path === preferred)) {
+    options.push({ path: preferred, types: 'unknown', isStringType: false });
   }
-  const preferred = initialPath?.trim();
-  if (preferred) merged.add(preferred);
-  return [...merged].sort((left, right) => left.localeCompare(right));
+  return options.sort((left, right) => left.path.localeCompare(right.path));
 }
 
-function pickInitialPath(paths: string[], initialPath?: string): string {
+function pickInitialFieldPath(options: SchemaFieldPickOption[], initialPath?: string): string {
   const preferred = initialPath?.trim();
-  if (preferred && paths.includes(preferred)) return preferred;
-  return paths[0] ?? preferred ?? '';
+  if (preferred && options.some((entry) => entry.path === preferred)) {
+    return preferred;
+  }
+  const firstString = options.find((entry) => entry.isStringType);
+  if (firstString) return firstString.path;
+  return options[0]?.path ?? preferred ?? '';
 }
 
-/** Mounted only while open — loads collection string fields once per dialog session. */
+/** Mounted only while open — loads all collection fields once per dialog session. */
 function MongoAutoEmbedVectorIndexModalPanel({
   database,
   collection,
@@ -58,15 +68,17 @@ function MongoAutoEmbedVectorIndexModalPanel({
   onClose,
   onCreated,
 }: Omit<MongoAutoEmbedVectorIndexModalProps, 'open'>) {
+  const databaseHint = database?.trim() ?? '';
   const textFieldPathsKey = textFieldPaths.join('\u0001');
-  const sessionKey = `${database}\u0000${collection}\u0000${initialPath ?? ''}\u0000${textFieldPathsKey}`;
+  const sessionKey = `${databaseHint}\u0000${collection}\u0000${initialPath ?? ''}\u0000${textFieldPathsKey}`;
   const initializedSessionRef = useRef<string | null>(null);
 
-  const [fieldPaths, setFieldPaths] = useState<string[]>(() =>
-    mergeFieldPaths(textFieldPaths, [], initialPath),
+  const [logicalDatabase, setLogicalDatabase] = useState(databaseHint);
+  const [fieldOptions, setFieldOptions] = useState<SchemaFieldPickOption[]>(() =>
+    seedFieldOptions(textFieldPaths, initialPath),
   );
   const [path, setPath] = useState(() =>
-    pickInitialPath(mergeFieldPaths(textFieldPaths, [], initialPath), initialPath),
+    pickInitialFieldPath(seedFieldOptions(textFieldPaths, initialPath), initialPath),
   );
   const [loadingFields, setLoadingFields] = useState(true);
   const [fieldLoadError, setFieldLoadError] = useState('');
@@ -92,28 +104,30 @@ function MongoAutoEmbedVectorIndexModalPanel({
     setBusy(false);
     setError('');
     setFieldLoadError('');
-    const seeds = mergeFieldPaths(textFieldPaths, [], initialPath);
-    setFieldPaths(seeds);
-    setPath(pickInitialPath(seeds, initialPath));
+    setLogicalDatabase(databaseHint);
+    const seeds = seedFieldOptions(textFieldPaths, initialPath);
+    setFieldOptions(seeds);
+    setPath(pickInitialFieldPath(seeds, initialPath));
     setLoadingFields(true);
 
     let cancelled = false;
     void (async () => {
       try {
-        const response = await invokeCopilotMongoInspect('describeMongoCollectionSchema', {
-          database,
-          collection,
-        });
+        const inspectArgs: Record<string, unknown> = { collection };
+        if (databaseHint) {
+          inspectArgs.database = databaseHint;
+        }
+        const response = await invokeCopilotMongoInspect('describeMongoCollectionSchema', inspectArgs);
         if (cancelled) return;
         if (!response.ok) {
           setFieldLoadError(response.summary);
           return;
         }
         const summary = readMongoInspectSchemaSummary(response.data);
-        const loaded = inferTextFieldPathsFromSchemaTypes(summary.fields);
-        const merged = mergeFieldPaths(textFieldPaths, loaded, initialPath);
-        setFieldPaths(merged);
-        setPath(pickInitialPath(merged, initialPath));
+        setLogicalDatabase(summary.database);
+        const options = listSchemaFieldPickOptions(summary.fields);
+        setFieldOptions(options);
+        setPath(pickInitialFieldPath(options, initialPath));
       } catch (loadError) {
         if (!cancelled) {
           setFieldLoadError(String(loadError));
@@ -126,20 +140,36 @@ function MongoAutoEmbedVectorIndexModalPanel({
     return () => {
       cancelled = true;
     };
-  }, [sessionKey, database, collection, initialPath, textFieldPathsKey]);
+  }, [sessionKey, databaseHint, collection, initialPath, textFieldPathsKey]);
 
-  const safePath = fieldPaths.includes(path) ? path : pickInitialPath(fieldPaths, initialPath);
+  const safePath = fieldOptions.some((entry) => entry.path === path)
+    ? path
+    : pickInitialFieldPath(fieldOptions, initialPath);
+  const selectedField = fieldOptions.find((entry) => entry.path === safePath);
+  const targetLabel =
+    logicalDatabase.trim().length > 0 ? `${logicalDatabase}.${collection}` : collection;
 
   const handleSubmit = async () => {
     setError('');
     const resolvedPath = safePath.trim();
     if (!resolvedPath) {
-      setError('Select the text field to index with autoEmbed.');
+      setError('Select a field to index with autoEmbed.');
+      return;
+    }
+    const resolvedDatabase = logicalDatabase.trim();
+    if (!resolvedDatabase) {
+      setError('Could not resolve the logical database for this collection.');
+      return;
+    }
+    if (selectedField && !selectedField.isStringType) {
+      setError(
+        `Field "${resolvedPath}" is typed as ${selectedField.types}. autoEmbed requires a string text field.`,
+      );
       return;
     }
 
     const payload: MongoAutoEmbedVectorIndexInput = {
-      database,
+      database: resolvedDatabase,
       collection,
       path: resolvedPath,
       model,
@@ -177,11 +207,8 @@ function MongoAutoEmbedVectorIndexModalPanel({
           <div>
             <h2 id="auto-embed-vector-index-title">Create autoEmbed vector index</h2>
             <p className="pipeline-modal__subtitle">
-              Automated Embeddings (Preview) on{' '}
-              <code>
-                {database}.{collection}
-              </code>
-              . Index build may take time and uses Voyage AI billing on Atlas.
+              Automated Embeddings (Preview) on <code>{targetLabel}</code>. Index build may take time and uses Voyage
+              AI billing on Atlas.
             </p>
           </div>
           <button type="button" className="btn-icon" onClick={onClose} aria-label="Close vector index dialog">
@@ -191,26 +218,32 @@ function MongoAutoEmbedVectorIndexModalPanel({
 
         <div className="pipeline-modal__body mongo-auto-embed-modal__body">
           <label className="mongo-auto-embed-modal__field">
-            <span>Text field</span>
+            <span>Field</span>
             {loadingFields ? (
               <select disabled value="">
                 <option value="">Loading fields from {collection}…</option>
               </select>
-            ) : fieldPaths.length > 0 ? (
+            ) : fieldOptions.length > 0 ? (
               <select value={safePath} onChange={(event) => setPath(event.target.value)}>
-                {fieldPaths.map((option) => (
-                  <option key={option} value={option}>
-                    {option}
+                {fieldOptions.map((option) => (
+                  <option key={option.path} value={option.path}>
+                    {formatSchemaFieldPickLabel(option)}
                   </option>
                 ))}
               </select>
             ) : (
               <p className="mongo-auto-embed-modal__error">
-                No string fields inferred on <code>{collection}</code>.
+                No fields inferred on <code>{collection}</code>.
                 {fieldLoadError ? ` ${fieldLoadError}` : ' Run describe schema first or pick another collection.'}
               </p>
             )}
           </label>
+
+          {selectedField && !selectedField.isStringType && !loadingFields ? (
+            <p className="copilot-results__meta copilot-results__meta--warn">
+              autoEmbed indexes string text fields. This field is typed as {selectedField.types}.
+            </p>
+          ) : null}
 
           <label className="mongo-auto-embed-modal__field">
             <span>Embedding model</span>
@@ -288,7 +321,7 @@ function MongoAutoEmbedVectorIndexModalPanel({
               type="button"
               className="primary"
               onClick={() => void handleSubmit()}
-              disabled={busy || loadingFields || fieldPaths.length === 0}
+              disabled={busy || loadingFields || fieldOptions.length === 0}
             >
               {busy ? 'Creating…' : 'Create index'}
             </button>

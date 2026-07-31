@@ -115,7 +115,8 @@ const CopilotContext = createContext<CopilotContextValue | null>(null);
 
 /** Target collection for the shared autoEmbed vector index dialog. */
 export type VectorIndexDialogRequest = {
-  database: string;
+  /** Logical database when known; omit to resolve from collection name via inspect. */
+  database?: string;
   collection: string;
   initialPath?: string;
   textFieldPaths?: string[];
@@ -729,7 +730,9 @@ export function CopilotProvider({
           return;
         }
         openVectorIndexDialog({
-          database: directVectorIndex.database?.trim() || targetDatabase.trim() || 'csv_to_atlas',
+          ...(directVectorIndex.database?.trim()
+            ? { database: directVectorIndex.database.trim() }
+            : {}),
           collection: directVectorIndex.collection,
           initialPath: directVectorIndex.path,
         });
