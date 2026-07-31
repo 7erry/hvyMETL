@@ -2,8 +2,11 @@ import type { TimeSeriesGranularity } from '../migrationPlanTypes';
 import type { SqlStructuralModel } from '../types';
 import {
   isActiveTimeSeriesOverride,
+  metaFieldSelectOptions,
   suggestMetaFieldForTable,
   suggestTimeFieldForTable,
+  timeFieldSelectOptions,
+  type TimeSeriesFieldOption,
   type TimeSeriesOverride,
   type TimeSeriesOverrides,
 } from '../timeSeriesOverrides';
@@ -13,6 +16,10 @@ const GRANULARITY_OPTIONS: { id: TimeSeriesGranularity; label: string }[] = [
   { id: 'minutes', label: 'minutes' },
   { id: 'hours', label: 'hours' },
 ];
+
+function fieldOptionLabel(option: TimeSeriesFieldOption): string {
+  return `${option.bsonField} (${option.columnName} · ${option.sqlType})`;
+}
 
 type TimeSeriesOverridesPanelProps = {
   model: SqlStructuralModel;
@@ -26,9 +33,11 @@ export function TimeSeriesOverridesPanel({ model, overrides, onChange }: TimeSer
   }
 
   const updateTable = (tableName: string, patch: Partial<TimeSeriesOverride>) => {
+    const table = model.tables.find((entry) => entry.name === tableName);
+    if (!table) return;
     const current = overrides[tableName] ?? {
-      timeField: suggestTimeFieldForTable(model.tables.find((table) => table.name === tableName)!),
-      metaField: suggestMetaFieldForTable(model.tables.find((table) => table.name === tableName)!),
+      timeField: suggestTimeFieldForTable(table),
+      metaField: suggestMetaFieldForTable(table),
       granularity: 'seconds' as TimeSeriesGranularity,
     };
     const nextEntry = { ...current, ...patch };
@@ -54,9 +63,9 @@ export function TimeSeriesOverridesPanel({ model, overrides, onChange }: TimeSer
   return (
     <div className="cardinality-overrides">
       <p className="cardinality-overrides__hint">
-        Optional: map a SQL table to a native MongoDB time series collection. Set{' '}
+        Optional: map a SQL table to a native MongoDB time series collection. Pick{' '}
         <code>timeseries.timeField</code>, optional <code>metaField</code>, and <code>granularity</code> for{' '}
-        <code>db.createCollection</code>. Leave timeField empty to skip a table.
+        <code>db.createCollection</code>. Leave timeField unset to skip a table.
       </p>
       <div className="cardinality-overrides__list">
         {model.tables.map((table) => {
@@ -65,6 +74,8 @@ export function TimeSeriesOverridesPanel({ model, overrides, onChange }: TimeSer
           const metaField = active?.metaField ?? '';
           const granularity = active?.granularity ?? 'seconds';
           const enabled = isActiveTimeSeriesOverride(active);
+          const timeOptions = timeFieldSelectOptions(table, timeField);
+          const metaOptions = metaFieldSelectOptions(table, timeField, metaField);
           return (
             <div className="cardinality-overrides__row" key={table.name}>
               <span>
@@ -78,21 +89,32 @@ export function TimeSeriesOverridesPanel({ model, overrides, onChange }: TimeSer
               <div className="cardinality-overrides__controls cardinality-overrides__controls--wide">
                 <label>
                   <span>timeField</span>
-                  <input
-                    type="text"
-                    placeholder={suggestTimeFieldForTable(table) || 'recordedAt'}
+                  <select
                     value={timeField}
                     onChange={(event) => updateTable(table.name, { timeField: event.target.value })}
-                  />
+                  >
+                    <option value="">— not configured —</option>
+                    {timeOptions.map((option) => (
+                      <option key={option.bsonField} value={option.bsonField}>
+                        {fieldOptionLabel(option)}
+                      </option>
+                    ))}
+                  </select>
                 </label>
                 <label>
                   <span>metaField</span>
-                  <input
-                    type="text"
-                    placeholder={suggestMetaFieldForTable(table) || 'optional'}
+                  <select
                     value={metaField}
                     onChange={(event) => updateTable(table.name, { metaField: event.target.value })}
-                  />
+                    disabled={!timeField.trim()}
+                  >
+                    <option value="">— none —</option>
+                    {metaOptions.map((option) => (
+                      <option key={option.bsonField} value={option.bsonField}>
+                        {fieldOptionLabel(option)}
+                      </option>
+                    ))}
+                  </select>
                 </label>
                 <label>
                   <span>granularity</span>
