@@ -18,7 +18,7 @@ import { DiagramCanvasFitView } from './DiagramCanvasFitView';
 import { RelationshipEdge } from './RelationshipEdge';
 import { RelationshipDisplayControls } from './RelationshipDisplayControls';
 import { TableNode, type TableNodeData } from './TableNode';
-import { COMPACT_GRAPH_LAYOUT_OPTIONS, layoutSqlModel } from '../graphLayout';
+import { COMPACT_GRAPH_LAYOUT_OPTIONS, layoutSqlModel, SQL_GRAPH_LAYOUT_OPTIONS } from '../graphLayout';
 import { useCompactDiagramLayout } from '../hooks/useCompactDiagramLayout';
 import {
   formatRelationshipLabel,
@@ -100,7 +100,10 @@ function modelToFlow(
   const referencedByColumn = buildReferencedColumns(model);
   const related = relatedTableNames(model, selectedTable);
   const hasSelection = Boolean(selectedTable);
-  const autoLayout = layoutSqlModel(model, compactLayout ? COMPACT_GRAPH_LAYOUT_OPTIONS : undefined);
+  const autoLayout = layoutSqlModel(
+    model,
+    compactLayout ? COMPACT_GRAPH_LAYOUT_OPTIONS : SQL_GRAPH_LAYOUT_OPTIONS,
+  );
 
   const nodes: Node<TableNodeData>[] = model.tables.map((table) => {
     const pos = positions[table.name] ?? autoLayout[table.name] ?? { x: 40, y: 40 };
@@ -219,7 +222,10 @@ export function SchemaCanvas({
 
   const handleAutoLayout = useCallback(() => {
     if (!model) return;
-    const autoLayout = layoutSqlModel(model, compactLayout ? COMPACT_GRAPH_LAYOUT_OPTIONS : undefined);
+    const autoLayout = layoutSqlModel(
+    model,
+    compactLayout ? COMPACT_GRAPH_LAYOUT_OPTIONS : SQL_GRAPH_LAYOUT_OPTIONS,
+  );
     onPositionsChange(autoLayout);
   }, [model, compactLayout, onPositionsChange]);
 

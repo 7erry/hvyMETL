@@ -28,6 +28,7 @@ import { FooterDiagramLegend } from './components/FooterDiagramLegend';
 import { CollapsiblePanel } from './components/CollapsiblePanel';
 import { edgesForPlan } from './migrationPlanDisplay';
 import { CardinalityOverridesPanel } from './components/CardinalityOverridesPanel';
+import { TimeSeriesOverridesPanel } from './components/TimeSeriesOverridesPanel';
 import { AuthGate } from './components/AuthGate';
 import { FALLBACK_DIALECTS } from './dialectConstants';
 import { RoleToggle } from './components/RoleToggle';
@@ -39,6 +40,7 @@ import {
   pruneCardinalityOverrides,
   pruneForceEmbedOverrides,
 } from './cardinalityOverrides';
+import { pruneTimeSeriesOverrides, type TimeSeriesOverrides } from './timeSeriesOverrides';
 import {
   downloadJson,
   downloadText,
@@ -80,7 +82,7 @@ import {
   patchMigrationPlanJsonWithProfile,
 } from './migrationPlanDisplay';
 import { fetchMigrationPrompts, mapPromptExportResponse } from './migrationPrompts';
-import { layoutSqlModel } from './graphLayout';
+import { layoutSqlModel, SQL_GRAPH_LAYOUT_OPTIONS } from './graphLayout';
 import { pickCsvDirectory } from './directoryPicker';
 import type { CollectionPlan, MigrationPlan } from './migrationPlanTypes';
 import type { PipelineExecutionDetail } from './transformationSummaryTypes';
@@ -147,6 +149,7 @@ export default function App() {
   const [schemaImportModalOpen, setSchemaImportModalOpen] = useState(false);
   const [schemaImportUserOpened, setSchemaImportUserOpened] = useState(false);
   const [embedOverridesPanelOpen, setEmbedOverridesPanelOpen] = useState(false);
+  const [timeSeriesOverridesPanelOpen, setTimeSeriesOverridesPanelOpen] = useState(false);
   const diagramFileInputRef = useRef<HTMLInputElement>(null);
   const mongoDiagramFileInputRef = useRef<HTMLInputElement>(null);
 
@@ -176,6 +179,7 @@ export default function App() {
     managerCostInputs,
     cardinalityOverrides,
     forceEmbedOverrides,
+    timeSeriesOverrides,
   } = session;
 
   const profileFields = useMemo(
@@ -220,6 +224,24 @@ export default function App() {
       document.getElementById(EMBED_OVERRIDES_PANEL_ID)?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     });
   }, [setSessionField]);
+
+  const handleTimeSeriesOverridesChange = useCallback((overrides: TimeSeriesOverrides) => {
+    setSession((prev) => ({
+      ...prev,
+      timeSeriesOverrides: overrides,
+      migrationArtifacts: null,
+      collectionPositions: {},
+      selectedCollection: null,
+      managerReviewAcceptances: null,
+      schemaPhase: 'before',
+    }));
+    const count = Object.keys(overrides).length;
+    setStatus(
+      count > 0
+        ? `Time series overrides set for ${count} table${count === 1 ? '' : 's'}. Run design to apply.`
+        : 'Time series overrides cleared.',
+    );
+  }, []);
 
   const handleCardinalityOverridesChange = useCallback(
     (
@@ -429,7 +451,7 @@ export default function App() {
       ddl: nextDdl,
       model: nextModel,
       profileId: inferredProfileId ?? prev.profileId,
-      positions: layoutSqlModel(nextModel),
+      positions: layoutSqlModel(nextModel, SQL_GRAPH_LAYOUT_OPTIONS),
       collectionPositions: {},
       selectedTable: null,
       selectedCollection: null,
@@ -437,6 +459,7 @@ export default function App() {
       managerReviewAcceptances: null,
       cardinalityOverrides: {},
       forceEmbedOverrides: {},
+      timeSeriesOverrides: {},
       schemaPhase: 'before',
       view: 'diagram',
     }));
@@ -544,6 +567,7 @@ export default function App() {
       positions: nextPos,
       cardinalityOverrides: pruneCardinalityOverrides(next, prev.cardinalityOverrides),
       forceEmbedOverrides: pruneForceEmbedOverrides(next, prev.forceEmbedOverrides),
+      timeSeriesOverrides: pruneTimeSeriesOverrides(next, prev.timeSeriesOverrides),
       selectedTable: next.tables.find((t) => t.name.startsWith(`${tableName}_copy`))?.name ?? tableName,
     }));
     setStatus(`Duplicated table ${tableName}.`);
@@ -558,6 +582,7 @@ export default function App() {
       positions: nextPos,
       cardinalityOverrides: pruneCardinalityOverrides(next, prev.cardinalityOverrides),
       forceEmbedOverrides: pruneForceEmbedOverrides(next, prev.forceEmbedOverrides),
+      timeSeriesOverrides: pruneTimeSeriesOverrides(next, prev.timeSeriesOverrides),
       selectedTable: prev.selectedTable === tableName ? null : prev.selectedTable,
     }));
     setStatus(`Deleted table ${tableName}.`);
@@ -615,6 +640,7 @@ export default function App() {
             positions: data.positions ?? {},
             cardinalityOverrides: {},
             forceEmbedOverrides: {},
+            timeSeriesOverrides: {},
             selectedTable: null,
             view: 'diagram',
           }));
@@ -643,6 +669,7 @@ export default function App() {
           model: data.model ?? prev.model,
           cardinalityOverrides: pruneCardinalityOverrides(data.model ?? prev.model, prev.cardinalityOverrides),
           forceEmbedOverrides: pruneForceEmbedOverrides(data.model ?? prev.model, prev.forceEmbedOverrides),
+          timeSeriesOverrides: pruneTimeSeriesOverrides(data.model ?? prev.model, prev.timeSeriesOverrides),
           profileId: data.profileId ?? data.plan.profileId ?? prev.profileId,
           collectionPositions: data.collectionPositions ?? {},
           selectedCollection: null,
@@ -681,6 +708,7 @@ export default function App() {
         ...profileFields,
         cardinalityOverrides,
         forceEmbedOverrides,
+        timeSeriesOverrides,
         plan: migrationPlan,
         csvSourcePath:
           designCsvFiles.length === 0 && csvSourcePath?.trim() ? csvSourcePath.trim() : undefined,
@@ -778,6 +806,7 @@ export default function App() {
         ...profileFields,
         cardinalityOverrides,
         forceEmbedOverrides,
+        timeSeriesOverrides,
         csvSourcePath:
           designCsvFiles.length === 0 && csvSourcePath?.trim() ? csvSourcePath.trim() : undefined,
       };
@@ -932,6 +961,7 @@ export default function App() {
         dialect,
         cardinalityOverrides,
         forceEmbedOverrides,
+        timeSeriesOverrides,
       });
       const promptsResult = await exportPrompts(ddl, profileFields);
       const promptBundle = mapPromptExportResponse(promptsResult);
@@ -1248,19 +1278,32 @@ export default function App() {
                       />
                     </CollapsiblePanel>
                     {model ? (
-                      <CollapsiblePanel
-                        id={EMBED_OVERRIDES_PANEL_ID}
-                        title="Embed Overrides"
-                        open={embedOverridesPanelOpen}
-                        onOpenChange={setEmbedOverridesPanelOpen}
-                      >
-                        <CardinalityOverridesPanel
-                          model={model}
-                          overrides={cardinalityOverrides}
-                          forceEmbedOverrides={forceEmbedOverrides}
-                          onChange={handleCardinalityOverridesChange}
-                        />
-                      </CollapsiblePanel>
+                      <>
+                        <CollapsiblePanel
+                          id={EMBED_OVERRIDES_PANEL_ID}
+                          title="Embed Overrides"
+                          open={embedOverridesPanelOpen}
+                          onOpenChange={setEmbedOverridesPanelOpen}
+                        >
+                          <CardinalityOverridesPanel
+                            model={model}
+                            overrides={cardinalityOverrides}
+                            forceEmbedOverrides={forceEmbedOverrides}
+                            onChange={handleCardinalityOverridesChange}
+                          />
+                        </CollapsiblePanel>
+                        <CollapsiblePanel
+                          title="Time Series Overrides"
+                          open={timeSeriesOverridesPanelOpen}
+                          onOpenChange={setTimeSeriesOverridesPanelOpen}
+                        >
+                          <TimeSeriesOverridesPanel
+                            model={model}
+                            overrides={timeSeriesOverrides}
+                            onChange={handleTimeSeriesOverridesChange}
+                          />
+                        </CollapsiblePanel>
+                      </>
                     ) : null}
                   </>
                 ) : (
@@ -1596,6 +1639,7 @@ export default function App() {
           profileFields={profileFields}
           cardinalityOverrides={cardinalityOverrides}
           forceEmbedOverrides={forceEmbedOverrides}
+          timeSeriesOverrides={timeSeriesOverrides}
           dialect={dialect}
           dialectLabel={dialectLabel}
           csvSourcePath={csvSourcePath}

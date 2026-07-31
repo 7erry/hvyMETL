@@ -800,6 +800,11 @@ textarea {
   max-width: none;
 }
 
+/* Keep Relationships / legend dock clear of the floating Agent launcher (copilot closed). */
+.workspace-canvas-shell:not(.workspace-canvas-shell--copilot-open) .schema-canvas-dock--corner {
+  margin-right: 5.75rem;
+}
+
 .schema-canvas-dock--corner .schema-canvas-toolbar--collapsible {
   width: min(calc(100vw - 3.5rem), 15rem);
 }
@@ -1514,6 +1519,18 @@ textarea {
 }
 
 .cardinality-overrides__row input[type='number'] {
+  min-width: 0;
+  padding-inline: 0.55rem;
+}
+
+.cardinality-overrides__controls--wide {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.5rem 0.65rem;
+}
+
+.cardinality-overrides__controls--wide .cardinality-overrides__row input[type='text'],
+.cardinality-overrides__controls--wide input[type='text'],
+.cardinality-overrides__controls--wide select {
   min-width: 0;
   padding-inline: 0.55rem;
 }
@@ -4565,6 +4582,10 @@ textarea {
     margin: 0 0.3rem 0.3rem 0;
   }
 
+  .workspace-canvas-shell:not(.workspace-canvas-shell--copilot-open) .schema-canvas-dock--corner {
+    margin-right: 5.25rem;
+  }
+
   .schema-canvas-dock--corner .schema-canvas-legend--collapsible,
   .app--manager .manager-canvas-legend--collapsible {
     max-width: min(calc(100vw - 2.25rem), 11rem);
@@ -4759,7 +4780,7 @@ textarea {
 .agent-copilot-launcher {
   position: absolute;
   right: 0.75rem;
-  bottom: 3.5rem;
+  bottom: 4.5rem;
   z-index: 19;
   padding: 0.45rem 0.75rem;
   border-radius: 999px;

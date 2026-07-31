@@ -296,6 +296,15 @@ export type BucketPlan = {
 /** MongoDB native time series collection options (Manual: timeseries.timeField / metaField). */
 export type TimeSeriesGranularity = 'seconds' | 'minutes' | 'hours';
 
+/** Developer override for createCollection timeseries (keyed by SQL source table name). */
+export type TimeSeriesOverride = {
+  timeField: string;
+  metaField?: string;
+  granularity: TimeSeriesGranularity;
+};
+
+export type TimeSeriesOverrides = Record<string, TimeSeriesOverride>;
+
 export type TimeSeriesPlan = {
   /** Document field holding the measurement timestamp (maps to timeseries.timeField). */
   timeField: string;

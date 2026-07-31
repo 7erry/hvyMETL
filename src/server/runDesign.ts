@@ -7,7 +7,7 @@ import { existsSync } from 'node:fs';
 import type { DesignFromModelResult } from '../design/designFromModel.js';
 import { designFromModelWithMlEngine } from '../ml_engine/pipelinePatch.js';
 import { configureMigrationStore, resolveMemoryDbName } from '../ml_engine/migrationStore.js';
-import type { MigrationPlan, SqlStructuralModel, WorkloadProfile } from '../types.js';
+import type { MigrationPlan, SqlStructuralModel, TimeSeriesOverrides, WorkloadProfile } from '../types.js';
 import { buildMigrationPlan } from '../design/patternSelector.js';
 import { enrichModelFromCsv } from '../utilities/csvModelEnrichment.js';
 import { resolveCsvSourcePath } from '../utilities/csvSource.js';
@@ -61,6 +61,7 @@ export type DesignRequest = {
   csvAllowedRoots?: string[];
   cardinalityOverrides?: Record<string, number>;
   forceEmbedOverrides?: Record<string, boolean>;
+  timeSeriesOverrides?: TimeSeriesOverrides;
   dialect?: string;
   env?: NodeJS.ProcessEnv;
 };
@@ -147,7 +148,9 @@ function enrichModelForDesign(request: DesignRequest, env: NodeJS.ProcessEnv): {
 export function explainDesignRequest(request: DesignRequest, plan?: MigrationPlan): TransformationSummary {
   const env = request.env ?? process.env;
   const { enrichedModel, resolvedCsvRoot } = enrichModelForDesign(request, env);
-  const migrationPlan = plan ?? buildMigrationPlan(enrichedModel, request.profile);
+  const migrationPlan = plan ?? buildMigrationPlan(enrichedModel, request.profile, {
+    timeSeriesOverrides: request.timeSeriesOverrides,
+  });
   const designMeta = buildDesignMeta(request.model, enrichedModel, migrationPlan, resolvedCsvRoot);
   return explainTransformation(request.model, enrichedModel, migrationPlan, request.profile, {
     csvEnriched: designMeta.csvEnriched,
@@ -164,6 +167,7 @@ export async function runDesignForModel(request: DesignRequest): Promise<DesignR
   const mlDesign = await designFromModelWithMlEngine(enrichedModel, request.profile, request.knowledgeDir, {
     schedulePostMigrationReflection: false,
     clusterId: env.HVYMETL_ATLAS_CLUSTER_ID?.trim(),
+    timeSeriesOverrides: request.timeSeriesOverrides,
   });
 
   const designMeta = buildDesignMeta(request.model, enrichedModel, mlDesign.plan, resolvedCsvRoot);

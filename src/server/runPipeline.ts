@@ -57,6 +57,7 @@ export type PipelineRunRequest = {
   tenantId?: string;
   cardinalityOverrides?: Record<string, number>;
   forceEmbedOverrides?: Record<string, boolean>;
+  timeSeriesOverrides?: import('../types.js').TimeSeriesOverrides;
   /** Physical Atlas database name passed to csvToAtlas. */
   targetDb?: string;
   /** Logical database name stored in execution history and shown in the UI. */
@@ -277,6 +278,7 @@ async function runFullPipelineInner(
   const mlDesign = await designFromModelWithMlEngine(enrichedModel, profile, request.knowledgeDir, {
     schedulePostMigrationReflection: false,
     clusterId,
+    timeSeriesOverrides: request.timeSeriesOverrides,
   });
   const design: DesignFromModelResult = {
     plan: mlDesign.plan,

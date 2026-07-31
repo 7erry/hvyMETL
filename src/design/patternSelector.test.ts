@@ -387,6 +387,40 @@ describe('buildMigrationPlan', () => {
     expect(readings?.patterns.some((decision) => decision.pattern === 'bucket')).toBe(true);
   });
 
+  it('applies developer time series overrides on non-IoT workloads', () => {
+    const model: SqlStructuralModel = {
+      source: 'synthetic.db',
+      tables: [
+        table({
+          name: 'stocks',
+          rowCount: 1200,
+          columns: [
+            { name: 'id', sqlType: 'INTEGER', bsonType: 'long', nullable: false, isPrimaryKey: true },
+            { name: 'ticker', sqlType: 'TEXT', bsonType: 'string', nullable: false, isPrimaryKey: false },
+            { name: 'date', sqlType: 'TIMESTAMP', bsonType: 'date', nullable: false, isPrimaryKey: false },
+            { name: 'price', sqlType: 'REAL', bsonType: 'double', nullable: false, isPrimaryKey: false },
+          ],
+          foreignKeys: [],
+        }),
+      ],
+      relationships: [],
+    };
+
+    const plan = buildMigrationPlan(model, WORKLOAD_PROFILES.catalog, {
+      timeSeriesOverrides: {
+        stocks: { timeField: 'date', metaField: 'ticker', granularity: 'seconds' },
+      },
+    });
+    const stocks = plan.collections.find((collection) => collection.sourceTable === 'stocks');
+
+    expect(stocks?.timeSeries).toEqual({
+      timeField: 'date',
+      metaField: 'ticker',
+      granularity: 'seconds',
+    });
+    expect(stocks?.patterns.some((decision) => decision.pattern === 'time-series')).toBe(true);
+  });
+
   it('applies Subset + Outlier to skewed unbounded children on read-heavy workloads', () => {
     const model: SqlStructuralModel = {
       source: 'synthetic.db',

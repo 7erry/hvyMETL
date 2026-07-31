@@ -484,6 +484,7 @@ app.post('/api/design', async (req, res) => {
         csvAllowedRoots,
         cardinalityOverrides: req.body?.cardinalityOverrides as Record<string, number> | undefined,
         forceEmbedOverrides: req.body?.forceEmbedOverrides as Record<string, boolean> | undefined,
+        timeSeriesOverrides: req.body?.timeSeriesOverrides as import('../types.js').TimeSeriesOverrides | undefined,
         dialect: req.body?.dialect as string | undefined,
       }),
     );
@@ -547,6 +548,9 @@ app.post('/api/design/with-csv', (req, res) => {
           forceEmbedOverrides: req.body?.forceEmbedOverrides
             ? JSON.parse(String(req.body.forceEmbedOverrides)) as Record<string, boolean>
             : undefined,
+          timeSeriesOverrides: req.body?.timeSeriesOverrides
+            ? JSON.parse(String(req.body.timeSeriesOverrides)) as import('../types.js').TimeSeriesOverrides
+            : undefined,
           dialect: req.body?.dialect as string | undefined,
         }),
       );
@@ -583,6 +587,7 @@ app.post('/api/design/explain', (req, res) => {
         csvAllowedRoots,
         cardinalityOverrides: req.body?.cardinalityOverrides as Record<string, number> | undefined,
         forceEmbedOverrides: req.body?.forceEmbedOverrides as Record<string, boolean> | undefined,
+        timeSeriesOverrides: req.body?.timeSeriesOverrides as import('../types.js').TimeSeriesOverrides | undefined,
         dialect: req.body?.dialect as string | undefined,
       },
       plan,
@@ -614,6 +619,7 @@ app.post('/api/export/migration', async (req, res) => {
       csvAllowedRoots,
       cardinalityOverrides: req.body?.cardinalityOverrides as Record<string, number> | undefined,
       forceEmbedOverrides: req.body?.forceEmbedOverrides as Record<string, boolean> | undefined,
+      timeSeriesOverrides: req.body?.timeSeriesOverrides as import('../types.js').TimeSeriesOverrides | undefined,
       dialect: req.body?.dialect as string | undefined,
     });
     const { paths, apiArtifacts } = persistDesignApiArtifacts(result, tenantId, 'ui-export', 'ui-export');
@@ -893,6 +899,7 @@ app.post('/api/pipeline/run', async (req, res) => {
       tenantId,
       cardinalityOverrides: req.body?.cardinalityOverrides as Record<string, number> | undefined,
       forceEmbedOverrides: req.body?.forceEmbedOverrides as Record<string, boolean> | undefined,
+      timeSeriesOverrides: req.body?.timeSeriesOverrides as import('../types.js').TimeSeriesOverrides | undefined,
       generateMockCsv: Boolean(req.body?.generateMockCsv),
       mockCsvOptions: req.body?.mockCsvOptions as import('../utilities/mockCsvFromDdl.js').MockCsvOptions | undefined,
       targetDb,
@@ -1048,6 +1055,9 @@ app.post('/api/pipeline/run-with-csv', (req, res) => {
           : undefined,
         forceEmbedOverrides: req.body?.forceEmbedOverrides
           ? JSON.parse(String(req.body.forceEmbedOverrides)) as Record<string, boolean>
+          : undefined,
+        timeSeriesOverrides: req.body?.timeSeriesOverrides
+          ? JSON.parse(String(req.body.timeSeriesOverrides)) as import('../types.js').TimeSeriesOverrides
           : undefined,
         generateMockCsv: req.body?.generateMockCsv === 'true' || req.body?.generateMockCsv === true,
         mockCsvOptions: req.body?.mockCsvOptions

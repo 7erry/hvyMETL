@@ -46,9 +46,12 @@ import type {
   SqlStructuralModel,
   TableModel,
   TimeSeriesGranularity,
+  TimeSeriesOverrides,
+  TimeSeriesOverride,
   TimeSeriesPlan,
   WorkloadProfile,
 } from '../types.js';
+import { isActiveTimeSeriesOverride, normalizeTimeSeriesOverrides } from './timeSeriesOverrides.js';
 import { singularize, toCamelCase, toPascalCase } from '../utilities/naming.js';
 import {
   EMBED_LEANING_PERCENT,
@@ -952,15 +955,23 @@ function planBucketCollection(
 }
 
 /** Build a MongoDB native time series collection plan for one firehose measurement table. */
-function planTimeSeriesCollection(table: TableModel, profile: WorkloadProfile): CollectionPlan {
+function planTimeSeriesCollection(
+  table: TableModel,
+  profile: WorkloadProfile,
+  developerOverride?: TimeSeriesOverride,
+): CollectionPlan {
   const dateColumn = findDateColumn(table);
-  if (!dateColumn) {
-    throw new Error(`Time series plan requires a timestamp column on ${table.name}.`);
+  const inferredTimeField = dateColumn ? toCamelCase(dateColumn.name) : '';
+  const timeField = developerOverride?.timeField?.trim() || inferredTimeField;
+  if (!timeField) {
+    throw new Error(`Time series plan requires a timestamp column or developer timeField on ${table.name}.`);
   }
-  const timeField = toCamelCase(dateColumn.name);
+
   const metaFk = table.foreignKeys.find((fk) => fk.referencesTable !== table.name);
-  const metaField = metaFk ? toCamelCase(metaFk.column) : undefined;
-  const granularity = inferTimeSeriesGranularity(profile);
+  const inferredMetaField = metaFk ? toCamelCase(metaFk.column) : undefined;
+  const metaField = developerOverride?.metaField?.trim() || inferredMetaField;
+
+  const granularity = developerOverride?.granularity ?? inferTimeSeriesGranularity(profile);
   const expireAfterSeconds = inferTimeSeriesExpireAfterSeconds(profile);
   const timeSeries: TimeSeriesPlan = {
     timeField,
@@ -974,7 +985,9 @@ function planTimeSeriesCollection(table: TableModel, profile: WorkloadProfile): 
   const properties = buildBaseProperties(table);
   properties[timeField] = {
     bsonType: 'date',
-    description: `Time series timeField (from ${table.name}.${dateColumn.name}).`,
+    description: dateColumn
+      ? `Time series timeField (from ${table.name}.${dateColumn.name}).`
+      : `Time series timeField (developer override on ${table.name}).`,
   };
   properties.schemaVersion = { bsonType: 'int', description: 'Schema versioning stamp (1 on import).' };
   if (metaField && metaFk) {
@@ -1013,7 +1026,7 @@ function planTimeSeriesCollection(table: TableModel, profile: WorkloadProfile): 
       {
         pattern: 'time-series',
         target: collectionName,
-        reason: `${table.name} holds ${table.rowCount.toLocaleString('en-US')} timestamped rows under ${ratioLabel}; a native MongoDB time series collection with timeField \`${timeField}\`${metaField ? ` and metaField \`${metaField}\`` : ''} uses server-side bucketing and compression per the Manual.`,
+        reason: `${table.name} holds ${table.rowCount.toLocaleString('en-US')} timestamped rows under ${ratioLabel}; a native MongoDB time series collection with timeField \`${timeField}\`${metaField ? ` and metaField \`${metaField}\`` : ''} uses server-side bucketing and compression per the Manual.${developerOverride ? ' Developer time series override applied.' : ''}`,
         knowledgeSource: 'time-series.md',
       },
       {
@@ -1059,13 +1072,22 @@ export function buildDirectEmbedPlansByTable(
   return embedPlansByTable;
 }
 
+export type BuildMigrationPlanOptions = {
+  timeSeriesOverrides?: TimeSeriesOverrides;
+};
+
 /**
  * Build the full migration plan for a structural model under a profile.
  * This function is pure and deterministic: same inputs, same plan.
  */
-export function buildMigrationPlan(model: SqlStructuralModel, profile: WorkloadProfile): MigrationPlan {
+export function buildMigrationPlan(
+  model: SqlStructuralModel,
+  profile: WorkloadProfile,
+  options?: BuildMigrationPlanOptions,
+): MigrationPlan {
   const tablesByName = new Map(model.tables.map((table) => [table.name, table]));
   const isWriteHeavy = profile.telemetry.writePercent >= WRITE_HEAVY_PERCENT;
+  const timeSeriesOverrides = normalizeTimeSeriesOverrides(options?.timeSeriesOverrides);
 
   // Pass 1: find tables that disappear into other collections (EAV, junction,
   // fully embedded children) and tables that become bucketed collections.
@@ -1080,6 +1102,11 @@ export function buildMigrationPlan(model: SqlStructuralModel, profile: WorkloadP
       )
       .map((table) => table.name),
   );
+  for (const [tableName, override] of Object.entries(timeSeriesOverrides)) {
+    if (isActiveTimeSeriesOverride(override) && tablesByName.has(tableName)) {
+      timeSeriesTables.add(tableName);
+    }
+  }
   const bucketedTables = new Set<string>(
     model.tables
       .filter(
@@ -1115,7 +1142,7 @@ export function buildMigrationPlan(model: SqlStructuralModel, profile: WorkloadP
   for (const table of orderedTables) {
     if (singleCollectionAbsorbed.has(table.name)) continue;
     if (timeSeriesTables.has(table.name)) {
-      collections.push(planTimeSeriesCollection(table, profile));
+      collections.push(planTimeSeriesCollection(table, profile, timeSeriesOverrides[table.name]));
       continue;
     }
     if (bucketedTables.has(table.name)) {

@@ -87,6 +87,7 @@ export type SchemaGenerationContext = {
   lessonChunks?: ScoredLesson[];
   /** Zero-based regeneration attempt (0 = first pass). */
   attempt: number;
+  timeSeriesOverrides?: import('../types.js').TimeSeriesOverrides;
 };
 
 export type SchemaGenerator = (context: SchemaGenerationContext) => Promise<import('../types.js').MigrationPlan>;

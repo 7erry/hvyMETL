@@ -39,7 +39,7 @@ export const COMPACT_GRAPH_LAYOUT_OPTIONS: GraphLayoutOptions = {
   nodeWidth: 200,
   nodeHeight: 150,
   gapX: 72,
-  gapY: 44,
+  gapY: 40,
   padding: 28,
   componentGapX: 88,
   componentGapY: 64,
@@ -57,6 +57,19 @@ export const MONGO_GRAPH_LAYOUT_OPTIONS: GraphLayoutOptions = {
   componentGapY: 40,
   grid: 20,
   maxRowWidth: 1600,
+};
+
+/** Default Before · SQL spacing — two grid dots (40px) between tables vertically. */
+export const SQL_GRAPH_LAYOUT_OPTIONS: GraphLayoutOptions = {
+  nodeWidth: 260,
+  nodeHeight: 200,
+  gapX: 160,
+  gapY: 40,
+  padding: 48,
+  componentGapX: 200,
+  componentGapY: 40,
+  grid: 20,
+  maxRowWidth: 2600,
 };
 
 function snap(value: number, grid: number): number {

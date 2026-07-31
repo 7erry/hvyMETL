@@ -53,6 +53,8 @@ export type MlEnhancedDesignOptions = {
   maxCriticLoops?: number;
   /** Override default rule-based generator (e.g. LLM-backed synthesis). */
   schemaGenerator?: SchemaGenerator;
+  /** Developer createCollection timeseries overrides keyed by SQL table name. */
+  timeSeriesOverrides?: import('../types.js').TimeSeriesOverrides;
   /** Atlas cluster id for post-migration reflection (defaults to env). */
   clusterId?: string;
   /** When true, schedule async reflection after logging decisions. */
@@ -61,7 +63,9 @@ export type MlEnhancedDesignOptions = {
 
 /** Default rule-based schema generator; critic feedback is appended to the report extras. */
 export async function defaultSchemaGenerator(context: SchemaGenerationContext): Promise<MigrationPlan> {
-  const plan = buildMigrationPlan(context.model, context.profile);
+  const plan = buildMigrationPlan(context.model, context.profile, {
+    timeSeriesOverrides: context.timeSeriesOverrides,
+  });
   plan.source = context.model.source;
   return plan;
 }
@@ -179,6 +183,7 @@ export async function runMlEnhancedDesign(options: MlEnhancedDesignOptions): Pro
       historicalLessonsMarkdown,
       lessonChunks,
       attempt,
+      timeSeriesOverrides: options.timeSeriesOverrides,
     };
 
     plan = await generateSchema(context);
@@ -270,6 +275,7 @@ export async function designFromModelWithMlEngine(
     schemaGenerator?: SchemaGenerator;
     schedulePostMigrationReflection?: boolean;
     clusterId?: string;
+    timeSeriesOverrides?: import('../types.js').TimeSeriesOverrides;
   } = {},
 ): Promise<{
   plan: MigrationPlan;
@@ -286,6 +292,7 @@ export async function designFromModelWithMlEngine(
       schemaGenerator: options.schemaGenerator,
       schedulePostMigrationReflection: options.schedulePostMigrationReflection,
       clusterId: options.clusterId,
+      timeSeriesOverrides: options.timeSeriesOverrides,
     });
     const designReport = [
       '# Migration Design Report (ML-Enhanced)',
