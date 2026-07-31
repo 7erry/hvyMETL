@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import {
   AUTO_EMBED_DIMENSIONS,
@@ -11,6 +11,7 @@ import {
   type AutoEmbedVoyageModel,
   type MongoAutoEmbedVectorIndexInput,
 } from '../../../../src/copilot/mongoVectorAutoEmbedIndex.ts';
+import { parseMultiDatabaseCollectionError } from '../../../../src/copilot/parseMultiDatabaseCollectionError.ts';
 import { createCopilotMongoAutoEmbedVectorIndex, invokeCopilotMongoInspect } from '../../api';
 import {
   formatSchemaFieldPickLabel,
@@ -72,8 +73,11 @@ function MongoAutoEmbedVectorIndexModalPanel({
   const textFieldPathsKey = textFieldPaths.join('\u0001');
   const sessionKey = `${databaseHint}\u0000${collection}\u0000${initialPath ?? ''}\u0000${textFieldPathsKey}`;
   const initializedSessionRef = useRef<string | null>(null);
+  const schemaLoadRequestRef = useRef(0);
 
   const [logicalDatabase, setLogicalDatabase] = useState(databaseHint);
+  const [databaseChoices, setDatabaseChoices] = useState<string[]>([]);
+  const [selectedDatabase, setSelectedDatabase] = useState(databaseHint);
   const [fieldOptions, setFieldOptions] = useState<SchemaFieldPickOption[]>(() =>
     seedFieldOptions(textFieldPaths, initialPath),
   );
@@ -90,6 +94,56 @@ function MongoAutoEmbedVectorIndexModalPanel({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
 
+  const loadCollectionSchema = useCallback(
+    async (explicitDatabase: string) => {
+      const requestId = ++schemaLoadRequestRef.current;
+      setLoadingFields(true);
+      setFieldLoadError('');
+
+      const inspectArgs: Record<string, unknown> = { collection };
+      const trimmedDatabase = explicitDatabase.trim();
+      if (trimmedDatabase) {
+        inspectArgs.database = trimmedDatabase;
+      }
+
+      try {
+        const response = await invokeCopilotMongoInspect('describeMongoCollectionSchema', inspectArgs);
+        if (requestId !== schemaLoadRequestRef.current) return;
+
+        if (!response.ok) {
+          const choices = parseMultiDatabaseCollectionError(response.summary);
+          if (choices && !trimmedDatabase) {
+            setDatabaseChoices(choices);
+            setSelectedDatabase(choices[0] ?? '');
+            setLogicalDatabase(choices[0] ?? '');
+            await loadCollectionSchema(choices[0] ?? '');
+            return;
+          }
+          setFieldLoadError(response.summary);
+          setFieldOptions([]);
+          return;
+        }
+
+        const summary = readMongoInspectSchemaSummary(response.data);
+        setLogicalDatabase(summary.database);
+        setSelectedDatabase(summary.database);
+        const options = listSchemaFieldPickOptions(summary.fields);
+        setFieldOptions(options);
+        setPath(pickInitialFieldPath(options, initialPath));
+      } catch (loadError) {
+        if (requestId === schemaLoadRequestRef.current) {
+          setFieldLoadError(String(loadError));
+          setFieldOptions([]);
+        }
+      } finally {
+        if (requestId === schemaLoadRequestRef.current) {
+          setLoadingFields(false);
+        }
+      }
+    },
+    [collection, initialPath],
+  );
+
   useEffect(() => {
     if (initializedSessionRef.current === sessionKey) {
       return;
@@ -104,43 +158,21 @@ function MongoAutoEmbedVectorIndexModalPanel({
     setBusy(false);
     setError('');
     setFieldLoadError('');
+    setDatabaseChoices([]);
     setLogicalDatabase(databaseHint);
+    setSelectedDatabase(databaseHint);
     const seeds = seedFieldOptions(textFieldPaths, initialPath);
     setFieldOptions(seeds);
     setPath(pickInitialFieldPath(seeds, initialPath));
-    setLoadingFields(true);
 
-    let cancelled = false;
-    void (async () => {
-      try {
-        const inspectArgs: Record<string, unknown> = { collection };
-        if (databaseHint) {
-          inspectArgs.database = databaseHint;
-        }
-        const response = await invokeCopilotMongoInspect('describeMongoCollectionSchema', inspectArgs);
-        if (cancelled) return;
-        if (!response.ok) {
-          setFieldLoadError(response.summary);
-          return;
-        }
-        const summary = readMongoInspectSchemaSummary(response.data);
-        setLogicalDatabase(summary.database);
-        const options = listSchemaFieldPickOptions(summary.fields);
-        setFieldOptions(options);
-        setPath(pickInitialFieldPath(options, initialPath));
-      } catch (loadError) {
-        if (!cancelled) {
-          setFieldLoadError(String(loadError));
-        }
-      } finally {
-        if (!cancelled) setLoadingFields(false);
-      }
-    })();
+    void loadCollectionSchema(databaseHint);
+  }, [sessionKey, databaseHint, collection, initialPath, textFieldPathsKey, loadCollectionSchema]);
 
-    return () => {
-      cancelled = true;
-    };
-  }, [sessionKey, databaseHint, collection, initialPath, textFieldPathsKey]);
+  const handleDatabaseChange = (nextDatabase: string) => {
+    setSelectedDatabase(nextDatabase);
+    setLogicalDatabase(nextDatabase);
+    void loadCollectionSchema(nextDatabase);
+  };
 
   const safePath = fieldOptions.some((entry) => entry.path === path)
     ? path
@@ -217,6 +249,23 @@ function MongoAutoEmbedVectorIndexModalPanel({
         </header>
 
         <div className="pipeline-modal__body mongo-auto-embed-modal__body">
+          {databaseChoices.length > 1 ? (
+            <label className="mongo-auto-embed-modal__field">
+              <span>Database</span>
+              <select
+                value={selectedDatabase}
+                onChange={(event) => handleDatabaseChange(event.target.value)}
+                disabled={loadingFields}
+              >
+                {databaseChoices.map((dbName) => (
+                  <option key={dbName} value={dbName}>
+                    {dbName}
+                  </option>
+                ))}
+              </select>
+            </label>
+          ) : null}
+
           <label className="mongo-auto-embed-modal__field">
             <span>Field</span>
             {loadingFields ? (
@@ -233,8 +282,12 @@ function MongoAutoEmbedVectorIndexModalPanel({
               </select>
             ) : (
               <p className="mongo-auto-embed-modal__error">
-                No fields inferred on <code>{collection}</code>.
-                {fieldLoadError ? ` ${fieldLoadError}` : ' Run describe schema first or pick another collection.'}
+                No fields inferred on <code>{targetLabel}</code>.
+                {fieldLoadError && databaseChoices.length <= 1
+                  ? ` ${fieldLoadError}`
+                  : databaseChoices.length <= 1
+                    ? ' Run describe schema first or pick another collection.'
+                    : ''}
               </p>
             )}
           </label>
