@@ -14,12 +14,22 @@ import {
 import { parseMultiDatabaseCollectionError } from '../../../../src/copilot/parseMultiDatabaseCollectionError.ts';
 import { createCopilotMongoAutoEmbedVectorIndex, invokeCopilotMongoInspect } from '../../api';
 import {
+  mergeCollectionNameOptions,
+  normalizeVectorIndexCollectionHint,
+  normalizeVectorIndexDatabaseHint,
+  pickInitialCatalogName,
+} from '../../copilot/mongoVectorAutoEmbedCatalog';
+import {
   formatSchemaFieldPickLabel,
   listSchemaFieldPickOptions,
   type SchemaFieldPickOption,
 } from '../../copilot/mongoVectorAutoEmbedFields';
 import { enrichSchemaFieldRowsFromPlan } from '../../copilot/mongoVectorAutoEmbedPlanFields';
-import { readMongoInspectSchemaSummary } from '../../copilot/mongoInspectFormat';
+import {
+  readMongoInspectCollectionRows,
+  readMongoInspectDatabaseRows,
+  readMongoInspectSchemaSummary,
+} from '../../copilot/mongoInspectFormat';
 import { useCopilot } from '../../copilot/CopilotContext';
 import type { MigrationPlan } from '../../migrationPlanTypes';
 
@@ -63,7 +73,7 @@ function pickInitialFieldPath(options: SchemaFieldPickOption[], initialPath?: st
   return options[0]?.path ?? preferred ?? '';
 }
 
-/** Mounted only while open — loads all collection fields once per dialog session. */
+/** Mounted only while open — database, collection, then field pickers. */
 function MongoAutoEmbedVectorIndexModalPanel({
   database,
   collection,
@@ -73,22 +83,32 @@ function MongoAutoEmbedVectorIndexModalPanel({
   onClose,
   onCreated,
 }: Omit<MongoAutoEmbedVectorIndexModalProps, 'open'>) {
-  const databaseHint = database?.trim() ?? '';
+  const copilot = useCopilot();
+  const databaseHint = normalizeVectorIndexDatabaseHint(database);
+  const collectionHint = normalizeVectorIndexCollectionHint(collection);
+  const pipelineDatabase = normalizeVectorIndexDatabaseHint(copilot.targetDatabase);
   const textFieldPathsKey = textFieldPaths.join('\u0001');
-  const sessionKey = `${databaseHint}\u0000${collection}\u0000${initialPath ?? ''}\u0000${textFieldPathsKey}`;
+  const sessionKey = `${databaseHint}\u0000${collectionHint}\u0000${initialPath ?? ''}\u0000${textFieldPathsKey}`;
   const initializedSessionRef = useRef<string | null>(null);
+  const catalogRequestRef = useRef(0);
   const schemaLoadRequestRef = useRef(0);
+  const loadCollectionsRef = useRef<(db: string, preferredCollection?: string) => Promise<void>>(async () => {});
 
   const [logicalDatabase, setLogicalDatabase] = useState(databaseHint);
-  const [databaseChoices, setDatabaseChoices] = useState<string[]>([]);
+  const [databaseOptions, setDatabaseOptions] = useState<string[]>([]);
+  const [collectionOptions, setCollectionOptions] = useState<string[]>([]);
   const [selectedDatabase, setSelectedDatabase] = useState(databaseHint);
+  const [selectedCollection, setSelectedCollection] = useState(collectionHint);
   const [fieldOptions, setFieldOptions] = useState<SchemaFieldPickOption[]>(() =>
     seedFieldOptions(textFieldPaths, initialPath),
   );
   const [path, setPath] = useState(() =>
     pickInitialFieldPath(seedFieldOptions(textFieldPaths, initialPath), initialPath),
   );
-  const [loadingFields, setLoadingFields] = useState(true);
+  const [loadingDatabases, setLoadingDatabases] = useState(true);
+  const [loadingCollections, setLoadingCollections] = useState(false);
+  const [loadingFields, setLoadingFields] = useState(false);
+  const [catalogLoadError, setCatalogLoadError] = useState('');
   const [fieldLoadError, setFieldLoadError] = useState('');
   const [model, setModel] = useState<AutoEmbedVoyageModel>(DEFAULT_MODEL);
   const [quantization, setQuantization] = useState<AutoEmbedQuantizationType>(DEFAULT_QUANTIZATION);
@@ -98,40 +118,50 @@ function MongoAutoEmbedVectorIndexModalPanel({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
 
-  const loadCollectionSchema = useCallback(
-    async (explicitDatabase: string) => {
+  const loadFieldsForTarget = useCallback(
+    async (explicitDatabase: string, explicitCollection: string) => {
       const requestId = ++schemaLoadRequestRef.current;
+      const db = explicitDatabase.trim();
+      const coll = explicitCollection.trim();
+
+      if (!db || !coll) {
+        setFieldOptions([]);
+        setPath('');
+        setFieldLoadError('');
+        return;
+      }
+
       setLoadingFields(true);
       setFieldLoadError('');
 
-      const inspectArgs: Record<string, unknown> = { collection };
-      const trimmedDatabase = explicitDatabase.trim();
-      if (trimmedDatabase) {
-        inspectArgs.database = trimmedDatabase;
-      }
-
       try {
-        const response = await invokeCopilotMongoInspect('describeMongoCollectionSchema', inspectArgs);
+        const response = await invokeCopilotMongoInspect('describeMongoCollectionSchema', {
+          database: db,
+          collection: coll,
+        });
         if (requestId !== schemaLoadRequestRef.current) return;
 
         if (!response.ok) {
           const choices = parseMultiDatabaseCollectionError(response.summary);
-          if (choices && !trimmedDatabase) {
-            setDatabaseChoices(choices);
-            setSelectedDatabase(choices[0] ?? '');
-            setLogicalDatabase(choices[0] ?? '');
-            await loadCollectionSchema(choices[0] ?? '');
+          if (choices?.length) {
+            setDatabaseOptions(choices);
+            const nextDb = pickInitialCatalogName(choices, [db, databaseHint, pipelineDatabase]);
+            setSelectedDatabase(nextDb);
+            setLogicalDatabase(nextDb);
+            setFieldLoadError('');
+            await loadCollectionsRef.current(nextDb, coll);
             return;
           }
           setFieldLoadError(response.summary);
           setFieldOptions([]);
+          setPath('');
           return;
         }
 
         const summary = readMongoInspectSchemaSummary(response.data);
         setLogicalDatabase(summary.database);
         setSelectedDatabase(summary.database);
-        const enrichedFields = enrichSchemaFieldRowsFromPlan(summary.fields, migrationPlan, collection);
+        const enrichedFields = enrichSchemaFieldRowsFromPlan(summary.fields, migrationPlan, coll);
         const options = listSchemaFieldPickOptions(enrichedFields);
         setFieldOptions(options);
         setPath(pickInitialFieldPath(options, initialPath));
@@ -139,6 +169,7 @@ function MongoAutoEmbedVectorIndexModalPanel({
         if (requestId === schemaLoadRequestRef.current) {
           setFieldLoadError(String(loadError));
           setFieldOptions([]);
+          setPath('');
         }
       } finally {
         if (requestId === schemaLoadRequestRef.current) {
@@ -146,8 +177,91 @@ function MongoAutoEmbedVectorIndexModalPanel({
         }
       }
     },
-    [collection, initialPath, migrationPlan],
+    [databaseHint, initialPath, migrationPlan, pipelineDatabase],
   );
+
+  const loadCollectionsForDatabase = useCallback(
+    async (explicitDatabase: string, preferredCollection = collectionHint) => {
+      const db = explicitDatabase.trim();
+      if (!db) {
+        setCollectionOptions([]);
+        setSelectedCollection('');
+        setFieldOptions([]);
+        setPath('');
+        return;
+      }
+
+      setLoadingCollections(true);
+      setFieldLoadError('');
+
+      try {
+        const response = await invokeCopilotMongoInspect('listMongoCollections', { database: db });
+        let apiNames: string[] = [];
+        if (response.ok) {
+          const payload = readMongoInspectCollectionRows(response.data);
+          apiNames = payload.collections.map((entry) => entry.name);
+        } else {
+          setCatalogLoadError((previous) => previous || response.summary);
+        }
+
+        const planNames = migrationPlan?.collections.map((entry) => entry.name) ?? [];
+        const names = mergeCollectionNameOptions(apiNames, planNames);
+        setCollectionOptions(names);
+        const nextCollection = pickInitialCatalogName(names, [preferredCollection]);
+        setSelectedCollection(nextCollection);
+        await loadFieldsForTarget(db, nextCollection);
+      } catch (loadError) {
+        setFieldLoadError(String(loadError));
+        setFieldOptions([]);
+        setPath('');
+      } finally {
+        setLoadingCollections(false);
+      }
+    },
+    [collectionHint, loadFieldsForTarget, migrationPlan],
+  );
+
+  loadCollectionsRef.current = loadCollectionsForDatabase;
+
+  const bootstrapCatalog = useCallback(async () => {
+    const requestId = ++catalogRequestRef.current;
+    setLoadingDatabases(true);
+    setCatalogLoadError('');
+    setFieldLoadError('');
+
+    try {
+      const response = await invokeCopilotMongoInspect('listMongoDatabases', {});
+      if (requestId !== catalogRequestRef.current) return;
+
+      if (!response.ok) {
+        setCatalogLoadError(response.summary);
+        const fallbackDb = pickInitialCatalogName([], [databaseHint, pipelineDatabase]);
+        if (fallbackDb) {
+          setDatabaseOptions([fallbackDb]);
+          setSelectedDatabase(fallbackDb);
+          setLogicalDatabase(fallbackDb);
+          await loadCollectionsForDatabase(fallbackDb);
+        }
+        return;
+      }
+
+      const rows = readMongoInspectDatabaseRows(response.data);
+      const names = rows.map((row) => row.name).sort((left, right) => left.localeCompare(right));
+      setDatabaseOptions(names);
+      const nextDb = pickInitialCatalogName(names, [databaseHint, pipelineDatabase]);
+      setSelectedDatabase(nextDb);
+      setLogicalDatabase(nextDb);
+      await loadCollectionsForDatabase(nextDb);
+    } catch (loadError) {
+      if (requestId === catalogRequestRef.current) {
+        setCatalogLoadError(String(loadError));
+      }
+    } finally {
+      if (requestId === catalogRequestRef.current) {
+        setLoadingDatabases(false);
+      }
+    }
+  }, [databaseHint, loadCollectionsForDatabase, pipelineDatabase]);
 
   useEffect(() => {
     if (initializedSessionRef.current === sessionKey) {
@@ -162,21 +276,43 @@ function MongoAutoEmbedVectorIndexModalPanel({
     setIndexName('');
     setBusy(false);
     setError('');
+    setCatalogLoadError('');
     setFieldLoadError('');
-    setDatabaseChoices([]);
+    setDatabaseOptions([]);
+    setCollectionOptions([]);
     setLogicalDatabase(databaseHint);
     setSelectedDatabase(databaseHint);
+    setSelectedCollection(collectionHint);
     const seeds = seedFieldOptions(textFieldPaths, initialPath);
     setFieldOptions(seeds);
     setPath(pickInitialFieldPath(seeds, initialPath));
 
-    void loadCollectionSchema(databaseHint);
-  }, [sessionKey, databaseHint, collection, initialPath, textFieldPathsKey, loadCollectionSchema]);
+    void bootstrapCatalog();
+  }, [sessionKey, databaseHint, collectionHint, initialPath, textFieldPathsKey, bootstrapCatalog]);
+
+  useEffect(() => {
+    if (!selectedDatabase.trim() || collectionOptions.length === 0) return;
+    if (selectedCollection && collectionOptions.includes(selectedCollection)) return;
+    const nextCollection = pickInitialCatalogName(collectionOptions, [collectionHint]);
+    setSelectedCollection(nextCollection);
+    void loadFieldsForTarget(selectedDatabase, nextCollection);
+  }, [
+    collectionHint,
+    collectionOptions,
+    loadFieldsForTarget,
+    selectedCollection,
+    selectedDatabase,
+  ]);
 
   const handleDatabaseChange = (nextDatabase: string) => {
     setSelectedDatabase(nextDatabase);
     setLogicalDatabase(nextDatabase);
-    void loadCollectionSchema(nextDatabase);
+    void loadCollectionsForDatabase(nextDatabase, '');
+  };
+
+  const handleCollectionChange = (nextCollection: string) => {
+    setSelectedCollection(nextCollection);
+    void loadFieldsForTarget(selectedDatabase, nextCollection);
   };
 
   const safePath = fieldOptions.some((entry) => entry.path === path)
@@ -184,18 +320,31 @@ function MongoAutoEmbedVectorIndexModalPanel({
     : pickInitialFieldPath(fieldOptions, initialPath);
   const selectedField = fieldOptions.find((entry) => entry.path === safePath);
   const targetLabel =
-    logicalDatabase.trim().length > 0 ? `${logicalDatabase}.${collection}` : collection;
+    logicalDatabase.trim() && selectedCollection.trim()
+      ? `${logicalDatabase}.${selectedCollection}`
+      : selectedCollection.trim() || logicalDatabase.trim() || 'your collection';
+
+  const catalogLoading = loadingDatabases || loadingCollections;
+  const canCreate =
+    Boolean(selectedDatabase.trim() && selectedCollection.trim() && safePath.trim()) &&
+    fieldOptions.length > 0;
 
   const handleSubmit = async () => {
     setError('');
     const resolvedPath = safePath.trim();
-    if (!resolvedPath) {
-      setError('Select a field to index with autoEmbed.');
+    const resolvedDatabase = selectedDatabase.trim() || logicalDatabase.trim();
+    const resolvedCollection = selectedCollection.trim();
+
+    if (!resolvedDatabase) {
+      setError('Select a database.');
       return;
     }
-    const resolvedDatabase = logicalDatabase.trim();
-    if (!resolvedDatabase) {
-      setError('Could not resolve the logical database for this collection.');
+    if (!resolvedCollection) {
+      setError('Select a collection.');
+      return;
+    }
+    if (!resolvedPath) {
+      setError('Select a field to index with autoEmbed.');
       return;
     }
     if (selectedField && !selectedField.isStringType) {
@@ -207,7 +356,7 @@ function MongoAutoEmbedVectorIndexModalPanel({
 
     const payload: MongoAutoEmbedVectorIndexInput = {
       database: resolvedDatabase,
-      collection,
+      collection: resolvedCollection,
       path: resolvedPath,
       model,
       quantization,
@@ -254,48 +403,77 @@ function MongoAutoEmbedVectorIndexModalPanel({
         </header>
 
         <div className="pipeline-modal__body mongo-auto-embed-modal__body">
-          {databaseChoices.length > 1 ? (
-            <label className="mongo-auto-embed-modal__field">
-              <span>Database</span>
-              <select
-                value={selectedDatabase}
-                onChange={(event) => handleDatabaseChange(event.target.value)}
-                disabled={loadingFields}
-              >
-                {databaseChoices.map((dbName) => (
+          <label className="mongo-auto-embed-modal__field">
+            <span>Database</span>
+            <select
+              value={selectedDatabase}
+              onChange={(event) => handleDatabaseChange(event.target.value)}
+              disabled={loadingDatabases || databaseOptions.length === 0}
+            >
+              {loadingDatabases ? (
+                <option value="">Loading databases…</option>
+              ) : databaseOptions.length === 0 ? (
+                <option value="">No databases found</option>
+              ) : (
+                databaseOptions.map((dbName) => (
                   <option key={dbName} value={dbName}>
                     {dbName}
                   </option>
-                ))}
-              </select>
-            </label>
-          ) : null}
+                ))
+              )}
+            </select>
+          </label>
+
+          <label className="mongo-auto-embed-modal__field">
+            <span>Collection</span>
+            <select
+              value={selectedCollection}
+              onChange={(event) => handleCollectionChange(event.target.value)}
+              disabled={!selectedDatabase.trim() || loadingCollections || collectionOptions.length === 0}
+            >
+              {!selectedDatabase.trim() ? (
+                <option value="">Select a database first</option>
+              ) : loadingCollections ? (
+                <option value="">Loading collections…</option>
+              ) : collectionOptions.length === 0 ? (
+                <option value="">No collections in this database</option>
+              ) : (
+                collectionOptions.map((collectionName) => (
+                  <option key={collectionName} value={collectionName}>
+                    {collectionName}
+                  </option>
+                ))
+              )}
+            </select>
+          </label>
 
           <label className="mongo-auto-embed-modal__field">
             <span>Field</span>
-            {loadingFields ? (
-              <select disabled value="">
-                <option value="">Loading fields from {collection}…</option>
-              </select>
-            ) : fieldOptions.length > 0 ? (
-              <select value={safePath} onChange={(event) => setPath(event.target.value)}>
-                {fieldOptions.map((option) => (
+            <select
+              value={safePath}
+              onChange={(event) => setPath(event.target.value)}
+              disabled={
+                !selectedCollection.trim() || loadingFields || (fieldOptions.length === 0 && !loadingFields)
+              }
+            >
+              {!selectedCollection.trim() ? (
+                <option value="">Select a collection first</option>
+              ) : loadingFields ? (
+                <option value="">Loading fields…</option>
+              ) : fieldOptions.length === 0 ? (
+                <option value="">No fields inferred — pick another collection</option>
+              ) : (
+                fieldOptions.map((option) => (
                   <option key={option.path} value={option.path}>
                     {formatSchemaFieldPickLabel(option)}
                   </option>
-                ))}
-              </select>
-            ) : (
-              <p className="mongo-auto-embed-modal__error">
-                No fields inferred on <code>{targetLabel}</code>.
-                {fieldLoadError && databaseChoices.length <= 1
-                  ? ` ${fieldLoadError}`
-                  : databaseChoices.length <= 1
-                    ? ' Run describe schema first or pick another collection.'
-                    : ''}
-              </p>
-            )}
+                ))
+              )}
+            </select>
           </label>
+
+          {catalogLoadError ? <p className="mongo-auto-embed-modal__error">{catalogLoadError}</p> : null}
+          {fieldLoadError ? <p className="copilot-results__meta copilot-results__meta--warn">{fieldLoadError}</p> : null}
 
           {selectedField && !selectedField.isStringType && !loadingFields ? (
             <p className="copilot-results__meta copilot-results__meta--warn">
@@ -379,7 +557,7 @@ function MongoAutoEmbedVectorIndexModalPanel({
               type="button"
               className="primary"
               onClick={() => void handleSubmit()}
-              disabled={busy || loadingFields || fieldOptions.length === 0}
+              disabled={busy || catalogLoading || loadingFields || !canCreate}
             >
               {busy ? 'Creating…' : 'Create index'}
             </button>
@@ -420,6 +598,9 @@ export function MongoAutoEmbedVectorIndexActions({
     return null;
   }
 
+  const databaseHint = normalizeVectorIndexDatabaseHint(database);
+  const collectionHint = normalizeVectorIndexCollectionHint(collection);
+
   return (
     <div className="mongo-auto-embed-actions">
       <button
@@ -427,8 +608,8 @@ export function MongoAutoEmbedVectorIndexActions({
         className="secondary mongo-auto-embed-actions__btn"
         onClick={() =>
           copilot.openVectorIndexDialog({
-            database,
-            collection,
+            ...(databaseHint ? { database: databaseHint } : {}),
+            collection: collectionHint,
             initialPath,
             textFieldPaths,
           })
@@ -439,3 +620,8 @@ export function MongoAutoEmbedVectorIndexActions({
     </div>
   );
 }
+
+export {
+  normalizeVectorIndexCollectionHint,
+  normalizeVectorIndexDatabaseHint,
+} from '../../copilot/mongoVectorAutoEmbedCatalog';
