@@ -115,9 +115,9 @@ export function AgentCopilotSidebar() {
                 ) : (
                   <> · offline heuristics</>
                 )}
-                {!copilot.mongoInspectAvailable ? <> · Atlas inspect offline</> : null}
+                {!copilot.mongoInspectAvailable ? <> · Atlas inspect disabled</> : null}
               </p>
-              {!copilot.mongoInspectAvailable && copilot.mongoInspectMessage ? (
+              {copilot.mongoInspectMessage ? (
                 <p className="agent-copilot-sidebar__meta agent-copilot-sidebar__meta--warn">
                   {copilot.mongoInspectMessage}
                 </p>

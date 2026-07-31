@@ -35,4 +35,10 @@ describe('parseVectorSearchIndexCommand', () => {
       path: 'details.summary',
     });
   });
+
+  it('parses commands embedded in a longer user message', () => {
+    expect(parseDirectVectorSearchIndexCommand('mcp is available: create vector search on products')).toEqual({
+      collection: 'products',
+    });
+  });
 });

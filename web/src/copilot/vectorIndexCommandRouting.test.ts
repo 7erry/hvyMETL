@@ -10,5 +10,8 @@ describe('vectorIndexCommandRouting', () => {
       collection: 'products',
       path: 'description',
     });
+    expect(parseDirectVectorSearchIndexCommand('mcp is available: create vector search on products')).toEqual({
+      collection: 'products',
+    });
   });
 });

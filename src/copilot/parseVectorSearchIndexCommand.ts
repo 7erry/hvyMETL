@@ -56,13 +56,23 @@ export function parseVectorSearchIndexTarget(rawTarget: string): ParsedVectorSea
   return { collection };
 }
 
+const CREATE_VECTOR_SEARCH_INLINE =
+  /create\s+(?:an?\s+)?(?:(?:auto\s?-?\s?embed\s+)?vector\s+(?:search\s+)?(?:index\s+)?on|vector\s+search\s+(?:index\s+)?on)\s+([^\n.?!]+)/i;
+
 /** Map chat input like "create vector search on products.description" to collection + optional field. */
 export function parseDirectVectorSearchIndexCommand(input: string): ParsedVectorSearchIndexCommand | null {
   const trimmed = input.trim();
   if (!trimmed) return null;
 
-  const match = trimmed.match(CREATE_VECTOR_SEARCH_PREFIX);
-  if (!match?.[1]) return null;
+  const anchored = trimmed.match(CREATE_VECTOR_SEARCH_PREFIX);
+  if (anchored?.[1]) {
+    return parseVectorSearchIndexTarget(anchored[1]);
+  }
 
-  return parseVectorSearchIndexTarget(match[1]);
+  const inline = trimmed.match(CREATE_VECTOR_SEARCH_INLINE);
+  if (inline?.[1]) {
+    return parseVectorSearchIndexTarget(inline[1]);
+  }
+
+  return null;
 }

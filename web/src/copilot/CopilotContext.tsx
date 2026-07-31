@@ -245,8 +245,12 @@ export function CopilotProvider({
       .then((status) => {
         setLlmConfigured(status.configured);
         setLlmModel(status.configured ? status.model : null);
-        setMongoInspectAvailable(Boolean(status.mongoInspect?.enabled && status.mongoInspect.available));
-        setMongoInspectMessage(status.mongoInspect?.message ?? null);
+        setMongoInspectAvailable(Boolean(status.mongoInspect?.enabled));
+        setMongoInspectMessage(
+          status.mongoInspect?.enabled && !status.mongoInspect.available
+            ? (status.mongoInspect.message ?? null)
+            : null,
+        );
       })
       .catch(() => {
         setLlmConfigured(false);
@@ -366,6 +370,9 @@ export function CopilotProvider({
           ok: response.ok,
           data: response.data,
         };
+        if (response.ok) {
+          setMongoInspectMessage(null);
+        }
         return attachPostVerifyArchitectureReviewNextStep(result, args);
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
@@ -702,7 +709,8 @@ export function CopilotProvider({
         if (!mongoInspectAvailable) {
           appendMessage({
             role: 'agent',
-            content: mongoInspectMessage ?? 'Atlas inspect is offline — vector index dialog is unavailable.',
+            content:
+              'MongoDB inspect is disabled on this server. Enable HVYMETL_MCP_MONGODB_ENABLED to create vector indexes from the studio.',
           });
           return;
         }

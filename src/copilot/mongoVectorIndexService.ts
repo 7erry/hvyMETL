@@ -11,7 +11,6 @@ import {
   resolveMongoInspectMongoUri,
 } from './mongoInspectConnection.js';
 import { resolveTenantMongoInspectScope } from './mongoInspectScope.js';
-import { isMongoMcpEnabled, MCP_INSPECT_UNAVAILABLE_MESSAGE } from './mongoMcpClient.js';
 import {
   buildAutoEmbedVectorSearchIndexDefinition,
   defaultAutoEmbedVectorIndexName,
@@ -94,15 +93,6 @@ export async function createMongoAutoEmbedVectorIndex(
   req: Request,
   rawBody: unknown,
 ): Promise<MongoAutoEmbedVectorIndexResult> {
-  if (!isMongoMcpEnabled()) {
-    return {
-      ok: false,
-      summary: MCP_INSPECT_UNAVAILABLE_MESSAGE,
-      error: MCP_INSPECT_UNAVAILABLE_MESSAGE,
-      serviceUnavailable: true,
-    };
-  }
-
   let input: MongoAutoEmbedVectorIndexInput;
   try {
     input = parseMongoAutoEmbedVectorIndexInput(rawBody);
