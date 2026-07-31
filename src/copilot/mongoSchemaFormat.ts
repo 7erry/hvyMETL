@@ -13,11 +13,22 @@ export type MongoCollectionSchemaSummary = {
 };
 
 /** Format a BSON type value (string or union array) for display. */
+function formatBsonTypeUnion(parts: string[]): string {
+  const unique = [...new Set(parts.map((part) => part.trim()).filter(Boolean))];
+  if (!unique.length) return 'unknown';
+  const nonNull = unique.filter((part) => part !== 'null');
+  const hasNull = unique.includes('null');
+  if (!nonNull.length) return 'null';
+  const ordered = [...nonNull];
+  if (hasNull) ordered.push('null');
+  return ordered.join(' | ');
+}
+
 function formatBsonTypeValue(value: unknown): string {
   if (typeof value === 'string') return value;
   if (Array.isArray(value)) {
-    const parts = [...new Set(value.filter((entry): entry is string => typeof entry === 'string'))].sort();
-    return parts.length ? parts.join(' | ') : 'unknown';
+    const parts = value.filter((entry): entry is string => typeof entry === 'string');
+    return parts.length ? formatBsonTypeUnion(parts) : 'unknown';
   }
   return 'unknown';
 }
@@ -60,8 +71,8 @@ function inferBsonTypesFromFieldDefinition(field: Record<string, unknown>): stri
     }
   }
 
-  const parts = [...tokens].sort();
-  return parts.length ? parts.join(' | ') : 'unknown';
+  const parts = [...tokens];
+  return parts.length ? formatBsonTypeUnion(parts) : 'unknown';
 }
 
 /** Recursively flatten JSON Schema properties from MCP collection-schema output. */

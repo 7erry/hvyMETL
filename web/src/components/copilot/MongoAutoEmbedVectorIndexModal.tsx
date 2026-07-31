@@ -18,8 +18,10 @@ import {
   listSchemaFieldPickOptions,
   type SchemaFieldPickOption,
 } from '../../copilot/mongoVectorAutoEmbedFields';
+import { enrichSchemaFieldRowsFromPlan } from '../../copilot/mongoVectorAutoEmbedPlanFields';
 import { readMongoInspectSchemaSummary } from '../../copilot/mongoInspectFormat';
 import { useCopilot } from '../../copilot/CopilotContext';
+import type { MigrationPlan } from '../../migrationPlanTypes';
 
 export type MongoAutoEmbedVectorIndexModalProps = {
   open: boolean;
@@ -27,6 +29,7 @@ export type MongoAutoEmbedVectorIndexModalProps = {
   collection: string;
   initialPath?: string;
   textFieldPaths?: string[];
+  migrationPlan?: MigrationPlan | null;
   onClose: () => void;
   onCreated?: (summary: string) => void;
 };
@@ -66,6 +69,7 @@ function MongoAutoEmbedVectorIndexModalPanel({
   collection,
   initialPath,
   textFieldPaths = EMPTY_TEXT_FIELD_PATHS,
+  migrationPlan = null,
   onClose,
   onCreated,
 }: Omit<MongoAutoEmbedVectorIndexModalProps, 'open'>) {
@@ -127,7 +131,8 @@ function MongoAutoEmbedVectorIndexModalPanel({
         const summary = readMongoInspectSchemaSummary(response.data);
         setLogicalDatabase(summary.database);
         setSelectedDatabase(summary.database);
-        const options = listSchemaFieldPickOptions(summary.fields);
+        const enrichedFields = enrichSchemaFieldRowsFromPlan(summary.fields, migrationPlan, collection);
+        const options = listSchemaFieldPickOptions(enrichedFields);
         setFieldOptions(options);
         setPath(pickInitialFieldPath(options, initialPath));
       } catch (loadError) {
@@ -141,7 +146,7 @@ function MongoAutoEmbedVectorIndexModalPanel({
         }
       }
     },
-    [collection, initialPath],
+    [collection, initialPath, migrationPlan],
   );
 
   useEffect(() => {

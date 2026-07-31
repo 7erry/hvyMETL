@@ -1069,6 +1069,7 @@ export function CopilotProvider({
           collection={vectorIndexModal.collection}
           initialPath={vectorIndexModal.initialPath}
           textFieldPaths={vectorIndexModal.textFieldPaths}
+          migrationPlan={plan}
           onClose={() => setVectorIndexModal(null)}
         />
       ) : null}

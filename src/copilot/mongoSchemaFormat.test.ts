@@ -48,7 +48,7 @@ describe('mongoSchemaFormat', () => {
           },
         },
       }),
-    ).toEqual([{ path: 'description', types: 'null | string' }]);
+    ).toEqual([{ path: 'description', types: 'string | null' }]);
   });
 
   it('normalizes MCP collection-schema payloads', () => {
