@@ -39,6 +39,18 @@ describe('mongoSchemaFormat', () => {
     ]);
   });
 
+  it('flattens nullable string fields from anyOf branches', () => {
+    expect(
+      flattenInferredSchemaFields({
+        properties: {
+          description: {
+            anyOf: [{ bsonType: 'string' }, { bsonType: 'null' }],
+          },
+        },
+      }),
+    ).toEqual([{ path: 'description', types: 'null | string' }]);
+  });
+
   it('normalizes MCP collection-schema payloads', () => {
     expect(
       normalizeCollectionSchemaPayload('csv_to_atlas', 'sensors', {

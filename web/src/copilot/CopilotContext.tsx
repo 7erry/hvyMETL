@@ -86,6 +86,8 @@ export type CopilotContextValue = {
   mongoInspectMessage: string | null;
   /** Logical MongoDB database for pipeline imports and architecture review titles. */
   targetDatabase: string;
+  /** Remember the logical database from the most recent successful pipeline import. */
+  setTargetDatabase: (database: string) => void;
   openVectorIndexDialog: (request: VectorIndexDialogRequest) => void;
   toggleOpen: () => void;
   setOpen: (open: boolean) => void;
@@ -173,9 +175,18 @@ export function CopilotProvider({
   const [targetDatabase, setTargetDatabase] = useState('csv_to_atlas');
   const [vectorIndexModal, setVectorIndexModal] = useState<VectorIndexDialogRequest | null>(null);
 
-  const openVectorIndexDialog = useCallback((request: VectorIndexDialogRequest) => {
-    setVectorIndexModal(request);
-  }, []);
+  const openVectorIndexDialog = useCallback(
+    (request: VectorIndexDialogRequest) => {
+      const explicitDatabase = request.database?.trim();
+      const pipelineDatabase = targetDatabase.trim();
+      const database =
+        explicitDatabase && explicitDatabase !== 'database'
+          ? explicitDatabase
+          : pipelineDatabase || undefined;
+      setVectorIndexModal({ ...request, database });
+    },
+    [targetDatabase],
+  );
   const [llmHistory, setLlmHistory] = useState<CopilotLlmMessage[]>([]);
   const chatInputFocusRef = useRef<(() => void) | null>(null);
   const chatInputFocusTimersRef = useRef<number[]>([]);
@@ -972,6 +983,7 @@ export function CopilotProvider({
       mongoInspectAvailable,
       mongoInspectMessage,
       targetDatabase,
+      setTargetDatabase,
       openVectorIndexDialog,
       toggleOpen,
       setOpen,
@@ -1025,6 +1037,7 @@ export function CopilotProvider({
       mongoInspectAvailable,
       mongoInspectMessage,
       targetDatabase,
+      setTargetDatabase,
       openVectorIndexDialog,
       toggleOpen,
       setOpen,

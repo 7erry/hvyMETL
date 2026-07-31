@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  fieldTypesAllowAutoEmbed,
   formatSchemaFieldPickLabel,
   inferTextFieldPathsFromSchemaTypes,
   listSchemaFieldPickOptions,
@@ -13,6 +14,12 @@ describe('mongoVectorAutoEmbedFields', () => {
         { path: 'count', types: 'int' },
       ]),
     ).toEqual(['title']);
+  });
+
+  it('treats unknown inferred types as autoEmbed-eligible', () => {
+    expect(fieldTypesAllowAutoEmbed('unknown')).toBe(true);
+    expect(fieldTypesAllowAutoEmbed('null | string')).toBe(true);
+    expect(fieldTypesAllowAutoEmbed('int')).toBe(false);
   });
 
   it('lists every inferred field for the picklist', () => {

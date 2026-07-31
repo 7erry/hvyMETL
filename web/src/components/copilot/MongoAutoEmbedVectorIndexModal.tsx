@@ -45,7 +45,7 @@ function seedFieldOptions(textFieldPaths: string[], initialPath?: string): Schem
   }));
   const preferred = initialPath?.trim();
   if (preferred && !options.some((entry) => entry.path === preferred)) {
-    options.push({ path: preferred, types: 'unknown', isStringType: false });
+    options.push({ path: preferred, types: 'unknown', isStringType: true });
   }
   return options.sort((left, right) => left.path.localeCompare(right.path));
 }

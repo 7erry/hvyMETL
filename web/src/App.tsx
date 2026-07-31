@@ -116,6 +116,7 @@ function PipelinePanelConnected(
         copilot.setOpen(true);
         copilot.setActiveTab('chat');
         if (result.ok && result.targetDb) {
+          copilot.setTargetDatabase(result.targetDb.trim());
           const imported = result.imports.filter((entry) => entry.ok).length;
           copilot.showWorkflowResult({
             tool: 'runPipeline',

@@ -1,9 +1,16 @@
+/** True when inferred BSON types allow Atlas autoEmbed on this field path. */
+export function fieldTypesAllowAutoEmbed(types: string): boolean {
+  const normalized = types.trim().toLowerCase();
+  if (!normalized || normalized === 'unknown') return true;
+  return /\bstring\b/.test(normalized);
+}
+
 /** Infer string field paths from BSON type labels shown in schema inspect tables. */
 export function inferTextFieldPathsFromSchemaTypes(
   fields: Array<{ path: string; types: string }>,
 ): string[] {
   return fields
-    .filter((field) => /\bstring\b/i.test(field.types))
+    .filter((field) => fieldTypesAllowAutoEmbed(field.types))
     .map((field) => field.path);
 }
 
@@ -21,7 +28,7 @@ export function listSchemaFieldPickOptions(
     .map((field) => ({
       path: field.path,
       types: field.types,
-      isStringType: /\bstring\b/i.test(field.types),
+      isStringType: fieldTypesAllowAutoEmbed(field.types),
     }))
     .sort((left, right) => left.path.localeCompare(right.path));
 }

@@ -22,6 +22,48 @@ function formatBsonTypeValue(value: unknown): string {
   return 'unknown';
 }
 
+function collectBsonTypeTokens(value: unknown, tokens: Set<string>): void {
+  if (typeof value === 'string') {
+    tokens.add(value);
+    return;
+  }
+  if (Array.isArray(value)) {
+    for (const entry of value) {
+      if (typeof entry === 'string') tokens.add(entry);
+    }
+  }
+}
+
+/** Infer a display type label from one JSON Schema field definition (incl. anyOf/nullable). */
+function inferBsonTypesFromFieldDefinition(field: Record<string, unknown>): string {
+  const tokens = new Set<string>();
+
+  if (field.bsonType !== undefined) {
+    collectBsonTypeTokens(field.bsonType, tokens);
+  }
+  if (typeof field.type === 'string') {
+    tokens.add(field.type);
+  }
+
+  for (const key of ['anyOf', 'oneOf', 'allOf'] as const) {
+    const branches = field[key];
+    if (!Array.isArray(branches)) continue;
+    for (const branch of branches) {
+      if (!branch || typeof branch !== 'object') continue;
+      const record = branch as Record<string, unknown>;
+      if (record.bsonType !== undefined) {
+        collectBsonTypeTokens(record.bsonType, tokens);
+      }
+      if (typeof record.type === 'string') {
+        tokens.add(record.type);
+      }
+    }
+  }
+
+  const parts = [...tokens].sort();
+  return parts.length ? parts.join(' | ') : 'unknown';
+}
+
 /** Recursively flatten JSON Schema properties from MCP collection-schema output. */
 export function flattenInferredSchemaFields(schema: unknown, prefix = ''): MongoSchemaFieldRow[] {
   if (!schema || typeof schema !== 'object') return [];
@@ -65,7 +107,7 @@ export function flattenInferredSchemaFields(schema: unknown, prefix = ''): Mongo
       continue;
     }
 
-    rows.push({ path, types: formatBsonTypeValue(bsonType) });
+    rows.push({ path, types: inferBsonTypesFromFieldDefinition(field) });
   }
 
   return rows;
