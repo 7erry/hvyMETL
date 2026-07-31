@@ -86,6 +86,7 @@ export type CopilotContextValue = {
   mongoInspectMessage: string | null;
   /** Logical MongoDB database for pipeline imports and architecture review titles. */
   targetDatabase: string;
+  openVectorIndexDialog: (request: VectorIndexDialogRequest) => void;
   toggleOpen: () => void;
   setOpen: (open: boolean) => void;
   setActiveTab: (tab: 'chat' | 'translator') => void;
@@ -111,6 +112,14 @@ export type CopilotContextValue = {
 };
 
 const CopilotContext = createContext<CopilotContextValue | null>(null);
+
+/** Target collection for the shared autoEmbed vector index dialog. */
+export type VectorIndexDialogRequest = {
+  database: string;
+  collection: string;
+  initialPath?: string;
+  textFieldPaths?: string[];
+};
 
 function newMessageId(): string {
   return `msg-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
@@ -161,11 +170,11 @@ export function CopilotProvider({
   const [mongoInspectAvailable, setMongoInspectAvailable] = useState(false);
   const [mongoInspectMessage, setMongoInspectMessage] = useState<string | null>(null);
   const [targetDatabase, setTargetDatabase] = useState('csv_to_atlas');
-  const [vectorIndexModal, setVectorIndexModal] = useState<{
-    database: string;
-    collection: string;
-    initialPath?: string;
-  } | null>(null);
+  const [vectorIndexModal, setVectorIndexModal] = useState<VectorIndexDialogRequest | null>(null);
+
+  const openVectorIndexDialog = useCallback((request: VectorIndexDialogRequest) => {
+    setVectorIndexModal(request);
+  }, []);
   const [llmHistory, setLlmHistory] = useState<CopilotLlmMessage[]>([]);
   const chatInputFocusRef = useRef<(() => void) | null>(null);
   const chatInputFocusTimersRef = useRef<number[]>([]);
@@ -719,7 +728,7 @@ export function CopilotProvider({
           });
           return;
         }
-        setVectorIndexModal({
+        openVectorIndexDialog({
           database: directVectorIndex.database?.trim() || targetDatabase.trim() || 'csv_to_atlas',
           collection: directVectorIndex.collection,
           initialPath: directVectorIndex.path,
@@ -785,7 +794,7 @@ export function CopilotProvider({
         setStatus('idle');
       }, 400);
     },
-    [appendMessage, llmConfigured, llmHistory, managerCostInputs, model, mongoInspectAvailable, mongoInspectMessage, onClearOverrides, plan, runLlmTurn, runMongoInspectDirect, runWorkflowDirect, runTool, targetDatabase],
+    [appendMessage, llmConfigured, llmHistory, managerCostInputs, model, mongoInspectAvailable, mongoInspectMessage, onClearOverrides, openVectorIndexDialog, plan, runLlmTurn, runMongoInspectDirect, runWorkflowDirect, runTool, targetDatabase],
   );
 
   const openWithPrompt = useCallback(
@@ -960,6 +969,7 @@ export function CopilotProvider({
       mongoInspectAvailable,
       mongoInspectMessage,
       targetDatabase,
+      openVectorIndexDialog,
       toggleOpen,
       setOpen,
       setActiveTab,
@@ -1012,6 +1022,7 @@ export function CopilotProvider({
       mongoInspectAvailable,
       mongoInspectMessage,
       targetDatabase,
+      openVectorIndexDialog,
       toggleOpen,
       setOpen,
       setActiveTab,
@@ -1041,6 +1052,7 @@ export function CopilotProvider({
           database={vectorIndexModal.database}
           collection={vectorIndexModal.collection}
           initialPath={vectorIndexModal.initialPath}
+          textFieldPaths={vectorIndexModal.textFieldPaths}
           onClose={() => setVectorIndexModal(null)}
         />
       ) : null}

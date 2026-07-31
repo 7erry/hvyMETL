@@ -249,7 +249,7 @@ export function MongoInspectSchemaTable({
   const schemaFieldsKey = summary.fields.map((field) => `${field.path}:${field.types}`).join('|');
   const textFieldPaths = useMemo(
     () => inferTextFieldPathsFromSchemaTypes(summary.fields),
-    [schemaFieldsKey, summary.fields],
+    [schemaFieldsKey],
   );
 
   if (!summary.fields.length) {

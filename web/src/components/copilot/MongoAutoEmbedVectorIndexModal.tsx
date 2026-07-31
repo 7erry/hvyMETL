@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import {
   AUTO_EMBED_DIMENSIONS,
   AUTO_EMBED_QUANTIZATION_TYPES,
@@ -13,14 +14,13 @@ import {
 import { createCopilotMongoAutoEmbedVectorIndex, invokeCopilotMongoInspect } from '../../api';
 import { inferTextFieldPathsFromSchemaTypes } from '../../copilot/mongoVectorAutoEmbedFields';
 import { readMongoInspectSchemaSummary } from '../../copilot/mongoInspectFormat';
+import { useCopilot } from '../../copilot/CopilotContext';
 
 export type MongoAutoEmbedVectorIndexModalProps = {
   open: boolean;
   database: string;
   collection: string;
-  /** Pre-selected text field when user specified collection.field. */
   initialPath?: string;
-  /** Optional seed paths while schema loads (e.g. from an inspect card). */
   textFieldPaths?: string[];
   onClose: () => void;
   onCreated?: (summary: string) => void;
@@ -30,8 +30,6 @@ const DEFAULT_MODEL: AutoEmbedVoyageModel = 'voyage-4-lite';
 const DEFAULT_QUANTIZATION: AutoEmbedQuantizationType = 'scalar';
 const DEFAULT_DIMENSIONS: AutoEmbedDimension = 1024;
 const DEFAULT_SIMILARITY: AutoEmbedSimilarityFunction = 'cosine';
-
-/** Stable default so optional textFieldPaths does not change reference every render. */
 const EMPTY_TEXT_FIELD_PATHS: string[] = [];
 
 function mergeFieldPaths(seeds: string[], loaded: string[], initialPath?: string): string[] {
@@ -51,26 +49,26 @@ function pickInitialPath(paths: string[], initialPath?: string): string {
   return paths[0] ?? preferred ?? '';
 }
 
-/** Dialog to create an Atlas Vector Search autoEmbed index on a collection. */
-export function MongoAutoEmbedVectorIndexModal({
-  open,
+/** Mounted only while open — loads collection string fields once per dialog session. */
+function MongoAutoEmbedVectorIndexModalPanel({
   database,
   collection,
   initialPath,
   textFieldPaths = EMPTY_TEXT_FIELD_PATHS,
   onClose,
   onCreated,
-}: MongoAutoEmbedVectorIndexModalProps) {
+}: Omit<MongoAutoEmbedVectorIndexModalProps, 'open'>) {
   const textFieldPathsKey = textFieldPaths.join('\u0001');
+  const sessionKey = `${database}\u0000${collection}\u0000${initialPath ?? ''}\u0000${textFieldPathsKey}`;
+  const initializedSessionRef = useRef<string | null>(null);
 
-  const seedPaths = useMemo(
-    () => mergeFieldPaths(textFieldPaths, [], initialPath),
-    [textFieldPathsKey, initialPath],
+  const [fieldPaths, setFieldPaths] = useState<string[]>(() =>
+    mergeFieldPaths(textFieldPaths, [], initialPath),
   );
-
-  const [fieldPaths, setFieldPaths] = useState<string[]>(seedPaths);
-  const [path, setPath] = useState(() => pickInitialPath(seedPaths, initialPath));
-  const [loadingFields, setLoadingFields] = useState(false);
+  const [path, setPath] = useState(() =>
+    pickInitialPath(mergeFieldPaths(textFieldPaths, [], initialPath), initialPath),
+  );
+  const [loadingFields, setLoadingFields] = useState(true);
   const [fieldLoadError, setFieldLoadError] = useState('');
   const [model, setModel] = useState<AutoEmbedVoyageModel>(DEFAULT_MODEL);
   const [quantization, setQuantization] = useState<AutoEmbedQuantizationType>(DEFAULT_QUANTIZATION);
@@ -81,7 +79,10 @@ export function MongoAutoEmbedVectorIndexModal({
   const [error, setError] = useState('');
 
   useEffect(() => {
-    if (!open) return;
+    if (initializedSessionRef.current === sessionKey) {
+      return;
+    }
+    initializedSessionRef.current = sessionKey;
 
     setModel(DEFAULT_MODEL);
     setQuantization(DEFAULT_QUANTIZATION);
@@ -91,12 +92,13 @@ export function MongoAutoEmbedVectorIndexModal({
     setBusy(false);
     setError('');
     setFieldLoadError('');
-    setFieldPaths(seedPaths);
-    setPath(pickInitialPath(seedPaths, initialPath));
+    const seeds = mergeFieldPaths(textFieldPaths, [], initialPath);
+    setFieldPaths(seeds);
+    setPath(pickInitialPath(seeds, initialPath));
+    setLoadingFields(true);
 
     let cancelled = false;
     void (async () => {
-      setLoadingFields(true);
       try {
         const response = await invokeCopilotMongoInspect('describeMongoCollectionSchema', {
           database,
@@ -124,13 +126,13 @@ export function MongoAutoEmbedVectorIndexModal({
     return () => {
       cancelled = true;
     };
-  }, [open, database, collection, initialPath, textFieldPathsKey]);
+  }, [sessionKey, database, collection, initialPath, textFieldPathsKey]);
 
-  if (!open) return null;
+  const safePath = fieldPaths.includes(path) ? path : pickInitialPath(fieldPaths, initialPath);
 
   const handleSubmit = async () => {
     setError('');
-    const resolvedPath = path.trim();
+    const resolvedPath = safePath.trim();
     if (!resolvedPath) {
       setError('Select the text field to index with autoEmbed.');
       return;
@@ -163,7 +165,7 @@ export function MongoAutoEmbedVectorIndexModal({
     }
   };
 
-  return (
+  const panel = (
     <div
       className="pipeline-overlay"
       role="dialog"
@@ -195,7 +197,7 @@ export function MongoAutoEmbedVectorIndexModal({
                 <option value="">Loading fields from {collection}…</option>
               </select>
             ) : fieldPaths.length > 0 ? (
-              <select value={path} onChange={(event) => setPath(event.target.value)}>
+              <select value={safePath} onChange={(event) => setPath(event.target.value)}>
                 {fieldPaths.map((option) => (
                   <option key={option} value={option}>
                     {option}
@@ -295,6 +297,14 @@ export function MongoAutoEmbedVectorIndexModal({
       </div>
     </div>
   );
+
+  return createPortal(panel, document.body);
+}
+
+/** Dialog to create an Atlas Vector Search autoEmbed index on a collection. */
+export function MongoAutoEmbedVectorIndexModal({ open, ...rest }: MongoAutoEmbedVectorIndexModalProps) {
+  if (!open) return null;
+  return <MongoAutoEmbedVectorIndexModalPanel {...rest} />;
 }
 
 type MongoAutoEmbedVectorIndexActionsProps = {
@@ -305,7 +315,7 @@ type MongoAutoEmbedVectorIndexActionsProps = {
   vectorIndexEnabled: boolean;
 };
 
-/** Button that opens the autoEmbed vector index dialog for one collection. */
+/** Opens the shared studio vector index dialog for one collection. */
 export function MongoAutoEmbedVectorIndexActions({
   database,
   collection,
@@ -313,30 +323,28 @@ export function MongoAutoEmbedVectorIndexActions({
   initialPath,
   vectorIndexEnabled,
 }: MongoAutoEmbedVectorIndexActionsProps) {
-  const [open, setOpen] = useState(false);
-  const [notice, setNotice] = useState('');
+  const copilot = useCopilot();
 
   if (!vectorIndexEnabled) {
     return null;
   }
 
   return (
-    <>
-      <div className="mongo-auto-embed-actions">
-        <button type="button" className="secondary mongo-auto-embed-actions__btn" onClick={() => setOpen(true)}>
-          Create autoEmbed vector index…
-        </button>
-        {notice ? <p className="copilot-results__meta">{notice}</p> : null}
-      </div>
-      <MongoAutoEmbedVectorIndexModal
-        open={open}
-        database={database}
-        collection={collection}
-        textFieldPaths={textFieldPaths}
-        initialPath={initialPath}
-        onClose={() => setOpen(false)}
-        onCreated={(summary) => setNotice(summary)}
-      />
-    </>
+    <div className="mongo-auto-embed-actions">
+      <button
+        type="button"
+        className="secondary mongo-auto-embed-actions__btn"
+        onClick={() =>
+          copilot.openVectorIndexDialog({
+            database,
+            collection,
+            initialPath,
+            textFieldPaths,
+          })
+        }
+      >
+        Create autoEmbed vector index…
+      </button>
+    </div>
   );
 }
