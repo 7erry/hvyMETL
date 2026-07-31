@@ -31,6 +31,9 @@ const DEFAULT_QUANTIZATION: AutoEmbedQuantizationType = 'scalar';
 const DEFAULT_DIMENSIONS: AutoEmbedDimension = 1024;
 const DEFAULT_SIMILARITY: AutoEmbedSimilarityFunction = 'cosine';
 
+/** Stable default so optional textFieldPaths does not change reference every render. */
+const EMPTY_TEXT_FIELD_PATHS: string[] = [];
+
 function mergeFieldPaths(seeds: string[], loaded: string[], initialPath?: string): string[] {
   const merged = new Set<string>();
   for (const path of [...seeds, ...loaded]) {
@@ -54,13 +57,15 @@ export function MongoAutoEmbedVectorIndexModal({
   database,
   collection,
   initialPath,
-  textFieldPaths = [],
+  textFieldPaths = EMPTY_TEXT_FIELD_PATHS,
   onClose,
   onCreated,
 }: MongoAutoEmbedVectorIndexModalProps) {
+  const textFieldPathsKey = textFieldPaths.join('\u0001');
+
   const seedPaths = useMemo(
     () => mergeFieldPaths(textFieldPaths, [], initialPath),
-    [textFieldPaths, initialPath],
+    [textFieldPathsKey, initialPath],
   );
 
   const [fieldPaths, setFieldPaths] = useState<string[]>(seedPaths);
@@ -119,7 +124,7 @@ export function MongoAutoEmbedVectorIndexModal({
     return () => {
       cancelled = true;
     };
-  }, [open, database, collection, initialPath, seedPaths, textFieldPaths]);
+  }, [open, database, collection, initialPath, textFieldPathsKey]);
 
   if (!open) return null;
 

@@ -246,7 +246,11 @@ export function MongoInspectSchemaTable({
   const fieldLabel =
     summary.fieldsCount === 1 ? '1 field' : `${summary.fieldsCount.toLocaleString()} fields`;
 
-  const textFieldPaths = inferTextFieldPathsFromSchemaTypes(summary.fields);
+  const schemaFieldsKey = summary.fields.map((field) => `${field.path}:${field.types}`).join('|');
+  const textFieldPaths = useMemo(
+    () => inferTextFieldPathsFromSchemaTypes(summary.fields),
+    [schemaFieldsKey, summary.fields],
+  );
 
   if (!summary.fields.length) {
     return (

@@ -459,6 +459,7 @@ export function CopilotProvider({
 
   const runLlmTurn = useCallback(
     async (history: CopilotLlmMessage[]): Promise<CopilotLlmMessage[]> => {
+      try {
       const schemaContext = buildSchemaContextPayload({
         model,
         plan,
@@ -631,6 +632,10 @@ export function CopilotProvider({
 
       setStatus('idle');
       return messages;
+      } catch (error) {
+        setStatus('idle');
+        throw error;
+      }
     },
     [
       appendMessage,
