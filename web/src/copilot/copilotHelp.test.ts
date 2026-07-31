@@ -26,5 +26,7 @@ describe('copilotHelp', () => {
     expect(buildCopilotCommandsResponse()).toContain('copilot-action:');
     expect(buildCopilotCommandsResponse()).toContain('describe `{db}.{collection}`');
     expect(buildCopilotCommandsResponse()).toContain('list databases');
+    expect(buildCopilotCommandsResponse()).toContain('create vector search on `{collection}`');
+    expect(buildCopilotCommandsResponse()).toContain('Vector search — Phase 3');
   });
 });
