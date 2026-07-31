@@ -12,7 +12,7 @@ import { fetchAuthConfig, fetchAuthSession, setAccessTokenProvider, setDbPrefixP
 import {
   DEFAULT_AUTH0_ROLES_CLAIM,
   parseJwtPayload,
-  preferredUiRole,
+  resolveStudioRoleAccess,
   rolesFromClaims,
   type HvyRole,
 } from './access';
@@ -31,6 +31,7 @@ type AuthState = {
   isAdmin: boolean;
   canUseDeveloper: boolean;
   canUseManager: boolean;
+  canSwitchUiRole: boolean;
   preferredRole: 'developer' | 'manager';
   /** True when Bearer tokens are available for protected API routes. */
   apiReady: boolean;
@@ -53,6 +54,7 @@ const disabledAuthState: AuthState = {
   isAdmin: true,
   canUseDeveloper: true,
   canUseManager: true,
+  canSwitchUiRole: true,
   preferredRole: 'developer',
   apiReady: true,
   login: async () => undefined,
@@ -248,6 +250,8 @@ function Auth0Bridge({
   const formattedError = error ? formatAuthError(error) : undefined;
   const authSessionExpired = sessionExpired || (formattedError ? isSessionExpiredAuthError(error) : false);
 
+  const roleAccess = resolveStudioRoleAccess(roles);
+
   const value: AuthState = {
     enabled: true,
     serverAuthRequired,
@@ -259,10 +263,11 @@ function Auth0Bridge({
     userName: user?.name ?? user?.nickname ?? user?.email ?? 'Authenticated user',
     userEmail: user?.email ?? '',
     roles,
-    isAdmin: roles.includes('admin'),
-    canUseDeveloper: roles.includes('admin') || roles.includes('developer'),
-    canUseManager: roles.includes('admin') || roles.includes('manager'),
-    preferredRole: preferredUiRole(roles),
+    isAdmin: roleAccess.isAdmin,
+    canUseDeveloper: roleAccess.canUseDeveloper,
+    canUseManager: roleAccess.canUseManager,
+    canSwitchUiRole: roleAccess.canSwitchUiRole,
+    preferredRole: roleAccess.preferredRole,
     error: formattedError,
     login: () => loginWithRedirect(),
     reauthenticate: () =>

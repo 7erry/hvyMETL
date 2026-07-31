@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { parseJwtPayload, preferredUiRole, rolesFromClaims } from './access';
+import { parseJwtPayload, preferredUiRole, resolveStudioRoleAccess, rolesFromClaims } from './access';
 
 describe('parseJwtPayload', () => {
   it('decodes a JWT payload segment', () => {
@@ -21,5 +21,42 @@ describe('rolesFromClaims', () => {
     expect(preferredUiRole(['admin'])).toBe('developer');
     expect(preferredUiRole(['developer'])).toBe('developer');
     expect(preferredUiRole(['manager'])).toBe('manager');
+  });
+});
+
+describe('resolveStudioRoleAccess', () => {
+  it('grants both modes and switching only to admin', () => {
+    expect(resolveStudioRoleAccess(['admin'])).toMatchObject({
+      canUseDeveloper: true,
+      canUseManager: true,
+      canSwitchUiRole: true,
+    });
+  });
+
+  it('grants a single mode for developer or manager alone', () => {
+    expect(resolveStudioRoleAccess(['developer'])).toEqual({
+      isAdmin: false,
+      canUseDeveloper: true,
+      canUseManager: false,
+      canSwitchUiRole: false,
+      preferredRole: 'developer',
+    });
+    expect(resolveStudioRoleAccess(['manager'])).toEqual({
+      isAdmin: false,
+      canUseDeveloper: false,
+      canUseManager: true,
+      canSwitchUiRole: false,
+      preferredRole: 'manager',
+    });
+  });
+
+  it('does not grant manager UI when user has developer and manager without admin', () => {
+    expect(resolveStudioRoleAccess(['developer', 'manager'])).toEqual({
+      isAdmin: false,
+      canUseDeveloper: true,
+      canUseManager: false,
+      canSwitchUiRole: false,
+      preferredRole: 'developer',
+    });
   });
 });

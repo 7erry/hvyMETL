@@ -346,17 +346,18 @@ export default function App() {
 
   useEffect(() => {
     if (!access.enabled || access.isLoading || !access.isAuthenticated) return;
-    if (access.isAdmin) return;
-    if (uiRole === 'developer' && !access.canUseDeveloper) {
-      setSessionField('uiRole', access.preferredRole);
-    } else if (uiRole === 'manager' && !access.canUseManager) {
+    if (access.canSwitchUiRole) return;
+    const allowed =
+      (uiRole === 'developer' && access.canUseDeveloper)
+      || (uiRole === 'manager' && access.canUseManager);
+    if (!allowed) {
       setSessionField('uiRole', access.preferredRole);
     }
   }, [
+    access.canSwitchUiRole,
     access.canUseDeveloper,
     access.canUseManager,
     access.enabled,
-    access.isAdmin,
     access.isAuthenticated,
     access.isLoading,
     access.preferredRole,
@@ -1172,7 +1173,7 @@ export default function App() {
       <header className="app-header">
         <MongoLogo />
         <div className="app-header__actions">
-          {access.isAdmin ? (
+          {access.canSwitchUiRole ? (
             <RoleToggle role={uiRole} onChange={(role) => setSessionField('uiRole', role)} />
           ) : (
             <span className="role-toggle role-toggle--locked" aria-label="Assigned role">

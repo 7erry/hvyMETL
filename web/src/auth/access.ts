@@ -31,6 +31,74 @@ export function preferredUiRole(roles: HvyRole[]): 'developer' | 'manager' {
   return 'manager';
 }
 
+export type StudioRoleAccess = {
+  isAdmin: boolean;
+  canUseDeveloper: boolean;
+  canUseManager: boolean;
+  /** Admin-only toggle between Developer and Manager UI. */
+  canSwitchUiRole: boolean;
+  preferredRole: 'developer' | 'manager';
+};
+
+/**
+ * Maps Auth0 roles to studio UI access.
+ * Admin may use both modes. Everyone else gets exactly one mode — including users
+ * who hold both developer and manager without admin (developer wins).
+ */
+export function resolveStudioRoleAccess(roles: HvyRole[]): StudioRoleAccess {
+  const isAdmin = roles.includes('admin');
+  if (isAdmin) {
+    return {
+      isAdmin: true,
+      canUseDeveloper: true,
+      canUseManager: true,
+      canSwitchUiRole: true,
+      preferredRole: preferredUiRole(roles),
+    };
+  }
+
+  const hasDeveloper = roles.includes('developer');
+  const hasManager = roles.includes('manager');
+
+  if (hasDeveloper && hasManager) {
+    return {
+      isAdmin: false,
+      canUseDeveloper: true,
+      canUseManager: false,
+      canSwitchUiRole: false,
+      preferredRole: 'developer',
+    };
+  }
+
+  if (hasDeveloper) {
+    return {
+      isAdmin: false,
+      canUseDeveloper: true,
+      canUseManager: false,
+      canSwitchUiRole: false,
+      preferredRole: 'developer',
+    };
+  }
+
+  if (hasManager) {
+    return {
+      isAdmin: false,
+      canUseDeveloper: false,
+      canUseManager: true,
+      canSwitchUiRole: false,
+      preferredRole: 'manager',
+    };
+  }
+
+  return {
+    isAdmin: false,
+    canUseDeveloper: false,
+    canUseManager: false,
+    canSwitchUiRole: false,
+    preferredRole: 'developer',
+  };
+}
+
 /** Decode a JWT payload segment (browser-safe; no signature verification). */
 export function parseJwtPayload(token: string): Record<string, unknown> | undefined {
   const segments = token.split('.');
