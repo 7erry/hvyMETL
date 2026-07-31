@@ -1,4 +1,5 @@
-Modified Business Source License 1.1
+Business Source License 1.1
+
 Copyright (c) 2026 Terry Walters
 
 Parameters:
@@ -9,20 +10,12 @@ Licensed Work: hvyMETL (https://github.com/7erry/hvyMETL)
 
 Associated Derivative Works: All works derived from the Licensed Work.
 
-Change Date: 2026-06-10 (Note: If you never want it to automatically become open source under Apache 2.0, you can set this to a distant future date like 2099-01-01, or remove the Change License clause entirely).
-
-Change License: Apache License, Version 2.0
-
 Additional Use Grant: Use of the Licensed Work is permitted for non-production environments, internal evaluation purposes, and internal business operations, strictly excluding any form of commercial exploitation, monetization, offering as a paid service, or resale by any party other than the Licensor.
 
 Terms
 
-The Licensor hereby grants you the right to copy, modify, create derivative works, redistribute, and make available the Licensed Work applied to the Licensed Work and Associated Derivative Works, provided that you do not use the Licensed Work for any purpose that breaches the restrictions or conditions specified in the Parameters or the Additional Use Grant. For the avoidance of doubt, third parties are explicitly prohibited from selling, licensing, sublicensing, or commercially distributing the Licensed Work or any commercial-grade derivative works for a fee.
+The Licensor hereby grants you the right to copy, modify, create derivative works, redistribute, and make available the Licensed Work applied to the Licensed Work and Associated Derivative Works, provided that you do not use the Licensed Work for any purpose that breaches the restrictions or conditions specified in the Parameters or the Additional Use Grant. For the avoidance of doubt, third parties are explicitly prohibited from selling, licensing, sublicensing, or commercially distributing the Licensed Work or any derivative works for a fee.
 
-Effective on the Change Date, the Licensor hereby grants you a permanent, worldwide, royalty-free, non-exclusive, irrevocable license under the Licensor's intellectual property rights to copy, modify, create derivative works, redistribute, and make available the Licensed Work under the terms of the Change License, subject to the continuing restriction that only the Licensor retains the right to commercially sell or monetize the Licensed Work.
-
-To the extent that the terms of the Change License conflict with the terms of this Business Source License, the terms of this Business Source License shall govern until the Change Date, after which the terms of the Change License shall govern.
-
-Intellectual property rights, including copyrights, in the Licensed Work remain with the Licensor. You must include a copy of this License and all notices of copyright, patent, trademark, and attribution with any copy or derivative work of the Licensed Work that you redistribute.
+Intellectual property rights, including copyrights, in the Licensed Work remain exclusively with the Licensor. You must include a copy of this License and all notices of copyright, patent, trademark, and attribution with any copy or derivative work of the Licensed Work that you redistribute.
 
 THE LICENSED WORK IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE LICENSED WORK OR THE USE OR OTHER DEALINGS IN THE LICENSED WORK.
