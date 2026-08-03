@@ -38,7 +38,8 @@ Base path: **`/api/sizing-assistant`** (mounted in [`src/server/index.ts`](../sr
 | Method | Path | Description |
 | --- | --- | --- |
 | `GET` | `/status` | `{ configured, model }` — Grove configured when `GROVE_API_KEY` is set |
-| `POST` | `/session` | Create session; returns `sessionId` |
+| `POST` | `/session` | Create session; optional body `{ studioSeed }` pre-fills parameters from Studio (Manager scale, workload profile, Atlas inspect hints) |
+| `POST` | `/session/:sessionId/seed` | Body `{ studioSeed }` — merge Studio context into an existing session (fills only missing fields) |
 | `GET` | `/session/:sessionId` | Session snapshot (parameters, handoff status) |
 | `PUT` | `/session/:sessionId/transcripts` | Body: `{ transcripts: [{ id, title, body }] }` |
 | `POST` | `/tools` | Body: `{ sessionId, tool, args? }` — direct tool execution |
@@ -91,9 +92,9 @@ Requires `GROVE_API_KEY` on the API server for LLM-driven tool use; `/tools` wor
 
 ## UX flow
 
-1. Client creates a **session** and optionally attaches **transcripts** after Resource Curator selection.
-2. User chats via **`/chat`** (Grove + tools) or the studio **Atlas Sizing** tab.
-3. Model calls `update_sizing_parameters` / `extract_sizing_from_transcripts` as the user supplies workload facts.
+1. Studio opens **Atlas Sizing** → `POST /session` with `studioSeed` built from Manager **Dataset scale**, migration workload profile (peak RPM, read/write split, compression), post-design document size, and optional Atlas inspect hints after pipeline import (`listMongoCollections` / index listings). Clients may still attach **transcripts** after Resource Curator selection via `PUT /session/:id/transcripts`.
+2. User chats via **`/chat`** (Grove + tools) or the studio **Atlas Sizing** tab. Studio re-posts `studioSeed` on `/seed` when Manager or inspect context changes, and includes it on `/chat` so the model sees pre-loaded facts.
+3. Model calls `update_sizing_parameters` only when the user changes values; `find_optimal_cluster_tier` can run immediately when required fields were seeded.
 4. When ready, `find_optimal_cluster_tier` returns tier id, shard count, secondaries, and **parameters used** — no cost breakdown in assistant-facing text.
 5. `handoff_to_resource_curator` pauses sizing until new resources are selected (`PUT` transcripts marks handoff `completed`).
 

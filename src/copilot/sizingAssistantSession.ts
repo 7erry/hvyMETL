@@ -94,6 +94,55 @@ export function mergeSessionParameters(
   return touchSession(session);
 }
 
+function isSizingParameterMissing(
+  key: keyof SizingSessionParameters,
+  params: SizingSessionParameters,
+): boolean {
+  const value = params[key];
+  if (value === undefined || value === null) return true;
+  if (key === 'workload_type') {
+    return typeof value !== 'string' || value.length === 0;
+  }
+  if (key === 'target_availability_sla' || key === 'cloud_provider') {
+    return typeof value !== 'string' || value.trim().length === 0;
+  }
+  if (key === 'target_regions') {
+    return !Array.isArray(value) || value.length === 0;
+  }
+  if (typeof value === 'boolean') {
+    return false;
+  }
+  if (typeof value !== 'number' || !Number.isFinite(value)) return true;
+  if (key === 'data_compression_percentage' || key === 'geo_sharded_regions_required') {
+    return false;
+  }
+  if (key === 'active_working_set_percentage') {
+    return value <= 0;
+  }
+  return value <= 0;
+}
+
+/** Apply patch fields only where the session does not already have a positive value. */
+export function mergeSessionParametersIfMissing(
+  session: SizingAssistantSession,
+  patch: Partial<SizingSessionParameters>,
+): { session: SizingAssistantSession; appliedKeys: string[] } {
+  const appliedKeys: string[] = [];
+  const next: Partial<SizingSessionParameters> = {};
+  for (const [rawKey, value] of Object.entries(patch)) {
+    const key = rawKey as keyof SizingSessionParameters;
+    if (value === undefined) continue;
+    if (isSizingParameterMissing(key, session.parameters)) {
+      next[key] = value as SizingSessionParameters[typeof key];
+      appliedKeys.push(rawKey);
+    }
+  }
+  if (appliedKeys.length === 0) {
+    return { session, appliedKeys };
+  }
+  return { session: mergeSessionParameters(session, next), appliedKeys };
+}
+
 export function setResourceCuratorHandoff(
   session: SizingAssistantSession,
   status: ResourceCuratorHandoffStatus,

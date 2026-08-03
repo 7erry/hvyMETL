@@ -6,7 +6,8 @@ import { SchemaCanvasWithCopilot } from './components/SchemaCanvasWithCopilot';
 import { WorkspaceCanvasShell } from './components/WorkspaceCanvasShell';
 import { CopilotHotkeys } from './components/CopilotHotkeys';
 import { CopilotProvider, useCopilot } from './copilot/CopilotContext';
-import { SizingAssistantProvider } from './sizing/SizingAssistantContext';
+import { SizingAssistantStudioBridge } from './sizing/SizingAssistantStudioBridge';
+import { mergeSizingAtlasHints } from './sizing/extractAtlasSizingHints';
 import type { AgentToolMutation } from './copilot/agentTools';
 import type { CopilotWorkflowHandlers } from './copilot/workflowTools';
 import { buildPipelineVerifyNextStep } from './copilot/workflowTools';
@@ -1217,8 +1218,22 @@ export default function App() {
       onReRunPipeline={() => setPipelineOpen(true)}
       workflowHandlers={copilotWorkflowHandlers}
       managerCostInputs={managerCostInputs}
+      onSizingAtlasHints={(patch) =>
+        setSession((prev) => ({
+          ...prev,
+          sizingAtlasHints: mergeSizingAtlasHints(prev.sizingAtlasHints, patch),
+        }))
+      }
     >
-    <SizingAssistantProvider>
+    <SizingAssistantStudioBridge
+      model={model}
+      plan={migrationPlan}
+      managerCostInputs={managerCostInputs}
+      profileId={profileId}
+      customProfile={customProfile}
+      profiles={profiles}
+      sizingAtlasHints={session.sizingAtlasHints}
+    >
     <CopilotHotkeys />
     <div
       className={uiRole === 'manager' ? 'app-root app--manager' : 'app-root'}
@@ -1788,7 +1803,7 @@ export default function App() {
         }}
       />
     </div>
-    </SizingAssistantProvider>
+    </SizingAssistantStudioBridge>
     </CopilotProvider>
     </AuthGate>
   );

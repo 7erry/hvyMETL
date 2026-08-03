@@ -121,6 +121,8 @@ export type SessionState = {
   cardinalityOverrides: CardinalityOverrides;
   forceEmbedOverrides: ForceEmbedOverrides;
   timeSeriesOverrides: TimeSeriesOverrides;
+  /** Atlas inspect stats reused by Atlas Sizing (post-pipeline describe / list collections). */
+  sizingAtlasHints?: { avgDocSizeKb?: number; secondaryIndexCount?: number };
 };
 
 export const defaultSessionState = (): SessionState => ({

@@ -31,6 +31,52 @@ describe('sizing assistant routes', () => {
     return { status: response.status, body };
   }
 
+  it('seeds session from studio context on create', async () => {
+    const createApp = express();
+    createApp.use(express.json());
+    createApp.use('/api/sizing-assistant', createSizingAssistantRouter());
+    const server = createApp.listen(0);
+    await new Promise<void>((resolve) => server.once('listening', resolve));
+    const address = server.address();
+    const port = typeof address === 'object' && address ? address.port : 0;
+
+    const createResponse = await fetch(`http://127.0.0.1:${port}/api/sizing-assistant/session`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        studioSeed: {
+          datasetScale: {
+            rawDataSource: 'manager-override',
+            managerRawDataGb: 5000,
+            rawDataGb: 5000,
+            totalStorageGb: 5000,
+            activeStorageGb: 4800,
+            archiveStorageGb: 200,
+            estimatedTotalRows: 1_000_000,
+            averageDocumentBytes: 2560,
+            workloadLabel: 'Catalog',
+            growthRatePercent: 10,
+            recommendedTierLabel: 'M200',
+            requiresSharding: false,
+            shardingRecommendations: [],
+          },
+          peakRpm: 24000,
+          readPercent: 50,
+          writePercent: 50,
+        },
+      }),
+    });
+    const created = (await createResponse.json()) as {
+      sessionId: string;
+      parameters: Record<string, number>;
+    };
+    await new Promise<void>((resolve, reject) => server.close((err) => (err ? reject(err) : resolve())));
+
+    expect(created.parameters.projected_total_data_size_gb).toBe(5000);
+    expect(created.parameters.total_raw_read_ops).toBe(200);
+    expect(created.parameters.avg_doc_size_kb).toBe(2.5);
+  });
+
   it('creates session and executes find_optimal_cluster_tier via tools route', async () => {
     const createApp = express();
     createApp.use(express.json());

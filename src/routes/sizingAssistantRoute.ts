@@ -12,6 +12,10 @@ import {
   createSizingSession,
   getSizingSession,
 } from '../copilot/sizingAssistantSession.js';
+import {
+  applyStudioSeedToSession,
+  type SizingAssistantStudioSeedPayload,
+} from '../copilot/sizingAssistantStudioSeed.js';
 import { executeSizingAssistantTool, setSessionTranscripts } from '../copilot/sizingAssistantTools.js';
 import { isSizingAssistantToolName } from '../copilot/sizingAssistantToolSchemas.js';
 import { stripPricingFields } from '../copilot/sizingAssistantPresentation.js';
@@ -42,6 +46,11 @@ function handleSizingError(res: Response, error: unknown): void {
   res.status(400).json({ error: message });
 }
 
+function parseStudioSeed(raw: unknown): SizingAssistantStudioSeedPayload | undefined {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return undefined;
+  return raw as SizingAssistantStudioSeedPayload;
+}
+
 export function createSizingAssistantRouter(): Router {
   const router = Router();
 
@@ -52,14 +61,46 @@ export function createSizingAssistantRouter(): Router {
     });
   });
 
-  router.post('/session', (_req, res) => {
-    const session = createSizingSession();
+  router.post('/session', (req, res) => {
+    let session = createSizingSession();
+    const studioSeed = parseStudioSeed(req.body?.studioSeed);
+    let appliedKeys: string[] = [];
+    if (studioSeed) {
+      const applied = applyStudioSeedToSession(session, studioSeed);
+      session = applied.session;
+      appliedKeys = applied.appliedKeys;
+    }
     res.status(201).json({
       sessionId: session.sessionId,
       parameters: session.parameters,
       shardPenaltyMultiplier: session.shardPenaltyMultiplier,
       resourceCuratorHandoff: session.resourceCuratorHandoff,
+      studioSeedAppliedKeys: appliedKeys,
     });
+  });
+
+  router.post('/session/:sessionId/seed', (req, res) => {
+    try {
+      const sessionId = String(req.params.sessionId ?? '').trim();
+      const session = getSizingSession(sessionId);
+      if (!session) {
+        res.status(404).json({ error: 'Sizing session not found.' });
+        return;
+      }
+      const studioSeed = parseStudioSeed(req.body?.studioSeed);
+      if (!studioSeed) {
+        res.status(400).json({ error: 'studioSeed object is required.' });
+        return;
+      }
+      const applied = applyStudioSeedToSession(session, studioSeed);
+      res.json({
+        sessionId: applied.session.sessionId,
+        parameters: applied.session.parameters,
+        studioSeedAppliedKeys: applied.appliedKeys,
+      });
+    } catch (error) {
+      handleSizingError(res, error);
+    }
   });
 
   router.get('/session/:sessionId', (req, res) => {
@@ -145,10 +186,12 @@ export function createSizingAssistantRouter(): Router {
         return;
       }
 
+      const studioSeed = parseStudioSeed(req.body?.studioSeed);
       const result = await runSizingAssistantChat({
         sessionId,
         messages,
         maxToolRounds: typeof req.body?.maxToolRounds === 'number' ? req.body.maxToolRounds : undefined,
+        studioSeed,
       });
 
       res.json(result);

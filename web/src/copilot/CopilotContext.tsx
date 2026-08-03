@@ -80,6 +80,7 @@ import type { CardinalityOverrides, ForceEmbedOverrides } from '../cardinalityOv
 import type { SqlStructuralModel } from '../types';
 import type { ManagerCostInputs } from '../managerCostEstimate';
 import { DEFAULT_MANAGER_COST_INPUTS } from '../managerCostEstimate';
+import { extractAtlasSizingHintsFromInspect } from '../sizing/extractAtlasSizingHints';
 
 export type CopilotContextValue = {
   open: boolean;
@@ -172,6 +173,8 @@ type CopilotProviderProps = {
   onReRunPipeline?: () => void;
   workflowHandlers: CopilotWorkflowHandlers;
   managerCostInputs?: ManagerCostInputs;
+  /** Called when Mongo inspect returns collection stats useful for Atlas Sizing. */
+  onSizingAtlasHints?: (patch: { avgDocSizeKb?: number; secondaryIndexCount?: number }) => void;
 };
 
 export function CopilotProvider({
@@ -187,6 +190,7 @@ export function CopilotProvider({
   onReRunPipeline,
   workflowHandlers,
   managerCostInputs = DEFAULT_MANAGER_COST_INPUTS,
+  onSizingAtlasHints,
 }: CopilotProviderProps) {
   const [open, setOpenState] = useState(false);
   const [activeTab, setActiveTabState] = useState<'chat' | 'translator' | 'sizing'>('chat');
@@ -212,6 +216,15 @@ export function CopilotProvider({
   );
   const [vectorIndexModal, setVectorIndexModal] = useState<VectorIndexDialogRequest | null>(null);
   const [atlasSearchIndexModal, setAtlasSearchIndexModal] = useState<AtlasSearchDialogRequest | null>(null);
+
+  const publishSizingAtlasHints = useCallback(
+    (tool: MongoInspectToolName, data: unknown, ok: boolean) => {
+      if (!ok || !onSizingAtlasHints) return;
+      const patch = extractAtlasSizingHintsFromInspect(tool, data);
+      if (patch) onSizingAtlasHints(patch);
+    },
+    [onSizingAtlasHints],
+  );
 
   const recordVectorSearchIndex = useCallback((entry: CopilotVectorSearchIndexRecord) => {
     setVectorSearchIndexes((previous) => {
@@ -597,6 +610,7 @@ export function CopilotProvider({
     async (tool: MongoInspectToolName, args: Record<string, unknown>) => {
       setStatus('mutating');
       const result = await runMongoInspectTool(tool, args);
+      publishSizingAtlasHints(result.tool, result.data, result.ok);
       appendMessage({
         role: 'agent',
         content: buildNextStepMessage(result.nextStep),
@@ -604,7 +618,7 @@ export function CopilotProvider({
       });
       setStatus('idle');
     },
-    [appendMessage, runMongoInspectTool],
+    [appendMessage, publishSizingAtlasHints, runMongoInspectTool],
   );
 
   const runWorkflowDirect = useCallback(
@@ -713,6 +727,9 @@ export function CopilotProvider({
             }
 
             const result = await runMongoInspectTool(parsed.tool, parsed.args);
+            if (result.ok) {
+              publishSizingAtlasHints(parsed.tool, result.data, true);
+            }
             if (toolExecutionHasStructuredOutput(result)) {
               structuredInspectOutputShown = true;
             }
@@ -849,6 +866,7 @@ export function CopilotProvider({
       targetDatabase,
       vectorSearchIndexes,
       atlasSearchIndexes,
+      publishSizingAtlasHints,
       workflowHandlers,
     ],
   );

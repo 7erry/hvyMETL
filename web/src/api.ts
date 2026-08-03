@@ -962,7 +962,10 @@ export type SizingAssistantSessionResponse = {
   parameters: Record<string, unknown>;
   shardPenaltyMultiplier: number;
   resourceCuratorHandoff: string;
+  studioSeedAppliedKeys?: string[];
 };
+
+export type SizingAssistantStudioSeed = Record<string, unknown>;
 
 export type SizingAssistantChatMessage = {
   role: 'user' | 'assistant' | 'tool' | 'system';
@@ -989,8 +992,27 @@ export async function fetchSizingAssistantStatus(): Promise<SizingAssistantStatu
   return res.json();
 }
 
-export async function createSizingAssistantSession(): Promise<SizingAssistantSessionResponse> {
-  const res = await copilotApiFetch(`${base}/api/sizing-assistant/session`, { method: 'POST' });
+export async function createSizingAssistantSession(
+  studioSeed?: SizingAssistantStudioSeed,
+): Promise<SizingAssistantSessionResponse> {
+  const res = await copilotApiFetch(`${base}/api/sizing-assistant/session`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(studioSeed ? { studioSeed } : {}),
+  });
+  if (!res.ok) throw new Error((await res.json()).error ?? res.statusText);
+  return res.json();
+}
+
+export async function seedSizingAssistantSession(
+  sessionId: string,
+  studioSeed: SizingAssistantStudioSeed,
+): Promise<SizingAssistantSessionResponse> {
+  const res = await copilotApiFetch(`${base}/api/sizing-assistant/session/${encodeURIComponent(sessionId)}/seed`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ studioSeed }),
+  });
   if (!res.ok) throw new Error((await res.json()).error ?? res.statusText);
   return res.json();
 }
@@ -999,6 +1021,7 @@ export async function sendSizingAssistantChat(request: {
   sessionId: string;
   messages: SizingAssistantChatMessage[];
   maxToolRounds?: number;
+  studioSeed?: SizingAssistantStudioSeed;
 }): Promise<SizingAssistantChatResponse> {
   const res = await copilotApiFetch(`${base}/api/sizing-assistant/chat`, {
     method: 'POST',

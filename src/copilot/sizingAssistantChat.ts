@@ -3,6 +3,8 @@
  */
 
 import { buildSizingAssistantSystemPrompt } from './sizingAssistantPrompt.js';
+import { formatStudioSeedContextForPrompt } from './sizingAssistantStudioSeed.js';
+import type { SizingAssistantStudioSeedPayload } from './sizingAssistantStudioSeed.js';
 import { readGroveConfig, type CopilotChatMessage, type GroveConfig, type OpenAiToolCall } from './groveChat.js';
 import { appendChatMessages, getSizingSession, touchSession } from './sizingAssistantSession.js';
 import { SIZING_ASSISTANT_OPENAI_TOOLS } from './sizingAssistantToolSchemas.js';
@@ -16,6 +18,8 @@ export type SizingAssistantChatRequest = {
   sessionId: string;
   messages: CopilotChatMessage[];
   maxToolRounds?: number;
+  /** Optional studio context echoed on each turn for the LLM (parameters are already on the session). */
+  studioSeed?: SizingAssistantStudioSeedPayload;
 };
 
 export type SizingAssistantChatResponse = {
@@ -41,11 +45,15 @@ type OpenAiCompletionResponse = {
 async function callGroveSizingCompletion(
   messages: CopilotChatMessage[],
   config: GroveConfig,
+  studioSeedContext?: string,
 ): Promise<{ message: CopilotChatMessage; finishReason: string | null }> {
   const systemPrompt = buildSizingAssistantSystemPrompt();
+  const systemContent = studioSeedContext
+    ? `${systemPrompt}\n\n## Studio pre-load\n${studioSeedContext}`
+    : systemPrompt;
   const payload = {
     model: config.model,
-    messages: [{ role: 'system', content: systemPrompt }, ...messages],
+    messages: [{ role: 'system', content: systemContent }, ...messages],
     tools: SIZING_ASSISTANT_OPENAI_TOOLS,
     tool_choice: 'auto' as const,
   };
@@ -113,6 +121,9 @@ export async function runSizingAssistantChat(
   const maxRounds = request.maxToolRounds ?? 6;
   const conversation: CopilotChatMessage[] = [...request.messages];
   const toolResults: Array<{ tool: string; ok: boolean; summary: string }> = [];
+  const studioSeedContext = request.studioSeed
+    ? formatStudioSeedContextForPrompt(request.studioSeed)
+    : undefined;
 
   appendChatMessages(session, request.messages);
 
@@ -120,7 +131,7 @@ export async function runSizingAssistantChat(
   let finishReason: string | null = 'stop';
 
   for (let round = 0; round < maxRounds; round += 1) {
-    const completion = await callGroveSizingCompletion(conversation, grove);
+    const completion = await callGroveSizingCompletion(conversation, grove, studioSeedContext);
     lastMessage = completion.message;
     finishReason = completion.finishReason;
 

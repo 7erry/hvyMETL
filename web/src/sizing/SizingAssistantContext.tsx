@@ -4,12 +4,15 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from 'react';
+import type { SizingAssistantStudioSeedPayload } from '../../../src/copilot/sizingAssistantStudioSeed.ts';
 import {
   createSizingAssistantSession,
   fetchSizingAssistantStatus,
+  seedSizingAssistantSession,
   sendSizingAssistantChat,
   type SizingAssistantChatMessage,
 } from '../api';
@@ -40,7 +43,13 @@ function newMessageId(): string {
   return `sizing-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 }
 
-export function SizingAssistantProvider({ children }: { children: ReactNode }) {
+export function SizingAssistantProvider({
+  children,
+  studioSeed,
+}: {
+  children: ReactNode;
+  studioSeed?: SizingAssistantStudioSeedPayload | null;
+}) {
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [messages, setMessages] = useState<SizingAssistantUiMessage[]>([]);
   const [status, setStatus] = useState<'idle' | 'loading'>('idle');
@@ -48,6 +57,8 @@ export function SizingAssistantProvider({ children }: { children: ReactNode }) {
   const [model, setModel] = useState<string | null>(null);
   const [parameters, setParameters] = useState<Record<string, unknown>>({});
   const [error, setError] = useState<string | null>(null);
+  const studioSeedRef = useRef(studioSeed);
+  studioSeedRef.current = studioSeed ?? null;
 
   useEffect(() => {
     void fetchSizingAssistantStatus()
@@ -61,20 +72,33 @@ export function SizingAssistantProvider({ children }: { children: ReactNode }) {
       });
   }, []);
 
+  const applySeedToSession = useCallback(async (activeSessionId: string) => {
+    const seed = studioSeedRef.current;
+    if (!seed) return;
+    const seeded = await seedSizingAssistantSession(activeSessionId, seed);
+    setParameters(seeded.parameters ?? {});
+  }, []);
+
   const ensureSession = useCallback(async (): Promise<string> => {
     if (sessionId) return sessionId;
-    const created = await createSizingAssistantSession();
+    const created = await createSizingAssistantSession(studioSeedRef.current ?? undefined);
     setSessionId(created.sessionId);
     setParameters(created.parameters ?? {});
     return created.sessionId;
   }, [sessionId]);
 
+  useEffect(() => {
+    const seed = studioSeed;
+    if (!seed || !sessionId) return;
+    void applySeedToSession(sessionId);
+  }, [sessionId, studioSeed, applySeedToSession]);
+
   const resetSession = useCallback(async () => {
     setMessages([]);
     setError(null);
-    setParameters({});
-    const created = await createSizingAssistantSession();
+    const created = await createSizingAssistantSession(studioSeedRef.current ?? undefined);
     setSessionId(created.sessionId);
+    setParameters(created.parameters ?? {});
   }, []);
 
   const sendMessage = useCallback(
@@ -102,6 +126,7 @@ export function SizingAssistantProvider({ children }: { children: ReactNode }) {
         const response = await sendSizingAssistantChat({
           sessionId: activeSessionId,
           messages: llmMessages,
+          studioSeed: studioSeedRef.current ?? undefined,
         });
 
         setParameters(response.parameters ?? {});
