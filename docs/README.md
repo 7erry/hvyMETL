@@ -27,6 +27,7 @@ merge-mode diagrams.
 | [13-web-ui.md](13-web-ui.md) | Optional MongoDB-branded Migration Studio (ER diagrams, templates, AI export) | [web/README.md](../web/README.md), `src/server/` |
 | [20-agent-copilot.md](20-agent-copilot.md) | Agent Copilot — guided workflow, commands, architecture review, Google Docs export | `web/src/copilot/`, `src/server/copilotRoutes.ts` |
 | [20-agent-copilot-mongodb-inspect.md](20-agent-copilot-mongodb-inspect.md) | Agent Copilot MongoDB inspect/analyze via co-hosted MCP HTTP proxy | `src/copilot/mongoInspectService.ts`, `src/server/copilotRoutes.ts` |
+| [21-sizing-assistant.md](21-sizing-assistant.md) | Release 4.0 Atlas cluster sizing assistant — system prompt and engine logic reference | `src/copilot/sizingAssistantPrompt.ts` |
 | [20-manager.md](20-manager.md) | Manager View, cost projections, retention controls, and pre-migration cloud cost governance | `web/src/components/ManagerView.tsx`, `web/src/managerCostEstimate.ts` |
 | [21-atlas-logs.md](21-atlas-logs.md) | Atlas Admin API project events and database log preview in Manager View | `src/utilities/atlasLogs.ts`, `web/src/components/ManagerAtlasLogsPanel.tsx` |
 | [14-validate-csv-to-atlas.md](14-validate-csv-to-atlas.md) | External csvToAtlas path (`CSV_TO_ATLAS_PATH`) and validation | `src/utilities/csvToAtlas.ts` |

@@ -1,3 +1,19 @@
+## hvyMETL 4.0.0 (in development)
+
+Foundation for the **MongoDB Atlas cluster sizing assistant** (separate from migration Agent Copilot).
+
+### Sizing assistant system prompt
+
+- **`src/copilot/sizingAssistantPrompt.ts`:** expert sizing assistant instructions — markdown formatting, thought-then-tool flow, resource curator handoff, transcript extraction, unsupported topology/feature defaults, cluster-level aggregation, and presentation rules for `find_optimal_cluster_tier` / `prompt_for_missing_info` (no cost breakdown in user-facing text).
+- **`src/copilot/sizingAssistantLogicReference.ts`:** embedded **Logic Abstract** (inputs, tier catalog, normalization, eligibility filters, shard/secondary/cost math, ranking).
+- **Docs:** [`docs/21-sizing-assistant.md`](docs/21-sizing-assistant.md).
+
+### Verification
+
+- `npm test -- src/copilot/sizingAssistantPrompt.test.ts`
+
+---
+
 ## hvyMETL 3.2.4
 
 Diagram **View** control for comparing **Before · SQL** and **After · MongoDB** on one screen.
