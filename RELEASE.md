@@ -1,15 +1,23 @@
 ## hvyMETL 4.0.0 (in development)
 
-Foundation for the **MongoDB Atlas cluster sizing assistant** (separate from migration Agent Copilot).
+Multi-phase release: **Atlas cluster sizing assistant** + **production ML lessons learned** (live metrics and vector retrieval). Full plan: [`docs/22-release-4.0-roadmap.md`](docs/22-release-4.0-roadmap.md).
 
-### Sizing assistant system prompt
+| Phase | Focus | Status |
+| --- | --- | --- |
+| **1** | Sizing assistant system prompts + logic reference | Foundation shipped |
+| **2** | Sizing runtime (tools, engine, Grove/API, UI) | Planned |
+| **3** | Live Atlas metrics (`AtlasApiMetricsConnector`, deferred reflection) | Planned |
+| **4** | Lessons `$vectorSearch` on `hvymetl_lessons_learned` | Planned |
+| **5** | Version **4.0.0** tag + release notes | When phases complete |
+
+### Phase 1 — Sizing assistant system prompt (shipped)
 
 - **`src/copilot/sizingAssistantPrompt.ts`:** expert sizing assistant instructions — markdown formatting, thought-then-tool flow, resource curator handoff, transcript extraction, unsupported topology/feature defaults, cluster-level aggregation, and presentation rules for `find_optimal_cluster_tier` / `prompt_for_missing_info` (no cost breakdown in user-facing text).
 - **`src/copilot/sizingAssistantLogicReference.ts`:** embedded **Logic Abstract** (inputs, tier catalog, normalization, eligibility filters, shard/secondary/cost math, ranking).
 - **`src/copilot/sizingAssistantInfrastructureFramework.ts`:** Principal Infrastructure Architect brief — step-by-step WSS/RAM, compute, storage/backup, oplog, topology/sovereignty, structured output requirements, and application input checklist.
 - **Docs:** [`docs/21-sizing-assistant.md`](docs/21-sizing-assistant.md).
 
-### Verification
+### Verification (Phase 1)
 
 - `npm test -- src/copilot/sizingAssistantPrompt.test.ts`
 

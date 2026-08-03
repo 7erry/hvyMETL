@@ -2,6 +2,8 @@
 
 The **sizing assistant** is a dedicated agent flow for MongoDB Atlas cluster sizing: it collects workload parameters, optionally extracts them from curated meeting transcripts, runs the sizing engine, and presents tier recommendations without exposing raw pricing breakdowns in chat.
 
+**Release 4.0 scope** also includes production **lessons learned** (live Atlas metrics + vector retrieval). Phase breakdown: [22-release-4.0-roadmap.md](22-release-4.0-roadmap.md) (**Phase 1** = this document; **Phases 2–5** = runtime, metrics, vector search, version tag).
+
 ## System prompt
 
 The LLM system prompt lives in the server package:
@@ -44,3 +46,12 @@ npm test -- src/copilot/sizingAssistantPrompt.test.ts
 ```
 
 See also [Agent Copilot](./20-agent-copilot.md) for the migration-studio copilot (separate from sizing assistant).
+
+## Release 4.0 phases
+
+| Phase | This doc |
+| --- | --- |
+| **1** — Prompts (current) | Above |
+| **2** — Sizing runtime | [22-release-4.0-roadmap.md § Phase 2](22-release-4.0-roadmap.md#phase-2--sizing-assistant-runtime) |
+| **3–4** — Lessons learned (Atlas metrics + vector search) | [22-release-4.0-roadmap.md § Phases 3–4](22-release-4.0-roadmap.md#phase-3--live-atlas-metrics-lessons-learned-feedback-loop) |
+| **5** — 4.0.0 release | [22-release-4.0-roadmap.md § Phase 5](22-release-4.0-roadmap.md#phase-5--release-400) |

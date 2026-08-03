@@ -129,7 +129,7 @@ HVYMETL_SCHEDULE_REFLECTION=1   # auto-reflect after ML design
 configured (collection `hvymetl_lessons_learned`, default DB `hvymetl_memory`). Without
 it, lessons live in process memory only. Similarity search runs in Node.js (cosine on
 stored embeddings or BM25) — not Atlas Vector Search. Details:
-**[docs/17-ml-engine.md § Lessons-learned memory](docs/17-ml-engine.md#lessons-learned-memory-storage-vs-retrieval)**.
+**[docs/17-ml-engine.md § Lessons-learned memory](docs/17-ml-engine.md#lessons-learned-memory-storage-vs-retrieval)**. Production Atlas metrics and `$vectorSearch` retrieval are planned in **[docs/22-release-4.0-roadmap.md](docs/22-release-4.0-roadmap.md)** (Phases 3–4).
 
 ## Prerequisites
 

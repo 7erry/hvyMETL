@@ -425,7 +425,8 @@ Console logs to watch:
 
 ## 9. Refactoring Notes
 
-- Replace `StubAtlasMetricsConnector` with a real Atlas Performance Advisor / Query Profiler API client in production.
-- Persist lesson embeddings in Atlas with `$vectorSearch` when the lessons collection grows beyond in-memory cosine ranking.
-- Add a CLI subcommand (`hvymetl reflect --migration-id …`) for cron operators.
-- Expose pipeline execution history in the Migration Studio UI (API: `GET /api/pipeline/executions`).
+Release **4.0** schedules the items below as **Phases 3–4** in [22-release-4.0-roadmap.md](22-release-4.0-roadmap.md):
+
+- Replace `StubAtlasMetricsConnector` with a real Atlas Performance Advisor / monitoring API client (`AtlasApiMetricsConnector`), deferred reflection, and optional `hvymetl reflect --migration-id …` for cron operators.
+- Persist lesson embeddings in Atlas with `$vectorSearch` on `hvymetl_lessons_learned` when the corpus outgrows in-process cosine ranking (feature-flagged retrieval path + backfill).
+- Expose pipeline execution history in the Migration Studio UI (API: `GET /api/pipeline/executions`) — may ship independently of 4.0.
