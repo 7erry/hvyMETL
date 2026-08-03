@@ -6,6 +6,7 @@ database patterns but serve different user flows:
 | Track | Goal |
 | --- | --- |
 | **Sizing assistant** | Conversational Atlas cluster sizing (parameters, transcripts, tier engine, architecture briefs) |
+| **Connectivity & security architect** | PrivateLink/PSC, IP access, IAM/RBAC, IaC, DNS validation & troubleshooting |
 | **ML lessons learned (production)** | Replace stub post-migration metrics and in-process lesson retrieval with live Atlas data and `$vectorSearch` |
 
 Package version remains **3.2.x** until Phase 5 ships; [`RELEASE.md`](../RELEASE.md) documents progress under **4.0.0 (in development)**.
@@ -28,11 +29,11 @@ Phases 2 and 3–4 can proceed in parallel after Phase 1.
 
 ---
 
-## Phase 1 — Sizing assistant prompts ✅ (foundation shipped)
+## Phase 1 — Release 4.0 assistant prompts ✅ (foundation shipped)
 
-**Status:** System prompts and logic reference are in the repo; no studio runtime yet.
+**Status:** System prompts are in the repo; no dedicated studio runtime yet.
 
-**Deliverables**
+### Sizing assistant
 
 | Item | Location |
 | --- | --- |
@@ -43,25 +44,45 @@ Phases 2 and 3–4 can proceed in parallel after Phase 1.
 
 **Verification:** `npm test -- src/copilot/sizingAssistantPrompt.test.ts`
 
+### Connectivity & security architect
+
+| Item | Location |
+| --- | --- |
+| Private connectivity, IAM/RBAC, IaC, troubleshooting framework | [`src/copilot/atlasConnectivityArchitectFramework.ts`](../src/copilot/atlasConnectivityArchitectFramework.ts) |
+| Composed system prompt | [`src/copilot/atlasConnectivityArchitectPrompt.ts`](../src/copilot/atlasConnectivityArchitectPrompt.ts) |
+| Docs | [23-atlas-connectivity-architect.md](23-atlas-connectivity-architect.md) |
+
+**Verification:** `npm test -- src/copilot/atlasConnectivityArchitectPrompt.test.ts`
+
 ---
 
-## Phase 2 — Sizing assistant runtime
+## Phase 2 — Assistant runtime (sizing + connectivity)
 
-**Goal:** Wire prompts to a stateful chat flow, tool schemas, sizing engine, and (optional) studio entry point.
+**Goal:** Wire Release 4.0 prompts to stateful chat flows, optional tool schemas, and studio entry points.
 
-**Deliverables**
+### Sizing assistant runtime ✅ (API + engine shipped)
 
-1. **Sizing state machine** — session store for cluster-level parameters, shard penalty, resource curator handoff status.
-2. **Tool implementations** (names fixed by Phase 1 prompt):
-   - `update_sizing_parameters`, `update_shard_penalty`, `abort_sizing_process`
-   - `handoff_to_resource_curator`, `get_session_transcripts`, `extract_sizing_from_transcripts`
-   - `find_optimal_cluster_tier`, `prompt_for_missing_info`
-3. **Sizing engine module** — implement or import tier catalog + Sections 1–10 from [Logic Abstract](../src/copilot/sizingAssistantLogicReference.ts) (distinct from Manager cost heuristics in `web/src/managerCostEstimate.ts` unless explicitly unified).
-4. **Grove / API route** — dedicated preset using `buildSizingAssistantSystemPrompt()` (separate from migration Agent Copilot in [20-agent-copilot.md](20-agent-copilot.md)).
-5. **Tests** — engine unit tests, tool handler tests, prompt snapshot tests.
-6. **Docs** — extend [21-sizing-assistant.md](21-sizing-assistant.md) with API, env vars, and UX.
+| Deliverable | Location |
+| --- | --- |
+| Session store | [`sizingAssistantSession.ts`](../src/copilot/sizingAssistantSession.ts) |
+| Tool schemas + handlers | [`sizingAssistantToolSchemas.ts`](../src/copilot/sizingAssistantToolSchemas.ts), [`sizingAssistantTools.ts`](../src/copilot/sizingAssistantTools.ts) |
+| Sizing engine | [`sizingEngine.ts`](../src/copilot/sizingEngine.ts) |
+| Grove tool loop | [`sizingAssistantChat.ts`](../src/copilot/sizingAssistantChat.ts) |
+| HTTP API | [`sizingAssistantRoute.ts`](../src/routes/sizingAssistantRoute.ts) → `/api/sizing-assistant` |
 
-**Exit criteria:** End-to-end chat can collect parameters, run `find_optimal_cluster_tier`, and present results per prompt rules (parameters shown, no cost breakdown in assistant text).
+**Remaining (optional):** Resource Curator UI integration for transcript attach.
+
+**Studio:** Agent Copilot → **Atlas Sizing** tab (`web/src/components/sizing/SizingAssistantPanel.tsx`).
+
+**Exit criteria (sizing):** Met via `/tools` and `/chat` — parameters collected, `find_optimal_cluster_tier` returns recommendations without pricing in API payloads.
+
+### Connectivity architect runtime
+
+1. **Grove / API preset** — `buildAtlasConnectivityArchitectSystemPrompt()` ([23-atlas-connectivity-architect.md](23-atlas-connectivity-architect.md)).
+2. **Optional tools** — validate IP access list, export Terraform skeleton, link to Atlas Admin API patterns from [21-atlas-logs.md](21-atlas-logs.md).
+3. **Studio entry** — enterprise setup wizard or Copilot mode switch (same auth/MCP boundaries as migration copilot).
+
+**Exit criteria (connectivity):** User can describe cloud/region/VPC/auth inputs and receive structured setup, IaC snippets, and validation commands per the framework.
 
 ---
 
@@ -154,6 +175,7 @@ Phases 2 and 3–4 can proceed in parallel after Phase 1.
 | Topic | Document |
 | --- | --- |
 | Sizing assistant detail | [21-sizing-assistant.md](21-sizing-assistant.md) |
+| Connectivity & security architect | [23-atlas-connectivity-architect.md](23-atlas-connectivity-architect.md) |
 | ML engine + lessons today | [17-ml-engine.md](17-ml-engine.md) |
 | Atlas Admin API (logs) | [21-atlas-logs.md](21-atlas-logs.md) |
 | Migration Copilot (separate agent) | [20-agent-copilot.md](20-agent-copilot.md) |

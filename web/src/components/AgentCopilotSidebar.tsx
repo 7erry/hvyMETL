@@ -4,6 +4,7 @@ import { MIGRATION_WORKFLOW_GUIDE_PROMPT } from '../copilot/copilotActionLinks';
 import { COPILOT_SLASH_COMMANDS, COPILOT_COMMANDS_USER_PROMPT, buildQuickActionChips, type AgentStatus } from '../copilot/types';
 import { ToolExecutionCard } from './copilot/ToolExecutionCard';
 import { QueryTranslatorPanel } from './copilot/QueryTranslatorPanel';
+import { SizingAssistantPanel } from './sizing/SizingAssistantPanel';
 import { CopilotMessageBody } from './copilot/CopilotMessageBody';
 import { MigrationWorkflowGuide } from './copilot/MigrationWorkflowGuide';
 import { CopilotTypingIndicator } from './copilot/CopilotTypingIndicator';
@@ -19,6 +20,7 @@ const PRESET_LABEL = {
   guardrails: 'Guardrails',
   'query-translate': 'Query Translate',
   'self-heal': 'Self-Heal',
+  sizing: 'Atlas Sizing',
 } as const;
 
 /** Collapsible right-hand agent copilot drawer. */
@@ -109,7 +111,9 @@ export function AgentCopilotSidebar() {
             <div>
               <h2>Agent Copilot</h2>
               <p className="agent-copilot-sidebar__meta">
-                {STATUS_LABEL[copilot.status]} · {PRESET_LABEL[copilot.preset]}
+                {copilot.activeTab === 'sizing'
+                  ? 'Atlas cluster sizing'
+                  : `${STATUS_LABEL[copilot.status]} · ${PRESET_LABEL[copilot.preset]}`}
                 {copilot.llmConfigured && copilot.llmModel ? (
                   <> · {copilot.llmModel}</>
                 ) : (
@@ -154,12 +158,23 @@ export function AgentCopilotSidebar() {
           >
             Query Translator
           </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={copilot.activeTab === 'sizing'}
+            className={copilot.activeTab === 'sizing' ? 'active' : ''}
+            onClick={() => copilot.setActiveTab('sizing')}
+          >
+            Atlas Sizing
+          </button>
         </div>
 
         {copilot.activeTab === 'translator' ? (
           <div className="agent-copilot-sidebar__body agent-copilot-sidebar__body--translator">
             <QueryTranslatorPanel />
           </div>
+        ) : copilot.activeTab === 'sizing' ? (
+          <SizingAssistantPanel />
         ) : (
           <>
             <div className="agent-copilot-sidebar__thread" ref={threadRef}>

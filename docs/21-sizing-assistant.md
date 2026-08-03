@@ -2,56 +2,125 @@
 
 The **sizing assistant** is a dedicated agent flow for MongoDB Atlas cluster sizing: it collects workload parameters, optionally extracts them from curated meeting transcripts, runs the sizing engine, and presents tier recommendations without exposing raw pricing breakdowns in chat.
 
-**Release 4.0 scope** also includes production **lessons learned** (live Atlas metrics + vector retrieval). Phase breakdown: [22-release-4.0-roadmap.md](22-release-4.0-roadmap.md) (**Phase 1** = this document; **Phases 2–5** = runtime, metrics, vector search, version tag).
+**Release 4.0 scope** also includes production **lessons learned** (live Atlas metrics + vector retrieval). Phase breakdown: [22-release-4.0-roadmap.md](22-release-4.0-roadmap.md).
 
-## System prompt
-
-The LLM system prompt lives in the server package:
+## Architecture (Phase 2 runtime)
 
 | Module | Purpose |
 | --- | --- |
-| [`src/copilot/sizingAssistantPrompt.ts`](../src/copilot/sizingAssistantPrompt.ts) | Role, tool-use rules, unsupported-config handling, output format |
-| [`src/copilot/sizingAssistantLogicReference.ts`](../src/copilot/sizingAssistantLogicReference.ts) | **Logic Abstract** — normalization, tier filters, shard/secondary math, cost penalty, ranking |
-| [`src/copilot/sizingAssistantInfrastructureFramework.ts`](../src/copilot/sizingAssistantInfrastructureFramework.ts) | **Infrastructure Architect** — WSS/RAM, vCPU, storage/IOPS/backup, oplog, HA/sovereignty, five-part output template, application input checklist |
+| [`src/copilot/sizingAssistantPrompt.ts`](../src/copilot/sizingAssistantPrompt.ts) | System prompt (Phase 1) |
+| [`src/copilot/sizingEngine.ts`](../src/copilot/sizingEngine.ts) | Logic Abstract Sections 1–10 + M30–M300 tier catalog |
+| [`src/copilot/sizingAssistantSession.ts`](../src/copilot/sizingAssistantSession.ts) | In-memory session store (parameters, shard penalty, curator handoff, chat buffer) |
+| [`src/copilot/sizingAssistantToolSchemas.ts`](../src/copilot/sizingAssistantToolSchemas.ts) | OpenAI function definitions |
+| [`src/copilot/sizingAssistantTools.ts`](../src/copilot/sizingAssistantTools.ts) | Tool handlers |
+| [`src/copilot/sizingAssistantChat.ts`](../src/copilot/sizingAssistantChat.ts) | Grove chat + server-side tool loop |
+| [`src/copilot/sizingAssistantPresentation.ts`](../src/copilot/sizingAssistantPresentation.ts) | Strip pricing from tool/assistant payloads |
+| [`src/routes/sizingAssistantRoute.ts`](../src/routes/sizingAssistantRoute.ts) | HTTP API (`/api/sizing-assistant`) |
 
-Use `buildSizingAssistantSystemPrompt()` (or `SIZING_ASSISTANT_SYSTEM_PROMPT`) when wiring the sizing chat endpoint or Grove preset for 4.0.
+The sizing engine is **not** shared with Manager View heuristics in `web/src/managerCostEstimate.ts`.
 
-## Expected tools (runtime)
+## Environment
 
-The prompt instructs the model to call:
+Uses the same Grove settings as Migration Agent Copilot:
 
-| Tool | When |
+| Variable | Required | Purpose |
+| --- | --- | --- |
+| `GROVE_API_KEY` | For `/chat` | Grove OpenAI-compatible gateway |
+| `GROVE_API_URL` | No | Override chat completions URL |
+| `GROVE_MODEL` | No | Model id (default `gpt-5.6-luna`) |
+
+Studio routes require authenticated roles `admin` or `developer` (same as `/api/copilot`).
+
+## HTTP API
+
+Base path: **`/api/sizing-assistant`** (mounted in [`src/server/index.ts`](../src/server/index.ts)).
+
+| Method | Path | Description |
+| --- | --- | --- |
+| `GET` | `/status` | `{ configured, model }` — Grove configured when `GROVE_API_KEY` is set |
+| `POST` | `/session` | Create session; returns `sessionId` |
+| `GET` | `/session/:sessionId` | Session snapshot (parameters, handoff status) |
+| `PUT` | `/session/:sessionId/transcripts` | Body: `{ transcripts: [{ id, title, body }] }` |
+| `POST` | `/tools` | Body: `{ sessionId, tool, args? }` — direct tool execution |
+| `POST` | `/chat` | Body: `{ sessionId, messages, maxToolRounds? }` — Grove turn with tool loop |
+
+### Tool execution example
+
+```bash
+SESSION=$(curl -s -X POST http://localhost:3847/api/sizing-assistant/session | jq -r .sessionId)
+
+curl -s -X POST http://localhost:3847/api/sizing-assistant/tools \
+  -H 'Content-Type: application/json' \
+  -d "{\"sessionId\":\"$SESSION\",\"tool\":\"update_sizing_parameters\",\"args\":{
+    \"projected_total_data_size_gb\":400,
+    \"total_raw_read_ops\":4000,
+    \"total_raw_write_ops\":1500,
+    \"avg_doc_size_kb\":2.5
+  }}"
+
+curl -s -X POST http://localhost:3847/api/sizing-assistant/tools \
+  -H 'Content-Type: application/json' \
+  -d "{\"sessionId\":\"$SESSION\",\"tool\":\"find_optimal_cluster_tier\",\"args\":{}}"
+```
+
+Responses from `/tools` and `/chat` **omit** `finalHourlyCost` and related pricing fields in JSON returned to clients. The engine still ranks tiers internally using hourly cost.
+
+## Tools
+
+| Tool | Handler behavior |
 | --- | --- |
-| `update_sizing_parameters` | User provides or updates sizing inputs (reads, writes, data size, flags, etc.) |
-| `update_shard_penalty` | User changes sharding cost sensitivity |
-| `abort_sizing_process` | User cancels the flow |
-| `handoff_to_resource_curator` | User changes Salesforce / transcript resources |
-| `get_session_transcripts` | After resource selection, before transcript extraction |
-| `extract_sizing_from_transcripts` | User confirms extraction from selected transcripts |
-| `find_optimal_cluster_tier` | System runs sizing (model presents results) |
-| `prompt_for_missing_info` | System asks for missing required parameters |
+| `update_sizing_parameters` | Merge partial cluster-level fields into session |
+| `update_shard_penalty` | Set `shard_penalty_multiplier` (≥ 1.0) |
+| `abort_sizing_process` | Clear parameters, transcripts, and chat buffer |
+| `handoff_to_resource_curator` | Set handoff `pending`; return curator payload |
+| `get_session_transcripts` | List attached transcripts (preview text) |
+| `extract_sizing_from_transcripts` | Heuristic parse → merge into parameters |
+| `find_optimal_cluster_tier` | Run sizing engine; return ranked recommendations |
+| `prompt_for_missing_info` | Required fields: data GB, read ops, write ops, avg doc KB |
 
-Tool schemas and API routes are added as the 4.0 studio UI and backend state machine land.
+## Migration Studio UI
 
-## Behavioral notes
+Open **Agent Copilot** (⌘K) → **Atlas Sizing** tab.
 
-- **Cluster-level only:** per-collection numbers must be aggregated with an explicit note to the user.
-- **Unsupported topology/features:** acknowledge deployment defaults (3-node replica set, `us-east-1`, AWS) but still set HA/geo flags and run calculation where applicable.
-- **After calculation:** include parameters used in the recommendation; do **not** repeat hourly cost breakdown or total price in the assistant message.
+| File | Role |
+| --- | --- |
+| [`web/src/sizing/SizingAssistantContext.tsx`](../web/src/sizing/SizingAssistantContext.tsx) | Session + chat state; calls `/api/sizing-assistant` |
+| [`web/src/components/sizing/SizingAssistantPanel.tsx`](../web/src/components/sizing/SizingAssistantPanel.tsx) | Thread, quick prompts, tool result summaries |
+
+Requires `GROVE_API_KEY` on the API server for LLM-driven tool use; `/tools` works without Grove for deterministic testing.
+
+## UX flow
+
+1. Client creates a **session** and optionally attaches **transcripts** after Resource Curator selection.
+2. User chats via **`/chat`** (Grove + tools) or the studio **Atlas Sizing** tab.
+3. Model calls `update_sizing_parameters` / `extract_sizing_from_transcripts` as the user supplies workload facts.
+4. When ready, `find_optimal_cluster_tier` returns tier id, shard count, secondaries, and **parameters used** — no cost breakdown in assistant-facing text.
+5. `handoff_to_resource_curator` pauses sizing until new resources are selected (`PUT` transcripts marks handoff `completed`).
+
+## Behavioral notes (prompt)
+
+- **Cluster-level only:** aggregate per-collection inputs with an explicit note.
+- **Unsupported topology/features:** acknowledge 3-node RS / `us-east-1` / AWS defaults while still setting HA/geo flags where applicable.
+- **After calculation:** include parameters used; do **not** surface hourly cost or total pricing in chat.
 
 ## Verification
 
 ```bash
-npm test -- src/copilot/sizingAssistantPrompt.test.ts
+npm test -- src/copilot/sizingEngine.test.ts
+npm test -- src/copilot/sizingAssistantTools.test.ts
+npm test -- src/routes/sizingAssistantRoute.test.ts
+npm test -- src/copilot/sizingAssistantPrompt.test.ts src/copilot/sizingAssistantPrompt.snapshot.test.ts
 ```
 
-See also [Agent Copilot](./20-agent-copilot.md) for the migration-studio copilot (separate from sizing assistant).
+See also [Agent Copilot](./20-agent-copilot.md) (migration studio, separate agent).
 
 ## Release 4.0 phases
 
-| Phase | This doc |
+| Phase | Status |
 | --- | --- |
-| **1** — Prompts (current) | Above |
-| **2** — Sizing runtime | [22-release-4.0-roadmap.md § Phase 2](22-release-4.0-roadmap.md#phase-2--sizing-assistant-runtime) |
-| **3–4** — Lessons learned (Atlas metrics + vector search) | [22-release-4.0-roadmap.md § Phases 3–4](22-release-4.0-roadmap.md#phase-3--live-atlas-metrics-lessons-learned-feedback-loop) |
-| **5** — 4.0.0 release | [22-release-4.0-roadmap.md § Phase 5](22-release-4.0-roadmap.md#phase-5--release-400) |
+| **1** — Prompts | Shipped |
+| **2** — Sizing runtime (API, engine, tools, studio tab) | Shipped |
+| **3–4** — Lessons learned | Planned — [roadmap](22-release-4.0-roadmap.md) |
+| **5** — 4.0.0 tag | When scope complete |
+
+Connectivity & security: [23-atlas-connectivity-architect.md](23-atlas-connectivity-architect.md).

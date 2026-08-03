@@ -952,6 +952,64 @@ export async function sendCopilotChat(request: {
   return data;
 }
 
+export type SizingAssistantStatusResponse = {
+  configured: boolean;
+  model: string;
+};
+
+export type SizingAssistantSessionResponse = {
+  sessionId: string;
+  parameters: Record<string, unknown>;
+  shardPenaltyMultiplier: number;
+  resourceCuratorHandoff: string;
+};
+
+export type SizingAssistantChatMessage = {
+  role: 'user' | 'assistant' | 'tool' | 'system';
+  content: string;
+  tool_call_id?: string;
+  tool_calls?: Array<{
+    id: string;
+    type: 'function';
+    function: { name: string; arguments: string };
+  }>;
+};
+
+export type SizingAssistantChatResponse = {
+  sessionId: string;
+  message: SizingAssistantChatMessage;
+  finishReason: string | null;
+  toolResults: Array<{ tool: string; ok: boolean; summary: string }>;
+  parameters: Record<string, unknown>;
+};
+
+export async function fetchSizingAssistantStatus(): Promise<SizingAssistantStatusResponse> {
+  const res = await copilotApiFetch(`${base}/api/sizing-assistant/status`);
+  if (!res.ok) throw new Error((await res.json()).error ?? res.statusText);
+  return res.json();
+}
+
+export async function createSizingAssistantSession(): Promise<SizingAssistantSessionResponse> {
+  const res = await copilotApiFetch(`${base}/api/sizing-assistant/session`, { method: 'POST' });
+  if (!res.ok) throw new Error((await res.json()).error ?? res.statusText);
+  return res.json();
+}
+
+export async function sendSizingAssistantChat(request: {
+  sessionId: string;
+  messages: SizingAssistantChatMessage[];
+  maxToolRounds?: number;
+}): Promise<SizingAssistantChatResponse> {
+  const res = await copilotApiFetch(`${base}/api/sizing-assistant/chat`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(request),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error ?? res.statusText);
+  return data;
+}
+
 export type ArchitectureReviewExportResponse = {
   token: string;
   filename: string;

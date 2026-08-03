@@ -30,6 +30,7 @@ import { readCsvToAtlasPathFromEnv } from '../utilities/csvToAtlas.js';
 import { getPipelineConfigStatus } from './pipelineConfig.js';
 import { createAtlasLogsRouter } from './atlasLogsRoutes.js';
 import { createArchitectureExportDownloadRouter, createCopilotRouter } from './copilotRoutes.js';
+import { createSizingAssistantRouter } from '../routes/sizingAssistantRoute.js';
 import { runFullPipeline } from './runPipeline.js';
 import { runFullPipelineWithStream } from './pipelineStream.js';
 import {
@@ -268,6 +269,7 @@ app.use('/api/workspace', ...requireRole(['admin', 'developer', 'manager']));
 app.use('/api/atlas', ...requireRole(['admin', 'developer', 'manager']), createAtlasLogsRouter());
 app.use('/api/copilot', createArchitectureExportDownloadRouter());
 app.use('/api/copilot', ...requireRole(['admin', 'developer']), createCopilotRouter());
+app.use('/api/sizing-assistant', ...requireRole(['admin', 'developer']), createSizingAssistantRouter());
 
 registerApiArtifactRoutes(app, ROOT);
 

@@ -5094,6 +5094,46 @@ textarea {
   min-height: 0;
 }
 
+.agent-copilot-sidebar__body--sizing {
+  flex: 1 1 0;
+  height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 0;
+  min-height: 0;
+}
+
+.sizing-assistant-banner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem 0.65rem;
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid var(--copilot-border);
+  font-size: 0.72rem;
+}
+
+.sizing-assistant-banner__meta {
+  opacity: 0.75;
+}
+
+.sizing-assistant-reset {
+  margin-left: auto;
+  font-size: 0.68rem;
+}
+
+.sizing-assistant-tool-results {
+  margin: 0 0 0.45rem;
+  padding-left: 1rem;
+  font-size: 0.68rem;
+  opacity: 0.85;
+}
+
+.sizing-assistant-tool-results code {
+  font-size: 0.65rem;
+}
+
 .agent-copilot-sidebar__empty {
   font-size: 0.72rem;
   opacity: 0.8;

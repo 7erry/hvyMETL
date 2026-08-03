@@ -1,25 +1,30 @@
+## hvyMETL 4.0.0
+
+Release **4.0** ships the **Atlas cluster sizing assistant** runtime (engine, tools, API, Migration Studio tab). Multi-phase work continues for connectivity architect runtime and production lessons learned — see [`docs/22-release-4.0-roadmap.md`](docs/22-release-4.0-roadmap.md).
+
+### Highlights
+
+- **Sizing engine** — Logic Abstract tier catalog (M30–M300), shard/secondary math, ranking ([`src/copilot/sizingEngine.ts`](src/copilot/sizingEngine.ts)).
+- **API** — `/api/sizing-assistant` session, tools, and Grove chat with pricing stripped from client payloads.
+- **Studio** — Agent Copilot → **Atlas Sizing** tab ([`web/src/components/sizing/SizingAssistantPanel.tsx`](web/src/components/sizing/SizingAssistantPanel.tsx)).
+- **Prompts (Phase 1)** — Sizing assistant + connectivity architect system prompts.
+
+### Verification
+
+- `npm test -- src/copilot/sizingEngine.test.ts src/copilot/sizingAssistantTools.test.ts src/routes/sizingAssistantRoute.test.ts`
+- `npm run build`
+- `npm run build --prefix web`
+
+---
+
 ## hvyMETL 4.0.0 (in development)
 
-Multi-phase release: **Atlas cluster sizing assistant** + **production ML lessons learned** (live metrics and vector retrieval). Full plan: [`docs/22-release-4.0-roadmap.md`](docs/22-release-4.0-roadmap.md).
+<details>
+<summary>Earlier 4.0 development notes (superseded by release above)</summary>
 
-| Phase | Focus | Status |
-| --- | --- | --- |
-| **1** | Sizing assistant system prompts + logic reference | Foundation shipped |
-| **2** | Sizing runtime (tools, engine, Grove/API, UI) | Planned |
-| **3** | Live Atlas metrics (`AtlasApiMetricsConnector`, deferred reflection) | Planned |
-| **4** | Lessons `$vectorSearch` on `hvymetl_lessons_learned` | Planned |
-| **5** | Version **4.0.0** tag + release notes | When phases complete |
+Multi-phase release: **Atlas sizing assistant**, **connectivity & security architect**, and **production ML lessons learned**. Full plan: [`docs/22-release-4.0-roadmap.md`](docs/22-release-4.0-roadmap.md).
 
-### Phase 1 — Sizing assistant system prompt (shipped)
-
-- **`src/copilot/sizingAssistantPrompt.ts`:** expert sizing assistant instructions — markdown formatting, thought-then-tool flow, resource curator handoff, transcript extraction, unsupported topology/feature defaults, cluster-level aggregation, and presentation rules for `find_optimal_cluster_tier` / `prompt_for_missing_info` (no cost breakdown in user-facing text).
-- **`src/copilot/sizingAssistantLogicReference.ts`:** embedded **Logic Abstract** (inputs, tier catalog, normalization, eligibility filters, shard/secondary/cost math, ranking).
-- **`src/copilot/sizingAssistantInfrastructureFramework.ts`:** Principal Infrastructure Architect brief — step-by-step WSS/RAM, compute, storage/backup, oplog, topology/sovereignty, structured output requirements, and application input checklist.
-- **Docs:** [`docs/21-sizing-assistant.md`](docs/21-sizing-assistant.md).
-
-### Verification (Phase 1)
-
-- `npm test -- src/copilot/sizingAssistantPrompt.test.ts`
+</details>
 
 ---
 

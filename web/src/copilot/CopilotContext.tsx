@@ -85,7 +85,7 @@ export type CopilotContextValue = {
   open: boolean;
   width: number;
   setWidth: (width: number) => void;
-  activeTab: 'chat' | 'translator';
+  activeTab: 'chat' | 'translator' | 'sizing';
   status: AgentStatus;
   preset: CopilotWorkflowPreset;
   messages: CopilotMessage[];
@@ -113,7 +113,7 @@ export type CopilotContextValue = {
   openAtlasSearchIndexDialog: (request: AtlasSearchDialogRequest) => void;
   toggleOpen: () => void;
   setOpen: (open: boolean) => void;
-  setActiveTab: (tab: 'chat' | 'translator') => void;
+  setActiveTab: (tab: 'chat' | 'translator' | 'sizing') => void;
   setPreset: (preset: CopilotWorkflowPreset) => void;
   sendMessage: (text: string) => void;
   openWithPrompt: (prompt: string) => void;
@@ -189,7 +189,7 @@ export function CopilotProvider({
   managerCostInputs = DEFAULT_MANAGER_COST_INPUTS,
 }: CopilotProviderProps) {
   const [open, setOpenState] = useState(false);
-  const [activeTab, setActiveTabState] = useState<'chat' | 'translator'>('chat');
+  const [activeTab, setActiveTabState] = useState<'chat' | 'translator' | 'sizing'>('chat');
   const [status, setStatus] = useState<AgentStatus>('idle');
   const [preset, setPreset] = useState<CopilotWorkflowPreset>('schema-design');
   const [messages, setMessages] = useState<CopilotMessage[]>([]);
