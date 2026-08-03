@@ -693,8 +693,9 @@ textarea {
 
 .diagram-view-dock {
   position: absolute;
-  left: 0.65rem;
+  right: 0.65rem;
   top: 0.65rem;
+  left: auto;
   z-index: 12;
   pointer-events: none;
 }
@@ -4749,8 +4750,9 @@ textarea {
   }
 
   .diagram-view-dock {
-    left: 0.45rem;
+    right: 0.45rem;
     top: 0.45rem;
+    left: auto;
     max-width: calc(100% - 0.9rem);
   }
 
