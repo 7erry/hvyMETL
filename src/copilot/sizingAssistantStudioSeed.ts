@@ -3,11 +3,12 @@
  */
 
 import type { CopilotDatasetScaleContext } from './copilotDatasetScale.js';
-import {
-  mergeSessionParametersIfMissing,
-  type SizingAssistantSession,
-} from './sizingAssistantSession.js';
-import type { SizingSessionParameters, SizingWorkloadType } from './sizingAssistantTypes.js';
+import { mergeSessionParametersIfMissing } from './sizingAssistantSession.js';
+import type {
+  SizingAssistantSession,
+  SizingSessionParameters,
+  SizingWorkloadType,
+} from './sizingAssistantTypes.js';
 
 /** Optional Atlas inspect hints captured after pipeline import (list collections / indexes). */
 export type SizingAtlasInspectHints = {

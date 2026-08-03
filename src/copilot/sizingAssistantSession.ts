@@ -128,19 +128,22 @@ export function mergeSessionParametersIfMissing(
   patch: Partial<SizingSessionParameters>,
 ): { session: SizingAssistantSession; appliedKeys: string[] } {
   const appliedKeys: string[] = [];
-  const next: Partial<SizingSessionParameters> = {};
+  const next: Record<string, unknown> = {};
   for (const [rawKey, value] of Object.entries(patch)) {
     const key = rawKey as keyof SizingSessionParameters;
     if (value === undefined) continue;
     if (isSizingParameterMissing(key, session.parameters)) {
-      next[key] = value as SizingSessionParameters[typeof key];
+      next[rawKey] = value;
       appliedKeys.push(rawKey);
     }
   }
   if (appliedKeys.length === 0) {
     return { session, appliedKeys };
   }
-  return { session: mergeSessionParameters(session, next), appliedKeys };
+  return {
+    session: mergeSessionParameters(session, next as Partial<SizingSessionParameters>),
+    appliedKeys,
+  };
 }
 
 export function setResourceCuratorHandoff(

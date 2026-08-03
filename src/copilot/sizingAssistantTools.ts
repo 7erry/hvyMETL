@@ -69,7 +69,7 @@ function supplementParametersFromChat(session: SizingAssistantSession): SizingAs
   for (const field of missing) {
     const value = patch[field];
     if (typeof value === 'number' && value > 0) {
-      filtered[field] = value;
+      Object.assign(filtered, { [field]: value });
     }
   }
 
