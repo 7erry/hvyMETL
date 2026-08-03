@@ -87,8 +87,11 @@ Open **Agent Copilot** (⌘K) → **Atlas Sizing** tab.
 | --- | --- |
 | [`web/src/sizing/SizingAssistantContext.tsx`](../web/src/sizing/SizingAssistantContext.tsx) | Session + chat state; calls `/api/sizing-assistant` |
 | [`web/src/components/sizing/SizingAssistantPanel.tsx`](../web/src/components/sizing/SizingAssistantPanel.tsx) | Thread, quick prompts, tool result summaries |
+| [`web/src/components/sizing/SizingRecommendationExport.tsx`](../web/src/components/sizing/SizingRecommendationExport.tsx) | **Save to Google Docs** + **Download markdown** on recommendation replies |
 
 Requires `GROVE_API_KEY` on the API server for LLM-driven tool use; `/tools` works without Grove for deterministic testing.
+
+Recommendation responses (for example **Recommended Cluster**, **Oplog Recommendations**, capacity tables, or after `find_optimal_cluster_tier`) show the same **Export** actions as architecture reviews when `GOOGLE_DRIVE_CLIENT_ID` is configured — see [Agent Copilot → Google Docs](20-agent-copilot.md#architecture-review--google-docs).
 
 ## UX flow
 

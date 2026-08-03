@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useSizingAssistant } from '../../sizing/SizingAssistantContext';
 import { CopilotMessageBody } from '../copilot/CopilotMessageBody';
 import { CopilotTypingIndicator } from '../copilot/CopilotTypingIndicator';
+import { SizingRecommendationExport } from './SizingRecommendationExport';
 
 const QUICK_PROMPTS = [
   {
@@ -73,6 +74,7 @@ export function SizingAssistantPanel() {
             {message.content.trim() ? (
               <CopilotMessageBody content={message.content} markdown={message.markdown} />
             ) : null}
+            <SizingRecommendationExport message={message} />
           </article>
         ))}
 
