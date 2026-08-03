@@ -1,3 +1,21 @@
+## hvyMETL 3.2.4
+
+Diagram **View** control for comparing **Before · SQL** and **After · MongoDB** on one screen.
+
+### Highlights
+
+- **View dock (canvas top-left):** pill selector with **stacked split** (SQL above MongoDB), **side-by-side split** (SQL left, MongoDB right), **REL** (SQL-only), and **MDB** (MongoDB-only).
+- **Resizable splits:** drag the divider between panes; sizes persist in session (`diagramDualSplitBottomHeight`, `diagramDualSplitLeftWidth`).
+- **Workflow integration:** **Import DDL → Before · SQL** / **After · MongoDB** steps switch to **REL** / **MDB**; split modes auto-run **Refresh design** when a migration plan is missing.
+- **Session:** `diagramViewMode` restored on refresh alongside existing `schemaPhase`.
+
+### Verification
+
+- `npm test -- web/src/diagramViewMode.test.ts`
+- `npm run build --prefix web` (after `npm install --prefix web`)
+
+---
+
 ## hvyMETL 3.2.3
 
 Full-text search chat commands open a **field picker dialog** (like vector search) instead of letting the LLM guess indexed fields.
