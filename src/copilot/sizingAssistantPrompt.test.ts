@@ -30,6 +30,15 @@ describe('sizingAssistantPrompt', () => {
     expect(SIZING_ASSISTANT_INSTRUCTIONS).toContain('cluster level');
   });
 
+  it('includes infrastructure architect framework in composed system prompt', () => {
+    const prompt = buildSizingAssistantSystemPrompt();
+    expect(prompt).toContain('Infrastructure Architect Framework');
+    expect(prompt).toContain('Principal MongoDB Atlas Infrastructure Architect');
+    expect(prompt).toContain('Working Set & RAM Sizing');
+    expect(prompt).toContain('Sizing & Capacity Breakdown Table');
+    expect(prompt).toContain('Peak Read Operations/sec (QPS)');
+  });
+
   it('includes full sizing engine logic reference in composed system prompt', () => {
     const prompt = buildSizingAssistantSystemPrompt();
     expect(prompt).toContain('Sizing Logic Reference');

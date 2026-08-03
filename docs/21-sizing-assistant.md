@@ -10,6 +10,7 @@ The LLM system prompt lives in the server package:
 | --- | --- |
 | [`src/copilot/sizingAssistantPrompt.ts`](../src/copilot/sizingAssistantPrompt.ts) | Role, tool-use rules, unsupported-config handling, output format |
 | [`src/copilot/sizingAssistantLogicReference.ts`](../src/copilot/sizingAssistantLogicReference.ts) | **Logic Abstract** — normalization, tier filters, shard/secondary math, cost penalty, ranking |
+| [`src/copilot/sizingAssistantInfrastructureFramework.ts`](../src/copilot/sizingAssistantInfrastructureFramework.ts) | **Infrastructure Architect** — WSS/RAM, vCPU, storage/IOPS/backup, oplog, HA/sovereignty, five-part output template, application input checklist |
 
 Use `buildSizingAssistantSystemPrompt()` (or `SIZING_ASSISTANT_SYSTEM_PROMPT`) when wiring the sizing chat endpoint or Grove preset for 4.0.
 

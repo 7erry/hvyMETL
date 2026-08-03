@@ -3,7 +3,10 @@
  * Composed with {@link SIZING_ASSISTANT_LOGIC_REFERENCE} for calculation explanations.
  */
 
+import { SIZING_ASSISTANT_INFRASTRUCTURE_ARCHITECT_FRAMEWORK } from './sizingAssistantInfrastructureFramework.js';
 import { SIZING_ASSISTANT_LOGIC_REFERENCE } from './sizingAssistantLogicReference.js';
+
+export { SIZING_ASSISTANT_INFRASTRUCTURE_ARCHITECT_FRAMEWORK } from './sizingAssistantInfrastructureFramework.js';
 
 /** Role and behavioral instructions for the sizing assistant LLM. */
 export const SIZING_ASSISTANT_INSTRUCTIONS = `
@@ -51,6 +54,11 @@ After the system runs a calculation (or an error occurs), you will see the resul
  */
 export function buildSizingAssistantSystemPrompt(): string {
   return `${SIZING_ASSISTANT_INSTRUCTIONS}
+
+Infrastructure Architect Framework
+When the user asks for a full architecture brief, or when you present sizing results beyond a minimal tool summary, apply the following role, step-by-step calculations, output structure, and input checklist. Automated tier recommendations from find_optimal_cluster_tier still follow the sizing assistant rules above (including unsupported-configuration defaults and no cost breakdown in chat).
+
+${SIZING_ASSISTANT_INFRASTRUCTURE_ARCHITECT_FRAMEWORK}
 
 Sizing Logic Reference
 The following document describes the mathematical formulas and business rules used by the sizing engine. Use this as a reference when explaining sizing calculations to users:

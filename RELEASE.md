@@ -6,6 +6,7 @@ Foundation for the **MongoDB Atlas cluster sizing assistant** (separate from mig
 
 - **`src/copilot/sizingAssistantPrompt.ts`:** expert sizing assistant instructions — markdown formatting, thought-then-tool flow, resource curator handoff, transcript extraction, unsupported topology/feature defaults, cluster-level aggregation, and presentation rules for `find_optimal_cluster_tier` / `prompt_for_missing_info` (no cost breakdown in user-facing text).
 - **`src/copilot/sizingAssistantLogicReference.ts`:** embedded **Logic Abstract** (inputs, tier catalog, normalization, eligibility filters, shard/secondary/cost math, ranking).
+- **`src/copilot/sizingAssistantInfrastructureFramework.ts`:** Principal Infrastructure Architect brief — step-by-step WSS/RAM, compute, storage/backup, oplog, topology/sovereignty, structured output requirements, and application input checklist.
 - **Docs:** [`docs/21-sizing-assistant.md`](docs/21-sizing-assistant.md).
 
 ### Verification
