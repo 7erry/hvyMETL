@@ -17,6 +17,10 @@ import type { SizingAssistantToolName } from './sizingAssistantToolSchemas.js';
 import { isSizingAssistantToolName } from './sizingAssistantToolSchemas.js';
 import type { SizingAssistantSession, SizingSessionParameters } from './sizingAssistantTypes.js';
 import { REQUIRED_SIZING_ENGINE_FIELDS } from './sizingAssistantTypes.js';
+import {
+  countPresentRequiredFields,
+  parseSizingParameterUpdate,
+} from './sizingAssistantParameterParse.js';
 
 export type SizingToolResult = {
   ok: boolean;
@@ -37,45 +41,40 @@ function requireSession(sessionId: string): SizingAssistantSession {
 }
 
 function pickNumericFields(args: Record<string, unknown>): Partial<SizingSessionParameters> {
-  const patch: Partial<SizingSessionParameters> = {};
-  const numericKeys = [
-    'projected_total_data_size_gb',
-    'total_raw_read_ops',
-    'total_raw_write_ops',
-    'avg_doc_size_kb',
-    'secondary_index_count',
-    'data_compression_percentage',
-    'geo_sharded_regions_required',
-    'user_specified_addl_secondaries',
-    'estimated_data_growth_gb_per_month',
-    'active_working_set_percentage',
-    'rto_seconds',
-    'rpo_seconds',
-    'shard_penalty_multiplier',
-  ] as const;
+  return parseSizingParameterUpdate(args);
+}
 
-  for (const key of numericKeys) {
-    const value = args[key];
-    if (typeof value === 'number' && Number.isFinite(value)) {
-      patch[key] = value;
+function latestUserMessageText(session: SizingAssistantSession): string {
+  const userMessages = session.chatMessages.filter((message) => message.role === 'user');
+  if (userMessages.length === 0) return '';
+  return userMessages
+    .slice(-3)
+    .map((message) => message.content)
+    .join('\n');
+}
+
+/** Fill missing required fields from recent user chat text when the model used wrong tool arg shapes. */
+function supplementParametersFromChat(session: SizingAssistantSession): SizingAssistantSession {
+  const missing = listMissingSizingParameters(session);
+  if (missing.length === 0) return session;
+
+  const sources = [latestUserMessageText(session)].filter(Boolean);
+
+  let patch: Partial<SizingSessionParameters> = {};
+  for (const text of sources) {
+    patch = { ...patch, ...extractParametersFromText(text) };
+  }
+
+  const filtered: Partial<SizingSessionParameters> = {};
+  for (const field of missing) {
+    const value = patch[field];
+    if (typeof value === 'number' && value > 0) {
+      filtered[field] = value;
     }
   }
 
-  if (args.workload_type === 'CONSISTENT' || args.workload_type === 'INTERMITTENT') {
-    patch.workload_type = args.workload_type;
-  }
-  for (const key of [
-    'read_sla_gt_50ms',
-    'is_bulk_ops_permitted',
-    'is_multi_region_required_for_ha',
-  ] as const) {
-    if (typeof args[key] === 'boolean') patch[key] = args[key];
-  }
-  if (typeof args.target_availability_sla === 'string') {
-    patch.target_availability_sla = args.target_availability_sla.trim();
-  }
-
-  return patch;
+  if (Object.keys(filtered).length === 0) return session;
+  return mergeSessionParameters(session, filtered);
 }
 
 /** Heuristic extraction from unstructured transcript text. */
@@ -84,25 +83,31 @@ export function extractParametersFromText(text: string): Partial<SizingSessionPa
   const lower = text.toLowerCase();
 
   const dataMatch =
-    text.match(/(\d+(?:\.\d+)?)\s*(?:gb|gib)\b/i) ??
-    lower.match(/data[^0-9]*(\d+(?:\.\d+)?)\s*gb/);
-  if (dataMatch) patch.projected_total_data_size_gb = Number.parseFloat(dataMatch[1]);
+    text.match(/(\d{1,3}(?:,\d{3})*(?:\.\d+)?|\d+(?:\.\d+)?)\s*(?:gb|gib)\b/i) ??
+    lower.match(/data[^0-9]*(\d{1,3}(?:,\d{3})*(?:\.\d+)?|\d+(?:\.\d+)?)\s*gb/);
+  if (dataMatch) {
+    patch.projected_total_data_size_gb = Number.parseFloat(dataMatch[1].replace(/,/g, ''));
+  }
 
   const readMatch =
-    text.match(/(\d+(?:,\d+)*)\s*(?:reads?|qps|rps)\b/i) ??
-    text.match(/read[^0-9]*(\d+(?:,\d+)*)/i);
+    text.match(/peak\s+reads?\s*(?:is|:)?\s*(\d{1,3}(?:,\d{3})*|\d+)/i) ??
+    text.match(/(\d{1,3}(?:,\d{3})*|\d+)\s*(?:reads?|qps|rps|qts)\b/i) ??
+    text.match(/read[^0-9]*(\d{1,3}(?:,\d{3})*|\d+)/i);
   if (readMatch) {
     patch.total_raw_read_ops = Number.parseInt(readMatch[1].replace(/,/g, ''), 10);
   }
 
   const writeMatch =
-    text.match(/(\d+(?:,\d+)*)\s*(?:writes?|tps|wps)\b/i) ??
-    text.match(/write[^0-9]*(\d+(?:,\d+)*)/i);
+    text.match(/peak\s+writes?\s*(?:is|:)?\s*(\d{1,3}(?:,\d{3})*|\d+)/i) ??
+    text.match(/(\d{1,3}(?:,\d{3})*|\d+)\s*(?:writes?|tps|wps)\b/i) ??
+    text.match(/write[^0-9]*(\d{1,3}(?:,\d{3})*|\d+)/i);
   if (writeMatch) {
     patch.total_raw_write_ops = Number.parseInt(writeMatch[1].replace(/,/g, ''), 10);
   }
 
-  const docMatch = text.match(/(\d+(?:\.\d+)?)\s*(?:kb|kilobyte)\b/i);
+  const docMatch =
+    text.match(/average\s+document\s+size\s*(?:is|:)?\s*(\d+(?:\.\d+)?)\s*(?:kb|kilobyte)?/i) ??
+    text.match(/(\d+(?:\.\d+)?)\s*(?:kb|kilobyte)\b/i);
   if (docMatch) patch.avg_doc_size_kb = Number.parseFloat(docMatch[1]);
 
   if (/bulk\s*ops/i.test(text) || /bulk\s*write/i.test(text)) {
@@ -156,13 +161,24 @@ export function executeSizingAssistantTool(
 
   switch (toolName) {
     case 'update_sizing_parameters': {
+      let session = requireSession(sessionId);
       const patch = pickNumericFields(args);
+      if (typeof args.source_text === 'string' && args.source_text.trim()) {
+        Object.assign(patch, extractParametersFromText(args.source_text));
+      }
       session = mergeSessionParameters(session, patch);
+      session = supplementParametersFromChat(session);
+      const missing = listMissingSizingParameters(session);
+      const requiredCount = countPresentRequiredFields(session.parameters);
       return {
         ok: true,
         tool: toolName,
-        summary: `Updated ${Object.keys(patch).length} sizing parameter(s).`,
-        data: { parameters: session.parameters },
+        summary: `Updated ${Object.keys(patch).length} sizing parameter(s); ${requiredCount}/4 required fields set.`,
+        data: {
+          parameters: session.parameters,
+          missingFields: missing,
+          appliedKeys: Object.keys(patch),
+        },
       };
     }
     case 'update_shard_penalty': {
@@ -246,6 +262,7 @@ export function executeSizingAssistantTool(
       };
     }
     case 'find_optimal_cluster_tier': {
+      session = supplementParametersFromChat(session);
       const missing = listMissingSizingParameters(session);
       if (missing.length > 0) {
         return {
