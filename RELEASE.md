@@ -1,3 +1,17 @@
+## hvyMETL 4.0.1
+
+Fix Atlas Sizing assistant parameter persistence when the model sends aliases, string numbers, or nested `parameters` objects.
+
+- **`parseSizingParameterUpdate`** — maps `cluster_data_size_gb`, `peak_read_qps`, etc. to canonical engine fields; coerces `"5,000"` strings.
+- **Chat supplement** — `find_optimal_cluster_tier` / `update_sizing_parameters` backfill missing required fields from recent user messages (e.g. `5,000 GB`, `400 qts` typo).
+- **Tool responses** — include `missingFields` and `X/4 required fields set` for clearer LLM turns.
+
+### Verification
+
+- `npm test -- src/copilot/sizingAssistantParameterParse.test.ts src/copilot/sizingAssistantTools.test.ts`
+
+---
+
 ## hvyMETL 4.0.0
 
 Release **4.0** ships the **Atlas cluster sizing assistant** runtime (engine, tools, API, Migration Studio tab). Multi-phase work continues for connectivity architect runtime and production lessons learned — see [`docs/22-release-4.0-roadmap.md`](docs/22-release-4.0-roadmap.md).
