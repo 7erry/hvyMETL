@@ -1,3 +1,5 @@
+import type { DiagramViewMode } from './diagramViewMode';
+import { diagramViewModeFromSchemaPhase, parseDiagramViewMode } from './diagramViewMode';
 import type { SqlStructuralModel } from './types';
 import type { CardinalityOverrides, ForceEmbedOverrides } from './cardinalityOverrides';
 import type { TimeSeriesOverrides } from './timeSeriesOverrides';
@@ -64,6 +66,9 @@ export type AppView = 'diagram' | 'migration';
 
 export type SchemaPhase = 'before' | 'after';
 
+export const DIAGRAM_DUAL_SPLIT_BOTTOM_DEFAULT = 320;
+export const DIAGRAM_DUAL_SPLIT_LEFT_DEFAULT = 480;
+
 /** Developer keeps the full engineering UI; manager shows a simplified executive dashboard. */
 export type UiRole = 'developer' | 'manager';
 
@@ -97,6 +102,9 @@ export type SessionState = {
   selectedTable: string | null;
   selectedCollection: string | null;
   schemaPhase: SchemaPhase;
+  diagramViewMode: DiagramViewMode;
+  diagramDualSplitBottomHeight: number;
+  diagramDualSplitLeftWidth: number;
   view: AppView;
   migrationArtifacts: MigrationArtifacts | null;
   sidebarWidth: number;
@@ -126,6 +134,9 @@ export const defaultSessionState = (): SessionState => ({
   selectedTable: null,
   selectedCollection: null,
   schemaPhase: 'before',
+  diagramViewMode: 'rel',
+  diagramDualSplitBottomHeight: DIAGRAM_DUAL_SPLIT_BOTTOM_DEFAULT,
+  diagramDualSplitLeftWidth: DIAGRAM_DUAL_SPLIT_LEFT_DEFAULT,
   view: 'diagram',
   migrationArtifacts: null,
   sidebarWidth: SIDEBAR_WIDTH_DEFAULT,
@@ -150,9 +161,24 @@ export function loadSessionState(userId?: string): SessionState {
     if (!raw) return defaultSessionState();
     const parsed = JSON.parse(raw) as Partial<SessionState> & { sourceDbPath?: string | null };
     const { sourceDbPath: _legacy, ...rest } = parsed;
+    const phase = rest.schemaPhase === 'after' ? 'after' : 'before';
+    const diagramViewMode =
+      parseDiagramViewMode(rest.diagramViewMode) ?? diagramViewModeFromSchemaPhase(phase);
     return {
       ...defaultSessionState(),
       ...rest,
+      schemaPhase: phase,
+      diagramViewMode,
+      diagramDualSplitBottomHeight: clampPanelWidth(
+        rest.diagramDualSplitBottomHeight,
+        DIAGRAM_DUAL_SPLIT_BOTTOM_DEFAULT,
+        900,
+      ),
+      diagramDualSplitLeftWidth: clampPanelWidth(
+        rest.diagramDualSplitLeftWidth,
+        DIAGRAM_DUAL_SPLIT_LEFT_DEFAULT,
+        1600,
+      ),
       csvSourcePath: rest.csvSourcePath ?? _legacy ?? null,
       sidebarWidth: clampPanelWidth(rest.sidebarWidth, SIDEBAR_WIDTH_DEFAULT, SIDEBAR_WIDTH_MAX),
       copilotWidth: clampPanelWidth(rest.copilotWidth, COPILOT_WIDTH_DEFAULT, COPILOT_WIDTH_MAX),

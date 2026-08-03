@@ -600,11 +600,191 @@ textarea {
 .schema-phase-bar {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
+  flex-wrap: wrap;
   gap: 1rem;
   padding: 0.5rem 1rem;
   border-bottom: 1px solid #00684a;
   background: #0a2a33;
+}
+
+.diagram-view-selector {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
+  flex-shrink: 0;
+}
+
+.diagram-view-selector__label {
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.diagram-view-selector__track {
+  display: inline-flex;
+  align-items: stretch;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 999px;
+  overflow: hidden;
+  background: rgba(0, 0, 0, 0.25);
+}
+
+.diagram-view-selector__segment {
+  min-height: 2rem;
+  min-width: 2.35rem;
+  padding: 0.25rem 0.65rem;
+  border: none;
+  border-right: 1px solid rgba(255, 255, 255, 0.12);
+  background: transparent;
+  color: rgba(255, 255, 255, 0.75);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: none;
+}
+
+.diagram-view-selector__segment:last-child {
+  border-right: none;
+}
+
+.diagram-view-selector__segment:hover:not(:disabled) {
+  background: rgba(0, 104, 74, 0.35);
+  color: #fff;
+}
+
+.diagram-view-selector__segment--active {
+  background: rgba(255, 255, 255, 0.92);
+  color: #0a2a33;
+}
+
+.diagram-view-selector__segment--active:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.92);
+  color: #0a2a33;
+}
+
+.diagram-view-selector__segment:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.diagram-view-selector__sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.diagram-workspace {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.diagram-view-dock {
+  position: absolute;
+  left: 0.65rem;
+  top: 0.65rem;
+  z-index: 12;
+  pointer-events: none;
+}
+
+.diagram-view-dock .diagram-view-selector {
+  pointer-events: auto;
+  padding: 0.35rem 0.5rem;
+  border-radius: 999px;
+  border: 1px solid rgba(0, 104, 74, 0.55);
+  background: rgba(10, 42, 51, 0.92);
+  backdrop-filter: blur(6px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+}
+
+.diagram-workspace__canvases {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.diagram-pane {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--mdb-gray-dark-4);
+}
+
+.diagram-pane__header {
+  flex-shrink: 0;
+  padding: 0.35rem 0.75rem;
+  border-bottom: 1px solid var(--mdb-green-dark-2);
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.diagram-pane__label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--mdb-spring-green);
+  text-transform: uppercase;
+}
+
+.diagram-pane__body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.workspace-split-horizontal {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+}
+
+.workspace-split-horizontal--dragging {
+  cursor: col-resize;
+  user-select: none;
+}
+
+.workspace-split-horizontal__left {
+  flex-shrink: 0;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.workspace-split-horizontal__right {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  border-left: 1px solid var(--mdb-green-dark-2);
+}
+
+.workspace-divider--horizontal-inner {
+  flex-shrink: 0;
+}
+
+.diagram-footer-legend-dual {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex-wrap: wrap;
 }
 
 .schema-phase-bar__meta {
@@ -4568,6 +4748,17 @@ textarea {
     order: 1;
   }
 
+  .diagram-view-dock {
+    left: 0.45rem;
+    top: 0.45rem;
+    max-width: calc(100% - 0.9rem);
+  }
+
+  .diagram-view-dock .diagram-view-selector {
+    flex-wrap: wrap;
+    max-width: 100%;
+  }
+
   .schema-phase-toggle {
     flex: 1 1 auto;
   }
@@ -5630,7 +5821,7 @@ textarea {
 }
 
 .mongo-auto-embed-modal__field select,
-.mongo-auto-embed-modal__field input {
+.mongo-auto-embed-modal__field input:not([type='checkbox']) {
   width: 100%;
 }
 
@@ -5650,6 +5841,21 @@ textarea {
 
 .mongo-atlas-search-field-list li {
   margin: 0.25rem 0;
+}
+
+.mongo-atlas-search-field-list label {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.mongo-atlas-search-field-list input[type='checkbox'] {
+  width: auto;
+  flex-shrink: 0;
+  margin: 0;
 }
 
 .copilot-self-heal {

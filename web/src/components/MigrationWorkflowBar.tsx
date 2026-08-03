@@ -2,6 +2,7 @@ import type { SchemaPhase } from './SchemaPhaseToggle';
 
 type MigrationWorkflowBarProps = {
   phase: SchemaPhase;
+  diagramViewMode?: import('../diagramViewMode').DiagramViewMode;
   onPhaseChange: (phase: SchemaPhase) => void;
   hasAfter: boolean;
   hasModel: boolean;
@@ -51,6 +52,7 @@ function WorkflowStep({ label, onClick, active, disabled, loading, primary, titl
 /** Linear migration steps: import → SQL view → MongoDB view → export → pipeline. */
 export function MigrationWorkflowBar({
   phase,
+  diagramViewMode = 'rel',
   onPhaseChange,
   hasAfter,
   hasModel,
@@ -68,14 +70,14 @@ export function MigrationWorkflowBar({
       <WorkflowStep
         label="Before · SQL"
         onClick={() => onPhaseChange('before')}
-        active={!exportActive && hasModel && phase === 'before'}
+        active={!exportActive && hasModel && phase === 'before' && diagramViewMode === 'rel'}
         disabled={!hasModel}
       />
       <WorkflowArrow />
       <WorkflowStep
         label="After · MongoDB"
         onClick={() => onPhaseChange('after')}
-        active={!exportActive && hasModel && phase === 'after'}
+        active={!exportActive && hasModel && phase === 'after' && diagramViewMode === 'mdb'}
         disabled={!hasModel}
         loading={designingPlan}
         title={hasAfter ? 'MongoDB collections from migration plan' : 'Generate a migration plan first'}

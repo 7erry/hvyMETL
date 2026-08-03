@@ -17,6 +17,9 @@ import { CollectionDetails } from './components/CollectionDetails';
 import { TransformationSummaryPanel } from './components/TransformationSummaryPanel';
 import { PipelineHistoryPanel } from './components/PipelineHistoryPanel';
 import { MigrationWorkflowBar } from './components/MigrationWorkflowBar';
+import { DiagramViewSelector } from './components/DiagramViewSelector';
+import { DiagramDualCanvasLayout } from './components/DiagramDualCanvasLayout';
+import { isDualDiagramView, diagramViewModeFromSchemaPhase } from './diagramViewMode';
 import type { SchemaPhase } from './components/SchemaPhaseToggle';
 import { ResizableSplit } from './components/ResizableSplit';
 import { PipelinePanel } from './components/PipelinePanel';
@@ -73,6 +76,7 @@ import {
   type MigrationArtifacts,
   type SessionState,
 } from './sessionState';
+import type { DiagramViewMode } from './diagramViewMode';
 import { mergeWorkspaceIntoSession, sessionToWorkspace } from './workspaceSync';
 import {
   fieldsForCollection,
@@ -166,6 +170,9 @@ export default function App() {
     selectedTable,
     selectedCollection,
     schemaPhase,
+    diagramViewMode,
+    diagramDualSplitBottomHeight,
+    diagramDualSplitLeftWidth,
     view,
     migrationArtifacts,
     sidebarWidth,
@@ -231,6 +238,7 @@ export default function App() {
 
   const handleGoToEmbedOverrides = useCallback(() => {
     setSessionField('schemaPhase', 'before');
+    setSessionField('diagramViewMode', 'rel');
     setEmbedOverridesPanelOpen(true);
     requestAnimationFrame(() => {
       document.getElementById(EMBED_OVERRIDES_PANEL_ID)?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
@@ -899,8 +907,26 @@ export default function App() {
 
   const handleSchemaPhaseChange = (phase: SchemaPhase) => {
     setSessionField('schemaPhase', phase);
+    setSessionField('diagramViewMode', diagramViewModeFromSchemaPhase(phase));
     if (phase === 'after' && model && (!migrationPlan || !migrationArtifacts?.designMeta)) {
       void handleGeneratePlan();
+    }
+  };
+
+  const handleDiagramViewModeChange = (mode: DiagramViewMode) => {
+    setSessionField('diagramViewMode', mode);
+    if (mode === 'rel') {
+      handleSchemaPhaseChange('before');
+      return;
+    }
+    if (mode === 'mdb') {
+      handleSchemaPhaseChange('after');
+      return;
+    }
+    if (mode === 'split-horizontal' || mode === 'split-vertical') {
+      if (!migrationPlan && model) {
+        void handleGeneratePlan();
+      }
     }
   };
 
@@ -1146,25 +1172,35 @@ export default function App() {
 
   const diagramLegend = useMemo(() => {
     if (view !== 'diagram' || uiRole !== 'developer') return null;
-    if (schemaPhase === 'before' && model) {
-      return (
+    const sqlLegend =
+      model ? (
         <FooterDiagramLegend
           variant="sql"
           stats={`${model.tables.length} tbl · ${model.relationships.length} rel`}
         />
-      );
-    }
-    if (schemaPhase === 'after' && migrationPlan) {
-      const links = edgesForPlan(migrationPlan).length;
-      return (
+      ) : null;
+    const mongoLegend =
+      migrationPlan ? (
         <FooterDiagramLegend
           variant="mongo"
-          stats={`${migrationPlan.collections.length} coll · ${links} link${links === 1 ? '' : 's'}`}
+          stats={`${migrationPlan.collections.length} coll · ${edgesForPlan(migrationPlan).length} link${edgesForPlan(migrationPlan).length === 1 ? '' : 's'}`}
         />
+      ) : null;
+
+    if (isDualDiagramView(diagramViewMode)) {
+      if (!sqlLegend && !mongoLegend) return null;
+      return (
+        <span className="diagram-footer-legend-dual">
+          {sqlLegend}
+          {sqlLegend && mongoLegend ? ' · ' : null}
+          {mongoLegend}
+        </span>
       );
     }
+    if (diagramViewMode === 'rel' && model) return sqlLegend;
+    if (diagramViewMode === 'mdb' && migrationPlan) return mongoLegend;
     return null;
-  }, [view, uiRole, schemaPhase, model, migrationPlan]);
+  }, [view, uiRole, diagramViewMode, model, migrationPlan]);
 
   return (
     <AuthGate>
@@ -1557,6 +1593,7 @@ export default function App() {
                 <div className="schema-phase-bar">
                   <MigrationWorkflowBar
                     phase={schemaPhase}
+                    diagramViewMode={diagramViewMode}
                     onPhaseChange={handleWorkflowPhaseChange}
                     hasAfter={Boolean(migrationPlan)}
                     hasModel={Boolean(model)}
@@ -1567,7 +1604,8 @@ export default function App() {
                     onExportMigration={handleExportMigrationStep}
                     onRunPipeline={() => setPipelineOpen(true)}
                   />
-                  {schemaPhase === 'after' && migrationPlan ? (
+                  {(diagramViewMode === 'mdb' || isDualDiagramView(diagramViewMode)) &&
+                  migrationPlan ? (
                     <span className="schema-phase-bar__meta">
                       {migrationArtifacts?.designMeta
                         ? formatTransformSummary(migrationArtifacts.designMeta)
@@ -1583,36 +1621,76 @@ export default function App() {
                     </span>
                   ) : null}
                 </div>
-                {schemaPhase === 'before' ? (
-                  <SchemaCanvasWithCopilot
-                    model={model}
-                    snapToGrid={snapToGrid}
-                    connectionType={relationshipConnectionType}
-                    relationshipNotation={relationshipNotation}
-                    onConnectionTypeChange={(type) => setSessionField('relationshipConnectionType', type)}
-                    onRelationshipNotationChange={(notation) => setSessionField('relationshipNotation', notation)}
-                    onPositionsChange={(p) => setSessionField('positions', p)}
-                    positions={positions}
-                    onDuplicateTable={handleDuplicate}
-                    selectedTable={selectedTable}
-                    onSelectTable={(name) => setSessionField('selectedTable', name)}
-                  />
-                ) : (
-                  <MongoSchemaCanvas
-                    plan={migrationPlan}
-                    snapToGrid={snapToGrid}
-                    connectionType={relationshipConnectionType}
-                    relationshipNotation={relationshipNotation}
-                    onConnectionTypeChange={(type) => setSessionField('relationshipConnectionType', type)}
-                    onRelationshipNotationChange={(notation) => setSessionField('relationshipNotation', notation)}
-                    onPositionsChange={(p) => setSessionField('collectionPositions', p)}
-                    positions={effectiveCollectionPositions}
-                    selectedCollection={selectedCollection}
-                    onSelectCollection={(name) => setSessionField('selectedCollection', name)}
-                    onGeneratePlan={() => void handleGeneratePlan()}
-                    generating={designingPlan}
-                  />
-                )}
+                <div className="diagram-workspace">
+                  <div className="diagram-view-dock" aria-label="Diagram layout">
+                    <DiagramViewSelector
+                      mode={diagramViewMode}
+                      onChange={handleDiagramViewModeChange}
+                      disabled={!model}
+                    />
+                  </div>
+                  <div className="diagram-workspace__canvases">
+                  {(() => {
+                    const sqlCanvas = (
+                      <SchemaCanvasWithCopilot
+                        model={model}
+                        snapToGrid={snapToGrid}
+                        connectionType={relationshipConnectionType}
+                        relationshipNotation={relationshipNotation}
+                        onConnectionTypeChange={(type) => setSessionField('relationshipConnectionType', type)}
+                        onRelationshipNotationChange={(notation) =>
+                          setSessionField('relationshipNotation', notation)
+                        }
+                        onPositionsChange={(p) => setSessionField('positions', p)}
+                        positions={positions}
+                        onDuplicateTable={handleDuplicate}
+                        selectedTable={selectedTable}
+                        onSelectTable={(name) => setSessionField('selectedTable', name)}
+                      />
+                    );
+                    const mongoCanvas = (
+                      <MongoSchemaCanvas
+                        plan={migrationPlan}
+                        snapToGrid={snapToGrid}
+                        connectionType={relationshipConnectionType}
+                        relationshipNotation={relationshipNotation}
+                        onConnectionTypeChange={(type) => setSessionField('relationshipConnectionType', type)}
+                        onRelationshipNotationChange={(notation) =>
+                          setSessionField('relationshipNotation', notation)
+                        }
+                        onPositionsChange={(p) => setSessionField('collectionPositions', p)}
+                        positions={effectiveCollectionPositions}
+                        selectedCollection={selectedCollection}
+                        onSelectCollection={(name) => setSessionField('selectedCollection', name)}
+                        onGeneratePlan={() => void handleGeneratePlan()}
+                        generating={designingPlan}
+                      />
+                    );
+
+                    if (isDualDiagramView(diagramViewMode)) {
+                      return (
+                        <DiagramDualCanvasLayout
+                          mode={diagramViewMode}
+                          sqlPane={sqlCanvas}
+                          mongoPane={mongoCanvas}
+                          dualSplitBottomHeight={diagramDualSplitBottomHeight}
+                          onDualSplitBottomHeightChange={(height) =>
+                            setSessionField('diagramDualSplitBottomHeight', height)
+                          }
+                          dualSplitLeftWidth={diagramDualSplitLeftWidth}
+                          onDualSplitLeftWidthChange={(width) =>
+                            setSessionField('diagramDualSplitLeftWidth', width)
+                          }
+                        />
+                      );
+                    }
+                    if (diagramViewMode === 'mdb') {
+                      return mongoCanvas;
+                    }
+                    return sqlCanvas;
+                  })()}
+                  </div>
+                </div>
                 <DiagramStatusFooter status={status} legend={diagramLegend} />
               </>
               </WorkspaceCanvasShell>
@@ -1625,6 +1703,7 @@ export default function App() {
               <div className="schema-phase-bar">
                 <MigrationWorkflowBar
                   phase={schemaPhase}
+                  diagramViewMode={diagramViewMode}
                   onPhaseChange={handleWorkflowPhaseChange}
                   hasAfter={Boolean(migrationPlan)}
                   hasModel={Boolean(model)}
