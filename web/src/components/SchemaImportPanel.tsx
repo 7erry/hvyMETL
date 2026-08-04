@@ -4,7 +4,7 @@ import { fetchBuiltinExamples, type BuiltinExampleSummary } from '../api';
 import { sortDialectsByLabel } from '../dialectConstants';
 import { sidebarWidthForSchemaImportTextarea } from '../schemaImportSidebarSync';
 import { detectDialect, DIALECT_DETECT_MIN_CONFIDENCE } from '../schema/detectDialect';
-import { isSupportedDialect } from '../../../src/dialects.ts';
+import { getDialectLabel, isSupportedDialect } from '../../../src/dialects.ts';
 import type { Dialect } from '../types';
 
 const DIALECT_DETECT_DEBOUNCE_MS = 280;
@@ -43,32 +43,28 @@ export function SchemaImportPanel({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const sidebarSyncRafRef = useRef<number | null>(null);
-  const sortedDialects = useMemo(
+  const supportedDialects = useMemo(
     () => sortDialectsByLabel(dialects).filter((entry) => isSupportedDialect(entry.id)),
     [dialects],
   );
   const [autoDetectedLabel, setAutoDetectedLabel] = useState<string | null>(null);
-  const dialectLockedByUserRef = useRef(false);
   const detectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const runDialectDetection = useCallback(
     (text: string) => {
       const trimmed = text.trim();
       if (!trimmed) {
-        dialectLockedByUserRef.current = false;
         setAutoDetectedLabel(null);
         return;
       }
-      if (dialectLockedByUserRef.current) return;
 
       const result = detectDialect(text);
-      if (!result.autoDetected || result.confidence < DIALECT_DETECT_MIN_CONFIDENCE) {
-        setAutoDetectedLabel(null);
-        return;
-      }
       if (!isSupportedDialect(result.dialectId)) return;
 
-      setAutoDetectedLabel(result.label);
+      const highConfidence =
+        result.autoDetected && result.confidence >= DIALECT_DETECT_MIN_CONFIDENCE;
+      setAutoDetectedLabel(highConfidence ? result.label : null);
+
       if (result.dialectId !== dialect) {
         onDialectChange(result.dialectId);
       }
@@ -98,7 +94,6 @@ export function SchemaImportPanel({
     (value: string) => {
       onDdlChange(value);
       if (!value.trim()) {
-        dialectLockedByUserRef.current = false;
         setAutoDetectedLabel(null);
         return;
       }
@@ -107,14 +102,6 @@ export function SchemaImportPanel({
     [onDdlChange, scheduleDialectDetection],
   );
 
-  const handleDialectSelect = useCallback(
-    (value: string) => {
-      dialectLockedByUserRef.current = true;
-      setAutoDetectedLabel(null);
-      onDialectChange(value);
-    },
-    [onDialectChange],
-  );
   const [builtinExamples, setBuiltinExamples] = useState<BuiltinExampleSummary[]>([]);
   const [selectedExampleId, setSelectedExampleId] = useState('');
   const [loadingExamples, setLoadingExamples] = useState(false);
@@ -186,6 +173,8 @@ export function SchemaImportPanel({
     }
   };
 
+  const importDialectLabel = getDialectLabel(dialect);
+
   const content = (
     <>
       {!apiConnected ? (
@@ -205,31 +194,36 @@ export function SchemaImportPanel({
           )}
         </p>
       ) : null}
-      <label className="schema-import-panel__label">Database dialect</label>
-      <div className="schema-import-panel__dialect-row">
-        <select
-          value={dialect}
-          onChange={(e) => handleDialectSelect(e.target.value)}
-          className="schema-import-panel__select"
-          disabled={sortedDialects.length === 0}
-          aria-describedby={autoDetectedLabel ? 'schema-dialect-auto-detected' : undefined}
-        >
-          {sortedDialects.length === 0 ? (
-            <option value="">Loading dialects…</option>
-          ) : (
-            sortedDialects.map((d) => (
-              <option key={d.id} value={d.id}>
-                {d.label}
-              </option>
-            ))
-          )}
-        </select>
+
+      <div className="schema-import-panel__supported-dialects">
+        <p className="schema-import-panel__label">Supported dialects</p>
+        {supportedDialects.length === 0 ? (
+          <p className="schema-import-panel__hint">Loading dialect list…</p>
+        ) : (
+          <ul className="schema-import-panel__dialect-list">
+            {supportedDialects.map((entry) => (
+              <li key={entry.id}>{entry.label}</li>
+            ))}
+          </ul>
+        )}
+      </div>
+
+      <div className="schema-import-panel__dialect-row" aria-live="polite">
         {autoDetectedLabel ? (
           <span className="schema-import-panel__auto-dialect" id="schema-dialect-auto-detected">
             Auto-detected: {autoDetectedLabel}
           </span>
-        ) : null}
+        ) : ddl.trim() ? (
+          <span className="schema-import-panel__import-dialect">
+            Import dialect: <strong>{importDialectLabel}</strong>
+          </span>
+        ) : (
+          <span className="schema-import-panel__import-dialect schema-import-panel__import-dialect--muted">
+            Paste or upload schema — dialect is detected automatically
+          </span>
+        )}
       </div>
+
       <textarea
         ref={textareaRef}
         value={ddl}
@@ -240,7 +234,7 @@ export function SchemaImportPanel({
             runDialectDetection(value);
           });
         }}
-        placeholder="Paste CREATE TABLE statements, JSON Schema, or CloudFormation YAML — dialect is detected automatically…"
+        placeholder="Paste CREATE TABLE statements, JSON Schema, or CloudFormation YAML…"
         rows={compact ? 6 : 8}
         className="schema-import-panel__textarea"
       />

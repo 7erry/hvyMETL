@@ -46,7 +46,7 @@ refresh-token rotation, and troubleshooting.
 
 | Feature | UI location | Backend |
 | --- | --- | --- |
-| **Instant Schema Import** | Sidebar → paste DDL → dialect **auto-detected** (debounced paste/type; manual override via dropdown) → Import Query, **Upload file**, or **Load example** (bundled DDL from server `~/hvymetl/examples`) | `POST /api/schema/import-ddl`, `GET /api/schema/builtin-examples`, `POST /api/schema/import-builtin-example`, `detectDialect` in `src/utilities/detectDialect.ts` |
+| **Instant Schema Import** | Sidebar → paste DDL (dialect **auto-detected**; **Supported dialects** list, no manual selector) → Import Query, **Upload file**, or **Load example** | `detectDialect` in `src/utilities/detectDialect.ts`, `POST /api/schema/import-ddl`, … |
 | **Broad Database Support** | Dialect selector (PostgreSQL, MySQL, SQLite, MSSQL, ClickHouse, Oracle, IBM Db2, CockroachDB, Amazon Aurora, Google Cloud Spanner) | DDL parser; SQLite file upload live |
 | **Embed Overrides** | Before view → **Embed Overrides** → enter max child rows per parent and/or check **Force embed** for linked FK relationships when CSV/live stats are unavailable | `cardinalityOverrides` and `forceEmbedOverrides` applied by design, explain, export, and pipeline APIs |
 | **Customizable ER Diagrams** | Main canvas (drag tables, zoom, minimap) | React Flow + `SqlStructuralModel` |

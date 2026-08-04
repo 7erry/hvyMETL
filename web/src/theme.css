@@ -4522,8 +4522,27 @@ textarea {
   margin-bottom: 0.5rem;
 }
 
-.schema-import-panel__dialect-row .schema-import-panel__select {
-  margin-bottom: 0;
+.schema-import-panel__supported-dialects {
+  margin-bottom: 0.65rem;
+}
+
+.schema-import-panel__dialect-list {
+  margin: 0.25rem 0 0;
+  padding-left: 1.1rem;
+  font-size: 0.72rem;
+  line-height: 1.45;
+  color: var(--text-muted, #5c6b7a);
+  max-height: 6.5rem;
+  overflow-y: auto;
+}
+
+.schema-import-panel__import-dialect {
+  font-size: 0.78rem;
+  color: var(--text-muted, #5c6b7a);
+}
+
+.schema-import-panel__import-dialect--muted {
+  font-style: italic;
 }
 
 .schema-import-panel__auto-dialect {
