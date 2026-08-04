@@ -196,15 +196,33 @@ export function SchemaImportPanel({
       ) : null}
 
       <div className="schema-import-panel__supported-dialects">
-        <p className="schema-import-panel__label">Supported dialects</p>
         {supportedDialects.length === 0 ? (
-          <p className="schema-import-panel__hint">Loading dialect list…</p>
+          <span className="schema-import-panel__supported-trigger schema-import-panel__supported-trigger--static">
+            Supported dialects
+            <span className="schema-import-panel__hint"> (loading…)</span>
+          </span>
         ) : (
-          <ul className="schema-import-panel__dialect-list">
-            {supportedDialects.map((entry) => (
-              <li key={entry.id}>{entry.label}</li>
-            ))}
-          </ul>
+          <>
+            <button
+              type="button"
+              className="schema-import-panel__supported-trigger"
+              aria-describedby="schema-supported-dialects-popover"
+            >
+              Supported dialects
+            </button>
+            <div
+              id="schema-supported-dialects-popover"
+              className="schema-import-panel__supported-popover"
+              role="tooltip"
+            >
+              <p className="schema-import-panel__supported-popover-title">Supported import dialects</p>
+              <ul className="schema-import-panel__dialect-grid">
+                {supportedDialects.map((entry) => (
+                  <li key={entry.id}>{entry.label}</li>
+                ))}
+              </ul>
+            </div>
+          </>
         )}
       </div>
 

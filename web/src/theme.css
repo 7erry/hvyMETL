@@ -4523,17 +4523,74 @@ textarea {
 }
 
 .schema-import-panel__supported-dialects {
-  margin-bottom: 0.65rem;
+  position: relative;
+  display: inline-block;
+  margin-bottom: 0.5rem;
 }
 
-.schema-import-panel__dialect-list {
-  margin: 0.25rem 0 0;
-  padding-left: 1.1rem;
-  font-size: 0.72rem;
-  line-height: 1.45;
+.schema-import-panel__supported-trigger {
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: none;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--link, #00684a);
+  text-decoration: underline dotted;
+  text-underline-offset: 0.15em;
+  cursor: help;
+}
+
+.schema-import-panel__supported-trigger:hover,
+.schema-import-panel__supported-trigger:focus-visible {
+  color: var(--accent, #13aa52);
+}
+
+.schema-import-panel__supported-trigger--static {
+  font-weight: 600;
+  cursor: default;
+  text-decoration: none;
+}
+
+.schema-import-panel__supported-popover {
+  display: none;
+  position: absolute;
+  left: 0;
+  top: calc(100% + 0.35rem);
+  z-index: 40;
+  min-width: min(22rem, 92vw);
+  max-width: 26rem;
+  padding: 0.55rem 0.65rem;
+  border-radius: 8px;
+  border: 1px solid var(--border, #d8dee4);
+  background: var(--panel-bg, #fff);
+  box-shadow: 0 8px 24px rgb(0 0 0 / 12%);
+}
+
+.schema-import-panel__supported-dialects:hover .schema-import-panel__supported-popover,
+.schema-import-panel__supported-dialects:focus-within .schema-import-panel__supported-popover {
+  display: block;
+}
+
+.schema-import-panel__supported-popover-title {
+  margin: 0 0 0.4rem;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
   color: var(--text-muted, #5c6b7a);
-  max-height: 6.5rem;
-  overflow-y: auto;
+}
+
+.schema-import-panel__dialect-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.2rem 1rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.72rem;
+  line-height: 1.35;
+  color: var(--text, #213547);
 }
 
 .schema-import-panel__import-dialect {
