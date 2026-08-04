@@ -91,7 +91,9 @@ Open **Agent Copilot** (⌘K) → **Atlas Sizing** tab.
 
 Requires `GROVE_API_KEY` on the API server for LLM-driven tool use; `/tools` works without Grove for deterministic testing.
 
-Recommendation responses (for example **Recommended Cluster**, **Oplog Recommendations**, capacity tables, or after `find_optimal_cluster_tier`) show the same **Export** actions as architecture reviews when `GOOGLE_DRIVE_CLIENT_ID` is configured — see [Agent Copilot → Google Docs](20-agent-copilot.md#architecture-review--google-docs).
+- **Multi-cloud:** Session parameters include `cloud_provider` (`AWS`, `GCP`, `AZURE`) and `target_regions`. Tier tool output includes `deploymentContext` and computed **`oplogRecommendation`** (retention, estimated GB, guidance). The assistant must present **Oplog Recommendations** on every tier recommendation reply.
+
+Recommendation responses show **Save to Google Docs** and **Download markdown** when `GOOGLE_DRIVE_CLIENT_ID` is configured — see [Agent Copilot → Google Docs](20-agent-copilot.md#architecture-review--google-docs).
 
 ## UX flow
 
@@ -103,9 +105,9 @@ Recommendation responses (for example **Recommended Cluster**, **Oplog Recommend
 
 ## Behavioral notes (prompt)
 
-- **Cluster-level only:** aggregate per-collection inputs with an explicit note.
-- **Unsupported topology/features:** acknowledge 3-node RS / `us-east-1` / AWS defaults while still setting HA/geo flags where applicable.
-- **After calculation:** include parameters used; do **not** surface hourly cost or total pricing in chat.
+- **Multi-cloud:** AWS, GCP, and Azure are supported; persist `cloud_provider` and `target_regions` when the user specifies them.
+- **Unsupported topology/features:** non-3-node replica sets and out-of-scope Atlas features — still run tier math on a standard 3-node layout.
+- **After calculation:** include **Oplog Recommendations**, parameters used, and deployment context; do **not** surface hourly cost or total pricing in chat.
 
 ## Verification
 

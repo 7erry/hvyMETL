@@ -77,6 +77,13 @@ describe('sizingAssistantTools', () => {
     expect(Array.isArray(recommendations)).toBe(true);
     expect(recommendations.length).toBeGreaterThan(0);
     expect(recommendations[0].tierId).toBeTruthy();
+    expect(tier.data?.oplogRecommendation).toMatchObject({
+      estimatedOplogSizeGb: expect.any(Number),
+      retentionHours: expect.any(Number),
+    });
+    expect(tier.data?.deploymentContext).toMatchObject({
+      cloudProvider: 'AWS',
+    });
 
     const sanitized = stripPricingFields(tier.data) as Record<string, unknown>;
     expect(JSON.stringify(sanitized)).not.toMatch(/finalHourlyCost/);

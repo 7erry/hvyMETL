@@ -4,8 +4,12 @@
 
 import type { CopilotChatMessage } from './groveChat.js';
 
+import type { SizingCloudProvider } from './sizingCloudProvider.js';
+
 /** Workload steadiness rating used by the sizing engine eligibility filters. */
 export type SizingWorkloadType = 'CONSISTENT' | 'INTERMITTENT';
+
+export type { SizingCloudProvider };
 
 /** Cluster-level inputs consumed by {@link findOptimalClusterTier}. */
 export type SizingEngineParameters = {
@@ -31,7 +35,7 @@ export type SizingSessionExtendedFields = {
   target_availability_sla?: string;
   rto_seconds?: number;
   rpo_seconds?: number;
-  cloud_provider?: string;
+  cloud_provider?: SizingCloudProvider | string;
   target_regions?: string[];
 };
 

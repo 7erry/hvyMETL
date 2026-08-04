@@ -4513,7 +4513,27 @@ textarea {
 
 .schema-import-panel__select {
   width: 100%;
+}
+
+.schema-import-panel__dialect-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
   margin-bottom: 0.5rem;
+}
+
+.schema-import-panel__dialect-row .schema-import-panel__select {
+  margin-bottom: 0;
+}
+
+.schema-import-panel__auto-dialect {
+  font-size: 0.72rem;
+  color: var(--text-muted, #5c6b7a);
+  background: color-mix(in srgb, var(--accent, #13aa52) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent, #13aa52) 35%, transparent);
+  border-radius: 4px;
+  padding: 0.2rem 0.45rem;
+  width: fit-content;
 }
 
 .schema-import-panel__textarea {

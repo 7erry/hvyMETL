@@ -24,8 +24,9 @@ describe('sizingAssistantPrompt', () => {
     expect(SIZING_ASSISTANT_INSTRUCTIONS).toContain('should NOT mention the cost breakdown');
   });
 
-  it('documents unsupported topology defaults and cluster-level aggregation', () => {
-    expect(SIZING_ASSISTANT_INSTRUCTIONS).toContain('3-node replica set, us-east-1, AWS');
+  it('documents multi-cloud support and cluster-level aggregation', () => {
+    expect(SIZING_ASSISTANT_INSTRUCTIONS).toContain('AWS**, **GCP**, and **Azure**');
+    expect(SIZING_ASSISTANT_INSTRUCTIONS).toContain('Oplog Recommendations');
     expect(SIZING_ASSISTANT_INSTRUCTIONS).toContain('is_multi_region_required_for_ha=True');
     expect(SIZING_ASSISTANT_INSTRUCTIONS).toContain('cluster level');
   });

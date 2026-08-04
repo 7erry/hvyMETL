@@ -44,6 +44,12 @@ export const SIZING_ASSISTANT_OPENAI_TOOLS = [
           target_availability_sla: { type: 'string' },
           rto_seconds: { type: 'number' },
           rpo_seconds: { type: 'number' },
+          cloud_provider: { type: 'string', enum: ['AWS', 'GCP', 'AZURE'] },
+          target_regions: {
+            type: 'array',
+            items: { type: 'string' },
+            description: 'Atlas region names for the chosen cloud provider (e.g. us-east-1, us-central1, East US).',
+          },
         },
       },
     },

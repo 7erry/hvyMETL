@@ -6,6 +6,8 @@ import {
   findOptimalClusterTier,
   toPublicRecommendations,
 } from './sizingEngine.js';
+import { resolveSizingDeploymentContext } from './sizingCloudProvider.js';
+import { buildOplogRecommendation } from './sizingOplogRecommendation.js';
 import {
   getSizingSession,
   mergeSessionParameters,
@@ -118,6 +120,24 @@ export function extractParametersFromText(text: string): Partial<SizingSessionPa
   }
   if (/\bintermittent\b/i.test(text)) {
     patch.workload_type = 'INTERMITTENT';
+  }
+
+  if (/\b(google cloud|gcp)\b/i.test(text)) {
+    patch.cloud_provider = 'GCP';
+  } else if (/\bazure\b/i.test(text)) {
+    patch.cloud_provider = 'AZURE';
+  } else if (/\baws\b/i.test(text)) {
+    patch.cloud_provider = 'AWS';
+  }
+
+  const regionMatch = text.match(
+    /(?:region|deploy(?:ed)?\s+(?:on|in|to))\s*[:\s]+([a-z0-9][a-z0-9\s-]{1,40})/i,
+  );
+  if (regionMatch?.[1]) {
+    const region = regionMatch[1].trim().replace(/\.$/, '');
+    if (region.length > 1) {
+      patch.target_regions = [region];
+    }
   }
 
   const workingSetMatch = text.match(/(\d+(?:\.\d+)?)\s*%\s*(?:of\s*)?(?:total\s*)?data/i);
@@ -281,6 +301,8 @@ export function executeSizingAssistantTool(
       };
       const ranked = findOptimalClusterTier(engineInput);
       const recommendations = toPublicRecommendations(ranked);
+      const deploymentContext = resolveSizingDeploymentContext(session.parameters);
+      const oplogRecommendation = buildOplogRecommendation(engineInput);
       touchSession(session);
       return {
         ok: true,
@@ -292,6 +314,8 @@ export function executeSizingAssistantTool(
         data: {
           recommendations,
           parametersUsed: recommendations[0]?.parametersUsed ?? engineInput,
+          deploymentContext,
+          oplogRecommendation,
         },
       };
     }

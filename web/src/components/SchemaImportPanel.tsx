@@ -1,9 +1,13 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAccess } from '../auth/HostedAuthProvider';
 import { fetchBuiltinExamples, type BuiltinExampleSummary } from '../api';
 import { sortDialectsByLabel } from '../dialectConstants';
 import { sidebarWidthForSchemaImportTextarea } from '../schemaImportSidebarSync';
+import { detectDialect, DIALECT_DETECT_MIN_CONFIDENCE } from '../schema/detectDialect';
+import { isSupportedDialect } from '../../../src/dialects.ts';
 import type { Dialect } from '../types';
+
+const DIALECT_DETECT_DEBOUNCE_MS = 280;
 
 type SchemaImportPanelProps = {
   dialects: Dialect[];
@@ -39,7 +43,78 @@ export function SchemaImportPanel({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const sidebarSyncRafRef = useRef<number | null>(null);
-  const sortedDialects = useMemo(() => sortDialectsByLabel(dialects), [dialects]);
+  const sortedDialects = useMemo(
+    () => sortDialectsByLabel(dialects).filter((entry) => isSupportedDialect(entry.id)),
+    [dialects],
+  );
+  const [autoDetectedLabel, setAutoDetectedLabel] = useState<string | null>(null);
+  const dialectLockedByUserRef = useRef(false);
+  const detectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const runDialectDetection = useCallback(
+    (text: string) => {
+      const trimmed = text.trim();
+      if (!trimmed) {
+        dialectLockedByUserRef.current = false;
+        setAutoDetectedLabel(null);
+        return;
+      }
+      if (dialectLockedByUserRef.current) return;
+
+      const result = detectDialect(text);
+      if (!result.autoDetected || result.confidence < DIALECT_DETECT_MIN_CONFIDENCE) {
+        setAutoDetectedLabel(null);
+        return;
+      }
+      if (!isSupportedDialect(result.dialectId)) return;
+
+      setAutoDetectedLabel(result.label);
+      if (result.dialectId !== dialect) {
+        onDialectChange(result.dialectId);
+      }
+    },
+    [dialect, onDialectChange],
+  );
+
+  const scheduleDialectDetection = useCallback(
+    (text: string) => {
+      if (detectTimerRef.current) clearTimeout(detectTimerRef.current);
+      detectTimerRef.current = setTimeout(() => {
+        detectTimerRef.current = null;
+        runDialectDetection(text);
+      }, DIALECT_DETECT_DEBOUNCE_MS);
+    },
+    [runDialectDetection],
+  );
+
+  useEffect(
+    () => () => {
+      if (detectTimerRef.current) clearTimeout(detectTimerRef.current);
+    },
+    [],
+  );
+
+  const handleDdlChange = useCallback(
+    (value: string) => {
+      onDdlChange(value);
+      if (!value.trim()) {
+        dialectLockedByUserRef.current = false;
+        setAutoDetectedLabel(null);
+        return;
+      }
+      scheduleDialectDetection(value);
+    },
+    [onDdlChange, scheduleDialectDetection],
+  );
+
+  const handleDialectSelect = useCallback(
+    (value: string) => {
+      dialectLockedByUserRef.current = true;
+      setAutoDetectedLabel(null);
+      onDialectChange(value);
+    },
+    [onDialectChange],
+  );
   const [builtinExamples, setBuiltinExamples] = useState<BuiltinExampleSummary[]>([]);
   const [selectedExampleId, setSelectedExampleId] = useState('');
   const [loadingExamples, setLoadingExamples] = useState(false);
@@ -131,27 +206,41 @@ export function SchemaImportPanel({
         </p>
       ) : null}
       <label className="schema-import-panel__label">Database dialect</label>
-      <select
-        value={dialect}
-        onChange={(e) => onDialectChange(e.target.value)}
-        className="schema-import-panel__select"
-        disabled={sortedDialects.length === 0}
-      >
-        {sortedDialects.length === 0 ? (
-          <option value="">Loading dialects…</option>
-        ) : (
-          sortedDialects.map((d) => (
-            <option key={d.id} value={d.id}>
-              {d.label}
-            </option>
-          ))
-        )}
-      </select>
+      <div className="schema-import-panel__dialect-row">
+        <select
+          value={dialect}
+          onChange={(e) => handleDialectSelect(e.target.value)}
+          className="schema-import-panel__select"
+          disabled={sortedDialects.length === 0}
+          aria-describedby={autoDetectedLabel ? 'schema-dialect-auto-detected' : undefined}
+        >
+          {sortedDialects.length === 0 ? (
+            <option value="">Loading dialects…</option>
+          ) : (
+            sortedDialects.map((d) => (
+              <option key={d.id} value={d.id}>
+                {d.label}
+              </option>
+            ))
+          )}
+        </select>
+        {autoDetectedLabel ? (
+          <span className="schema-import-panel__auto-dialect" id="schema-dialect-auto-detected">
+            Auto-detected: {autoDetectedLabel}
+          </span>
+        ) : null}
+      </div>
       <textarea
         ref={textareaRef}
         value={ddl}
-        onChange={(e) => onDdlChange(e.target.value)}
-        placeholder="Paste CREATE TABLE statements or a full DDL script…"
+        onChange={(e) => handleDdlChange(e.target.value)}
+        onPaste={() => {
+          requestAnimationFrame(() => {
+            const value = textareaRef.current?.value ?? ddl;
+            runDialectDetection(value);
+          });
+        }}
+        placeholder="Paste CREATE TABLE statements, JSON Schema, or CloudFormation YAML — dialect is detected automatically…"
         rows={compact ? 6 : 8}
         className="schema-import-panel__textarea"
       />

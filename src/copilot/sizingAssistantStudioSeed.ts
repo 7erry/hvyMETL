@@ -6,6 +6,7 @@ import type { CopilotDatasetScaleContext } from './copilotDatasetScale.js';
 import { mergeSessionParametersIfMissing } from './sizingAssistantSession.js';
 import type {
   SizingAssistantSession,
+  SizingCloudProvider,
   SizingSessionParameters,
   SizingWorkloadType,
 } from './sizingAssistantTypes.js';
@@ -31,6 +32,8 @@ export type SizingAssistantStudioSeedPayload = {
   compression?: string;
   atlasInspectHints?: SizingAtlasInspectHints;
   targetDatabase?: string;
+  cloudProvider?: SizingCloudProvider;
+  targetRegions?: string[];
   workloadType?: SizingWorkloadType;
 };
 
@@ -128,6 +131,13 @@ export function buildSizingParametersFromStudioSeed(
     patch.workload_type = 'CONSISTENT';
   }
 
+  if (seed.cloudProvider) {
+    patch.cloud_provider = seed.cloudProvider;
+  }
+  if (seed.targetRegions?.length) {
+    patch.target_regions = seed.targetRegions;
+  }
+
   return patch;
 }
 
@@ -180,8 +190,14 @@ export function formatStudioSeedContextForPrompt(seed: SizingAssistantStudioSeed
   if (seed.targetDatabase) {
     lines.push(`- Target Atlas database: ${seed.targetDatabase}`);
   }
+  if (seed.cloudProvider) {
+    lines.push(`- Cloud provider (prompt context): ${seed.cloudProvider}`);
+  }
+  if (seed.targetRegions?.length) {
+    lines.push(`- Target region(s): ${seed.targetRegions.join(', ')}`);
+  }
   lines.push(
-    'Treat session parameters as authoritative. Call update_sizing_parameters only when the user changes values; use find_optimal_cluster_tier when all required fields are present.',
+    'Treat session parameters as authoritative. Call update_sizing_parameters only when the user changes values; use find_optimal_cluster_tier when all required fields are present. When presenting tier results, always include an **Oplog Recommendations** section using oplogRecommendation from the tool output.',
   );
   return lines.join('\n');
 }

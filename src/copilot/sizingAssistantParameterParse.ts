@@ -4,6 +4,7 @@
 
 import type { SizingSessionParameters } from './sizingAssistantTypes.js';
 import { REQUIRED_SIZING_ENGINE_FIELDS } from './sizingAssistantTypes.js';
+import { normalizeSizingCloudProvider } from './sizingCloudProvider.js';
 
 const CANONICAL_NUMERIC_FIELDS = [
   'projected_total_data_size_gb',
@@ -110,6 +111,24 @@ export function parseSizingParameterUpdate(args: Record<string, unknown>): Parti
   }
   if (typeof flat.target_availability_sla === 'string') {
     patch.target_availability_sla = flat.target_availability_sla.trim();
+  }
+  if (typeof flat.cloud_provider === 'string') {
+    const provider = normalizeSizingCloudProvider(flat.cloud_provider);
+    if (provider) patch.cloud_provider = provider;
+  }
+  if (Array.isArray(flat.target_regions)) {
+    const regions = flat.target_regions
+      .filter((entry): entry is string => typeof entry === 'string')
+      .map((entry) => entry.trim())
+      .filter(Boolean);
+    if (regions.length > 0) patch.target_regions = regions;
+  }
+  if (typeof flat.target_regions === 'string') {
+    const regions = flat.target_regions
+      .split(/[,;/]/)
+      .map((entry) => entry.trim())
+      .filter(Boolean);
+    if (regions.length > 0) patch.target_regions = regions;
   }
 
   return patch;
