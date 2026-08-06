@@ -47,6 +47,14 @@ describe('copilotArchitecturePrompt', () => {
     expect(COPILOT_ARCHITECTURE_RESPONSE_INSTRUCTIONS).toContain('never generic labels like "Loaded Schema"');
   });
 
+  it('requires Atlas cluster sizing section with working set and tier guidance', () => {
+    expect(COPILOT_ARCHITECTURE_RESPONSE_INSTRUCTIONS).toContain('§8 MongoDB Atlas cluster sizing');
+    expect(COPILOT_ARCHITECTURE_RESPONSE_INSTRUCTIONS).toContain('Working Set');
+    expect(COPILOT_ARCHITECTURE_RESPONSE_INSTRUCTIONS).toContain('M40 vs M50');
+    expect(COPILOT_ARCHITECTURE_RESPONSE_INSTRUCTIONS).toContain('Sharding Verdict');
+    expect(buildOptimizeSchemaUserPrompt('finops')).toContain('§8 Atlas cluster sizing');
+  });
+
   it('requires vector search documentation when indexes exist', () => {
     expect(COPILOT_ARCHITECTURE_RESPONSE_INSTRUCTIONS).toContain('$vectorSearch');
     expect(COPILOT_ARCHITECTURE_RESPONSE_INSTRUCTIONS).toContain('numCandidates');

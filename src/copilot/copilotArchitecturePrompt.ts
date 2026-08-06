@@ -3,6 +3,8 @@
  * Used when users ask to optimize, explain, or architect a table/collection migration.
  */
 
+import { ARCHITECTURE_REVIEW_ATLAS_SIZING_SECTION } from './architectureReviewSizingSection.js';
+
 /** System-prompt block: how to format schema analysis and architecture answers. */
 export const COPILOT_ARCHITECTURE_RESPONSE_INSTRUCTIONS = `
 ## Architecture & schema analysis responses
@@ -17,7 +19,7 @@ brief** — not a wall of unbroken text.
 2. **Verdict callout** — one blockquote with a single-sentence recommendation
 3. **Comparison table** — compact markdown table (Naive vs Recommended); max 6 rows
 4. **Next actions** — one short bullet list (2–4 items, include tool names when relevant)
-5. **Collapsible sections** — wrap sections **2 through 7** in HTML \`<details>\`:
+5. **Collapsible sections** — wrap sections **2 through 8** in HTML \`<details>\`:
 
 \`\`\`html
 <details>
@@ -29,7 +31,7 @@ brief** — not a wall of unbroken text.
 \`\`\`
 
 Keep **section 1 (Executive summary)** and the title/verdict/table/actions **outside** \`<details>\`
-so the user sees the answer immediately. Sections 2–7 must each be a separate \`<details>\` block.
+so the user sees the answer immediately. Sections 2–8 must each be a separate \`<details>\` block.
 
 ### Section contents
 
@@ -61,6 +63,8 @@ so the user sees the answer immediately. Sections 2–7 must each be a separate 
 **§7 Migration mapping** (collapsible, when multiple SQL tables)
 - SQL → MongoDB table + numbered ETL order
 
+${ARCHITECTURE_REVIEW_ATLAS_SIZING_SECTION}
+
 ### Formatting rules (critical)
 
 - **Always** put a blank line before headings, tables, lists, code fences, and \`<details>\`
@@ -68,7 +72,7 @@ so the user sees the answer immediately. Sections 2–7 must each be a separate 
 - **Never** output one continuous paragraph — break content into bullets and tables
 - **Never** invent SQL tables not in the live schema context
 - Keep §1 under ~120 words; put depth in collapsible sections
-- For sizing, sharding, and Atlas tier guidance, cite **Manager dataset scale** from the system context (Manager slider override takes precedence over missing CSV row counts)
+- For sizing, sharding, and Atlas tier guidance, cite **Manager dataset scale** from the system context (Manager slider override takes precedence over missing CSV row counts) and follow **§8 MongoDB Atlas cluster sizing** structure exactly when scale data exists
 - For simple tool requests (fold, highlight, translate) — 1–3 short paragraphs, no architecture template
 `.trim();
 
@@ -77,8 +81,9 @@ export function buildArchitectureReviewUserPrompt(focus: string): string {
   return [
     `Tell me about **${focus}** — produce a MongoDB migration architecture review.`,
     'Use the required format: title, verdict blockquote, comparison table, next actions,',
-    'then sections 2–7 each inside `<details><summary>…</summary>` collapsible blocks.',
+    'then sections 2–8 each inside `<details><summary>…</summary>` collapsible blocks.',
     'Include Before/After TypeScript + JSON Schema in section 4.',
+    'Include the full §8 Atlas cluster sizing breakdown (RAM/tier, storage table, replica set & backup, sharding verdict, validation steps) using Manager dataset scale hot/active GB.',
     'Ground every recommendation in the current schema context, guardrail issues, and Manager dataset scale when discussing sizing or sharding.',
     'If Atlas vector search indexes are listed in the system context, document each in §6 with sample $vectorSearch aggregations and operational guidance.',
   ].join(' ');
@@ -91,8 +96,9 @@ export function buildOptimizeSchemaUserPrompt(targetDb: string): string {
     `Produce a MongoDB migration **Architecture Review** for all collections targeting logical database \`${db}\`.`,
     `Use \`# ${db} — Architecture Review\` as the title.`,
     'Use the required format: title, verdict blockquote, comparison table, next actions,',
-    'then sections 2–7 each inside `<details><summary>…</summary>` collapsible blocks.',
+    'then sections 2–8 each inside `<details><summary>…</summary>` collapsible blocks.',
     'Include Before/After TypeScript + JSON Schema in section 4.',
+    'Include the full §8 Atlas cluster sizing breakdown (RAM/tier, storage table, replica set & backup, sharding verdict, validation steps) using Manager dataset scale hot/active GB.',
     'Ground every recommendation in the current schema context, guardrail issues, and Manager dataset scale when discussing sizing or sharding.',
     'If Atlas vector search indexes are listed in the system context, document each in §6 with sample $vectorSearch aggregations and operational guidance.',
   ].join(' ');
@@ -106,8 +112,9 @@ export function buildPostImportArchitectureReviewPrompt(targetDb: string): strin
     `Use \`# ${db} — Architecture Review\` as the title.`,
     'Review each collection against the migration plan, embed decisions, indexes, guardrails, and Manager dataset scale.',
     'Use the required format: title, verdict blockquote, comparison table, next actions,',
-    'then sections 2–7 each inside `<details><summary>…</summary>` collapsible blocks.',
+    'then sections 2–8 each inside `<details><summary>…</summary>` collapsible blocks.',
     'Include Before/After TypeScript + JSON Schema in section 4 where applicable.',
+    'Include the full §8 Atlas cluster sizing breakdown (RAM/tier, storage table, replica set & backup, sharding verdict, validation steps) using Manager dataset scale hot/active GB.',
     'Ground recommendations in the current schema context and the live Atlas collections listed above.',
     'If Atlas vector search indexes are listed in the system context, document each in §6 with sample $vectorSearch aggregations and operational guidance.',
   ].join(' ');

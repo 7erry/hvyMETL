@@ -88,7 +88,7 @@ The **Dataset scale — raw data** slider in Manager view (`Migration Cost Proje
 | **Schema estimate** | DDL loaded, no slider override — heuristics from column types and default/plan row counts |
 | **Unavailable** | No schema and no slider override |
 
-The system prompt includes projected storage, workload profile, illustrative Atlas tier, and sharding recommendations derived from the same projection engine as Manager view. Architecture reviews (**Optimize Schema**) should cite this context for §5–§6 sizing and sharding sections.
+The system prompt includes projected storage, workload profile, illustrative Atlas tier, and sharding recommendations derived from the same projection engine as Manager view. Architecture reviews (**Optimize Schema**) should cite this context in collapsible **§8 MongoDB Atlas cluster sizing** (RAM/tier working-set rule, storage headroom table, replica set & backup, sharding verdict, validation steps) and in §5–§6 where relevant.
 
 Manager settings persist in session state (`managerCostInputs`) and sync to hosted workspace storage when enabled.
 
