@@ -103,6 +103,9 @@ function parseSchemaContext(raw: unknown): CopilotSchemaContext {
     atlasSearchIndexes: Array.isArray(body.atlasSearchIndexes)
       ? (body.atlasSearchIndexes as CopilotSchemaContext['atlasSearchIndexes'])
       : undefined,
+    searchFieldHints: Array.isArray(body.searchFieldHints)
+      ? (body.searchFieldHints as CopilotSchemaContext['searchFieldHints'])
+      : undefined,
   };
 }
 

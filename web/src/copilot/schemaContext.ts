@@ -7,6 +7,7 @@ import type { CopilotVectorSearchIndexRecord } from '../../../src/copilot/copilo
 import type { CopilotAtlasSearchIndexRecord } from '../../../src/copilot/copilotAtlasSearchContext.ts';
 import type { ManagerCostInputs } from '../managerCostEstimate';
 import { buildDatasetScaleContext } from './buildDatasetScaleContext';
+import { buildSearchFieldHintsFromPlan } from './buildSearchFieldHints';
 
 export type CopilotSchemaContextPayload = {
   tables: { name: string; columnCount: number; rowCount?: number }[];
@@ -29,6 +30,7 @@ export type CopilotSchemaContextPayload = {
   targetDatabase?: string;
   vectorSearchIndexes?: CopilotVectorSearchIndexRecord[];
   atlasSearchIndexes?: CopilotAtlasSearchIndexRecord[];
+  searchFieldHints?: import('../../../src/copilot/groveChat.ts').CopilotSearchFieldHint[];
 };
 
 /** Builds the schema context payload sent to /api/copilot/chat. */
@@ -80,5 +82,6 @@ export function buildSchemaContextPayload(input: {
     targetDatabase: targetDatabase?.trim() || undefined,
     vectorSearchIndexes: vectorSearchIndexes?.length ? vectorSearchIndexes : undefined,
     atlasSearchIndexes: atlasSearchIndexes?.length ? atlasSearchIndexes : undefined,
+    searchFieldHints: buildSearchFieldHintsFromPlan(plan),
   };
 }

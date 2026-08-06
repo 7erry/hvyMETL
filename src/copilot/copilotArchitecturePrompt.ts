@@ -4,6 +4,7 @@
  */
 
 import { ARCHITECTURE_REVIEW_ATLAS_SIZING_SECTION } from './architectureReviewSizingSection.js';
+import { ARCHITECTURE_REVIEW_SEARCH_SECTION } from './architectureReviewSearchSection.js';
 
 /** System-prompt block: how to format schema analysis and architecture answers. */
 export const COPILOT_ARCHITECTURE_RESPONSE_INSTRUCTIONS = `
@@ -59,6 +60,7 @@ so the user sees the answer immediately. Sections 2–8 must each be a separate 
   - For **each** index, include a fenced \`js\` **sample** \`aggregate\` using \`$vectorSearch\` with the exact \`index\` name, autoEmbed \`query\` string (not \`queryVector\`), \`numCandidates\`, and \`limit\`
   - Show **pre-filter** example (\`filter\` inside \`$vectorSearch\`) when metadata fields exist; note that filter fields need \`type: "filter"\` in the index definition
   - Include **Crucial operational details**: \`numCandidates\` vs \`limit\` (10×–20× rule), pre-filter vs post-filter (\`$match\` after search), RAM/HNSW, scalar quantization, M10+ vs shared tier limits, hybrid \`$search\` + RRF when relevant
+${ARCHITECTURE_REVIEW_SEARCH_SECTION}
 
 **§7 Migration mapping** (collapsible, when multiple SQL tables)
 - SQL → MongoDB table + numbered ETL order
@@ -86,6 +88,7 @@ export function buildArchitectureReviewUserPrompt(focus: string): string {
     'Include the full §8 Atlas cluster sizing breakdown (RAM/tier, storage table, replica set & backup, sharding verdict, validation steps) using Manager dataset scale hot/active GB.',
     'Ground every recommendation in the current schema context, guardrail issues, and Manager dataset scale when discussing sizing or sharding.',
     'If Atlas vector search indexes are listed in the system context, document each in §6 with sample $vectorSearch aggregations and operational guidance.',
+    'Apply search field hints (name/title → Atlas Search autocomplete; description/body → Vector Search autoEmbed) and recommend hybrid search when both apply.',
   ].join(' ');
 }
 
@@ -101,6 +104,7 @@ export function buildOptimizeSchemaUserPrompt(targetDb: string): string {
     'Include the full §8 Atlas cluster sizing breakdown (RAM/tier, storage table, replica set & backup, sharding verdict, validation steps) using Manager dataset scale hot/active GB.',
     'Ground every recommendation in the current schema context, guardrail issues, and Manager dataset scale when discussing sizing or sharding.',
     'If Atlas vector search indexes are listed in the system context, document each in §6 with sample $vectorSearch aggregations and operational guidance.',
+    'Apply search field hints (name/title → Atlas Search autocomplete; description/body → Vector Search autoEmbed) and recommend hybrid search when both apply.',
   ].join(' ');
 }
 
@@ -117,5 +121,6 @@ export function buildPostImportArchitectureReviewPrompt(targetDb: string): strin
     'Include the full §8 Atlas cluster sizing breakdown (RAM/tier, storage table, replica set & backup, sharding verdict, validation steps) using Manager dataset scale hot/active GB.',
     'Ground recommendations in the current schema context and the live Atlas collections listed above.',
     'If Atlas vector search indexes are listed in the system context, document each in §6 with sample $vectorSearch aggregations and operational guidance.',
+    'Apply search field hints (name/title → Atlas Search autocomplete; description/body → Vector Search autoEmbed) and recommend hybrid search when both apply.',
   ].join(' ');
 }

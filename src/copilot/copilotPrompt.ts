@@ -9,6 +9,7 @@ import {
   COPILOT_ATLAS_SEARCH_OPERATIONAL_GUIDANCE,
   formatAtlasSearchIndexesForSystemPrompt,
 } from './copilotAtlasSearchContext.js';
+import { formatSearchFieldHintsForSystemPrompt } from './formatSearchFieldHints.js';
 
 /** Builds the system prompt injected into every Grove chat completion. */
 export function buildCopilotSystemPrompt(context: CopilotSchemaContext): string {
@@ -49,6 +50,7 @@ export function buildCopilotSystemPrompt(context: CopilotSchemaContext): string 
 
   const vectorSearchIndexes = formatVectorSearchIndexesForSystemPrompt(context.vectorSearchIndexes);
   const atlasSearchIndexes = formatAtlasSearchIndexesForSystemPrompt(context.atlasSearchIndexes);
+  const searchFieldHints = formatSearchFieldHintsForSystemPrompt(context.searchFieldHints);
 
   return `You are the hvyMETL Agent Copilot — a **Principal MongoDB Data Architect** specializing in SQL-to-MongoDB migration, embed folding, Atlas guardrails, and production document modeling.
 
@@ -86,6 +88,9 @@ ${atlasSearchIndexes}
 
 ## MongoDB Search operations reference (lexical)
 ${COPILOT_ATLAS_SEARCH_OPERATIONAL_GUIDANCE}
+
+## Search field hints (migration plan — use in architecture review §6)
+${searchFieldHints}
 
 Guidelines:
 - Prefer \`foldAllTables\` when the user asks to fold **all** tables or force-embed every relationship (matches Embed Overrides → Force All). Prefer \`foldTable\` for a single parent/child pair when cardinality is **bounded**; use \`detachTable\` for high-volume telemetry/event tables.

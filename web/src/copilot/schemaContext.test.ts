@@ -3,6 +3,7 @@ import type { MigrationPlan } from '../migrationPlanTypes';
 import type { SqlStructuralModel } from '../types';
 import { DEFAULT_MANAGER_COST_INPUTS } from '../managerCostEstimate';
 import { buildSchemaContextPayload } from './schemaContext';
+import { buildSearchFieldHintsFromPlan } from './buildSearchFieldHints';
 
 const model: SqlStructuralModel = {
   source: 'test',
@@ -76,5 +77,36 @@ describe('buildSchemaContextPayload', () => {
     expect(payload.datasetScale?.rawDataSource).toBe('schema-estimate');
     expect(payload.datasetScale?.managerRawDataGb).toBeNull();
     expect(payload.datasetScale?.rawDataGb).toBeGreaterThan(0);
+  });
+
+  it('includes search field hints from plan string fields', () => {
+    const catalogPlan: MigrationPlan = {
+      ...plan,
+      collections: [
+        {
+          ...plan.collections[0]!,
+          name: 'products',
+          sourceTable: 'products',
+          jsonSchema: {
+            properties: {
+              product_name: { bsonType: 'string' },
+              description: { bsonType: 'string' },
+            },
+          },
+        },
+      ],
+    };
+    const hints = buildSearchFieldHintsFromPlan(catalogPlan);
+    expect(hints?.some((h) => h.field === 'product_name' && h.kind.includes('autocomplete'))).toBe(true);
+    expect(hints?.some((h) => h.field === 'description' && h.kind.includes('Vector'))).toBe(true);
+
+    const payload = buildSchemaContextPayload({
+      model,
+      plan: catalogPlan,
+      cardinalityOverrides: {},
+      forceEmbedOverrides: {},
+      guardrailIssues: [],
+    });
+    expect(payload.searchFieldHints?.length).toBeGreaterThanOrEqual(2);
   });
 });

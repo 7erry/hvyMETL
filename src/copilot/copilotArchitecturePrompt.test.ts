@@ -59,6 +59,12 @@ describe('copilotArchitecturePrompt', () => {
     expect(COPILOT_ARCHITECTURE_RESPONSE_INSTRUCTIONS).toContain('$vectorSearch');
     expect(COPILOT_ARCHITECTURE_RESPONSE_INSTRUCTIONS).toContain('numCandidates');
   });
+
+  it('requires field-based Atlas Search vs Vector Search guidance in §6', () => {
+    expect(COPILOT_ARCHITECTURE_RESPONSE_INSTRUCTIONS).toContain('autocomplete');
+    expect(COPILOT_ARCHITECTURE_RESPONSE_INSTRUCTIONS).toContain('Hybrid search');
+    expect(buildArchitectureReviewUserPrompt('products')).toContain('hybrid search');
+  });
 });
 
 describe('buildCopilotSystemPrompt', () => {
@@ -110,5 +116,32 @@ describe('buildCopilotSystemPrompt', () => {
     expect(prompt).toContain('Atlas vector search indexes');
     expect(prompt).toContain('csv_to_atlas.products');
     expect(prompt).toContain('$vectorSearch');
+  });
+
+  it('includes migration-plan search field hints in system context', () => {
+    const prompt = buildCopilotSystemPrompt({
+      tables: [],
+      relationships: [],
+      guardrailIssues: [],
+      cardinalityOverrides: {},
+      forceEmbedOverrides: {},
+      searchFieldHints: [
+        {
+          collection: 'products',
+          field: 'product_name',
+          kind: 'Atlas Search (autocomplete)',
+          summary: 'Atlas Search autocomplete on this field.',
+        },
+        {
+          collection: 'products',
+          field: 'description',
+          kind: 'Atlas Vector Search (autoEmbed)',
+          summary: 'Vector Search autoEmbed on this field.',
+        },
+      ],
+    });
+    expect(prompt).toContain('Search field hints');
+    expect(prompt).toContain('products.product_name');
+    expect(prompt).toContain('products.description');
   });
 });

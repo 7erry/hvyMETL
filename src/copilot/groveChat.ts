@@ -32,6 +32,15 @@ export type CopilotSchemaContext = {
   vectorSearchIndexes?: import('./copilotVectorSearchContext.js').CopilotVectorSearchIndexRecord[];
   /** Lexical MongoDB Search indexes created in Migration Studio this session. */
   atlasSearchIndexes?: import('./copilotAtlasSearchContext.js').CopilotAtlasSearchIndexRecord[];
+  /** Field-level Atlas Search vs Vector Search hints from the migration plan schema. */
+  searchFieldHints?: CopilotSearchFieldHint[];
+};
+
+export type CopilotSearchFieldHint = {
+  collection: string;
+  field: string;
+  kind: string;
+  summary: string;
 };
 
 export type CopilotChatMessage = {

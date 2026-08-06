@@ -118,6 +118,8 @@ Guardrail warning badges on table nodes open the copilot with an optimization pr
 
 When you create **autoEmbed vector search indexes** in the studio (dialog or copilot tool), they are recorded for the session and injected into copilot **schema context**. Architecture reviews and **design-report.md** (export / pipeline artifacts) then include each index, sample `$vectorSearch` aggregations (`query` for autoEmbed), and operational guidance (`numCandidates` vs `limit`, pre-filter vs post-filter, RAM/quantization/tier limits, hybrid RRF).
 
+After **Refresh design**, copilot schema context also includes **search field hints** derived from each collection’s string fields: paths like `product_name`, `title`, or `sku` → **Atlas Search autocomplete** (keyword/fuzzy/faceting); paths like `description`, `summary`, or `body` → **Atlas Vector Search (autoEmbed)**. Architecture review **§6** must apply these hints, recommend **hybrid search** (`$search` + `$vectorSearch` / RRF) when both field classes exist on a collection, and align with any studio **Atlas Search** or **vector** indexes already in context.
+
 Implementation: markdown is converted to HTML client-side, then uploaded via the Google Drive API (`application/vnd.google-apps.document`). The legacy Google **Save to Drive** widget is not used.
 
 ### Google Docs setup
