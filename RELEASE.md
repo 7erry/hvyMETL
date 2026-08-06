@@ -1,3 +1,70 @@
+## hvyMETL 4.0.9
+
+Architecture reviews recommend **Atlas Search** vs **Atlas Vector Search** from migration-plan field names, with hybrid search guidance in §6.
+
+### Highlights
+
+- **Field heuristics** — `product_name`, `title`, `sku` → Atlas Search **autocomplete**; `description`, `summary`, `body` → **Vector Search (autoEmbed)**; category/brand/tags → faceted lexical search ([`architectureReviewSearchRecommendations.ts`](src/copilot/architectureReviewSearchRecommendations.ts)).
+- **Copilot context** — after **Refresh design**, **Search field hints** inject into the system prompt from each collection’s string fields.
+- **§6 template** — Atlas Search vs Vector Search use cases, per-collection **Search strategy** tables, and **hybrid** `$search` + `$vectorSearch` / RRF when both field classes exist ([`docs/20-agent-copilot.md`](docs/20-agent-copilot.md)).
+
+### Verification
+
+- `npm test -- src/copilot/architectureReviewSearchRecommendations.test.ts src/copilot/copilotArchitecturePrompt.test.ts web/src/copilot/schemaContext.test.ts`
+
+---
+
+## hvyMETL 4.0.8
+
+Structured **§8 MongoDB Atlas cluster sizing** in architecture reviews (working set, M40 vs M50, storage table, replica set & backup, sharding verdict, validation) grounded in Manager dataset scale.
+
+### Verification
+
+- `npm test -- src/copilot/copilotArchitecturePrompt.test.ts`
+
+---
+
+## hvyMETL 4.0.7
+
+Schema import **supported dialects** list uses a two-column **hover popover** instead of a long inline list.
+
+---
+
+## hvyMETL 4.0.6
+
+Schema import removes the manual **dialect dropdown**; dialect is **auto-detected** from pasted DDL with a read-only supported-dialects reference in the UI.
+
+---
+
+## hvyMETL 4.0.5
+
+- **`detectDialect()`** — automatic SQL dialect detection on schema import (22 dialects).
+- **Atlas Sizing assistant** — multi-cloud provider context and **`oplogRecommendation`** on tier tool output.
+
+### Verification
+
+- `npm test -- src/utilities/detectDialect.test.ts`
+
+---
+
+## hvyMETL 4.0.4
+
+**Atlas Sizing** recommendation replies support **Save to Google Docs** and **Download markdown** (same export pattern as architecture reviews).
+
+---
+
+## hvyMETL 4.0.3
+
+Fix **Atlas Sizing** studio seed module import and TypeScript build for `SizingAssistantSession`.
+
+---
+
+## hvyMETL 4.0.2
+
+**Atlas Sizing** tab can seed session parameters from Migration Studio **Manager** sliders, workload profile, and Atlas inspect context.
+
+---
+
 ## hvyMETL 4.0.1
 
 Fix Atlas Sizing assistant parameter persistence when the model sends aliases, string numbers, or nested `parameters` objects.
