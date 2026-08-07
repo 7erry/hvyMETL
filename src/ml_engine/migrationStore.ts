@@ -25,6 +25,7 @@ export type MigrationStore = {
   insertPipelineExecution(document: PipelineExecutionDocument): Promise<void>;
   findPipelineExecution(executionId: string, tenantId?: string): Promise<PipelineExecutionDocument | null>;
   listPipelineExecutions(limit?: number, tenantId?: string): Promise<PipelineExecutionDocument[]>;
+  listPendingReflectionLogs(options: { minAgeMs: number }): Promise<MigrationLogDocument[]>;
 };
 
 /** In-memory store for tests and offline CLI runs without MONGODB_URI. */
@@ -75,6 +76,17 @@ export class InMemoryMigrationStore implements MigrationStore {
       .sort((left, right) => right.completedAt.localeCompare(left.completedAt))
       .slice(0, limit)
       .map((execution) => structuredClone(execution));
+  }
+
+  async listPendingReflectionLogs(options: { minAgeMs: number }): Promise<MigrationLogDocument[]> {
+    const cutoffMs = Date.now() - Math.max(0, options.minAgeMs);
+    return [...this.logs.values()]
+      .filter(
+        (log) =>
+          log.status === 'pending_reflection' &&
+          Date.parse(log.loggedAt) <= cutoffMs,
+      )
+      .map((log) => structuredClone(log));
   }
 }
 
@@ -196,6 +208,15 @@ class MongoMigrationStore implements MigrationStore {
     const { executions } = await this.ctx();
     const query = tenantId ? { tenantId } : {};
     return executions.find(query).sort({ completedAt: -1 }).limit(limit).toArray();
+  }
+
+  async listPendingReflectionLogs(options: { minAgeMs: number }): Promise<MigrationLogDocument[]> {
+    const { logs } = await this.ctx();
+    const cutoffIso = new Date(Date.now() - Math.max(0, options.minAgeMs)).toISOString();
+    return logs
+      .find({ status: 'pending_reflection', loggedAt: { $lte: cutoffIso } })
+      .sort({ loggedAt: 1 })
+      .toArray();
   }
 }
 

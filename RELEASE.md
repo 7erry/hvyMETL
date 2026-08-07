@@ -1,3 +1,19 @@
+## hvyMETL 4.2.0
+
+**Studio scheduled reflection jobs** — Manager View UI to create, start, stop, and destroy hourly/daily/weekly ML reflection schedules on the API server.
+
+### Highlights
+
+- **`/api/reflection-jobs`** — tenant-scoped CRUD + start/stop; jobs persist in `hvymetl_reflection_jobs`.
+- **In-process scheduler** — hydrates running jobs on API startup; each tick reflects `pending_reflection` logs after job soak (`reflectPendingMigrationLogs`).
+- **Manager UI** — **Configure → Lessons learned — scheduled reflection** ([`ManagerReflectionJobsPanel.tsx`](web/src/components/ManagerReflectionJobsPanel.tsx)).
+
+### Verification
+
+- `npm test -- src/ml_engine/reflectionJobs.test.ts src/routes/reflectionJobRoutes.test.ts`
+
+---
+
 ## hvyMETL 4.1.0
 
 Release **4.0 Phase 3** — **live Atlas metrics** for the ML lessons-learned feedback loop.

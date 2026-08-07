@@ -3314,6 +3314,75 @@ textarea {
   opacity: 0.7;
 }
 
+.app--manager .manager-reflection-form {
+  display: grid;
+  gap: 0.65rem;
+  margin-bottom: 0.75rem;
+}
+
+.app--manager .manager-reflection-form__field {
+  display: grid;
+  gap: 0.25rem;
+  font-size: 0.78rem;
+}
+
+.app--manager .manager-reflection-form__field input,
+.app--manager .manager-reflection-form__field select {
+  width: 100%;
+  padding: 0.35rem 0.5rem;
+  border-radius: 4px;
+  border: 1px solid rgba(0, 104, 74, 0.45);
+  background: rgba(0, 30, 43, 0.6);
+  color: inherit;
+}
+
+.app--manager .manager-reflection-form__create {
+  justify-self: start;
+}
+
+.app--manager .manager-reflection-job-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 0.75rem;
+}
+
+.app--manager .manager-reflection-job {
+  padding: 0.65rem 0;
+  border-top: 1px solid rgba(0, 104, 74, 0.35);
+}
+
+.app--manager .manager-reflection-job__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.5rem;
+  margin-bottom: 0.35rem;
+}
+
+.app--manager .manager-reflection-job__status--running {
+  color: var(--mdb-spring-green);
+}
+
+.app--manager .manager-reflection-job__status--stopped {
+  opacity: 0.75;
+}
+
+.app--manager .manager-reflection-job__meta {
+  margin-bottom: 0.35rem;
+}
+
+.app--manager .manager-reflection-job__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.app--manager .manager-reflection-job__destroy {
+  opacity: 0.85;
+}
+
 .app--manager .manager-refresh {
   font-size: 0.72rem;
   padding: 0.2rem 0.5rem;

@@ -90,6 +90,13 @@ All six pipeline steps (Knowledge + RAG, profiles, design, ETL, import, codegen)
 | `POST` | `/api/pipeline/run-with-csv` | `multipart csvs` + form fields | Same as run, with uploaded CSV files |
 | `GET` | `/api/pipeline/executions?limit=20` | — | Recent pipeline runs from `hvymetl_pipeline_executions` |
 | `GET` | `/api/pipeline/executions/:executionId` | — | One run (includes migration plan, design report, csv manifest) |
+| `GET` | `/api/reflection-jobs` | — | Tenant scheduled ML reflection jobs |
+| `POST` | `/api/reflection-jobs` | `{ name, schedule: hourly\|daily\|weekly, minAgeMs? }` | Create job (starts **stopped**) |
+| `POST` | `/api/reflection-jobs/:jobId/start` | — | Start schedule on API server |
+| `POST` | `/api/reflection-jobs/:jobId/stop` | — | Pause schedule |
+| `DELETE` | `/api/reflection-jobs/:jobId` | — | Destroy job |
+
+Manager View → **Configure** → **Lessons learned — scheduled reflection** drives the same API.
 
 ## 5. Supported SQL dialects
 

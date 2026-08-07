@@ -672,6 +672,76 @@ export async function fetchPipelineExecutions(
   return res.json();
 }
 
+export type ReflectionSchedulePreset = 'hourly' | 'daily' | 'weekly';
+
+export type ReflectionJobRecord = {
+  jobId: string;
+  tenantId: string;
+  name: string;
+  schedule: ReflectionSchedulePreset;
+  status: 'running' | 'stopped';
+  minAgeMs: number;
+  createdAt: string;
+  updatedAt: string;
+  lastRunAt?: string;
+  lastRunSummary?: {
+    processed: number;
+    lessonsPersisted: number;
+    errors: string[];
+    finishedAt: string;
+  };
+  nextRunAt?: string;
+};
+
+export async function fetchReflectionJobs(): Promise<{ jobs: ReflectionJobRecord[] }> {
+  const res = await apiFetch(`${base}/api/reflection-jobs`);
+  if (!res.ok) throw new Error((await res.json()).error ?? res.statusText);
+  return res.json();
+}
+
+export async function createReflectionJob(input: {
+  name: string;
+  schedule: ReflectionSchedulePreset;
+  minAgeMs?: number;
+}): Promise<{ job: ReflectionJobRecord }> {
+  const res = await apiFetch(`${base}/api/reflection-jobs`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(input),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error ?? res.statusText);
+  return data;
+}
+
+export async function startReflectionJob(jobId: string): Promise<{ job: ReflectionJobRecord }> {
+  const res = await apiFetch(`${base}/api/reflection-jobs/${encodeURIComponent(jobId)}/start`, {
+    method: 'POST',
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error ?? res.statusText);
+  return data;
+}
+
+export async function stopReflectionJob(jobId: string): Promise<{ job: ReflectionJobRecord }> {
+  const res = await apiFetch(`${base}/api/reflection-jobs/${encodeURIComponent(jobId)}/stop`, {
+    method: 'POST',
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error ?? res.statusText);
+  return data;
+}
+
+export async function destroyReflectionJob(jobId: string): Promise<void> {
+  const res = await apiFetch(`${base}/api/reflection-jobs/${encodeURIComponent(jobId)}`, {
+    method: 'DELETE',
+  });
+  if (!res.ok) {
+    const data = await res.json();
+    throw new Error(data.error ?? res.statusText);
+  }
+}
+
 export async function fetchPipelineExecution(
   executionId: string,
   mongoUri?: string,

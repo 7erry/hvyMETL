@@ -330,6 +330,7 @@ Migration logs store optional **`atlasCorrelation`** (`targetDatabase`, `targetC
 
 - **`HVYMETL_REFLECTION_DELAY_MS`** — pipeline `scheduleReflection()` waits before calling `analyzeAndReflect` (soak after import).
 - **`hvymetl reflect --migration-id <id>`** — blocking reflection for cron/operators (bootstraps live metrics when configured).
+- **Migration Studio (Manager → Configure)** — create/start/stop/destroy **scheduled reflection jobs** (`GET/POST /api/reflection-jobs`). Jobs run on the API server process on an **hourly**, **daily**, or **weekly** cadence; each tick reflects `pending_reflection` logs older than the job soak period. Job definitions persist in `hvymetl_reflection_jobs` when `MONGODB_URI` is set.
 
 ```bash
 # Cron / operator reflection after soak

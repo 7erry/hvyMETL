@@ -33,6 +33,9 @@ import { getPipelineConfigStatus } from './pipelineConfig.js';
 import { createAtlasLogsRouter } from './atlasLogsRoutes.js';
 import { createArchitectureExportDownloadRouter, createCopilotRouter } from './copilotRoutes.js';
 import { createSizingAssistantRouter } from '../routes/sizingAssistantRoute.js';
+import { createReflectionJobRouter } from '../routes/reflectionJobRoutes.js';
+import { ReflectionJobScheduler } from '../ml_engine/reflectionJobScheduler.js';
+import { getReflectionJobStore } from '../ml_engine/reflectionJobStore.js';
 import { runFullPipeline } from './runPipeline.js';
 import { runFullPipelineWithStream } from './pipelineStream.js';
 import {
@@ -107,6 +110,30 @@ const UPLOAD_DIR = join(ROOT, 'web-uploads');
 const PORT = Number(process.env.HVYMETL_UI_PORT ?? 3847);
 
 mkdirSync(UPLOAD_DIR, { recursive: true });
+
+async function prepareTenantMigrationStoreForReflection(
+  tenantId: string,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const hosted = process.env.HVYMETL_HOSTED === '1';
+  const creds = resolvePipelineCredentials(ROOT, tenantId, {
+    hosted,
+    authEnabled: isAuthConfigured(),
+    overrides: {},
+  });
+  const mongoUri = creds.mongoUri?.trim();
+  if (!mongoUri) {
+    return {
+      ok: false,
+      error: 'MONGODB_URI is required for scheduled reflection (set in .env or tenant secrets).',
+    };
+  }
+  configureMigrationStore({ mongoUri, dbName: resolveMemoryDbName(process.env) });
+  return { ok: true };
+}
+
+const reflectionJobScheduler = new ReflectionJobScheduler(getReflectionJobStore(), {
+  prepareTenantStore: prepareTenantMigrationStoreForReflection,
+});
 
 type TenantContext = {
   tenantId: string;
@@ -272,6 +299,11 @@ app.use('/api/atlas', ...requireRole(['admin', 'developer', 'manager']), createA
 app.use('/api/copilot', createArchitectureExportDownloadRouter());
 app.use('/api/copilot', ...requireRole(['admin', 'developer']), createCopilotRouter());
 app.use('/api/sizing-assistant', ...requireRole(['admin', 'developer']), createSizingAssistantRouter());
+app.use(
+  '/api/reflection-jobs',
+  ...requireRole(['admin', 'developer', 'manager']),
+  createReflectionJobRouter({ scheduler: reflectionJobScheduler }),
+);
 
 registerApiArtifactRoutes(app, ROOT);
 
@@ -1137,6 +1169,9 @@ async function startServer(): Promise<void> {
   server.on('listening', () => {
     console.log(`hvyMETL Migration Studio http://localhost:${PORT}`);
     console.log(`Swagger UI http://localhost:${PORT}/api/docs`);
+    void reflectionJobScheduler.hydrateRunningJobs().catch((error) => {
+      console.error(`[ml_engine/reflectionJobScheduler] Hydration failed: ${String(error)}`);
+    });
     if (uiMode === 'vite') {
       console.log('UI: Vite dev server (hot reload)');
     } else if (uiMode === 'static') {

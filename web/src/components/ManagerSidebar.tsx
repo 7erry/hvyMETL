@@ -14,6 +14,7 @@ import type { MigrationArtifacts, ManagerCostInputs } from '../sessionState';
 import type { PipelineExecutionListItem } from '../transformationSummaryTypes';
 import { ManagerCostPanel } from './ManagerCostPanel';
 import { ManagerAtlasLogsPanel } from './ManagerAtlasLogsPanel';
+import { ManagerReflectionJobsPanel } from './ManagerReflectionJobsPanel';
 import { SchemaImportPanel } from './SchemaImportPanel';
 import { CollapsiblePanel } from './CollapsiblePanel';
 import type { MigrationPlan } from '../migrationPlanTypes';
@@ -255,6 +256,8 @@ export function ManagerSidebar({
             inputs={managerCostInputs}
             onChange={onManagerCostInputsChange}
           />
+
+          <ManagerReflectionJobsPanel />
 
           <CollapsiblePanel title="Model API Usage" collapsedHint={modelApiUsageHint}>
             {!cloudSummary.modelTokenUsage || cloudSummary.modelTokenUsage.totalTokens === 0 ? (
