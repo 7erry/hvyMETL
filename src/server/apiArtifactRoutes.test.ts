@@ -67,6 +67,28 @@ describe('registerApiArtifactRoutes', () => {
     expect(result.body).toContain('swagger-ui');
   });
 
+  it('serves platform fallback Swagger when no migration artifacts exist', async () => {
+    const rootDir = mkdtempSync(join(tmpdir(), 'hvymetl-swagger-empty-'));
+    process.env.HVYMETL_AUTH_DISABLED = '1';
+    const app = express();
+    registerApiArtifactRoutes(app, rootDir);
+    const server = app.listen(0);
+    await new Promise<void>((resolve) => server.once('listening', resolve));
+    const address = server.address();
+    const port = typeof address === 'object' && address ? address.port : 0;
+
+    const response = await fetch(`http://127.0.0.1:${port}/api/docs`);
+    const body = await response.text();
+    const specResponse = await fetch(`http://127.0.0.1:${port}/api/docs/openapi.json`);
+    const spec = (await specResponse.json()) as { info?: { title?: string } };
+    await new Promise<void>((resolve, reject) => server.close((err) => (err ? reject(err) : resolve())));
+
+    expect(response.status).toBe(200);
+    expect(body).toContain('swagger-ui');
+    expect(specResponse.status).toBe(200);
+    expect(spec.info?.title).toBe('hvyMETL Migration Studio API');
+  });
+
   it('serves Swagger HTML when the bootstrap auth cookie is present', async () => {
     const rootDir = mkdtempSync(join(tmpdir(), 'hvymetl-swagger-'));
     const outDir = join(rootDir, 'out', 'tenants', LOCAL_DEV_TENANT_ID, 'ui-design');

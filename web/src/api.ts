@@ -617,8 +617,11 @@ export async function uploadPipelineCsvFiles(files: File[]): Promise<PipelineCsv
   return result!;
 }
 
-/** Open Swagger UI in a new tab after priming a short-lived auth cookie on the server. */
-export async function openSwaggerUi(urlPath = '/api/docs'): Promise<void> {
+/** Open Swagger UI after priming a short-lived auth cookie on the server. */
+export async function openSwaggerUi(
+  urlPath = '/api/docs',
+  options?: { target?: 'popup' | 'same-tab' },
+): Promise<void> {
   const path = urlPath.startsWith('/') ? urlPath : `/${urlPath}`;
   if (accessTokenProvider) {
     const token = await accessTokenProvider();
@@ -634,8 +637,15 @@ export async function openSwaggerUi(urlPath = '/api/docs'): Promise<void> {
       throw new Error(payload.error ?? bootstrap.statusText ?? 'Failed to open Swagger UI.');
     }
   }
+  const target = options?.target ?? 'popup';
+  if (target === 'same-tab') {
+    window.location.assign(path);
+    return;
+  }
   const popup = window.open(path, '_blank', 'noopener,noreferrer');
-  if (!popup) throw new Error('Popup blocked. Allow popups for this site to open Swagger UI.');
+  if (!popup) {
+    window.location.assign(path);
+  }
 }
 
 export type ExplainDesignRequest = ProfileRequestFields & {

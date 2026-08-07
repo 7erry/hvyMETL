@@ -247,7 +247,7 @@ describe('authenticateSwaggerDocsAccess', () => {
     for (const key of envKeys) delete process.env[key];
   });
 
-  it('redirects unauthenticated browser requests to the studio openSwagger flow', () => {
+  it('redirects unauthenticated browser requests to the studio swagger auth return flow', () => {
     process.env.AUTH0_ISSUER_BASE_URL = 'https://tenant.us.auth0.com/';
     process.env.AUTH0_AUDIENCE = 'https://api.hvymetl.studio';
     process.env.HVYMETL_HOSTED_URL = 'https://hvymetl.studio';
@@ -269,6 +269,6 @@ describe('authenticateSwaggerDocsAccess', () => {
     } as unknown as Response;
 
     authenticateSwaggerDocsAccess(req, res, () => undefined);
-    expect(redirectUrl).toBe('https://hvymetl.studio/?openSwagger=%2Fapi%2Fdocs');
+    expect(redirectUrl).toBe('https://hvymetl.studio/?swaggerAuthReturn=%2Fapi%2Fdocs');
   });
 });

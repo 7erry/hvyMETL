@@ -325,19 +325,40 @@ export default function App() {
   useEffect(() => {
     if (!access.apiReady) return;
     const params = new URLSearchParams(window.location.search);
+
+    const swaggerAuthReturn = params.get('swaggerAuthReturn')?.trim();
+    if (swaggerAuthReturn) {
+      params.delete('swaggerAuthReturn');
+      const remainder = params.toString();
+      const nextPath = remainder ? `${window.location.pathname}?${remainder}` : window.location.pathname;
+      window.history.replaceState({}, '', nextPath);
+
+      const docsPath = swaggerAuthReturn.startsWith('/') ? swaggerAuthReturn : `/${swaggerAuthReturn}`;
+      if (access.enabled && !access.isAuthenticated) {
+        access.login();
+        return;
+      }
+      void openSwaggerUi(docsPath, { target: 'same-tab' }).catch((error) => {
+        setStatus(describeApiError(error));
+      });
+      return;
+    }
+
     const openSwagger = params.get('openSwagger')?.trim();
     if (!openSwagger) return;
 
     params.delete('openSwagger');
-    const remainder = params.toString();
-    const nextPath = remainder ? `${window.location.pathname}?${remainder}` : window.location.pathname;
-    window.history.replaceState({}, '', nextPath);
+    const remainderLegacy = params.toString();
+    const nextPathLegacy = remainderLegacy
+      ? `${window.location.pathname}?${remainderLegacy}`
+      : window.location.pathname;
+    window.history.replaceState({}, '', nextPathLegacy);
 
-    const docsPath = openSwagger.startsWith('/') ? openSwagger : `/${openSwagger}`;
-    void openSwaggerUi(docsPath).catch((error) => {
+    const docsPathLegacy = openSwagger.startsWith('/') ? openSwagger : `/${openSwagger}`;
+    void openSwaggerUi(docsPathLegacy).catch((error) => {
       setStatus(describeApiError(error));
     });
-  }, [access.apiReady]);
+  }, [access.apiReady, access.enabled, access.isAuthenticated, access.login]);
 
   useEffect(() => {
     if (access.isLoading) return;

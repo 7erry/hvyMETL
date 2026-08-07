@@ -17,7 +17,7 @@ artifacts as `npm run hvymetl`.
 | `npm run start:ui` | Production build served from `:3847` |
 | `npm run build:ui` | Build API + static web assets only |
 
-Open **http://localhost:3847** (dev and production). Swagger UI: **http://localhost:3847/api/docs**.
+Open **http://localhost:3847** (dev and production). Swagger UI: **http://localhost:3847/api/docs** (hosted: [hvymetl.studio/api/docs](https://hvymetl.studio/api/docs) — sign in, then same-tab Swagger; platform API spec until you run design).
 
 Environment: `.env` is loaded by the API server (`MONGODB_MODEL_KEY` for hybrid RAG
 exports, same as CLI).

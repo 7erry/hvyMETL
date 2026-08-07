@@ -16,6 +16,7 @@ import {
 } from './apiArtifactStore.js';
 import { requireRole, promoteQueryAccessToken, promoteSwaggerSessionCookie, authenticateSwaggerDocsAccess, issueSwaggerDocsCookie } from './auth.js';
 import { swaggerUiSetupOptions } from './swaggerUiTheme.js';
+import { resolveOpenApiSpecForDocs } from './studioPlatformOpenApi.js';
 import { getRequestTenantId } from './tenant.js';
 
 const docsRoleCheck = requireRole(['admin', 'developer', 'manager']).slice(1);
@@ -37,10 +38,18 @@ function findCollection(bundle: ApiArtifactBundle, name: string) {
   return bundle.collections.find((collection) => collection.name === name);
 }
 
-function readCombinedOpenApiSpec(req: Request, rootDir: string): Record<string, unknown> | null {
+function readTenantOpenApiSpec(req: Request, rootDir: string): Record<string, unknown> | null {
   const bundle = resolveBundle(req, rootDir);
   if (!bundle) return null;
-  return readJsonObjectArtifact(bundle.combinedOpenApiPath);
+  try {
+    return readJsonObjectArtifact(bundle.combinedOpenApiPath);
+  } catch {
+    return null;
+  }
+}
+
+function readCombinedOpenApiSpec(req: Request, rootDir: string): Record<string, unknown> {
+  return resolveOpenApiSpecForDocs(readTenantOpenApiSpec(req, rootDir));
 }
 
 export function registerApiArtifactRoutes(app: Express, rootDir: string): void {
@@ -94,10 +103,6 @@ export function registerApiArtifactRoutes(app: Express, rootDir: string): void {
 
   const renderSwaggerDocs = (req: Request, res: Response, next: NextFunction): void => {
     const spec = readCombinedOpenApiSpec(req, rootDir);
-    if (!spec) {
-      res.status(404).type('text/plain').send('Combined OpenAPI spec not found.');
-      return;
-    }
     swaggerUi.setup(spec, swaggerUiSetupOptions())(req, res, next);
   };
 
@@ -115,12 +120,7 @@ export function registerApiArtifactRoutes(app: Express, rootDir: string): void {
   });
 
   app.get('/api/docs/openapi.json', ...docsAuth, (req, res) => {
-    const spec = readCombinedOpenApiSpec(req, rootDir);
-    if (!spec) {
-      res.status(404).json({ error: 'Combined OpenAPI spec not found.' });
-      return;
-    }
-    res.json(spec);
+    res.json(readCombinedOpenApiSpec(req, rootDir));
   });
 
   app.get(['/api/docs', '/api/docs/'], ...docsAuth, renderSwaggerDocs);

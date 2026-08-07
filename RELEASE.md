@@ -1,3 +1,18 @@
+## hvyMETL 4.2.1
+
+**Fix hosted Swagger** — [https://hvymetl.studio/api/docs](https://hvymetl.studio/api/docs) no longer lands on a blank SPA after login.
+
+### Highlights
+
+- **Same-tab return** — unauthenticated HTML visits redirect to `/?swaggerAuthReturn=…`; the studio bootstraps the swagger session cookie and navigates back to `/api/docs` (popup fallback if blocked).
+- **Platform OpenAPI fallback** — Swagger always renders; tenants without design/pipeline artifacts see the Studio platform API spec via [`studioPlatformOpenApi.ts`](src/server/studioPlatformOpenApi.ts).
+
+### Verification
+
+- `npm test -- src/server/apiArtifactRoutes.test.ts src/server/auth.test.ts src/server/studioPlatformOpenApi.test.ts`
+
+---
+
 ## hvyMETL 4.2.0
 
 **Studio scheduled reflection jobs** — Manager View UI to create, start, stop, and destroy hourly/daily/weekly ML reflection schedules on the API server.

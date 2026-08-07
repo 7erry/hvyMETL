@@ -284,7 +284,10 @@ function redirectToStudioSwaggerLogin(req: Request, res: Response): void {
   const configured = env('HVYMETL_HOSTED_URL');
   const base = (configured || hostedStudioUrl()).replace(/\/+$/, '');
   const docsPath = swaggerDocsReturnPath(req);
-  res.redirect(302, `${base}/?openSwagger=${encodeURIComponent(docsPath)}`);
+  const rawUrl = req.url ?? req.originalUrl ?? '';
+  const query = rawUrl.includes('?') ? rawUrl.slice(rawUrl.indexOf('?')) : '';
+  const returnTarget = `${docsPath}${query}`;
+  res.redirect(302, `${base}/?swaggerAuthReturn=${encodeURIComponent(returnTarget)}`);
 }
 
 /**
