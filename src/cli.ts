@@ -10,6 +10,7 @@
  *   prompt     assemble the three RAG-grounded production prompts
  *   etl        run the parallel pattern-aware extraction to CSV chunks
  *   repogen    generate the concurrency-safe repository layer from a plan
+ *   reflect    run ML post-migration reflection for a migration log id
  *
  * CSV imports use the external csvToAtlas tool via npm run import-cli
  * (requires CSV_TO_ATLAS_PATH in .env).
@@ -21,6 +22,8 @@ import { loadProjectEnv } from './server/loadProjectEnv.js';
 
 const CLI_ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 loadProjectEnv(CLI_ROOT);
+import { bootstrapAtlasMetricsConnector } from './ml_engine/atlasApiMetrics.js';
+bootstrapAtlasMetricsConnector(process.env);
 
 import { Command } from 'commander';
 import { select } from '@inquirer/prompts';
@@ -272,6 +275,16 @@ program
   )
   .action((flags: { plan: string; out: string; lang: string }) => {
     runRepogen({ planPath: flags.plan, outDir: flags.out, language: flags.lang });
+  });
+
+program
+  .command('reflect')
+  .description('Run ML post-migration reflection for a logged migration id (Atlas or stub metrics)')
+  .requiredOption('--migration-id <id>', 'migration id from hvymetl_migration_logs')
+  .option('--cluster-id <name>', 'Atlas cluster name override (defaults to log or HVYMETL_ATLAS_CLUSTER_ID)')
+  .action(async (flags: { migrationId: string; clusterId?: string }) => {
+    const { runReflectCommand } = await import('./ml_engine/reflectCommand.js');
+    await runReflectCommand({ migrationId: flags.migrationId, clusterId: flags.clusterId });
   });
 
 maybePhoneHome(APP_VERSION);

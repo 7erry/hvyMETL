@@ -12,6 +12,16 @@ export type ChosenSchemaSnapshot = SchemaCandidate | CollectionPlan;
 /** Reflection lifecycle for a logged migration decision. */
 export type MigrationLogStatus = 'pending_reflection' | 'reflected' | 'healthy';
 
+/** Optional Atlas correlation metadata stored on migration logs for metrics API queries. */
+export type MigrationLogAtlasCorrelation = {
+  targetDatabase?: string;
+  targetCollection?: string;
+  projectId?: string;
+  processId?: string;
+  observationWindowStart?: string;
+  observationWindowEnd?: string;
+};
+
 /** Document persisted in `hvymetl_migration_logs`. */
 export type MigrationLogDocument = {
   migrationId: string;
@@ -27,6 +37,7 @@ export type MigrationLogDocument = {
   actualMetrics?: AtlasActualPerformance;
   lessonLearnedId?: string;
   reflectionNotes?: string;
+  atlasCorrelation?: MigrationLogAtlasCorrelation;
 };
 
 /** Post-migration runtime metrics from MongoDB Atlas (or stub connector). */
@@ -37,6 +48,11 @@ export type AtlasActualPerformance = {
   sampledAt: string;
   /** Connector label, e.g. "atlas-stub" or "atlas-api". */
   source: string;
+  observationWindow?: { start: string; end: string };
+  processId?: string;
+  projectId?: string;
+  targetDatabase?: string;
+  targetCollection?: string;
 };
 
 /** Severity for a stored lesson. */

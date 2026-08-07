@@ -9,7 +9,7 @@ every schema decision in a retrievable knowledge base of MongoDB design patterns
 your workload telemetry (read:write ratio, peak RPM, data growth), then runs a
 parallel, pattern-aware ETL into MongoDB Atlas.
 
-**Release:** [`4.0.9`](RELEASE.md#hvymetl-409) — see [RELEASE.md](RELEASE.md) for full release history.
+**Release:** [`4.1.0`](RELEASE.md#hvymetl-410) — see [RELEASE.md](RELEASE.md) for full release history.
 
 An optional **ML engine** (`src/ml_engine/`) adds telemetry-aware reranking
 ([Voyage rerank-2.5](https://docs.voyageai.com/reference/reranker-api) when
@@ -102,7 +102,7 @@ The ML engine upgrades the design stage from static RAG + heuristics to a
 | **Telemetry reranker** | After bi-encoder retrieval (top 15), rescore patterns against workload telemetry (top 3). Uses [Voyage rerank-2.5](https://docs.voyageai.com/reference/reranker-api) when `MONGODB_MODEL_KEY` is set; local Xenova cross-encoder offline. |
 | **Performance critic** | Predicts cache-miss and IOPS risk from schema shape + telemetry before ETL. Rejects and regenerates (max 2 loops) with critic notes. ONNX model optional. |
 | **Lessons-learned memory** | Persists lessons in MongoDB (`hvymetl_lessons_learned` when `MONGODB_URI` is set; in-memory otherwise). Retrieves via in-process cosine/BM25 — not Atlas `$vectorSearch` yet. Injects matches into LLM prompts under **HISTORICAL LESSONS LEARNED FROM PAST MIGRATIONS**. |
-| **Feedback loop** | Logs decisions to `hvymetl_migration_logs`, fetches post-migration Atlas metrics, upserts new lessons when performance breaches thresholds. Cron/serverless safe. |
+| **Feedback loop** | Logs decisions to `hvymetl_migration_logs`, fetches post-migration Atlas metrics (live Admin API when configured, else stub), upserts lessons when performance breaches thresholds. Cron: `hvymetl reflect --migration-id …`. |
 
 ```typescript
 import { designFromModelWithMlEngine } from './ml_engine/pipelinePatch.js';

@@ -12,6 +12,8 @@ import { loadProjectEnv } from './loadProjectEnv.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '../..');
 loadProjectEnv(ROOT);
+import { bootstrapAtlasMetricsConnector } from '../ml_engine/atlasApiMetrics.js';
+bootstrapAtlasMetricsConnector(process.env);
 import { createSqliteAdapter } from '../adapters/sqlite.js';
 import { DIALECTS, resolveImportDialect } from '../dialects.js';
 import { writeDesignArtifacts } from '../design/designFromModel.js';

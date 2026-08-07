@@ -86,9 +86,11 @@ Phases 2 and 3–4 can proceed in parallel after Phase 1.
 
 ---
 
-## Phase 3 — Live Atlas metrics (lessons learned feedback loop)
+## Phase 3 — Live Atlas metrics (lessons learned feedback loop) ✅
 
 **Goal:** Replace default [`StubAtlasMetricsConnector`](../src/ml_engine/feedbackCollector.ts) with production metrics for [`analyzeAndReflect()`](../src/ml_engine/feedbackCollector.ts) while keeping the stub for local dev.
+
+**Status:** Shipped in **4.1.0** — [`atlasApiMetrics.ts`](../src/ml_engine/atlasApiMetrics.ts), `hvymetl reflect`, soak delay, migration log correlation fields.
 
 **Prerequisites**
 

@@ -14,6 +14,7 @@ import {
   REFLECTION_SLOW_QUERY_THRESHOLD,
   type AtlasActualPerformance,
   type ChosenSchemaSnapshot,
+  type MigrationLogAtlasCorrelation,
   type MigrationLogDocument,
   type ReflectionAnalysis,
   type ReflectionResult,
@@ -111,12 +112,28 @@ export async function logMigrationDecision(
     clusterId?: string;
     predictedMetrics: PerformancePrediction;
     store?: MigrationStore;
+    atlasCorrelation?: MigrationLogAtlasCorrelation;
   },
 ): Promise<{ migrationId: string }> {
   const store = options.store ?? getMigrationStore();
   const migrationId = options.migrationId ?? `${tableId}-${randomUUID()}`;
   const clusterId = options.clusterId ?? process.env.HVYMETL_ATLAS_CLUSTER_ID?.trim() ?? 'local-dev';
   const patternsApplied = extractPatterns(chosenSchema);
+  const groupId = process.env.ATLAS_GROUP_ID?.trim();
+  const targetCollection =
+    'collectionName' in chosenSchema
+      ? chosenSchema.collectionName
+      : 'name' in chosenSchema
+        ? chosenSchema.name
+        : undefined;
+  const atlasCorrelation: MigrationLogAtlasCorrelation | undefined =
+    options.atlasCorrelation ??
+    (groupId
+      ? {
+          projectId: groupId,
+          targetCollection,
+        }
+      : undefined);
 
   const document: MigrationLogDocument = {
     migrationId,
@@ -128,6 +145,7 @@ export async function logMigrationDecision(
     predictedMetrics: options.predictedMetrics,
     patternsApplied,
     status: 'pending_reflection',
+    atlasCorrelation,
   };
 
   await store.insertLog(document);
@@ -250,6 +268,15 @@ export async function analyzeAndReflect(
     actualMetrics,
     lessonLearnedId: lessonId,
     reflectionNotes: analysis.breachReasons.join('; ') || 'within safety thresholds',
+    atlasCorrelation: {
+      ...log.atlasCorrelation,
+      projectId: actualMetrics.projectId ?? log.atlasCorrelation?.projectId,
+      processId: actualMetrics.processId ?? log.atlasCorrelation?.processId,
+      observationWindowStart: actualMetrics.observationWindow?.start ?? log.atlasCorrelation?.observationWindowStart,
+      observationWindowEnd: actualMetrics.observationWindow?.end ?? log.atlasCorrelation?.observationWindowEnd,
+      targetDatabase: actualMetrics.targetDatabase ?? log.atlasCorrelation?.targetDatabase,
+      targetCollection: actualMetrics.targetCollection ?? log.atlasCorrelation?.targetCollection,
+    },
   });
 
   return {
@@ -264,9 +291,16 @@ export async function analyzeAndReflect(
  * Fire-and-forget reflection hook for post-ETL pipelines.
  * Errors are logged but never thrown to the caller.
  */
-export function scheduleReflection(
+export function parseReflectionDelayMs(env: NodeJS.ProcessEnv = process.env): number {
+  const raw = env.HVYMETL_REFLECTION_DELAY_MS?.trim();
+  if (!raw) return 0;
+  const parsed = Number(raw);
+  return Number.isFinite(parsed) && parsed >= 0 ? parsed : 0;
+}
+
+function runReflectionAsync(
   migrationId: string,
-  options: { clusterId?: string; store?: MigrationStore } = {},
+  options: { clusterId?: string; store?: MigrationStore },
 ): void {
   void analyzeAndReflect(migrationId, options)
     .then((result) => {
@@ -281,20 +315,46 @@ export function scheduleReflection(
     });
 }
 
+export function scheduleReflection(
+  migrationId: string,
+  options: { clusterId?: string; store?: MigrationStore } = {},
+): void {
+  const delayMs = parseReflectionDelayMs(process.env);
+  if (delayMs > 0) {
+    console.info(
+      `[ml_engine/feedbackCollector] Scheduling reflection migrationId=${migrationId} in ${delayMs}ms (HVYMETL_REFLECTION_DELAY_MS)`,
+    );
+    setTimeout(() => runReflectionAsync(migrationId, options), delayMs);
+    return;
+  }
+  runReflectionAsync(migrationId, options);
+}
+
 /** Log all collections from an approved migration and return migration IDs. */
 export async function logMigrationPlanDecisions(
   tablePrefix: string,
   telemetry: TelemetryData,
   collections: Array<{ schema: SchemaCandidate | CollectionPlan; prediction: PerformancePrediction }>,
-  options: { clusterId?: string; store?: MigrationStore } = {},
+  options: {
+    clusterId?: string;
+    store?: MigrationStore;
+    targetDatabase?: string;
+    atlasCorrelation?: MigrationLogAtlasCorrelation;
+  } = {},
 ): Promise<string[]> {
   const migrationIds: string[] = [];
   for (const entry of collections) {
     const tableId = 'collectionName' in entry.schema ? entry.schema.collectionName : entry.schema.name;
+    const collectionCorrelation: MigrationLogAtlasCorrelation | undefined = {
+      ...options.atlasCorrelation,
+      targetDatabase: options.atlasCorrelation?.targetDatabase ?? options.targetDatabase,
+      targetCollection: tableId,
+    };
     const { migrationId } = await logMigrationDecision(`${tablePrefix}:${tableId}`, telemetry, entry.schema, {
       clusterId: options.clusterId,
       predictedMetrics: entry.prediction,
       store: options.store,
+      atlasCorrelation: collectionCorrelation,
     });
     migrationIds.push(migrationId);
   }

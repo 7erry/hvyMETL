@@ -1,8 +1,10 @@
-import { describe, expect, it, beforeEach } from 'vitest';
+import { describe, expect, it, beforeEach, vi } from 'vitest';
 import {
   analyzeAndReflect,
   fetchAtlasPerformanceMetrics,
   logMigrationDecision,
+  parseReflectionDelayMs,
+  scheduleReflection,
   setAtlasMetricsConnector,
   StubAtlasMetricsConnector,
 } from './feedbackCollector.js';
@@ -107,6 +109,41 @@ describe('feedbackCollector', () => {
     const metrics = await fetchAtlasPerformanceMetrics('cluster-1', migrationId, { store });
     expect(metrics.actualCacheMissRate).toBeGreaterThan(REFLECTION_CACHE_MISS_THRESHOLD);
     expect(metrics.slowQueryCount).toBeGreaterThan(100);
+  });
+
+  it('parseReflectionDelayMs reads HVYMETL_REFLECTION_DELAY_MS', () => {
+    expect(parseReflectionDelayMs({ HVYMETL_REFLECTION_DELAY_MS: '5000' })).toBe(5000);
+    expect(parseReflectionDelayMs({})).toBe(0);
+  });
+
+  it('scheduleReflection respects soak delay', async () => {
+    vi.useFakeTimers();
+    const { migrationId } = await logMigrationDecision('delayed', telemetry, {
+      collectionName: 'delayed',
+      nestingDepth: 1,
+      hasArrays: false,
+      indexCount: 1,
+      isSharded: false,
+      sourceRowCount: 1000,
+    }, {
+      predictedMetrics: {
+        predictedCacheMissRate: 0.05,
+        predictedIopsUtilization: 0.4,
+        storageFootprintMultiplier: 1.1,
+      },
+      store,
+    });
+
+    process.env.HVYMETL_REFLECTION_DELAY_MS = '10000';
+    scheduleReflection(migrationId, { store });
+    expect(await store.findLogByMigrationId(migrationId)).toMatchObject({ status: 'pending_reflection' });
+
+    await vi.advanceTimersByTimeAsync(10_000);
+    await vi.runAllTimersAsync();
+    const updated = await store.findLogByMigrationId(migrationId);
+    expect(updated?.status === 'reflected' || updated?.status === 'healthy').toBe(true);
+    vi.useRealTimers();
+    delete process.env.HVYMETL_REFLECTION_DELAY_MS;
   });
 });
 

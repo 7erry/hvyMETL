@@ -126,7 +126,8 @@ See also [Agent Copilot](./20-agent-copilot.md) (migration studio, separate agen
 | --- | --- |
 | **1** — Prompts | Shipped |
 | **2** — Sizing runtime (API, engine, tools, studio tab) | Shipped |
-| **3–4** — Lessons learned | Planned — [roadmap](22-release-4.0-roadmap.md) |
+| **3** — Live Atlas metrics + `hvymetl reflect` | Shipped ([4.1.0](../RELEASE.md#hvymetl-410)) |
+| **4** — Lessons `$vectorSearch` retrieval | Planned — [roadmap](22-release-4.0-roadmap.md) |
 | **5** — 4.0.0 tag | When scope complete |
 
 Connectivity & security: [23-atlas-connectivity-architect.md](23-atlas-connectivity-architect.md).

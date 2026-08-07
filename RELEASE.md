@@ -1,3 +1,20 @@
+## hvyMETL 4.1.0
+
+Release **4.0 Phase 3** — **live Atlas metrics** for the ML lessons-learned feedback loop.
+
+### Highlights
+
+- **`AtlasApiMetricsConnector`** — Performance Advisor slow query counts, process cache/IOPS measurements, `source: atlas-api` ([`atlasApiMetrics.ts`](src/ml_engine/atlasApiMetrics.ts)).
+- **Bootstrap** — API server and CLI register the live connector when `ATLAS_CLIENT_ID` / `ATLAS_CLIENT_SECRET` / `ATLAS_GROUP_ID` and `HVYMETL_ATLAS_CLUSTER_ID` are set; `HVYMETL_ATLAS_STUB_MODE` still forces stub metrics for local dev.
+- **Migration log correlation** — optional `atlasCorrelation` on `hvymetl_migration_logs` (target database/collection, project id, process id, observation window).
+- **Deferred reflection** — `HVYMETL_REFLECTION_DELAY_MS` soak before pipeline `scheduleReflection`; **`hvymetl reflect --migration-id`** for cron operators.
+
+### Verification
+
+- `npm test -- src/ml_engine/atlasApiMetrics.test.ts src/ml_engine/feedback_loop.test.ts`
+
+---
+
 ## hvyMETL 4.0.9
 
 Architecture reviews recommend **Atlas Search** vs **Atlas Vector Search** from migration-plan field names, with hybrid search guidance in §6.

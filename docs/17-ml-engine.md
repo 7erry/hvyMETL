@@ -68,6 +68,7 @@ npm run build
 | [`critic.ts`](../src/ml_engine/critic.ts) | ONNX / heuristic Atlas constraint prediction |
 | [`pipelinePatch.ts`](../src/ml_engine/pipelinePatch.ts) | Full ML design orchestration |
 | [`feedbackCollector.ts`](../src/ml_engine/feedbackCollector.ts) | Log decisions, fetch Atlas metrics, reflect |
+| [`atlasApiMetrics.ts`](../src/ml_engine/atlasApiMetrics.ts) | Live Atlas Admin API metrics connector (Phase 3) |
 | [`memoryEngine.ts`](../src/ml_engine/memoryEngine.ts) | Embed and retrieve `lessons_learned` |
 | [`memoryRetrieval.ts`](../src/ml_engine/memoryRetrieval.ts) | Dual-space RAG (patterns + memory) |
 | [`migrationStore.ts`](../src/ml_engine/migrationStore.ts) | MongoDB / in-memory persistence |
@@ -114,8 +115,12 @@ Breaches produce a lesson like: *"CRITICAL FAILURE: Table 'order_items' migrated
 | `MONGODB_URI` | optional | — | Persist logs, lessons, and pipeline executions (in-memory if unset) |
 | `HVYMETL_MEMORY_DB` | optional | `hvymetl_memory` | Database for all `hvymetl_*` metadata collections |
 | `MONGODB_DB` | optional | — | Fallback memory DB name when `HVYMETL_MEMORY_DB` unset; also csvToAtlas import target |
-| `HVYMETL_ATLAS_CLUSTER_ID` | optional | `local-dev` | Cluster id on logged decisions |
-| `HVYMETL_ATLAS_STUB_MODE` | optional | — | `healthy` or `degraded` for stub metrics |
+| `HVYMETL_ATLAS_CLUSTER_ID` | optional | `local-dev` | Atlas cluster **name** for metrics/advisor API paths |
+| `ATLAS_CLIENT_ID`, `ATLAS_CLIENT_SECRET`, `ATLAS_GROUP_ID` | optional | — | Atlas Admin API (live metrics; shared with Manager logs) |
+| `HVYMETL_ATLAS_STUB_MODE` | optional | — | `healthy` or `degraded` forces stub metrics (overrides live API) |
+| `HVYMETL_REFLECTION_DELAY_MS` | optional | `0` | Soak delay before pipeline schedules `analyzeAndReflect` |
+| `HVYMETL_ATLAS_TIER_IOPS_CAP` | optional | `3000` | Tier IOPS cap for `actualIopsUtilization` derivation |
+| `HVYMETL_ATLAS_METRICS_PERIOD` | optional | `PT1H` | Observation window for slow queries / measurements |
 | `HVYMETL_CRITIC_MODEL_PATH` | optional | `models/performance-critic.onnx` | ONNX critic model |
 | `HVYMETL_SCHEDULE_REFLECTION=1` | optional | off | Auto-schedule reflection after ML design |
 | `HVYMETL_DISABLE_ML_RERANKER=1` | optional | off | Force heuristic reranking |
@@ -311,6 +316,34 @@ triggerPostMigrationReflection(migrationLogIds, { clusterId: 'cluster-abc' });
 
 ### 5.4 Stub Atlas metrics for local testing
 
+When `ATLAS_CLIENT_ID`, `ATLAS_CLIENT_SECRET`, `ATLAS_GROUP_ID`, and `HVYMETL_ATLAS_CLUSTER_ID` are set and `HVYMETL_ATLAS_STUB_MODE` is **not** `healthy`/`degraded`, the API server and CLI register **`AtlasApiMetricsConnector`** at startup ([`atlasApiMetrics.ts`](../src/ml_engine/atlasApiMetrics.ts)):
+
+| Signal | Source |
+| --- | --- |
+| `slowQueryCount` | Performance Advisor slow query logs (observation window) |
+| `actualIopsUtilization` | Process measurements (read + write IOPS vs `HVYMETL_ATLAS_TIER_IOPS_CAP`) |
+| `actualCacheMissRate` | Derived from `CACHE_BYTES_USED` / `CACHE_MAX_BYTES` on a primary mongod process |
+
+Migration logs store optional **`atlasCorrelation`** (`targetDatabase`, `targetCollection`, `projectId`, `processId`, observation window) for audit and namespace-scoped slow-query filters.
+
+**Deferred reflection**
+
+- **`HVYMETL_REFLECTION_DELAY_MS`** — pipeline `scheduleReflection()` waits before calling `analyzeAndReflect` (soak after import).
+- **`hvymetl reflect --migration-id <id>`** — blocking reflection for cron/operators (bootstraps live metrics when configured).
+
+```bash
+# Cron / operator reflection after soak
+hvymetl reflect --migration-id "orders-uuid-here"
+
+# Simulate healthy post-migration metrics (no lesson written)
+HVYMETL_ATLAS_STUB_MODE=healthy hvymetl reflect --migration-id your-migration-id
+
+# Simulate degraded metrics (lesson upserted)
+HVYMETL_ATLAS_STUB_MODE=degraded hvymetl reflect --migration-id your-migration-id
+```
+
+Legacy one-liner (still works):
+
 ```bash
 # Simulate healthy post-migration metrics (no lesson written)
 HVYMETL_ATLAS_STUB_MODE=healthy node -e "
@@ -427,6 +460,6 @@ Console logs to watch:
 
 Release **4.0** schedules the items below as **Phases 3–4** in [22-release-4.0-roadmap.md](22-release-4.0-roadmap.md):
 
-- Replace `StubAtlasMetricsConnector` with a real Atlas Performance Advisor / monitoring API client (`AtlasApiMetricsConnector`), deferred reflection, and optional `hvymetl reflect --migration-id …` for cron operators.
-- Persist lesson embeddings in Atlas with `$vectorSearch` on `hvymetl_lessons_learned` when the corpus outgrows in-process cosine ranking (feature-flagged retrieval path + backfill).
+- **Phase 3 (shipped 4.1.0):** `AtlasApiMetricsConnector`, migration log correlation metadata, `HVYMETL_REFLECTION_DELAY_MS`, and `hvymetl reflect --migration-id …` for cron operators. Stub remains default when Admin API creds or cluster name are missing, or when `HVYMETL_ATLAS_STUB_MODE` is set.
+- **Phase 4 (planned):** Persist lesson embeddings in Atlas with `$vectorSearch` on `hvymetl_lessons_learned` when the corpus outgrows in-process cosine ranking (feature-flagged retrieval path + backfill).
 - Expose pipeline execution history in the Migration Studio UI (API: `GET /api/pipeline/executions`) — may ship independently of 4.0.

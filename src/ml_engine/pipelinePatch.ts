@@ -57,6 +57,8 @@ export type MlEnhancedDesignOptions = {
   timeSeriesOverrides?: import('../types.js').TimeSeriesOverrides;
   /** Atlas cluster id for post-migration reflection (defaults to env). */
   clusterId?: string;
+  /** Logical MongoDB database targeted by csvToAtlas import (Atlas correlation). */
+  targetDatabase?: string;
   /** When true, schedule async reflection after logging decisions. */
   schedulePostMigrationReflection?: boolean;
 };
@@ -216,7 +218,7 @@ export async function runMlEnhancedDesign(options: MlEnhancedDesignOptions): Pro
       schema,
       prediction: criticEvaluations[index]?.prediction ?? fallbackPrediction,
     })),
-    { clusterId: options.clusterId },
+    { clusterId: options.clusterId, targetDatabase: options.targetDatabase },
   );
 
   const shouldSchedule =
@@ -275,6 +277,7 @@ export async function designFromModelWithMlEngine(
     schemaGenerator?: SchemaGenerator;
     schedulePostMigrationReflection?: boolean;
     clusterId?: string;
+    targetDatabase?: string;
     timeSeriesOverrides?: import('../types.js').TimeSeriesOverrides;
   } = {},
 ): Promise<{
@@ -292,6 +295,7 @@ export async function designFromModelWithMlEngine(
       schemaGenerator: options.schemaGenerator,
       schedulePostMigrationReflection: options.schedulePostMigrationReflection,
       clusterId: options.clusterId,
+      targetDatabase: options.targetDatabase,
       timeSeriesOverrides: options.timeSeriesOverrides,
     });
     const designReport = [

@@ -269,6 +269,12 @@ async function runFullPipelineInner(
     configureMigrationStore({ mongoUri: importEnv.MONGODB_URI, dbName: memoryDb });
   }
 
+  const logicalTargetDb =
+    request.logicalTargetDb ??
+    request.targetDb ??
+    importEnv.MONGODB_DB?.trim() ??
+    DEFAULT_LOGICAL_TARGET_DB;
+
   const profile = request.profile ?? resolveWorkloadProfile({ profileId: request.profileId });
   const clusterId = importEnv.HVYMETL_ATLAS_CLUSTER_ID?.trim();
   reportProgress(request, {
@@ -278,6 +284,7 @@ async function runFullPipelineInner(
   const mlDesign = await designFromModelWithMlEngine(enrichedModel, profile, request.knowledgeDir, {
     schedulePostMigrationReflection: false,
     clusterId,
+    targetDatabase: logicalTargetDb,
     timeSeriesOverrides: request.timeSeriesOverrides,
   });
   const design: DesignFromModelResult = {
@@ -320,11 +327,6 @@ async function runFullPipelineInner(
   const csvImportManifest = { csvSource: csvRoot, schemaDialect, collections: csvCollections };
   writeFileSync(manifestPath, `${JSON.stringify(csvImportManifest, null, 2)}\n`);
 
-  const logicalTargetDb =
-    request.logicalTargetDb ??
-    request.targetDb ??
-    importEnv.MONGODB_DB?.trim() ??
-    DEFAULT_LOGICAL_TARGET_DB;
   const requestedPhysicalDb = request.targetDb ?? logicalTargetDb;
   const physicalTargetDb = importEnv.MONGODB_URI?.trim()
     ? await resolveMongoDatabaseNameCasing(importEnv.MONGODB_URI, requestedPhysicalDb, { timeoutMs: 12_000 })

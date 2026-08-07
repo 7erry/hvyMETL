@@ -14,4 +14,6 @@ export * from './feedbackCollector.js';
 export * from './memoryEngine.js';
 export * from './memoryRetrieval.js';
 export * from './feedbackHooks.js';
+export { bootstrapAtlasMetricsConnector, readAtlasMetricsConfig } from './atlasApiMetrics.js';
+export { runReflectCommand } from './reflectCommand.js';
 export { createModelSingleton } from './modelSingleton.js';

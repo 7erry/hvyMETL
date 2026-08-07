@@ -86,6 +86,11 @@ type FetchFn = typeof fetch;
 let cachedAccessToken: { token: string; expiresAtMs: number } | undefined;
 let fetchImpl: FetchFn = fetch;
 
+/** Returns the fetch implementation used for Atlas Admin API calls (mockable in tests). */
+export function getAtlasFetchImpl(): FetchFn {
+  return fetchImpl;
+}
+
 /** Override fetch (tests) or reset token cache between runs. */
 export function configureAtlasLogsRuntime(options?: {
   fetchFn?: FetchFn;
