@@ -91,17 +91,17 @@ export function AgentCopilotSidebar() {
           type="button"
           className="agent-copilot-launcher"
           onClick={handleOpen}
-          aria-label="Open Agent Copilot"
-          title="Agent Copilot (⌘K)"
+          aria-label="Open Copilot"
+          title="Copilot (⌘K)"
         >
-          ◈ Agent
+          ◈ Copilot
         </button>
       ) : null}
 
       <aside
         className="agent-copilot-sidebar"
         style={{ width: copilot.width }}
-        aria-label="Agent Copilot"
+        aria-label="Copilot"
         aria-hidden={!copilot.open}
         data-open={copilot.open ? 'true' : 'false'}
       >
@@ -109,7 +109,7 @@ export function AgentCopilotSidebar() {
           <div className="agent-copilot-sidebar__title-row">
             <span className={`agent-copilot-sidebar__status agent-copilot-sidebar__status--${copilot.status}`} />
             <div>
-              <h2>Agent Copilot</h2>
+              <h2>Copilot</h2>
               <p className="agent-copilot-sidebar__meta">
                 {copilot.activeTab === 'sizing'
                   ? 'Atlas cluster sizing'
@@ -259,7 +259,7 @@ export function AgentCopilotSidebar() {
                       handleSend();
                     }
                   }}
-                  placeholder="Message agent… (/fold, /guardrails, /translate)"
+                  placeholder="Message Copilot… (/fold, /guardrails, /translate)"
                   rows={2}
                   disabled={!copilot.open}
                 />

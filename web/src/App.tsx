@@ -100,7 +100,7 @@ import { COPILOT_WIDTH_MAX, SIDEBAR_WIDTH_MAX, SIDEBAR_WIDTH_MIN } from './layou
 function CopilotHeaderToggle() {
   const copilot = useCopilot();
   return (
-    <button type="button" className="tertiary" onClick={copilot.toggleOpen} title="Agent Copilot (⌘K)">
+    <button type="button" className="tertiary" onClick={copilot.toggleOpen} title="Copilot (⌘K)">
       ◈ Copilot
     </button>
   );
@@ -318,7 +318,7 @@ export default function App() {
       };
     });
     if (mutation.cardinalityOverrides !== undefined || mutation.forceEmbedOverrides !== undefined) {
-      setStatus('Agent updated embed overrides. Run design to refresh the MongoDB plan.');
+      setStatus('Copilot updated embed overrides. Run design to refresh the MongoDB plan.');
     }
   }, []);
 

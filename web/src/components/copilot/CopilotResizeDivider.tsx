@@ -77,7 +77,7 @@ export function CopilotResizeDivider({
       className={`workspace-divider workspace-divider--copilot${isDragging ? ' workspace-divider--copilot-dragging' : ''}`}
       role="separator"
       aria-orientation="vertical"
-      aria-label="Resize Agent Copilot"
+      aria-label="Resize Copilot"
       aria-valuemin={COPILOT_WIDTH_MIN}
       aria-valuemax={COPILOT_WIDTH_MAX}
       aria-valuenow={width}
@@ -91,7 +91,7 @@ export function CopilotResizeDivider({
         if (event.key === 'Home') onWidthChange(COPILOT_WIDTH_MIN);
         if (event.key === 'End') onWidthChange(COPILOT_WIDTH_MAX);
       }}
-      title="Drag to resize Agent Copilot"
+      title="Drag to resize Copilot"
     >
       <span className="workspace-divider__grip" aria-hidden="true" />
     </div>
