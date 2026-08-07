@@ -1,6 +1,6 @@
 # Atlas cluster sizing assistant (Release 4.0)
 
-The **sizing assistant** is a dedicated agent flow for MongoDB Atlas cluster sizing: it collects workload parameters, optionally extracts them from curated meeting transcripts, runs the sizing engine, and presents tier recommendations without exposing raw pricing breakdowns in chat.
+The **sizing assistant** is a dedicated Copilot flow for MongoDB Atlas cluster sizing: it collects workload parameters, optionally extracts them from curated meeting transcripts, runs the sizing engine, and presents tier recommendations without exposing raw pricing breakdowns in chat.
 
 **Release 4.0 scope** also includes production **lessons learned** (live Atlas metrics + vector retrieval). Phase breakdown: [22-release-4.0-roadmap.md](22-release-4.0-roadmap.md).
 
@@ -21,7 +21,7 @@ The sizing engine is **not** shared with Manager View heuristics in `web/src/man
 
 ## Environment
 
-Uses the same Grove settings as Migration Agent Copilot:
+Uses the same Grove settings as Migration Studio Copilot:
 
 | Variable | Required | Purpose |
 | --- | --- | --- |
@@ -81,7 +81,7 @@ Responses from `/tools` and `/chat` **omit** `finalHourlyCost` and related prici
 
 ## Migration Studio UI
 
-Open **Agent Copilot** (⌘K) → **Atlas Sizing** tab.
+Open **Copilot** (⌘K) → **Atlas Sizing** tab.
 
 | File | Role |
 | --- | --- |
@@ -93,7 +93,7 @@ Requires `GROVE_API_KEY` on the API server for LLM-driven tool use; `/tools` wor
 
 - **Multi-cloud:** Session parameters include `cloud_provider` (`AWS`, `GCP`, `AZURE`) and `target_regions`. Tier tool output includes `deploymentContext` and computed **`oplogRecommendation`** (retention, estimated GB, guidance). The assistant must present **Oplog Recommendations** on every tier recommendation reply.
 
-Recommendation responses show **Save to Google Docs** and **Download markdown** when `GOOGLE_DRIVE_CLIENT_ID` is configured — see [Agent Copilot → Google Docs](20-agent-copilot.md#architecture-review--google-docs).
+Recommendation responses show **Save to Google Docs** and **Download markdown** when `GOOGLE_DRIVE_CLIENT_ID` is configured — see [Copilot → Google Docs](20-agent-copilot.md#architecture-review--google-docs).
 
 ## UX flow
 
@@ -118,7 +118,7 @@ npm test -- src/routes/sizingAssistantRoute.test.ts
 npm test -- src/copilot/sizingAssistantPrompt.test.ts src/copilot/sizingAssistantPrompt.snapshot.test.ts
 ```
 
-See also [Agent Copilot](./20-agent-copilot.md) (migration studio, separate agent).
+See also [Copilot](./20-agent-copilot.md) (Migration Studio sidebar).
 
 ## Release 4.0 phases
 

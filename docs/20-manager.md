@@ -97,7 +97,7 @@ forcing the primary cluster to carry the full historical footprint.
 
 When CSV import has not populated SQL `rowCount` statistics, managers can set **Dataset scale — raw data** (up to 21 TB) on the cost panel slider. This override scales storage, tier, sharding, and manpower projections as if that raw relational footprint were imported.
 
-The same value is persisted in session state as `managerCostInputs.estimatedDataGb` and forwarded to **Agent Copilot** on every chat turn. Copilot uses it for:
+The same value is persisted in session state as `managerCostInputs.estimatedDataGb` and forwarded to **Copilot** on every chat turn. Copilot uses it for:
 
 - Direct answers to *what is the current raw data size?*
 - Atlas tier and storage guidance in architecture reviews

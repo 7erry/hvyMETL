@@ -72,7 +72,7 @@ Phases 2 and 3–4 can proceed in parallel after Phase 1.
 
 **Remaining (optional):** Resource Curator UI integration for transcript attach.
 
-**Studio:** Agent Copilot → **Atlas Sizing** tab (`web/src/components/sizing/SizingAssistantPanel.tsx`).
+**Studio:** Copilot → **Atlas Sizing** tab (`web/src/components/sizing/SizingAssistantPanel.tsx`).
 
 **Exit criteria (sizing):** Met via `/tools` and `/chat` — parameters collected, `find_optimal_cluster_tier` returns recommendations without pricing in API payloads.
 
@@ -180,4 +180,4 @@ Phases 2 and 3–4 can proceed in parallel after Phase 1.
 | Connectivity & security architect | [23-atlas-connectivity-architect.md](23-atlas-connectivity-architect.md) |
 | ML engine + lessons today | [17-ml-engine.md](17-ml-engine.md) |
 | Atlas Admin API (logs) | [21-atlas-logs.md](21-atlas-logs.md) |
-| Migration Copilot (separate agent) | [20-agent-copilot.md](20-agent-copilot.md) |
+| Migration Copilot (studio sidebar) | [20-agent-copilot.md](20-agent-copilot.md) |

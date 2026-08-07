@@ -1,8 +1,8 @@
-# Agent Copilot
+# Copilot
 
-The **Agent Copilot** is Migration Studio's AI-assisted sidebar for SQL-to-MongoDB migration. It runs canvas mutations in the browser, migration workflow steps against live studio handlers, and read-only Atlas inspect/analyze tools server-side via a MongoDB MCP proxy.
+The **Copilot** is Migration Studio's AI-assisted sidebar for SQL-to-MongoDB migration. It runs canvas mutations in the browser, migration workflow steps against live studio handlers, and read-only Atlas inspect/analyze tools server-side via a MongoDB MCP proxy.
 
-Open it with **⌘K** / **Ctrl+K** or the **◈ Agent** launcher. The header shows agent status, active preset, LLM model (or offline heuristics), and whether Atlas inspect is online.
+Open it with **⌘K** / **Ctrl+K** or the **◈ Copilot** launcher in the lower-right corner. The header shows copilot status, active preset, LLM model (or offline heuristics), and whether Atlas inspect is online.
 
 ## Tabs
 
@@ -30,7 +30,7 @@ Say or click:
 - **Migration steps** quick chip, or
 - *Guide me through the migration workflow: clear session, import SQL, refresh design, run pipeline, then list collections.*
 
-The agent runs one workflow tool per turn and summarizes the result.
+Copilot runs one workflow tool per turn and summarizes the result.
 
 ### Next step buttons
 
@@ -80,7 +80,7 @@ These bypass the LLM and return static reference text:
 
 ## Manager dataset scale in copilot
 
-The **Dataset scale — raw data** slider in Manager view (`Migration Cost Projection`) is sent to Agent Copilot on every LLM turn as `schemaContext.datasetScale`. Use it when CSV import has not loaded real row counts but you still need sizing, tier, or sharding guidance.
+The **Dataset scale — raw data** slider in Manager view (`Migration Cost Projection`) is sent to Copilot on every LLM turn as `schemaContext.datasetScale`. Use it when CSV import has not loaded real row counts but you still need sizing, tier, or sharding guidance.
 
 | Source | When used |
 | --- | --- |

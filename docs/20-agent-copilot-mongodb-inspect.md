@@ -1,8 +1,8 @@
-# Agent Copilot — MongoDB inspect & analyze (MCP)
+# Copilot — MongoDB inspect & analyze (MCP)
 
 > **Overview:** guided workflow, quick chips, architecture review export, and canvas tools are documented in [20-agent-copilot.md](20-agent-copilot.md). This page covers the co-hosted MongoDB MCP proxy and inspect/analyze tools in depth.
 
-Read-only Atlas inspection and analysis tools for the **Agent Copilot** sidebar. The hvyMETL API proxies requests to a co-hosted [MongoDB MCP Server](https://github.com/mongodb-js/mongodb-mcp-server) over streamable HTTP.
+Read-only Atlas inspection and analysis tools for the **Copilot** sidebar. The hvyMETL API proxies requests to a co-hosted [MongoDB MCP Server](https://github.com/mongodb-js/mongodb-mcp-server) over streamable HTTP.
 
 ## Tools (Phase 3 — Vector index)
 

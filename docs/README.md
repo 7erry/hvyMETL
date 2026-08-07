@@ -25,8 +25,8 @@ merge-mode diagrams.
 | [03-knowledge-rag.md](03-knowledge-rag.md) | Pattern knowledge base, BM25 / hybrid RRF retrieval, prompt bundles | `knowledge/`, `src/rag/` |
 | [12-validate-hybrid-rag.md](12-validate-hybrid-rag.md) | Validate MongoDB Model Key + hybrid BM25 + Voyage 4 + RRF | `scripts/validate-hybrid-rag.mjs` |
 | [13-web-ui.md](13-web-ui.md) | Optional MongoDB-branded Migration Studio (ER diagrams, templates, AI export) | [web/README.md](../web/README.md), `src/server/` |
-| [20-agent-copilot.md](20-agent-copilot.md) | Agent Copilot — guided workflow, commands, architecture review, Google Docs export | `web/src/copilot/`, `src/server/copilotRoutes.ts` |
-| [20-agent-copilot-mongodb-inspect.md](20-agent-copilot-mongodb-inspect.md) | Agent Copilot MongoDB inspect/analyze via co-hosted MCP HTTP proxy | `src/copilot/mongoInspectService.ts`, `src/server/copilotRoutes.ts` |
+| [20-agent-copilot.md](20-agent-copilot.md) | Copilot — guided workflow, commands, architecture review, Google Docs export | `web/src/copilot/`, `src/server/copilotRoutes.ts` |
+| [20-agent-copilot-mongodb-inspect.md](20-agent-copilot-mongodb-inspect.md) | Copilot MongoDB inspect/analyze via co-hosted MCP HTTP proxy | `src/copilot/mongoInspectService.ts`, `src/server/copilotRoutes.ts` |
 | [21-sizing-assistant.md](21-sizing-assistant.md) | Release 4.0 Atlas cluster sizing assistant — system prompt and engine logic reference | `src/copilot/sizingAssistantPrompt.ts` |
 | [22-release-4.0-roadmap.md](22-release-4.0-roadmap.md) | Release 4.0 multi-phase plan — sizing runtime, live Atlas metrics, lessons `$vectorSearch` | `src/ml_engine/`, `src/copilot/sizingAssistant*.ts` |
 | [23-atlas-connectivity-architect.md](23-atlas-connectivity-architect.md) | Release 4.0 Atlas PrivateLink/IAM/IaC connectivity architect prompt | `src/copilot/atlasConnectivityArchitectPrompt.ts` |
