@@ -272,6 +272,12 @@ describe('buildMigrationPlan', () => {
     expect(cars.extendedReferences.some((reference) => reference.sourceTable === 'paints')).toBe(false);
     expect(cars.jsonSchema.properties).toHaveProperty('paint');
     expect(cars.jsonSchema.properties).not.toHaveProperty('paintId');
+    const paintSchema = (cars.jsonSchema.properties as Record<string, { properties?: Record<string, unknown> }>).paint;
+    expect(paintSchema?.properties).toMatchObject({
+      paintId: expect.objectContaining({ bsonType: 'int' }),
+      colorName: expect.objectContaining({ bsonType: 'string' }),
+      paintCode: expect.objectContaining({ bsonType: ['string', 'null'] }),
+    });
     expect(cars.indexes.some((index) => 'paintId' in index.keys)).toBe(false);
     expect(plan.collections.some((collection) => collection.sourceTable === 'paints')).toBe(false);
   });

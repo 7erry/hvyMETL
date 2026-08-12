@@ -445,6 +445,19 @@ export function reverseJoinFkColumns(collection: CollectionPlan): Set<string> {
   );
 }
 
+/** Build camelCased $jsonSchema properties for every column on a table. */
+function buildTableColumnProperties(table: TableModel): Record<string, unknown> {
+  const properties: Record<string, unknown> = {};
+  for (const column of table.columns) {
+    const types = column.nullable ? [column.bsonType, 'null'] : column.bsonType;
+    properties[toCamelCase(column.name)] = {
+      bsonType: types,
+      description: `From SQL column ${table.name}.${column.name} (${column.sqlType}).`,
+    };
+  }
+  return properties;
+}
+
 /** Build the $jsonSchema property map for a table's own (camelCased) columns. */
 function buildBaseProperties(
   table: TableModel,
@@ -505,6 +518,7 @@ function planReversedForceEmbedRelationships(
     });
     properties[field] = {
       bsonType: 'object',
+      properties: buildTableColumnProperties(parentTable),
       description: `Embedded ${parentTable.name} because the developer reversed embed direction for FK ${relationship.fkColumn}.`,
     };
     patterns.push({

@@ -1,3 +1,13 @@
+## hvyMETL 4.2.6
+
+**Reverse-embedded objects include nested field schema** — `paint`, `wheel`, and similar reverse-embed fields now carry full `$jsonSchema` properties (`colorName`, `paintCode`, `finishType`, etc.) instead of a bare `object` type.
+
+### Verification
+
+- `npx vitest run src/design/patternSelector.test.ts`
+
+---
+
 ## hvyMETL 4.2.5
 
 **Reverse-embedded lookup tables are absorbed** — when you flip embed direction so lookups nest inside the host (e.g. `paints → cars`), standalone `paints` / `wheels` / `lights` collections are no longer emitted.
