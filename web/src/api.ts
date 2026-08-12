@@ -919,8 +919,7 @@ export function downloadText(filename: string, text: string, mime = 'text/plain'
 
 export async function fetchCopilotStatus(): Promise<CopilotStatusResponse> {
   const res = await copilotApiFetch(`${base}/api/copilot/status`);
-  if (!res.ok) throw new Error((await res.json()).error ?? res.statusText);
-  return res.json();
+  return parseApiJsonResponse<CopilotStatusResponse>(res);
 }
 
 export type CopilotMongoAutoEmbedVectorIndexResponse = {
@@ -1032,9 +1031,7 @@ export async function sendCopilotChat(request: {
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify(request),
   });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error ?? res.statusText);
-  return data;
+  return parseApiJsonResponse<CopilotChatApiResponse>(res);
 }
 
 export type SizingAssistantStatusResponse = {

@@ -1,3 +1,19 @@
+## hvyMETL 4.2.3
+
+**Copilot Architecture Review resilience** — pre-flight Atlas collection checks and safe JSON parsing so reviews complete when plan collections are folded or the Grove gateway returns HTML.
+
+### Highlights
+
+- **Collection pre-flight** — Mongo inspect tools verify the collection exists in the target physical database before `collection-indexes` / schema / aggregate calls; errors list live Atlas collections and migration-plan hints when a name was folded.
+- **Safe Grove/API parsing** — `groveChat` and `sendCopilotChat` parse response bodies as text first so HTML error pages (502/gateway) surface clear errors instead of `Unexpected token '<'`.
+- **Architecture Review prompts** — Copilot is instructed to call `listMongoCollections` once and only inspect live collections; continue the review when a single inspect call fails.
+
+### Verification
+
+- `npx vitest run src/copilot/groveChat.test.ts src/copilot/mongoInspectService.test.ts src/copilot/copilotArchitecturePrompt.test.ts`
+
+---
+
 ## hvyMETL 4.2.2
 
 **Embed direction toggle** — flip which collection hosts a forced embed in **Embed Overrides**.

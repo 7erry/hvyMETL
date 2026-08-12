@@ -161,6 +161,32 @@ function normalizeListCollectionsPayload(raw: unknown): ListCollectionsPayload {
   return {};
 }
 
+/** Fail fast when a collection-scoped inspect targets a namespace that is not in Atlas. */
+async function assertCollectionExistsInPhysicalDatabase(
+  callTool: MongoMcpToolCaller,
+  connectionId: string,
+  physicalDatabase: string,
+  collection: string,
+  logicalDatabase: string,
+  planContext?: MongoPlanContext,
+): Promise<void> {
+  const raw = await callTool('list-collections', { connectionId, database: physicalDatabase });
+  const payload = normalizeListCollectionsPayload(raw);
+  const atlasNames = (payload.collections ?? []).map((entry) => entry.name);
+  if (atlasNames.includes(collection)) return;
+
+  const planEntry = findPlanCollection(planContext, collection);
+  const atlasSummary = atlasNames.length > 0 ? atlasNames.join(', ') : '(none)';
+  let message = `Collection "${collection}" does not exist in logical database "${logicalDatabase}". Atlas collections: ${atlasSummary}.`;
+  if (planEntry) {
+    message +=
+      ' This name appears in the migration plan but may be folded into a parent collection — use plan index specs from schema context instead of live index inspect.';
+  } else {
+    message += ' Run listMongoCollections for this database and use an exact collection name from that list.';
+  }
+  throw new Error(message);
+}
+
 type BuildMcpArgumentsResult = {
   mcpArgs: Record<string, unknown>;
   logicalDatabase: string;
@@ -367,6 +393,25 @@ export async function invokeMongoInspectTool(
         );
         if (physicalDatabase) {
           assertPhysicalDatabaseOnCluster(scope, logicalDatabase, physicalDatabase, clusterNames);
+        }
+
+        if (
+          tool !== 'compareMongoCollectionToPlan' &&
+          physicalDatabase &&
+          hasInspectDatabaseArg(args)
+        ) {
+          const collectionName =
+            typeof mcpArgs.collection === 'string' ? mcpArgs.collection.trim() : '';
+          if (collectionName) {
+            await assertCollectionExistsInPhysicalDatabase(
+              callTool,
+              connectionId,
+              physicalDatabase,
+              collectionName,
+              logicalDatabase,
+              options.planContext,
+            );
+          }
         }
 
         if (tool === 'compareMongoCollectionToPlan') {

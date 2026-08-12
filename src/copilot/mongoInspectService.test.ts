@@ -253,6 +253,9 @@ describe('mongoInspectService', () => {
       if (name === 'list-databases') {
         return { databases: [{ name: 'terry_walters__myshop', size: 100 }], totalCount: 1 };
       }
+      if (name === 'list-collections') {
+        return { collections: [{ name: 'orders' }], totalCount: 1 };
+      }
       if (name === 'aggregate') {
         expect(args).toMatchObject({
           connectionId: 'preconfigured',
@@ -288,6 +291,9 @@ describe('mongoInspectService', () => {
     mockInspectMcp(async (name, args) => {
       if (name === 'list-databases') {
         return { databases: [{ name: 'terry_walters__csv_to_atlas', size: 100 }], totalCount: 1 };
+      }
+      if (name === 'list-collections') {
+        return { collections: [{ name: 'sensors' }], totalCount: 1 };
       }
       if (name === 'collection-schema') {
         expect(args).toMatchObject({
@@ -415,6 +421,9 @@ describe('mongoInspectService', () => {
           totalCount: 1,
         };
       }
+      if (name === 'list-collections') {
+        return { collections: [{ name: 'salesChannels' }], totalCount: 1 };
+      }
       if (name === 'collection-indexes') {
         expect(args).toEqual({
           connectionId: 'preconfigured',
@@ -458,6 +467,39 @@ describe('mongoInspectService', () => {
       searchIndexes: [{ name: 'search_idx', type: 'search', status: 'READY', queryable: true }],
       totalCount: 3,
     });
+  });
+
+  it('returns a helpful error when indexes are requested for a collection missing from the target database', async () => {
+    vi.spyOn(mongoMcpClient, 'isMongoMcpEnabled').mockReturnValue(true);
+    mockInspectMcp(async (name, args) => {
+      if (name === 'list-databases') {
+        return {
+          databases: [{ name: 'terry_walters__whatif', size: 100 }],
+          totalCount: 1,
+        };
+      }
+      if (name === 'list-collections') {
+        expect(args).toMatchObject({ database: 'terry_walters__whatif' });
+        return { collections: [{ name: 'orders' }], totalCount: 1 };
+      }
+      throw new Error(`Unexpected tool ${name}`);
+    });
+    vi.spyOn(auth, 'isAuthConfigured').mockReturnValue(true);
+    vi.spyOn(auth, 'resolveAuthDisplayName').mockResolvedValue('Terry Walters');
+
+    const req = {
+      auth: { payload: { sub: 'google-oauth2|abc' } },
+      headers: { authorization: 'Bearer token', 'x-hvymetl-db-prefix': 'terry_walters' },
+    } as import('express').Request;
+
+    const result = await invokeMongoInspectTool(req, 'listMongoCollectionIndexes', {
+      database: 'whatif',
+      collection: 'order_items',
+    });
+
+    expect(result.ok).toBe(false);
+    expect(result.summary).toContain('does not exist in logical database "whatif"');
+    expect(result.summary).toContain('orders');
   });
 
   it('resolves the database for explain when collection exists in one tenant database', async () => {

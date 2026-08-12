@@ -131,7 +131,27 @@ export async function callGroveChat(request: GroveChatRequest, config?: GroveCon
     body: JSON.stringify(payload),
   });
 
-  const body = (await response.json()) as OpenAiCompletionResponse;
+  const contentType = response.headers.get('content-type') ?? '';
+  const rawBody = await response.text();
+  let body: OpenAiCompletionResponse;
+  try {
+    if (
+      !contentType.includes('application/json') &&
+      (rawBody.trim().startsWith('<') || rawBody.includes('<html'))
+    ) {
+      throw new Error(
+        `Grove API returned HTML instead of JSON (HTTP ${response.status}). The gateway may be unavailable — retry in a moment.`,
+      );
+    }
+    body = JSON.parse(rawBody) as OpenAiCompletionResponse;
+  } catch (error) {
+    if (error instanceof Error && error.message.includes('Grove API returned HTML')) {
+      throw error;
+    }
+    throw new Error(
+      `Grove API returned invalid JSON (HTTP ${response.status}). ${error instanceof Error ? error.message : String(error)}`,
+    );
+  }
 
   if (!response.ok) {
     const message = body.error?.message ?? response.statusText;

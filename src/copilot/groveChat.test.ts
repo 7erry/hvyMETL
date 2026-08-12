@@ -78,14 +78,17 @@ describe('groveChat', () => {
   it('calls Grove chat completions with api-key header', async () => {
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
-      json: async () => ({
-        choices: [
-          {
-            message: { role: 'assistant', content: 'Hello from Grove.' },
-            finish_reason: 'stop',
-          },
-        ],
-      }),
+      status: 200,
+      headers: { get: () => 'application/json' },
+      text: async () =>
+        JSON.stringify({
+          choices: [
+            {
+              message: { role: 'assistant', content: 'Hello from Grove.' },
+              finish_reason: 'stop',
+            },
+          ],
+        }),
     });
     vi.stubGlobal('fetch', fetchMock);
 
@@ -104,5 +107,28 @@ describe('groveChat', () => {
     expect(fetchMock).toHaveBeenCalledOnce();
     const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
     expect((init.headers as Record<string, string>)['api-key']).toBe('test-key');
+  });
+
+  it('throws a clear error when Grove returns HTML instead of JSON', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 502,
+      headers: { get: () => 'text/html' },
+      text: async () => '<html><body>Bad Gateway</body></html>',
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(
+      callGroveChat({
+        messages: [{ role: 'user', content: 'Hi' }],
+        schemaContext: {
+          tables: [],
+          relationships: [],
+          guardrailIssues: [],
+          cardinalityOverrides: {},
+          forceEmbedOverrides: {},
+        },
+      }),
+    ).rejects.toThrow(/HTML instead of JSON/i);
   });
 });

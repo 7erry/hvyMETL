@@ -98,6 +98,8 @@ export function buildOptimizeSchemaUserPrompt(targetDb: string): string {
   return [
     `Produce a MongoDB migration **Architecture Review** for all collections targeting logical database \`${db}\`.`,
     `Use \`# ${db} — Architecture Review\` as the title.`,
+    'Before listing indexes, call `listMongoCollections` once for this database; only call `listMongoCollectionIndexes` on names that exist in Atlas (folded children may exist only on the parent—use plan index specs from schema context for those).',
+    'If an inspect tool reports a missing collection, continue the review using migration plan data—do not abort the Architecture Review.',
     'Use the required format: title, verdict blockquote, comparison table, next actions,',
     'then sections 2–8 each inside `<details><summary>…</summary>` collapsible blocks.',
     'Include Before/After TypeScript + JSON Schema in section 4.',
@@ -115,6 +117,8 @@ export function buildPostImportArchitectureReviewPrompt(targetDb: string): strin
     `Produce a collective **Architecture Review** of all collections imported into \`${db}\`.`,
     `Use \`# ${db} — Architecture Review\` as the title.`,
     'Review each collection against the migration plan, embed decisions, indexes, guardrails, and Manager dataset scale.',
+    'Before listing indexes, call `listMongoCollections` once for this database; only call `listMongoCollectionIndexes` on names that exist in Atlas (folded children may exist only on the parent—use plan index specs from schema context for those).',
+    'If an inspect tool reports a missing collection, continue the review using migration plan data—do not abort the Architecture Review.',
     'Use the required format: title, verdict blockquote, comparison table, next actions,',
     'then sections 2–8 each inside `<details><summary>…</summary>` collapsible blocks.',
     'Include Before/After TypeScript + JSON Schema in section 4 where applicable.',
