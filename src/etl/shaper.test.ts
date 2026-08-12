@@ -125,6 +125,60 @@ describe('buildShapedQuery (document collections)', () => {
   });
 });
 
+describe('buildShapedQuery (reversed lookup embed)', () => {
+  const model: SqlStructuralModel = {
+    source: 'synthetic.db',
+    tables: [
+      {
+        name: 'paints',
+        columns: [
+          { name: 'paint_id', sqlType: 'INT', bsonType: 'int', nullable: false, isPrimaryKey: true },
+          { name: 'color_name', sqlType: 'VARCHAR(50)', bsonType: 'string', nullable: false, isPrimaryKey: false },
+        ],
+        primaryKey: ['paint_id'],
+        foreignKeys: [],
+        rowCount: 20,
+      },
+      {
+        name: 'cars',
+        columns: [
+          { name: 'car_id', sqlType: 'INT', bsonType: 'int', nullable: false, isPrimaryKey: true },
+          { name: 'vin', sqlType: 'VARCHAR(17)', bsonType: 'string', nullable: false, isPrimaryKey: false },
+          { name: 'paint_id', sqlType: 'INT', bsonType: 'int', nullable: true, isPrimaryKey: false },
+        ],
+        primaryKey: ['car_id'],
+        foreignKeys: [{ column: 'paint_id', referencesTable: 'paints', referencesColumn: 'paint_id' }],
+        rowCount: 100,
+      },
+    ],
+    relationships: [
+      {
+        parentTable: 'paints',
+        childTable: 'cars',
+        fkColumn: 'paint_id',
+        avgChildrenPerParent: 5,
+        maxChildrenPerParent: 10,
+        isBounded: true,
+        forceEmbed: true,
+        embedDirectionReversed: true,
+      },
+    ],
+  };
+
+  const plan = buildMigrationPlan(model, WORKLOAD_PROFILES.catalog);
+  const cars = plan.collections.find((collection) => collection.sourceTable === 'cars');
+  if (!cars) throw new Error('cars collection missing from plan');
+  const shaped = buildShapedQuery(cars, model);
+
+  it('emits a nested paint object and drops the paint_id scalar', () => {
+    expect(shaped.columns).toContain('paint');
+    expect(shaped.columns).not.toContain('paintId');
+    expect(shaped.columns).not.toContain('paint.colorName');
+    expect(shaped.sql).toContain('FROM "paints" p WHERE p."paint_id" = base."paint_id"');
+    expect(shaped.sql).not.toContain('LEFT JOIN "paints"');
+  });
+});
+
 describe('buildShapedQuery (native time series collections)', () => {
   const model = buildIotModel();
   const plan = buildMigrationPlan(model, WORKLOAD_PROFILES.iot);

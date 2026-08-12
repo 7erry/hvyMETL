@@ -15,7 +15,7 @@
 
 import type { CollectionPlan, SqlStructuralModel, TableModel } from '../types.js';
 import { toCamelCase, singularize } from '../utilities/naming.js';
-import { findDateColumn, isEavTable, isJunctionTable } from '../design/patternSelector.js';
+import { findDateColumn, isEavTable, isJunctionTable, reverseJoinFkColumns } from '../design/patternSelector.js';
 
 /** Everything a worker needs to extract one collection's rows. */
 export type ShapedQuery = {
@@ -114,12 +114,16 @@ function buildDocumentQuery(collection: CollectionPlan, model: SqlStructuralMode
   const columns: string[] = [];
   const joins: string[] = [];
 
+  const reverseJoinColumns = reverseJoinFkColumns(collection);
+
   // 1. Base columns, camelCased. A single-column PK is consumed by _id and
-  //    not repeated; composite PK parts stay as regular fields.
+  //    not repeated; composite PK parts stay as regular fields. FK columns
+  //    covered by a reverse embed become the nested parent object instead.
   const singlePk = collection.idDerivation.strategy === 'direct' ? collection.idDerivation.sourceColumns[0] : null;
   for (const column of table.columns) {
     const outputName = toCamelCase(column.name);
     if (column.name === singlePk) continue;
+    if (reverseJoinColumns.has(column.name)) continue;
     selectParts.push(`base.${quote(column.name)} AS ${quote(outputName)}`);
     columns.push(outputName);
   }
@@ -136,6 +140,7 @@ function buildDocumentQuery(collection: CollectionPlan, model: SqlStructuralMode
   // 2. Extended Reference: pre-join lookup tables and select hot columns
   //    inline under dotted aliases so the CSV is born denormalized.
   collection.extendedReferences.forEach((reference, index) => {
+    if (reverseJoinColumns.has(reference.viaColumn)) return;
     const lookupTable = requireTable(model, reference.sourceTable);
     const lookupKey = lookupTable.primaryKey[0] ?? 'id';
     const alias = `lk${index}`;

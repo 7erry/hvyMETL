@@ -9,7 +9,7 @@
 
 import { writeFileSync } from 'node:fs';
 import type { CollectionPlan, EmbeddedArrayPlan, SqlStructuralModel, TableModel } from '../types.js';
-import { findDateColumn, isEavTable, isJunctionTable } from '../design/patternSelector.js';
+import { findDateColumn, isEavTable, isJunctionTable, reverseJoinFkColumns } from '../design/patternSelector.js';
 import { toCamelCase } from './naming.js';
 import { loadTableCsvRows } from './csvModelEnrichment.js';
 import { formatCsvRow } from './csv.js';
@@ -240,15 +240,20 @@ export function shapeCollectionCsv(
   const singlePk =
     collection.idDerivation.strategy === 'direct' ? collection.idDerivation.sourceColumns[0] : null;
 
+  const reverseJoinColumns = reverseJoinFkColumns(collection);
+
   const scalarColumns: string[] = [];
   for (const column of parentTable.columns) {
     const outputName = toCamelCase(column.name);
     if (column.name === singlePk) continue;
+    if (reverseJoinColumns.has(column.name)) continue;
     scalarColumns.push(outputName);
   }
 
   const extendedHeaders: string[] = [];
-  const lookupIndexes = collection.extendedReferences.map((reference) => {
+  const lookupIndexes = collection.extendedReferences
+    .filter((reference) => !reverseJoinColumns.has(reference.viaColumn))
+    .map((reference) => {
     const lookupTable = requireTable(model, reference.sourceTable);
     const lookupKey = lookupTable.primaryKey[0] ?? lookupTable.columns[0]?.name ?? 'id';
     const lookupRows = loadTableCsvRows(csvRoot, lookupTable.name);
@@ -296,6 +301,7 @@ export function shapeCollectionCsv(
 
     for (const column of parentTable.columns) {
       if (column.name === singlePk) continue;
+      if (reverseJoinColumns.has(column.name)) continue;
       values.push(parentRow[column.name] ?? '');
     }
 

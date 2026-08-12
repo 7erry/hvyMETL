@@ -438,14 +438,25 @@ export function pickLookupColumns(lookupTable: TableModel): string[] {
 /* JSON Schema construction                                                   */
 /* -------------------------------------------------------------------------- */
 
+/** Join columns on a collection that receive a full reverse-embedded parent document. */
+export function reverseJoinFkColumns(collection: CollectionPlan): Set<string> {
+  return new Set(
+    collection.embeddedArrays.filter((array) => array.reverseJoin).map((array) => array.joinColumn),
+  );
+}
+
 /** Build the $jsonSchema property map for a table's own (camelCased) columns. */
-function buildBaseProperties(table: TableModel): Record<string, unknown> {
+function buildBaseProperties(
+  table: TableModel,
+  excludeColumns: Set<string> = new Set(),
+): Record<string, unknown> {
   const properties: Record<string, unknown> = {
     _id: { bsonType: 'string', description: 'Deterministic id derived from the SQL primary key.' },
     schemaVersion: { bsonType: 'int', description: 'Document shape version for lazy migrations.' },
   };
   for (const column of table.columns) {
     if (column.isPrimaryKey && table.primaryKey.length === 1) continue; // becomes _id
+    if (excludeColumns.has(column.name)) continue;
     const types = column.nullable ? [column.bsonType, 'null'] : column.bsonType;
     properties[toCamelCase(column.name)] = {
       bsonType: types,
@@ -896,6 +907,7 @@ function planLookupReferences(
   model: SqlStructuralModel,
   profile: WorkloadProfile,
   tablesByName: Map<string, TableModel>,
+  excludeViaColumns: Set<string> = new Set(),
 ): { extendedReferences: ExtendedReferencePlan[]; patterns: PatternDecision[]; properties: Record<string, unknown> } {
   const isReadLeaning = profile.telemetry.readPercent >= READ_HEAVY_PERCENT;
   const extendedReferences: ExtendedReferencePlan[] = [];
@@ -904,6 +916,7 @@ function planLookupReferences(
 
   for (const fk of table.foreignKeys) {
     if (fk.referencesTable === table.name) continue; // self-reference: Tree, handled elsewhere
+    if (excludeViaColumns.has(fk.column)) continue;
     const lookupTable = tablesByName.get(fk.referencesTable);
     if (!lookupTable) continue;
     if (!isReadLeaning || !isLookupTable(lookupTable, model)) continue;
@@ -1204,7 +1217,16 @@ export function buildMigrationPlan(
     }
 
     const childPlan = planChildRelationships(table, model, profile, tablesByName, absorbedTables);
-    const lookupPlan = planLookupReferences(table, model, profile, tablesByName);
+    const reverseEmbeddedJoinColumns = new Set(
+      childPlan.embeddedArrays.filter((array) => array.reverseJoin).map((array) => array.joinColumn),
+    );
+    const lookupPlan = planLookupReferences(
+      table,
+      model,
+      profile,
+      tablesByName,
+      reverseEmbeddedJoinColumns,
+    );
 
     const patterns: PatternDecision[] = [...childPlan.patterns, ...lookupPlan.patterns];
 
@@ -1238,7 +1260,7 @@ export function buildMigrationPlan(
 
     const collectionName = toCamelCase(table.name);
     const properties: Record<string, unknown> = {
-      ...buildBaseProperties(table),
+      ...buildBaseProperties(table, reverseEmbeddedJoinColumns),
       ...childPlan.properties,
       ...lookupPlan.properties,
     };
@@ -1246,6 +1268,7 @@ export function buildMigrationPlan(
     // Indexes: kept FK reference columns, plus the attribute pattern's k/v.
     const indexes: IndexSpec[] = [];
     for (const fk of table.foreignKeys) {
+      if (reverseEmbeddedJoinColumns.has(fk.column)) continue;
       const field = toCamelCase(fk.column);
       indexes.push({
         keys: { [field]: 1 },

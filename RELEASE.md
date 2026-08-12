@@ -1,3 +1,19 @@
+## hvyMETL 4.2.4
+
+**Reversed embed produces full nested documents** — flipping embed direction on lookup FKs (e.g. `paints → cars`) now embeds the parent object instead of keeping a scalar id plus Extended Reference fields.
+
+### Highlights
+
+- **Full reverse embed** — when embed direction is reversed, the FK column is omitted from the host document and the referenced parent is emitted as a nested object (`paint`, `model`, etc.).
+- **No duplicate Extended Reference** — reverse-embedded FKs skip the partial `paint.colorName` dotted-column pattern so the document shape matches a true embed.
+- **ETL + CSV pipeline** — SQLite shaper and CSV shaper both drop the FK scalar and emit the nested JSON object.
+
+### Verification
+
+- `npx vitest run src/design/patternSelector.test.ts src/etl/shaper.test.ts src/server/runDesign.test.ts`
+
+---
+
 ## hvyMETL 4.2.3
 
 **Copilot Architecture Review resilience** — pre-flight Atlas collection checks and safe JSON parsing so reviews complete when plan collections are folded or the Grove gateway returns HTML.

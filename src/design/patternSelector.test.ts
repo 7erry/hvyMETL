@@ -216,6 +216,65 @@ describe('buildMigrationPlan', () => {
     expect(plan.collections.some((collection) => collection.sourceTable === 'paints')).toBe(true);
   });
 
+  it('fully reverse-embeds a lookup parent referenced by the child FK (cars.paint_id -> paints)', () => {
+    const model: SqlStructuralModel = {
+      source: 'ddl:oracle',
+      tables: [
+        table({
+          name: 'paints',
+          rowCount: 20,
+          primaryKey: ['paint_id'],
+          columns: [
+            { name: 'paint_id', sqlType: 'INT', bsonType: 'int', nullable: false, isPrimaryKey: true },
+            { name: 'color_name', sqlType: 'VARCHAR(50)', bsonType: 'string', nullable: false, isPrimaryKey: false },
+            { name: 'paint_code', sqlType: 'VARCHAR(20)', bsonType: 'string', nullable: true, isPrimaryKey: false },
+          ],
+        }),
+        table({
+          name: 'cars',
+          rowCount: 100,
+          primaryKey: ['car_id'],
+          columns: [
+            { name: 'car_id', sqlType: 'INT', bsonType: 'int', nullable: false, isPrimaryKey: true },
+            { name: 'vin', sqlType: 'VARCHAR(17)', bsonType: 'string', nullable: false, isPrimaryKey: false },
+            { name: 'paint_id', sqlType: 'INT', bsonType: 'int', nullable: true, isPrimaryKey: false },
+          ],
+          foreignKeys: [{ column: 'paint_id', referencesTable: 'paints', referencesColumn: 'paint_id' }],
+        }),
+      ],
+      relationships: [
+        relationship({
+          parentTable: 'paints',
+          childTable: 'cars',
+          fkColumn: 'paint_id',
+          avgChildrenPerParent: 5,
+          maxChildrenPerParent: 10,
+          isBounded: true,
+          forceEmbed: true,
+          embedDirectionReversed: true,
+        }),
+      ],
+    };
+
+    const plan = buildMigrationPlan(model, WORKLOAD_PROFILES.catalog);
+    const cars = plan.collections.find((collection) => collection.sourceTable === 'cars');
+    if (!cars) throw new Error('cars collection missing from plan');
+
+    expect(cars.embeddedArrays).toContainEqual(
+      expect.objectContaining({
+        field: 'paint',
+        sourceTable: 'paints',
+        joinColumn: 'paint_id',
+        reverseJoin: true,
+        embedAsDocument: true,
+      }),
+    );
+    expect(cars.extendedReferences.some((reference) => reference.sourceTable === 'paints')).toBe(false);
+    expect(cars.jsonSchema.properties).toHaveProperty('paint');
+    expect(cars.jsonSchema.properties).not.toHaveProperty('paintId');
+    expect(cars.indexes.some((index) => 'paintId' in index.keys)).toBe(false);
+  });
+
   it('keeps a child as a separate collection when force-embed is explicitly disabled', () => {
     const model: SqlStructuralModel = {
       source: 'ddl:oracle',
