@@ -480,6 +480,7 @@ function planReversedForceEmbedRelationships(
   embeddedArrays: EmbeddedArrayPlan[],
   properties: Record<string, unknown>,
   patterns: PatternDecision[],
+  absorbedTables: Set<string>,
 ): void {
   const reversedRelationships = model.relationships.filter(
     (relationship) =>
@@ -512,6 +513,7 @@ function planReversedForceEmbedRelationships(
       reason: `Developer reversed embed direction: ${parentTable.name} is embedded into each ${table.name} document instead of folding ${table.name} into ${parentTable.name}.`,
       knowledgeSource: 'embed-vs-reference.md',
     });
+    absorbedTables.add(parentTable.name);
   }
 }
 
@@ -541,7 +543,15 @@ function planChildRelationships(
   const patterns: PatternDecision[] = [];
   const properties: Record<string, unknown> = {};
 
-  planReversedForceEmbedRelationships(table, model, tablesByName, embeddedArrays, properties, patterns);
+  planReversedForceEmbedRelationships(
+    table,
+    model,
+    tablesByName,
+    embeddedArrays,
+    properties,
+    patterns,
+    absorbedTables,
+  );
 
   /** Add a Computed-pattern counter for one child relationship. */
   function addComputedCounter(childTable: TableModel, relationship: RelationshipModel, reason: string): void {

@@ -114,8 +114,8 @@ describe('runDesign buildDesignMeta', () => {
     const cars = summary.collections.find((collection) => collection.sourceTable === 'cars');
 
     expect(paints?.embeddedFields).toContain('car');
-    expect(cars).toBeDefined();
     expect(summary.collections.some((collection) => collection.sourceTable === 'paints')).toBe(true);
+    expect(summary.collections.some((collection) => collection.sourceTable === 'cars')).toBe(false);
   });
 
   it('reverse-embeds lookup parents referenced from the child row (cars.paint_id -> paints)', () => {
@@ -147,6 +147,7 @@ describe('runDesign buildDesignMeta', () => {
     const cars = summary.collections.find((collection) => collection.sourceTable === 'cars');
     expect(cars?.embeddedFields).toContain('paint');
     expect(cars?.extendedReferenceFields ?? []).not.toContain('paint.colorName');
+    expect(summary.collections.some((collection) => collection.sourceTable === 'paints')).toBe(false);
   });
 
   it('applies API force-embed false overrides as separate collections', () => {

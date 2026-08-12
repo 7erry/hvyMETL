@@ -1,3 +1,18 @@
+## hvyMETL 4.2.5
+
+**Reverse-embedded lookup tables are absorbed** — when you flip embed direction so lookups nest inside the host (e.g. `paints → cars`), standalone `paints` / `wheels` / `lights` collections are no longer emitted.
+
+### Highlights
+
+- **Absorb embedded parent** — reverse force-embed marks the guest lookup table as absorbed, same as forward embed absorbs the child; only the host collection (`cars`) is imported.
+- **Multi-lookup hosts** — reversing several FKs into one host (paint, wheel, light into cars) yields a single collection with nested objects.
+
+### Verification
+
+- `npx vitest run src/design/patternSelector.test.ts src/server/runDesign.test.ts`
+
+---
+
 ## hvyMETL 4.2.4
 
 **Reversed embed produces full nested documents** — flipping embed direction on lookup FKs (e.g. `paints → cars`) now embeds the parent object instead of keeping a scalar id plus Extended Reference fields.

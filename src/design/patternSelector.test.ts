@@ -212,8 +212,8 @@ describe('buildMigrationPlan', () => {
         embedAsDocument: true,
       }),
     );
-    expect(plan.collections.some((collection) => collection.sourceTable === 'cars')).toBe(true);
     expect(plan.collections.some((collection) => collection.sourceTable === 'paints')).toBe(true);
+    expect(plan.collections.some((collection) => collection.sourceTable === 'cars')).toBe(false);
   });
 
   it('fully reverse-embeds a lookup parent referenced by the child FK (cars.paint_id -> paints)', () => {
@@ -273,6 +273,89 @@ describe('buildMigrationPlan', () => {
     expect(cars.jsonSchema.properties).toHaveProperty('paint');
     expect(cars.jsonSchema.properties).not.toHaveProperty('paintId');
     expect(cars.indexes.some((index) => 'paintId' in index.keys)).toBe(false);
+    expect(plan.collections.some((collection) => collection.sourceTable === 'paints')).toBe(false);
+  });
+
+  it('absorbs multiple reverse-embedded lookup parents into the host collection only', () => {
+    const model: SqlStructuralModel = {
+      source: 'ddl:oracle',
+      tables: [
+        table({
+          name: 'paints',
+          rowCount: 20,
+          primaryKey: ['paint_id'],
+          columns: [
+            { name: 'paint_id', sqlType: 'INT', bsonType: 'int', nullable: false, isPrimaryKey: true },
+            { name: 'color_name', sqlType: 'VARCHAR(50)', bsonType: 'string', nullable: false, isPrimaryKey: false },
+          ],
+        }),
+        table({
+          name: 'wheels',
+          rowCount: 15,
+          primaryKey: ['wheel_id'],
+          columns: [
+            { name: 'wheel_id', sqlType: 'INT', bsonType: 'int', nullable: false, isPrimaryKey: true },
+            { name: 'style_name', sqlType: 'VARCHAR(100)', bsonType: 'string', nullable: false, isPrimaryKey: false },
+          ],
+        }),
+        table({
+          name: 'lights',
+          rowCount: 10,
+          primaryKey: ['light_id'],
+          columns: [
+            { name: 'light_id', sqlType: 'INT', bsonType: 'int', nullable: false, isPrimaryKey: true },
+            { name: 'light_type', sqlType: 'VARCHAR(50)', bsonType: 'string', nullable: false, isPrimaryKey: false },
+          ],
+        }),
+        table({
+          name: 'cars',
+          rowCount: 100,
+          primaryKey: ['car_id'],
+          columns: [
+            { name: 'car_id', sqlType: 'INT', bsonType: 'int', nullable: false, isPrimaryKey: true },
+            { name: 'vin', sqlType: 'VARCHAR(17)', bsonType: 'string', nullable: false, isPrimaryKey: false },
+            { name: 'paint_id', sqlType: 'INT', bsonType: 'int', nullable: true, isPrimaryKey: false },
+            { name: 'wheel_id', sqlType: 'INT', bsonType: 'int', nullable: true, isPrimaryKey: false },
+            { name: 'light_id', sqlType: 'INT', bsonType: 'int', nullable: true, isPrimaryKey: false },
+          ],
+          foreignKeys: [
+            { column: 'paint_id', referencesTable: 'paints', referencesColumn: 'paint_id' },
+            { column: 'wheel_id', referencesTable: 'wheels', referencesColumn: 'wheel_id' },
+            { column: 'light_id', referencesTable: 'lights', referencesColumn: 'light_id' },
+          ],
+        }),
+      ],
+      relationships: [
+        relationship({
+          parentTable: 'paints',
+          childTable: 'cars',
+          fkColumn: 'paint_id',
+          forceEmbed: true,
+          embedDirectionReversed: true,
+        }),
+        relationship({
+          parentTable: 'wheels',
+          childTable: 'cars',
+          fkColumn: 'wheel_id',
+          forceEmbed: true,
+          embedDirectionReversed: true,
+        }),
+        relationship({
+          parentTable: 'lights',
+          childTable: 'cars',
+          fkColumn: 'light_id',
+          forceEmbed: true,
+          embedDirectionReversed: true,
+        }),
+      ],
+    };
+
+    const plan = buildMigrationPlan(model, WORKLOAD_PROFILES.catalog);
+    const cars = plan.collections.find((collection) => collection.sourceTable === 'cars');
+    if (!cars) throw new Error('cars collection missing from plan');
+
+    expect(cars.embeddedArrays.map((array) => array.field).sort()).toEqual(['light', 'paint', 'wheel']);
+    expect(plan.collections.map((collection) => collection.sourceTable).sort()).toEqual(['cars']);
   });
 
   it('keeps a child as a separate collection when force-embed is explicitly disabled', () => {
