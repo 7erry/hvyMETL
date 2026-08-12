@@ -1,7 +1,7 @@
 import type { DiagramViewMode } from './diagramViewMode';
 import { diagramViewModeFromSchemaPhase, parseDiagramViewMode } from './diagramViewMode';
 import type { SqlStructuralModel } from './types';
-import type { CardinalityOverrides, ForceEmbedOverrides } from './cardinalityOverrides';
+import type { CardinalityOverrides, EmbedDirectionOverrides, ForceEmbedOverrides } from './cardinalityOverrides';
 import type { TimeSeriesOverrides } from './timeSeriesOverrides';
 import type { RelationshipConnectionType, RelationshipNotation } from './relationshipDisplay';
 import type { CustomProfileInput, WorkloadProfile } from './customProfileShared';
@@ -120,6 +120,7 @@ export type SessionState = {
   managerCostInputs: ManagerCostInputs;
   cardinalityOverrides: CardinalityOverrides;
   forceEmbedOverrides: ForceEmbedOverrides;
+  embedDirectionOverrides: EmbedDirectionOverrides;
   timeSeriesOverrides: TimeSeriesOverrides;
   /** Atlas inspect stats reused by Atlas Sizing (post-pipeline describe / list collections). */
   sizingAtlasHints?: { avgDocSizeKb?: number; secondaryIndexCount?: number };
@@ -154,6 +155,7 @@ export const defaultSessionState = (): SessionState => ({
   managerCostInputs: { ...DEFAULT_MANAGER_COST_INPUTS },
   cardinalityOverrides: {},
   forceEmbedOverrides: {},
+  embedDirectionOverrides: {},
   timeSeriesOverrides: {},
 });
 

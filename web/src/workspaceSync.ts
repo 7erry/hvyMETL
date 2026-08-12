@@ -13,6 +13,7 @@ export type TenantWorkspace = {
   customTelemetryInput?: SessionState['customTelemetryInput'];
   cardinalityOverrides?: SessionState['cardinalityOverrides'];
   forceEmbedOverrides?: SessionState['forceEmbedOverrides'];
+  embedDirectionOverrides?: SessionState['embedDirectionOverrides'];
   timeSeriesOverrides?: SessionState['timeSeriesOverrides'];
   uiRole?: SessionState['uiRole'];
 };
@@ -29,6 +30,7 @@ export function sessionToWorkspace(state: SessionState): TenantWorkspace {
     customTelemetryInput: state.customTelemetryInput,
     cardinalityOverrides: state.cardinalityOverrides,
     forceEmbedOverrides: state.forceEmbedOverrides,
+    embedDirectionOverrides: state.embedDirectionOverrides,
     timeSeriesOverrides: state.timeSeriesOverrides,
     uiRole: state.uiRole,
   };
@@ -54,6 +56,9 @@ export function mergeWorkspaceIntoSession(state: SessionState, workspace: Tenant
       : {}),
     ...(workspace.forceEmbedOverrides !== undefined
       ? { forceEmbedOverrides: workspace.forceEmbedOverrides }
+      : {}),
+    ...(workspace.embedDirectionOverrides !== undefined
+      ? { embedDirectionOverrides: workspace.embedDirectionOverrides }
       : {}),
     ...(workspace.timeSeriesOverrides !== undefined
       ? { timeSeriesOverrides: workspace.timeSeriesOverrides }

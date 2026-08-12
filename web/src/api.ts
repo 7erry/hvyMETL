@@ -417,6 +417,7 @@ export type PipelineRunRequest = ProfileRequestFields & {
   csvSourcePath?: string;
   cardinalityOverrides?: Record<string, number>;
   forceEmbedOverrides?: Record<string, boolean>;
+  embedDirectionOverrides?: Record<string, boolean>;
   timeSeriesOverrides?: import('./timeSeriesOverrides').TimeSeriesOverrides;
   generateMockCsv?: boolean;
   mockCsvOptions?: MockCsvOptions;
@@ -655,6 +656,7 @@ export type ExplainDesignRequest = ProfileRequestFields & {
   csvSourcePath?: string;
   cardinalityOverrides?: Record<string, number>;
   forceEmbedOverrides?: Record<string, boolean>;
+  embedDirectionOverrides?: Record<string, boolean>;
   timeSeriesOverrides?: import('./timeSeriesOverrides').TimeSeriesOverrides;
   plan?: unknown;
 };
@@ -774,6 +776,7 @@ export type DesignRequest = ProfileRequestFields & {
   csvSourcePath?: string;
   cardinalityOverrides?: Record<string, number>;
   forceEmbedOverrides?: Record<string, boolean>;
+  embedDirectionOverrides?: Record<string, boolean>;
   timeSeriesOverrides?: import('./timeSeriesOverrides').TimeSeriesOverrides;
 };
 
@@ -797,6 +800,7 @@ export async function runDesignWithCsv(files: File[], request: DesignRequest): P
   if (request.dialect) body.append('dialect', request.dialect);
   if (request.cardinalityOverrides) body.append('cardinalityOverrides', JSON.stringify(request.cardinalityOverrides));
   if (request.forceEmbedOverrides) body.append('forceEmbedOverrides', JSON.stringify(request.forceEmbedOverrides));
+  if (request.embedDirectionOverrides) body.append('embedDirectionOverrides', JSON.stringify(request.embedDirectionOverrides));
   if (request.timeSeriesOverrides) body.append('timeSeriesOverrides', JSON.stringify(request.timeSeriesOverrides));
 
   const res = await apiFetch(`${base}/api/design/with-csv`, { method: 'POST', body });
@@ -814,6 +818,7 @@ export async function exportMigration(
     dialect?: string;
     cardinalityOverrides?: Record<string, number>;
     forceEmbedOverrides?: Record<string, boolean>;
+  embedDirectionOverrides?: Record<string, boolean>;
     timeSeriesOverrides?: import('./timeSeriesOverrides').TimeSeriesOverrides;
   },
 ) {

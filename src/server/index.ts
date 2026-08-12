@@ -520,6 +520,7 @@ app.post('/api/design', async (req, res) => {
         csvAllowedRoots,
         cardinalityOverrides: req.body?.cardinalityOverrides as Record<string, number> | undefined,
         forceEmbedOverrides: req.body?.forceEmbedOverrides as Record<string, boolean> | undefined,
+        embedDirectionOverrides: req.body?.embedDirectionOverrides as Record<string, boolean> | undefined,
         timeSeriesOverrides: req.body?.timeSeriesOverrides as import('../types.js').TimeSeriesOverrides | undefined,
         dialect: req.body?.dialect as string | undefined,
       }),
@@ -584,6 +585,9 @@ app.post('/api/design/with-csv', (req, res) => {
           forceEmbedOverrides: req.body?.forceEmbedOverrides
             ? JSON.parse(String(req.body.forceEmbedOverrides)) as Record<string, boolean>
             : undefined,
+          embedDirectionOverrides: req.body?.embedDirectionOverrides
+            ? JSON.parse(String(req.body.embedDirectionOverrides)) as Record<string, boolean>
+            : undefined,
           timeSeriesOverrides: req.body?.timeSeriesOverrides
             ? JSON.parse(String(req.body.timeSeriesOverrides)) as import('../types.js').TimeSeriesOverrides
             : undefined,
@@ -623,6 +627,7 @@ app.post('/api/design/explain', (req, res) => {
         csvAllowedRoots,
         cardinalityOverrides: req.body?.cardinalityOverrides as Record<string, number> | undefined,
         forceEmbedOverrides: req.body?.forceEmbedOverrides as Record<string, boolean> | undefined,
+        embedDirectionOverrides: req.body?.embedDirectionOverrides as Record<string, boolean> | undefined,
         timeSeriesOverrides: req.body?.timeSeriesOverrides as import('../types.js').TimeSeriesOverrides | undefined,
         dialect: req.body?.dialect as string | undefined,
       },
@@ -655,6 +660,7 @@ app.post('/api/export/migration', async (req, res) => {
       csvAllowedRoots,
       cardinalityOverrides: req.body?.cardinalityOverrides as Record<string, number> | undefined,
       forceEmbedOverrides: req.body?.forceEmbedOverrides as Record<string, boolean> | undefined,
+      embedDirectionOverrides: req.body?.embedDirectionOverrides as Record<string, boolean> | undefined,
       timeSeriesOverrides: req.body?.timeSeriesOverrides as import('../types.js').TimeSeriesOverrides | undefined,
       dialect: req.body?.dialect as string | undefined,
     });
@@ -935,6 +941,7 @@ app.post('/api/pipeline/run', async (req, res) => {
       tenantId,
       cardinalityOverrides: req.body?.cardinalityOverrides as Record<string, number> | undefined,
       forceEmbedOverrides: req.body?.forceEmbedOverrides as Record<string, boolean> | undefined,
+      embedDirectionOverrides: req.body?.embedDirectionOverrides as Record<string, boolean> | undefined,
       timeSeriesOverrides: req.body?.timeSeriesOverrides as import('../types.js').TimeSeriesOverrides | undefined,
       generateMockCsv: Boolean(req.body?.generateMockCsv),
       mockCsvOptions: req.body?.mockCsvOptions as import('../utilities/mockCsvFromDdl.js').MockCsvOptions | undefined,
@@ -1091,6 +1098,9 @@ app.post('/api/pipeline/run-with-csv', (req, res) => {
           : undefined,
         forceEmbedOverrides: req.body?.forceEmbedOverrides
           ? JSON.parse(String(req.body.forceEmbedOverrides)) as Record<string, boolean>
+          : undefined,
+        embedDirectionOverrides: req.body?.embedDirectionOverrides
+          ? JSON.parse(String(req.body.embedDirectionOverrides)) as Record<string, boolean>
           : undefined,
         timeSeriesOverrides: req.body?.timeSeriesOverrides
           ? JSON.parse(String(req.body.timeSeriesOverrides)) as import('../types.js').TimeSeriesOverrides

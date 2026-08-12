@@ -165,6 +165,16 @@ function buildDocumentQuery(collection: CollectionPlan, model: SqlStructuralMode
   //    under a "field[]" header.
   const basePk = table.primaryKey[0] ?? 'id';
   for (const arrayPlan of collection.embeddedArrays) {
+    if (arrayPlan.reverseJoin) {
+      const parent = requireTable(model, arrayPlan.sourceTable);
+      const parentPk = parent.primaryKey[0] ?? 'id';
+      const header = arrayPlan.field;
+      const expression = `(SELECT ${buildJsonObjectExpression(parent, 'p', '')} FROM ${quote(parent.name)} p WHERE p.${quote(parentPk)} = base.${quote(arrayPlan.joinColumn)})`;
+      selectParts.push(`${expression} AS ${quote(header)}`);
+      columns.push(header);
+      continue;
+    }
+
     const child = requireTable(model, arrayPlan.sourceTable);
     const header = `${arrayPlan.field}[]`;
 

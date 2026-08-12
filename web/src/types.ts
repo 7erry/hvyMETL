@@ -21,6 +21,7 @@ export type RelationshipModel = {
   isBounded: boolean;
   cardinalitySource?: 'csv' | 'database' | 'developer';
   forceEmbed?: boolean;
+  embedDirectionReversed?: boolean;
 };
 
 export type TableModel = {

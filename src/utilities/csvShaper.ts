@@ -122,6 +122,28 @@ function buildEmbeddedObject(
   return object;
 }
 
+function indexRowsByColumn(rows: Record<string, string>[], column: string): Map<string, Record<string, string>> {
+  const byKey = new Map<string, Record<string, string>>();
+  for (const row of rows) {
+    const key = normalizeJoinKey(row[column]);
+    if (key === '') continue;
+    if (!byKey.has(key)) byKey.set(key, row);
+  }
+  return byKey;
+}
+
+function buildEmbeddedParentDocument(
+  parent: TableModel,
+  parentRow: Record<string, string> | undefined,
+): Record<string, unknown> {
+  if (!parentRow) return {};
+  const object: Record<string, unknown> = {};
+  for (const column of parent.columns) {
+    object[toCamelCase(column.name)] = parentRow[column.name] ?? '';
+  }
+  return object;
+}
+
 function buildEmbeddedArrayItems(
   arrayPlan: EmbeddedArrayPlan,
   child: TableModel,
@@ -133,6 +155,10 @@ function buildEmbeddedArrayItems(
   rowIndexCache: ChildRowIndexCache,
   depth: number,
 ): unknown[] {
+  if (arrayPlan.reverseJoin) {
+    return [];
+  }
+
   const parentPk = parentTable.primaryKey[0] ?? parentTable.columns[0]?.name;
   const parentKey = normalizeJoinKey(parentPk ? parentRow[parentPk] : '');
   let children = childIndex.get(parentKey) ?? [];
@@ -166,7 +192,14 @@ function buildEmbeddedArrayValue(
   embedPlansByTable: Map<string, EmbeddedArrayPlan[]>,
   model: SqlStructuralModel,
   rowIndexCache: ChildRowIndexCache,
+  parentRowsByPk?: Map<string, Record<string, string>>,
 ): string {
+  if (arrayPlan.reverseJoin) {
+    const fkValue = normalizeJoinKey(parentRow[arrayPlan.joinColumn]);
+    const embeddedParentRow = parentRowsByPk?.get(fkValue);
+    return JSON.stringify(buildEmbeddedParentDocument(child, embeddedParentRow));
+  }
+
   const items = buildEmbeddedArrayItems(
     arrayPlan,
     child,
@@ -228,7 +261,17 @@ export function shapeCollectionCsv(
 
   const computedHeaders = collection.computedFields.map((field) => field.field);
   const childIndexes = new Map<string, Map<string, Record<string, string>[]>>();
+  const parentRowsByPk = new Map<string, Map<string, Record<string, string>>>();
   for (const arrayPlan of collection.embeddedArrays) {
+    if (arrayPlan.reverseJoin) {
+      if (!parentRowsByPk.has(arrayPlan.sourceTable)) {
+        const embeddedParent = requireTable(model, arrayPlan.sourceTable);
+        const parentPk = embeddedParent.primaryKey[0] ?? embeddedParent.columns[0]?.name ?? 'id';
+        const rows = loadTableCsvRows(csvRoot, arrayPlan.sourceTable);
+        parentRowsByPk.set(arrayPlan.sourceTable, indexRowsByColumn(rows, parentPk));
+      }
+      continue;
+    }
     if (!childIndexes.has(arrayPlan.sourceTable)) {
       childIndexes.set(arrayPlan.sourceTable, rowIndexCache.get(arrayPlan.sourceTable, arrayPlan.joinColumn));
     }
@@ -241,7 +284,9 @@ export function shapeCollectionCsv(
     computedChildIndexes.set(parsed.childTable, rowIndexCache.get(parsed.childTable, parsed.fkColumn));
   }
 
-  const arrayHeaders = collection.embeddedArrays.map((array) => `${array.field}[]`);
+  const arrayHeaders = collection.embeddedArrays.map((array) =>
+    array.embedAsDocument ? array.field : `${array.field}[]`,
+  );
   const headers = ['_id', ...scalarColumns, ...extendedHeaders, ...computedHeaders, ...arrayHeaders, 'schemaVersion'];
 
   const lines: string[] = [formatCsvRow(headers)];
@@ -276,18 +321,19 @@ export function shapeCollectionCsv(
     }
 
     for (const arrayPlan of collection.embeddedArrays) {
-      const child = requireTable(model, arrayPlan.sourceTable);
-      const childIndex = childIndexes.get(arrayPlan.sourceTable)!;
+      const embeddedSource = requireTable(model, arrayPlan.sourceTable);
+      const childIndex = childIndexes.get(arrayPlan.sourceTable) ?? new Map();
       values.push(
         buildEmbeddedArrayValue(
           arrayPlan,
-          child,
+          embeddedSource,
           parentTable,
           parentRow,
           childIndex,
           embedPlansByTable,
           model,
           rowIndexCache,
+          parentRowsByPk.get(arrayPlan.sourceTable),
         ),
       );
     }

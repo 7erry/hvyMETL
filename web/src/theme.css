@@ -1725,6 +1725,29 @@ textarea {
   padding-inline: 0.55rem;
 }
 
+.cardinality-overrides__direction {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.cardinality-overrides__arrow {
+  min-width: 1.75rem;
+  padding: 0.1rem 0.35rem;
+  border: 1px solid rgba(0, 237, 100, 0.35);
+  border-radius: 4px;
+  background: rgba(0, 237, 100, 0.08);
+  color: #00ed64;
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.cardinality-overrides__arrow:hover {
+  background: rgba(0, 237, 100, 0.18);
+  border-color: rgba(0, 237, 100, 0.55);
+}
+
 .cardinality-overrides__force {
   flex-direction: row !important;
   align-items: center;

@@ -57,6 +57,7 @@ export type PipelineRunRequest = {
   tenantId?: string;
   cardinalityOverrides?: Record<string, number>;
   forceEmbedOverrides?: Record<string, boolean>;
+  embedDirectionOverrides?: Record<string, boolean>;
   timeSeriesOverrides?: import('../types.js').TimeSeriesOverrides;
   /** Physical Atlas database name passed to csvToAtlas. */
   targetDb?: string;
@@ -124,10 +125,12 @@ function applyCardinalityOverrides(
   model: SqlStructuralModel,
   overrides?: Record<string, number>,
   forceEmbedOverrides?: Record<string, boolean>,
+  embedDirectionOverrides?: Record<string, boolean>,
 ): SqlStructuralModel {
   if (
     (!overrides || Object.keys(overrides).length === 0) &&
-    (!forceEmbedOverrides || Object.keys(forceEmbedOverrides).length === 0)
+    (!forceEmbedOverrides || Object.keys(forceEmbedOverrides).length === 0) &&
+    (!embedDirectionOverrides || Object.keys(embedDirectionOverrides).length === 0)
   ) {
     return model;
   }
@@ -140,7 +143,8 @@ function applyCardinalityOverrides(
         typeof maxChildrenPerParent === 'number' && Number.isFinite(maxChildrenPerParent) && maxChildrenPerParent > 0;
       const forceEmbedOverride = forceEmbedOverrides?.[key];
       const hasForceEmbedOverride = forceEmbedOverride === true || forceEmbedOverride === false;
-      if (!hasForceEmbedOverride && !hasMaxOverride) return relationship;
+      const embedDirectionReversed = embedDirectionOverrides?.[key] === true;
+      if (!hasForceEmbedOverride && !hasMaxOverride && !embedDirectionReversed) return relationship;
       return {
         ...relationship,
         ...(hasMaxOverride
@@ -152,6 +156,7 @@ function applyCardinalityOverrides(
             }
           : {}),
         ...(hasForceEmbedOverride ? { forceEmbed: forceEmbedOverride } : {}),
+        ...(embedDirectionReversed ? { embedDirectionReversed: true } : {}),
       };
     }),
   };
@@ -260,6 +265,7 @@ async function runFullPipelineInner(
     enrichModelFromCsv(modelForDesign, csvRoot),
     request.cardinalityOverrides,
     request.forceEmbedOverrides,
+    request.embedDirectionOverrides,
   );
 
   const memoryDb = resolveMemoryDbName(importEnv);

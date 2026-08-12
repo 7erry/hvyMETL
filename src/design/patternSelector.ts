@@ -460,6 +460,51 @@ function buildBaseProperties(table: TableModel): Record<string, unknown> {
 /* -------------------------------------------------------------------------- */
 
 /**
+ * Developer reversed embed direction: parent row nested inside each child document.
+ */
+function planReversedForceEmbedRelationships(
+  table: TableModel,
+  model: SqlStructuralModel,
+  tablesByName: Map<string, TableModel>,
+  embeddedArrays: EmbeddedArrayPlan[],
+  properties: Record<string, unknown>,
+  patterns: PatternDecision[],
+): void {
+  const reversedRelationships = model.relationships.filter(
+    (relationship) =>
+      relationship.childTable === table.name &&
+      relationship.forceEmbed === true &&
+      relationship.embedDirectionReversed === true,
+  );
+
+  for (const relationship of reversedRelationships) {
+    const parentTable = tablesByName.get(relationship.parentTable);
+    if (!parentTable) continue;
+
+    const field = toCamelCase(singularize(parentTable.name));
+    if (embeddedArrays.some((array) => array.field === field && array.reverseJoin)) continue;
+
+    embeddedArrays.push({
+      field,
+      sourceTable: parentTable.name,
+      joinColumn: relationship.fkColumn,
+      reverseJoin: true,
+      embedAsDocument: true,
+    });
+    properties[field] = {
+      bsonType: 'object',
+      description: `Embedded ${parentTable.name} because the developer reversed embed direction for FK ${relationship.fkColumn}.`,
+    };
+    patterns.push({
+      pattern: 'embed',
+      target: `${table.name}.${field}`,
+      reason: `Developer reversed embed direction: ${parentTable.name} is embedded into each ${table.name} document instead of folding ${table.name} into ${parentTable.name}.`,
+      knowledgeSource: 'embed-vs-reference.md',
+    });
+  }
+}
+
+/**
  * Decide how every relationship where `table` is the PARENT gets handled,
  * and accumulate the resulting plan pieces onto the collection.
  */
@@ -484,6 +529,8 @@ function planChildRelationships(
   const computedFields: ComputedFieldPlan[] = [];
   const patterns: PatternDecision[] = [];
   const properties: Record<string, unknown> = {};
+
+  planReversedForceEmbedRelationships(table, model, tablesByName, embeddedArrays, properties, patterns);
 
   /** Add a Computed-pattern counter for one child relationship. */
   function addComputedCounter(childTable: TableModel, relationship: RelationshipModel, reason: string): void {
@@ -581,6 +628,7 @@ function planChildRelationships(
     const skewed = isOutlierSkewed(relationship);
 
     if (relationship.forceEmbed === true) {
+      if (relationship.embedDirectionReversed) continue;
       const field = toCamelCase(childTable.name);
       embeddedArrays.push({ field, sourceTable: childTable.name, joinColumn: relationship.fkColumn });
       properties[field] = {

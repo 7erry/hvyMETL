@@ -44,6 +44,7 @@ import { emptyModelTokenUsage, mergeModelTokenUsage } from './modelUsage';
 import {
   applyCardinalityOverrides,
   pruneCardinalityOverrides,
+  pruneEmbedDirectionOverrides,
   pruneForceEmbedOverrides,
 } from './cardinalityOverrides';
 import { pruneTimeSeriesOverrides, type TimeSeriesOverrides } from './timeSeriesOverrides';
@@ -190,6 +191,7 @@ export default function App() {
     managerCostInputs,
     cardinalityOverrides,
     forceEmbedOverrides,
+    embedDirectionOverrides,
     timeSeriesOverrides,
   } = session;
 
@@ -230,12 +232,15 @@ export default function App() {
   }, [access.isLoading, session.model]);
 
   const designModel = useMemo(
-    () => (model ? applyCardinalityOverrides(model, cardinalityOverrides, forceEmbedOverrides) : null),
-    [model, cardinalityOverrides, forceEmbedOverrides],
+    () => (model ? applyCardinalityOverrides(model, cardinalityOverrides, forceEmbedOverrides, embedDirectionOverrides) : null),
+    [model, cardinalityOverrides, forceEmbedOverrides, embedDirectionOverrides],
   );
   const hasCardinalityOverrides = useMemo(
-    () => Object.keys(cardinalityOverrides).length > 0 || Object.keys(forceEmbedOverrides).length > 0,
-    [cardinalityOverrides, forceEmbedOverrides],
+    () =>
+      Object.keys(cardinalityOverrides).length > 0 ||
+      Object.keys(forceEmbedOverrides).length > 0 ||
+      Object.keys(embedDirectionOverrides).length > 0,
+    [cardinalityOverrides, forceEmbedOverrides, embedDirectionOverrides],
   );
 
   const handleGoToEmbedOverrides = useCallback(() => {
@@ -269,29 +274,34 @@ export default function App() {
     (
       overrides: SessionState['cardinalityOverrides'],
       nextForceEmbedOverrides = forceEmbedOverrides,
+      nextEmbedDirectionOverrides = embedDirectionOverrides,
     ) => {
       setSession((prev) => ({
         ...prev,
         cardinalityOverrides: overrides,
         forceEmbedOverrides: nextForceEmbedOverrides,
+        embedDirectionOverrides: nextEmbedDirectionOverrides,
         migrationArtifacts: null,
         collectionPositions: {},
         selectedCollection: null,
         managerReviewAcceptances: null,
         schemaPhase: 'before',
       }));
-      const count = Object.keys(overrides).length + Object.keys(nextForceEmbedOverrides).length;
+      const count =
+        Object.keys(overrides).length +
+        Object.keys(nextForceEmbedOverrides).length +
+        Object.keys(nextEmbedDirectionOverrides).length;
       setStatus(
         count > 0
           ? `Applied ${count} developer embed override${count === 1 ? '' : 's'}. Run design to regenerate embeds.`
           : 'Cleared developer embed overrides. Run design to regenerate the migration plan.',
       );
     },
-    [forceEmbedOverrides],
+    [forceEmbedOverrides, embedDirectionOverrides],
   );
 
   const handleClearCopilotOverrides = useCallback(() => {
-    handleCardinalityOverridesChange({}, {});
+    handleCardinalityOverridesChange({}, {}, {});
   }, [handleCardinalityOverridesChange]);
 
   const handleCopilotMutations = useCallback((mutation: AgentToolMutation) => {
@@ -503,6 +513,7 @@ export default function App() {
       managerReviewAcceptances: null,
       cardinalityOverrides: {},
       forceEmbedOverrides: {},
+      embedDirectionOverrides: {},
       timeSeriesOverrides: {},
       schemaPhase: 'before',
       view: 'diagram',
@@ -611,6 +622,7 @@ export default function App() {
       positions: nextPos,
       cardinalityOverrides: pruneCardinalityOverrides(next, prev.cardinalityOverrides),
       forceEmbedOverrides: pruneForceEmbedOverrides(next, prev.forceEmbedOverrides),
+      embedDirectionOverrides: pruneEmbedDirectionOverrides(next, prev.embedDirectionOverrides),
       timeSeriesOverrides: pruneTimeSeriesOverrides(next, prev.timeSeriesOverrides),
       selectedTable: next.tables.find((t) => t.name.startsWith(`${tableName}_copy`))?.name ?? tableName,
     }));
@@ -626,6 +638,7 @@ export default function App() {
       positions: nextPos,
       cardinalityOverrides: pruneCardinalityOverrides(next, prev.cardinalityOverrides),
       forceEmbedOverrides: pruneForceEmbedOverrides(next, prev.forceEmbedOverrides),
+      embedDirectionOverrides: pruneEmbedDirectionOverrides(next, prev.embedDirectionOverrides),
       timeSeriesOverrides: pruneTimeSeriesOverrides(next, prev.timeSeriesOverrides),
       selectedTable: prev.selectedTable === tableName ? null : prev.selectedTable,
     }));
@@ -684,6 +697,7 @@ export default function App() {
             positions: data.positions ?? {},
             cardinalityOverrides: {},
             forceEmbedOverrides: {},
+            embedDirectionOverrides: {},
             timeSeriesOverrides: {},
             selectedTable: null,
             view: 'diagram',
@@ -713,6 +727,7 @@ export default function App() {
           model: data.model ?? prev.model,
           cardinalityOverrides: pruneCardinalityOverrides(data.model ?? prev.model, prev.cardinalityOverrides),
           forceEmbedOverrides: pruneForceEmbedOverrides(data.model ?? prev.model, prev.forceEmbedOverrides),
+          embedDirectionOverrides: pruneEmbedDirectionOverrides(data.model ?? prev.model, prev.embedDirectionOverrides),
           timeSeriesOverrides: pruneTimeSeriesOverrides(data.model ?? prev.model, prev.timeSeriesOverrides),
           profileId: data.profileId ?? data.plan.profileId ?? prev.profileId,
           collectionPositions: data.collectionPositions ?? {},
@@ -752,6 +767,7 @@ export default function App() {
         ...profileFields,
         cardinalityOverrides,
         forceEmbedOverrides,
+        embedDirectionOverrides,
         timeSeriesOverrides,
         plan: migrationPlan,
         csvSourcePath:
@@ -824,6 +840,7 @@ export default function App() {
         ...profileFields,
         cardinalityOverrides,
         forceEmbedOverrides,
+        embedDirectionOverrides,
         plan,
       }).then((summary) => {
         setSession((prev) => ({
@@ -850,6 +867,7 @@ export default function App() {
         ...profileFields,
         cardinalityOverrides,
         forceEmbedOverrides,
+        embedDirectionOverrides,
         timeSeriesOverrides,
         csvSourcePath:
           designCsvFiles.length === 0 && csvSourcePath?.trim() ? csvSourcePath.trim() : undefined,
@@ -1023,6 +1041,7 @@ export default function App() {
         dialect,
         cardinalityOverrides,
         forceEmbedOverrides,
+        embedDirectionOverrides,
         timeSeriesOverrides,
       });
       const promptsResult = await exportPrompts(ddl, profileFields);
@@ -1381,6 +1400,7 @@ export default function App() {
                             model={model}
                             overrides={cardinalityOverrides}
                             forceEmbedOverrides={forceEmbedOverrides}
+                            embedDirectionOverrides={embedDirectionOverrides}
                             onChange={handleCardinalityOverridesChange}
                           />
                         </CollapsiblePanel>
@@ -1774,6 +1794,7 @@ export default function App() {
           profileFields={profileFields}
           cardinalityOverrides={cardinalityOverrides}
           forceEmbedOverrides={forceEmbedOverrides}
+          embedDirectionOverrides={embedDirectionOverrides}
           timeSeriesOverrides={timeSeriesOverrides}
           dialect={dialect}
           dialectLabel={dialectLabel}

@@ -174,6 +174,48 @@ describe('buildMigrationPlan', () => {
     expect(plan.collections.some((collection) => collection.sourceTable === 'company_assets')).toBe(false);
   });
 
+  it('embeds the parent into the child collection when embed direction is reversed', () => {
+    const model: SqlStructuralModel = {
+      source: 'ddl:oracle',
+      tables: [
+        table({ name: 'cars', rowCount: 0, primaryKey: ['car_id'] }),
+        table({
+          name: 'paints',
+          rowCount: 0,
+          primaryKey: ['paint_id'],
+          foreignKeys: [{ column: 'car_id', referencesTable: 'cars', referencesColumn: 'car_id' }],
+        }),
+      ],
+      relationships: [
+        relationship({
+          parentTable: 'cars',
+          childTable: 'paints',
+          fkColumn: 'car_id',
+          avgChildrenPerParent: 2,
+          maxChildrenPerParent: 4,
+          isBounded: true,
+          forceEmbed: true,
+          embedDirectionReversed: true,
+        }),
+      ],
+    };
+
+    const plan = buildMigrationPlan(model, WORKLOAD_PROFILES.catalog);
+    const paints = plan.collections.find((collection) => collection.sourceTable === 'paints');
+
+    expect(paints?.embeddedArrays).toContainEqual(
+      expect.objectContaining({
+        field: 'car',
+        sourceTable: 'cars',
+        joinColumn: 'car_id',
+        reverseJoin: true,
+        embedAsDocument: true,
+      }),
+    );
+    expect(plan.collections.some((collection) => collection.sourceTable === 'cars')).toBe(true);
+    expect(plan.collections.some((collection) => collection.sourceTable === 'paints')).toBe(true);
+  });
+
   it('keeps a child as a separate collection when force-embed is explicitly disabled', () => {
     const model: SqlStructuralModel = {
       source: 'ddl:oracle',

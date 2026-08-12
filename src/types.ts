@@ -189,6 +189,8 @@ export type RelationshipModel = {
   cardinalitySource?: 'csv' | 'database' | 'developer';
   /** Developer explicitly requested this linked child table to embed into its parent collection. */
   forceEmbed?: boolean;
+  /** When true with forceEmbed, embed the parent row into each child document instead. */
+  embedDirectionReversed?: boolean;
 };
 
 /** The full structural picture of a SQL source database. */
@@ -257,6 +259,10 @@ export type EmbeddedArrayPlan = {
   subsetLimit?: number;
   /** Name of the overflow collection holding the full child set, if any. */
   overflowCollection?: string;
+  /** Join parent via FK on the base (child) row — embed parent into child collection. */
+  reverseJoin?: boolean;
+  /** Emit one embedded document instead of an array (used with reverseJoin). */
+  embedAsDocument?: boolean;
 };
 
 /** A lookup field duplicated into the document (Extended Reference pattern). */

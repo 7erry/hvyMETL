@@ -114,6 +114,16 @@ describe('cardinalityOverrides', () => {
     expect(buildForceEmbedOverridesForAll(model, false)).toEqual({});
   });
 
+  it('applies reversed embed direction when force embed is enabled', () => {
+    const key = relationshipOverrideKey(model.relationships[0]);
+    const adjusted = applyCardinalityOverrides(model, {}, { [key]: true }, { [key]: true });
+
+    expect(adjusted.relationships[0]).toMatchObject({
+      forceEmbed: true,
+      embedDirectionReversed: true,
+    });
+  });
+
   it('allRelationshipsForceEmbed and someRelationshipsForceEmbed reflect override state', () => {
     const key = relationshipOverrideKey(model.relationships[0]);
 

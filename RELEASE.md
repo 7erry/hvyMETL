@@ -1,3 +1,18 @@
+## hvyMETL 4.2.2
+
+**Embed direction toggle** — flip which collection hosts a forced embed in **Embed Overrides**.
+
+### Highlights
+
+- **Arrow control** — click **→** between linked tables to reverse embed direction (e.g. embed parent `cars` inside child `paints` instead of folding `paints` into `cars`).
+- **Design + pipeline** — reversed embeds emit a nested document on the child collection via `reverseJoin` in the migration plan and ETL shaper.
+
+### Verification
+
+- `npm test -- web/src/cardinalityOverrides.test.ts src/design/patternSelector.test.ts src/server/runDesign.test.ts`
+
+---
+
 ## hvyMETL 4.2.1
 
 **Fix hosted Swagger** — [https://hvymetl.studio/api/docs](https://hvymetl.studio/api/docs) no longer lands on a blank SPA after login.

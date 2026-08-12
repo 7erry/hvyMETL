@@ -1,9 +1,9 @@
 import { useEffect, useRef } from 'react';
-import type { CardinalityOverrides, ForceEmbedOverrides } from '../cardinalityOverrides';
+import type { CardinalityOverrides, EmbedDirectionOverrides, ForceEmbedOverrides } from '../cardinalityOverrides';
 import {
   allRelationshipsForceEmbed,
   buildForceEmbedOverridesForAll,
-  relationshipLabel,
+  relationshipEmbedDirectionLabel,
   relationshipOverrideKey,
   someRelationshipsForceEmbed,
 } from '../cardinalityOverrides';
@@ -13,13 +13,19 @@ type CardinalityOverridesPanelProps = {
   model: SqlStructuralModel;
   overrides: CardinalityOverrides;
   forceEmbedOverrides: ForceEmbedOverrides;
-  onChange: (overrides: CardinalityOverrides, forceEmbedOverrides: ForceEmbedOverrides) => void;
+  embedDirectionOverrides: EmbedDirectionOverrides;
+  onChange: (
+    overrides: CardinalityOverrides,
+    forceEmbedOverrides: ForceEmbedOverrides,
+    embedDirectionOverrides: EmbedDirectionOverrides,
+  ) => void;
 };
 
 export function CardinalityOverridesPanel({
   model,
   overrides,
   forceEmbedOverrides,
+  embedDirectionOverrides,
   onChange,
 }: CardinalityOverridesPanelProps) {
   const setMaxChildren = (key: string, value: number) => {
@@ -29,17 +35,30 @@ export function CardinalityOverridesPanel({
     } else {
       delete next[key];
     }
-    onChange(next, forceEmbedOverrides);
+    onChange(next, forceEmbedOverrides, embedDirectionOverrides);
   };
 
   const setForceEmbed = (key: string, isForced: boolean) => {
-    const next = { ...forceEmbedOverrides };
+    const nextForce = { ...forceEmbedOverrides };
+    const nextDirection = { ...embedDirectionOverrides };
     if (isForced) {
-      next[key] = true;
+      nextForce[key] = true;
     } else {
-      next[key] = false;
+      nextForce[key] = false;
+      delete nextDirection[key];
     }
-    onChange(overrides, next);
+    onChange(overrides, nextForce, nextDirection);
+  };
+
+  const toggleEmbedDirection = (key: string) => {
+    const nextForce = { ...forceEmbedOverrides, [key]: true };
+    const nextDirection = { ...embedDirectionOverrides };
+    if (nextDirection[key]) {
+      delete nextDirection[key];
+    } else {
+      nextDirection[key] = true;
+    }
+    onChange(overrides, nextForce, nextDirection);
   };
 
   const allForced = allRelationshipsForceEmbed(model, forceEmbedOverrides);
@@ -53,7 +72,7 @@ export function CardinalityOverridesPanel({
   }, [someForced, allForced]);
 
   const setForceAll = (enabled: boolean) => {
-    onChange(overrides, buildForceEmbedOverridesForAll(model, enabled));
+    onChange(overrides, buildForceEmbedOverridesForAll(model, enabled), enabled ? embedDirectionOverrides : {});
   };
 
   if (model.relationships.length === 0) {
@@ -64,8 +83,9 @@ export function CardinalityOverridesPanel({
     <div className="cardinality-overrides">
       <p className="cardinality-overrides__hint">
         Optional: suggest max child rows per parent when CSV or live database stats are unavailable. Values up to
-        5,000 are treated as bounded for embed decisions. You can also force a linked child table to embed into its
-        parent collection. Unchecking **Force embed** keeps the child as its own collection.
+        5,000 are treated as bounded for embed decisions. Force embed to fold a linked table, then click the arrow to
+        flip direction (which collection hosts the nested documents). Unchecking **Force embed** keeps the child as its
+        own collection.
       </p>
       <label className="cardinality-overrides__force-all">
         <input
@@ -83,14 +103,36 @@ export function CardinalityOverridesPanel({
           const forceEmbedChoice = forceEmbedOverrides[key];
           const isForced = forceEmbedChoice === true;
           const isSeparateCollection = forceEmbedChoice === false;
+          const isReversed = embedDirectionOverrides[key] === true;
+          const direction = relationshipEmbedDirectionLabel(relationship, isReversed);
           return (
             <div className="cardinality-overrides__row" key={key}>
               <span>
-                <strong>{relationshipLabel(relationship)}</strong>
+                <strong className="cardinality-overrides__direction">
+                  <span>{direction.left}</span>
+                  <button
+                    type="button"
+                    className="cardinality-overrides__arrow"
+                    aria-label={`Toggle embed direction (${direction.guestTable} into ${direction.hostTable})`}
+                    title={
+                      isForced
+                        ? `Embed ${direction.guestTable} into ${direction.hostTable}. Click to reverse.`
+                        : 'Enable force embed to change direction'
+                    }
+                    onClick={() => toggleEmbedDirection(key)}
+                  >
+                    {direction.arrow}
+                  </button>
+                  <span>{direction.right}</span>
+                </strong>
                 <small>
-                  Current max: {relationship.maxChildrenPerParent || 'unknown'} ·{' '}
+                  {relationship.fkColumn} · Current max: {relationship.maxChildrenPerParent || 'unknown'} ·{' '}
                   {relationship.isBounded ? 'bounded' : 'unbounded'} ·{' '}
-                  {isForced ? 'force embed enabled' : isSeparateCollection ? 'separate collection' : 'planner decides'}
+                  {isForced
+                    ? `force embed: ${direction.guestTable} into ${direction.hostTable}`
+                    : isSeparateCollection
+                      ? 'separate collection'
+                      : 'planner decides'}
                 </small>
               </span>
               <div className="cardinality-overrides__controls">

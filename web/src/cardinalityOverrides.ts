@@ -2,6 +2,8 @@ import type { RelationshipModel, SqlStructuralModel } from './types';
 
 export type CardinalityOverrides = Record<string, number>;
 export type ForceEmbedOverrides = Record<string, boolean>;
+/** When true, force-embed puts the parent table inside the child collection (reversed FK direction). */
+export type EmbedDirectionOverrides = Record<string, boolean>;
 
 const SAFE_EMBED_MAX_CHILDREN = 5000;
 
@@ -13,6 +15,29 @@ export function relationshipLabel(relationship: RelationshipModel): string {
   return `${relationship.parentTable} -> ${relationship.childTable} (${relationship.fkColumn})`;
 }
 
+/** Embed-direction label: arrow points at the collection that receives the embed. */
+export function relationshipEmbedDirectionLabel(
+  relationship: RelationshipModel,
+  reversed: boolean,
+): { left: string; arrow: '→' | '←'; right: string; hostTable: string; guestTable: string } {
+  if (reversed) {
+    return {
+      left: relationship.parentTable,
+      arrow: '→',
+      right: relationship.childTable,
+      hostTable: relationship.childTable,
+      guestTable: relationship.parentTable,
+    };
+  }
+  return {
+    left: relationship.childTable,
+    arrow: '→',
+    right: relationship.parentTable,
+    hostTable: relationship.parentTable,
+    guestTable: relationship.childTable,
+  };
+}
+
 function avgFromMax(maxChildrenPerParent: number): number {
   return Math.max(1, Math.ceil(maxChildrenPerParent / 2));
 }
@@ -21,6 +46,7 @@ export function applyCardinalityOverrides(
   model: SqlStructuralModel,
   overrides: CardinalityOverrides,
   forceEmbedOverrides: ForceEmbedOverrides = {},
+  embedDirectionOverrides: EmbedDirectionOverrides = {},
 ): SqlStructuralModel {
   const relationships = model.relationships.map((relationship) => {
     const key = relationshipOverrideKey(relationship);
@@ -29,7 +55,8 @@ export function applyCardinalityOverrides(
       typeof maxChildrenPerParent === 'number' && Number.isFinite(maxChildrenPerParent) && maxChildrenPerParent > 0;
     const forceEmbedOverride = forceEmbedOverrides[key];
     const hasForceEmbedOverride = forceEmbedOverride === true || forceEmbedOverride === false;
-    if (!hasForceEmbedOverride && !hasMaxOverride) return relationship;
+    const embedDirectionReversed = embedDirectionOverrides[key] === true;
+    if (!hasForceEmbedOverride && !hasMaxOverride && !embedDirectionReversed) return relationship;
 
     return {
       ...relationship,
@@ -42,6 +69,7 @@ export function applyCardinalityOverrides(
           }
         : {}),
       ...(hasForceEmbedOverride ? { forceEmbed: forceEmbedOverride } : {}),
+      ...(embedDirectionReversed ? { embedDirectionReversed: true } : {}),
     };
   });
 
@@ -64,6 +92,15 @@ export function pruneForceEmbedOverrides(
   if (!model) return {};
   const validKeys = new Set(model.relationships.map(relationshipOverrideKey));
   return Object.fromEntries(Object.entries(overrides).filter(([key, value]) => validKeys.has(key) && typeof value === 'boolean'));
+}
+
+export function pruneEmbedDirectionOverrides(
+  model: SqlStructuralModel | null,
+  overrides: EmbedDirectionOverrides,
+): EmbedDirectionOverrides {
+  if (!model) return {};
+  const validKeys = new Set(model.relationships.map(relationshipOverrideKey));
+  return Object.fromEntries(Object.entries(overrides).filter(([key, value]) => validKeys.has(key) && value === true));
 }
 
 /** True when every relationship in the model has force embed enabled. */

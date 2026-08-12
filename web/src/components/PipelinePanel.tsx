@@ -42,6 +42,7 @@ type PipelinePanelProps = {
   profileFields: ProfileRequestFields;
   cardinalityOverrides?: Record<string, number>;
   forceEmbedOverrides?: Record<string, boolean>;
+  embedDirectionOverrides?: Record<string, boolean>;
   timeSeriesOverrides?: import('../timeSeriesOverrides').TimeSeriesOverrides;
   dialect: string;
   dialectLabel: string;
@@ -74,6 +75,7 @@ export function PipelinePanel({
   profileFields,
   cardinalityOverrides,
   forceEmbedOverrides,
+  embedDirectionOverrides,
   timeSeriesOverrides,
   dialect,
   dialectLabel,
@@ -455,6 +457,7 @@ export function PipelinePanel({
         ddl,
         cardinalityOverrides,
         forceEmbedOverrides,
+        embedDirectionOverrides,
         timeSeriesOverrides,
         dialect,
         targetDb: form.targetDb.trim() || undefined,
