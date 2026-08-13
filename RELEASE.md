@@ -1,3 +1,19 @@
+## hvyMETL 4.2.9
+
+**Reverse-embedded lookup objects omit absorbed collection primary keys** — when a lookup table is eliminated (e.g. `paints → cars`), nested `paint` payloads no longer include `paintId`; only semantic fields (`colorName`, `paintCode`, etc.) remain.
+
+### Highlights
+
+- **Migration plan schema** — `$jsonSchema` on reverse-embedded objects excludes the absorbed table's PK columns.
+- **CSV + ETL shaping** — nested JSON objects and SQLite `json_object` expressions drop the lookup id for reverse embeds.
+- **Host document** — the FK scalar (`paintId` on `cars`) was already omitted; nested objects now match that shape.
+
+### Verification
+
+- `npx vitest run src/design/patternSelector.test.ts src/utilities/csvShaper.test.ts src/etl/shaper.test.ts -t reverse-embed`
+
+---
+
 ## hvyMETL 4.2.8
 
 **Architecture Review export restored after inspect tools** — collective post-import reviews are no longer suppressed as duplicate inspect listings, so **Save to Google Docs** and **Download markdown** appear again on the full review response.

@@ -491,6 +491,21 @@ function buildTableColumnProperties(table: TableModel): Record<string, unknown> 
   return properties;
 }
 
+/** Nested schema for a reverse-embedded parent whose standalone collection was absorbed (no PK/id fields). */
+function buildReverseEmbeddedParentProperties(table: TableModel): Record<string, unknown> {
+  const primaryKeyColumns = new Set(table.primaryKey);
+  const properties: Record<string, unknown> = {};
+  for (const column of table.columns) {
+    if (primaryKeyColumns.has(column.name)) continue;
+    const types = column.nullable ? [column.bsonType, 'null'] : column.bsonType;
+    properties[toCamelCase(column.name)] = {
+      bsonType: types,
+      description: `From SQL column ${table.name}.${column.name} (${column.sqlType}).`,
+    };
+  }
+  return properties;
+}
+
 /** Build the $jsonSchema property map for a table's own (camelCased) columns. */
 function buildBaseProperties(
   table: TableModel,
@@ -551,7 +566,7 @@ function planReversedForceEmbedRelationships(
     });
     properties[field] = {
       bsonType: 'object',
-      properties: buildTableColumnProperties(parentTable),
+      properties: buildReverseEmbeddedParentProperties(parentTable),
       description: `Embedded ${parentTable.name} because the developer reversed embed direction for FK ${relationship.fkColumn}.`,
     };
     patterns.push({

@@ -176,6 +176,8 @@ describe('buildShapedQuery (reversed lookup embed)', () => {
     expect(shaped.columns).not.toContain('paint.colorName');
     expect(shaped.sql).toContain('FROM "paints" p WHERE p."paint_id" = base."paint_id"');
     expect(shaped.sql).not.toContain('LEFT JOIN "paints"');
+    expect(shaped.sql).toContain("'colorName'");
+    expect(shaped.sql).not.toContain("'paintId'");
   });
 });
 

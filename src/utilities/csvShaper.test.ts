@@ -211,8 +211,9 @@ describe('csvShaper', () => {
       const paintIndex = rows[0].indexOf('paint');
       expect(paintIndex).toBeGreaterThan(-1);
       expect(JSON.parse(rows[1][paintIndex])).toEqual(
-        expect.objectContaining({ paintId: '100', colorName: 'Red' }),
+        expect.objectContaining({ colorName: 'Red' }),
       );
+      expect(JSON.parse(rows[1][paintIndex])).not.toHaveProperty('paintId');
       expect(rows[0]).not.toContain('paintId');
     } finally {
       rmSync(tempDir, { recursive: true, force: true });

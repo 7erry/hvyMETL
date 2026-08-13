@@ -51,9 +51,15 @@ function requireTable(model: SqlStructuralModel, name: string): TableModel {
  * (camelCased keys), excluding the join FK column that linked it to the
  * parent — that value is implied by the parent document itself.
  */
-function buildJsonObjectExpression(child: TableModel, alias: string, excludeColumn: string): string {
+function buildJsonObjectExpression(
+  child: TableModel,
+  alias: string,
+  excludeColumn: string,
+  options?: { omitPrimaryKey?: boolean },
+): string {
+  const excludePrimaryKey = options?.omitPrimaryKey ? new Set(child.primaryKey) : new Set<string>();
   const pairs = child.columns
-    .filter((column) => column.name !== excludeColumn)
+    .filter((column) => column.name !== excludeColumn && !excludePrimaryKey.has(column.name))
     .map((column) => `'${toCamelCase(column.name)}', ${alias}.${quote(column.name)}`);
   return `json_object(${pairs.join(', ')})`;
 }
@@ -174,7 +180,7 @@ function buildDocumentQuery(collection: CollectionPlan, model: SqlStructuralMode
       const parent = requireTable(model, arrayPlan.sourceTable);
       const parentPk = parent.primaryKey[0] ?? 'id';
       const header = arrayPlan.field;
-      const expression = `(SELECT ${buildJsonObjectExpression(parent, 'p', '')} FROM ${quote(parent.name)} p WHERE p.${quote(parentPk)} = base.${quote(arrayPlan.joinColumn)})`;
+      const expression = `(SELECT ${buildJsonObjectExpression(parent, 'p', '', { omitPrimaryKey: true })} FROM ${quote(parent.name)} p WHERE p.${quote(parentPk)} = base.${quote(arrayPlan.joinColumn)})`;
       selectParts.push(`${expression} AS ${quote(header)}`);
       columns.push(header);
       continue;

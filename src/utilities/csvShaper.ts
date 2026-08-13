@@ -151,8 +151,10 @@ function buildEmbeddedParentDocument(
   parentRow: Record<string, string> | undefined,
 ): Record<string, unknown> {
   if (!parentRow) return {};
+  const primaryKeyColumns = new Set(parent.primaryKey);
   const object: Record<string, unknown> = {};
   for (const column of parent.columns) {
+    if (primaryKeyColumns.has(column.name)) continue;
     object[toCamelCase(column.name)] = parentRow[column.name] ?? '';
   }
   return object;
