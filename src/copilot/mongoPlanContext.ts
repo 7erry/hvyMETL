@@ -8,6 +8,7 @@ export type MongoPlanContextCollection = {
   topLevelFields: string[];
   embeddedFields: string[];
   indexKeys: string[];
+  jsonSchema?: Record<string, unknown>;
 };
 
 export type MongoPlanContext = {
@@ -34,6 +35,10 @@ export function parseMongoPlanContext(raw: unknown): MongoPlanContext | undefine
       topLevelFields: normalizeStringList(entry.topLevelFields),
       embeddedFields: normalizeStringList(entry.embeddedFields),
       indexKeys: normalizeStringList(entry.indexKeys),
+      jsonSchema:
+        entry.jsonSchema && typeof entry.jsonSchema === 'object'
+          ? (entry.jsonSchema as Record<string, unknown>)
+          : undefined,
     }))
     .filter((entry) => entry.name.length > 0);
 

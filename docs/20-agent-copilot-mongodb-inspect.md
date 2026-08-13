@@ -76,7 +76,7 @@ See [How to index fields for vector search (autoEmbed)](https://www.mongodb.com/
 |--------------|----------|---------|
 | `listMongoDatabases` | `list-databases` | Databases owned by the signed-in user |
 | `listMongoCollections` | `list-collections` | Collections in a logical database |
-| `describeMongoCollectionSchema` | `collection-schema` | Inferred document schema |
+| `describeMongoCollectionSchema` | `collection-schema` | Inferred document schema (merged with migration-plan `$jsonSchema` types when MCP returns `unknown`) |
 | `listMongoCollectionIndexes` | `collection-indexes` | Classic + Atlas Search indexes |
 | `findMongoDocuments` | `find` | Read-only find (max 25 docs) |
 

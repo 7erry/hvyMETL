@@ -14,8 +14,12 @@ export type CopilotSchemaContextPayload = {
   relationships: {
     childTable: string;
     parentTable: string;
+    fkColumn?: string;
     isBounded: boolean;
+    avgChildrenPerParent?: number;
     maxChildrenPerParent?: number;
+    forceEmbed?: boolean;
+    embedDirectionReversed?: boolean;
   }[];
   guardrailIssues: {
     tableName: string;
@@ -66,8 +70,12 @@ export function buildSchemaContextPayload(input: {
     relationships: (model?.relationships ?? []).map((rel) => ({
       childTable: rel.childTable,
       parentTable: rel.parentTable,
+      fkColumn: rel.fkColumn,
       isBounded: rel.isBounded,
+      avgChildrenPerParent: rel.avgChildrenPerParent || undefined,
       maxChildrenPerParent: rel.maxChildrenPerParent || undefined,
+      forceEmbed: rel.forceEmbed,
+      embedDirectionReversed: rel.embedDirectionReversed,
     })),
     guardrailIssues: guardrailIssues.map((issue) => ({
       tableName: issue.tableName,

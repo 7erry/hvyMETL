@@ -460,6 +460,7 @@ export async function invokeMongoInspectTool(
           clusterNames,
           knownLogicalDatabases,
           databaseSizes,
+          options.planContext,
         );
         if (tool === 'listMongoCollections' && physicalDatabase) {
           const payload = data as { database: string; collections: Array<{ name: string }>; totalCount: number };
@@ -719,6 +720,7 @@ function sanitizeInspectPayload(
   clusterNames: string[],
   knownLogicalDatabases: string[],
   databaseSizes: Map<string, number | undefined>,
+  planContext?: MongoPlanContext,
 ): unknown {
   if (tool === 'listMongoDatabases') {
     const payload = normalizeListDatabasesPayload(raw);
@@ -783,7 +785,13 @@ function sanitizeInspectPayload(
 
   if (tool === 'describeMongoCollectionSchema') {
     const collection = typeof args.collection === 'string' ? args.collection : '';
-    return normalizeCollectionSchemaPayload(logicalDatabase, collection, raw);
+    const planEntry = findPlanCollection(planContext, collection);
+    return normalizeCollectionSchemaPayload(
+      logicalDatabase,
+      collection,
+      raw,
+      planEntry?.jsonSchema,
+    );
   }
 
   return {

@@ -7,6 +7,7 @@ export type MongoPlanContextPayload = {
     topLevelFields: string[];
     embeddedFields: string[];
     indexKeys: string[];
+    jsonSchema?: Record<string, unknown>;
   }>;
 };
 
@@ -32,6 +33,7 @@ export function buildMongoPlanContext(plan: MigrationPlan | null): MongoPlanCont
         )
         .filter(Boolean)
         .sort(),
+      jsonSchema: collection.jsonSchema as Record<string, unknown>,
     })),
   };
 }

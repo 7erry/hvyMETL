@@ -1,3 +1,19 @@
+## hvyMETL 4.2.10
+
+**Architecture Review production checklist + schema type enrichment** — collective reviews now require cardinality tables, multikey index warnings, concurrency/pagination guidance, and inspect schema merges migration-plan `$jsonSchema` types instead of showing `unknown`.
+
+### Highlights
+
+- **BSON type unknown fix** — `describeMongoCollectionSchema` merges migration-plan field types when MCP inference returns empty/unknown definitions; supports analyzer `fields[]` payloads.
+- **Production readiness prompt** — parallel array multikey warning, document size projections, Extended Reference refresh, `maxItems`/`additionalProperties`, optimistic locking, security/pagination/shard contingency.
+- **Richer schema context** — relationships include avg/max cardinality and embed-direction flags for review grounding.
+
+### Verification
+
+- `npx vitest run src/copilot/mongoSchemaFormat.test.ts src/copilot/copilotArchitecturePrompt.test.ts`
+
+---
+
 ## hvyMETL 4.2.9
 
 **Reverse-embedded lookup objects omit absorbed collection primary keys** — when a lookup table is eliminated (e.g. `paints → cars`), nested `paint` payloads no longer include `paintId`; only semantic fields (`colorName`, `paintCode`, etc.) remain.

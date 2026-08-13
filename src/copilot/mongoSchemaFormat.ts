@@ -12,6 +12,96 @@ export type MongoCollectionSchemaSummary = {
   fields: MongoSchemaFieldRow[];
 };
 
+/** Normalize MongoDB analyzer / MCP bson type labels to lowercase jsonSchema names. */
+function normalizeAnalyzerBsonTypeLabel(raw: string): string {
+  const normalized = raw.trim().toLowerCase();
+  switch (normalized) {
+    case 'string':
+    case 'int':
+    case 'long':
+    case 'double':
+    case 'decimal':
+    case 'bool':
+    case 'boolean':
+    case 'date':
+    case 'object':
+    case 'array':
+    case 'binData':
+    case 'objectId':
+    case 'null':
+      return normalized === 'boolean' ? 'bool' : normalized;
+    default:
+      return normalized;
+  }
+}
+
+/** Flatten MongoDB analyzer \`fields: [{ path, types }]\` payloads from collection-schema MCP. */
+export function flattenAnalyzerSchemaFields(fields: unknown): MongoSchemaFieldRow[] {
+  if (!Array.isArray(fields)) return [];
+  const rows: MongoSchemaFieldRow[] = [];
+  for (const entry of fields) {
+    if (!entry || typeof entry !== 'object') continue;
+    const record = entry as Record<string, unknown>;
+    const pathParts = Array.isArray(record.path)
+      ? record.path.map((part) => String(part).trim()).filter(Boolean)
+      : typeof record.name === 'string'
+        ? [record.name.trim()]
+        : [];
+    if (!pathParts.length) continue;
+    const path = pathParts.join('.');
+    const typeTokens = new Set<string>();
+    if (Array.isArray(record.types)) {
+      for (const typeEntry of record.types) {
+        if (!typeEntry || typeof typeEntry !== 'object') continue;
+        const bsonType = (typeEntry as { bsonType?: unknown }).bsonType;
+        if (typeof bsonType === 'string') typeTokens.add(normalizeAnalyzerBsonTypeLabel(bsonType));
+      }
+    }
+    if (typeof record.bsonType === 'string') {
+      typeTokens.add(normalizeAnalyzerBsonTypeLabel(record.bsonType));
+    }
+    rows.push({
+      path,
+      types: typeTokens.size ? formatBsonTypeUnion([...typeTokens]) : 'unknown',
+    });
+  }
+  return rows.sort((left, right) => left.path.localeCompare(right.path));
+}
+
+/** Flatten migration-plan $jsonSchema into inspect-style field rows. */
+export function flattenMigrationPlanCollectionSchema(jsonSchema: unknown): MongoSchemaFieldRow[] {
+  if (!jsonSchema || typeof jsonSchema !== 'object') return [];
+  return flattenInferredSchemaFields(jsonSchema);
+}
+
+/** Prefer plan types when Atlas/MCP inference returns unknown or omits nested paths. */
+export function mergeInferredSchemaWithPlan(
+  inferred: MongoSchemaFieldRow[],
+  plan: MongoSchemaFieldRow[],
+): MongoSchemaFieldRow[] {
+  if (!plan.length) return inferred;
+  if (!inferred.length) return plan;
+
+  const planByPath = new Map(plan.map((row) => [row.path, row.types]));
+  const mergedPaths = new Set<string>();
+  const merged = inferred.map((row) => {
+    mergedPaths.add(row.path);
+    const planType = planByPath.get(row.path);
+    return {
+      path: row.path,
+      types: row.types === 'unknown' && planType ? planType : row.types,
+    };
+  });
+
+  for (const planRow of plan) {
+    if (mergedPaths.has(planRow.path)) continue;
+    merged.push(planRow);
+    mergedPaths.add(planRow.path);
+  }
+
+  return merged.sort((left, right) => left.path.localeCompare(right.path));
+}
+
 /** Format a BSON type value (string or union array) for display. */
 function formatBsonTypeUnion(parts: string[]): string {
   const unique = [...new Set(parts.map((part) => part.trim()).filter(Boolean))];
@@ -72,7 +162,9 @@ function inferBsonTypesFromFieldDefinition(field: Record<string, unknown>): stri
   }
 
   const parts = [...tokens];
-  return parts.length ? formatBsonTypeUnion(parts) : 'unknown';
+  if (parts.length) return formatBsonTypeUnion(parts);
+  if (field.properties && typeof field.properties === 'object') return 'object';
+  return 'unknown';
 }
 
 /** Recursively flatten JSON Schema properties from MCP collection-schema output. */
@@ -129,10 +221,14 @@ export function normalizeCollectionSchemaPayload(
   logicalDatabase: string,
   collection: string,
   raw: unknown,
+  planSchema?: unknown,
 ): MongoCollectionSchemaSummary {
   const payload = raw && typeof raw === 'object' ? (raw as Record<string, unknown>) : {};
-  const schema = payload.schema;
-  const fields = flattenInferredSchemaFields(schema);
+  const analyzerFields = flattenAnalyzerSchemaFields(payload.fields);
+  const inferredFields =
+    analyzerFields.length > 0 ? analyzerFields : flattenInferredSchemaFields(payload.schema);
+  const planFields = flattenMigrationPlanCollectionSchema(planSchema);
+  const fields = mergeInferredSchemaWithPlan(inferredFields, planFields);
   const fieldsCount =
     typeof payload.fieldsCount === 'number' && Number.isFinite(payload.fieldsCount)
       ? payload.fieldsCount
