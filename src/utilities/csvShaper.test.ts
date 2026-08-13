@@ -151,6 +151,74 @@ describe('csvShaper', () => {
     }
   });
 
+  it('embeds reverse-embedded lookups on the cars collection when cars stays separate from models', () => {
+    const tempDir = mkdtempSync(join(tmpdir(), 'hvymetl-shape-reverse-cars-'));
+    try {
+      writeFileSync(join(tempDir, 'manufacturers.csv'), 'manufacturer_id,name\n1,Acme\n', 'utf8');
+      writeFileSync(join(tempDir, 'models.csv'), 'model_id,manufacturer_id,name\n10,1,Sedan\n', 'utf8');
+      writeFileSync(join(tempDir, 'paints.csv'), 'paint_id,color_name\n100,Red\n', 'utf8');
+      writeFileSync(
+        join(tempDir, 'cars.csv'),
+        'car_id,model_id,paint_id,vin\n1000,10,100,VIN1\n',
+        'utf8',
+      );
+
+      const ddl = `
+        CREATE TABLE manufacturers (
+          manufacturer_id INT PRIMARY KEY,
+          name VARCHAR(100)
+        );
+        CREATE TABLE models (
+          model_id INT PRIMARY KEY,
+          manufacturer_id INT REFERENCES manufacturers(manufacturer_id),
+          name VARCHAR(100)
+        );
+        CREATE TABLE paints (
+          paint_id INT PRIMARY KEY,
+          color_name VARCHAR(50)
+        );
+        CREATE TABLE cars (
+          car_id INT PRIMARY KEY,
+          model_id INT REFERENCES models(model_id),
+          paint_id INT REFERENCES paints(paint_id),
+          vin VARCHAR(17)
+        );
+      `;
+      const baseModel = parseDdlToModel(ddl, 'ddl:postgres');
+      const model = applyCardinalityOverrides(
+        baseModel,
+        {},
+        {
+          'manufacturers::models::manufacturer_id': true,
+          'models::cars::model_id': true,
+          'paints::cars::paint_id': true,
+        },
+        { 'paints::cars::paint_id': true },
+      );
+      const profile = getProfile('catalog');
+      const plan = buildMigrationPlan(model, profile);
+      const manufacturers = plan.collections.find((collection) => collection.sourceTable === 'manufacturers');
+      const cars = plan.collections.find((collection) => collection.sourceTable === 'cars');
+      expect(manufacturers).toBeDefined();
+      expect(cars).toBeDefined();
+      expect(manufacturers?.embeddedArrays.some((array) => array.sourceTable === 'cars')).toBe(false);
+
+      const embedPlansByTable = buildDirectEmbedPlansByTable(model, profile);
+      const shapedPath = join(tempDir, 'cars-shaped.csv');
+      shapeCollectionCsv(cars!, model, tempDir, shapedPath, embedPlansByTable);
+
+      const rows = parseCsv(readFileSync(shapedPath, 'utf8'));
+      const paintIndex = rows[0].indexOf('paint');
+      expect(paintIndex).toBeGreaterThan(-1);
+      expect(JSON.parse(rows[1][paintIndex])).toEqual(
+        expect.objectContaining({ paintId: '100', colorName: 'Red' }),
+      );
+      expect(rows[0]).not.toContain('paintId');
+    } finally {
+      rmSync(tempDir, { recursive: true, force: true });
+    }
+  });
+
   it('nests container rows for the foundrymam DDL under Force All', () => {
     const ddlPath = join(process.cwd(), '.tmp-foundrymam.ddl');
     const ddl = readFileSync(ddlPath, 'utf8');

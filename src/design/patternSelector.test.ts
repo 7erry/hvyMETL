@@ -7,7 +7,7 @@
 import { describe, expect, it } from 'vitest';
 import type { RelationshipModel, SqlStructuralModel, TableModel } from '../types.js';
 import { WORKLOAD_PROFILES, buildCustomProfile } from '../profiles/profiles.js';
-import { buildMigrationPlan, isLineItemsChild, isMetaTable, shouldDefaultEmbedLineItems } from './patternSelector.js';
+import { buildDirectEmbedPlansByTable, buildMigrationPlan, isJunctionTable, isLineItemsChild, isMetaTable, isReverseEmbedHostTable, shouldDefaultEmbedLineItems } from './patternSelector.js';
 
 /** Build a minimal TableModel with sensible defaults. */
 function table(partial: Partial<TableModel> & { name: string }): TableModel {
@@ -362,6 +362,94 @@ describe('buildMigrationPlan', () => {
 
     expect(cars.embeddedArrays.map((array) => array.field).sort()).toEqual(['light', 'paint', 'wheel']);
     expect(plan.collections.map((collection) => collection.sourceTable).sort()).toEqual(['cars']);
+  });
+
+  it('keeps cars as its own collection when it hosts reverse embeds even if models would fold cars', () => {
+    const model: SqlStructuralModel = {
+      source: 'ddl:oracle',
+      tables: [
+        table({
+          name: 'manufacturers',
+          rowCount: 50,
+          primaryKey: ['manufacturer_id'],
+          columns: [
+            { name: 'manufacturer_id', sqlType: 'INT', bsonType: 'int', nullable: false, isPrimaryKey: true },
+            { name: 'name', sqlType: 'VARCHAR(100)', bsonType: 'string', nullable: false, isPrimaryKey: false },
+          ],
+        }),
+        table({
+          name: 'models',
+          rowCount: 200,
+          primaryKey: ['model_id'],
+          columns: [
+            { name: 'model_id', sqlType: 'INT', bsonType: 'int', nullable: false, isPrimaryKey: true },
+            { name: 'manufacturer_id', sqlType: 'INT', bsonType: 'int', nullable: false, isPrimaryKey: false },
+            { name: 'name', sqlType: 'VARCHAR(100)', bsonType: 'string', nullable: false, isPrimaryKey: false },
+          ],
+          foreignKeys: [{ column: 'manufacturer_id', referencesTable: 'manufacturers', referencesColumn: 'manufacturer_id' }],
+        }),
+        table({
+          name: 'paints',
+          rowCount: 20,
+          primaryKey: ['paint_id'],
+          columns: [
+            { name: 'paint_id', sqlType: 'INT', bsonType: 'int', nullable: false, isPrimaryKey: true },
+            { name: 'color_name', sqlType: 'VARCHAR(50)', bsonType: 'string', nullable: false, isPrimaryKey: false },
+          ],
+        }),
+        table({
+          name: 'cars',
+          rowCount: 1000,
+          primaryKey: ['car_id'],
+          columns: [
+            { name: 'car_id', sqlType: 'INT', bsonType: 'int', nullable: false, isPrimaryKey: true },
+            { name: 'model_id', sqlType: 'INT', bsonType: 'int', nullable: false, isPrimaryKey: false },
+            { name: 'paint_id', sqlType: 'INT', bsonType: 'int', nullable: true, isPrimaryKey: false },
+          ],
+          foreignKeys: [
+            { column: 'model_id', referencesTable: 'models', referencesColumn: 'model_id' },
+            { column: 'paint_id', referencesTable: 'paints', referencesColumn: 'paint_id' },
+          ],
+        }),
+      ],
+      relationships: [
+        relationship({
+          parentTable: 'manufacturers',
+          childTable: 'models',
+          fkColumn: 'manufacturer_id',
+          forceEmbed: true,
+        }),
+        relationship({
+          parentTable: 'models',
+          childTable: 'cars',
+          fkColumn: 'model_id',
+          avgChildrenPerParent: 5,
+          maxChildrenPerParent: 10,
+          isBounded: true,
+          forceEmbed: true,
+        }),
+        relationship({
+          parentTable: 'paints',
+          childTable: 'cars',
+          fkColumn: 'paint_id',
+          forceEmbed: true,
+          embedDirectionReversed: true,
+        }),
+      ],
+    };
+
+    const plan = buildMigrationPlan(model, WORKLOAD_PROFILES.catalog);
+    expect(isReverseEmbedHostTable('cars', model)).toBe(true);
+    const embedPlans = buildDirectEmbedPlansByTable(model, WORKLOAD_PROFILES.catalog);
+    expect(embedPlans.get('paints')?.some((array) => array.sourceTable === 'cars')).toBeFalsy();
+    expect(embedPlans.get('models')?.some((array) => array.sourceTable === 'cars')).toBeFalsy();
+    const sourceTables = plan.collections.map((collection) => collection.sourceTable).sort();
+
+    expect(sourceTables).toContain('cars');
+    expect(sourceTables).toContain('manufacturers');
+    expect(plan.collections.find((collection) => collection.sourceTable === 'manufacturers')?.embeddedArrays.some(
+      (array) => array.sourceTable === 'cars',
+    )).toBe(false);
   });
 
   it('keeps a child as a separate collection when force-embed is explicitly disabled', () => {
@@ -1121,6 +1209,36 @@ describe('buildMigrationPlan', () => {
 });
 
 describe('migration-principles helpers', () => {
+  it('detects junction vs entity tables with two foreign keys', () => {
+    const pageTags = table({
+      name: 'page_tags',
+      columns: [
+        { name: 'id', sqlType: 'INTEGER', bsonType: 'long', nullable: false, isPrimaryKey: true },
+        { name: 'page_id', sqlType: 'INTEGER', bsonType: 'long', nullable: false, isPrimaryKey: false },
+        { name: 'tag_id', sqlType: 'INTEGER', bsonType: 'long', nullable: false, isPrimaryKey: false },
+      ],
+      foreignKeys: [
+        { column: 'page_id', referencesTable: 'pages', referencesColumn: 'id' },
+        { column: 'tag_id', referencesTable: 'tags', referencesColumn: 'id' },
+      ],
+    });
+    const cars = table({
+      name: 'cars',
+      columns: [
+        { name: 'car_id', sqlType: 'INT', bsonType: 'int', nullable: false, isPrimaryKey: true },
+        { name: 'model_id', sqlType: 'INT', bsonType: 'int', nullable: false, isPrimaryKey: false },
+        { name: 'paint_id', sqlType: 'INT', bsonType: 'int', nullable: true, isPrimaryKey: false },
+      ],
+      foreignKeys: [
+        { column: 'model_id', referencesTable: 'models', referencesColumn: 'model_id' },
+        { column: 'paint_id', referencesTable: 'paints', referencesColumn: 'paint_id' },
+      ],
+    });
+
+    expect(isJunctionTable(pageTags)).toBe(true);
+    expect(isJunctionTable(cars)).toBe(false);
+  });
+
   it('detects meta and line-item table names', () => {
     const userMeta = table({
       name: 'usermeta',

@@ -94,16 +94,29 @@ function buildEmbeddedObject(
   model: SqlStructuralModel,
   rowIndexCache: ChildRowIndexCache,
   depth: number,
+  parentRowsByPk: Map<string, Map<string, Record<string, string>>>,
 ): Record<string, unknown> {
+  const nestedPlans = embedPlansByTable.get(child.name) ?? [];
+  const reverseJoinColumns = new Set(
+    nestedPlans.filter((plan) => plan.reverseJoin).map((plan) => plan.joinColumn),
+  );
   const object: Record<string, unknown> = {};
   for (const column of child.columns) {
     if (column.name === joinColumn) continue;
+    if (reverseJoinColumns.has(column.name)) continue;
     object[toCamelCase(column.name)] = row[column.name] ?? '';
   }
 
   if (depth >= MAX_EMBED_DEPTH) return object;
 
-  for (const nestedPlan of embedPlansByTable.get(child.name) ?? []) {
+  for (const nestedPlan of nestedPlans) {
+    if (nestedPlan.reverseJoin) {
+      const parentTable = requireTable(model, nestedPlan.sourceTable);
+      const fkValue = normalizeJoinKey(row[nestedPlan.joinColumn]);
+      const embeddedParentRow = parentRowsByPk.get(nestedPlan.sourceTable)?.get(fkValue);
+      object[nestedPlan.field] = buildEmbeddedParentDocument(parentTable, embeddedParentRow);
+      continue;
+    }
     const nestedChild = requireTable(model, nestedPlan.sourceTable);
     const nestedIndex = rowIndexCache.get(nestedPlan.sourceTable, nestedPlan.joinColumn);
     object[nestedPlan.field] = buildEmbeddedArrayItems(
@@ -116,6 +129,7 @@ function buildEmbeddedObject(
       model,
       rowIndexCache,
       depth + 1,
+      parentRowsByPk,
     );
   }
 
@@ -154,6 +168,7 @@ function buildEmbeddedArrayItems(
   model: SqlStructuralModel,
   rowIndexCache: ChildRowIndexCache,
   depth: number,
+  parentRowsByPk: Map<string, Map<string, Record<string, string>>>,
 ): unknown[] {
   if (arrayPlan.reverseJoin) {
     return [];
@@ -179,7 +194,16 @@ function buildEmbeddedArrayItems(
   }
 
   return children.map((row) =>
-    buildEmbeddedObject(child, row, arrayPlan.joinColumn, embedPlansByTable, model, rowIndexCache, depth),
+    buildEmbeddedObject(
+      child,
+      row,
+      arrayPlan.joinColumn,
+      embedPlansByTable,
+      model,
+      rowIndexCache,
+      depth,
+      parentRowsByPk,
+    ),
   );
 }
 
@@ -210,6 +234,7 @@ function buildEmbeddedArrayValue(
     model,
     rowIndexCache,
     0,
+    parentRowsByPk ?? new Map(),
   );
   return JSON.stringify(items);
 }
@@ -267,14 +292,19 @@ export function shapeCollectionCsv(
   const computedHeaders = collection.computedFields.map((field) => field.field);
   const childIndexes = new Map<string, Map<string, Record<string, string>[]>>();
   const parentRowsByPk = new Map<string, Map<string, Record<string, string>>>();
+  const ensureReverseJoinIndex = (arrayPlan: EmbeddedArrayPlan): void => {
+    if (!arrayPlan.reverseJoin || parentRowsByPk.has(arrayPlan.sourceTable)) return;
+    const embeddedParent = requireTable(model, arrayPlan.sourceTable);
+    const parentPk = embeddedParent.primaryKey[0] ?? embeddedParent.columns[0]?.name ?? 'id';
+    const rows = loadTableCsvRows(csvRoot, arrayPlan.sourceTable);
+    parentRowsByPk.set(arrayPlan.sourceTable, indexRowsByColumn(rows, parentPk));
+  };
+  for (const plans of embedPlansByTable.values()) {
+    for (const arrayPlan of plans) ensureReverseJoinIndex(arrayPlan);
+  }
   for (const arrayPlan of collection.embeddedArrays) {
     if (arrayPlan.reverseJoin) {
-      if (!parentRowsByPk.has(arrayPlan.sourceTable)) {
-        const embeddedParent = requireTable(model, arrayPlan.sourceTable);
-        const parentPk = embeddedParent.primaryKey[0] ?? embeddedParent.columns[0]?.name ?? 'id';
-        const rows = loadTableCsvRows(csvRoot, arrayPlan.sourceTable);
-        parentRowsByPk.set(arrayPlan.sourceTable, indexRowsByColumn(rows, parentPk));
-      }
+      ensureReverseJoinIndex(arrayPlan);
       continue;
     }
     if (!childIndexes.has(arrayPlan.sourceTable)) {

@@ -51,7 +51,7 @@ Orchestrates introspect → retrieve → plan → write, and always closes the a
 | Structural signal | Telemetry condition | Pattern applied | Knowledge source |
 | --- | --- | --- | --- |
 | EAV child table (key/value payload) | always | **Attribute** (k/v array + compound index) | `attribute.md` |
-| Junction table (two FKs, no payload) | always | embedded id array | `embed-vs-reference.md` |
+| Junction / link table (two FKs, link-shaped name or composite PK; not an entity host) | always | embedded id array | `embed-vs-reference.md` |
 | Timestamped child ≥ 10,000 rows | write-heavy + profile prefers **time-series** (IoT, Real-Time Analytics) | **Native time series** collection + parent Computed counter | `time-series.md` |
 | Timestamped child ≥ 10,000 rows | write-heavy + profile prefers **bucket** (no time-series) | **Bucket** collection + parent Computed counter | `bucket.md` |
 | Child is a "hub" (other tables reference it) | always | reference (never embedded) | `embed-vs-reference.md` |
@@ -106,6 +106,16 @@ Internal: `src/adapters/sqlite.ts`, `src/rag/*` (for the report's cited context)
 - **Hub protection.** A child that other tables reference (e.g. `products` under
   `brands`) is never embedded into its lookup parents; denormalization flows the
   *other* way via Extended Reference.
+- **Junction vs entity with two FKs.** Link tables such as `page_tags` (surrogate
+  PK, name contains both referenced entities, or composite PK of both FKs) fold into
+  an embedded id array. Entity tables such as `cars` that reference multiple
+  lookups but carry their own primary key and semantic identity are not treated as
+  junction tables.
+- **Reverse-embed host protection.** When a table hosts developer reverse-embedded
+  parents (e.g. `cars` with nested `paint`, `wheel`, `light`), it stays its own
+  collection and is not folded into an ancestor via force-embed, bounded embed, or
+  junction rules. Parent-side planning also skips relationships marked
+  `embedDirectionReversed`.
 - **Absorbed-table cleanup.** Pass 4 drops standalone collections for fully-embedded
   tables, but never drops a Subset overflow collection — the full history must
   survive.

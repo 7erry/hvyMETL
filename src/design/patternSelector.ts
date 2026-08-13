@@ -113,9 +113,32 @@ export function isEavTable(table: TableModel): boolean {
  * meaningful payload (at most one timestamp). These fold into the parent as
  * an array of referenced ids.
  */
+/** True when a table name looks like a many-to-many link (e.g. page_tags), not an entity like cars. */
+function looksLikeLinkTableName(tableName: string, foreignKeys: TableModel['foreignKeys']): boolean {
+  if (/_?(tags|links|map|xref|assoc|junction|memberships|enrollments|associations|assignments)$/i.test(tableName)) {
+    return true;
+  }
+  const normalized = tableName.toLowerCase().replace(/_/g, '');
+  const referenced = foreignKeys.map((fk) => singularize(fk.referencesTable).toLowerCase());
+  return referenced.every((ref) => normalized.includes(ref));
+}
+
 export function isJunctionTable(table: TableModel): boolean {
   if (table.foreignKeys.length !== 2) return false;
   const payload = payloadColumns(table);
+  if (payload.length === 0) {
+    const pkColumns = new Set(table.primaryKey);
+    if (
+      table.primaryKey.length === 2 &&
+      table.foreignKeys.every((fk) => pkColumns.has(fk.column))
+    ) {
+      return true;
+    }
+    if (table.primaryKey.length === 1 && looksLikeLinkTableName(table.name, table.foreignKeys)) {
+      return true;
+    }
+    return false;
+  }
   return payload.every((column) => column.bsonType === 'date');
 }
 
@@ -172,6 +195,16 @@ export function isLookupTable(table: TableModel, model: SqlStructuralModel): boo
   if (table.rowCount === 0 || table.rowCount > LOOKUP_TABLE_MAX_ROWS) return false;
   if (table.foreignKeys.length > 0) return false;
   return model.relationships.some((relationship) => relationship.parentTable === table.name);
+}
+
+/** True when the table hosts developer reverse-embedded parent documents (e.g. cars with paint). */
+export function isReverseEmbedHostTable(tableName: string, model: SqlStructuralModel): boolean {
+  return model.relationships.some(
+    (relationship) =>
+      relationship.childTable === tableName &&
+      relationship.forceEmbed === true &&
+      relationship.embedDirectionReversed === true,
+  );
 }
 
 /** Find the first date/timestamp column of a table, if any. */
@@ -593,6 +626,8 @@ function planChildRelationships(
     const childTable = tablesByName.get(relationship.childTable);
     if (!childTable) continue;
 
+    if (relationship.embedDirectionReversed) continue;
+
     // Rule 1: EAV children always become the Attribute pattern's k/v array.
     if (isEavTable(childTable)) {
       embeddedArrays.push({
@@ -639,7 +674,7 @@ function planChildRelationships(
     }
 
     // Rule 2: junction tables fold into an array of referenced ids.
-    if (isJunctionTable(childTable)) {
+    if (isJunctionTable(childTable) && !isReverseEmbedHostTable(childTable.name, model)) {
       const otherFk = childTable.foreignKeys.find((fk) => fk.referencesTable !== table.name);
       if (otherFk) {
         const field = `${toCamelCase(singularize(otherFk.referencesTable))}Ids`;
@@ -663,7 +698,22 @@ function planChildRelationships(
     const skewed = isOutlierSkewed(relationship);
 
     if (relationship.forceEmbed === true) {
-      if (relationship.embedDirectionReversed) continue;
+      if (isReverseEmbedHostTable(childTable.name, model)) {
+        patterns.push({
+          pattern: 'reference',
+          target: `${table.name} -> ${childTable.name}`,
+          reason: `${childTable.name} hosts developer reverse-embedded documents; it remains its own collection instead of folding into ${table.name}.`,
+          knowledgeSource: 'embed-vs-reference.md',
+        });
+        if (isReadHeavy) {
+          addComputedCounter(
+            childTable,
+            relationship,
+            `Reads dominate (${ratioLabel}); storing the ${childTable.name} count avoids an aggregation on every read.`,
+          );
+        }
+        continue;
+      }
       const field = toCamelCase(childTable.name);
       embeddedArrays.push({ field, sourceTable: childTable.name, joinColumn: relationship.fkColumn });
       properties[field] = {
@@ -717,6 +767,22 @@ function planChildRelationships(
       relationship.maxChildrenPerParent <= DEVELOPER_OVERRIDE_EMBED_MAX_CHILDREN;
 
     if (developerForcedBoundedEmbed && !skewed) {
+      if (isReverseEmbedHostTable(childTable.name, model)) {
+        patterns.push({
+          pattern: 'reference',
+          target: `${table.name} -> ${childTable.name}`,
+          reason: `${childTable.name} hosts developer reverse-embedded documents; it remains its own collection instead of folding into ${table.name}.`,
+          knowledgeSource: 'embed-vs-reference.md',
+        });
+        if (isReadHeavy) {
+          addComputedCounter(
+            childTable,
+            relationship,
+            `Reads dominate (${ratioLabel}); storing the ${childTable.name} count avoids an aggregation on every read.`,
+          );
+        }
+        continue;
+      }
       const field = toCamelCase(childTable.name);
       embeddedArrays.push({ field, sourceTable: childTable.name, joinColumn: relationship.fkColumn });
       properties[field] = {
@@ -788,6 +854,15 @@ function planChildRelationships(
       !skewed &&
       !isWriteHeavy
     ) {
+      if (isReverseEmbedHostTable(childTable.name, model)) {
+        patterns.push({
+          pattern: 'reference',
+          target: `${table.name} -> ${childTable.name}`,
+          reason: `${childTable.name} hosts developer reverse-embedded documents; it remains its own collection instead of folding into ${table.name}.`,
+          knowledgeSource: 'embed-vs-reference.md',
+        });
+        continue;
+      }
       const field = toCamelCase(childTable.name);
       embeddedArrays.push({ field, sourceTable: childTable.name, joinColumn: relationship.fkColumn });
       properties[field] = {
@@ -830,6 +905,15 @@ function planChildRelationships(
       nonSelfForeignKeys.length <= 1 &&
       !skewed
     ) {
+      if (isReverseEmbedHostTable(childTable.name, model)) {
+        patterns.push({
+          pattern: 'reference',
+          target: `${table.name} -> ${childTable.name}`,
+          reason: `${childTable.name} hosts developer reverse-embedded documents; it remains its own collection instead of folding into ${table.name}.`,
+          knowledgeSource: 'embed-vs-reference.md',
+        });
+        continue;
+      }
       const field = toCamelCase(childTable.name);
       embeddedArrays.push({ field, sourceTable: childTable.name, joinColumn: relationship.fkColumn });
       properties[field] = {
@@ -849,6 +933,22 @@ function planChildRelationships(
 
     // Rule 4: bounded children embed fully (read-heavy no longer required).
     if (relationship.isBounded && !skewed) {
+      if (isReverseEmbedHostTable(childTable.name, model)) {
+        patterns.push({
+          pattern: 'reference',
+          target: `${table.name} -> ${childTable.name}`,
+          reason: `${childTable.name} hosts developer reverse-embedded documents; it remains its own collection instead of folding into ${table.name}.`,
+          knowledgeSource: 'embed-vs-reference.md',
+        });
+        if (isReadHeavy) {
+          addComputedCounter(
+            childTable,
+            relationship,
+            `Reads dominate (${ratioLabel}); storing the ${childTable.name} count avoids an aggregation on every read.`,
+          );
+        }
+        continue;
+      }
       const field = toCamelCase(childTable.name);
       embeddedArrays.push({ field, sourceTable: childTable.name, joinColumn: relationship.fkColumn });
       properties[field] = {

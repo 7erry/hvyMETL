@@ -1,3 +1,20 @@
+## hvyMETL 4.2.7
+
+**Entity tables with multiple FKs no longer collapse as junction links** — `cars` and similar hosts stay as top-level collections when they reference several lookups, so reverse embed overrides (`paints → cars`, `wheels → cars`, `lights → cars`) produce a `cars` collection instead of folding everything into `manufacturers`.
+
+### Highlights
+
+- **Junction detection fix** — empty payload no longer vacuously marks every two-FK table as a junction; link tables like `page_tags` still fold, but entity tables like `cars` do not.
+- **Reverse-embed host guard** — tables that host developer reverse-embedded documents are never absorbed into a parent via force-embed, bounded embed, or junction folding.
+- **Reversed relationship skip** — parent-side planning ignores `embedDirectionReversed` relationships so lookups embed into the host (`cars.paint`) rather than the host folding into the lookup.
+- **Nested CSV shaping** — reverse-embedded lookup objects resolve correctly when intermediate tables remain nested in shaped CSV output.
+
+### Verification
+
+- `npx vitest run src/design/patternSelector.test.ts src/utilities/csvShaper.test.ts`
+
+---
+
 ## hvyMETL 4.2.6
 
 **Reverse-embedded objects include nested field schema** — `paint`, `wheel`, and similar reverse-embed fields now carry full `$jsonSchema` properties (`colorName`, `paintCode`, `finishType`, etc.) instead of a bare `object` type.
