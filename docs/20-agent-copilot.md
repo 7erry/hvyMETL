@@ -109,7 +109,9 @@ Guardrail warning badges on table nodes open the copilot with an optimization pr
 
 ## Architecture review → Google Docs
 
-**Optimize Schema** produces a markdown architecture review. When the response matches `# … — Architecture Review`, an **Export** bar appears below the message:
+**Optimize Schema** produces a markdown architecture review. When the response matches `# … — Architecture Review` (em dash, en dash, or hyphen), an **Export** bar appears below the message:
+
+Post-import **Architecture Review** runs inspect tools first (`listMongoCollections`, indexes, schema); the written review is always shown afterward and is **not** treated as a duplicate inspect listing, so export controls remain available.
 
 | Control | Behavior |
 | --- | --- |
