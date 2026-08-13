@@ -115,7 +115,8 @@ Internal: `src/adapters/sqlite.ts`, `src/rag/*` (for the report's cited context)
   parents (e.g. `cars` with nested `paint`, `wheel`, `light`), it stays its own
   collection and is not folded into an ancestor via force-embed, bounded embed, or
   junction rules. Parent-side planning also skips relationships marked
-  `embedDirectionReversed`.
+  `embedDirectionReversed`. Nested lookup objects omit the absorbed table's primary
+  key columns (e.g. no `paintId` inside `cars.paint` when `paints` is eliminated).
 - **Absorbed-table cleanup.** Pass 4 drops standalone collections for fully-embedded
   tables, but never drops a Subset overflow collection — the full history must
   survive.
