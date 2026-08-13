@@ -1,3 +1,19 @@
+## hvyMETL 4.2.8
+
+**Architecture Review export restored after inspect tools** — collective post-import reviews are no longer suppressed as duplicate inspect listings, so **Save to Google Docs** and **Download markdown** appear again on the full review response.
+
+### Highlights
+
+- **Never suppress architecture reviews** — comparison and index tables in `# {db} — Architecture Review` responses no longer match inspect-echo heuristics.
+- **Heading detection** — accepts em dash, en dash, and hyphen title variants for export buttons.
+- **Tool-loop headroom** — copilot tool iterations increased to 10 for inspect-heavy review turns; shows a recovery hint if the written review still does not appear.
+
+### Verification
+
+- `npx vitest run web/src/copilot/inspectCommandRouting.test.ts src/copilot/architectureReviewExport.test.ts`
+
+---
+
 ## hvyMETL 4.2.7
 
 **Entity tables with multiple FKs no longer collapse as junction links** — `cars` and similar hosts stay as top-level collections when they reference several lookups, so reverse embed overrides (`paints → cars`, `wheels → cars`, `lights → cars`) produce a `cars` collection instead of folding everything into `manufacturers`.

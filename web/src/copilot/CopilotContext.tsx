@@ -17,6 +17,7 @@ import {
   isInspectOnlyUserMessage,
   looksLikeInspectListingEcho,
 } from './inspectCommandRouting';
+import { isArchitectureReviewContent } from './architectureReviewExport';
 import { parseDirectVectorSearchIndexCommand } from './vectorIndexCommandRouting';
 import { parseDirectAtlasSearchIndexCommand } from './atlasSearchCommandRouting';
 import { MongoAutoEmbedVectorIndexModal } from '../components/copilot/MongoAutoEmbedVectorIndexModal';
@@ -660,8 +661,9 @@ export function CopilotProvider({
         [...history].reverse().find((entry) => entry.role === 'user')?.content.trim() ?? '';
 
       let messages = [...history];
-      const maxIterations = 6;
+      const maxIterations = 10;
       let structuredInspectOutputShown = false;
+      let architectureReviewAppended = false;
 
       for (let i = 0; i < maxIterations; i += 1) {
         setStatus(i === 0 ? 'analyzing' : 'mutating');
@@ -680,15 +682,19 @@ export function CopilotProvider({
         const suppressListMongoDatabases = shouldSuppressListMongoDatabasesDisplay(userMessage, parsedBatch);
 
         if (assistant.content?.trim() && !toolCalls.length) {
+          const reviewContent = assistant.content.trim();
+          const isReview = isArchitectureReviewContent(reviewContent);
           const suppressFollowUpProse =
+            !isReview &&
             structuredInspectOutputShown &&
-            (isInspectOnlyUserMessage(userMessage) || looksLikeInspectListingEcho(assistant.content));
+            (isInspectOnlyUserMessage(userMessage) || looksLikeInspectListingEcho(reviewContent));
           if (!suppressFollowUpProse) {
             appendMessage({
               role: 'agent',
-              content: assistant.content.trim(),
+              content: reviewContent,
               markdown: true,
             });
+            if (isReview) architectureReviewAppended = true;
           }
         }
 
@@ -841,6 +847,15 @@ export function CopilotProvider({
             },
           ];
         }
+      }
+
+      if (/Architecture Review/i.test(userMessage) && !architectureReviewAppended) {
+        appendMessage({
+          role: 'agent',
+          content:
+            'Inspect tools completed but the written **Architecture Review** did not appear. Click **Architecture Review** again or ask: *Continue the Architecture Review using the inspect results above.*',
+          markdown: true,
+        });
       }
 
       setStatus('idle');

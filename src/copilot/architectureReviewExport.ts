@@ -1,11 +1,14 @@
 /** Detects Agent Copilot architecture review markdown responses. */
 export function isArchitectureReviewContent(content: string): boolean {
-  return /^#\s+.+\s+—\s+Architecture Review/im.test(content.trim());
+  const trimmed = content.trim();
+  if (/^#\s+.+\s+—\s+Architecture Review/im.test(trimmed)) return true;
+  // Accept hyphen/em-dash variants and reviews that start after a short preamble.
+  return /^#\s+.+\s+[-–—]\s+Architecture Review/im.test(trimmed);
 }
 
 /** Extracts the review title from the leading `# … — Architecture Review` heading. */
 export function architectureReviewTitle(content: string): string | null {
-  const match = content.trim().match(/^#\s+(.+?)\s+—\s+Architecture Review/im);
+  const match = content.trim().match(/^#\s+(.+?)\s+[-–—]\s+Architecture Review/im);
   return match?.[1]?.trim() ?? null;
 }
 

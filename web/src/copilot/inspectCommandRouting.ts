@@ -64,6 +64,7 @@ export function isInspectOnlyUserMessage(userMessage: string): boolean {
 export function looksLikeInspectListingEcho(content: string): boolean {
   const trimmed = content.trim();
   if (!trimmed) return false;
+  if (/^#\s+.+\s+[-–—]\s+Architecture Review/im.test(trimmed)) return false;
   if (/^\s*#+\s*(available|listed|mongodb|atlas|collections?|databases?)\b/i.test(trimmed)) return true;
   if (/\|\s*database\s*\|/i.test(trimmed) || /\|\s*collection\s*\|/i.test(trimmed)) return true;
   if (/\|\s*size\s*\|/i.test(trimmed) && /\|\s*database\s*\|/i.test(trimmed)) return true;

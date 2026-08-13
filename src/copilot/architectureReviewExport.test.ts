@@ -15,6 +15,7 @@ describe('architectureReviewExport', () => {
 
   it('detects architecture review headings', () => {
     expect(isArchitectureReviewContent('# Trains — Architecture Review\n\nBody')).toBe(true);
+    expect(isArchitectureReviewContent('# Trains - Architecture Review\n\nBody')).toBe(true);
     expect(isArchitectureReviewContent('Hello')).toBe(false);
   });
 

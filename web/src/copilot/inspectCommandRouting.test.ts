@@ -94,6 +94,21 @@ describe('inspectCommandRouting', () => {
     expect(looksLikeInspectListingEcho('Use fromoraclewithlove for the Oracle import.')).toBe(false);
   });
 
+  it('does not treat a full architecture review as an inspect listing echo', () => {
+    const review = `# cars — Architecture Review
+
+> **Verdict:** Ship as-is with index tuning.
+
+| Collection | Naive | Recommended |
+| --- | --- | --- |
+| cars | SQL joins | Embedded lookups |
+
+| Field | BSON type |
+| --- | --- |
+| vin | string |`;
+    expect(looksLikeInspectListingEcho(review)).toBe(false);
+  });
+
   it('suppresses redundant listMongoDatabases when the user named a database', () => {
     expect(
       shouldSuppressListMongoDatabasesDisplay('list collections from fromoraclewithlove', []),
