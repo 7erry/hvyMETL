@@ -39,7 +39,7 @@ import { AuthGate } from './components/AuthGate';
 import { FALLBACK_DIALECTS } from './dialectConstants';
 import { RoleToggle } from './components/RoleToggle';
 import { useAccess } from './auth/HostedAuthProvider';
-import { profileRequestBody } from './customProfileShared';
+import { profileRequestBody, resolveCustomTelemetryInitial } from './customProfileShared';
 import { emptyModelTokenUsage, mergeModelTokenUsage } from './modelUsage';
 import {
   applyCardinalityOverrides,
@@ -198,6 +198,17 @@ export default function App() {
   const profileFields = useMemo(
     () => profileRequestBody(profileId, customProfile),
     [profileId, customProfile],
+  );
+
+  const customTelemetryInitial = useMemo(
+    () =>
+      resolveCustomTelemetryInitial({
+        profileId,
+        customProfile,
+        customTelemetryInput,
+        presets: profiles,
+      }),
+    [profileId, customProfile, customTelemetryInput, profiles],
   );
 
   const setSessionField = useCallback(<K extends keyof SessionState>(key: K, value: SessionState[K]) => {
@@ -1820,7 +1831,7 @@ export default function App() {
 
       <CustomTelemetryModal
         open={customTelemetryOpen}
-        initial={customTelemetryInput}
+        initial={customTelemetryInitial}
         onClose={() => setCustomTelemetryOpen(false)}
         onApply={(profile, input) => {
           setSession((prev) => {

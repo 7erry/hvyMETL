@@ -6,29 +6,18 @@ export type { CustomProfileInput, WorkloadProfile };
 
 type CustomTelemetryModalProps = {
   open: boolean;
-  initial?: CustomProfileInput | null;
+  initial: CustomProfileInput;
   onClose: () => void;
   onApply: (profile: WorkloadProfile, input: CustomProfileInput) => void;
 };
 
-const DEFAULT_INPUT: CustomProfileInput = {
-  readPercent: 80,
-  writePercent: 20,
-  peakRpm: 10000,
-  growthRate: '10GB/month',
-  readPreference: 'primary',
-  writeConcernW: 1,
-  writeConcernJournal: false,
-  compression: 'snappy',
-};
-
 export function CustomTelemetryModal({ open, initial, onClose, onApply }: CustomTelemetryModalProps) {
-  const [form, setForm] = useState<CustomProfileInput>(initial ?? DEFAULT_INPUT);
+  const [form, setForm] = useState<CustomProfileInput>(initial);
   const [error, setError] = useState('');
 
   useEffect(() => {
     if (open) {
-      setForm(initial ?? DEFAULT_INPUT);
+      setForm(initial);
       setError('');
     }
   }, [open, initial]);

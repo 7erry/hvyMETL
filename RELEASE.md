@@ -1,3 +1,13 @@
+## hvyMETL 4.2.11
+
+**Custom workload modal seeds from active profile** — opening Custom Workload now pre-fills read/write ratio, RPM, growth, and driver tuning from the currently selected preset (e.g. E-commerce Catalog 95:5) instead of a fixed 80:20 default.
+
+### Verification
+
+- `npx vitest run web/src/customProfileShared.test.ts`
+
+---
+
 ## hvyMETL 4.2.10
 
 **Architecture Review production checklist + schema type enrichment** — collective reviews now require cardinality tables, multikey index warnings, concurrency/pagination guidance, and inspect schema merges migration-plan `$jsonSchema` types instead of showing `unknown`.

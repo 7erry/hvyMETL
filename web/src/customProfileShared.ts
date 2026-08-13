@@ -52,3 +52,50 @@ export function profileRequestBody(profileId: string, customProfile: WorkloadPro
   }
   return { profileId };
 }
+
+type ProfileTelemetrySource = Pick<
+  WorkloadProfile,
+  'id' | 'telemetry' | 'readPreference' | 'writeConcern' | 'compression'
+>;
+
+/** Map a workload profile into the custom telemetry modal form shape. */
+export function workloadProfileToCustomInput(
+  profile: Pick<WorkloadProfile, 'telemetry' | 'readPreference' | 'writeConcern' | 'compression'>,
+): CustomProfileInput {
+  return {
+    readPercent: profile.telemetry.readPercent,
+    writePercent: profile.telemetry.writePercent,
+    peakRpm: profile.telemetry.peakRpm,
+    growthRate: profile.telemetry.growthRate,
+    readPreference: profile.readPreference,
+    writeConcernW: profile.writeConcern.w,
+    writeConcernJournal: profile.writeConcern.journal,
+    compression: profile.compression,
+  };
+}
+
+/** Seed the custom workload modal from the active session profile. */
+export function resolveCustomTelemetryInitial(args: {
+  profileId: string;
+  customProfile: WorkloadProfile | null;
+  customTelemetryInput: CustomProfileInput | null;
+  presets: ProfileTelemetrySource[];
+}): CustomProfileInput {
+  if (args.profileId === 'custom') {
+    if (args.customTelemetryInput) return args.customTelemetryInput;
+    if (args.customProfile) return workloadProfileToCustomInput(args.customProfile);
+  }
+
+  const preset = args.presets.find((p) => p.id === args.profileId);
+  if (preset) return workloadProfileToCustomInput(preset);
+
+  const fallback = args.presets.find((p) => p.id === 'catalog') ?? args.presets[0];
+  if (fallback) return workloadProfileToCustomInput(fallback);
+
+  return workloadProfileToCustomInput({
+    telemetry: { readPercent: 95, writePercent: 5, peakRpm: 60_000, growthRate: '5GB/month' },
+    readPreference: 'primaryPreferred',
+    writeConcern: { w: 1, journal: false },
+    compression: 'snappy',
+  });
+}

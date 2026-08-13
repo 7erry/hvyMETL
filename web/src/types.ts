@@ -1,3 +1,5 @@
+import type { WorkloadProfile } from './customProfileShared';
+
 export type ColumnModel = {
   name: string;
   sqlType: string;
@@ -72,11 +74,8 @@ export type MongoDiagramExport = {
   exportedAt: string;
 };
 
-export type Profile = {
-  id: string;
-  label: string;
-  description: string;
-};
+/** Preset workload profile returned by `GET /api/profiles`. */
+export type Profile = WorkloadProfile;
 
 export type Dialect = {
   id: string;
