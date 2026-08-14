@@ -1,3 +1,22 @@
+## hvyMETL 4.2.17
+
+**DynamoDB GSI → MongoDB migration helpers** — new utility maps `INCLUDE` GSI projections to MongoDB compound indexes (covered queries) and Atlas Search `storedSource` definitions, with PascalCase → camelCase field renaming aligned to migration plans.
+
+### Highlights
+
+- **`dynamoGsiMongoMigration`** — `buildMongoCompoundIndexFromGsi`, `buildMongoCoveredFindFromGsi`, `buildAtlasSearchIndexFromGsi` for CloudFormation GSI metadata.
+- **CMS moderation example** — `GSI2-Author-Moderation-Index` covered in unit tests and [docs/20-dynamodb-gsi-mongodb-migration.md](docs/20-dynamodb-gsi-mongodb-migration.md).
+- **Load example naming** — all DynamoDB picker entries use the `Amazon DynamoDB (CloudFormation) - …` prefix; legacy Mobile dialect label removed.
+- **MongoDB diagram UX** — compact single-line collection field rows with larger type; duplicate-table controls removed from Before SQL canvas.
+
+### Verification
+
+- `npm test -- src/utilities/dynamoGsiMongoMigration.test.ts`
+- `npm test -- src/server/builtinExamples.test.ts`
+- `npm run build:ui`
+
+---
+
 ## hvyMETL 4.2.16
 
 **MongoDB collection diagram readability** — field rows stack name above BSON type with nowrap types and wider cards, fixing broken `string | null` wrapping on long DynamoDB GSI field names.

@@ -105,7 +105,7 @@ After `npm run seed-examples`, each folder also contains a matching `.db` for `d
 | Oracle Customer Loyalty | [`oracle/oracle-customerloyalty.ddl`](oracle/oracle-customerloyalty.ddl) | `oracle` | |
 | Oracle Invoices | [`oracle/oracle-invoices.ddl`](oracle/oracle-invoices.ddl) | `oracle` | |
 | Oracle Supply Chain | [`oracle/oracle-supplychain.ddl`](oracle/oracle-supplychain.ddl) | `oracle` | |
-| Amazon DynamoDB CMS platform | [`dynamodb/cms-platform-table.yaml`](dynamodb/cms-platform-table.yaml) | `dynamodb` | Single-table CMS; suggested profile `cms` |
+| Amazon DynamoDB CMS platform | [`dynamodb/cms-platform-table.yaml`](dynamodb/cms-platform-table.yaml) | `dynamodb` | Single-table CMS; GSI2 moderation index — see [docs/20-dynamodb-gsi-mongodb-migration.md](../docs/20-dynamodb-gsi-mongodb-migration.md) |
 | Amazon DynamoDB ecommerce catalog | [`dynamodb/ecommerce-catalog-table.yaml`](dynamodb/ecommerce-catalog-table.yaml) | `dynamodb` | Single-table catalog; suggested profile `catalog` |
 | Amazon DynamoDB orders | [`dynamodb/orders-table.yaml`](dynamodb/orders-table.yaml) | `dynamodb` | CloudFormation table template |
 
