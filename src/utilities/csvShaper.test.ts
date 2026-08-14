@@ -11,7 +11,13 @@ import { parseCsv } from './csv.js';
 import { collectionNeedsShapedCsv, shapeCollectionCsv } from './csvShaper.js';
 import { applyCardinalityOverrides, buildForceEmbedOverridesForAll } from '../../web/src/cardinalityOverrides.ts';
 
+import { parseDynamoDbCloudFormationToModel } from './dynamodbCloudFormationParser.js';
+
 const ORACLE_ROOT = join(process.cwd(), 'examples', 'oracle');
+const ECOMMERCE_CATALOG_TEMPLATE = readFileSync(
+  join(process.cwd(), 'examples', 'dynamodb', 'ecommerce-catalog-table.yaml'),
+  'utf8',
+);
 
 describe('csvShaper', () => {
   it('writes embedded JSON array columns into shaped orders CSV', () => {
@@ -263,6 +269,47 @@ describe('csvShaper', () => {
       expect(intervals[0].container).toEqual([
         expect.objectContaining({ fileSize: '8192', fileFormat: 'mxf', data: 'container-data' }),
       ]);
+    } finally {
+      rmSync(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  it('renames DynamoDB attribute columns to semantic MongoDB field names during shaping', () => {
+    const model = parseDynamoDbCloudFormationToModel(ECOMMERCE_CATALOG_TEMPLATE);
+    const plan = buildMigrationPlan(model, getProfile('catalog'));
+    const collection = plan.collections[0]!;
+    expect(collectionNeedsShapedCsv(collection, model)).toBe(true);
+
+    const tempDir = mkdtempSync(join(tmpdir(), 'hvymetl-shape-dynamo-'));
+    try {
+      writeFileSync(
+        join(tempDir, 'ecommerce-catalog-production.csv'),
+        [
+          'PK,SK,GSI1PK,GSI1SK,GSI2PK,GSI2SK,GSI3PK,GSI3SK,ExpireAt',
+          'pk-1,sk-1,gsi1-pk,gsi1-sk,gsi2-pk,gsi2-sk,gsi3-pk,gsi3-sk,123',
+        ].join('\n'),
+        'utf8',
+      );
+
+      const shapedPath = join(tempDir, 'ecommerceCatalogTable.csv');
+      shapeCollectionCsv(collection, model, tempDir, shapedPath);
+
+      const rows = parseCsv(readFileSync(shapedPath, 'utf8'));
+      expect(rows[0]).toEqual(
+        expect.arrayContaining([
+          '_id',
+          'partitionKey',
+          'sortKey',
+          'gSI1CategoryPriceIndex',
+          'gSI1CategoryPriceIndexSortKey',
+          'gSI2SKUBrandIndex',
+          'gSI3SellerStatusIndex',
+          'expireAt',
+          'schemaVersion',
+        ]),
+      );
+      expect(rows[0]).not.toContain('GSI1PK');
+      expect(rows[0]).not.toContain('PK');
     } finally {
       rmSync(tempDir, { recursive: true, force: true });
     }

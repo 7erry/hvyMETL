@@ -24,14 +24,23 @@ function requireTable(model: SqlStructuralModel, name: string): TableModel {
   return table;
 }
 
-/** True when the collection needs joins or JSON array columns beyond a flat parent CSV. */
-export function collectionNeedsShapedCsv(collection: CollectionPlan): boolean {
-  return (
+/** True when the collection needs joins, JSON arrays, or DynamoDB field renaming beyond a flat parent CSV. */
+export function collectionNeedsShapedCsv(collection: CollectionPlan, model?: SqlStructuralModel): boolean {
+  if (
     collection.embeddedArrays.length > 0 ||
     collection.extendedReferences.length > 0 ||
     collection.computedFields.length > 0 ||
     Boolean(collection.bucket)
-  );
+  ) {
+    return true;
+  }
+
+  if (model) {
+    const sourceTable = model.tables.find((table) => table.name === collection.sourceTable);
+    if (sourceTable?.dynamoDb) return true;
+  }
+
+  return false;
 }
 
 function findEavColumns(child: TableModel): { keyColumn: string; valueColumn: string } {

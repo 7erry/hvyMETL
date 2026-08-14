@@ -1,3 +1,13 @@
+## hvyMETL 4.2.15
+
+**Pipeline import applies DynamoDB field renaming** — flat DynamoDB collections now pass through the CSV shaper before csvToAtlas, mapping `PK`/`GSI1PK` source columns to `partitionKey`/`gSI1CategoryPriceIndex` (etc.) so Atlas documents match the MongoDB diagram.
+
+### Verification
+
+- `npx vitest run src/utilities/csvShaper.test.ts -t "renames DynamoDB"`
+
+---
+
 ## hvyMETL 4.2.14
 
 **Auto-refresh stale DynamoDB migration plans** — switching to After · MongoDB (or re-importing DynamoDB YAML) now regenerates plans that still expose legacy `gSI1PK`/`pK` fields instead of semantic GSI index names. Design API always re-parses CloudFormation DDL with the resolved dialect.

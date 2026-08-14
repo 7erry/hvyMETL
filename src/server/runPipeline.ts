@@ -318,7 +318,7 @@ async function runFullPipelineInner(
   reportProgress(request, { stage: 'shaping', message: 'Shaping CSV files with embedded arrays and references…' });
 
   const csvCollections = design.plan.collections.map((collection) => {
-    if (collectionNeedsShapedCsv(collection)) {
+    if (collectionNeedsShapedCsv(collection, enrichedModel)) {
       const shapedPath = join(shapedDir, `${collection.name}.csv`);
       const written = shapeCollectionCsv(collection, enrichedModel, csvRoot, shapedPath, embedPlansByTable);
       if (written) {
