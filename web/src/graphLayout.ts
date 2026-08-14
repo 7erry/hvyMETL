@@ -286,9 +286,8 @@ export function estimateTableNodeSize(
 }
 
 export function estimateCollectionNodeSize(fieldCount: number, mergedCount: number): GraphLayoutNodeSize {
-  const visibleRows = Math.min(fieldCount, 12);
   const mergedLines = mergedCount > 1 ? 1 : 0;
-  return { width: 280, height: 72 + mergedLines * 16 + visibleRows * 22 };
+  return { width: 380, height: 72 + mergedLines * 16 + fieldCount * 34 };
 }
 
 function sqlEdges(model: SqlStructuralModel): GraphLayoutEdge[] {

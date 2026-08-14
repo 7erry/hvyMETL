@@ -1,3 +1,9 @@
+## hvyMETL 4.2.16
+
+**MongoDB collection diagram readability** — field rows stack name above BSON type with nowrap types and wider cards, fixing broken `string | null` wrapping on long DynamoDB GSI field names.
+
+---
+
 ## hvyMETL 4.2.15
 
 **Pipeline import applies DynamoDB field renaming** — flat DynamoDB collections now pass through the CSV shaper before csvToAtlas, mapping `PK`/`GSI1PK` source columns to `partitionKey`/`gSI1CategoryPriceIndex` (etc.) so Atlas documents match the MongoDB diagram.
