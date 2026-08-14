@@ -438,13 +438,123 @@ textarea {
 .table-node .column-name {
   flex: 1;
   min-width: 0;
-  word-break: break-word;
+  overflow-wrap: anywhere;
+  word-break: normal;
 }
 
 .table-node .column-type {
   opacity: 0.55;
   font-size: 0.68rem;
-  white-space: nowrap;
+  flex-shrink: 0;
+  max-width: 58%;
+  text-align: right;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.table-node--dynamodb {
+  min-width: 340px;
+  max-width: 420px;
+  font-size: 0.78rem;
+}
+
+.table-node--dynamodb header {
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.table-node--dynamodb header .btn-icon {
+  position: absolute;
+  top: 0.45rem;
+  right: 0.45rem;
+}
+
+.table-node--dynamodb header {
+  position: relative;
+  padding-right: 2rem;
+}
+
+.dynamo-table-node__physical-name {
+  margin: 0;
+  padding: 0.35rem 0.85rem 0;
+  color: var(--mdb-spring-green);
+  opacity: 0.75;
+  font-size: 0.68rem;
+}
+
+.dynamo-table-node__chips {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin: 0;
+  padding: 0.45rem 0.85rem 0.15rem;
+}
+
+.dynamo-table-node__chips li {
+  padding: 0.12rem 0.45rem;
+  border-radius: 999px;
+  background: rgba(0, 237, 100, 0.1);
+  color: var(--mdb-green-base);
+  font-size: 0.62rem;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.dynamo-table-node__section {
+  border-top: 1px solid rgba(0, 237, 100, 0.12);
+  padding-top: 0.25rem;
+}
+
+.dynamo-table-node__section-title {
+  margin: 0;
+  padding: 0.35rem 0.85rem 0.1rem;
+  color: var(--mdb-green-base);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.dynamo-table-node__section-subtitle {
+  margin: 0;
+  padding: 0 0.85rem 0.25rem;
+  color: var(--mdb-spring-green);
+  opacity: 0.68;
+  font-size: 0.62rem;
+  line-height: 1.35;
+}
+
+.table-node--dynamodb li.dynamo-key-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) auto auto;
+  gap: 0.65rem;
+  align-items: center;
+  padding: 0.22rem 0.85rem;
+}
+
+.table-node--dynamodb .column-name {
+  overflow-wrap: normal;
+  word-break: keep-all;
+}
+
+.table-node--dynamodb .column-type {
+  max-width: none;
+  opacity: 0.72;
+}
+
+.table-node--dynamodb .dynamo-role {
+  justify-self: end;
+  min-width: 3.2rem;
+  text-align: right;
+  opacity: 0.58;
+  font-size: 0.62rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.table-node--dynamodb li.dynamo-key-row:nth-child(odd) {
+  background: rgba(0, 237, 100, 0.04);
 }
 
 .column-handle {

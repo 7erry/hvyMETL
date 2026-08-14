@@ -1,3 +1,19 @@
+## hvyMETL 4.2.12
+
+**DynamoDB CloudFormation diagram layout** — DynamoDB imports now render grouped primary-key, GSI, and TTL sections with capability chips (billing mode, streams, PITR, SSE) instead of squeezing long `(GSI … HASH)` labels into SQL-style rows.
+
+### Highlights
+
+- **Structured parser metadata** — GSIs include projection type and `NonKeyAttributes`; table-level billing, stream, TTL, PITR, and SSE settings attach to `table.dynamoDb`.
+- **Readable table cards** — wider DynamoDB nodes with grid rows (`attribute | type | HASH/RANGE`) and section headers per index.
+- **SQL tables unchanged** — column-type wrapping improved so long SQL types no longer force character-by-character name breaks.
+
+### Verification
+
+- `npx vitest run src/utilities/dynamodbCloudFormationParser.test.ts web/src/dynamoTableDisplay.test.ts`
+
+---
+
 ## hvyMETL 4.2.11
 
 **Custom workload modal seeds from active profile** — opening Custom Workload now pre-fills read/write ratio, RPM, growth, and driver tuning from the currently selected preset (e.g. E-commerce Catalog 95:5) instead of a fixed 80:20 default.

@@ -6,6 +6,27 @@ export type ColumnModel = {
   bsonType: string;
   nullable: boolean;
   isPrimaryKey: boolean;
+  dynamoKeyRole?: 'pk-hash' | 'pk-range' | 'gsi-hash' | 'gsi-range' | 'ttl';
+  dynamoGsiName?: string;
+};
+
+export type DynamoDbGsiModel = {
+  indexName: string;
+  hashKey: string;
+  rangeKey?: string;
+  projectionType: 'ALL' | 'KEYS_ONLY' | 'INCLUDE';
+  nonKeyAttributes?: string[];
+};
+
+export type DynamoDbTableMetadata = {
+  logicalId: string;
+  physicalTableName?: string;
+  billingMode?: string;
+  streamViewType?: string;
+  ttlAttribute?: string;
+  pointInTimeRecovery?: boolean;
+  sseEnabled?: boolean;
+  globalSecondaryIndexes: DynamoDbGsiModel[];
 };
 
 export type ForeignKeyModel = {
@@ -32,6 +53,7 @@ export type TableModel = {
   primaryKey: string[];
   foreignKeys: ForeignKeyModel[];
   rowCount: number;
+  dynamoDb?: DynamoDbTableMetadata;
 };
 
 export type SqlStructuralModel = {

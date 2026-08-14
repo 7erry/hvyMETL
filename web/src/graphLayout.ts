@@ -4,6 +4,7 @@
 
 import { edgesForPlan } from './migrationPlanDisplay';
 import { analyzeMigrationRisks, guardrailsByTable } from './copilot/guardrails';
+import { estimateDynamoTableNodeHeight } from './dynamoTableDisplay';
 import type { MigrationPlan } from './migrationPlanTypes';
 import type { SqlStructuralModel, TableModel } from './types';
 
@@ -258,6 +259,14 @@ export function estimateTableNodeSize(
   table: TableModel,
   options?: { hasGuardrailBadge?: boolean },
 ): GraphLayoutNodeSize {
+  if (table.dynamoDb) {
+    const guardrailSlack = options?.hasGuardrailBadge ? 22 : 0;
+    return {
+      width: 400,
+      height: estimateDynamoTableNodeHeight(table) + guardrailSlack,
+    };
+  }
+
   const headerHeight = 52;
   const guardrailSlack = options?.hasGuardrailBadge ? 22 : 0;
   const duplicateControlSlack = 8;

@@ -4,7 +4,13 @@
  */
 
 import { parse as parseYaml } from 'yaml';
-import type { ColumnModel, SqlStructuralModel, TableModel } from '../types.js';
+import type {
+  ColumnModel,
+  DynamoDbGsiModel,
+  DynamoDbTableMetadata,
+  SqlStructuralModel,
+  TableModel,
+} from '../types.js';
 
 const DYNAMO_ATTRIBUTE_TYPES: Record<string, { sqlType: string; bsonType: string }> = {
   S: { sqlType: 'STRING', bsonType: 'string' },
@@ -85,24 +91,140 @@ function parseKeySchema(keySchema: unknown): { ordered: string[]; hash?: string;
   return { ordered, hash, range };
 }
 
-function collectGsiKeyRoles(properties: Record<string, unknown>): Map<string, { indexName: string; keyType: string }> {
-  const roles = new Map<string, { indexName: string; keyType: string }>();
+function parseProjection(gsi: Record<string, unknown>): Pick<DynamoDbGsiModel, 'projectionType' | 'nonKeyAttributes'> {
+  const projection = asRecord(gsi.Projection);
+  const rawType = String(projection.ProjectionType ?? 'ALL').trim().toUpperCase();
+  const projectionType =
+    rawType === 'KEYS_ONLY' || rawType === 'INCLUDE' ? rawType : ('ALL' as const);
+  const nonKeyAttributes = asArray<unknown>(projection.NonKeyAttributes)
+    .map((value) => String(value ?? '').trim())
+    .filter(Boolean);
+  return {
+    projectionType,
+    nonKeyAttributes: projectionType === 'INCLUDE' && nonKeyAttributes.length > 0 ? nonKeyAttributes : undefined,
+  };
+}
+
+function parseGlobalSecondaryIndexes(properties: Record<string, unknown>): DynamoDbGsiModel[] {
+  const indexes: DynamoDbGsiModel[] = [];
 
   for (const gsi of asArray<Record<string, unknown>>(properties.GlobalSecondaryIndexes)) {
     const indexName = String(gsi.IndexName ?? 'GSI').trim();
-    for (const keyEntry of asArray<Record<string, unknown>>(gsi.KeySchema)) {
-      const attributeName = String(keyEntry.AttributeName ?? '').trim();
-      const keyType = String(keyEntry.KeyType ?? '').trim().toUpperCase();
-      if (!attributeName) continue;
-      roles.set(attributeName, { indexName, keyType });
+    const keySchema = parseKeySchema(gsi.KeySchema);
+    if (!keySchema.hash) continue;
+    indexes.push({
+      indexName,
+      hashKey: keySchema.hash,
+      rangeKey: keySchema.range,
+      ...parseProjection(gsi),
+    });
+  }
+
+  return indexes;
+}
+
+function resolveTableName(logicalId: string, properties: Record<string, unknown>): {
+  displayName: string;
+  physicalTableName?: string;
+} {
+  const rawTableName = properties.TableName;
+  if (typeof rawTableName === 'string' && rawTableName.trim()) {
+    return { displayName: rawTableName.trim(), physicalTableName: rawTableName.trim() };
+  }
+  return { displayName: logicalId, physicalTableName: undefined };
+}
+
+function buildColumn(
+  name: string,
+  attributeType: string,
+  options: {
+    isPrimaryKey: boolean;
+    dynamoKeyRole?: ColumnModel['dynamoKeyRole'];
+    dynamoGsiName?: string;
+  },
+): ColumnModel {
+  const mapped = mapAttributeType(attributeType);
+  return {
+    name,
+    sqlType: mapped.sqlType,
+    bsonType: mapped.bsonType,
+    nullable: !options.isPrimaryKey && options.dynamoKeyRole !== 'ttl',
+    isPrimaryKey: options.isPrimaryKey,
+    dynamoKeyRole: options.dynamoKeyRole,
+    dynamoGsiName: options.dynamoGsiName,
+  };
+}
+
+function orderedDynamoColumns(
+  attributeDefinitions: Map<string, string>,
+  mainKey: ReturnType<typeof parseKeySchema>,
+  gsiIndexes: DynamoDbGsiModel[],
+  ttlAttribute: string,
+): ColumnModel[] {
+  const columns: ColumnModel[] = [];
+  const seen = new Set<string>();
+
+  const pushColumn = (column: ColumnModel) => {
+    if (seen.has(column.name)) return;
+    seen.add(column.name);
+    columns.push(column);
+  };
+
+  if (mainKey.hash) {
+    pushColumn(
+      buildColumn(mainKey.hash, attributeDefinitions.get(mainKey.hash) ?? 'S', {
+        isPrimaryKey: true,
+        dynamoKeyRole: 'pk-hash',
+      }),
+    );
+  }
+  if (mainKey.range) {
+    pushColumn(
+      buildColumn(mainKey.range, attributeDefinitions.get(mainKey.range) ?? 'S', {
+        isPrimaryKey: true,
+        dynamoKeyRole: 'pk-range',
+      }),
+    );
+  }
+
+  for (const gsi of gsiIndexes) {
+    pushColumn(
+      buildColumn(gsi.hashKey, attributeDefinitions.get(gsi.hashKey) ?? 'S', {
+        isPrimaryKey: false,
+        dynamoKeyRole: 'gsi-hash',
+        dynamoGsiName: gsi.indexName,
+      }),
+    );
+    if (gsi.rangeKey) {
+      pushColumn(
+        buildColumn(gsi.rangeKey, attributeDefinitions.get(gsi.rangeKey) ?? 'S', {
+          isPrimaryKey: false,
+          dynamoKeyRole: 'gsi-range',
+          dynamoGsiName: gsi.indexName,
+        }),
+      );
     }
   }
 
-  return roles;
+  if (ttlAttribute) {
+    pushColumn(
+      buildColumn(ttlAttribute, attributeDefinitions.get(ttlAttribute) ?? 'N', {
+        isPrimaryKey: false,
+        dynamoKeyRole: 'ttl',
+      }),
+    );
+  }
+
+  for (const [name, attributeType] of attributeDefinitions.entries()) {
+    if (seen.has(name)) continue;
+    pushColumn(buildColumn(name, attributeType, { isPrimaryKey: false }));
+  }
+
+  return columns;
 }
 
 function buildTableModel(logicalId: string, properties: Record<string, unknown>): TableModel {
-  const tableName = String(properties.TableName ?? logicalId).trim() || logicalId;
+  const { displayName, physicalTableName } = resolveTableName(logicalId, properties);
   const attributeDefinitions = new Map<string, string>();
 
   for (const definition of asArray<Record<string, unknown>>(properties.AttributeDefinitions)) {
@@ -121,43 +243,36 @@ function buildTableModel(logicalId: string, properties: Record<string, unknown>)
   }
 
   const mainKey = parseKeySchema(properties.KeySchema);
-  const gsiRoles = collectGsiKeyRoles(properties);
+  const gsiIndexes = parseGlobalSecondaryIndexes(properties);
   const primaryKey = mainKey.ordered;
-
-  const columns: ColumnModel[] = [...attributeDefinitions.entries()].map(([name, attributeType]) => {
-    const mapped = mapAttributeType(attributeType);
-    const isPrimaryKey = primaryKey.includes(name);
-    const gsiRole = gsiRoles.get(name);
-    let sqlType = mapped.sqlType;
-
-    if (isPrimaryKey) {
-      const role = name === mainKey.hash ? 'HASH' : 'RANGE';
-      sqlType = `${mapped.sqlType} (PK ${role})`;
-    } else if (gsiRole) {
-      sqlType = `${mapped.sqlType} (GSI ${gsiRole.indexName} ${gsiRole.keyType})`;
-    } else if (ttlAttribute && name === ttlAttribute) {
-      sqlType = `${mapped.sqlType} (TTL)`;
-    }
-
-    return {
-      name,
-      sqlType,
-      bsonType: mapped.bsonType,
-      nullable: !isPrimaryKey,
-      isPrimaryKey,
-    };
-  });
+  const columns = orderedDynamoColumns(attributeDefinitions, mainKey, gsiIndexes, ttlAttribute);
 
   if (columns.length === 0) {
-    throw new Error(`DynamoDB table "${tableName}" has no AttributeDefinitions.`);
+    throw new Error(`DynamoDB table "${displayName}" has no AttributeDefinitions.`);
   }
 
+  const pitr = asRecord(properties.PointInTimeRecoverySpecification);
+  const sse = asRecord(properties.SSESpecification);
+  const stream = asRecord(properties.StreamSpecification);
+
+  const dynamoDb: DynamoDbTableMetadata = {
+    logicalId,
+    physicalTableName,
+    billingMode: typeof properties.BillingMode === 'string' ? properties.BillingMode : undefined,
+    streamViewType: typeof stream.StreamViewType === 'string' ? stream.StreamViewType : undefined,
+    ttlAttribute: ttlAttribute || undefined,
+    pointInTimeRecovery: pitr.PointInTimeRecoveryEnabled === true || pitr.PointInTimeRecoveryEnabled === 'true',
+    sseEnabled: sse.SSEEnabled === true || sse.SSEEnabled === 'true',
+    globalSecondaryIndexes: gsiIndexes,
+  };
+
   return {
-    name: tableName,
+    name: displayName,
     columns,
     primaryKey: primaryKey.length > 0 ? primaryKey : [columns[0]!.name],
     foreignKeys: [],
     rowCount: 0,
+    dynamoDb,
   };
 }
 

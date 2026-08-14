@@ -144,6 +144,31 @@ export type ColumnModel = {
   nullable: boolean;
   /** True when the column is part of the table's primary key. */
   isPrimaryKey: boolean;
+  /** DynamoDB key role when imported from CloudFormation. */
+  dynamoKeyRole?: 'pk-hash' | 'pk-range' | 'gsi-hash' | 'gsi-range' | 'ttl';
+  /** GSI index name when dynamoKeyRole is gsi-hash or gsi-range. */
+  dynamoGsiName?: string;
+};
+
+/** Global secondary index metadata from a DynamoDB CloudFormation table. */
+export type DynamoDbGsiModel = {
+  indexName: string;
+  hashKey: string;
+  rangeKey?: string;
+  projectionType: 'ALL' | 'KEYS_ONLY' | 'INCLUDE';
+  nonKeyAttributes?: string[];
+};
+
+/** DynamoDB table metadata attached during CloudFormation import. */
+export type DynamoDbTableMetadata = {
+  logicalId: string;
+  physicalTableName?: string;
+  billingMode?: string;
+  streamViewType?: string;
+  ttlAttribute?: string;
+  pointInTimeRecovery?: boolean;
+  sseEnabled?: boolean;
+  globalSecondaryIndexes: DynamoDbGsiModel[];
 };
 
 /** A foreign-key edge from one table's column to another table's column. */
@@ -165,6 +190,8 @@ export type TableModel = {
   foreignKeys: ForeignKeyModel[];
   /** Total number of rows currently in the table. */
   rowCount: number;
+  /** Present when the table was imported from DynamoDB CloudFormation. */
+  dynamoDb?: DynamoDbTableMetadata;
 };
 
 /**
