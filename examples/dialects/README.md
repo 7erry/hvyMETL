@@ -34,7 +34,7 @@ Example shapes follow [JSON Schema examples](https://json-schema.org/learn/json-
 | `cockroachdb` | tree | catalog | [`cockroachdb.sql`](cockroachdb.sql) |
 | `databricks` | archive | catalog | [`databricks.sql`](databricks.sql) |
 | `db2` | extended-reference | catalog | [`db2.sql`](db2.sql) |
-| `dynamodb` | reference | mobile | [`dynamodb.yaml`](dynamodb.yaml) |
+| `dynamodb` | bucket | iot | [`dynamodb.yaml`](dynamodb.yaml) |
 | `firebird` | attribute | catalog | [`firebird.sql`](firebird.sql) |
 | `json-schema` | bucket | iot | [`json-schema.json`](json-schema.json) |
 | `mariadb` | single-collection | mobile | [`mariadb.sql`](mariadb.sql) |

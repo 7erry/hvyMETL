@@ -915,6 +915,142 @@ export function renderDialectExampleDdl(dialectId: string, pattern: PatternId): 
   return renderer(pattern, header);
 }
 
+/** IoT fleet single-table DynamoDB CloudFormation example (committed dialect bundle). */
+export function renderIoTPlatformDynamoDbExample(header: string): string {
+  const yamlHeader = header.replace(/^-- /, '# ');
+  return `${yamlHeader}
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+  Single-Table DynamoDB Implementation for IoT Fleet Management, Device Shadows,
+  and Time-Series Telemetry with automated TTL data lifecycle policies.
+
+Parameters:
+  Environment:
+    Type: String
+    Default: production
+    AllowedValues:
+      - dev
+      - staging
+      - production
+    Description: Target deployment environment.
+
+Resources:
+  IoTPlatformTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub 'iot-telemetry-platform-\${Environment}'
+      BillingMode: PAY_PER_REQUEST
+      
+      # Encryption & Recovery Controls
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
+      SSESpecification:
+        SSEEnabled: true
+      
+      # Streams for real-time anomaly detection & event-driven processing
+      StreamSpecification:
+        StreamViewType: NEW_AND_OLD_IMAGES
+
+      # Automatic cleanup/aging out of high-frequency raw telemetry (e.g., expire after 30 days)
+      TimeToLiveSpecification:
+        AttributeName: ExpireAt
+        Enabled: true
+
+      # Primary and Index Key Attribute Definitions
+      AttributeDefinitions:
+        - AttributeName: PK
+          AttributeType: S
+        - AttributeName: SK
+          AttributeType: S
+        - AttributeName: GSI1PK
+          AttributeType: S
+        - AttributeName: GSI1SK
+          AttributeType: S
+        - AttributeName: GSI2PK
+          AttributeType: S
+        - AttributeName: GSI2SK
+          AttributeType: S
+        - AttributeName: GSI3PK
+          AttributeType: S
+        - AttributeName: GSI3SK
+          AttributeType: S
+
+      # Main Table Key Schema
+      KeySchema:
+        - AttributeName: PK
+          KeyType: HASH
+        - AttributeName: SK
+          KeyType: RANGE
+
+      # Global Secondary Indexes
+      GlobalSecondaryIndexes:
+        # GSI 1: Fleet Management & Device Status Monitoring
+        # Pattern: Query all devices/alerts in a fleet by connectivity status or type
+        - IndexName: GSI1-Fleet-Status-Index
+          KeySchema:
+            - AttributeName: GSI1PK
+              KeyType: HASH
+            - AttributeName: GSI1SK
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+
+        # GSI 2: Global Security & Severity Alert Monitoring
+        # Pattern: Fetch all CRITICAL or HIGH severity alerts across the entire device fleet sorted by timestamp
+        - IndexName: GSI2-Global-Alerts-Index
+          KeySchema:
+            - AttributeName: GSI2PK
+              KeyType: HASH
+            - AttributeName: GSI2SK
+              KeyType: RANGE
+          Projection:
+            ProjectionType: INCLUDE
+            NonKeyAttributes:
+              - DeviceId
+              - EventType
+              - Severity
+              - ErrorCode
+              - Description
+              - Timestamp
+
+        # GSI 3: Firmware Fleet Audit
+        # Pattern: Identify devices running legacy firmware versions for OTA rollout campaigns
+        - IndexName: GSI3-Firmware-Audit-Index
+          KeySchema:
+            - AttributeName: GSI3PK
+              KeyType: HASH
+            - AttributeName: GSI3SK
+              KeyType: RANGE
+          Projection:
+            ProjectionType: KEYS_ONLY
+
+      Tags:
+        - Key: Application
+          Value: IoTPlatform
+        - Key: Environment
+          Value: !Ref Environment
+
+Outputs:
+  TableName:
+    Description: Name of the IoT DynamoDB Table
+    Value: !Ref IoTPlatformTable
+    Export:
+      Name: !Sub '\${AWS::StackName}-TableName'
+
+  TableArn:
+    Description: ARN of the IoT DynamoDB Table
+    Value: !GetAtt IoTPlatformTable.Arn
+    Export:
+      Name: !Sub '\${AWS::StackName}-TableArn'
+
+  TableStreamArn:
+    Description: ARN of the Stream for EventBridge / Kinesis Pipe integration
+    Value: !GetAtt IoTPlatformTable.StreamArn
+    Export:
+      Name: !Sub '\${AWS::StackName}-StreamArn'
+`;
+}
+
 /** CloudFormation template illustrating a design pattern for DynamoDB. */
 export function renderDynamoDbExample(pattern: PatternId, header: string): string {
   const yamlHeader = header.replace(/^-- /, '# ');
@@ -1039,13 +1175,18 @@ export function renderJsonSchemaExample(pattern: PatternId, header: string): str
 /** Render example file contents (SQL, CloudFormation YAML, or JSON Schema bundle). */
 export function renderDialectExampleFile(dialectId: string, pattern: PatternId): string {
   if (dialectId === 'dynamodb') {
-    return renderDynamoDbExample(pattern, dialectExampleHeader(dialectId, pattern));
+    return renderIoTPlatformDynamoDbExample(dialectExampleHeader(dialectId, pattern));
   }
   if (dialectId === 'json-schema') {
     return renderJsonSchemaExample(pattern, dialectExampleHeader(dialectId, pattern));
   }
   return renderDialectExampleDdl(dialectId, pattern);
 }
+
+/** Per-dialect table name overrides when the committed example diverges from the generic pattern shape. */
+export const DIALECT_SIGNATURE_TABLES: Partial<Record<string, string[]>> = {
+  dynamodb: ['io_tplatform_table'],
+};
 
 /** Table names that must exist for a pattern (used by tests). */
 export const PATTERN_SIGNATURE_TABLES: Record<PatternId, string[]> = {

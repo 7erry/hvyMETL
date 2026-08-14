@@ -126,8 +126,20 @@ describe('repo bundled examples', () => {
     expect(dialectExamples).toContain('dialects/json-schema.json');
   });
 
+  it('loads the CMS DynamoDB CloudFormation example with cms profile suggestion', () => {
+    const { path } = resolveBuiltinExamplesDir();
+    const example = listBuiltinExamples(path).find((item) => item.id === 'dynamodb/cms-platform-table.yaml');
+    expect(example?.label).toBe('DynamoDB Cms Platform Table');
+    expect(example?.suggestedProfileId).toBe('cms');
+
+    const { ddl, summary } = readBuiltinExample(path, 'dynamodb/cms-platform-table.yaml');
+    expect(summary.dialect).toBe('dynamodb');
+    expect(ddl).toContain('CmsPlatformTable');
+    expect(ddl).toContain('GSI2-Author-Moderation-Index');
+  });
+
   it('documents the full Load example catalog count (examples/README.md)', () => {
     const { path } = resolveBuiltinExamplesDir();
-    expect(listBuiltinExamples(path)).toHaveLength(40);
+    expect(listBuiltinExamples(path)).toHaveLength(42);
   });
 });

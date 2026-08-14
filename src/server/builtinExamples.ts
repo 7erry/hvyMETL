@@ -28,6 +28,12 @@ const DOMAIN_DIALECTS: Record<string, string> = {
   ledger: 'postgresql',
 };
 
+/** Suggested workload profile for standalone DynamoDB CloudFormation examples. */
+const DYNAMODB_SUGGESTED_PROFILES: Record<string, string> = {
+  'cms-platform-table.yaml': 'cms',
+  'ecommerce-catalog-table.yaml': 'catalog',
+};
+
 /** Human-readable labels for seeded example folders. */
 const DOMAIN_LABELS: Record<string, string> = {
   catalog: 'E-commerce Catalog',
@@ -191,6 +197,7 @@ export function listBuiltinExamples(examplesDir: string): BuiltinExampleSummary[
           label: `DynamoDB ${baseName.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())}`,
           description: readCloudFormationDescription(filePath) ?? 'DynamoDB CloudFormation template example.',
           dialect: 'dynamodb',
+          suggestedProfileId: DYNAMODB_SUGGESTED_PROFILES[fileName],
         });
       }
       continue;

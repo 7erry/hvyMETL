@@ -17,6 +17,7 @@ import {
   dialectExampleFor,
 } from './dialectPatternManifest.js';
 import {
+  DIALECT_SIGNATURE_TABLES,
   PATTERN_SIGNATURE_TABLES,
   renderDialectExampleFile,
 } from './dialectExampleTemplates.js';
@@ -74,7 +75,8 @@ describe('dialect example files', () => {
       }
 
       const tableNames = new Set(model.tables.map((table) => baseTableName(table.name)));
-      for (const expected of PATTERN_SIGNATURE_TABLES[entry.pattern]) {
+      const signatureTables = DIALECT_SIGNATURE_TABLES[dialectId] ?? PATTERN_SIGNATURE_TABLES[entry.pattern];
+      for (const expected of signatureTables) {
         expect(tableNames.has(expected.toLowerCase())).toBe(true);
       }
     },

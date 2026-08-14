@@ -1,8 +1,7 @@
-# dynamodb dialect example — bucket pattern: IoT sensor_readings time series with sites, devices, and operational metadata.
 AWSTemplateFormatVersion: '2010-09-09'
 Description: >
-  Single-Table DynamoDB Implementation for IoT Fleet Management, Device Shadows,
-  and Time-Series Telemetry with automated TTL data lifecycle policies.
+  Single-Table DynamoDB Implementation for an Enterprise Content Management System (CMS).
+  Supports editorial workflows, i18n localization, taxonomy tagging, threaded comments, and digital asset management.
 
 Parameters:
   Environment:
@@ -15,28 +14,28 @@ Parameters:
     Description: Target deployment environment.
 
 Resources:
-  IoTPlatformTable:
+  CmsPlatformTable:
     Type: AWS::DynamoDB::Table
     Properties:
-      TableName: !Sub 'iot-telemetry-platform-${Environment}'
+      TableName: !Sub 'cms-platform-${Environment}'
       BillingMode: PAY_PER_REQUEST
       
-      # Encryption & Recovery Controls
+      # Security & Resilience Settings
       PointInTimeRecoverySpecification:
         PointInTimeRecoveryEnabled: true
       SSESpecification:
         SSEEnabled: true
       
-      # Streams for real-time anomaly detection & event-driven processing
+      # Streams for search indexing (OpenSearch), cache invalidation (CloudFront), and static site generation triggers
       StreamSpecification:
         StreamViewType: NEW_AND_OLD_IMAGES
 
-      # Automatic cleanup/aging out of high-frequency raw telemetry (e.g., expire after 30 days)
+      # Auto-expiration for scheduled preview links, transient draft tokens, or ephemeral cache locks
       TimeToLiveSpecification:
         AttributeName: ExpireAt
         Enabled: true
 
-      # Primary and Index Key Attribute Definitions
+      # Attribute Definitions (Only schema-defined keys for primary & global secondary indexes)
       AttributeDefinitions:
         - AttributeName: PK
           AttributeType: S
@@ -55,7 +54,7 @@ Resources:
         - AttributeName: GSI3SK
           AttributeType: S
 
-      # Main Table Key Schema
+      # Main Table Primary Key Schema
       KeySchema:
         - AttributeName: PK
           KeyType: HASH
@@ -64,9 +63,9 @@ Resources:
 
       # Global Secondary Indexes
       GlobalSecondaryIndexes:
-        # GSI 1: Fleet Management & Device Status Monitoring
-        # Pattern: Query all devices/alerts in a fleet by connectivity status or type
-        - IndexName: GSI1-Fleet-Status-Index
+        # GSI 1: Content Publishing Feeds & Taxonomy Lists
+        # Pattern: Query published content by locale & status ordered by publish date; query articles by category/tag
+        - IndexName: GSI1-PublishFeed-Taxonomy-Index
           KeySchema:
             - AttributeName: GSI1PK
               KeyType: HASH
@@ -75,9 +74,9 @@ Resources:
           Projection:
             ProjectionType: ALL
 
-        # GSI 2: Global Security & Severity Alert Monitoring
-        # Pattern: Fetch all CRITICAL or HIGH severity alerts across the entire device fleet sorted by timestamp
-        - IndexName: GSI2-Global-Alerts-Index
+        # GSI 2: Author Dashboards & Editorial Moderation Queue
+        # Pattern: Fetch drafts/articles by Author OR query comments awaiting moderation (`MOD#PENDING`) ordered by date
+        - IndexName: GSI2-Author-Moderation-Index
           KeySchema:
             - AttributeName: GSI2PK
               KeyType: HASH
@@ -86,16 +85,17 @@ Resources:
           Projection:
             ProjectionType: INCLUDE
             NonKeyAttributes:
-              - DeviceId
-              - EventType
-              - Severity
-              - ErrorCode
-              - Description
-              - Timestamp
+              - ContentId
+              - Title
+              - AuthorId
+              - Status
+              - CommentText
+              - UserHandle
+              - UpdatedAt
 
-        # GSI 3: Firmware Fleet Audit
-        # Pattern: Identify devices running legacy firmware versions for OTA rollout campaigns
-        - IndexName: GSI3-Firmware-Audit-Index
+        # GSI 3: Fast Slug Resolution & Asset Catalog Routing
+        # Pattern: Fetch content ID by SEO URL Slug or query digital assets by media type (IMAGE, VIDEO, PDF)
+        - IndexName: GSI3-Slug-Asset-Index
           KeySchema:
             - AttributeName: GSI3PK
               KeyType: HASH
@@ -106,25 +106,25 @@ Resources:
 
       Tags:
         - Key: Application
-          Value: IoTPlatform
+          Value: CMSPlatform
         - Key: Environment
           Value: !Ref Environment
 
 Outputs:
   TableName:
-    Description: Name of the IoT DynamoDB Table
-    Value: !Ref IoTPlatformTable
+    Description: Name of the CMS DynamoDB Table
+    Value: !Ref CmsPlatformTable
     Export:
       Name: !Sub '${AWS::StackName}-TableName'
 
   TableArn:
-    Description: ARN of the IoT DynamoDB Table
-    Value: !GetAtt IoTPlatformTable.Arn
+    Description: ARN of the CMS DynamoDB Table
+    Value: !GetAtt CmsPlatformTable.Arn
     Export:
       Name: !Sub '${AWS::StackName}-TableArn'
 
   TableStreamArn:
-    Description: ARN of the Stream for EventBridge / Kinesis Pipe integration
-    Value: !GetAtt IoTPlatformTable.StreamArn
+    Description: ARN of the Stream for EventBridge / OpenSearch / SSG triggers
+    Value: !GetAtt CmsPlatformTable.StreamArn
     Export:
       Name: !Sub '${AWS::StackName}-StreamArn'

@@ -1,14 +1,14 @@
 # Example domains and design-pattern coverage
 
-This folder holds **40 built-in schemas** exposed in Migration Studio **Instant Schema Import → Load example**
+This folder holds **42 built-in schemas** exposed in Migration Studio **Instant Schema Import → Load example**
 (served from the repo `examples/` tree, or `~/hvymetl/examples` on hosted deployments). They fall into four groups:
 
 | Group | Count | Purpose |
 | --- | ---: | --- |
 | [Seeded SQLite domains](#seeded-sqlite-domains-7) | 7 | Full workload demos with `.sql`, optional `.db` (via `seed-examples`), CSV generators, diagram JSON |
-| [Enterprise & Oracle DDL](#enterprise-oracle-and-dynamodb-ddl) | 9 | PostgreSQL ledger, multi-file Oracle packs, standalone DynamoDB CloudFormation |
+| [Enterprise & Oracle DDL](#enterprise-oracle-and-dynamodb-ddl) | 10 | PostgreSQL ledger, multi-file Oracle packs, standalone DynamoDB CloudFormation |
 | [Per-dialect pattern demos](#per-dialect-pattern-demos-24) | 24 | One script per import dialect (`dialects/`), each showcasing a single design pattern |
-| **Total Load example entries** | **40** | Same list as `GET /api/schema/builtin-examples` ([`listBuiltinExamples`](../src/server/builtinExamples.ts)) |
+| **Total Load example entries** | **42** | Same list as `GET /api/schema/builtin-examples` ([`listBuiltinExamples`](../src/server/builtinExamples.ts)) |
 
 Seven seeded SQLite domains demonstrate how hvyMETL applies MongoDB schema design patterns from the [`knowledge/`](../knowledge/) base. Each
 seeded domain ships DDL (`.sql`), a deterministic seeder ([`src/examples/seed.ts`](../src/examples/seed.ts)),
@@ -38,12 +38,14 @@ Alphabetical picker labels (API `exampleId` → file under `examples/`).
 | --- | --- | --- | --- |
 | Amazon Aurora (MySQL) - Catalog | `dialects/aurora-mysql.sql` | `aurora-mysql` | `catalog` |
 | Amazon Aurora (PostgreSQL) - Catalog | `dialects/aurora-postgresql.sql` | `aurora-postgresql` | `catalog` |
-| Amazon DynamoDB (CloudFormation) - Mobile | `dialects/dynamodb.yaml` | `dynamodb` | `mobile` |
+| Amazon DynamoDB (CloudFormation) - IoT | `dialects/dynamodb.yaml` | `dynamodb` | `iot` |
 | Amazon Redshift - CMS | `dialects/redshift.sql` | `redshift` | `cms` |
 | ClickHouse - Catalog | `dialects/clickhouse.sql` | `clickhouse` | `catalog` |
 | CockroachDB - Catalog | `dialects/cockroachdb.sql` | `cockroachdb` | `catalog` |
 | Content Management (CMS) | `cms` | `sqlite` | `cms` |
 | Databricks SQL / Spark SQL - Catalog | `dialects/databricks.sql` | `databricks` | `catalog` |
+| DynamoDB CMS Platform Table | `dynamodb/cms-platform-table.yaml` | `dynamodb` | `cms` |
+| DynamoDB Ecommerce Catalog Table | `dynamodb/ecommerce-catalog-table.yaml` | `dynamodb` | `catalog` |
 | DynamoDB Orders Table | `dynamodb/orders-table.yaml` | `dynamodb` | — |
 | E-commerce Catalog | `catalog` | `sqlite` | `catalog` |
 | Financial Ledger (Enterprise) | `ledger` | `postgresql` | `ledger` |
@@ -103,6 +105,8 @@ After `npm run seed-examples`, each folder also contains a matching `.db` for `d
 | Oracle Customer Loyalty | [`oracle/oracle-customerloyalty.ddl`](oracle/oracle-customerloyalty.ddl) | `oracle` | |
 | Oracle Invoices | [`oracle/oracle-invoices.ddl`](oracle/oracle-invoices.ddl) | `oracle` | |
 | Oracle Supply Chain | [`oracle/oracle-supplychain.ddl`](oracle/oracle-supplychain.ddl) | `oracle` | |
+| DynamoDB CMS platform | [`dynamodb/cms-platform-table.yaml`](dynamodb/cms-platform-table.yaml) | `dynamodb` | Single-table CMS; suggested profile `cms` |
+| DynamoDB ecommerce catalog | [`dynamodb/ecommerce-catalog-table.yaml`](dynamodb/ecommerce-catalog-table.yaml) | `dynamodb` | Single-table catalog; suggested profile `catalog` |
 | DynamoDB orders | [`dynamodb/orders-table.yaml`](dynamodb/orders-table.yaml) | `dynamodb` | CloudFormation table template |
 
 [`oracle/hvymetl-diagram-Oracle.json`](oracle/hvymetl-diagram-Oracle.json) and [`oracle/generate_mock_data.py`](oracle/generate_mock_data.py) support diagram import and mock data; they are not separate **Load example** entries.

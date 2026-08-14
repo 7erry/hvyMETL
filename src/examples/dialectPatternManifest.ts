@@ -82,14 +82,21 @@ const NON_SQL_DIALECT_EXTENSIONS: Record<string, string> = {
   'json-schema': 'json',
 };
 
+/** Manual overrides when a committed dialect example uses a curated schema instead of the shuffled pattern. */
+const DIALECT_MANIFEST_OVERRIDES: Partial<Record<string, Pick<DialectExampleEntry, 'pattern' | 'suggestedProfileId'>>> = {
+  dynamodb: { pattern: 'bucket', suggestedProfileId: 'iot' },
+};
+
 /** Stable manifest: one randomized design pattern per supported dialect. */
 export const DIALECT_PATTERN_MANIFEST: DialectExampleEntry[] = SHUFFLED_DIALECTS.map((dialectId, index) => {
   const pattern = SHUFFLED_PATTERNS[index % SHUFFLED_PATTERNS.length]!;
   const extension = NON_SQL_DIALECT_EXTENSIONS[dialectId] ?? 'sql';
+  const override = DIALECT_MANIFEST_OVERRIDES[dialectId];
+  const resolvedPattern = override?.pattern ?? pattern;
   return {
     dialectId,
-    pattern,
-    suggestedProfileId: PATTERN_SUGGESTED_PROFILE[pattern] ?? 'catalog',
+    pattern: resolvedPattern,
+    suggestedProfileId: override?.suggestedProfileId ?? PATTERN_SUGGESTED_PROFILE[resolvedPattern] ?? 'catalog',
     fileName: `${dialectId}.${extension}`,
   };
 });

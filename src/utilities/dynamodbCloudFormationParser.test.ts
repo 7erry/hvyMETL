@@ -82,6 +82,11 @@ Resources:
               - UpdatedAt
 `;
 
+const CMS_PLATFORM_TEMPLATE = readFileSync(
+  join(dirname(fileURLToPath(import.meta.url)), '../../examples/dynamodb/cms-platform-table.yaml'),
+  'utf8',
+);
+
 const JSON_TEMPLATE = JSON.stringify({
   AWSTemplateFormatVersion: '2010-09-09',
   Resources: {
@@ -171,6 +176,26 @@ describe('parseDynamoDbCloudFormationToModel', () => {
       projectionType: 'INCLUDE',
       nonKeyAttributes: ['ItemName', 'PrimaryImageUrl', 'Price', 'InventoryCount', 'ProductStatus', 'UpdatedAt'],
     });
+  });
+
+  it('parses the bundled cms-platform-table CloudFormation YAML example', () => {
+    const model = parseDynamoDbCloudFormationToModel(CMS_PLATFORM_TEMPLATE, 'ddl:dynamodb');
+    const table = model.tables[0]!;
+
+    expect(table.name).toBe('CmsPlatformTable');
+    expect(table.dynamoDb?.logicalId).toBe('CmsPlatformTable');
+    expect(table.dynamoDb?.billingMode).toBe('PAY_PER_REQUEST');
+    expect(table.dynamoDb?.streamViewType).toBe('NEW_AND_OLD_IMAGES');
+    expect(table.dynamoDb?.pointInTimeRecovery).toBe(true);
+    expect(table.dynamoDb?.ttlAttribute).toBe('ExpireAt');
+    expect(table.dynamoDb?.globalSecondaryIndexes).toHaveLength(3);
+    expect(table.dynamoDb?.globalSecondaryIndexes[0]?.indexName).toBe('GSI1-PublishFeed-Taxonomy-Index');
+    expect(table.dynamoDb?.globalSecondaryIndexes[1]).toMatchObject({
+      indexName: 'GSI2-Author-Moderation-Index',
+      projectionType: 'INCLUDE',
+      nonKeyAttributes: ['ContentId', 'Title', 'AuthorId', 'Status', 'CommentText', 'UserHandle', 'UpdatedAt'],
+    });
+    expect(table.dynamoDb?.globalSecondaryIndexes[2]?.projectionType).toBe('KEYS_ONLY');
   });
 
   it('parses JSON CloudFormation templates', () => {
