@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ComponentProps } from 'react';
 import { MongoLogo } from './components/MongoLogo';
 import { MigrationArtifactsView } from './components/MigrationArtifactsView';
-import { SchemaCanvas, deleteTableFromModel, duplicateTableInModel } from './components/SchemaCanvas';
+import { SchemaCanvas, deleteTableFromModel } from './components/SchemaCanvas';
 import { SchemaCanvasWithCopilot } from './components/SchemaCanvasWithCopilot';
 import { WorkspaceCanvasShell } from './components/WorkspaceCanvasShell';
 import { CopilotHotkeys } from './components/CopilotHotkeys';
@@ -630,22 +630,6 @@ export default function App() {
     () => dialects.find((d) => d.id === dialect)?.label ?? dialect,
     [dialects, dialect],
   );
-
-  const handleDuplicate = (tableName: string) => {
-    if (!model) return;
-    const { model: next, positions: nextPos } = duplicateTableInModel(model, tableName, positions);
-    setSession((prev) => ({
-      ...prev,
-      model: next,
-      positions: nextPos,
-      cardinalityOverrides: pruneCardinalityOverrides(next, prev.cardinalityOverrides),
-      forceEmbedOverrides: pruneForceEmbedOverrides(next, prev.forceEmbedOverrides),
-      embedDirectionOverrides: pruneEmbedDirectionOverrides(next, prev.embedDirectionOverrides),
-      timeSeriesOverrides: pruneTimeSeriesOverrides(next, prev.timeSeriesOverrides),
-      selectedTable: next.tables.find((t) => t.name.startsWith(`${tableName}_copy`))?.name ?? tableName,
-    }));
-    setStatus(`Duplicated table ${tableName}.`);
-  };
 
   const handleDelete = (tableName: string) => {
     if (!model) return;
@@ -1521,7 +1505,6 @@ export default function App() {
                       table={selectedTableModel}
                       incoming={incomingReferences}
                       onClose={() => setSessionField('selectedTable', null)}
-                      onDuplicate={handleDuplicate}
                       onDelete={handleDelete}
                     />
                   </div>
@@ -1563,18 +1546,6 @@ export default function App() {
                             onClick={() => setSessionField('selectedTable', t.name)}
                           >
                             <span>{t.name}</span>
-                            <button
-                              type="button"
-                              className="btn-icon"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleDuplicate(t.name);
-                              }}
-                              title="Duplicate table"
-                              aria-label={`Duplicate ${t.name}`}
-                            >
-                              ⧉
-                            </button>
                           </li>
                         ))}
                       </ul>
@@ -1729,7 +1700,6 @@ export default function App() {
                         }
                         onPositionsChange={(p) => setSessionField('positions', p)}
                         positions={positions}
-                        onDuplicateTable={handleDuplicate}
                         selectedTable={selectedTable}
                         onSelectTable={(name) => setSessionField('selectedTable', name)}
                       />

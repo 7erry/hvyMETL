@@ -42,7 +42,6 @@ type SchemaCanvasProps = {
   onRelationshipNotationChange: (notation: RelationshipNotation) => void;
   onPositionsChange: (positions: Record<string, { x: number; y: number }>) => void;
   positions: Record<string, { x: number; y: number }>;
-  onDuplicateTable: (name: string) => void;
   selectedTable: string | null;
   onSelectTable: (name: string | null) => void;
   highlightedTables?: string[];
@@ -87,7 +86,6 @@ function buildReferencedColumns(model: SqlStructuralModel): Map<string, Set<stri
 function modelToFlow(
   model: SqlStructuralModel,
   positions: Record<string, { x: number; y: number }>,
-  onDuplicate: (name: string) => void,
   selectedTable: string | null,
   highlightedTables: string[],
   connectionType: RelationshipConnectionType,
@@ -118,7 +116,6 @@ function modelToFlow(
       position: pos,
       data: {
         table,
-        onDuplicate,
         selected: table.name === selectedTable,
         highlighted: highlightedTables.includes(table.name),
         related: related.has(table.name),
@@ -178,7 +175,6 @@ export function SchemaCanvas({
   onRelationshipNotationChange,
   onPositionsChange,
   positions,
-  onDuplicateTable,
   selectedTable,
   onSelectTable,
   highlightedTables = [],
@@ -194,7 +190,6 @@ export function SchemaCanvas({
         ? modelToFlow(
             model,
             positions,
-            onDuplicateTable,
             selectedTable,
             highlightedTables,
             connectionType,
@@ -207,7 +202,6 @@ export function SchemaCanvas({
     [
       model,
       positions,
-      onDuplicateTable,
       selectedTable,
       highlightedTables,
       connectionType,

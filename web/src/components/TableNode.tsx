@@ -12,7 +12,6 @@ import type { GuardrailIssue } from '../copilot/types';
 
 export type TableNodeData = {
   table: TableModel;
-  onDuplicate?: (name: string) => void;
   selected?: boolean;
   highlighted?: boolean;
   related?: boolean;
@@ -62,7 +61,6 @@ function DynamoDbTableBody({ table }: { table: TableModel }) {
 function TableNodeComponent({ data }: NodeProps & { data: TableNodeData }) {
   const {
     table,
-    onDuplicate,
     selected,
     highlighted,
     related,
@@ -105,20 +103,6 @@ function TableNodeComponent({ data }: NodeProps & { data: TableNodeData }) {
             ⚠ {guardrailBadge.label}
           </button>
         ) : null}
-        {onDuplicate && (
-          <button
-            type="button"
-            className="btn-icon"
-            onClick={(e) => {
-              e.stopPropagation();
-              onDuplicate(table.name);
-            }}
-            title="Duplicate table"
-            aria-label={`Duplicate ${table.name}`}
-          >
-            ⧉
-          </button>
-        )}
       </header>
       {isDynamoDb ? (
         <DynamoDbTableBody table={table} />

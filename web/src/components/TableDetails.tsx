@@ -10,11 +10,10 @@ type TableDetailsProps = {
   table: TableModel | null;
   incoming?: IncomingReference[];
   onClose: () => void;
-  onDuplicate: (name: string) => void;
   onDelete: (name: string) => void;
 };
 
-export function TableDetails({ table, incoming = [], onClose, onDuplicate, onDelete }: TableDetailsProps) {
+export function TableDetails({ table, incoming = [], onClose, onDelete }: TableDetailsProps) {
   if (!table) return null;
 
   return (
@@ -22,9 +21,6 @@ export function TableDetails({ table, incoming = [], onClose, onDuplicate, onDel
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
         <h3 style={{ margin: 0 }}>{table.name}</h3>
         <div style={{ display: 'flex', gap: '0.35rem' }}>
-          <button type="button" className="tertiary" onClick={() => onDuplicate(table.name)} title="Duplicate table">
-            Duplicate
-          </button>
           <button
             type="button"
             className="danger secondary"
