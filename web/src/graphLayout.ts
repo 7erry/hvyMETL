@@ -287,7 +287,9 @@ export function estimateTableNodeSize(
 
 export function estimateCollectionNodeSize(fieldCount: number, mergedCount: number): GraphLayoutNodeSize {
   const mergedLines = mergedCount > 1 ? 1 : 0;
-  return { width: 380, height: 72 + mergedLines * 16 + fieldCount * 34 };
+  const headerAndMeta = 58;
+  const rowHeight = 22;
+  return { width: 340, height: headerAndMeta + mergedLines * 12 + fieldCount * rowHeight };
 }
 
 function sqlEdges(model: SqlStructuralModel): GraphLayoutEdge[] {

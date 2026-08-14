@@ -90,7 +90,9 @@ function CollectionNodeComponent({ data }: NodeProps & { data: CollectionNodeDat
                 {mongoFieldTagPrefix(field.tags)}
                 {field.name}
               </span>
-              <span className="column-type">{field.bsonType}</span>
+              <span className="column-type" title={field.bsonType}>
+                {field.bsonType}
+              </span>
               {isLink ? (
                 <Handle
                   type="source"

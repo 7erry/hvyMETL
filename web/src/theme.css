@@ -577,9 +577,9 @@ textarea {
   background: #023430;
   border: 1px solid var(--accent-border);
   border-radius: 8px;
-  min-width: 280px;
-  max-width: 400px;
-  font-size: 0.8rem;
+  min-width: 260px;
+  max-width: 380px;
+  font-size: 0.875rem;
   box-shadow: 0 2px 8px rgba(0, 30, 43, 0.35);
   transition: opacity 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
 }
@@ -604,7 +604,8 @@ textarea {
   align-items: center;
   gap: 0.35rem;
   background: #014e3d;
-  padding: 0.5rem 0.75rem;
+  padding: 0.4rem 0.65rem;
+  font-size: 0.95rem;
   font-weight: 700;
   color: #00ed64;
   border-radius: 6px 6px 0 0;
@@ -616,11 +617,11 @@ textarea {
 }
 
 .collection-node__badge {
-  font-size: 0.6rem;
+  font-size: 0.65rem;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  padding: 0.1rem 0.35rem;
+  padding: 0.08rem 0.3rem;
   border-radius: 4px;
   background: rgba(0, 237, 100, 0.15);
   color: var(--mdb-spring-green);
@@ -628,17 +629,17 @@ textarea {
 
 .collection-node__source {
   margin: 0;
-  padding: 0.25rem 0.75rem 0;
-  font-size: 0.68rem;
-  opacity: 0.65;
+  padding: 0.15rem 0.65rem 0;
+  font-size: 0.75rem;
+  opacity: 0.7;
   color: var(--mdb-spring-green);
 }
 
 .collection-node__merged {
   margin: 0;
-  padding: 0.15rem 0.75rem 0;
-  font-size: 0.62rem;
-  opacity: 0.75;
+  padding: 0.08rem 0.65rem 0;
+  font-size: 0.72rem;
+  opacity: 0.78;
   color: var(--mdb-spring-green);
   font-style: italic;
 }
@@ -646,13 +647,13 @@ textarea {
 .collection-node__patterns {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.25rem;
-  padding: 0.35rem 0.75rem 0;
+  gap: 0.2rem;
+  padding: 0.2rem 0.65rem 0;
 }
 
 .collection-node__pattern {
-  font-size: 0.62rem;
-  padding: 0.1rem 0.35rem;
+  font-size: 0.68rem;
+  padding: 0.06rem 0.3rem;
   border-radius: 4px;
   background: rgba(0, 104, 74, 0.45);
   color: var(--mdb-spring-green);
@@ -661,33 +662,37 @@ textarea {
 .collection-node ul {
   list-style: none;
   margin: 0;
-  padding: 0.35rem 0;
+  padding: 0.15rem 0;
 }
 
 .collection-node li {
   position: relative;
   display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: 0.12rem;
-  padding: 0.3rem 0.85rem;
+  align-items: baseline;
+  gap: 0.45rem;
+  padding: 0.12rem 0.75rem;
   color: var(--mdb-spring-green);
   font-family: ui-monospace, monospace;
-  font-size: 0.75rem;
+  font-size: 0.85rem;
   line-height: 1.25;
 }
 
 .collection-node .column-name {
+  flex: 1;
   min-width: 0;
   overflow-wrap: anywhere;
   word-break: normal;
 }
 
 .collection-node .column-type {
-  align-self: flex-end;
-  opacity: 0.62;
-  font-size: 0.64rem;
+  flex-shrink: 0;
+  max-width: 52%;
+  opacity: 0.72;
+  font-size: 0.78rem;
+  text-align: right;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .collection-node li.pk {
@@ -710,9 +715,9 @@ textarea {
 
 .collection-node__footer {
   position: relative;
-  padding: 0.35rem 1.1rem 0.5rem;
-  font-size: 0.68rem;
-  opacity: 0.75;
+  padding: 0.25rem 0.85rem 0.35rem;
+  font-size: 0.75rem;
+  opacity: 0.78;
   border-top: 1px solid rgba(0, 104, 74, 0.6);
 }
 
