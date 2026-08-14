@@ -129,13 +129,26 @@ describe('repo bundled examples', () => {
   it('loads the CMS DynamoDB CloudFormation example with cms profile suggestion', () => {
     const { path } = resolveBuiltinExamplesDir();
     const example = listBuiltinExamples(path).find((item) => item.id === 'dynamodb/cms-platform-table.yaml');
-    expect(example?.label).toBe('DynamoDB Cms Platform Table');
+    expect(example?.label).toBe('Amazon DynamoDB (CloudFormation) - CMS Platform');
     expect(example?.suggestedProfileId).toBe('cms');
 
     const { ddl, summary } = readBuiltinExample(path, 'dynamodb/cms-platform-table.yaml');
     expect(summary.dialect).toBe('dynamodb');
     expect(ddl).toContain('CmsPlatformTable');
     expect(ddl).toContain('GSI2-Author-Moderation-Index');
+  });
+
+  it('prefixes every DynamoDB Load example with Amazon DynamoDB and excludes the legacy Mobile dialect entry', () => {
+    const { path } = resolveBuiltinExamplesDir();
+    const dynamoExamples = listBuiltinExamples(path).filter((item) => item.dialect === 'dynamodb');
+    expect(dynamoExamples.length).toBeGreaterThan(0);
+    for (const example of dynamoExamples) {
+      expect(example.label.startsWith('Amazon DynamoDB')).toBe(true);
+      expect(example.label).not.toMatch(/\bMobile\b/);
+    }
+    const dialectDynamo = listBuiltinExamples(path).find((item) => item.id === 'dialects/dynamodb.yaml');
+    expect(dialectDynamo?.label).toBe('Amazon DynamoDB (CloudFormation) - IoT');
+    expect(dialectDynamo?.suggestedProfileId).toBe('iot');
   });
 
   it('documents the full Load example catalog count (examples/README.md)', () => {

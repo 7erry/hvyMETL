@@ -44,9 +44,9 @@ Alphabetical picker labels (API `exampleId` → file under `examples/`).
 | CockroachDB - Catalog | `dialects/cockroachdb.sql` | `cockroachdb` | `catalog` |
 | Content Management (CMS) | `cms` | `sqlite` | `cms` |
 | Databricks SQL / Spark SQL - Catalog | `dialects/databricks.sql` | `databricks` | `catalog` |
-| DynamoDB CMS Platform Table | `dynamodb/cms-platform-table.yaml` | `dynamodb` | `cms` |
-| DynamoDB Ecommerce Catalog Table | `dynamodb/ecommerce-catalog-table.yaml` | `dynamodb` | `catalog` |
-| DynamoDB Orders Table | `dynamodb/orders-table.yaml` | `dynamodb` | — |
+| Amazon DynamoDB (CloudFormation) - CMS Platform | `dynamodb/cms-platform-table.yaml` | `dynamodb` | `cms` |
+| Amazon DynamoDB (CloudFormation) - Ecommerce Catalog | `dynamodb/ecommerce-catalog-table.yaml` | `dynamodb` | `catalog` |
+| Amazon DynamoDB (CloudFormation) - Orders | `dynamodb/orders-table.yaml` | `dynamodb` | — |
 | E-commerce Catalog | `catalog` | `sqlite` | `catalog` |
 | Financial Ledger (Enterprise) | `ledger` | `postgresql` | `ledger` |
 | Firebird - Catalog | `dialects/firebird.sql` | `firebird` | `catalog` |
@@ -105,9 +105,9 @@ After `npm run seed-examples`, each folder also contains a matching `.db` for `d
 | Oracle Customer Loyalty | [`oracle/oracle-customerloyalty.ddl`](oracle/oracle-customerloyalty.ddl) | `oracle` | |
 | Oracle Invoices | [`oracle/oracle-invoices.ddl`](oracle/oracle-invoices.ddl) | `oracle` | |
 | Oracle Supply Chain | [`oracle/oracle-supplychain.ddl`](oracle/oracle-supplychain.ddl) | `oracle` | |
-| DynamoDB CMS platform | [`dynamodb/cms-platform-table.yaml`](dynamodb/cms-platform-table.yaml) | `dynamodb` | Single-table CMS; suggested profile `cms` |
-| DynamoDB ecommerce catalog | [`dynamodb/ecommerce-catalog-table.yaml`](dynamodb/ecommerce-catalog-table.yaml) | `dynamodb` | Single-table catalog; suggested profile `catalog` |
-| DynamoDB orders | [`dynamodb/orders-table.yaml`](dynamodb/orders-table.yaml) | `dynamodb` | CloudFormation table template |
+| Amazon DynamoDB CMS platform | [`dynamodb/cms-platform-table.yaml`](dynamodb/cms-platform-table.yaml) | `dynamodb` | Single-table CMS; suggested profile `cms` |
+| Amazon DynamoDB ecommerce catalog | [`dynamodb/ecommerce-catalog-table.yaml`](dynamodb/ecommerce-catalog-table.yaml) | `dynamodb` | Single-table catalog; suggested profile `catalog` |
+| Amazon DynamoDB orders | [`dynamodb/orders-table.yaml`](dynamodb/orders-table.yaml) | `dynamodb` | CloudFormation table template |
 
 [`oracle/hvymetl-diagram-Oracle.json`](oracle/hvymetl-diagram-Oracle.json) and [`oracle/generate_mock_data.py`](oracle/generate_mock_data.py) support diagram import and mock data; they are not separate **Load example** entries.
 

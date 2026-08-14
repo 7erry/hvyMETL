@@ -8,6 +8,7 @@ import { homedir } from 'node:os';
 import { dirname, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { dialectExampleFor, dialectExamplePickerLabel } from '../examples/dialectPatternManifest.js';
+import { getDialectLabel } from '../dialects.js';
 
 const REPO_ROOT = join(dirname(fileURLToPath(import.meta.url)), '../..');
 
@@ -33,6 +34,24 @@ const DYNAMODB_SUGGESTED_PROFILES: Record<string, string> = {
   'cms-platform-table.yaml': 'cms',
   'ecommerce-catalog-table.yaml': 'catalog',
 };
+
+/** Standalone CloudFormation bundle titles (`Amazon DynamoDB (CloudFormation) - …`). */
+const DYNAMODB_STANDALONE_LABEL_SUFFIX: Record<string, string> = {
+  'cms-platform-table.yaml': 'CMS Platform',
+  'ecommerce-catalog-table.yaml': 'Ecommerce Catalog',
+  'orders-table.yaml': 'Orders',
+};
+
+/** Build a Load example label for a file under examples/dynamodb/. */
+function labelFromDynamoDbFile(fileName: string): string {
+  const suffix =
+    DYNAMODB_STANDALONE_LABEL_SUFFIX[fileName] ??
+    fileName
+      .replace(/\.(ya?ml|json|template)$/i, '')
+      .replace(/-/g, ' ')
+      .replace(/\b\w/g, (character) => character.toUpperCase());
+  return `${getDialectLabel('dynamodb')} - ${suffix}`;
+}
 
 /** Human-readable labels for seeded example folders. */
 const DOMAIN_LABELS: Record<string, string> = {
@@ -190,12 +209,13 @@ export function listBuiltinExamples(examplesDir: string): BuiltinExampleSummary[
       for (const fileName of readdirSync(dynamoDir).sort()) {
         if (!/\.(ya?ml|json|template)$/i.test(fileName)) continue;
         const filePath = join(dynamoDir, fileName);
-        const baseName = fileName.replace(/\.(ya?ml|json|template)$/i, '');
         const id = `${domain}/${fileName}`;
         summaries.push({
           id,
-          label: `DynamoDB ${baseName.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())}`,
-          description: readCloudFormationDescription(filePath) ?? 'DynamoDB CloudFormation template example.',
+          label: labelFromDynamoDbFile(fileName),
+          description:
+            readCloudFormationDescription(filePath) ??
+            `${getDialectLabel('dynamodb')} template example.`,
           dialect: 'dynamodb',
           suggestedProfileId: DYNAMODB_SUGGESTED_PROFILES[fileName],
         });
