@@ -5,9 +5,18 @@
  */
 
 import { describe, expect, it } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import type { RelationshipModel, SqlStructuralModel, TableModel } from '../types.js';
 import { WORKLOAD_PROFILES, buildCustomProfile } from '../profiles/profiles.js';
 import { buildDirectEmbedPlansByTable, buildMigrationPlan, isJunctionTable, isLineItemsChild, isMetaTable, isReverseEmbedHostTable, shouldDefaultEmbedLineItems } from './patternSelector.js';
+import { parseDynamoDbCloudFormationToModel } from '../utilities/dynamodbCloudFormationParser.js';
+
+const ECOMMERCE_CATALOG_TEMPLATE = readFileSync(
+  join(dirname(fileURLToPath(import.meta.url)), '../../examples/dynamodb/ecommerce-catalog-table.yaml'),
+  'utf8',
+);
 
 /** Build a minimal TableModel with sensible defaults. */
 function table(partial: Partial<TableModel> & { name: string }): TableModel {
@@ -1266,5 +1275,24 @@ describe('migration-principles helpers', () => {
         'orders',
       ),
     ).toBe(true);
+  });
+
+  it('names DynamoDB GSI key fields from GSI index names in the migration plan', () => {
+    const model = parseDynamoDbCloudFormationToModel(ECOMMERCE_CATALOG_TEMPLATE);
+    const plan = buildMigrationPlan(model, WORKLOAD_PROFILES.catalog);
+    const collection = plan.collections[0]!;
+    const properties = (collection.jsonSchema as { properties?: Record<string, unknown> }).properties ?? {};
+
+    expect(properties).toHaveProperty('partitionKey');
+    expect(properties).toHaveProperty('sortKey');
+    expect(properties).toHaveProperty('gSI1CategoryPriceIndex');
+    expect(properties).toHaveProperty('gSI1CategoryPriceIndexSortKey');
+    expect(properties).toHaveProperty('gSI2SKUBrandIndex');
+    expect(properties).toHaveProperty('gSI3SellerStatusIndex');
+    expect(properties).toHaveProperty('expireAt');
+    expect(properties).not.toHaveProperty('gSI1PK');
+    expect(properties).not.toHaveProperty('gSI1SK');
+    expect(properties).not.toHaveProperty('pK');
+    expect(properties).not.toHaveProperty('sK');
   });
 });

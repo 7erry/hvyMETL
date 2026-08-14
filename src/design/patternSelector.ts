@@ -53,6 +53,7 @@ import type {
 } from '../types.js';
 import { isActiveTimeSeriesOverride, normalizeTimeSeriesOverrides } from './timeSeriesOverrides.js';
 import { singularize, toCamelCase, toPascalCase } from '../utilities/naming.js';
+import { mongoFieldNameForColumn } from '../utilities/mongoFieldNaming.js';
 import {
   EMBED_LEANING_PERCENT,
   LINE_ITEMS_EMBED_MAX,
@@ -483,7 +484,7 @@ function buildTableColumnProperties(table: TableModel): Record<string, unknown> 
   const properties: Record<string, unknown> = {};
   for (const column of table.columns) {
     const types = column.nullable ? [column.bsonType, 'null'] : column.bsonType;
-    properties[toCamelCase(column.name)] = {
+    properties[mongoFieldNameForColumn(column)] = {
       bsonType: types,
       description: `From SQL column ${table.name}.${column.name} (${column.sqlType}).`,
     };
@@ -498,7 +499,7 @@ function buildReverseEmbeddedParentProperties(table: TableModel): Record<string,
   for (const column of table.columns) {
     if (primaryKeyColumns.has(column.name)) continue;
     const types = column.nullable ? [column.bsonType, 'null'] : column.bsonType;
-    properties[toCamelCase(column.name)] = {
+    properties[mongoFieldNameForColumn(column)] = {
       bsonType: types,
       description: `From SQL column ${table.name}.${column.name} (${column.sqlType}).`,
     };
@@ -519,7 +520,7 @@ function buildBaseProperties(
     if (column.isPrimaryKey && table.primaryKey.length === 1) continue; // becomes _id
     if (excludeColumns.has(column.name)) continue;
     const types = column.nullable ? [column.bsonType, 'null'] : column.bsonType;
-    properties[toCamelCase(column.name)] = {
+    properties[mongoFieldNameForColumn(column)] = {
       bsonType: types,
       description: `From SQL column ${table.name}.${column.name} (${column.sqlType}).`,
     };

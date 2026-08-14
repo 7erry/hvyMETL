@@ -1,3 +1,13 @@
+## hvyMETL 4.2.13
+
+**DynamoDB GSI fields use index names in MongoDB plans** — GSI hash keys map to camelCased GSI index names (e.g. `GSI1-Category-Price-Index` → `gSI1CategoryPriceIndex`) instead of generic `gSI1PK`; range keys append `SortKey`. Table PK/SK become `partitionKey` / `sortKey`.
+
+### Verification
+
+- `npx vitest run src/utilities/mongoFieldNaming.test.ts src/design/patternSelector.test.ts -t DynamoDB`
+
+---
+
 ## hvyMETL 4.2.12
 
 **DynamoDB CloudFormation diagram layout** — DynamoDB imports now render grouped primary-key, GSI, and TTL sections with capability chips (billing mode, streams, PITR, SSE) instead of squeezing long `(GSI … HASH)` labels into SQL-style rows.

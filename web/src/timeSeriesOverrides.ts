@@ -1,6 +1,7 @@
 import type { TimeSeriesGranularity } from './migrationPlanTypes';
 import type { SqlStructuralModel, TableModel } from './types';
 import { toCamelCase } from '../../src/utilities/naming.js';
+import { mongoFieldNameForColumn } from '../../src/utilities/mongoFieldNaming.js';
 
 export type TimeSeriesOverride = {
   timeField: string;
@@ -40,7 +41,7 @@ export type TimeSeriesFieldOption = {
 /** Every table column as a selectable BSON field (camelCase). */
 export function columnFieldOptionsForTable(table: TableModel): TimeSeriesFieldOption[] {
   return table.columns.map((column) => ({
-    bsonField: toCamelCase(column.name),
+    bsonField: mongoFieldNameForColumn(column),
     columnName: column.name,
     sqlType: column.sqlType,
   }));

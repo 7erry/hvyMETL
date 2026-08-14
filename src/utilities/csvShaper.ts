@@ -11,6 +11,7 @@ import { writeFileSync } from 'node:fs';
 import type { CollectionPlan, EmbeddedArrayPlan, SqlStructuralModel, TableModel } from '../types.js';
 import { findDateColumn, isEavTable, isJunctionTable, reverseJoinFkColumns } from '../design/patternSelector.js';
 import { toCamelCase } from './naming.js';
+import { mongoFieldNameForColumn } from './mongoFieldNaming.js';
 import { loadTableCsvRows } from './csvModelEnrichment.js';
 import { formatCsvRow } from './csv.js';
 import { deriveId } from './ids.js';
@@ -104,7 +105,7 @@ function buildEmbeddedObject(
   for (const column of child.columns) {
     if (column.name === joinColumn) continue;
     if (reverseJoinColumns.has(column.name)) continue;
-    object[toCamelCase(column.name)] = row[column.name] ?? '';
+    object[mongoFieldNameForColumn(column)] = row[column.name] ?? '';
   }
 
   if (depth >= MAX_EMBED_DEPTH) return object;
@@ -155,7 +156,7 @@ function buildEmbeddedParentDocument(
   const object: Record<string, unknown> = {};
   for (const column of parent.columns) {
     if (primaryKeyColumns.has(column.name)) continue;
-    object[toCamelCase(column.name)] = parentRow[column.name] ?? '';
+    object[mongoFieldNameForColumn(column)] = parentRow[column.name] ?? '';
   }
   return object;
 }
@@ -271,7 +272,7 @@ export function shapeCollectionCsv(
 
   const scalarColumns: string[] = [];
   for (const column of parentTable.columns) {
-    const outputName = toCamelCase(column.name);
+    const outputName = mongoFieldNameForColumn(column);
     if (column.name === singlePk) continue;
     if (reverseJoinColumns.has(column.name)) continue;
     scalarColumns.push(outputName);

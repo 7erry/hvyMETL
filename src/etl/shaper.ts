@@ -15,6 +15,7 @@
 
 import type { CollectionPlan, SqlStructuralModel, TableModel } from '../types.js';
 import { toCamelCase, singularize } from '../utilities/naming.js';
+import { mongoFieldNameForColumn } from '../utilities/mongoFieldNaming.js';
 import { findDateColumn, isEavTable, isJunctionTable, reverseJoinFkColumns } from '../design/patternSelector.js';
 
 /** Everything a worker needs to extract one collection's rows. */
@@ -60,7 +61,7 @@ function buildJsonObjectExpression(
   const excludePrimaryKey = options?.omitPrimaryKey ? new Set(child.primaryKey) : new Set<string>();
   const pairs = child.columns
     .filter((column) => column.name !== excludeColumn && !excludePrimaryKey.has(column.name))
-    .map((column) => `'${toCamelCase(column.name)}', ${alias}.${quote(column.name)}`);
+    .map((column) => `'${mongoFieldNameForColumn(column)}', ${alias}.${quote(column.name)}`);
   return `json_object(${pairs.join(', ')})`;
 }
 
@@ -83,7 +84,7 @@ function buildBucketQuery(collection: CollectionPlan, model: SqlStructuralModel)
   // bucket) — including the timestamp, which each measurement needs.
   const measurementPairs = table.columns
     .filter((column) => column.name !== bucket.groupByColumn)
-    .map((column) => `'${toCamelCase(column.name)}', base.${quote(column.name)}`);
+    .map((column) => `'${mongoFieldNameForColumn(column)}', base.${quote(column.name)}`);
 
   // Window start: epoch seconds floored to the window, rendered as ISO-8601.
   const windowSeconds = bucket.windowMinutes * 60;
@@ -127,7 +128,7 @@ function buildDocumentQuery(collection: CollectionPlan, model: SqlStructuralMode
   //    covered by a reverse embed become the nested parent object instead.
   const singlePk = collection.idDerivation.strategy === 'direct' ? collection.idDerivation.sourceColumns[0] : null;
   for (const column of table.columns) {
-    const outputName = toCamelCase(column.name);
+    const outputName = mongoFieldNameForColumn(column);
     if (column.name === singlePk) continue;
     if (reverseJoinColumns.has(column.name)) continue;
     selectParts.push(`base.${quote(column.name)} AS ${quote(outputName)}`);
