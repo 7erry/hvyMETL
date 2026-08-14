@@ -47,6 +47,7 @@ import {
   pruneEmbedDirectionOverrides,
   pruneForceEmbedOverrides,
 } from './cardinalityOverrides';
+import { isDynamoMigrationPlanStale } from '../../src/utilities/dynamoPlanStale.js';
 import { pruneTimeSeriesOverrides, type TimeSeriesOverrides } from './timeSeriesOverrides';
 import {
   downloadJson,
@@ -552,6 +553,9 @@ export default function App() {
         setSessionField('dialect', resolvedDialect);
       }
       await applySchema(payload, m, inferred?.profileId);
+      if (m.tables.some((table) => table.dynamoDb)) {
+        void handleGeneratePlan();
+      }
     } catch (e) {
       setStatus(`Import failed: ${describeApiError(e)}`);
     }
@@ -565,6 +569,9 @@ export default function App() {
       setSessionField('ddl', result.ddl);
       const profileId = result.suggestedProfileId ?? result.inferred?.profileId;
       await applySchema(result.ddl, result.model, profileId);
+      if (result.model.tables.some((table) => table.dynamoDb)) {
+        void handleGeneratePlan();
+      }
       setStatus(`Loaded example "${result.label}" (${result.model.tables.length} tables).`);
     } catch (e) {
       setStatus(`Example import failed: ${describeApiError(e)}`);
@@ -960,7 +967,14 @@ export default function App() {
   const handleSchemaPhaseChange = (phase: SchemaPhase) => {
     setSessionField('schemaPhase', phase);
     setSessionField('diagramViewMode', diagramViewModeFromSchemaPhase(phase));
-    if (phase === 'after' && model && (!migrationPlan || !migrationArtifacts?.designMeta)) {
+    const activeModel = designModel ?? model;
+    const staleDynamoPlan =
+      activeModel && migrationPlan ? isDynamoMigrationPlanStale(activeModel, migrationPlan) : false;
+    if (
+      phase === 'after'
+      && activeModel
+      && (!migrationPlan || !migrationArtifacts?.designMeta || staleDynamoPlan)
+    ) {
       void handleGeneratePlan();
     }
   };
@@ -976,7 +990,10 @@ export default function App() {
       return;
     }
     if (mode === 'split-horizontal' || mode === 'split-vertical') {
-      if (!migrationPlan && model) {
+      const activeModel = designModel ?? model;
+      const staleDynamoPlan =
+        activeModel && migrationPlan ? isDynamoMigrationPlanStale(activeModel, migrationPlan) : false;
+      if ((!migrationPlan || staleDynamoPlan) && activeModel) {
         void handleGeneratePlan();
       }
     }

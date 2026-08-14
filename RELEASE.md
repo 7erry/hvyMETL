@@ -1,3 +1,13 @@
+## hvyMETL 4.2.14
+
+**Auto-refresh stale DynamoDB migration plans** — switching to After · MongoDB (or re-importing DynamoDB YAML) now regenerates plans that still expose legacy `gSI1PK`/`pK` fields instead of semantic GSI index names. Design API always re-parses CloudFormation DDL with the resolved dialect.
+
+### Verification
+
+- `npx vitest run src/utilities/dynamoPlanStale.test.ts src/design/patternSelector.test.ts -t DynamoDB`
+
+---
+
 ## hvyMETL 4.2.13
 
 **DynamoDB GSI fields use index names in MongoDB plans** — GSI hash keys map to camelCased GSI index names (e.g. `GSI1-Category-Price-Index` → `gSI1CategoryPriceIndex`) instead of generic `gSI1PK`; range keys append `SortKey`. Table PK/SK become `partitionKey` / `sortKey`.

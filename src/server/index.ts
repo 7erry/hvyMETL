@@ -26,6 +26,7 @@ import { createRetrievalConfigFromEnv, retrieve } from '../rag/retrieval.js';
 import { buildPromptBundle, buildRetrievalQuery } from '../rag/promptBundle.js';
 import { parseDdlToModel } from '../utilities/ddlParser.js';
 import { parseSchemaImport, resolveSchemaImportDialect } from '../utilities/schemaImport.js';
+import { resolveDesignModel } from '../utilities/resolveDesignModel.js';
 import { generateMockCsvFromDdl, verifyMockCsvGenerator } from '../utilities/mockCsvFromDdl.js';
 import type { MigrationPlan, SqlStructuralModel } from '../types.js';
 import { readCsvToAtlasPathFromEnv } from '../utilities/csvToAtlas.js';
@@ -500,15 +501,11 @@ app.post('/api/schema/import-sqlite', (req, res) => {
 app.post('/api/design', async (req, res) => {
   try {
     const { tenantId, csvAllowedRoots } = tenantContextFromRequest(req);
-    let model: SqlStructuralModel;
-    if (req.body?.ddl) {
-      model = parseSchemaImport(String(req.body.ddl), String(req.body?.dialect ?? 'import'));
-    } else if (req.body?.model) {
-      model = req.body.model as SqlStructuralModel;
-    } else {
-      res.status(400).json({ error: 'Provide ddl or model in body' });
-      return;
-    }
+    const model = resolveDesignModel({
+      ddl: req.body?.ddl as string | undefined,
+      dialect: req.body?.dialect as string | undefined,
+      model: req.body?.model as SqlStructuralModel | undefined,
+    });
     const profile = resolveWorkloadProfile(req.body);
     const csvSourcePath = scopedCsvSourcePath(req, req.body?.csvSourcePath as string | undefined);
     const result = await withTenantMlEnv(req, tenantId, () =>
@@ -562,11 +559,11 @@ app.post('/api/design/with-csv', (req, res) => {
         res.status(400).json({ error: 'At least one CSV file is required' });
         return;
       }
-      const model = req.body?.model ? (JSON.parse(String(req.body.model)) as SqlStructuralModel) : undefined;
-      if (!model) {
-        res.status(400).json({ error: 'model is required' });
-        return;
-      }
+      const model = resolveDesignModel({
+        ddl: req.body?.ddl as string | undefined,
+        dialect: req.body?.dialect as string | undefined,
+        model: req.body?.model ? (JSON.parse(String(req.body.model)) as SqlStructuralModel) : undefined,
+      });
       const profile = resolveWorkloadProfile({
         profileId: req.body?.profileId,
         customProfile: req.body?.customProfile ? JSON.parse(String(req.body.customProfile)) : undefined,
