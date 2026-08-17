@@ -47,6 +47,8 @@ verify pattern decisions against the source material RAG retrieves.
 | Attribute | `catalog` or `personalization` | `products` (EAV) / `profiles` (traits) | `catalog` / `personalization` |
 | Archive | `catalog` | `reviews` + `reviews_archive` | `catalog` |
 | Bucket | `iot` (also `mobile`, `analytics`) | `sensor_readings` / `app_events` / `page_events` | `iot` / `mobile` / `realtime-analytics` |
+| Bucket | `dialects/dynamodb.yaml` | `IoTPlatformTable` single-table CloudFormation | `iot` — **Amazon DynamoDB (CloudFormation) - IoT** |
+| Time series | `iot` | `sensor_readings` native time series | `iot` |
 | Computed | any domain | parent counters, bucket aggregates | each domain default |
 | Embed / Reference | any domain | bounded children vs lookups | each domain default |
 | Extended Reference | `catalog`, `cms`, `mobile`, `singleview` | e.g. `products.brand`, `orders.crmCustomer` | matching domain profile |
@@ -76,6 +78,20 @@ cross-cutting embed/merge rules applied across all examples; retrieved with patt
 chunks during RAG (see [03-knowledge-rag.md](03-knowledge-rag.md)).
 
 Regression coverage: `npm test -- src/examples/examplePatternCoverage.test.ts`.
+
+### Amazon DynamoDB CloudFormation Load examples
+
+Four picker entries (labels prefixed **Amazon DynamoDB (CloudFormation)**) are documented in
+[`examples/README.md`](../examples/README.md#amazon-dynamodb-cloudformation-examples):
+
+| Label | File | Profile |
+| --- | --- | --- |
+| Amazon DynamoDB (CloudFormation) - IoT | `dialects/dynamodb.yaml` | `iot` |
+| Amazon DynamoDB (CloudFormation) - CMS Platform | `dynamodb/cms-platform-table.yaml` | `cms` |
+| Amazon DynamoDB (CloudFormation) - Ecommerce Catalog | `dynamodb/ecommerce-catalog-table.yaml` | `catalog` |
+| Amazon DynamoDB (CloudFormation) - Orders | `dynamodb/orders-table.yaml` | — |
+
+GSI `INCLUDE` projections → MongoDB compound indexes and Atlas Search: [`docs/20-dynamodb-gsi-mongodb-migration.md`](20-dynamodb-gsi-mongodb-migration.md).
 
 ### `seed.ts` entry point
 

@@ -1,3 +1,20 @@
+## hvyMETL 4.2.18
+
+**Examples catalog documentation** — [`examples/README.md`](examples/README.md) now documents all four Amazon DynamoDB CloudFormation Load examples (IoT, CMS Platform, Ecommerce Catalog, Orders), fixes the enterprise example count (11), and links GSI migration guidance from the pattern matrix and coverage tables.
+
+### Highlights
+
+- **Amazon DynamoDB section** — resource names, GSI counts, suggested profiles, and CLI load commands.
+- **Pattern matrix** — bucket/time-series/polymorphic rows for DynamoDB and dialect demos.
+- **Cross-links** — [`docs/10-examples.md`](docs/10-examples.md) quick reference for DynamoDB picker entries.
+
+### Verification
+
+- `npm test -- src/server/builtinExamples.test.ts`
+- Confirm [`examples/README.md`](examples/README.md) Load example catalog matches `listBuiltinExamples()` (42 entries)
+
+---
+
 ## hvyMETL 4.2.17
 
 **DynamoDB GSI → MongoDB migration helpers** — new utility maps `INCLUDE` GSI projections to MongoDB compound indexes (covered queries) and Atlas Search `storedSource` definitions, with PascalCase → camelCase field renaming aligned to migration plans.
