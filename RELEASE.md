@@ -1,3 +1,14 @@
+## hvyMETL 4.3.2
+
+**Architecture Review Google Docs** — **Save to Google Docs** now embeds a **Collections diagrams** section with one Migration Studio-style card per collection (fields, BSON types, pattern tags) from the loaded migration plan.
+
+### Verification
+
+- `npm test -- tests/copilot/architectureReviewCollectionDiagram.test.ts tests/copilot/architectureReviewHtml.test.ts`
+- Run **Optimize Schema** or **Architecture Review**, then **Save to Google Docs** — each collection appears under **Collections diagrams** below the review title.
+
+---
+
 ## hvyMETL 4.3.1
 
 **MongoDB inspect workspace scoping** — fixes false "database is outside your workspace" errors when creating autoEmbed vector indexes (and other inspect tools) on shared Atlas clusters.

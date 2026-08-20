@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { fetchCopilotStatus } from '../../api';
-import { architectureReviewToHtml } from '../../copilot/architectureReviewHtml';
+import { architectureReviewToHtml, type ArchitectureReviewHtmlOptions } from '../../copilot/architectureReviewHtml';
 import {
   loadGoogleIdentityScript,
   openGoogleDoc,
@@ -11,10 +11,16 @@ type MarkdownDocumentExportProps = {
   content: string;
   docTitle: string;
   onDownloadMarkdown: () => void;
+  htmlOptions?: ArchitectureReviewHtmlOptions;
 };
 
 /** Save markdown recommendations to Google Docs or download as .md (shared by Copilot and Atlas Sizing). */
-export function MarkdownDocumentExport({ content, docTitle, onDownloadMarkdown }: MarkdownDocumentExportProps) {
+export function MarkdownDocumentExport({
+  content,
+  docTitle,
+  onDownloadMarkdown,
+  htmlOptions,
+}: MarkdownDocumentExportProps) {
   const [googleClientId, setGoogleClientId] = useState<string | null>(null);
   const [statusLoaded, setStatusLoaded] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -52,7 +58,7 @@ export function MarkdownDocumentExport({ content, docTitle, onDownloadMarkdown }
       const result = await uploadArchitectureReviewToGoogleDocs({
         clientId: googleClientId,
         title: docTitle,
-        html: architectureReviewToHtml(content),
+        html: architectureReviewToHtml(content, htmlOptions),
       });
       openGoogleDoc(result);
       setSuccess('Saved to Google Docs.');
@@ -61,7 +67,7 @@ export function MarkdownDocumentExport({ content, docTitle, onDownloadMarkdown }
     } finally {
       setBusy(false);
     }
-  }, [content, docTitle, googleClientId]);
+  }, [content, docTitle, googleClientId, htmlOptions]);
 
   const handleDownload = useCallback(() => {
     setError('');

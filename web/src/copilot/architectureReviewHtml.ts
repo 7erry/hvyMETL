@@ -5,6 +5,7 @@ import {
 import { architectureReviewExportMarkdown, architectureReviewFilename } from './architectureReviewExport';
 
 export { architectureReviewDocTitle, architectureReviewToHtml };
+export type { ArchitectureReviewHtmlOptions } from '../../../src/copilot/architectureReviewHtml.ts';
 
 /** Downloads the architecture review as markdown when Google Docs export is unavailable. */
 export function downloadArchitectureReviewMarkdown(content: string): void {

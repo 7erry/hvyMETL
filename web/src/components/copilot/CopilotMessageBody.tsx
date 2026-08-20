@@ -93,7 +93,9 @@ export function CopilotMessageBody({ content, markdown = false }: CopilotMessage
       >
         {formatted}
       </ReactMarkdown>
-      {showSaveToDrive ? <ArchitectureReviewSaveToDrive content={content} /> : null}
+      {showSaveToDrive ? (
+        <ArchitectureReviewSaveToDrive content={content} migrationPlan={copilot.migrationPlan} />
+      ) : null}
     </div>
   );
 }

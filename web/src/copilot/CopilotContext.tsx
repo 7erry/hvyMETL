@@ -103,6 +103,8 @@ export type CopilotContextValue = {
   mongoInspectMessage: string | null;
   /** Logical MongoDB database for pipeline imports and architecture review titles. */
   targetDatabase: string;
+  /** Loaded migration plan used for architecture review Google Docs collection diagrams. */
+  migrationPlan: MigrationPlan | null;
   /** Remember the logical database from the most recent successful pipeline import. */
   setTargetDatabase: (database: string) => void;
   /** autoEmbed vector search indexes created in this studio session. */
@@ -1221,6 +1223,7 @@ export function CopilotProvider({
       mongoInspectAvailable,
       mongoInspectMessage,
       targetDatabase,
+      migrationPlan: plan,
       setTargetDatabase,
       vectorSearchIndexes,
       recordVectorSearchIndex,
@@ -1280,6 +1283,7 @@ export function CopilotProvider({
       mongoInspectAvailable,
       mongoInspectMessage,
       targetDatabase,
+      plan,
       setTargetDatabase,
       vectorSearchIndexes,
       recordVectorSearchIndex,

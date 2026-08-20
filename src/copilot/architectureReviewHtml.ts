@@ -1,4 +1,13 @@
 import { architectureReviewExportMarkdown, architectureReviewTitle } from './architectureReviewExport.js';
+import {
+  architectureReviewCollectionDiagramsHtml,
+  ARCHITECTURE_REVIEW_COLLECTION_DIAGRAM_STYLES,
+} from './architectureReviewCollectionDiagram.js';
+import type { MigrationPlan } from '../types.js';
+
+export type ArchitectureReviewHtmlOptions = {
+  migrationPlan?: MigrationPlan | null;
+};
 
 function escapeHtml(text: string): string {
   return text
@@ -29,11 +38,15 @@ function isTableSeparator(line: string): boolean {
 }
 
 /** Converts an architecture review markdown response into HTML for Google Docs import. */
-export function architectureReviewToHtml(markdown: string): string {
+export function architectureReviewToHtml(markdown: string, options: ArchitectureReviewHtmlOptions = {}): string {
   const normalized = architectureReviewExportMarkdown(markdown);
   const title = architectureReviewTitle(markdown) ?? 'Architecture Review';
   const lines = normalized.split('\n');
   const bodyParts: string[] = [];
+  const collectionDiagramsHtml = options.migrationPlan
+    ? architectureReviewCollectionDiagramsHtml(options.migrationPlan)
+    : '';
+  let collectionDiagramsInserted = false;
 
   let index = 0;
   while (index < lines.length) {
@@ -84,6 +97,10 @@ export function architectureReviewToHtml(markdown: string): string {
     }
     if (line.startsWith('# ')) {
       bodyParts.push(`<h1>${inlineMarkdown(line.slice(2).trim())}</h1>`);
+      if (collectionDiagramsHtml && !collectionDiagramsInserted) {
+        bodyParts.push(collectionDiagramsHtml);
+        collectionDiagramsInserted = true;
+      }
       index += 1;
       continue;
     }
@@ -118,6 +135,7 @@ export function architectureReviewToHtml(markdown: string): string {
     pre { background: #f6f8fa; padding: 12px; overflow-x: auto; border-radius: 6px; }
     code { font-family: Menlo, Consolas, monospace; font-size: 0.92em; }
     blockquote { border-left: 4px solid #13aa52; margin: 1rem 0; padding-left: 1rem; color: #333; }
+    ${ARCHITECTURE_REVIEW_COLLECTION_DIAGRAM_STYLES}
   </style>
 </head>
 <body>
