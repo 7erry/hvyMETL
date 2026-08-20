@@ -1,4 +1,4 @@
-import type { Response } from 'express';
+import type { Response as ExpressResponse } from 'express';
 import type { GroveChatResponse } from './groveChat.js';
 
 export const COPILOT_CHAT_SSE_KEEPALIVE_MS = 10_000;
@@ -9,7 +9,7 @@ export type CopilotChatSseEvent =
   | { event: 'done'; data: Record<string, never> };
 
 /** Begin an SSE response with nginx-friendly no-buffer headers. */
-export function beginCopilotChatSse(res: Response): void {
+export function beginCopilotChatSse(res: ExpressResponse): void {
   res.status(200);
   res.setHeader('Content-Type', 'text/event-stream; charset=utf-8');
   res.setHeader('Cache-Control', 'no-cache, no-transform');
@@ -18,13 +18,13 @@ export function beginCopilotChatSse(res: Response): void {
   res.flushHeaders();
 }
 
-export function writeCopilotChatSseEvent(res: Response, payload: CopilotChatSseEvent): void {
+export function writeCopilotChatSseEvent(res: ExpressResponse, payload: CopilotChatSseEvent): void {
   res.write(`event: ${payload.event}\n`);
   res.write(`data: ${JSON.stringify(payload.data)}\n\n`);
 }
 
 /** Sends comment keepalives so hosted reverse proxies do not 504 during long Grove calls. */
-export function startCopilotChatSseKeepalive(res: Response, intervalMs = COPILOT_CHAT_SSE_KEEPALIVE_MS): () => void {
+export function startCopilotChatSseKeepalive(res: ExpressResponse, intervalMs = COPILOT_CHAT_SSE_KEEPALIVE_MS): () => void {
   const timer = setInterval(() => {
     res.write(': keepalive\n\n');
   }, intervalMs);
@@ -32,7 +32,7 @@ export function startCopilotChatSseKeepalive(res: Response, intervalMs = COPILOT
 }
 
 /** Parse SSE body from POST /api/copilot/chat?stream=1 into a Grove chat response. */
-export async function readCopilotChatSseResponse(response: Response): Promise<GroveChatResponse> {
+export async function readCopilotChatSseResponse(response: globalThis.Response): Promise<GroveChatResponse> {
   if (!response.ok) {
     const text = await response.text();
     try {
