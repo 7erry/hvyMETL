@@ -54,6 +54,13 @@ function handleCopilotError(res: Response, error: unknown): void {
     return;
   }
   const message = error instanceof Error ? error.message : String(error);
+  if (/timed out|TimeoutError|AbortError/i.test(message)) {
+    res.status(504).json({
+      error:
+        'Copilot request timed out. Architecture Review can take several minutes — wait and retry. Increase GROVE_CHAT_TIMEOUT_MS if needed.',
+    });
+    return;
+  }
   if (/not configured/i.test(message)) {
     res.status(503).json({ error: message });
     return;
@@ -219,6 +226,7 @@ export function createCopilotRouter(): Router {
   });
 
   router.post('/chat', chatRateLimit, async (req, res) => {
+    req.socket.setTimeout(0);
     const identity = readCopilotAuditIdentity(req);
     try {
       const messages = sanitizeCopilotChatMessages(req.body?.messages, {

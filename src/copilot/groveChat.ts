@@ -5,6 +5,16 @@ import type { CopilotDatasetScaleContext } from './copilotDatasetScale.js';
 const DEFAULT_GROVE_URL =
   'https://grove-gateway-prod.azure-api.net/grove-foundry-prod/openai/v1/chat/completions';
 const DEFAULT_GROVE_MODEL = 'gpt-5.6-luna';
+/** Default Grove chat timeout — Architecture Review + tool rounds can exceed 60s gateway limits. */
+export const DEFAULT_GROVE_CHAT_TIMEOUT_MS = 300_000;
+
+/** Reads Grove chat timeout from GROVE_CHAT_TIMEOUT_MS (milliseconds). */
+export function readGroveChatTimeoutMs(): number {
+  const raw = process.env.GROVE_CHAT_TIMEOUT_MS?.trim();
+  if (!raw) return DEFAULT_GROVE_CHAT_TIMEOUT_MS;
+  const parsed = Number.parseInt(raw, 10);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : DEFAULT_GROVE_CHAT_TIMEOUT_MS;
+}
 
 export type CopilotChatRole = 'system' | 'user' | 'assistant' | 'tool';
 
@@ -122,14 +132,27 @@ export async function callGroveChat(request: GroveChatRequest, config?: GroveCon
     payload.tool_choice = 'auto';
   }
 
-  const response = await fetch(grove.baseUrl, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'api-key': grove.apiKey,
-    },
-    body: JSON.stringify(payload),
-  });
+  const timeoutMs = readGroveChatTimeoutMs();
+
+  let response: Response;
+  try {
+    response = await fetch(grove.baseUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'api-key': grove.apiKey,
+      },
+      body: JSON.stringify(payload),
+      signal: AbortSignal.timeout(timeoutMs),
+    });
+  } catch (error) {
+    if (error instanceof Error && error.name === 'TimeoutError') {
+      throw new Error(
+        `Grove API request timed out after ${Math.round(timeoutMs / 1000)}s. Architecture Review can take several minutes — retry in a moment.`,
+      );
+    }
+    throw error;
+  }
 
   const contentType = response.headers.get('content-type') ?? '';
   const rawBody = await response.text();

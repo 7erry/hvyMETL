@@ -1,3 +1,14 @@
+## hvyMETL 4.3.7
+
+**Copilot 504 timeout fixes** — Architecture Review Grove calls now use 5-minute client/server timeouts, disable premature HTTP socket timeouts, and show accurate errors (`npm run dev:ui`, not a generic “start API server” message).
+
+### Verification
+
+- `npm run dev:ui` → run **Architecture Review** (long runs should not 504 at 60s)
+- `npm test -- src/copilot/groveChat.test.ts`
+
+---
+
 ## hvyMETL 4.3.6
 
 **Architecture Review §9 deployment options** — collective reviews now include a collapsible **Atlas deployment options** section aligned to the MongoDB Well-Architected Framework: multi-region HA, dual auto-scaling, private endpoints, RBAC/SSO, encryption (TLS 1.3, CMK, CSFLE/Queryable Encryption), and a gold-standard operations table.

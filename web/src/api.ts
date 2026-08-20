@@ -9,6 +9,25 @@ import { createPipelineStreamConsumer } from './pipelineStream.js';
 
 const base = '';
 
+/** Client timeout for copilot Grove proxy calls (Architecture Review + tool rounds). */
+const COPILOT_CHAT_CLIENT_TIMEOUT_MS = 300_000;
+
+function gatewayErrorMessage(status: number): string {
+  if (status === 504) {
+    return (
+      'Copilot request timed out (HTTP 504). Architecture Review can take several minutes — wait and retry. ' +
+      'If running locally, keep `npm run dev:ui` running at http://localhost:3847.'
+    );
+  }
+  if (status === 502 || status === 503) {
+    return (
+      `API unavailable (HTTP ${status}). Start Migration Studio with npm run dev:ui from the repo root ` +
+      '(http://localhost:3847).'
+    );
+  }
+  return `Unexpected server response (HTTP ${status}).`;
+}
+
 type AccessTokenProvider = () => Promise<string>;
 
 let accessTokenProvider: AccessTokenProvider | undefined;
@@ -109,7 +128,7 @@ async function readApiError(res: Response): Promise<string> {
         : 'Forbidden: insufficient permissions for this action.';
     }
     if (res.status === 502 || res.status === 503 || res.status === 504) {
-      return `API unavailable (HTTP ${res.status}). Start the hvyMETL API server (npm run dev from the repo root).`;
+      return gatewayErrorMessage(res.status);
     }
     return `Unexpected HTML response from server (HTTP ${res.status}). Ensure the API server is running and you are signed in on hosted studio.`;
   }
@@ -127,7 +146,7 @@ async function parseApiJsonResponse<T>(res: Response): Promise<T> {
     const trimmed = body.trim();
     if (trimmed.startsWith('<') || trimmed.includes('<html')) {
       throw new Error(
-        'API returned HTML instead of JSON. Ensure the hvyMETL API server is running (npm run dev) and sign in again on hosted studio.',
+        'API returned HTML instead of JSON. Ensure Migration Studio is running (npm run dev:ui) and sign in again on hosted studio.',
       );
     }
     throw new Error(`Expected JSON from API (HTTP ${res.status}).`);
@@ -1030,6 +1049,7 @@ export async function sendCopilotChat(request: {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify(request),
+    signal: AbortSignal.timeout(COPILOT_CHAT_CLIENT_TIMEOUT_MS),
   });
   return parseApiJsonResponse<CopilotChatApiResponse>(res);
 }

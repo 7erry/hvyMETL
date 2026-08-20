@@ -1172,6 +1172,8 @@ async function startServer(): Promise<void> {
   const uiMode = await mountWebUi(app, ROOT, devUiMode);
 
   const server = app.listen(PORT);
+  server.requestTimeout = 0;
+  server.headersTimeout = 620_000;
 
   server.on('listening', () => {
     console.log(`hvyMETL Migration Studio http://localhost:${PORT}`);

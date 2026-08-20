@@ -131,4 +131,22 @@ describe('groveChat', () => {
       }),
     ).rejects.toThrow(/HTML instead of JSON/i);
   });
+
+  it('throws a clear error when Grove fetch times out', async () => {
+    const fetchMock = vi.fn().mockRejectedValue(Object.assign(new Error('The operation was aborted'), { name: 'TimeoutError' }));
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(
+      callGroveChat({
+        messages: [{ role: 'user', content: 'Hi' }],
+        schemaContext: {
+          tables: [],
+          relationships: [],
+          guardrailIssues: [],
+          cardinalityOverrides: {},
+          forceEmbedOverrides: {},
+        },
+      }),
+    ).rejects.toThrow(/timed out/i);
+  });
 });
