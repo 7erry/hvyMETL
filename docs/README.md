@@ -30,6 +30,7 @@ merge-mode diagrams.
 | [21-sizing-assistant.md](21-sizing-assistant.md) | Release 4.0 Atlas cluster sizing assistant — system prompt and engine logic reference | `src/copilot/sizingAssistantPrompt.ts` |
 | [22-release-4.0-roadmap.md](22-release-4.0-roadmap.md) | Release 4.0 multi-phase plan — sizing runtime, live Atlas metrics, lessons `$vectorSearch` | `src/ml_engine/`, `src/copilot/sizingAssistant*.ts` |
 | [23-atlas-connectivity-architect.md](23-atlas-connectivity-architect.md) | Release 4.0 Atlas PrivateLink/IAM/IaC connectivity architect prompt | `src/copilot/atlasConnectivityArchitectPrompt.ts` |
+| [24-grove-api.md](24-grove-api.md) | Grove LLM gateway — architecture, security audit, error handling, recommendations | `src/copilot/groveChat.ts`, `src/copilot/sizingAssistantChat.ts` |
 | [20-manager.md](20-manager.md) | Manager View, cost projections, retention controls, and pre-migration cloud cost governance | `web/src/components/ManagerView.tsx`, `web/src/managerCostEstimate.ts` |
 | [21-atlas-logs.md](21-atlas-logs.md) | Atlas Admin API project events and database log preview in Manager View | `src/utilities/atlasLogs.ts`, `web/src/components/ManagerAtlasLogsPanel.tsx` |
 | [14-validate-csv-to-atlas.md](14-validate-csv-to-atlas.md) | External csvToAtlas path (`CSV_TO_ATLAS_PATH`) and validation | `src/utilities/csvToAtlas.ts` |

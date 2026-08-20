@@ -200,6 +200,8 @@ GROVE_API_KEY=your_grove_api_key
 
 When Grove is not configured, the sidebar falls back to offline heuristics for direct commands (help, commands list, workflow phrases, inspect routing).
 
+For architecture, security audit, error-handling gaps, and hardening recommendations, see [24-grove-api.md](24-grove-api.md).
+
 ### MongoDB MCP (inspect/analyze)
 
 ```bash

@@ -1,3 +1,9 @@
+## hvyMETL 4.2.20
+
+**Grove API documentation** — new [docs/24-grove-api.md](docs/24-grove-api.md) audit covering Migration Studio Grove usage (Copilot + sizing), security, error handling, test coverage, and hardening recommendations. Cross-linked from [docs/19-llm-and-models.md](docs/19-llm-and-models.md), [docs/20-agent-copilot.md](docs/20-agent-copilot.md), and [docs/21-sizing-assistant.md](docs/21-sizing-assistant.md).
+
+---
+
 ## hvyMETL 4.2.19
 
 **Run Full Pipeline dialect label** — the pipeline environment banner now shows the imported schema dialect (MySQL, Oracle, DynamoDB, etc.) instead of always defaulting to PostgreSQL when the session dialect was never changed from its initial value.

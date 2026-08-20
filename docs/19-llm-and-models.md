@@ -20,6 +20,8 @@ When people describe hvyMETL as "AI-driven," they usually mean:
 
 There is no required generative model in the core pipeline.
 
+**Migration Studio Copilot and Atlas Sizing** optionally call the internal **Grove** OpenAI-compatible gateway when `GROVE_API_KEY` is set. That is separate from Voyage/rerank and from exported prompt bundles. See [24-grove-api.md](24-grove-api.md).
+
 ## 2. What Runs at Each Layer
 
 | Layer | Model / approach | When |
