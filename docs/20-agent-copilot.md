@@ -113,6 +113,8 @@ Guardrail warning badges on table nodes open the copilot with an optimization pr
 
 Post-import **Architecture Review** runs inspect tools first (`listMongoCollections`, indexes, schema); the written review is always shown afterward and is **not** treated as a duplicate inspect listing, so export controls remain available.
 
+Reviews include a **Review domain** table (data model, performance, infrastructure, operations), deep coverage of embed vs reference, ESR/explain/index RAM, shard keys and HA, and **hyperlinks to official MongoDB docs** (Atlas Search, Vector Search, RRF/`$rankFusion`, design patterns, schema validation). Google Docs export preserves those links as clickable anchors.
+
 | Control | Behavior |
 | --- | --- |
 | **Save to Google Docs** | OAuth sign-in → creates a native Google Doc in your Drive → opens in a new tab. Includes **Collections diagrams** (one card per migration-plan collection) when a design is loaded. |

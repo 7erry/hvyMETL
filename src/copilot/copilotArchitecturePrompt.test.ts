@@ -63,7 +63,18 @@ describe('copilotArchitecturePrompt', () => {
   it('requires field-based Atlas Search vs Vector Search guidance in §6', () => {
     expect(COPILOT_ARCHITECTURE_RESPONSE_INSTRUCTIONS).toContain('autocomplete');
     expect(COPILOT_ARCHITECTURE_RESPONSE_INSTRUCTIONS).toContain('Hybrid search');
+    expect(COPILOT_ARCHITECTURE_RESPONSE_INSTRUCTIONS).toContain('rankFusion');
     expect(buildArchitectureReviewUserPrompt('products')).toContain('hybrid search');
+  });
+
+  it('requires review domain checklist and MongoDB doc hyperlinks', () => {
+    expect(COPILOT_ARCHITECTURE_RESPONSE_INSTRUCTIONS).toContain('Review domain');
+    expect(COPILOT_ARCHITECTURE_RESPONSE_INSTRUCTIONS).toContain('Common red flags');
+    expect(COPILOT_ARCHITECTURE_RESPONSE_INSTRUCTIONS).toContain('ESR rule');
+    expect(COPILOT_ARCHITECTURE_RESPONSE_INSTRUCTIONS).toContain('explain("executionStats")');
+    expect(COPILOT_ARCHITECTURE_RESPONSE_INSTRUCTIONS).toContain('Embedding vs referencing');
+    expect(COPILOT_ARCHITECTURE_RESPONSE_INSTRUCTIONS).toContain('mongodb.com/docs');
+    expect(buildOptimizeSchemaUserPrompt('finops')).toContain('Review domain table');
   });
 });
 

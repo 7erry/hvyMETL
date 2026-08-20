@@ -17,10 +17,33 @@ function escapeHtml(text: string): string {
     .replace(/"/g, '&quot;');
 }
 
-function inlineMarkdown(text: string): string {
+function formatInlineNoLinks(text: string): string {
   return escapeHtml(text)
     .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
     .replace(/`([^`]+)`/g, '<code>$1</code>');
+}
+
+function inlineMarkdown(text: string): string {
+  const linkPattern = /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g;
+  const parts: string[] = [];
+  let lastIndex = 0;
+  let match: RegExpExecArray | null;
+
+  while ((match = linkPattern.exec(text)) !== null) {
+    if (match.index > lastIndex) {
+      parts.push(formatInlineNoLinks(text.slice(lastIndex, match.index)));
+    }
+    parts.push(
+      `<a href="${escapeHtml(match[2]!)}">${formatInlineNoLinks(match[1]!)}</a>`,
+    );
+    lastIndex = match.index + match[0].length;
+  }
+
+  if (lastIndex < text.length) {
+    parts.push(formatInlineNoLinks(text.slice(lastIndex)));
+  }
+
+  return parts.join('');
 }
 
 function splitTableRow(line: string): string[] {
@@ -134,7 +157,8 @@ export function architectureReviewToHtml(markdown: string, options: Architecture
     th { background: #f5f5f5; text-align: left; }
     pre { background: #f6f8fa; padding: 12px; overflow-x: auto; border-radius: 6px; }
     code { font-family: Menlo, Consolas, monospace; font-size: 0.92em; }
-    blockquote { border-left: 4px solid #13aa52; margin: 1rem 0; padding-left: 1rem; color: #333; }
+    a { color: #00684a; text-decoration: underline; }
+    a:visited { color: #004d38; }
     ${ARCHITECTURE_REVIEW_COLLECTION_DIAGRAM_STYLES}
   </style>
 </head>

@@ -1,3 +1,14 @@
+## hvyMETL 4.3.3
+
+**Architecture Review depth & MongoDB doc links** — copilot reviews now require the Review domain checklist (data model, performance, infrastructure, operations), ESR/explain/shard-key/HA coverage, and hyperlinks to official MongoDB docs for Atlas Search, Vector Search, RRF (`$rankFusion`), design patterns, and schema validation. Google Docs export renders markdown links as clickable anchors.
+
+### Verification
+
+- `npm test -- src/copilot/copilotArchitecturePrompt.test.ts tests/copilot/architectureReviewDocLinks.test.ts tests/copilot/architectureReviewHtml.test.ts`
+- Run **Architecture Review** → **Save to Google Docs** — §1 includes Review domain table; §6 links Atlas Search / Vector Search / RRF docs.
+
+---
+
 ## hvyMETL 4.3.2
 
 **Architecture Review Google Docs** — **Save to Google Docs** now embeds a **Collections diagrams** section with one Migration Studio-style card per collection (fields, BSON types, pattern tags) from the loaded migration plan.

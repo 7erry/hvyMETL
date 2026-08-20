@@ -6,6 +6,8 @@
 import { ARCHITECTURE_REVIEW_ATLAS_SIZING_SECTION } from './architectureReviewSizingSection.js';
 import { ARCHITECTURE_REVIEW_SEARCH_SECTION } from './architectureReviewSearchSection.js';
 import { ARCHITECTURE_REVIEW_PRODUCTION_SECTION } from './architectureReviewProductionSection.js';
+import { ARCHITECTURE_REVIEW_DOMAIN_SECTION } from './architectureReviewDomainSection.js';
+import { ARCHITECTURE_REVIEW_DOC_LINKING_RULES } from './architectureReviewDocLinks.js';
 
 /** System-prompt block: how to format schema analysis and architecture answers. */
 export const COPILOT_ARCHITECTURE_RESPONSE_INSTRUCTIONS = `
@@ -38,23 +40,33 @@ so the user sees the answer immediately. Sections 2–8 must each be a separate 
 ### Section contents
 
 **§1 Executive summary** (visible, not collapsible)
-- 2–3 sentences max + comparison table + next actions
+- Open with operational-limits / schema-efficiency / cluster-topology framing (see Review domain table below)
+- 2–3 sentences max + **Review domain** table + comparison table + next actions
+
+${ARCHITECTURE_REVIEW_DOMAIN_SECTION}
+
+${ARCHITECTURE_REVIEW_DOC_LINKING_RULES}
 
 **§2 Entity & workload analysis** (collapsible)
 - Primary entity, child entities table, read/write patterns, architectural risks
+- **Data modeling:** embedding vs referencing justification; unbounded-array audit; link Building with Patterns / design-pattern docs where applicable
 
 **§3 Production MongoDB design patterns** (collapsible)
-- Subset, Extended Reference, Time-Series, Bucket, Computed, Outlier — only what applies
+- Subset, Extended Reference, Time-Series, Bucket, Computed, Outlier — only what applies; hyperlink each cited pattern to MongoDB Manual design-pattern docs
 
 **§4 Concrete schema code** (collapsible)
 - **Before** and **After** with TypeScript types + \`$jsonSchema\` validators
 - Use fenced code blocks with language tags (\`ts\`, \`js\`)
+- Link JSON Schema validation when discussing enforceable validators
 
 **§5 Technical & operational justification** (collapsible)
-- Bullet list citing 16 MB BSON, working set, oplog, write amplification, relocation
+- Bullet list citing 16 MB BSON, working set, oplog, write amplification, relocation — link WiredTiger and BSON limit docs
+- Storage-engine mechanics: how access patterns hit cache, document growth, and index RAM
 
 **§6 Indexes & query strategy** (collapsible)
-- Index table + fenced \`js\` query/aggregation examples
+- Index table + fenced \`js\` query/aggregation examples; **ESR rule** evaluation on compound indexes
+- **Memory footprint:** index bloat / redundant indexes vs RAM; link index and multikey docs
+- **Query plan analysis:** recommend \`explain("executionStats")\`; eliminate COLLSCAN, in-memory sorts, unindexed aggregations — link explain docs
 - Note hot vs analytical paths
 - When **Atlas vector search indexes (studio)** in the system context lists one or more **autoEmbed** indexes, you **must** document them here:
   - Table of each index: logical database, collection, index name, text \`path\`, model, dimensions, quantization, similarity
@@ -81,6 +93,13 @@ ${ARCHITECTURE_REVIEW_ATLAS_SIZING_SECTION}
 - For simple tool requests (fold, highlight, translate) — 1–3 short paragraphs, no architecture template
 `.trim();
 
+function architectureReviewPromptSuffix(): string {
+  return [
+    'Include the Review domain table and hyperlink first mention of MongoDB topics to official docs (Atlas Search, Vector Search, RRF/$rankFusion, ESR, explain, schema validation, shard keys, design patterns).',
+    'Cover data modeling (embed vs reference, unbounded arrays), indexing (ESR, explain, RAM), cluster topology (shard keys, HA, write concern), and operations (security, oplog).',
+  ].join(' ');
+}
+
 /** User message sent by guardrail badges and the Optimize Schema quick action. */
 export function buildArchitectureReviewUserPrompt(focus: string): string {
   return [
@@ -93,6 +112,7 @@ export function buildArchitectureReviewUserPrompt(focus: string): string {
     'If Atlas vector search indexes are listed in the system context, document each in §6 with sample $vectorSearch aggregations and operational guidance.',
     'Apply search field hints (name/title → Atlas Search autocomplete; description/body → Vector Search autoEmbed) and recommend hybrid search when both apply.',
     'Include production readiness: empirical cardinality table, parallel multikey index warning, array update/concurrency patterns, maxItems/additionalProperties in validators, pagination, security, and shard-key contingency.',
+    architectureReviewPromptSuffix(),
   ].join(' ');
 }
 
@@ -112,6 +132,7 @@ export function buildOptimizeSchemaUserPrompt(targetDb: string): string {
     'If Atlas vector search indexes are listed in the system context, document each in §6 with sample $vectorSearch aggregations and operational guidance.',
     'Apply search field hints (name/title → Atlas Search autocomplete; description/body → Vector Search autoEmbed) and recommend hybrid search when both apply.',
     'Include production readiness: empirical cardinality table, parallel multikey index warning, array update/concurrency patterns, maxItems/additionalProperties in validators, pagination, security, and shard-key contingency.',
+    architectureReviewPromptSuffix(),
   ].join(' ');
 }
 
@@ -132,5 +153,6 @@ export function buildPostImportArchitectureReviewPrompt(targetDb: string): strin
     'If Atlas vector search indexes are listed in the system context, document each in §6 with sample $vectorSearch aggregations and operational guidance.',
     'Apply search field hints (name/title → Atlas Search autocomplete; description/body → Vector Search autoEmbed) and recommend hybrid search when both apply.',
     'Include production readiness: empirical cardinality table, parallel multikey index warning, array update/concurrency patterns, maxItems/additionalProperties in validators, pagination, security, and shard-key contingency.',
+    architectureReviewPromptSuffix(),
   ].join(' ');
 }
