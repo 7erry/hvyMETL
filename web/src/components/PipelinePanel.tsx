@@ -940,7 +940,6 @@ export function PipelinePanel({
                 ))}
               </ul>
             ) : null}
-            <p className="pipeline-hint">Output: {result.paths.outDir}</p>
             {result.runId ? (
               <button
                 type="button"
