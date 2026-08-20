@@ -53,6 +53,11 @@ export const MONGODB_DOC_LINKS = {
     'https://www.mongodb.com/docs/manual/tutorial/model-embedded-many-to-many-relationships-between-documents/',
   treeStructures: 'https://www.mongodb.com/docs/manual/applications/data-models-tree-structures/',
   timeSeries: 'https://www.mongodb.com/docs/manual/core/timeseries-collections/',
+  atlasWellArchitected: 'https://www.mongodb.com/docs/atlas/architecture/current/',
+  atlasArchitectureReliability: 'https://www.mongodb.com/docs/atlas/architecture/current/reliability/',
+  atlasArchitectureSecurity: 'https://www.mongodb.com/docs/atlas/architecture/current/security/',
+  csfle: 'https://www.mongodb.com/docs/manual/core/csfle/',
+  queryableEncryption: 'https://www.mongodb.com/docs/manual/core/queryable-encryption/',
 } as const;
 
 /** Markdown link helper for prompt templates. */
@@ -74,5 +79,5 @@ When you mention a MongoDB or Atlas concept, link the **first occurrence** in ea
 
 ${architectureReviewDocLinkRegistry()}
 
-Topic hints: data modeling → \`dataModelingIntro\`, \`designPatterns\`; embed vs reference → \`embeddedDocuments\`, \`referencing\`; §6 search → \`atlasSearch\`, \`atlasVectorSearch\`, \`rankFusion\`; §3 patterns → \`subsetPattern\`, \`bucketPattern\`, \`outlierPattern\`, \`attributePattern\`, \`polymorphicPattern\`, \`inheritancePattern\`, \`dataVersioning\`, \`archivePattern\`, \`extendedReferencePattern\`, \`singleCollectionPattern\`, \`timeSeries\`, \`designAntipatterns\`.
+Topic hints: data modeling → \`dataModelingIntro\`, \`designPatterns\`; embed vs reference → \`embeddedDocuments\`, \`referencing\`; §6 search → \`atlasSearch\`, \`atlasVectorSearch\`, \`rankFusion\`; §3 patterns → \`subsetPattern\`, \`bucketPattern\`, \`outlierPattern\`, \`attributePattern\`, \`polymorphicPattern\`, \`inheritancePattern\`, \`dataVersioning\`, \`archivePattern\`, \`extendedReferencePattern\`, \`singleCollectionPattern\`, \`timeSeries\`, \`designAntipatterns\`; §9 deployment → \`atlasWellArchitected\`, \`atlasArchitectureReliability\`, \`atlasArchitectureSecurity\`, \`csfle\`, \`queryableEncryption\`.
 `.trim();

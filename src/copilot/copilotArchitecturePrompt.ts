@@ -4,6 +4,7 @@
  */
 
 import { ARCHITECTURE_REVIEW_ATLAS_SIZING_SECTION } from './architectureReviewSizingSection.js';
+import { ARCHITECTURE_REVIEW_DEPLOYMENT_SECTION } from './architectureReviewDeploymentSection.js';
 import { ARCHITECTURE_REVIEW_SEARCH_SECTION } from './architectureReviewSearchSection.js';
 import { ARCHITECTURE_REVIEW_PRODUCTION_SECTION } from './architectureReviewProductionSection.js';
 import { ARCHITECTURE_REVIEW_DOMAIN_SECTION } from './architectureReviewDomainSection.js';
@@ -23,7 +24,7 @@ brief** — not a wall of unbroken text.
 2. **Verdict callout** — one blockquote with a single-sentence recommendation
 3. **Comparison table** — compact markdown table (Naive vs Recommended); max 6 rows
 4. **Next actions** — one short bullet list (2–4 items, include tool names when relevant)
-5. **Collapsible sections** — wrap sections **2 through 8** in HTML \`<details>\`:
+5. **Collapsible sections** — wrap sections **2 through 9** in HTML \`<details>\`:
 
 \`\`\`html
 <details>
@@ -35,7 +36,7 @@ brief** — not a wall of unbroken text.
 \`\`\`
 
 Keep **section 1 (Executive summary)** and the title/verdict/table/actions **outside** \`<details>\`
-so the user sees the answer immediately. Sections 2–8 must each be a separate \`<details>\` block.
+so the user sees the answer immediately. Sections 2–9 must each be a separate \`<details>\` block.
 
 ### Section contents
 
@@ -82,6 +83,8 @@ ${ARCHITECTURE_REVIEW_PRODUCTION_SECTION}
 
 ${ARCHITECTURE_REVIEW_ATLAS_SIZING_SECTION}
 
+${ARCHITECTURE_REVIEW_DEPLOYMENT_SECTION}
+
 ### Formatting rules (critical)
 
 - **Always** put a blank line before headings, tables, lists, code fences, and \`<details>\`
@@ -96,7 +99,7 @@ ${ARCHITECTURE_REVIEW_ATLAS_SIZING_SECTION}
 function architectureReviewPromptSuffix(): string {
   return [
     'Include the Review domain table and hyperlink first mention of MongoDB topics to official docs (Atlas Search, Vector Search, RRF/$rankFusion, ESR, explain, schema validation, shard keys, design patterns).',
-    'Cover data modeling (embed vs reference, unbounded arrays), indexing (ESR, explain, RAM), cluster topology (shard keys, HA, write concern), and operations (security, oplog).',
+    'Cover data modeling (embed vs reference, unbounded arrays), indexing (ESR, explain, RAM), cluster topology (shard keys, HA, write concern), §9 Well-Architected deployment options (multi-region, private endpoints, encryption, observability), and operations (security, oplog).',
   ].join(' ');
 }
 
@@ -116,9 +119,10 @@ export function buildArchitectureReviewUserPrompt(focus: string): string {
   return [
     `Tell me about **${focus}** — produce a MongoDB migration architecture review.`,
     'Use the required format: title, verdict blockquote, comparison table, next actions,',
-    'then sections 2–8 each inside `<details><summary>…</summary>` collapsible blocks.',
+    'then sections 2–9 each inside `<details><summary>…</summary>` collapsible blocks.',
     'Include Before/After TypeScript + JSON Schema in section 4.',
     'Include the full §8 Atlas cluster sizing breakdown (RAM/tier, storage table, replica set & backup, sharding verdict, validation steps) using Manager dataset scale hot/active GB.',
+    'Include §9 Atlas deployment options (Well-Architected Framework): multi-region HA, private endpoints, RBAC/SSO, encryption, and the gold-standard operations table.',
     'Ground every recommendation in the current schema context, guardrail issues, and Manager dataset scale when discussing sizing or sharding.',
     'If Atlas vector search indexes are listed in the system context, document each in §6 with sample $vectorSearch aggregations and operational guidance.',
     'Apply search field hints (name/title → Atlas Search autocomplete; description/body → Vector Search autoEmbed) and recommend hybrid search when both apply.',
@@ -136,9 +140,10 @@ export function buildOptimizeSchemaUserPrompt(targetDb: string): string {
     'Before listing indexes, call `listMongoCollections` once for this database; only call `listMongoCollectionIndexes` on names that exist in Atlas (folded children may exist only on the parent—use plan index specs from schema context for those).',
     'If an inspect tool reports a missing collection, continue the review using migration plan data—do not abort the Architecture Review.',
     'Use the required format: title, verdict blockquote, comparison table, next actions,',
-    'then sections 2–8 each inside `<details><summary>…</summary>` collapsible blocks.',
+    'then sections 2–9 each inside `<details><summary>…</summary>` collapsible blocks.',
     'Include Before/After TypeScript + JSON Schema in section 4.',
     'Include the full §8 Atlas cluster sizing breakdown (RAM/tier, storage table, replica set & backup, sharding verdict, validation steps) using Manager dataset scale hot/active GB.',
+    'Include §9 Atlas deployment options (Well-Architected Framework): multi-region HA, private endpoints, RBAC/SSO, encryption, and the gold-standard operations table.',
     'Ground every recommendation in the current schema context, guardrail issues, and Manager dataset scale when discussing sizing or sharding.',
     'If Atlas vector search indexes are listed in the system context, document each in §6 with sample $vectorSearch aggregations and operational guidance.',
     'Apply search field hints (name/title → Atlas Search autocomplete; description/body → Vector Search autoEmbed) and recommend hybrid search when both apply.',
@@ -157,9 +162,10 @@ export function buildPostImportArchitectureReviewPrompt(targetDb: string): strin
     'Before listing indexes, call `listMongoCollections` once for this database; only call `listMongoCollectionIndexes` on names that exist in Atlas (folded children may exist only on the parent—use plan index specs from schema context for those).',
     'If an inspect tool reports a missing collection, continue the review using migration plan data—do not abort the Architecture Review.',
     'Use the required format: title, verdict blockquote, comparison table, next actions,',
-    'then sections 2–8 each inside `<details><summary>…</summary>` collapsible blocks.',
+    'then sections 2–9 each inside `<details><summary>…</summary>` collapsible blocks.',
     'Include Before/After TypeScript + JSON Schema in section 4 where applicable.',
     'Include the full §8 Atlas cluster sizing breakdown (RAM/tier, storage table, replica set & backup, sharding verdict, validation steps) using Manager dataset scale hot/active GB.',
+    'Include §9 Atlas deployment options (Well-Architected Framework): multi-region HA, private endpoints, RBAC/SSO, encryption, and the gold-standard operations table.',
     'Ground recommendations in the current schema context and the live Atlas collections listed above.',
     'If Atlas vector search indexes are listed in the system context, document each in §6 with sample $vectorSearch aggregations and operational guidance.',
     'Apply search field hints (name/title → Atlas Search autocomplete; description/body → Vector Search autoEmbed) and recommend hybrid search when both apply.',

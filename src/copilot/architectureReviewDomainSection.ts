@@ -13,7 +13,7 @@ Include this **Review domain** table in §1 (after the verdict callout or compar
 | --- | --- | --- |
 | **Data model** | Access-pattern matrix (read vs write per entity), migration-plan JSON schemas, cardinality stats | Unbounded embedded arrays; relational schemas ported 1:1 to BSON without embed/reference justification |
 | **Performance** | Planned compound indexes, \`explain("executionStats")\` samples on hot paths, slow-query patterns | Missing compound indexes; COLLSCAN; in-memory sorts; unindexed aggregations; redundant indexes bloating RAM |
-| **Infrastructure** | Topology / tier sizing, shard-key candidates, replica-set layout | Monotonically increasing shard keys (ObjectId-only or timestamp-only); WiredTiger cache under-provisioned vs working set |
+| **Infrastructure** | Topology / tier sizing, shard-key candidates, replica-set layout, §9 Well-Architected deployment | Monotonically increasing shard keys; public internet DB access; missing private endpoints or RBAC |
 | **Operations** | DR / backup posture, security baseline, write concern & read preference | Default \`w: 1\` for critical writes; missing TLS/RBAC; unmonitored oplog growth |
 
 **§2 Data modeling & schema strategy** (collapsible — expand beyond entity list)

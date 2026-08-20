@@ -1,3 +1,14 @@
+## hvyMETL 4.3.6
+
+**Architecture Review §9 deployment options** — collective reviews now include a collapsible **Atlas deployment options** section aligned to the MongoDB Well-Architected Framework: multi-region HA, dual auto-scaling, private endpoints, RBAC/SSO, encryption (TLS 1.3, CMK, CSFLE/Queryable Encryption), and a gold-standard operations table.
+
+### Verification
+
+- `npm test -- src/copilot/architectureReviewDeploymentSection.test.ts src/copilot/copilotArchitecturePrompt.test.ts`
+- Run **Architecture Review** — output includes §9 with Well-Architected deployment guidance.
+
+---
+
 ## hvyMETL 4.3.5
 
 **Copilot Architecture Review message limits** — fixes `Message content exceeds 16384 characters` when a prior Architecture Review reply stays in LLM history. Assistant messages now allow up to 131 KB; tool payloads truncate instead of failing; starting a new Architecture Review clears prior LLM history.

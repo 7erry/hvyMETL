@@ -56,6 +56,13 @@ describe('copilotArchitecturePrompt', () => {
     expect(buildOptimizeSchemaUserPrompt('finops')).toContain('§8 Atlas cluster sizing');
   });
 
+  it('requires §9 Well-Architected deployment options', () => {
+    expect(COPILOT_ARCHITECTURE_RESPONSE_INSTRUCTIONS).toContain('§9 Atlas deployment options');
+    expect(COPILOT_ARCHITECTURE_RESPONSE_INSTRUCTIONS).toContain('Multi-region replica sets');
+    expect(COPILOT_ARCHITECTURE_RESPONSE_INSTRUCTIONS).toContain('Gold-standard configuration');
+    expect(buildOptimizeSchemaUserPrompt('finops')).toContain('§9 Atlas deployment options');
+  });
+
   it('requires vector search documentation when indexes exist', () => {
     expect(COPILOT_ARCHITECTURE_RESPONSE_INSTRUCTIONS).toContain('$vectorSearch');
     expect(COPILOT_ARCHITECTURE_RESPONSE_INSTRUCTIONS).toContain('numCandidates');
