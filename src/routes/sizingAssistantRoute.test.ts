@@ -6,6 +6,7 @@ import { InMemorySizingSessionStore, setSizingSessionStore } from '../copilot/si
 describe('sizing assistant routes', () => {
   beforeEach(() => {
     process.env.GROVE_API_KEY = 'test-key';
+    process.env.HVYMETL_COPILOT_RATE_LIMIT_DISABLED = '1';
     setSizingSessionStore(new InMemorySizingSessionStore());
   });
 

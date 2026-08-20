@@ -181,6 +181,8 @@ Priority order for future hardening:
 6. **Prompt size awareness** — Log or metric approximate prompt size; optionally summarize very large schemas before Grove calls.
 7. **Atlas Connectivity Architect** — When wired, reuse the same Grove module ([22-release-4.0-roadmap.md](22-release-4.0-roadmap.md) Phase 2+).
 
+Phase 0 guardrails shipped in **4.3.0** are documented in [25-copilot-security.md](25-copilot-security.md).
+
 ## 11. Related Documentation
 
 | Document | Relationship |

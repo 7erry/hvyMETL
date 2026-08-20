@@ -2,12 +2,16 @@
  * Agent copilot API — proxies chat to Grove OpenAI-compatible endpoint.
  */
 
-import { Router, type Response } from 'express';
+import { Router, type Request, type Response } from 'express';
+import {
+  auditCopilotEvent,
+  CopilotRequestValidationError,
+  sanitizeCopilotChatMessages,
+  sanitizeCopilotSchemaContext,
+} from '../copilot/copilotRequestGuard.js';
 import {
   callGroveChat,
   isGroveConfigured,
-  type CopilotChatMessage,
-  type CopilotSchemaContext,
 } from '../copilot/groveChat.js';
 import { invokeMongoInspectTool } from '../copilot/mongoInspectService.js';
 import { createMongoAutoEmbedVectorIndex } from '../copilot/mongoVectorIndexService.js';
@@ -22,94 +26,33 @@ import {
   readArchitectureExport,
 } from '../copilot/architectureReviewExport.js';
 import { readGoogleDriveClientId } from '../copilot/googleDriveConfig.js';
-import type { CopilotDatasetScaleContext } from '../copilot/copilotDatasetScale.js';
+import { getRequestTenantId } from './tenant.js';
+import { createCopilotRateLimitMiddleware } from './copilotRateLimit.js';
 
-function parseChatMessages(raw: unknown): CopilotChatMessage[] {
-  if (!Array.isArray(raw)) return [];
-  return raw
-    .filter((item): item is Record<string, unknown> => item !== null && typeof item === 'object')
-    .map((item) => ({
-      role: item.role as CopilotChatMessage['role'],
-      content: typeof item.content === 'string' ? item.content : '',
-      ...(typeof item.tool_call_id === 'string' ? { tool_call_id: item.tool_call_id } : {}),
-      ...(Array.isArray(item.tool_calls) ? { tool_calls: item.tool_calls as CopilotChatMessage['tool_calls'] } : {}),
-    }))
-    .filter((msg) => ['system', 'user', 'assistant', 'tool'].includes(msg.role));
-}
+type RequestWithAuth = Request & {
+  auth?: {
+    payload?: Record<string, unknown>;
+  };
+};
 
-function parseDatasetScale(raw: unknown): CopilotDatasetScaleContext | undefined {
-  if (!raw || typeof raw !== 'object') return undefined;
-  const body = raw as Record<string, unknown>;
-  const rawDataSource = body.rawDataSource;
-  if (rawDataSource !== 'manager-override' && rawDataSource !== 'schema-estimate' && rawDataSource !== 'unavailable') {
-    return undefined;
+function readCopilotAuditIdentity(req: Request): { tenantId: string | null; userSub: string | null } {
+  try {
+    const tenantId = getRequestTenantId(req as RequestWithAuth);
+    const sub = req.auth?.payload?.sub;
+    return {
+      tenantId,
+      userSub: typeof sub === 'string' ? sub : null,
+    };
+  } catch {
+    return { tenantId: null, userSub: null };
   }
-  const shardingRecommendations = Array.isArray(body.shardingRecommendations)
-    ? body.shardingRecommendations
-        .filter((item): item is Record<string, unknown> => item !== null && typeof item === 'object')
-        .map((item) => ({
-          collectionName: String(item.collectionName ?? ''),
-          strategy: String(item.strategy ?? ''),
-          shardKeySummary: String(item.shardKeySummary ?? ''),
-          estimatedHotStorageGb: Number(item.estimatedHotStorageGb ?? 0),
-          rationale: String(item.rationale ?? ''),
-        }))
-        .filter((item) => item.collectionName.length > 0)
-    : [];
-
-  return {
-    rawDataSource,
-    managerRawDataGb: typeof body.managerRawDataGb === 'number' ? body.managerRawDataGb : null,
-    rawDataGb: typeof body.rawDataGb === 'number' ? body.rawDataGb : null,
-    totalStorageGb: typeof body.totalStorageGb === 'number' ? body.totalStorageGb : null,
-    activeStorageGb: typeof body.activeStorageGb === 'number' ? body.activeStorageGb : null,
-    archiveStorageGb: typeof body.archiveStorageGb === 'number' ? body.archiveStorageGb : null,
-    estimatedTotalRows: typeof body.estimatedTotalRows === 'number' ? body.estimatedTotalRows : null,
-    averageDocumentBytes: typeof body.averageDocumentBytes === 'number' ? body.averageDocumentBytes : null,
-    workloadLabel: typeof body.workloadLabel === 'string' ? body.workloadLabel : null,
-    growthRatePercent: typeof body.growthRatePercent === 'number' ? body.growthRatePercent : null,
-    recommendedTierLabel: typeof body.recommendedTierLabel === 'string' ? body.recommendedTierLabel : null,
-    requiresSharding: body.requiresSharding === true,
-    shardingRecommendations,
-  };
-}
-
-function parseSchemaContext(raw: unknown): CopilotSchemaContext {
-  const body = raw && typeof raw === 'object' ? (raw as Record<string, unknown>) : {};
-  return {
-    tables: Array.isArray(body.tables) ? (body.tables as CopilotSchemaContext['tables']) : [],
-    relationships: Array.isArray(body.relationships)
-      ? (body.relationships as CopilotSchemaContext['relationships'])
-      : [],
-    guardrailIssues: Array.isArray(body.guardrailIssues)
-      ? (body.guardrailIssues as CopilotSchemaContext['guardrailIssues'])
-      : [],
-    cardinalityOverrides:
-      body.cardinalityOverrides && typeof body.cardinalityOverrides === 'object'
-        ? (body.cardinalityOverrides as Record<string, number>)
-        : {},
-    forceEmbedOverrides:
-      body.forceEmbedOverrides && typeof body.forceEmbedOverrides === 'object'
-        ? (body.forceEmbedOverrides as Record<string, boolean>)
-        : {},
-    collections: Array.isArray(body.collections)
-      ? (body.collections as CopilotSchemaContext['collections'])
-      : undefined,
-    datasetScale: parseDatasetScale(body.datasetScale),
-    targetDatabase: typeof body.targetDatabase === 'string' ? body.targetDatabase.trim() : undefined,
-    vectorSearchIndexes: Array.isArray(body.vectorSearchIndexes)
-      ? (body.vectorSearchIndexes as CopilotSchemaContext['vectorSearchIndexes'])
-      : undefined,
-    atlasSearchIndexes: Array.isArray(body.atlasSearchIndexes)
-      ? (body.atlasSearchIndexes as CopilotSchemaContext['atlasSearchIndexes'])
-      : undefined,
-    searchFieldHints: Array.isArray(body.searchFieldHints)
-      ? (body.searchFieldHints as CopilotSchemaContext['searchFieldHints'])
-      : undefined,
-  };
 }
 
 function handleCopilotError(res: Response, error: unknown): void {
+  if (error instanceof CopilotRequestValidationError) {
+    res.status(error.statusCode).json({ error: error.message });
+    return;
+  }
   const message = error instanceof Error ? error.message : String(error);
   if (/not configured/i.test(message)) {
     res.status(503).json({ error: message });
@@ -187,6 +130,8 @@ export function createArchitectureExportDownloadRouter(): Router {
 
 export function createCopilotRouter(): Router {
   const router = Router();
+  const chatRateLimit = createCopilotRateLimitMiddleware('chat');
+  const inspectRateLimit = createCopilotRateLimitMiddleware('inspect');
 
   router.get('/status', async (_req, res) => {
     const mongoInspectEnabled = isMongoMcpEnabled();
@@ -206,27 +151,43 @@ export function createCopilotRouter(): Router {
     });
   });
 
-  router.post('/mongo/vector-index', async (req, res) => {
+  router.post('/mongo/vector-index', inspectRateLimit, async (req, res) => {
     try {
       const result = await createMongoAutoEmbedVectorIndex(req, req.body);
       const status = result.serviceUnavailable ? 503 : result.ok ? 200 : 400;
+      const identity = readCopilotAuditIdentity(req);
+      auditCopilotEvent({
+        kind: 'copilot.index',
+        tenantId: identity.tenantId,
+        userSub: identity.userSub,
+        tool: 'createMongoAutoEmbedVectorIndex',
+        ok: result.ok,
+      });
       res.status(status).json(result);
     } catch (error) {
       handleCopilotError(res, error);
     }
   });
 
-  router.post('/mongo/atlas-search-index', async (req, res) => {
+  router.post('/mongo/atlas-search-index', inspectRateLimit, async (req, res) => {
     try {
       const result = await createMongoAtlasSearchIndex(req, req.body);
       const status = result.serviceUnavailable ? 503 : result.ok ? 200 : 400;
+      const identity = readCopilotAuditIdentity(req);
+      auditCopilotEvent({
+        kind: 'copilot.index',
+        tenantId: identity.tenantId,
+        userSub: identity.userSub,
+        tool: 'createMongoAtlasSearchIndex',
+        ok: result.ok,
+      });
       res.status(status).json(result);
     } catch (error) {
       handleCopilotError(res, error);
     }
   });
 
-  router.post('/mongo/inspect', async (req, res) => {
+  router.post('/mongo/inspect', inspectRateLimit, async (req, res) => {
     try {
       const tool = String(req.body?.tool ?? '').trim();
       const args =
@@ -240,8 +201,16 @@ export function createCopilotRouter(): Router {
       }
 
       const planContext = parseMongoPlanContext(req.body?.planContext);
+      const identity = readCopilotAuditIdentity(req);
 
       const result = await invokeMongoInspectTool(req, tool, args, { planContext });
+      auditCopilotEvent({
+        kind: 'copilot.inspect',
+        tenantId: identity.tenantId,
+        userSub: identity.userSub,
+        tool,
+        ok: result.ok,
+      });
       const status = result.serviceUnavailable ? 503 : result.ok ? 200 : 400;
       res.status(status).json(result);
     } catch (error) {
@@ -249,20 +218,36 @@ export function createCopilotRouter(): Router {
     }
   });
 
-  router.post('/chat', async (req, res) => {
+  router.post('/chat', chatRateLimit, async (req, res) => {
+    const identity = readCopilotAuditIdentity(req);
     try {
-      const messages = parseChatMessages(req.body?.messages);
-      const schemaContext = parseSchemaContext(req.body?.schemaContext);
+      const messages = sanitizeCopilotChatMessages(req.body?.messages, {
+        allowToolMessages: true,
+        allowAssistantMessages: true,
+      });
+      const schemaContext = sanitizeCopilotSchemaContext(req.body?.schemaContext);
       const toolsEnabled = req.body?.toolsEnabled !== false;
 
-      if (!messages.some((m) => m.role === 'user' || m.role === 'tool')) {
-        res.status(400).json({ error: 'At least one user or tool message is required.' });
-        return;
-      }
+      auditCopilotEvent({
+        kind: 'copilot.chat',
+        tenantId: identity.tenantId,
+        userSub: identity.userSub,
+        messageCount: messages.length,
+        ok: true,
+      });
 
       const result = await callGroveChat({ messages, schemaContext, toolsEnabled });
       res.json(result);
     } catch (error) {
+      if (error instanceof CopilotRequestValidationError) {
+        auditCopilotEvent({
+          kind: 'copilot.validation_failed',
+          tenantId: identity.tenantId,
+          userSub: identity.userSub,
+          reason: error.message,
+          ok: false,
+        });
+      }
       handleCopilotError(res, error);
     }
   });

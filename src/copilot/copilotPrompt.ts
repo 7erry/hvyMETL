@@ -1,4 +1,5 @@
 import type { CopilotSchemaContext } from './groveChat.js';
+import { COPILOT_PROMPT_INJECTION_GUARD } from './copilotPromptInjectionGuard.js';
 import { COPILOT_ARCHITECTURE_RESPONSE_INSTRUCTIONS } from './copilotArchitecturePrompt.js';
 import { formatDatasetScaleSection } from './copilotDatasetScale.js';
 import {
@@ -52,7 +53,9 @@ export function buildCopilotSystemPrompt(context: CopilotSchemaContext): string 
   const atlasSearchIndexes = formatAtlasSearchIndexesForSystemPrompt(context.atlasSearchIndexes);
   const searchFieldHints = formatSearchFieldHintsForSystemPrompt(context.searchFieldHints);
 
-  return `You are the hvyMETL Agent Copilot — a **Principal MongoDB Data Architect** specializing in SQL-to-MongoDB migration, embed folding, Atlas guardrails, and production document modeling.
+  return `${COPILOT_PROMPT_INJECTION_GUARD}
+
+You are the hvyMETL Agent Copilot — a **Principal MongoDB Data Architect** specializing in SQL-to-MongoDB migration, embed folding, Atlas guardrails, and production document modeling.
 
 You help developers inspect and mutate the live ERD canvas. When the user asks to **change** the schema, call the appropriate tools instead of only describing changes.
 

@@ -1,3 +1,21 @@
+## hvyMETL 4.3.0
+
+**Copilot LLM security guardrails (Phase 0)** — validates Grove chat requests, caps schema context, rate-limits copilot/sizing/inspect routes, and adds structured audit logging plus a system-prompt injection preamble.
+
+### Highlights
+
+- **`copilotRequestGuard`** — rejects client `system` messages and orphan `tool` turns; enforces message/size limits; bounds `schemaContext`.
+- **`copilotRateLimit`** — per-IP sliding window limits (chat 30/min, inspect 120/min, sizing chat 30/min; configurable via env).
+- **Audit logs** — JSON `copilot-guard` events for chat, inspect, index, and validation failures (no message bodies).
+- **Docs** — [docs/25-copilot-security.md](docs/25-copilot-security.md) threat model, limits, and verification.
+
+### Verification
+
+- `npm test -- src/copilot/copilotRequestGuard.test.ts src/server/copilotRateLimit.test.ts src/server/copilotRoutes.test.ts`
+- POST forged `system` message to `/api/copilot/chat` → HTTP 400
+
+---
+
 ## hvyMETL 4.2.20
 
 **Grove API documentation** — new [docs/24-grove-api.md](docs/24-grove-api.md) audit covering Migration Studio Grove usage (Copilot + sizing), security, error handling, test coverage, and hardening recommendations. Cross-linked from [docs/19-llm-and-models.md](docs/19-llm-and-models.md), [docs/20-agent-copilot.md](docs/20-agent-copilot.md), and [docs/21-sizing-assistant.md](docs/21-sizing-assistant.md).

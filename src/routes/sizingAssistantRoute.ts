@@ -2,8 +2,12 @@
  * HTTP routes for the Release 4.0 sizing assistant.
  */
 
-import { Router, type Response } from 'express';
-import type { CopilotChatMessage } from '../copilot/groveChat.js';
+import { Router, type Request, type Response } from 'express';
+import {
+  auditCopilotEvent,
+  CopilotRequestValidationError,
+  sanitizeCopilotChatMessages,
+} from '../copilot/copilotRequestGuard.js';
 import {
   isSizingAssistantConfigured,
   runSizingAssistantChat,
@@ -19,21 +23,40 @@ import {
 import { executeSizingAssistantTool, setSessionTranscripts } from '../copilot/sizingAssistantTools.js';
 import { isSizingAssistantToolName } from '../copilot/sizingAssistantToolSchemas.js';
 import { stripPricingFields } from '../copilot/sizingAssistantPresentation.js';
+import { getRequestTenantId } from '../server/tenant.js';
+import { createCopilotRateLimitMiddleware } from '../server/copilotRateLimit.js';
 
-function parseChatMessages(raw: unknown): CopilotChatMessage[] {
-  if (!Array.isArray(raw)) return [];
-  return raw
-    .filter((item): item is Record<string, unknown> => item !== null && typeof item === 'object')
-    .map((item) => ({
-      role: item.role as CopilotChatMessage['role'],
-      content: typeof item.content === 'string' ? item.content : '',
-      ...(typeof item.tool_call_id === 'string' ? { tool_call_id: item.tool_call_id } : {}),
-      ...(Array.isArray(item.tool_calls) ? { tool_calls: item.tool_calls as CopilotChatMessage['tool_calls'] } : {}),
-    }))
-    .filter((msg) => ['system', 'user', 'assistant', 'tool'].includes(msg.role));
+type RequestWithAuth = Request & {
+  auth?: {
+    payload?: Record<string, unknown>;
+  };
+};
+
+function readCopilotAuditIdentity(req: Request): { tenantId: string | null; userSub: string | null } {
+  try {
+    const tenantId = getRequestTenantId(req as RequestWithAuth);
+    const sub = req.auth?.payload?.sub;
+    return {
+      tenantId,
+      userSub: typeof sub === 'string' ? sub : null,
+    };
+  } catch {
+    return { tenantId: null, userSub: null };
+  }
+}
+
+function parseChatMessages(raw: unknown) {
+  return sanitizeCopilotChatMessages(raw, {
+    allowToolMessages: false,
+    allowAssistantMessages: true,
+  });
 }
 
 function handleSizingError(res: Response, error: unknown): void {
+  if (error instanceof CopilotRequestValidationError) {
+    res.status(error.statusCode).json({ error: error.message });
+    return;
+  }
   const message = error instanceof Error ? error.message : String(error);
   if (/not configured/i.test(message)) {
     res.status(503).json({ error: message });
@@ -53,6 +76,7 @@ function parseStudioSeed(raw: unknown): SizingAssistantStudioSeedPayload | undef
 
 export function createSizingAssistantRouter(): Router {
   const router = Router();
+  const sizingChatRateLimit = createCopilotRateLimitMiddleware('sizing-chat');
 
   router.get('/status', (_req, res) => {
     res.json({
@@ -172,7 +196,8 @@ export function createSizingAssistantRouter(): Router {
     }
   });
 
-  router.post('/chat', async (req, res) => {
+  router.post('/chat', sizingChatRateLimit, async (req, res) => {
+    const identity = readCopilotAuditIdentity(req);
     try {
       const sessionId = String(req.body?.sessionId ?? '').trim();
       const messages = parseChatMessages(req.body?.messages);
@@ -181,12 +206,16 @@ export function createSizingAssistantRouter(): Router {
         res.status(400).json({ error: 'sessionId is required.' });
         return;
       }
-      if (!messages.some((message) => message.role === 'user' || message.role === 'tool')) {
-        res.status(400).json({ error: 'At least one user or tool message is required.' });
-        return;
-      }
 
       const studioSeed = parseStudioSeed(req.body?.studioSeed);
+      auditCopilotEvent({
+        kind: 'sizing.chat',
+        tenantId: identity.tenantId,
+        userSub: identity.userSub,
+        messageCount: messages.length,
+        ok: true,
+      });
+
       const result = await runSizingAssistantChat({
         sessionId,
         messages,
@@ -196,6 +225,15 @@ export function createSizingAssistantRouter(): Router {
 
       res.json(result);
     } catch (error) {
+      if (error instanceof CopilotRequestValidationError) {
+        auditCopilotEvent({
+          kind: 'copilot.validation_failed',
+          tenantId: identity.tenantId,
+          userSub: identity.userSub,
+          reason: error.message,
+          ok: false,
+        });
+      }
       handleSizingError(res, error);
     }
   });

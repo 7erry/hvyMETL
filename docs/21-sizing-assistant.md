@@ -91,7 +91,7 @@ Open **Copilot** (⌘K) → **Atlas Sizing** tab.
 
 Requires `GROVE_API_KEY` on the API server for LLM-driven tool use; `/tools` works without Grove for deterministic testing.
 
-Grove integration details (shared client with Copilot, error-handling gaps, recommendations): [24-grove-api.md](24-grove-api.md).
+Grove integration details (shared client with Copilot, error-handling gaps, recommendations): [24-grove-api.md](24-grove-api.md). LLM guardrails: [25-copilot-security.md](25-copilot-security.md).
 
 - **Multi-cloud:** Session parameters include `cloud_provider` (`AWS`, `GCP`, `AZURE`) and `target_regions`. Tier tool output includes `deploymentContext` and computed **`oplogRecommendation`** (retention, estimated GB, guidance). The assistant must present **Oplog Recommendations** on every tier recommendation reply.
 

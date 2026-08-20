@@ -87,6 +87,7 @@ describe('buildCopilotSystemPrompt', () => {
     });
 
     expect(prompt).toContain('Principal MongoDB Data Architect');
+    expect(prompt).toContain('Security — untrusted input');
     expect(prompt).toContain('trains');
     expect(prompt).toContain('train_telemetry');
     expect(prompt).toContain('Architecture & schema analysis responses');

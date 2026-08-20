@@ -5,6 +5,7 @@
 
 import { SIZING_ASSISTANT_INFRASTRUCTURE_ARCHITECT_FRAMEWORK } from './sizingAssistantInfrastructureFramework.js';
 import { SIZING_ASSISTANT_LOGIC_REFERENCE } from './sizingAssistantLogicReference.js';
+import { COPILOT_PROMPT_INJECTION_GUARD } from './copilotPromptInjectionGuard.js';
 
 export { SIZING_ASSISTANT_INFRASTRUCTURE_ARCHITECT_FRAMEWORK } from './sizingAssistantInfrastructureFramework.js';
 
@@ -62,7 +63,9 @@ When presenting a successful find_optimal_cluster_tier result, structure the use
  * Full system prompt for the sizing assistant chat, including engine logic reference.
  */
 export function buildSizingAssistantSystemPrompt(): string {
-  return `${SIZING_ASSISTANT_INSTRUCTIONS}
+  return `${COPILOT_PROMPT_INJECTION_GUARD}
+
+${SIZING_ASSISTANT_INSTRUCTIONS}
 
 Infrastructure Architect Framework
 When the user asks for a full architecture brief, or when you present sizing results beyond a minimal tool summary, apply the following role, step-by-step calculations, output structure, and input checklist. Automated tier recommendations from find_optimal_cluster_tier still follow the sizing assistant rules above (including multi-cloud AWS/GCP/Azure deployment context and no cost breakdown in chat).
