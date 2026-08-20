@@ -1,3 +1,14 @@
+## hvyMETL 4.3.4
+
+**Architecture Review doc link fixes** — updates all MongoDB Manual, Search, and Vector Search URLs to current paths (e.g. `group-data/subset-pattern`, `/docs/search/`, `/docs/vector-search/`) so Google Docs exports no longer link to 404 pages.
+
+### Verification
+
+- `npm test -- tests/copilot/architectureReviewDocLinks.test.ts tests/copilot/copilotArchitecturePrompt.test.ts`
+- Run **Architecture Review** → **Save to Google Docs** — pattern and search links resolve on mongodb.com.
+
+---
+
 ## hvyMETL 4.3.3
 
 **Architecture Review depth & MongoDB doc links** — copilot reviews now require the Review domain checklist (data model, performance, infrastructure, operations), ESR/explain/shard-key/HA coverage, and hyperlinks to official MongoDB docs for Atlas Search, Vector Search, RRF (`$rankFusion`), design patterns, and schema validation. Google Docs export renders markdown links as clickable anchors.
