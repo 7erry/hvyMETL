@@ -17,7 +17,7 @@ export const MONGODB_DOC_LINKS = {
   explainResults: 'https://www.mongodb.com/docs/manual/reference/explain-results/',
   queryPlans: 'https://www.mongodb.com/docs/manual/core/query-plans/',
   wiredTiger: 'https://www.mongodb.com/docs/manual/core/wiredtiger/',
-  shardingShardKey: 'https://www.mongodb.com/docs/manual/core/sharding-shard-key/',
+  shardingShardKey: 'https://www.mongodb.com/docs/manual/core/sharding-choose-a-shard-key/',
   replication: 'https://www.mongodb.com/docs/manual/replication/',
   writeConcern: 'https://www.mongodb.com/docs/manual/reference/write-concern/',
   readPreference: 'https://www.mongodb.com/docs/manual/core/read-preference/',
