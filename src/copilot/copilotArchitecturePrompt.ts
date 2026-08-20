@@ -100,6 +100,17 @@ function architectureReviewPromptSuffix(): string {
   ].join(' ');
 }
 
+/** True when the user is starting a full Architecture Review (reset LLM history for a clean turn). */
+export function isArchitectureReviewRequest(text: string): boolean {
+  const trimmed = text.trim();
+  if (!trimmed) return false;
+  return (
+    /Architecture Review/i.test(trimmed) ||
+    /migration architecture review/i.test(trimmed) ||
+    /Tell me about \*\*.+\*\* — produce a MongoDB migration architecture review/i.test(trimmed)
+  );
+}
+
 /** User message sent by guardrail badges and the Optimize Schema quick action. */
 export function buildArchitectureReviewUserPrompt(focus: string): string {
   return [

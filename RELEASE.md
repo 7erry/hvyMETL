@@ -1,3 +1,14 @@
+## hvyMETL 4.3.5
+
+**Copilot Architecture Review message limits** — fixes `Message content exceeds 16384 characters` when a prior Architecture Review reply stays in LLM history. Assistant messages now allow up to 131 KB; tool payloads truncate instead of failing; starting a new Architecture Review clears prior LLM history.
+
+### Verification
+
+- `npm test -- src/copilot/copilotRequestGuard.test.ts`
+- Run **Architecture Review** twice in the same session — second run should not 413.
+
+---
+
 ## hvyMETL 4.3.4
 
 **Architecture Review doc link fixes** — updates all MongoDB Manual, Search, and Vector Search URLs to current paths (e.g. `group-data/subset-pattern`, `/docs/search/`, `/docs/vector-search/`) so Google Docs exports no longer link to 404 pages.

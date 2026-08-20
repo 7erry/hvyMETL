@@ -58,13 +58,41 @@ describe('sanitizeCopilotChatMessages', () => {
     ).toThrow(/Tool messages are not allowed/);
   });
 
-  it('rejects oversized message content', () => {
+  it('rejects oversized user message content', () => {
     expect(() =>
       sanitizeCopilotChatMessages([{ role: 'user', content: 'x'.repeat(COPILOT_MAX_MESSAGE_CONTENT_CHARS + 1) }], {
         allowToolMessages: true,
         allowAssistantMessages: true,
       }),
     ).toThrow(/exceeds/);
+  });
+
+  it('accepts long assistant messages for Architecture Review replies', () => {
+    const longReview = `# finops — Architecture Review\n\n${'section '.repeat(4000)}`;
+    expect(longReview.length).toBeGreaterThan(COPILOT_MAX_MESSAGE_CONTENT_CHARS);
+    const messages = sanitizeCopilotChatMessages(
+      [{ role: 'user', content: 'Architecture Review' }, { role: 'assistant', content: longReview }],
+      { allowToolMessages: true, allowAssistantMessages: true },
+    );
+    expect(messages[1]?.content).toBe(longReview);
+  });
+
+  it('truncates oversized tool message content instead of rejecting', () => {
+    const oversized = JSON.stringify({ ok: true, data: 'x'.repeat(40_000) });
+    const messages = sanitizeCopilotChatMessages(
+      [
+        { role: 'user', content: 'inspect' },
+        {
+          role: 'assistant',
+          content: '',
+          tool_calls: [{ id: 'call_1', type: 'function', function: { name: 'x', arguments: '{}' } }],
+        },
+        { role: 'tool', tool_call_id: 'call_1', content: oversized },
+      ],
+      { allowToolMessages: true, allowAssistantMessages: true },
+    );
+    expect(messages[2]!.content.length).toBeLessThan(oversized.length);
+    expect(messages[2]!.content.endsWith('…')).toBe(true);
   });
 });
 

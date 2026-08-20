@@ -5,8 +5,15 @@
 import type { CopilotChatMessage, CopilotSchemaContext } from './groveChat.js';
 
 export const COPILOT_MAX_MESSAGES = 50;
-export const COPILOT_MAX_MESSAGE_CONTENT_CHARS = 16_384;
-export const COPILOT_MAX_TOTAL_CONTENT_CHARS = 256_000;
+/** Max user message size (prompt injection / abuse guard). */
+export const COPILOT_MAX_USER_MESSAGE_CONTENT_CHARS = 16_384;
+/** Architecture Review assistant replies can be long; allow multi-section markdown in history. */
+export const COPILOT_MAX_ASSISTANT_MESSAGE_CONTENT_CHARS = 131_072;
+/** Tool payloads are truncated when over this size so inspect loops stay valid. */
+export const COPILOT_MAX_TOOL_MESSAGE_CONTENT_CHARS = 32_768;
+/** @deprecated Use role-specific limits; kept for tests and docs referencing the user cap. */
+export const COPILOT_MAX_MESSAGE_CONTENT_CHARS = COPILOT_MAX_USER_MESSAGE_CONTENT_CHARS;
+export const COPILOT_MAX_TOTAL_CONTENT_CHARS = 512_000;
 export const COPILOT_MAX_SCHEMA_TABLES = 500;
 export const COPILOT_MAX_SCHEMA_RELATIONSHIPS = 2_000;
 export const COPILOT_MAX_SCHEMA_GUARDRAIL_ISSUES = 200;
@@ -36,8 +43,22 @@ function truncateString(value: string, maxChars: number): string {
   return `${value.slice(0, maxChars)}…`;
 }
 
-function messageContentLength(message: CopilotChatMessage): number {
-  return message.content.length;
+function maxContentCharsForRole(role: CopilotChatMessage['role']): number {
+  if (role === 'assistant') return COPILOT_MAX_ASSISTANT_MESSAGE_CONTENT_CHARS;
+  if (role === 'tool') return COPILOT_MAX_TOOL_MESSAGE_CONTENT_CHARS;
+  return COPILOT_MAX_USER_MESSAGE_CONTENT_CHARS;
+}
+
+function normalizeMessageContent(role: CopilotChatMessage['role'], content: string): string {
+  const maxChars = maxContentCharsForRole(role);
+  if (content.length <= maxChars) return content;
+  if (role === 'tool') {
+    return truncateString(content, maxChars);
+  }
+  throw new CopilotRequestValidationError(
+    `Message content exceeds ${maxChars} characters.`,
+    413,
+  );
 }
 
 /** Validates OpenAI-style tool call ids from client-supplied assistant messages. */
@@ -90,13 +111,8 @@ export function sanitizeCopilotChatMessages(
       throw new CopilotRequestValidationError('Assistant messages are not allowed on this endpoint.');
     }
 
-    const content = typeof record.content === 'string' ? record.content : '';
-    if (content.length > COPILOT_MAX_MESSAGE_CONTENT_CHARS) {
-      throw new CopilotRequestValidationError(
-        `Message content exceeds ${COPILOT_MAX_MESSAGE_CONTENT_CHARS} characters.`,
-        413,
-      );
-    }
+    const rawContent = typeof record.content === 'string' ? record.content : '';
+    const content = normalizeMessageContent(role, rawContent);
     totalChars += content.length;
     if (totalChars > COPILOT_MAX_TOTAL_CONTENT_CHARS) {
       throw new CopilotRequestValidationError(

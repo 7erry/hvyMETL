@@ -50,8 +50,10 @@ Implemented in `sanitizeCopilotChatMessages()`.
 | Constant | Default |
 | --- | --- |
 | Max messages per request | 50 |
-| Max characters per message | 16,384 |
-| Max total message characters | 256,000 |
+| Max characters per **user** message | 16,384 |
+| Max characters per **assistant** message | 131,072 |
+| Max characters per **tool** message | 32,768 (truncated if larger) |
+| Max total message characters | 512,000 |
 
 ## 4. Schema Context Sanitization
 

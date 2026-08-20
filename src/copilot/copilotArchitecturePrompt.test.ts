@@ -4,6 +4,7 @@ import {
   buildOptimizeSchemaUserPrompt,
   buildPostImportArchitectureReviewPrompt,
   COPILOT_ARCHITECTURE_RESPONSE_INSTRUCTIONS,
+  isArchitectureReviewRequest,
 } from './copilotArchitecturePrompt.js';
 import { buildCopilotSystemPrompt } from './copilotPrompt.js';
 
@@ -74,7 +75,13 @@ describe('copilotArchitecturePrompt', () => {
     expect(COPILOT_ARCHITECTURE_RESPONSE_INSTRUCTIONS).toContain('explain("executionStats")');
     expect(COPILOT_ARCHITECTURE_RESPONSE_INSTRUCTIONS).toContain('Embedding vs referencing');
     expect(COPILOT_ARCHITECTURE_RESPONSE_INSTRUCTIONS).toContain('mongodb.com/docs');
+    expect(COPILOT_ARCHITECTURE_RESPONSE_INSTRUCTIONS).toContain('subsetPattern');
     expect(buildOptimizeSchemaUserPrompt('finops')).toContain('Review domain table');
+  });
+
+  it('detects architecture review requests for history reset', () => {
+    expect(isArchitectureReviewRequest(buildOptimizeSchemaUserPrompt('finops'))).toBe(true);
+    expect(isArchitectureReviewRequest('List collections in finops')).toBe(false);
   });
 });
 

@@ -49,6 +49,7 @@ import { buildMongoInspectDelta, serializeMongoInspectToolResult } from './mongo
 import { buildMongoPlanContext } from './mongoPlanContextPayload';
 import { buildAggregateInspectArgs } from './runTranslationPipeline';
 import { buildSchemaContextPayload } from './schemaContext';
+import { isArchitectureReviewRequest } from '../../../src/copilot/copilotArchitecturePrompt.ts';
 import { serializeCanvasToolResult, toolExecutionHasStructuredOutput } from './toolExecutionDisplay';
 import { fetchCopilotStatus, fetchPipelineConfig, createCopilotMongoAutoEmbedVectorIndex, createCopilotMongoAtlasSearchIndex, invokeCopilotMongoInspect, sendCopilotChat } from '../api';
 import type { CopilotVectorSearchIndexRecord } from '../../../src/copilot/copilotVectorSearchContext.ts';
@@ -1019,7 +1020,9 @@ export function CopilotProvider({
       if (llmConfigured) {
         setStatus('analyzing');
         const userTurn: CopilotLlmMessage = { role: 'user', content: trimmed };
-        const nextHistory = [...llmHistory, userTurn];
+        const nextHistory = isArchitectureReviewRequest(trimmed)
+          ? [userTurn]
+          : [...llmHistory, userTurn];
         setLlmHistory(nextHistory);
         void runLlmTurn(nextHistory)
           .then((updated) => setLlmHistory(updated))

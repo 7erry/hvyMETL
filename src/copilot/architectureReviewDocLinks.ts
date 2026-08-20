@@ -60,33 +60,19 @@ export function mongodbDocLink(label: string, key: keyof typeof MONGODB_DOC_LINK
   return `[${label}](${MONGODB_DOC_LINKS[key]})`;
 }
 
+/** Compact URL registry for the system prompt (avoids duplicating long markdown links in a table). */
+function architectureReviewDocLinkRegistry(): string {
+  return Object.entries(MONGODB_DOC_LINKS)
+    .map(([key, url]) => `- \`${key}\` → ${url}`)
+    .join('\n');
+}
+
 export const ARCHITECTURE_REVIEW_DOC_LINKING_RULES = `
 **MongoDB documentation hyperlinks (required in every Architecture Review)**
 
-When you mention a MongoDB or Atlas concept below, link the **first occurrence** in each collapsible section using markdown \`[label](url)\`. Use these canonical URLs (do not invent or shorten):
+When you mention a MongoDB or Atlas concept, link the **first occurrence** in each collapsible section using markdown \`[label](url)\`. Use only these canonical URLs (do not invent or shorten):
 
-| Topic | Link |
-| --- | --- |
-| Data modeling | ${mongodbDocLink('Data modeling', 'dataModelingIntro')}, ${mongodbDocLink('Design patterns', 'designPatterns')}, ${mongodbDocLink('Building with Patterns', 'buildingWithPatterns')} |
-| Embedding vs referencing | ${mongodbDocLink('Embedded documents', 'embeddedDocuments')}, ${mongodbDocLink('Document references', 'referencing')} |
-| Schema validation | ${mongodbDocLink('JSON Schema validation', 'schemaValidation')} |
-| 16 MB BSON limit | ${mongodbDocLink('BSON document size limit', 'bsonDocumentLimit')} |
-| ESR compound indexes | ${mongodbDocLink('ESR (Equality, Sort, Range) rule', 'esrRule')} |
-| Indexes & multikey | ${mongodbDocLink('Indexes', 'indexes')}, ${mongodbDocLink('Multikey indexes', 'multikeyIndexes')} |
-| Query plans / explain | ${mongodbDocLink('explain results', 'explainResults')}, ${mongodbDocLink('Query plans', 'queryPlans')} |
-| WiredTiger / working set | ${mongodbDocLink('WiredTiger storage engine', 'wiredTiger')} |
-| Sharding & shard keys | ${mongodbDocLink('Shard keys', 'shardingShardKey')} |
-| High availability | ${mongodbDocLink('Replication', 'replication')}, ${mongodbDocLink('Write concern', 'writeConcern')}, ${mongodbDocLink('Read preference', 'readPreference')}, ${mongodbDocLink('Oplog', 'oplog')} |
-| Security & operations | ${mongodbDocLink('Security checklist', 'securityChecklist')}, ${mongodbDocLink('Production notes', 'productionNotes')} |
-| MongoDB Search (lexical) | ${mongodbDocLink('MongoDB Search', 'atlasSearch')}, ${mongodbDocLink('$search stage', 'searchStage')} |
-| MongoDB Vector Search | ${mongodbDocLink('MongoDB Vector Search', 'atlasVectorSearch')}, ${mongodbDocLink('Automated Embedding (autoEmbed)', 'atlasAutoEmbed')}, ${mongodbDocLink('$vectorSearch stage', 'vectorSearchStage')} |
-| Hybrid search & RRF | ${mongodbDocLink('Hybrid search overview', 'hybridSearchOverview')}, ${mongodbDocLink('Vector + full-text hybrid tutorial', 'hybridSearchTutorial')}, ${mongodbDocLink('$rankFusion (Reciprocal Rank Fusion)', 'rankFusion')} |
-| Group-data patterns | ${mongodbDocLink('Subset pattern', 'subsetPattern')}, ${mongodbDocLink('Bucket pattern', 'bucketPattern')}, ${mongodbDocLink('Outlier pattern', 'outlierPattern')}, ${mongodbDocLink('Attribute pattern', 'attributePattern')} |
-| Polymorphic patterns | ${mongodbDocLink('Polymorphic schema pattern', 'polymorphicPattern')}, ${mongodbDocLink('Inheritance pattern', 'inheritancePattern')} |
-| Versioning & archival | ${mongodbDocLink('Document and schema versioning', 'dataVersioning')}, ${mongodbDocLink('Archive pattern', 'archivePattern')} |
-| Other design patterns | ${mongodbDocLink('Extended reference / duplicate data', 'extendedReferencePattern')}, ${mongodbDocLink('Single collection pattern', 'singleCollectionPattern')}, ${mongodbDocLink('Time series collections', 'timeSeries')} |
-| Anti-patterns | ${mongodbDocLink('Schema design anti-patterns', 'designAntipatterns')} |
-| Relationship modeling | ${mongodbDocLink('Embedded one-to-one', 'embedOneToOne')}, ${mongodbDocLink('Embedded one-to-many', 'embedOneToMany')}, ${mongodbDocLink('Embedded many-to-many', 'embedManyToMany')}, ${mongodbDocLink('Tree structures', 'treeStructures')} |
+${architectureReviewDocLinkRegistry()}
 
-Also link pattern names in §3 to the matching design-pattern doc when cited.
+Topic hints: data modeling → \`dataModelingIntro\`, \`designPatterns\`; embed vs reference → \`embeddedDocuments\`, \`referencing\`; §6 search → \`atlasSearch\`, \`atlasVectorSearch\`, \`rankFusion\`; §3 patterns → \`subsetPattern\`, \`bucketPattern\`, \`outlierPattern\`, \`attributePattern\`, \`polymorphicPattern\`, \`inheritancePattern\`, \`dataVersioning\`, \`archivePattern\`, \`extendedReferencePattern\`, \`singleCollectionPattern\`, \`timeSeries\`, \`designAntipatterns\`.
 `.trim();
