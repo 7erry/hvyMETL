@@ -1,3 +1,20 @@
+## hvyMETL 4.2.19
+
+**Run Full Pipeline dialect label** — the pipeline environment banner now shows the imported schema dialect (MySQL, Oracle, DynamoDB, etc.) instead of always defaulting to PostgreSQL when the session dialect was never changed from its initial value.
+
+### Highlights
+
+- **`dialectFromModelSource`** — reads dialect from `ddl:{id}` and `example:…` model source labels.
+- **`inferSchemaDialect`** — prefers the imported model source over the UI session default.
+- **Migration Studio** — pipeline panel uses the resolved dialect for the `{dialect} → Atlas` banner and CSV hints.
+
+### Verification
+
+- `npm test -- src/dialects.test.ts`
+- Load a non-PostgreSQL example (e.g. MySQL or DynamoDB) and open **Run Full Pipeline** — banner should match the import dialect.
+
+---
+
 ## hvyMETL 4.2.18
 
 **Examples catalog documentation** — [`examples/README.md`](examples/README.md) now documents all four Amazon DynamoDB CloudFormation Load examples (IoT, CMS Platform, Ecommerce Catalog, Orders), fixes the enterprise example count (11), and links GSI migration guidance from the pattern matrix and coverage tables.

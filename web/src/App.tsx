@@ -37,6 +37,7 @@ import { CardinalityOverridesPanel } from './components/CardinalityOverridesPane
 import { TimeSeriesOverridesPanel } from './components/TimeSeriesOverridesPanel';
 import { AuthGate } from './components/AuthGate';
 import { FALLBACK_DIALECTS } from './dialectConstants';
+import { getDialectLabel, inferSchemaDialect } from '../../src/dialects.ts';
 import { RoleToggle } from './components/RoleToggle';
 import { useAccess } from './auth/HostedAuthProvider';
 import { profileRequestBody, resolveCustomTelemetryInitial } from './customProfileShared';
@@ -549,9 +550,7 @@ export default function App() {
       }
       setStatus('Importing schema…');
       const { model: m, inferred, dialect: resolvedDialect } = await importDdl(payload, dialect);
-      if (resolvedDialect !== dialect) {
-        setSessionField('dialect', resolvedDialect);
-      }
+      setSessionField('dialect', resolvedDialect);
       await applySchema(payload, m, inferred?.profileId);
       if (m.tables.some((table) => table.dynamoDb)) {
         void handleGeneratePlan();
@@ -626,10 +625,12 @@ export default function App() {
     };
   }, [profileId, customProfile, profiles]);
 
-  const dialectLabel = useMemo(
-    () => dialects.find((d) => d.id === dialect)?.label ?? dialect,
-    [dialects, dialect],
+  const pipelineDialect = useMemo(
+    () => inferSchemaDialect(model, dialect),
+    [model, dialect],
   );
+
+  const dialectLabel = useMemo(() => getDialectLabel(pipelineDialect), [pipelineDialect]);
 
   const handleDelete = (tableName: string) => {
     if (!model) return;
@@ -1794,7 +1795,7 @@ export default function App() {
           forceEmbedOverrides={forceEmbedOverrides}
           embedDirectionOverrides={embedDirectionOverrides}
           timeSeriesOverrides={timeSeriesOverrides}
-          dialect={dialect}
+          dialect={pipelineDialect}
           dialectLabel={dialectLabel}
           csvSourcePath={csvSourcePath}
           onCsvSourcePathChange={(path) => setSessionField('csvSourcePath', path)}

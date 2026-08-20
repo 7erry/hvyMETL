@@ -4,6 +4,7 @@ import {
   SUPPORTED_DIALECT_IDS,
   getDialectLabel,
   getDialectParserFamily,
+  dialectFromModelSource,
   inferSchemaDialect,
   isLiveSourceDialect,
   isSupportedDialect,
@@ -79,14 +80,23 @@ describe('dialects', () => {
     expect(getDialectParserFamily('sap-hana')).toBe('hana');
   });
 
-  it('infers dialect from ddl: source labels', () => {
-    expect(inferSchemaDialect({ source: 'ddl:postgresql' }, '')).toBe('postgresql');
-    expect(inferSchemaDialect({ source: 'ddl:snowflake' }, '')).toBe('snowflake');
-    expect(inferSchemaDialect({ source: 'ddl:teradata' }, '')).toBe('teradata');
+  it('infers dialect from ddl: and example: source labels', () => {
+    expect(dialectFromModelSource('ddl:postgresql')).toBe('postgresql');
+    expect(dialectFromModelSource('ddl:snowflake')).toBe('snowflake');
+    expect(dialectFromModelSource('ddl:teradata')).toBe('teradata');
+    expect(dialectFromModelSource('example:dialects/mysql.sql')).toBe('mysql');
+    expect(dialectFromModelSource('example:dynamodb/cms-platform-table.yaml')).toBe('dynamodb');
+    expect(dialectFromModelSource('example:oracle/oracle-hr.ddl')).toBe('oracle');
+    expect(dialectFromModelSource('example:ledger')).toBe('postgresql');
+    expect(dialectFromModelSource('example:catalog')).toBe('sqlite');
   });
 
-  it('prefers session dialect when set', () => {
-    expect(inferSchemaDialect({ source: 'ddl:mysql' }, 'postgresql')).toBe('postgresql');
+  it('prefers imported model dialect over the session default', () => {
+    expect(inferSchemaDialect({ source: 'ddl:mysql' }, 'postgresql')).toBe('mysql');
+    expect(inferSchemaDialect({ source: 'ddl:dynamodb' }, 'postgresql')).toBe('dynamodb');
+    expect(inferSchemaDialect({ source: 'ddl:postgresql' }, '')).toBe('postgresql');
+    expect(inferSchemaDialect({ source: 'ddl:snowflake' }, '')).toBe('snowflake');
+    expect(inferSchemaDialect(null, 'oracle')).toBe('oracle');
   });
 
   it('infers sqlite from uploaded file paths', () => {

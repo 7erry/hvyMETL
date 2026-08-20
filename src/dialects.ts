@@ -113,18 +113,61 @@ export function isLiveSourceDialect(dialectId: string): boolean {
   return DIALECTS.find((d) => d.id === normalized)?.live === true;
 }
 
+/** Non-SQLite bundled example domains that use DDL paste dialects. */
+const EXAMPLE_DOMAIN_DIALECTS: Record<string, string> = {
+  ledger: 'postgresql',
+};
+
 /**
- * Infer schema dialect from session state and the structural model source label.
- * SQLite uploads set `source` to a file path; DDL imports use `ddl:{dialect}`.
+ * Extract a canonical dialect id encoded in a structural model `source` label.
+ * Returns undefined when the source does not imply a dialect.
+ */
+export function dialectFromModelSource(source: string): string | undefined {
+  const trimmed = source.trim();
+  if (!trimmed) return undefined;
+
+  if (trimmed.startsWith('ddl:')) {
+    const id = normalizeDialectId(trimmed.slice(4));
+    return isSupportedDialect(id) ? id : undefined;
+  }
+
+  if (trimmed.startsWith('example:')) {
+    const exampleId = trimmed.slice('example:'.length);
+    const dialectFileMatch = /^dialects\/([^./]+)\.(sql|ya?ml|json)$/i.exec(exampleId);
+    if (dialectFileMatch) {
+      const id = normalizeDialectId(dialectFileMatch[1]);
+      return isSupportedDialect(id) ? id : undefined;
+    }
+    if (exampleId.startsWith('dynamodb/')) return 'dynamodb';
+    if (exampleId.startsWith('oracle/')) return 'oracle';
+    const domain = exampleId.split('/')[0]?.split('.')[0] ?? '';
+    if (domain && EXAMPLE_DOMAIN_DIALECTS[domain]) {
+      return EXAMPLE_DOMAIN_DIALECTS[domain];
+    }
+    if (domain && !exampleId.includes('.')) {
+      return 'sqlite';
+    }
+  }
+
+  if (/\.(db|sqlite|sqlite3)$/i.test(trimmed) || trimmed.includes('web-uploads')) {
+    return 'sqlite';
+  }
+
+  return undefined;
+}
+
+/**
+ * Infer schema dialect from the structural model source label and session state.
+ * Imported models (`ddl:{dialect}`, `example:…`) win over the UI session default.
  */
 export function inferSchemaDialect(
   model: { source: string } | null | undefined,
   sessionDialect: string,
 ): string {
-  if (sessionDialect) return normalizeDialectId(sessionDialect) || sessionDialect;
-  const source = model?.source ?? '';
-  if (source.startsWith('ddl:')) return source.slice(4);
-  if (/\.(db|sqlite|sqlite3)$/i.test(source) || source.includes('web-uploads')) return 'sqlite';
+  const fromSource = dialectFromModelSource(model?.source ?? '');
+  if (fromSource) return fromSource;
+  const session = normalizeDialectId(sessionDialect);
+  if (session) return session;
   return 'postgresql';
 }
 

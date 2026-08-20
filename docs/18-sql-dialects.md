@@ -91,7 +91,7 @@ flowchart TB
 | `getDialectLabel(id)` | Display name for UI and pipeline hints |
 | `getDialectParserFamily(id)` | Parser compatibility family (`postgresql`, `mysql`, `snowflake`, …) |
 | `isLiveSourceDialect(id)` | `true` only when a database file can be uploaded |
-| `inferSchemaDialect(model, sessionDialect)` | Resolves dialect from UI session or `model.source` |
+| `inferSchemaDialect(model, sessionDialect)` | Resolves dialect from `model.source` (`ddl:…`, `example:…`) then UI session |
 | `getCsvSourceHint(dialect)` | User-facing CSV export instructions per dialect |
 
 `POST /api/schema/import-ddl` validates the requested dialect with
