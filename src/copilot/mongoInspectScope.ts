@@ -165,7 +165,6 @@ export function discoverTenantPhysicalDatabases(
     const separatorIndex = physicalName.indexOf(TENANT_DB_SEPARATOR);
     const prefix = separatorIndex > 0 ? physicalName.slice(0, separatorIndex) : '';
     const allowed =
-      knownLogicalDatabases.includes(logical) ||
       scope.ownsPhysicalDatabase(physicalName) ||
       (prefix.length > 0 && scope.prefixCandidates.includes(prefix));
     if (allowed) physical.add(physicalName);
@@ -291,7 +290,10 @@ export function sanitizeDatabaseListForClient(
 export function assertDatabaseAccess(scope: TenantMongoInspectScope, physicalDatabase: string): void {
   if (!scope.authEnabled) return;
   if (!scope.ownsPhysicalDatabase(physicalDatabase)) {
-    throw new Error('Access denied: database is outside your workspace.');
+    const logical = scope.toLogicalDatabase(physicalDatabase);
+    throw new Error(
+      `Access denied: database "${logical}" is outside your workspace. Run **Run Full Pipeline** to import into your tenant database, or choose a database returned by **list MongoDB databases**.`,
+    );
   }
 }
 

@@ -992,12 +992,19 @@ async function resolveAccessiblePhysicalDatabase(
   if (discovered) return discovered;
 
   for (const candidate of resolved.scope.resolvePhysicalDatabaseCandidates(logicalDatabase)) {
-    if (clusterNames.includes(candidate)) {
+    if (!clusterNames.includes(candidate)) continue;
+    if (!resolved.scope.authEnabled || resolved.scope.ownsPhysicalDatabase(candidate)) {
       return candidate;
     }
   }
 
-  return resolved.scope.resolvePhysicalDatabase(logicalDatabase);
+  const fallbackPhysical = resolved.scope.resolvePhysicalDatabase(logicalDatabase);
+  if (resolved.scope.authEnabled && !resolved.scope.ownsPhysicalDatabase(fallbackPhysical)) {
+    throw new Error(
+      `Database "${logicalDatabase}" was not found in your workspace. Run **Run Full Pipeline** first, or pick a database from **list MongoDB databases**.`,
+    );
+  }
+  return fallbackPhysical;
 }
 
 async function runCompareCollectionToPlan(input: {

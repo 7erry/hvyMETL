@@ -236,13 +236,13 @@ function MongoAutoEmbedVectorIndexModalPanel({
 
       if (!response.ok) {
         setCatalogLoadError(response.summary);
-        const fallbackDb = pickInitialCatalogName([], [databaseHint, pipelineDatabase]);
-        if (fallbackDb) {
-          setDatabaseOptions([fallbackDb]);
-          setSelectedDatabase(fallbackDb);
-          setLogicalDatabase(fallbackDb);
-          await loadCollectionsForDatabase(fallbackDb);
-        }
+        setDatabaseOptions([]);
+        setSelectedDatabase('');
+        setLogicalDatabase('');
+        setCollectionOptions([]);
+        setSelectedCollection('');
+        setFieldOptions([]);
+        setPath('');
         return;
       }
 

@@ -1,3 +1,20 @@
+## hvyMETL 4.3.1
+
+**MongoDB inspect workspace scoping** — fixes false "database is outside your workspace" errors when creating autoEmbed vector indexes (and other inspect tools) on shared Atlas clusters.
+
+### Highlights
+
+- **Tenant discovery** — pipeline history no longer claims another tenant's `{prefix}__{logical}` database when the logical name matches but the prefix does not.
+- **Physical DB resolution** — inspect only returns Atlas database candidates the signed-in user owns; clearer errors when the workspace database is missing.
+- **Index dialogs** — autoEmbed and Atlas Search index pickers no longer fall back to an unverified pipeline target when `listMongoDatabases` fails.
+
+### Verification
+
+- `npm test -- src/copilot/mongoInspectScope.test.ts src/copilot/mongoInspectService.test.ts`
+- Open **Create autoEmbed vector index…** after **Run Full Pipeline** — database dropdown should list only your tenant databases.
+
+---
+
 ## hvyMETL 4.3.0
 
 **Copilot LLM security guardrails (Phase 0)** — validates Grove chat requests, caps schema context, rate-limits copilot/sizing/inspect routes, and adds structured audit logging plus a system-prompt injection preamble.

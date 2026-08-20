@@ -128,4 +128,22 @@ describe('mongoInspectScope', () => {
     expect(logical.map((entry) => entry.name).sort()).toEqual(['mytrains', 'railway_ops']);
     vi.restoreAllMocks();
   });
+
+  it('does not treat another tenant database as owned when pipeline history matches the logical name', async () => {
+    vi.spyOn(auth, 'isAuthConfigured').mockReturnValue(true);
+    vi.spyOn(auth, 'resolveAuthDisplayName').mockResolvedValue('Terry Walters');
+
+    const req = {
+      auth: { payload: { sub: 'google-oauth2|abc' } },
+      headers: { authorization: 'Bearer token' },
+    } as Parameters<typeof resolveTenantMongoInspectScope>[0];
+
+    const scope = await resolveTenantMongoInspectScope(req);
+    const clusterDatabaseNames = ['other_user__csv_to_atlas'];
+    const physical = discoverTenantPhysicalDatabases(scope, clusterDatabaseNames, ['csv_to_atlas']);
+
+    expect(physical).toEqual([]);
+    expect(() => assertDatabaseAccess(scope, 'other_user__csv_to_atlas')).toThrow(/outside your workspace/i);
+    vi.restoreAllMocks();
+  });
 });
