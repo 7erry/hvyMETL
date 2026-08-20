@@ -1,4 +1,5 @@
 import { buildCopilotSystemPrompt } from './copilotPrompt.js';
+import { conversationNeedsArchitectureInstructions } from './copilotArchitectureMode.js';
 import { COPILOT_OPENAI_TOOLS } from './agentToolSchemas.js';
 import type { CopilotDatasetScaleContext } from './copilotDatasetScale.js';
 
@@ -121,7 +122,9 @@ export async function callGroveChat(request: GroveChatRequest, config?: GroveCon
     throw new Error('Grove copilot is not configured. Set GROVE_API_KEY in .env.');
   }
 
-  const systemPrompt = buildCopilotSystemPrompt(request.schemaContext);
+  const systemPrompt = buildCopilotSystemPrompt(request.schemaContext, {
+    includeArchitectureInstructions: conversationNeedsArchitectureInstructions(request.messages),
+  });
   const payload: Record<string, unknown> = {
     model: grove.model,
     messages: [{ role: 'system', content: systemPrompt }, ...request.messages],

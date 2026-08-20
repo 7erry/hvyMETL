@@ -27,6 +27,11 @@ import {
 } from '../copilot/architectureReviewExport.js';
 import { readGoogleDriveClientId } from '../copilot/googleDriveConfig.js';
 import { getRequestTenantId } from './tenant.js';
+import {
+  beginCopilotChatSse,
+  startCopilotChatSseKeepalive,
+  writeCopilotChatSseEvent,
+} from '../copilot/copilotChatStream.js';
 import { createCopilotRateLimitMiddleware } from './copilotRateLimit.js';
 
 type RequestWithAuth = Request & {
@@ -48,7 +53,19 @@ function readCopilotAuditIdentity(req: Request): { tenantId: string | null; user
   }
 }
 
-function handleCopilotError(res: Response, error: unknown): void {
+function handleCopilotError(res: Response, error: unknown, options?: { sse?: boolean }): void {
+  if (options?.sse && !res.headersSent) {
+    beginCopilotChatSse(res);
+    const message =
+      error instanceof CopilotRequestValidationError
+        ? error.message
+        : error instanceof Error
+          ? error.message
+          : String(error);
+    writeCopilotChatSseEvent(res, { event: 'error', data: { error: message } });
+    res.end();
+    return;
+  }
   if (error instanceof CopilotRequestValidationError) {
     res.status(error.statusCode).json({ error: error.message });
     return;
@@ -228,6 +245,8 @@ export function createCopilotRouter(): Router {
   router.post('/chat', chatRateLimit, async (req, res) => {
     req.socket.setTimeout(0);
     const identity = readCopilotAuditIdentity(req);
+    const useSseStream = req.query.stream === '1' || req.body?.stream === true;
+    let stopKeepalive: (() => void) | undefined;
     try {
       const messages = sanitizeCopilotChatMessages(req.body?.messages, {
         allowToolMessages: true,
@@ -244,9 +263,24 @@ export function createCopilotRouter(): Router {
         ok: true,
       });
 
+      if (useSseStream) {
+        beginCopilotChatSse(res);
+        stopKeepalive = startCopilotChatSseKeepalive(res);
+      }
+
       const result = await callGroveChat({ messages, schemaContext, toolsEnabled });
+
+      if (useSseStream) {
+        stopKeepalive?.();
+        writeCopilotChatSseEvent(res, { event: 'message', data: result });
+        writeCopilotChatSseEvent(res, { event: 'done', data: {} });
+        res.end();
+        return;
+      }
+
       res.json(result);
     } catch (error) {
+      stopKeepalive?.();
       if (error instanceof CopilotRequestValidationError) {
         auditCopilotEvent({
           kind: 'copilot.validation_failed',
@@ -256,7 +290,17 @@ export function createCopilotRouter(): Router {
           ok: false,
         });
       }
-      handleCopilotError(res, error);
+      if (useSseStream && res.headersSent) {
+        const message = error instanceof Error ? error.message : String(error);
+        const statusMessage =
+          /timed out|TimeoutError|AbortError/i.test(message)
+            ? 'Copilot request timed out. Architecture Review can take several minutes — wait and retry.'
+            : message;
+        writeCopilotChatSseEvent(res, { event: 'error', data: { error: statusMessage } });
+        res.end();
+        return;
+      }
+      handleCopilotError(res, error, { sse: useSseStream });
     }
   });
 

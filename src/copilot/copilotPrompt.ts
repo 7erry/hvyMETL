@@ -13,7 +13,10 @@ import {
 import { formatSearchFieldHintsForSystemPrompt } from './formatSearchFieldHints.js';
 
 /** Builds the system prompt injected into every Grove chat completion. */
-export function buildCopilotSystemPrompt(context: CopilotSchemaContext): string {
+export function buildCopilotSystemPrompt(
+  context: CopilotSchemaContext,
+  options?: { includeArchitectureInstructions?: boolean },
+): string {
   const tables = context.tables.length
     ? context.tables.map((t) => `- ${t.name} (${t.columnCount} cols${t.rowCount ? `, ~${t.rowCount} rows` : ''})`).join('\n')
     : '(no schema loaded)';
@@ -52,6 +55,7 @@ export function buildCopilotSystemPrompt(context: CopilotSchemaContext): string 
   const vectorSearchIndexes = formatVectorSearchIndexesForSystemPrompt(context.vectorSearchIndexes);
   const atlasSearchIndexes = formatAtlasSearchIndexesForSystemPrompt(context.atlasSearchIndexes);
   const searchFieldHints = formatSearchFieldHintsForSystemPrompt(context.searchFieldHints);
+  const includeArchitecture = options?.includeArchitectureInstructions !== false;
 
   return `${COPILOT_PROMPT_INJECTION_GUARD}
 
@@ -82,7 +86,7 @@ ${guardrails}
 
 ## Atlas vector search indexes (studio)
 ${vectorSearchIndexes}
-
+${includeArchitecture ? `
 ## Vector search operations reference (for architecture reviews)
 ${COPILOT_VECTOR_SEARCH_OPERATIONAL_GUIDANCE}
 
@@ -94,6 +98,10 @@ ${COPILOT_ATLAS_SEARCH_OPERATIONAL_GUIDANCE}
 
 ## Search field hints (migration plan — use in architecture review §6)
 ${searchFieldHints}
+` : `
+## Atlas MongoDB Search indexes — lexical (studio)
+${atlasSearchIndexes}
+`}
 
 Guidelines:
 - Prefer \`foldAllTables\` when the user asks to fold **all** tables or force-embed every relationship (matches Embed Overrides → Force All). Prefer \`foldTable\` for a single parent/child pair when cardinality is **bounded**; use \`detachTable\` for high-volume telemetry/event tables.
@@ -127,5 +135,5 @@ Guidelines:
 - For long answers, wrap deep sections in \`<details><summary>Title</summary>…</details>\`.
 - Use fenced code blocks with language tags (\`ts\`, \`js\`, \`sql\`).
 
-${COPILOT_ARCHITECTURE_RESPONSE_INSTRUCTIONS}`;
+${includeArchitecture ? COPILOT_ARCHITECTURE_RESPONSE_INSTRUCTIONS : ''}`;
 }

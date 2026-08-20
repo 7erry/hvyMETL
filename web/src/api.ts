@@ -3,6 +3,7 @@ import type { CustomProfileInput, ProfileRequestFields, WorkloadProfile } from '
 import { formatAuthError, toAuthError } from './auth/authErrors';
 import type { CopilotChatApiResponse, CopilotLlmMessage, CopilotStatusResponse } from './copilot/types';
 import type { CopilotSchemaContextPayload } from './copilot/schemaContext';
+import { readCopilotChatSseResponse } from '../../src/copilot/copilotChatStream.ts';
 
 import { prepareCsvFilesForUpload } from './csvUploadSplit.js';
 import { createPipelineStreamConsumer } from './pipelineStream.js';
@@ -16,14 +17,11 @@ function gatewayErrorMessage(status: number): string {
   if (status === 504) {
     return (
       'Copilot request timed out (HTTP 504). Architecture Review can take several minutes — wait and retry. ' +
-      'If running locally, keep `npm run dev:ui` running at http://localhost:3847.'
+      'If this persists on hosted Studio, contact support; the edge proxy may need longer read timeouts.'
     );
   }
   if (status === 502 || status === 503) {
-    return (
-      `API unavailable (HTTP ${status}). Start Migration Studio with npm run dev:ui from the repo root ` +
-      '(http://localhost:3847).'
-    );
+    return `API unavailable (HTTP ${status}). Retry in a moment or check server status.`;
   }
   return `Unexpected server response (HTTP ${status}).`;
 }
@@ -1045,13 +1043,29 @@ export async function sendCopilotChat(request: {
   schemaContext: CopilotSchemaContextPayload;
   toolsEnabled?: boolean;
 }): Promise<CopilotChatApiResponse> {
-  const res = await copilotApiFetch(`${base}/api/copilot/chat`, {
+  const res = await copilotApiFetch(`${base}/api/copilot/chat?stream=1`, {
     method: 'POST',
-    headers: { 'content-type': 'application/json' },
-    body: JSON.stringify(request),
+    headers: {
+      'content-type': 'application/json',
+      accept: 'text/event-stream',
+    },
+    body: JSON.stringify({ ...request, stream: true }),
     signal: AbortSignal.timeout(COPILOT_CHAT_CLIENT_TIMEOUT_MS),
   });
-  return parseApiJsonResponse<CopilotChatApiResponse>(res);
+  if (!res.ok && !(res.headers.get('content-type') ?? '').includes('text/event-stream')) {
+    throw new Error(await readApiError(res));
+  }
+  try {
+    return await readCopilotChatSseResponse(res);
+  } catch (error) {
+    if (error instanceof Error && /HTTP \d+/.test(error.message)) {
+      throw error;
+    }
+    if (!res.ok) {
+      throw new Error(gatewayErrorMessage(res.status));
+    }
+    throw error;
+  }
 }
 
 export type SizingAssistantStatusResponse = {
