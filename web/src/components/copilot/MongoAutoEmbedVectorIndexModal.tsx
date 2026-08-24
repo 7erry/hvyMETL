@@ -26,6 +26,11 @@ import {
 } from '../../copilot/mongoVectorAutoEmbedFields';
 import { enrichSchemaFieldRowsFromPlan } from '../../copilot/mongoVectorAutoEmbedPlanFields';
 import {
+  AUTO_EMBED_INDEX_FIELDS_DOC_URL,
+  AUTO_EMBED_MODELS_DOC_URL,
+  MongoVectorIndexDocLink,
+} from '../../copilot/mongoVectorIndexDocLinks';
+import {
   readMongoInspectCollectionRows,
   readMongoInspectDatabaseRows,
   readMongoInspectSchemaSummary,
@@ -487,7 +492,9 @@ function MongoAutoEmbedVectorIndexModalPanel({
           ) : null}
 
           <label className="mongo-auto-embed-modal__field">
-            <span>Embedding model</span>
+            <span>
+              <MongoVectorIndexDocLink href={AUTO_EMBED_MODELS_DOC_URL}>Embedding model</MongoVectorIndexDocLink>
+            </span>
             <select value={model} onChange={(event) => setModel(event.target.value as AutoEmbedVoyageModel)}>
               {AUTO_EMBED_VOYAGE_MODELS.map((option) => (
                 <option key={option} value={option}>
@@ -498,7 +505,9 @@ function MongoAutoEmbedVectorIndexModalPanel({
           </label>
 
           <label className="mongo-auto-embed-modal__field">
-            <span>Quantization</span>
+            <span>
+              <MongoVectorIndexDocLink href={AUTO_EMBED_INDEX_FIELDS_DOC_URL}>Quantization</MongoVectorIndexDocLink>
+            </span>
             <select
               value={quantization}
               onChange={(event) => setQuantization(event.target.value as AutoEmbedQuantizationType)}
@@ -512,7 +521,9 @@ function MongoAutoEmbedVectorIndexModalPanel({
           </label>
 
           <label className="mongo-auto-embed-modal__field">
-            <span>Dimensions</span>
+            <span>
+              <MongoVectorIndexDocLink href={AUTO_EMBED_INDEX_FIELDS_DOC_URL}>Dimensions</MongoVectorIndexDocLink>
+            </span>
             <select
               value={numDimensions}
               onChange={(event) => setNumDimensions(Number(event.target.value) as AutoEmbedDimension)}
@@ -526,7 +537,9 @@ function MongoAutoEmbedVectorIndexModalPanel({
           </label>
 
           <label className="mongo-auto-embed-modal__field">
-            <span>Similarity</span>
+            <span>
+              <MongoVectorIndexDocLink href={AUTO_EMBED_INDEX_FIELDS_DOC_URL}>Similarity</MongoVectorIndexDocLink>
+            </span>
             <select
               value={similarity}
               onChange={(event) => setSimilarity(event.target.value as AutoEmbedSimilarityFunction)}
@@ -540,7 +553,10 @@ function MongoAutoEmbedVectorIndexModalPanel({
           </label>
 
           <label className="mongo-auto-embed-modal__field">
-            <span>Index name (optional)</span>
+            <span>
+              <MongoVectorIndexDocLink href={AUTO_EMBED_INDEX_FIELDS_DOC_URL}>Index name</MongoVectorIndexDocLink>{' '}
+              (optional)
+            </span>
             <input
               type="text"
               value={indexName}

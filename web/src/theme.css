@@ -6207,6 +6207,17 @@ textarea {
   width: 100%;
 }
 
+.mongo-auto-embed-modal__doc-link {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, currentColor 45%, transparent);
+  text-underline-offset: 0.15em;
+}
+
+.mongo-auto-embed-modal__doc-link:hover {
+  text-decoration-color: currentColor;
+}
+
 .mongo-auto-embed-modal__error {
   color: #ffb4a8;
   font-size: 0.85rem;
