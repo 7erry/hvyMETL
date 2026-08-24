@@ -30,11 +30,14 @@ export type CopilotToolName =
   | 'explainMongoOperation'
   | 'compareMongoCollectionToPlan'
   | 'createMongoAutoEmbedVectorIndex'
-  | 'createMongoAtlasSearchIndex';
+  | 'createMongoAtlasSearchIndex'
+  | 'createMongoClassicIndex';
 
 export type MongoVectorIndexToolName = 'createMongoAutoEmbedVectorIndex';
 
 export type MongoAtlasSearchIndexToolName = 'createMongoAtlasSearchIndex';
+
+export type MongoClassicIndexToolName = 'createMongoClassicIndex';
 
 export const MONGO_VECTOR_INDEX_TOOL_NAMES = new Set<MongoVectorIndexToolName>([
   'createMongoAutoEmbedVectorIndex',
@@ -44,12 +47,20 @@ export const MONGO_ATLAS_SEARCH_INDEX_TOOL_NAMES = new Set<MongoAtlasSearchIndex
   'createMongoAtlasSearchIndex',
 ]);
 
+export const MONGO_CLASSIC_INDEX_TOOL_NAMES = new Set<MongoClassicIndexToolName>([
+  'createMongoClassicIndex',
+]);
+
 export function isMongoVectorIndexToolName(name: string): name is MongoVectorIndexToolName {
   return MONGO_VECTOR_INDEX_TOOL_NAMES.has(name as MongoVectorIndexToolName);
 }
 
 export function isMongoAtlasSearchIndexToolName(name: string): name is MongoAtlasSearchIndexToolName {
   return MONGO_ATLAS_SEARCH_INDEX_TOOL_NAMES.has(name as MongoAtlasSearchIndexToolName);
+}
+
+export function isMongoClassicIndexToolName(name: string): name is MongoClassicIndexToolName {
+  return MONGO_CLASSIC_INDEX_TOOL_NAMES.has(name as MongoClassicIndexToolName);
 }
 
 /** Tools executed server-side via the MongoDB MCP proxy. */

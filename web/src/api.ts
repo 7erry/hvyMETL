@@ -1011,6 +1011,42 @@ export async function createCopilotMongoAtlasSearchIndex(
   return data;
 }
 
+export type CopilotMongoClassicIndexResponse = {
+  ok: boolean;
+  summary: string;
+  error?: string;
+  database?: string;
+  collection?: string;
+  indexName?: string;
+  keys?: Record<string, number | string>;
+};
+
+/** Create a classic MongoDB B-tree index (createIndex). */
+export async function createCopilotMongoClassicIndex(
+  request: import('../../../../src/copilot/mongoClassicIndex.ts').MongoClassicIndexInput,
+): Promise<CopilotMongoClassicIndexResponse> {
+  const res = await copilotApiFetch(`${base}/api/copilot/mongo/classic-index`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(request),
+  });
+  const contentType = res.headers.get('content-type') ?? '';
+  const body = await res.text();
+  if (!contentType.includes('application/json')) {
+    throw new Error(await readApiError(new Response(body, { status: res.status, headers: res.headers })));
+  }
+  let data: CopilotMongoClassicIndexResponse;
+  try {
+    data = JSON.parse(body) as CopilotMongoClassicIndexResponse;
+  } catch {
+    throw new Error('Invalid JSON in API response.');
+  }
+  if (!res.ok && !data.summary) {
+    throw new Error(data.error ?? res.statusText);
+  }
+  return data;
+}
+
 export async function invokeCopilotMongoInspect(
   tool: import('./copilot/types').MongoInspectToolName,
   args: Record<string, unknown>,

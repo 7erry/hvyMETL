@@ -3,6 +3,7 @@ import {
   isServerMongoInspectToolCall,
   isServerMongoVectorIndexToolCall,
   isServerMongoAtlasSearchToolCall,
+  isServerMongoClassicIndexToolCall,
   parseOpenAiToolCall,
 } from './llmTools';
 
@@ -59,6 +60,23 @@ describe('llmTools mongo inspect parsing', () => {
     if (parsed && isServerMongoAtlasSearchToolCall(parsed)) {
       expect(parsed.tool).toBe('createMongoAtlasSearchIndex');
       expect(parsed.args.pattern).toBe('keyword');
+    }
+  });
+
+  it('routes classic index tool calls to the server-side executor', () => {
+    const parsed = parseOpenAiToolCall({
+      id: 'call_4',
+      type: 'function',
+      function: {
+        name: 'createMongoClassicIndex',
+        arguments: JSON.stringify({ collection: 'journalEntries', keys: { status: 1 } }),
+      },
+    });
+    expect(parsed).not.toBeNull();
+    expect(isServerMongoClassicIndexToolCall(parsed!)).toBe(true);
+    if (parsed && isServerMongoClassicIndexToolCall(parsed)) {
+      expect(parsed.tool).toBe('createMongoClassicIndex');
+      expect(parsed.args.collection).toBe('journalEntries');
     }
   });
 });

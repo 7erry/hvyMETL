@@ -10,7 +10,7 @@ import {
 } from 'react';
 import { executeAgentTool, parseCopilotCommand, type AgentToolContext, type AgentToolMutation } from './agentTools';
 import { analyzeMigrationRisks } from './guardrails';
-import { parseOpenAiToolCall, isServerMongoInspectToolCall, isServerMongoVectorIndexToolCall, isServerMongoAtlasSearchToolCall, isWorkflowToolCallParsed } from './llmTools';
+import { parseOpenAiToolCall, isServerMongoInspectToolCall, isServerMongoVectorIndexToolCall, isServerMongoAtlasSearchToolCall, isServerMongoClassicIndexToolCall, isWorkflowToolCallParsed } from './llmTools';
 import {
   parseDirectMongoInspectCommand,
   parseVerifyCollectionsCommand,
@@ -21,6 +21,7 @@ import {
 import { isArchitectureReviewContent } from './architectureReviewExport';
 import { parseDirectVectorSearchIndexCommand } from './vectorIndexCommandRouting';
 import { parseDirectAtlasSearchIndexCommand } from './atlasSearchCommandRouting';
+import { parseDirectClassicIndexCommand } from './classicIndexCommandRouting';
 import { MongoAutoEmbedVectorIndexModal } from '../components/copilot/MongoAutoEmbedVectorIndexModal';
 import { MongoAtlasSearchIndexModal } from '../components/copilot/MongoAtlasSearchIndexModal';
 import {
@@ -52,7 +53,7 @@ import { buildAggregateInspectArgs } from './runTranslationPipeline';
 import { buildSchemaContextPayload } from './schemaContext';
 import { isArchitectureReviewRequest } from '../../../src/copilot/copilotArchitecturePrompt.ts';
 import { serializeCanvasToolResult, toolExecutionHasStructuredOutput } from './toolExecutionDisplay';
-import { fetchCopilotStatus, fetchPipelineConfig, createCopilotMongoAutoEmbedVectorIndex, createCopilotMongoAtlasSearchIndex, invokeCopilotMongoInspect, sendCopilotChat } from '../api';
+import { fetchCopilotStatus, fetchPipelineConfig, createCopilotMongoAutoEmbedVectorIndex, createCopilotMongoAtlasSearchIndex, createCopilotMongoClassicIndex, invokeCopilotMongoInspect, sendCopilotChat } from '../api';
 import type { CopilotVectorSearchIndexRecord } from '../../../src/copilot/copilotVectorSearchContext.ts';
 import { copilotVectorSearchIndexFromCreateResult } from '../../../src/copilot/copilotVectorSearchContext.ts';
 import type { CopilotAtlasSearchIndexRecord } from '../../../src/copilot/copilotAtlasSearchContext.ts';
@@ -611,6 +612,42 @@ export function CopilotProvider({
     [targetDatabase, recordAtlasSearchIndex],
   );
 
+  const runMongoClassicIndexTool = useCallback(
+    async (args: Record<string, unknown>): Promise<ToolExecutionResult> => {
+      const tool = 'createMongoClassicIndex' as const;
+      try {
+        const payload: Record<string, unknown> = { ...args };
+        if (
+          (typeof payload.database !== 'string' || !payload.database.trim()) &&
+          targetDatabase.trim()
+        ) {
+          payload.database = targetDatabase.trim();
+        }
+        const response = await createCopilotMongoClassicIndex(
+          payload as import('../../../../src/copilot/mongoClassicIndex.ts').MongoClassicIndexInput,
+        );
+        return {
+          tool,
+          summary: response.summary,
+          delta: response.indexName
+            ? [`${response.database ?? ''}.${response.collection ?? ''} → ${response.indexName}`]
+            : [],
+          ok: response.ok,
+          data: response,
+        };
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        return {
+          tool,
+          summary: message,
+          delta: [],
+          ok: false,
+        };
+      }
+    },
+    [targetDatabase],
+  );
+
   const runMongoInspectDirect = useCallback(
     async (tool: MongoInspectToolName, args: Record<string, unknown>) => {
       setStatus('mutating');
@@ -624,6 +661,20 @@ export function CopilotProvider({
       setStatus('idle');
     },
     [appendMessage, publishSizingAtlasHints, runMongoInspectTool],
+  );
+
+  const runMongoClassicIndexDirect = useCallback(
+    async (args: Record<string, unknown>) => {
+      setStatus('mutating');
+      const result = await runMongoClassicIndexTool(args);
+      appendMessage({
+        role: 'agent',
+        content: result.ok ? '' : result.summary,
+        toolExecution: result,
+      });
+      setStatus('idle');
+    },
+    [appendMessage, runMongoClassicIndexTool],
   );
 
   const runWorkflowDirect = useCallback(
@@ -811,6 +862,29 @@ export function CopilotProvider({
             continue;
           }
 
+          if (isServerMongoClassicIndexToolCall(parsed)) {
+            const result = await runMongoClassicIndexTool(parsed.args);
+            appendMessage({
+              role: 'agent',
+              content: result.ok ? '' : result.summary,
+              toolExecution: result,
+            });
+            messages = [
+              ...messages,
+              {
+                role: 'tool',
+                tool_call_id: toolCall.id,
+                content: JSON.stringify({
+                  ok: result.ok,
+                  tool: parsed.tool,
+                  summary: result.summary,
+                  indexName: (result.data as { indexName?: string } | undefined)?.indexName,
+                }),
+              },
+            ];
+            continue;
+          }
+
           if (isWorkflowToolCallParsed(parsed)) {
             const result = await executeWorkflowTool(parsed, workflowHandlers);
             appendMessage({
@@ -948,6 +1022,25 @@ export function CopilotProvider({
       const directInspect = parseDirectMongoInspectCommand(trimmed);
       if (directInspect) {
         void runMongoInspectDirect(directInspect.tool, directInspect.args);
+        return;
+      }
+
+      const directClassicIndex = parseDirectClassicIndexCommand(trimmed);
+      if (directClassicIndex) {
+        if (!mongoInspectAvailable) {
+          appendMessage({
+            role: 'agent',
+            content:
+              'MongoDB inspect is disabled on this server. Enable HVYMETL_MCP_MONGODB_ENABLED to create indexes from the studio.',
+          });
+          return;
+        }
+        void runMongoClassicIndexDirect({
+          ...(directClassicIndex.database?.trim() ? { database: directClassicIndex.database.trim() } : {}),
+          collection: directClassicIndex.collection,
+          keys: directClassicIndex.keys,
+          ...(directClassicIndex.options ? { options: directClassicIndex.options } : {}),
+        });
         return;
       }
 

@@ -16,6 +16,7 @@ import {
 import { invokeMongoInspectTool } from '../copilot/mongoInspectService.js';
 import { createMongoAutoEmbedVectorIndex } from '../copilot/mongoVectorIndexService.js';
 import { createMongoAtlasSearchIndex } from '../copilot/mongoAtlasSearchIndexService.js';
+import { createMongoClassicIndex } from '../copilot/mongoClassicIndexService.js';
 import { parseMongoPlanContext } from '../copilot/mongoPlanContext.js';
 import { isMongoInspectToolName } from '../copilot/mongoInspectToolSchemas.js';
 import { isMongoMcpEnabled, probeMongoMcpAvailability } from '../copilot/mongoMcpClient.js';
@@ -185,6 +186,24 @@ export function createCopilotRouter(): Router {
         tenantId: identity.tenantId,
         userSub: identity.userSub,
         tool: 'createMongoAutoEmbedVectorIndex',
+        ok: result.ok,
+      });
+      res.status(status).json(result);
+    } catch (error) {
+      handleCopilotError(res, error);
+    }
+  });
+
+  router.post('/mongo/classic-index', inspectRateLimit, async (req, res) => {
+    try {
+      const result = await createMongoClassicIndex(req, req.body);
+      const status = result.serviceUnavailable ? 503 : result.ok ? 200 : 400;
+      const identity = readCopilotAuditIdentity(req);
+      auditCopilotEvent({
+        kind: 'copilot.index',
+        tenantId: identity.tenantId,
+        userSub: identity.userSub,
+        tool: 'createMongoClassicIndex',
         ok: result.ok,
       });
       res.status(status).json(result);

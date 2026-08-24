@@ -35,7 +35,7 @@ export function buildCopilotHelpResponse(): string {
     `2. ${buildImportExampleActionLink('Import ledger example', 'ledger')} — or paste SQL DDL in the import dialog`,
     `3. ${buildWorkflowActionLink('Refresh design', 'refreshDesign')} — generate the MongoDB target schema (ML/RAG)`,
     `4. ${buildWorkflowActionLink('Run pipeline', 'runPipeline')} — load CSV/SQLite data into Atlas`,
-    '5. **Inspect Atlas** — list databases and collections, describe schema, find/aggregate/explain, compare to plan',
+    '5. **Inspect Atlas** — list databases and collections, describe schema, find/aggregate/explain, compare to plan, create classic indexes',
     '6. **Vector search (Phase 3)** — create Atlas **autoEmbed** indexes on text fields (dialog or chat)',
     '7. **MongoDB Search (lexical)** — keyword, autocomplete, and faceted `$search` indexes via copilot tool',
     '',
@@ -45,7 +45,7 @@ export function buildCopilotHelpResponse(): string {
     '',
     `**Try:** ${buildMigrationWorkflowGuideLink()}`,
     '',
-    'Or use quick actions below, slash commands like `/refresh-design`, or ask naturally (e.g. *show me databases*, *create vector search on products*, *create full text search index on products*).',
+    'Or use quick actions below, slash commands like `/refresh-design`, or ask naturally (e.g. *show me databases*, *create vector search on products*, *db.orders.createIndex({ status: 1 })*, *create full text search index on products*).',
   ].join('\n');
 }
 
@@ -82,6 +82,7 @@ export function buildCopilotCommandsResponse(): string {
     '- **aggregate** on `{collection}` — grouped metrics via **aggregateMongoCollection** (read-only pipeline)',
     '- **explain** find/aggregate on `{collection}` — **explainMongoOperation**',
     '- **compare `{collection}` to plan** — **compareMongoCollectionToPlan** after Refresh design',
+    '- **create classic index** — paste `db.{collection}.createIndex({ field: 1 })` or ask *create index on `{collection}` { status: 1 }* (**createMongoClassicIndex**)',
     '',
     'After inspect/analyze tools run, the UI shows structured tables — use **Next step** on the tool card when offered.',
     '',
