@@ -147,3 +147,78 @@ ORDER BY a.last_modified_date_time DESC;
     expect(fallback).toBeUndefined();
   });
 });
+
+describe('translateSQLToMongo literals and UNION ALL', () => {
+  const ledgerSql = `
+SELECT 
+    journal_entry_id, 
+    '11111111-1111-1111-1111-111111111111', -- Cash/Operating Account
+    'DEBIT'::posting_type, 
+    1500.00, 
+    'USD', 
+    1.00000000, 
+    CURRENT_TIMESTAMP 
+FROM new_entry
+UNION ALL
+SELECT 
+    journal_entry_id, 
+    '22222222-2222-2222-2222-222222222222', -- Deferred Revenue Account
+    'CREDIT'::posting_type, 
+    1500.00, 
+    'USD', 
+    1.00000000, 
+    CURRENT_TIMESTAMP 
+FROM new_entry;
+`.trim();
+
+  it('projects SQL string/number literals and casts instead of mangling decimal tokens', () => {
+    const result = translateSQLToMongo({
+      sqlQuery: `SELECT journal_entry_id, 'DEBIT'::posting_type, 1500.00 FROM new_entry`,
+      model: null,
+      plan: null,
+    });
+
+    const pipeline = JSON.parse(result.aggregationPipeline) as Record<string, unknown>[];
+    const projectStage = pipeline.find((stage) => '$project' in stage) as { $project: Record<string, unknown> };
+
+    expect(projectStage.$project.journalEntryId).toBe('$journalEntryId');
+    expect(projectStage.$project.postingType).toEqual({ $literal: 'DEBIT' });
+    expect(projectStage.$project.selectLiteral1).toEqual({ $literal: 1500 });
+    expect(projectStage.$project).not.toHaveProperty('00');
+  });
+
+  it('translates UNION ALL ledger inserts with distinct literal UUIDs per branch', () => {
+    const result = translateSQLToMongo({
+      sqlQuery: ledgerSql,
+      model: null,
+      plan: null,
+    });
+
+    const pipeline = JSON.parse(result.aggregationPipeline) as Record<string, unknown>[];
+    expect(result.collectionName).toBe('newEntry');
+
+    const firstProject = pipeline.find((stage) => '$project' in stage) as { $project: Record<string, unknown> };
+    expect(firstProject.$project).toMatchObject({
+      journalEntryId: '$journalEntryId',
+      selectLiteral1: { $literal: '11111111-1111-1111-1111-111111111111' },
+      postingType: { $literal: 'DEBIT' },
+      selectLiteral2: { $literal: 1500 },
+      selectLiteral3: { $literal: 'USD' },
+      selectLiteral4: { $literal: 1 },
+      currentTimestamp: { $dateAdd: { startDate: '$$NOW', unit: 'millisecond', amount: 0 } },
+    });
+
+    const unionStage = pipeline.find((stage) => '$unionWith' in stage) as {
+      $unionWith: { coll: string; pipeline: Record<string, unknown>[] };
+    };
+    expect(unionStage.$unionWith.coll).toBe('newEntry');
+
+    const secondProject = unionStage.$unionWith.pipeline.find((stage) => '$project' in stage) as {
+      $project: Record<string, unknown>;
+    };
+    expect(secondProject.$project.selectLiteral1).toEqual({
+      $literal: '22222222-2222-2222-2222-222222222222',
+    });
+    expect(secondProject.$project.postingType).toEqual({ $literal: 'CREDIT' });
+  });
+});

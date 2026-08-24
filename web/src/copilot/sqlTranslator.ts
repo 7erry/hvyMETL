@@ -38,55 +38,28 @@ type ParsedSqlQuery = {
 
 /** Heuristic SQL → MongoDB translation using current folding rules from the migration plan. */
 export function translateSQLToMongo(context: TranslateContext): SqlTranslationOutput {
-  const parsed = parseSqlQuery(context.sqlQuery, context.plan);
-  const pipeline: Record<string, unknown>[] = [{ $match: { _archived: { $ne: true } } }];
+  const branches = splitUnionAllBranches(context.sqlQuery);
+  const branchPipelines = branches.map((branchSql) =>
+    buildBranchPipeline(branchSql, context.model, context.plan),
+  );
 
-  const primaryWhere = filterWhereForAliases(parsed.whereClause, parsed.aliasMap, [parsed.primaryAlias]);
-  if (primaryWhere) {
-    pipeline.push({
-      $match: parseWhereHeuristic(primaryWhere, parsed.aliasMap, context.model),
-    });
-  }
-
-  for (const join of parsed.joins) {
-    pipeline.push(...buildJoinStages(join, parsed.aliasMap, parsed.primaryTable, context.model, context.plan));
-  }
-
-  const joinedAliases = [...parsed.aliasMap.keys()].filter((alias) => alias !== parsed.primaryAlias);
-  const joinedWhere = filterWhereForAliases(parsed.whereClause, parsed.aliasMap, joinedAliases);
-  if (joinedWhere) {
-    pipeline.push({
-      $match: parseWhereHeuristic(joinedWhere, parsed.aliasMap, context.model),
-    });
-  }
-
-  if (parsed.groupClause) {
-    pipeline.push({
-      $group: {
-        _id: `$${resolveMongoPath(parsed.groupClause.split(',')[0]?.trim() ?? '_id', parsed.aliasMap, context.model)}`,
-        count: { $sum: 1 },
-      },
-    });
-  }
-
-  const project = parseSelectProject(parsed.selectClause, parsed.aliasMap, context.model);
-  if (project) {
-    pipeline.push({ $project: project });
-  }
-
-  if (parsed.orderClause) {
-    const sortSpec = parseOrderByClause(parsed.orderClause, parsed.aliasMap, context.model);
-    if (Object.keys(sortSpec).length > 0) {
-      pipeline.push({ $sort: sortSpec });
-    }
-  }
+  const collectionName = branchPipelines[0]?.collectionName ?? 'collection';
+  const pipeline =
+    branchPipelines.length === 1
+      ? branchPipelines[0]!.pipeline
+      : mergeUnionAllPipelines(collectionName, branchPipelines.map((entry) => entry.pipeline));
 
   const pipelineJson = JSON.stringify(pipeline, null, 2);
-  const { collectionName } = parsed;
   const mongooseScript = `const results = await ${collectionName}.aggregate(${pipelineJson.replace(/\n/g, '\n  ')}).toArray();`;
   const shellScript = `db.${collectionName}.aggregate(${pipelineJson});`;
 
-  const indexRecommendations = buildIndexRecommendations(parsed.whereClause, parsed.aliasMap, context.model, collectionName);
+  const parsed = parseSqlQuery(branches[0] ?? context.sqlQuery, context.plan);
+  const indexRecommendations = buildIndexRecommendations(
+    parsed.whereClause,
+    parsed.aliasMap,
+    context.model,
+    collectionName,
+  );
 
   return {
     collectionName,
@@ -95,6 +68,86 @@ export function translateSQLToMongo(context: TranslateContext): SqlTranslationOu
     shellScript,
     indexRecommendations,
   };
+}
+
+function splitUnionAllBranches(sqlQuery: string): string[] {
+  const normalized = sqlQuery.trim().replace(/;\s*$/, '');
+  const parts = normalized.split(/\bunion\s+all\b/i).map((part) => part.trim()).filter(Boolean);
+  if (parts.length <= 1) return [normalized];
+
+  return parts.map((part, index) => {
+    if (index === 0) return part;
+    return /^\s*select\b/i.test(part) ? part : `SELECT ${part}`;
+  });
+}
+
+function mergeUnionAllPipelines(
+  collectionName: string,
+  pipelines: Record<string, unknown>[][],
+): Record<string, unknown>[] {
+  const [first, ...rest] = pipelines;
+  if (!first) return [];
+  const merged = [...first];
+  for (const branchPipeline of rest) {
+    merged.push({
+      $unionWith: {
+        coll: collectionName,
+        pipeline: branchPipeline,
+      },
+    });
+  }
+  return merged;
+}
+
+function buildBranchPipeline(
+  sqlQuery: string,
+  model: SqlStructuralModel | null,
+  plan: MigrationPlan | null,
+): { collectionName: string; pipeline: Record<string, unknown>[] } {
+  const parsed = parseSqlQuery(sqlQuery, plan);
+  const pipeline: Record<string, unknown>[] = [{ $match: { _archived: { $ne: true } } }];
+
+  const primaryWhere = filterWhereForAliases(parsed.whereClause, parsed.aliasMap, [parsed.primaryAlias]);
+  if (primaryWhere) {
+    pipeline.push({
+      $match: parseWhereHeuristic(primaryWhere, parsed.aliasMap, model),
+    });
+  }
+
+  for (const join of parsed.joins) {
+    pipeline.push(...buildJoinStages(join, parsed.aliasMap, parsed.primaryTable, model, plan));
+  }
+
+  const joinedAliases = [...parsed.aliasMap.keys()].filter((alias) => alias !== parsed.primaryAlias);
+  const joinedWhere = filterWhereForAliases(parsed.whereClause, parsed.aliasMap, joinedAliases);
+  if (joinedWhere) {
+    pipeline.push({
+      $match: parseWhereHeuristic(joinedWhere, parsed.aliasMap, model),
+    });
+  }
+
+  if (parsed.groupClause) {
+    pipeline.push({
+      $group: {
+        _id: `$${resolveMongoPath(parsed.groupClause.split(',')[0]?.trim() ?? '_id', parsed.aliasMap, model)}`,
+        count: { $sum: 1 },
+      },
+    });
+  }
+
+  const project = parseSelectProject(parsed.selectClause, parsed.aliasMap, model);
+  if (project) {
+    pipeline.push({ $project: project });
+  }
+
+  if (parsed.orderClause) {
+    const sortSpec = parseOrderByClause(parsed.orderClause, parsed.aliasMap, model);
+    if (Object.keys(sortSpec).length > 0) {
+      pipeline.push({ $sort: sortSpec });
+    }
+  }
+
+  return { collectionName: parsed.collectionName, pipeline };
 }
 
 function parseSqlQuery(sqlQuery: string, plan: MigrationPlan | null): ParsedSqlQuery {
@@ -257,6 +310,41 @@ function filterWhereForAliases(
   return kept.length > 0 ? kept.join(' AND ') : null;
 }
 
+function stripSqlLineComment(fragment: string): string {
+  let trimmed = fragment.trim();
+
+  // When a trailing `-- comment` on the prior line shares a split fragment, skip it.
+  while (trimmed.startsWith('--')) {
+    const newlineIndex = trimmed.indexOf('\n');
+    trimmed = (newlineIndex === -1 ? '' : trimmed.slice(newlineIndex + 1)).trim();
+  }
+
+  let inString = false;
+  for (let index = 0; index < trimmed.length - 1; index += 1) {
+    if (trimmed[index] === "'") inString = !inString;
+    if (!inString && trimmed[index] === '-' && trimmed[index + 1] === '-') {
+      return trimmed.slice(0, index).trim();
+    }
+  }
+  return trimmed;
+}
+
+function isSqlNumericLiteral(value: string): boolean {
+  return /^-?\d+(?:\.\d+)?$/.test(value);
+}
+
+function isSqlColumnReference(value: string): boolean {
+  return /^[`"[\]\w.]+$/.test(value) && !isSqlNumericLiteral(value) && !/^current_timestamp$/i.test(value);
+}
+
+function mongoLiteralValue(value: string | number | boolean | null): unknown {
+  return { $literal: value };
+}
+
+function mongoCurrentTimestampValue(): unknown {
+  return { $dateAdd: { startDate: '$$NOW', unit: 'millisecond', amount: 0 } };
+}
+
 function parseSelectProject(
   selectClause: string | null,
   aliasMap: Map<string, SqlAliasBinding>,
@@ -265,17 +353,20 @@ function parseSelectProject(
   if (!selectClause || /^\*/i.test(selectClause.trim())) return null;
 
   const project: Record<string, unknown> = {};
+  let literalCounter = 0;
+
   for (const rawItem of splitSelectItems(selectClause)) {
-    const item = rawItem.trim();
+    const item = stripSqlLineComment(rawItem.trim());
     if (!item) continue;
 
-    const aliasMatch = item.match(/^(.*)\s+as\s+([\w.]+)$/i);
+    const aliasMatch = item.match(/^(.*)\s+as\s+([`"[\]\w.]+)$/i);
     const expression = (aliasMatch?.[1] ?? item).trim();
-    const outputName = toCamelCase((aliasMatch?.[2] ?? normalizeQualifiedSqlIdentifier(expression)).replace(/[`"[\]]/g, ''));
+    const explicitAlias = aliasMatch?.[2]?.replace(/[`"[\]]/g, '');
 
     if (/^([\w.]+)\s*\|\|\s*'([^']*)'\s*\|\|\s*([\w.]+)$/i.test(expression)) {
       const concatMatch = expression.match(/^([\w.]+)\s*\|\|\s*'([^']*)'\s*\|\|\s*([\w.]+)$/i);
       if (concatMatch) {
+        const outputName = toCamelCase(explicitAlias ?? normalizeQualifiedSqlIdentifier(concatMatch[1]));
         project[outputName] = {
           $concat: [
             `$${resolveMongoPath(concatMatch[1], aliasMap, model)}`,
@@ -287,7 +378,35 @@ function parseSelectProject(
       }
     }
 
-    if (/^[\w.]+$/.test(expression)) {
+    const castMatch = expression.match(/^('(?:''|[^'])*'|-?\d+(?:\.\d+)?)\s*::\s*([`"[\]\w.]+)$/i);
+    if (castMatch) {
+      const outputName = toCamelCase(explicitAlias ?? castMatch[2].replace(/[`"[\]]/g, ''));
+      project[outputName] = mongoLiteralValue(parseSqlLiteral(castMatch[1]));
+      continue;
+    }
+
+    if (/^'(?:''|[^'])*'$/.test(expression)) {
+      literalCounter += 1;
+      const outputName = toCamelCase(explicitAlias ?? `selectLiteral${literalCounter}`);
+      project[outputName] = mongoLiteralValue(parseSqlLiteral(expression));
+      continue;
+    }
+
+    if (isSqlNumericLiteral(expression)) {
+      literalCounter += 1;
+      const outputName = toCamelCase(explicitAlias ?? `selectLiteral${literalCounter}`);
+      project[outputName] = mongoLiteralValue(Number(expression));
+      continue;
+    }
+
+    if (/^current_timestamp$/i.test(expression)) {
+      const outputName = toCamelCase(explicitAlias ?? 'currentTimestamp');
+      project[outputName] = mongoCurrentTimestampValue();
+      continue;
+    }
+
+    if (isSqlColumnReference(expression)) {
+      const outputName = toCamelCase(explicitAlias ?? normalizeQualifiedSqlIdentifier(expression));
       project[outputName] = `$${resolveMongoPath(expression, aliasMap, model)}`;
     }
   }
