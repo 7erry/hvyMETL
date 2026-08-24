@@ -77,6 +77,10 @@ reference shape.
 cross-cutting embed/merge rules applied across all examples; retrieved with pattern
 chunks during RAG (see [03-knowledge-rag.md](03-knowledge-rag.md)).
 
+**SQL vs Mongo production mental model** ([`knowledge/mongo-vs-sql-decipherist.md`](../knowledge/mongo-vs-sql-decipherist.md)):
+curated summary of [The Decipherist — MongoDB vs SQL (2026)](https://thedecipherist.com/articles/mongo_vs_sql/);
+retrieved for Query Translator context and SQL-origin coaching during RAG.
+
 Regression coverage: `npm test -- src/examples/examplePatternCoverage.test.ts`.
 
 ### Amazon DynamoDB CloudFormation Load examples

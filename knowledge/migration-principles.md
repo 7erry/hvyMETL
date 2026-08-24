@@ -140,3 +140,9 @@ or the child is queried independently at scale.
 - Read-heavy profiles (≥ 70% reads) weight embed and denormalization more
   aggressively; write-heavy profiles (≥ 60% writes) keep unbounded children as
   references or buckets.
+
+## See also
+
+- [mongo-vs-sql-decipherist.md](mongo-vs-sql-decipherist.md) — curated external
+  production perspective (JSON pipeline, aggregation-first reads, SQL→Mongo quick
+  reference) aligned with Rules 1–6; useful for Query Translator and Copilot coaching

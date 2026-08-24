@@ -12,11 +12,12 @@ Sources: [`knowledge/`](../knowledge/), [`src/rag/chunker.ts`](../src/rag/chunke
 ## 1. High-Level Summary
 
 The RAG layer grounds the toolkit's schema decisions in concrete source material
-instead of generic LLM training data. Fourteen curated markdown documents covering
-the [MongoDB Manual Schema Design Patterns](https://www.mongodb.com/docs/manual/data-modeling/design-patterns/)
-and the Building with Patterns series, each with applicability thresholds and
-verified code blocks, are chunked at heading boundaries and ranked against a
-workload-derived query. Runnable mappings from each doc to a seeded example
+instead of generic LLM training data. Seventeen curated markdown documents covering
+the [MongoDB Manual Schema Design Patterns](https://www.mongodb.com/docs/manual/data-modeling/design-patterns/),
+the Building with Patterns series, SQL-to-Mongo migration principles, and a curated
+summary of [The Decipherist — MongoDB vs SQL (2026)](https://thedecipherist.com/articles/mongo_vs_sql/),
+each with applicability thresholds and verified code blocks, are chunked at heading
+boundaries and ranked against a workload-derived query. Runnable mappings from each doc to a seeded example
 database are in **[examples/README.md](../examples/README.md)** and
 [10-examples.md § Knowledge-base pattern applicability](10-examples.md#knowledge-base-pattern-applicability). By default retrieval is **BM25 only** (no API keys, fully offline).
 When `MONGODB_MODEL_KEY` is set, the retriever runs **hybrid search**: BM25 for exact keyword tokens plus

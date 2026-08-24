@@ -12,6 +12,7 @@ Official pattern catalog: [MongoDB Manual — Schema Design Patterns](https://ww
 | Document | Summary |
 | --- | --- |
 | [migration-principles.md](migration-principles.md) | Cross-cutting SQL-to-Mongo rules — embed over 1-to-1, denormalization, change streams, lean driver usage |
+| [mongo-vs-sql-decipherist.md](mongo-vs-sql-decipherist.md) | Curated summary of [The Decipherist — MongoDB vs SQL (2026)](https://thedecipherist.com/articles/mongo_vs_sql/) — JSON pipeline, aggregation-first reads, SQL→Mongo mental model for Query Translator |
 | [embed-vs-reference.md](embed-vs-reference.md) | When to nest documents vs store FK references |
 | [extended-reference.md](extended-reference.md) | Duplicate hot lookup fields to avoid `$lookup` on reads |
 | [subset.md](subset.md) | Store a working subset of large parent documents on children |

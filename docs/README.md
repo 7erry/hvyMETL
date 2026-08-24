@@ -104,6 +104,7 @@ starting point for understanding *why* the design engine makes the choices it ma
 | `archive` | `knowledge/archive.md` | [Archive Pattern](https://www.mongodb.com/docs/manual/data-modeling/design-patterns/archive/) | Hot working set stays fast; cold tier holds history |
 | `single-collection` | `knowledge/single-collection.md` | [Single Collection Pattern](https://www.mongodb.com/docs/manual/data-modeling/design-patterns/single-collection/) | One copy of each entity; graph reads without `$lookup` |
 | *(principles)* | `knowledge/migration-principles.md` | SQL-to-MongoDB migration rules (embed over 1-to-1, denormalization, meta/line-item checklist) | Guides cross-pattern decisions; not a single Building with Patterns entry |
+| *(external)* | `knowledge/mongo-vs-sql-decipherist.md` | Curated summary of [The Decipherist — MongoDB vs SQL (2026)](https://thedecipherist.com/articles/mongo_vs_sql/) | JSON pipeline, aggregation-first reads, SQL→Mongo quick reference for Query Translator / Copilot |
 
 Two patterns from the Building with Patterns series are intentionally **not** automated: *Approximation*
 (requires application-level statistical writes) and *Document Versioning* (revision

@@ -185,6 +185,7 @@ ids match [`PatternId`](../src/types.ts) and the design engine output.
 | [`tree.md`](../knowledge/tree.md) | `tree` | `catalog` | `catalog` | Self-referencing `categories` | catalog `design` |
 | [`tree.md`](../knowledge/tree.md) | `tree` | `cms` | `cms` | Self-referencing `pages` | cms `design` |
 | [`migration-principles.md`](../knowledge/migration-principles.md) | *(principles)* | *(all seven)* | any | Embed-over-reference, meta/EAV collapse, line-item checklist | retrieved during RAG; see [03-knowledge-rag.md](../docs/03-knowledge-rag.md) |
+| [`mongo-vs-sql-decipherist.md`](../knowledge/mongo-vs-sql-decipherist.md) | *(external)* | *(all seven)* | any | SQL→Mongo mental model, aggregation-first reads, Query Translator context | retrieved during RAG; see [03-knowledge-rag.md](../docs/03-knowledge-rag.md) |
 
 ### Coverage at a glance (default profile)
 

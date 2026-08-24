@@ -94,7 +94,7 @@ export const COPILOT_CANVAS_OPENAI_TOOLS = [
     function: {
       name: 'translateSQLToMongo',
       description:
-        'Translates SQL with JOINs/WHERE/ORDER BY to MongoDB aggregation based on current target schema.',
+        'Translates SQL with JOINs/WHERE/ORDER BY to MongoDB aggregation based on current target schema. Grounding: knowledge/mongo-vs-sql-decipherist.md and migration-principles.md.',
       parameters: {
         type: 'object',
         required: ['sqlQuery'],
