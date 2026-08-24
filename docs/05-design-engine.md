@@ -80,6 +80,18 @@ Tunable thresholds (constants at the top of `patternSelector.ts`):
 `ARCHIVE_MIN_ROWS = 5000`, `ARCHIVE_AFTER_DAYS_DEFAULT = 1825`, `SINGLE_COLLECTION_MIN_RPM = 100000`,
 `DEVELOPER_OVERRIDE_EMBED_MAX_CHILDREN = 5000`.
 
+### Polymorphic / inheritance detection
+
+SQL **single-table inheritance** is detected by `isPolymorphicTable()` when a table
+has (1) a payload column matching `(^|_)type$` and (2) at least two other nullable
+payload columns (non-PK, non-FK). The migration plan records pattern id
+`polymorphic`; Copilot Architecture Reviews may call this the [MongoDB Inheritance
+Schema Pattern](https://www.mongodb.com/docs/manual/data-modeling/design-patterns/polymorphic-data/inheritance-schema-pattern/).
+
+Separate **class-table** subtype tables (base + per-subtype tables) are **not**
+auto-merged — only DDL already flattened to one wide table with a type column
+qualifies. Full algorithm, examples, and UI labels: [knowledge/polymorphic.md](../knowledge/polymorphic.md#detection-in-hvymetl).
+
 ### Dependencies
 
 Internal: `src/adapters/sqlite.ts`, `src/rag/*` (for the report's cited context),

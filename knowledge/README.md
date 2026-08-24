@@ -24,7 +24,7 @@ Official pattern catalog: [MongoDB Manual — Schema Design Patterns](https://ww
 | [tree.md](tree.md) | Adjacency / materialized path hierarchies without recursive JOINs |
 | [archive.md](archive.md) | Hot vs cold tier split for historical data |
 | [schema-versioning.md](schema-versioning.md) | Dual-schema migrations with version discriminators |
-| [polymorphic.md](polymorphic.md) | Single collection for SQL single-table / sparse variant inheritance (`*_type` + nullable columns) |
+| [polymorphic.md](polymorphic.md) | Single-table inheritance detection (`isPolymorphicTable`: `*_type` + ≥2 nullable payload columns) and MongoDB polymorphic modeling |
 | [mongodb-inheritance-schema-pattern.md](mongodb-inheritance-schema-pattern.md) | MongoDB Inheritance Schema Pattern — discriminator-based subtypes, reverse ETL to relational/columnar sinks, and CDC from change streams |
 | [single-collection.md](single-collection.md) | Peer entities in one collection with `docType` and `links[]` |
 

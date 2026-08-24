@@ -109,11 +109,14 @@ logical stream with a **variant schema**, not as N fixed relational tables.
    rows/documents tagged with `{ discriminator, subtypeSchemaVersion }` metadata
    so downstream transforms can route without re-parsing BSON per stage.
 
-For **SQL → Mongo** (forward migration), the design engine detects inheritance
-shapes via `isPolymorphicTable()` (`*_type` column + ≥2 nullable variant columns)
-and class-table subtype tables, then collapses them into one collection per
-[polymorphic.md](polymorphic.md). ETL's `buildShapedQueriesForCollection()` and
-Single Collection `docType` injection follow the same discriminator principle.
+For **SQL → Mongo** (forward migration), the design engine detects single-table
+inheritance via `isPolymorphicTable()` in `src/design/patternSelector.ts`: a
+payload column matching `(^|_)type$` plus ≥2 other nullable payload columns (non-PK,
+non-FK). The plan records pattern id **`polymorphic`**. See [Detection in
+hvyMETL](polymorphic.md#detection-in-hvymetl) for the full algorithm, CMS example,
+and what is **not** auto-detected (separate class-table subtype tables are not
+merged unless DDL is already one wide table). ETL and Single Collection `docType`
+injection follow the same discriminator principle where applicable.
 
 ### Transformation
 
