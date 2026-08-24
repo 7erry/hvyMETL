@@ -4,11 +4,23 @@
  */
 
 /**
- * Convert "snake_case_name" to "snakeCaseName". Names that are already
- * camelCase pass through unchanged (only underscores trigger rewriting).
+ * Convert SQL-style identifiers to camelCase MongoDB field/collection names.
+ *
+ * - snake_case: `order_items` → `orderItems`
+ * - ALL_CAPS (Oracle/SQL Server): `REGIONS` → `regions`, `ORDER_ITEMS` → `orderItems`
+ * - already camelCase / mixed: only lowercases the first character
  */
 export function toCamelCase(name: string): string {
-  const camel = name.replace(/_+(\w)/g, (_, letter: string) => letter.toUpperCase());
+  const trimmed = name.trim();
+  if (!trimmed) return trimmed;
+
+  // Uppercase identifiers without lowercase letters — avoid REGIONS → rEGIONS.
+  if (/^[A-Z][A-Z0-9_]*$/.test(trimmed)) {
+    const lower = trimmed.toLowerCase();
+    return lower.replace(/_+([a-z0-9])/g, (_, letter: string) => letter.toUpperCase());
+  }
+
+  const camel = trimmed.replace(/_+(\w)/g, (_, letter: string) => letter.toUpperCase());
   return camel.charAt(0).toLowerCase() + camel.slice(1);
 }
 
