@@ -2,7 +2,7 @@
  * Creates classic MongoDB B-tree indexes via the MongoDB driver.
  */
 
-import { MongoClient } from 'mongodb';
+import { MongoClient, type CreateIndexesOptions, type IndexSpecification } from 'mongodb';
 import type { Request } from 'express';
 import { isAuthConfigured } from '../server/auth.js';
 import { isHostedStudioRequest } from '../server/hosted.js';
@@ -88,10 +88,12 @@ export async function createMongoClassicIndex(
 
     const indexName = input.options?.name ?? defaultClassicIndexName(input.keys);
     const collection = client.db(physicalDatabase).collection(input.collection);
-    const createdName = await collection.createIndex(input.keys, {
+    const indexKeys = input.keys as IndexSpecification;
+    const indexOptions: CreateIndexesOptions = {
       ...input.options,
       name: indexName,
-    });
+    };
+    const createdName = await collection.createIndex(indexKeys, indexOptions);
 
     const keySummary = Object.entries(input.keys)
       .map(([field, direction]) => `${field}: ${direction}`)
