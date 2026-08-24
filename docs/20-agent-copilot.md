@@ -115,6 +115,8 @@ Post-import **Architecture Review** runs inspect tools first (`listMongoCollecti
 
 Reviews include a **Review domain** table (data model, performance, infrastructure, operations), deep coverage of embed vs reference, ESR/explain/index RAM, shard keys and HA, and **hyperlinks to official MongoDB docs** (Atlas Search, Vector Search, RRF/`$rankFusion`, design patterns, schema validation). Google Docs export preserves those links as clickable anchors.
 
+**§2 cardinality table** — Copilot schema context sends measured **min / avg / p95 / p99 / max** children-per-parent per FK when CSV or SQLite `.db` stats exist (`[csv]` / `[database]`). **Embed Overrides → Max** supplies estimated percentiles (`[developer]`) when DDL-only. Architecture Review must use these numbers instead of "Unavailable" when present.
+
 | Control | Behavior |
 | --- | --- |
 | **Save to Google Docs** | OAuth sign-in → creates a native Google Doc in your Drive → opens in a new tab. Includes **Collections diagrams** (one card per migration-plan collection) when a design is loaded. |

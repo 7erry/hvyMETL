@@ -11,6 +11,7 @@ import {
   formatAtlasSearchIndexesForSystemPrompt,
 } from './copilotAtlasSearchContext.js';
 import { formatSearchFieldHintsForSystemPrompt } from './formatSearchFieldHints.js';
+import { formatRelationshipCardinalityLine } from './formatRelationshipCardinality.js';
 
 /** Builds the system prompt injected into every Grove chat completion. */
 export function buildCopilotSystemPrompt(
@@ -22,12 +23,7 @@ export function buildCopilotSystemPrompt(
     : '(no schema loaded)';
 
   const relationships = context.relationships.length
-    ? context.relationships
-        .map(
-          (r) =>
-            `- ${r.childTable} → ${r.parentTable} (${r.maxChildrenPerParent ?? '?'} max children, bounded=${r.isBounded})`,
-        )
-        .join('\n')
+    ? context.relationships.map((relationship) => formatRelationshipCardinalityLine(relationship)).join('\n')
     : '(none)';
 
   const guardrails = context.guardrailIssues.length

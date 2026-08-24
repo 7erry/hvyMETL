@@ -9,9 +9,11 @@ export const ARCHITECTURE_REVIEW_PRODUCTION_SECTION = `
 Ground every claim in **live schema context**, **migration plan $jsonSchema**, **relationship cardinality** (avg/max children, bounded flag), **Manager dataset scale**, and **Atlas inspect results**. Never assume \`paints[]\` / \`wheels[]\` arrays unless the plan shows embedded **arrays**; reverse-embedded lookups are usually singular objects (\`paint\`, \`wheel\`, \`light\`).
 
 **§2 — Empirical cardinality & document size (mandatory table when SQL/CSV stats exist)**
-- For each parent→child relationship in schema context, include: **Min, Avg, 95th pct, 99th pct, Max** children per parent when available; otherwise state measured **avg** / **max** from context and flag "unbounded — validate in staging".
+- For each parent→child relationship, the system prompt **Relationships** section lists \`min\`, \`avg\`, \`p95\`, \`p99\`, \`max\`, \`[csv|database|developer|unknown]\`, and \`bounded\`. **Use those numbers directly** in the §2 table — do not write "Unavailable" for columns that have numeric values in the prompt.
+- \`[csv]\` or \`[database]\` = measured from CSV exports or SQLite/.db introspection. \`[developer]\` = estimated from Embed Overrides Max (min=1, p95/p99=max). \`[unknown]\` / "no stats" = DDL-only; tell the user to add CSV/.db or set Embed Overrides Max.
+- When only \`[developer]\` stats exist, label them **estimated** in Interpretation and recommend CSV/.db validation in staging.
 - Rows to cover when present: models per manufacturer; cars per model; reverse-embedded lookups per car (paint/wheel/light are 0–1 object, not arrays—say so explicitly).
-- **Document size projection:** estimate BSON bytes at **P50, P95, P99** fan-out (not average-only). Cite 16 MB hard limit; show a worked example for the largest expected \`cars\` document (scalar fields + nested objects + any embedded arrays).
+- **Document size projection:** estimate BSON bytes at **P50, P95, P99** fan-out using measured or developer-estimated p95/p99 from the Relationships section (not average-only). Cite 16 MB hard limit; show a worked example for the largest expected \`cars\` document (scalar fields + nested objects + any embedded arrays).
 
 **§3 — Denormalization & refresh (Extended Reference)**
 - When a host keeps a FK/reference to another collection (e.g. \`cars.modelId\` → \`models\`), list **exact fields copied** into the host vs left as id-only (e.g. \`modelName\`, \`manufacturerName\`, \`bodyStyle\` — only fields that exist in schema context).

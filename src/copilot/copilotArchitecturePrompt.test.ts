@@ -97,7 +97,14 @@ describe('buildCopilotSystemPrompt', () => {
     const prompt = buildCopilotSystemPrompt({
       tables: [{ name: 'trains', columnCount: 8, rowCount: 120 }],
       relationships: [
-        { childTable: 'train_telemetry', parentTable: 'trains', isBounded: false, maxChildrenPerParent: 0 },
+        {
+          childTable: 'train_telemetry',
+          parentTable: 'trains',
+          fkColumn: 'train_id',
+          isBounded: false,
+          maxChildrenPerParent: 0,
+          cardinalitySource: 'unknown',
+        },
       ],
       guardrailIssues: [
         {
@@ -115,6 +122,7 @@ describe('buildCopilotSystemPrompt', () => {
     expect(prompt).toContain('Security — untrusted input');
     expect(prompt).toContain('trains');
     expect(prompt).toContain('train_telemetry');
+    expect(prompt).toContain('no stats');
     expect(prompt).toContain('Architecture & schema analysis responses');
     expect(prompt).toContain('Indexes & query strategy');
   });

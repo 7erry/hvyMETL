@@ -11,6 +11,8 @@ export const READ_HEAVY_PERCENT = 55;
 export const EMBED_LEANING_PERCENT = 50;
 /** Measured max children per parent treated as safely embeddable. */
 export const BOUNDED_CHILDREN_THRESHOLD = 250;
+/** Developer Embed Overrides max treated as bounded embed intent (UI/API). */
+export const DEVELOPER_OVERRIDE_EMBED_MAX_CHILDREN = 5000;
 /** How many child documents the Subset pattern keeps on the parent. */
 export const SUBSET_LIMIT = 25;
 /** Max children per parent for line-item tables without measured stats. */

@@ -1,3 +1,22 @@
+## hvyMETL 4.3.9
+
+**Relationship cardinality percentiles for Architecture Review** — CSV/SQLite enrichment and Embed Overrides now supply min, avg, p95, p99, and max children-per-parent to Copilot (replacing "Unavailable" in §2 when data exists). Design-with-CSV returns measured stats into the session model.
+
+### Highlights
+
+- **`relationshipCardinalityStats`** — shared percentile computation from per-parent child counts.
+- **Embed Overrides Max** — derives estimated min/avg/p95/p99 when CSV/.db stats are missing.
+- **Copilot schema context** — applies embed overrides before sending relationships; Architecture Review prompt uses numeric stats from the Relationships section.
+- **CSV design** — `measuredModel` in design API response merges row counts and relationship stats into the canvas session.
+
+### Verification
+
+- `npm test -- src/utilities/relationshipCardinalityStats.test.ts src/utilities/csvModelEnrichment.test.ts src/copilot/formatRelationshipCardinality.test.ts web/src/cardinalityOverrides.test.ts web/src/mergeMeasuredModelStats.test.ts`
+- Import ledger DDL → set Embed Overrides Max=100 on `fx_rates · from_currency` → **Architecture Review** §2 should show estimated min/p95/p99/max (not Unavailable).
+- **Choose CSVs** + **Refresh design** → §2 should show `[csv]` measured percentiles.
+
+---
+
 ## hvyMETL 4.3.7
 
 **Copilot 504 timeout fixes** — Architecture Review Grove calls now use 5-minute client/server timeouts, disable premature HTTP socket timeouts, and show accurate errors (`npm run dev:ui`, not a generic “start API server” message).

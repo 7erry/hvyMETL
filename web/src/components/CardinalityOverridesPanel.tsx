@@ -126,7 +126,17 @@ export function CardinalityOverridesPanel({
                   <span>{direction.right}</span>
                 </strong>
                 <small>
-                  {relationship.fkColumn} · Current max: {relationship.maxChildrenPerParent || 'unknown'} ·{' '}
+                  {relationship.fkColumn} ·{' '}
+                  {relationship.maxChildrenPerParent > 0 ? (
+                    <>
+                      min {relationship.minChildrenPerParent ?? '—'} · avg {relationship.avgChildrenPerParent} · p95{' '}
+                      {relationship.p95ChildrenPerParent ?? '—'} · p99 {relationship.p99ChildrenPerParent ?? '—'} · max{' '}
+                      {relationship.maxChildrenPerParent}
+                      {relationship.cardinalitySource ? ` · ${relationship.cardinalitySource}` : ''} ·{' '}
+                    </>
+                  ) : (
+                    <>Current max: unknown · </>
+                  )}
                   {relationship.isBounded ? 'bounded' : 'unbounded'} ·{' '}
                   {isForced
                     ? `force embed: ${direction.guestTable} into ${direction.hostTable}`

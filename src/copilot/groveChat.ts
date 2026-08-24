@@ -21,12 +21,7 @@ export type CopilotChatRole = 'system' | 'user' | 'assistant' | 'tool';
 
 export type CopilotSchemaContext = {
   tables: { name: string; columnCount: number; rowCount?: number }[];
-  relationships: {
-    childTable: string;
-    parentTable: string;
-    isBounded: boolean;
-    maxChildrenPerParent?: number;
-  }[];
+  relationships: import('./formatRelationshipCardinality.js').CopilotRelationshipCardinality[];
   guardrailIssues: {
     tableName: string;
     label: string;

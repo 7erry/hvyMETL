@@ -203,8 +203,14 @@ export type RelationshipModel = {
   childTable: string;
   /** The foreign-key column on the child table pointing at the parent. */
   fkColumn: string;
+  /** Smallest number of child rows any single parent has (measured or estimated). */
+  minChildrenPerParent?: number;
   /** Average number of child rows per parent row. */
   avgChildrenPerParent: number;
+  /** 95th percentile of child rows per parent (measured or estimated). */
+  p95ChildrenPerParent?: number;
+  /** 99th percentile of child rows per parent (measured or estimated). */
+  p99ChildrenPerParent?: number;
   /** The largest number of child rows any single parent has. */
   maxChildrenPerParent: number;
   /**

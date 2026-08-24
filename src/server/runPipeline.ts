@@ -21,6 +21,10 @@ import { resolveWorkloadProfile } from '../profiles/resolveProfile.js';
 import type { SqlStructuralModel, WorkloadProfile } from '../types.js';
 import { listCsvFiles, matchCsvFilesForCollection, resolveCsvSourcePath } from '../utilities/csvSource.js';
 import { enrichModelFromCsv } from '../utilities/csvModelEnrichment.js';
+import {
+  estimateRelationshipCardinalityFromMax,
+  relationshipOverrideKey,
+} from '../utilities/relationshipCardinalityStats.js';
 import { collectionNeedsShapedCsv, shapeCollectionCsv } from '../utilities/csvShaper.js';
 import { generateMockCsvFromDdl, type MockCsvOptions } from '../utilities/mockCsvFromDdl.js';
 import { registerApiArtifacts, serializeApiArtifactBundle } from './apiArtifactStore.js';
@@ -117,10 +121,6 @@ function reportProgress(request: PipelineRunRequest, event: PipelineProgressEven
   request.onProgress?.(event);
 }
 
-function relationshipOverrideKey(relationship: SqlStructuralModel['relationships'][number]): string {
-  return `${relationship.parentTable}::${relationship.childTable}::${relationship.fkColumn}`;
-}
-
 function applyCardinalityOverrides(
   model: SqlStructuralModel,
   overrides?: Record<string, number>,
@@ -149,9 +149,7 @@ function applyCardinalityOverrides(
         ...relationship,
         ...(hasMaxOverride
           ? {
-              avgChildrenPerParent: Math.max(1, Math.ceil(maxChildrenPerParent / 2)),
-              maxChildrenPerParent,
-              isBounded: maxChildrenPerParent <= 5000,
+              ...estimateRelationshipCardinalityFromMax(maxChildrenPerParent),
               cardinalitySource: 'developer' as const,
             }
           : {}),

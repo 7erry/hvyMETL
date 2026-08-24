@@ -16,7 +16,7 @@ import type {
   SqlStructuralModel,
   TableModel,
 } from '../types.js';
-import { BOUNDED_CHILDREN_THRESHOLD } from '../design/embedThresholds.js';
+import { computeRelationshipCardinalityStats } from '../utilities/relationshipCardinalityStats.js';
 import type { KeyRange, SqlSourceAdapter } from './types.js';
 
 /** Shape of one row returned by PRAGMA table_info. */
@@ -98,20 +98,20 @@ export function createSqliteAdapter(databasePath: string): SqlSourceAdapter {
    * The average and maximum drive the embed/reference/subset decision.
    */
   function measureRelationship(childTable: TableModel, fk: ForeignKeyModel): RelationshipModel {
-    const statsRow = db
+    const countRows = db
       .prepare(
-        `SELECT COALESCE(AVG(childCount), 0) AS avgCount, COALESCE(MAX(childCount), 0) AS maxCount
-         FROM (SELECT COUNT(*) AS childCount FROM "${childTable.name}" GROUP BY "${fk.column}")`,
+        `SELECT COUNT(*) AS childCount FROM "${childTable.name}" GROUP BY "${fk.column}"`,
       )
-      .get() as { avgCount: number; maxCount: number };
+      .all() as { childCount: number }[];
+
+    const stats = computeRelationshipCardinalityStats(countRows.map((row) => row.childCount));
 
     return {
       parentTable: fk.referencesTable,
       childTable: childTable.name,
       fkColumn: fk.column,
-      avgChildrenPerParent: Math.round(statsRow.avgCount * 100) / 100,
-      maxChildrenPerParent: statsRow.maxCount,
-      isBounded: statsRow.maxCount > 0 && statsRow.maxCount <= BOUNDED_CHILDREN_THRESHOLD,
+      ...stats,
+      cardinalitySource: 'database',
     };
   }
 

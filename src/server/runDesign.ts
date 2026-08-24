@@ -11,6 +11,10 @@ import type { MigrationPlan, SqlStructuralModel, TimeSeriesOverrides, WorkloadPr
 import { buildMigrationPlan } from '../design/patternSelector.js';
 import { enrichModelFromCsv } from '../utilities/csvModelEnrichment.js';
 import { resolveCsvSourcePath } from '../utilities/csvSource.js';
+import {
+  estimateRelationshipCardinalityFromMax,
+  relationshipOverrideKey,
+} from '../utilities/relationshipCardinalityStats.js';
 import { explainTransformation, type TransformationSummary } from '../design/explainTransformation.js';
 import type { ModelTokenUsage } from '../modelUsage.js';
 
@@ -74,10 +78,6 @@ function configureDesignMigrationStore(env: NodeJS.ProcessEnv): void {
   }
 }
 
-function relationshipOverrideKey(relationship: SqlStructuralModel['relationships'][number]): string {
-  return `${relationship.parentTable}::${relationship.childTable}::${relationship.fkColumn}`;
-}
-
 function applyCardinalityOverrides(
   model: SqlStructuralModel,
   overrides?: Record<string, number>,
@@ -106,9 +106,7 @@ function applyCardinalityOverrides(
         ...relationship,
         ...(hasMaxOverride
           ? {
-              avgChildrenPerParent: Math.max(1, Math.ceil(maxChildrenPerParent / 2)),
-              maxChildrenPerParent,
-              isBounded: maxChildrenPerParent <= 5000,
+              ...estimateRelationshipCardinalityFromMax(maxChildrenPerParent),
               cardinalitySource: 'developer' as const,
             }
           : {}),
@@ -123,24 +121,29 @@ export type DesignRunResult = DesignFromModelResult & {
   designMeta: DesignMeta;
   transformationSummary: TransformationSummary;
   modelTokenUsage: ModelTokenUsage;
+  /** CSV/SQLite-measured stats before developer embed overrides (for session persistence). */
+  measuredModel?: SqlStructuralModel;
 };
 
 function enrichModelForDesign(request: DesignRequest, env: NodeJS.ProcessEnv): {
   modelForDesign: SqlStructuralModel;
   enrichedModel: SqlStructuralModel;
+  measuredModel?: SqlStructuralModel;
   resolvedCsvRoot?: string;
 } {
   const modelForDesign: SqlStructuralModel = request.dialect?.trim()
     ? { ...request.model, source: `ddl:${request.dialect.trim()}` }
     : request.model;
 
+  let measuredModel: SqlStructuralModel | undefined;
   let enrichedModel = modelForDesign;
   let resolvedCsvRoot: string | undefined;
 
   if (request.csvSourcePath?.trim()) {
     resolvedCsvRoot = resolveCsvSourcePath(request.csvSourcePath, env, request.csvAllowedRoots);
     if (existsSync(resolvedCsvRoot)) {
-      enrichedModel = enrichModelFromCsv(modelForDesign, resolvedCsvRoot);
+      measuredModel = enrichModelFromCsv(modelForDesign, resolvedCsvRoot);
+      enrichedModel = measuredModel;
     }
   }
 
@@ -151,13 +154,13 @@ function enrichModelForDesign(request: DesignRequest, env: NodeJS.ProcessEnv): {
     request.embedDirectionOverrides,
   );
 
-  return { modelForDesign, enrichedModel, resolvedCsvRoot };
+  return { modelForDesign, enrichedModel, measuredModel, resolvedCsvRoot };
 }
 
 /** Explain pattern decisions without running the ML design engine. */
 export function explainDesignRequest(request: DesignRequest, plan?: MigrationPlan): TransformationSummary {
   const env = request.env ?? process.env;
-  const { enrichedModel, resolvedCsvRoot } = enrichModelForDesign(request, env);
+  const { enrichedModel, measuredModel, resolvedCsvRoot } = enrichModelForDesign(request, env);
   const migrationPlan = plan ?? buildMigrationPlan(enrichedModel, request.profile, {
     timeSeriesOverrides: request.timeSeriesOverrides,
   });
@@ -170,7 +173,7 @@ export function explainDesignRequest(request: DesignRequest, plan?: MigrationPla
 /** Run ML-enhanced design with optional CSV enrichment for row/cardinality stats. */
 export async function runDesignForModel(request: DesignRequest): Promise<DesignRunResult> {
   const env = request.env ?? process.env;
-  const { enrichedModel, resolvedCsvRoot } = enrichModelForDesign(request, env);
+  const { enrichedModel, measuredModel, resolvedCsvRoot } = enrichModelForDesign(request, env);
 
   configureDesignMigrationStore(env);
 
@@ -192,5 +195,6 @@ export async function runDesignForModel(request: DesignRequest): Promise<DesignR
     designMeta,
     transformationSummary,
     modelTokenUsage: mlDesign.modelTokenUsage,
+    measuredModel,
   };
 }

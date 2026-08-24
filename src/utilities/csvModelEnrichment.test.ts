@@ -11,11 +11,15 @@ import {
 const ORACLE_ROOT = join(process.cwd(), 'examples', 'oracle');
 
 describe('csvModelEnrichment', () => {
-  it('measures order_items as multi-row per parent from CSV', () => {
+  it('measures order_items with min/avg/p95/p99/max from CSV', () => {
     const rows = loadTableCsvRows(ORACLE_ROOT, 'order_items');
     const stats = measureRelationshipFromCsv(rows, 'order_id');
     expect(stats.maxChildrenPerParent).toBeGreaterThan(1);
+    expect(stats.minChildrenPerParent).toBeGreaterThanOrEqual(1);
+    expect(stats.p95ChildrenPerParent).toBeGreaterThanOrEqual(stats.avgChildrenPerParent ?? 0);
+    expect(stats.p99ChildrenPerParent).toBeGreaterThanOrEqual(stats.p95ChildrenPerParent ?? 0);
     expect(stats.isBounded).toBe(true);
+    expect(stats.cardinalitySource).toBe('csv');
   });
 
   it('enriches DDL-only relationships with CSV cardinality', () => {

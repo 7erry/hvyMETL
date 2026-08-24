@@ -1,5 +1,6 @@
 import type { MigrationPlan } from '../migrationPlanTypes';
 import type { CardinalityOverrides, ForceEmbedOverrides } from '../cardinalityOverrides';
+import { applyCardinalityOverrides } from '../cardinalityOverrides';
 import type { SqlStructuralModel } from '../types';
 import type { GuardrailIssue } from './types';
 import type { CopilotDatasetScaleContext } from '../../../src/copilot/copilotDatasetScale.ts';
@@ -8,19 +9,11 @@ import type { CopilotAtlasSearchIndexRecord } from '../../../src/copilot/copilot
 import type { ManagerCostInputs } from '../managerCostEstimate';
 import { buildDatasetScaleContext } from './buildDatasetScaleContext';
 import { buildSearchFieldHintsFromPlan } from './buildSearchFieldHints';
+import type { CopilotRelationshipCardinality } from '../../../src/copilot/formatRelationshipCardinality.ts';
 
 export type CopilotSchemaContextPayload = {
   tables: { name: string; columnCount: number; rowCount?: number }[];
-  relationships: {
-    childTable: string;
-    parentTable: string;
-    fkColumn?: string;
-    isBounded: boolean;
-    avgChildrenPerParent?: number;
-    maxChildrenPerParent?: number;
-    forceEmbed?: boolean;
-    embedDirectionReversed?: boolean;
-  }[];
+  relationships: CopilotRelationshipCardinality[];
   guardrailIssues: {
     tableName: string;
     label: string;
@@ -36,6 +29,25 @@ export type CopilotSchemaContextPayload = {
   atlasSearchIndexes?: CopilotAtlasSearchIndexRecord[];
   searchFieldHints?: import('../../../src/copilot/groveChat.ts').CopilotSearchFieldHint[];
 };
+
+function mapRelationshipForCopilot(
+  relationship: SqlStructuralModel['relationships'][number],
+): CopilotRelationshipCardinality {
+  const source = relationship.cardinalitySource ?? 'unknown';
+
+  return {
+    childTable: relationship.childTable,
+    parentTable: relationship.parentTable,
+    fkColumn: relationship.fkColumn,
+    isBounded: relationship.isBounded,
+    minChildrenPerParent: relationship.minChildrenPerParent,
+    avgChildrenPerParent: relationship.avgChildrenPerParent || undefined,
+    p95ChildrenPerParent: relationship.p95ChildrenPerParent,
+    p99ChildrenPerParent: relationship.p99ChildrenPerParent,
+    maxChildrenPerParent: relationship.maxChildrenPerParent || undefined,
+    cardinalitySource: source,
+  };
+}
 
 /** Builds the schema context payload sent to /api/copilot/chat. */
 export function buildSchemaContextPayload(input: {
@@ -61,22 +73,19 @@ export function buildSchemaContextPayload(input: {
     atlasSearchIndexes,
   } = input;
 
+  const effectiveModel = model
+    ? applyCardinalityOverrides(model, cardinalityOverrides, forceEmbedOverrides)
+    : null;
+
   return {
-    tables: (model?.tables ?? []).map((table) => ({
+    tables: (effectiveModel?.tables ?? []).map((table) => ({
       name: table.name,
       columnCount: table.columns.length,
       rowCount: table.rowCount || undefined,
     })),
-    relationships: (model?.relationships ?? []).map((rel) => ({
-      childTable: rel.childTable,
-      parentTable: rel.parentTable,
-      fkColumn: rel.fkColumn,
-      isBounded: rel.isBounded,
-      avgChildrenPerParent: rel.avgChildrenPerParent || undefined,
-      maxChildrenPerParent: rel.maxChildrenPerParent || undefined,
-      forceEmbed: rel.forceEmbed,
-      embedDirectionReversed: rel.embedDirectionReversed,
-    })),
+    relationships: (effectiveModel?.relationships ?? []).map((relationship) =>
+      mapRelationshipForCopilot(relationship),
+    ),
     guardrailIssues: guardrailIssues.map((issue) => ({
       tableName: issue.tableName,
       label: issue.label,

@@ -165,6 +165,11 @@ Values from `1` through `5000` are treated as bounded developer intent and can f
 full embedding for that relationship. Values above `5000` remain unbounded, so design
 falls back to subset/reference behavior.
 
+When only a max is provided, hvyMETL **estimates** min (1), avg (~max/2), p95, and p99
+(= max) so Architecture Review §2 can size documents without "Unavailable" columns.
+**Measured** min/avg/p95/p99/max come from CSV exports or SQLite `.db` introspection
+and are persisted into the session model after **Refresh design** with CSVs attached.
+
 If the developer wants a linked child table folded into the parent collection without
 providing a max cardinality, check **Force embed** for that FK. Unchecking **Force embed**
 keeps the child as a separate collection (`forceEmbed: false`) even when the planner

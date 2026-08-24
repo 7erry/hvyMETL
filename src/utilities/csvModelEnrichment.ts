@@ -5,9 +5,9 @@
 
 import { readFileSync } from 'node:fs';
 import type { RelationshipModel, SqlStructuralModel, TableModel } from '../types.js';
-import { BOUNDED_CHILDREN_THRESHOLD } from '../design/embedThresholds.js';
 import { csvBaseName, listCsvFiles } from './csvSource.js';
 import { parseCsv } from './csv.js';
+import { computeRelationshipCardinalityStats } from './relationshipCardinalityStats.js';
 
 export { BOUNDED_CHILDREN_THRESHOLD } from '../design/embedThresholds.js';
 
@@ -49,7 +49,16 @@ export function countTableCsvRows(csvRoot: string, tableName: string): number {
 export function measureRelationshipFromCsv(
   childRows: Record<string, string>[],
   fkColumn: string,
-): Pick<RelationshipModel, 'avgChildrenPerParent' | 'maxChildrenPerParent' | 'isBounded'> {
+): Pick<
+  RelationshipModel,
+  | 'minChildrenPerParent'
+  | 'avgChildrenPerParent'
+  | 'p95ChildrenPerParent'
+  | 'p99ChildrenPerParent'
+  | 'maxChildrenPerParent'
+  | 'isBounded'
+  | 'cardinalitySource'
+> {
   if (childRows.length === 0) {
     return { avgChildrenPerParent: 0, maxChildrenPerParent: 0, isBounded: false };
   }
@@ -65,15 +74,8 @@ export function measureRelationshipFromCsv(
     return { avgChildrenPerParent: 0, maxChildrenPerParent: 0, isBounded: false };
   }
 
-  const counts = [...countsByParent.values()];
-  const maxChildrenPerParent = Math.max(...counts);
-  const avgChildrenPerParent = Math.round((counts.reduce((sum, count) => sum + count, 0) / counts.length) * 100) / 100;
-
-  return {
-    avgChildrenPerParent,
-    maxChildrenPerParent,
-    isBounded: maxChildrenPerParent > 0 && maxChildrenPerParent <= BOUNDED_CHILDREN_THRESHOLD,
-  };
+  const stats = computeRelationshipCardinalityStats([...countsByParent.values()]);
+  return { ...stats, cardinalitySource: 'csv' as const };
 }
 
 function enrichTableRowCount(table: TableModel, csvRoot: string): TableModel {

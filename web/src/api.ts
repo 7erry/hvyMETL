@@ -573,6 +573,8 @@ export type DesignResult = {
   transformationSummary: import('./transformationSummaryTypes').TransformationSummary;
   modelTokenUsage?: import('./modelUsage').ModelTokenUsage;
   apiArtifacts?: ApiArtifactBundleInfo | null;
+  /** CSV-measured stats returned from design/with-csv (merge into session model). */
+  measuredModel?: import('./types').SqlStructuralModel;
 };
 
 export type ApiArtifactBundleInfo = {

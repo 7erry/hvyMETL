@@ -33,6 +33,7 @@ import { DiagramStatusFooter } from './components/DiagramStatusFooter';
 import { FooterDiagramLegend } from './components/FooterDiagramLegend';
 import { CollapsiblePanel } from './components/CollapsiblePanel';
 import { edgesForPlan } from './migrationPlanDisplay';
+import { mergeMeasuredModelStats } from './mergeMeasuredModelStats';
 import { CardinalityOverridesPanel } from './components/CardinalityOverridesPanel';
 import { TimeSeriesOverridesPanel } from './components/TimeSeriesOverridesPanel';
 import { AuthGate } from './components/AuthGate';
@@ -888,6 +889,9 @@ export default function App() {
       const meta = result.designMeta as DesignMeta;
       setSession((prev) => ({
         ...prev,
+        ...(result.measuredModel && prev.model
+          ? { model: mergeMeasuredModelStats(prev.model, result.measuredModel) }
+          : {}),
         migrationArtifacts: {
           planJson,
           designReportMarkdown: result.designReport ?? prev.migrationArtifacts?.designReportMarkdown ?? '',

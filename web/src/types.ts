@@ -39,7 +39,10 @@ export type RelationshipModel = {
   parentTable: string;
   childTable: string;
   fkColumn: string;
+  minChildrenPerParent?: number;
   avgChildrenPerParent: number;
+  p95ChildrenPerParent?: number;
+  p99ChildrenPerParent?: number;
   maxChildrenPerParent: number;
   isBounded: boolean;
   cardinalitySource?: 'csv' | 'database' | 'developer';

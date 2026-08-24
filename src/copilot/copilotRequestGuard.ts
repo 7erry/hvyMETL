@@ -249,14 +249,35 @@ export function sanitizeCopilotSchemaContext(raw: unknown): CopilotSchemaContext
   const relationships = Array.isArray(body.relationships)
     ? body.relationships.slice(0, COPILOT_MAX_SCHEMA_RELATIONSHIPS).map((item) => {
         const row = item as Record<string, unknown>;
-        return {
+        const base = {
           childTable: truncateString(String(row.childTable ?? ''), COPILOT_MAX_SCHEMA_STRING_FIELD_CHARS),
           parentTable: truncateString(String(row.parentTable ?? ''), COPILOT_MAX_SCHEMA_STRING_FIELD_CHARS),
           isBounded: row.isBounded === true,
-          ...(typeof row.maxChildrenPerParent === 'number'
-            ? { maxChildrenPerParent: row.maxChildrenPerParent }
-            : {}),
+          fkColumn:
+            typeof row.fkColumn === 'string'
+              ? truncateString(row.fkColumn, COPILOT_MAX_SCHEMA_STRING_FIELD_CHARS)
+              : undefined,
+          cardinalitySource:
+            row.cardinalitySource === 'csv'
+            || row.cardinalitySource === 'database'
+            || row.cardinalitySource === 'developer'
+            || row.cardinalitySource === 'unknown'
+              ? (row.cardinalitySource as 'csv' | 'database' | 'developer' | 'unknown')
+              : undefined,
         };
+        const numericFields = [
+          'minChildrenPerParent',
+          'avgChildrenPerParent',
+          'p95ChildrenPerParent',
+          'p99ChildrenPerParent',
+          'maxChildrenPerParent',
+        ] as const;
+        const stats = Object.fromEntries(
+          numericFields
+            .filter((field) => typeof row[field] === 'number' && Number.isFinite(row[field]))
+            .map((field) => [field, row[field]]),
+        );
+        return { ...base, ...stats };
       })
     : [];
 

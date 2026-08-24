@@ -1,14 +1,16 @@
 import type { RelationshipModel, SqlStructuralModel } from './types';
+import {
+  estimateRelationshipCardinalityFromMax,
+  relationshipOverrideKey as sharedRelationshipOverrideKey,
+} from '../../src/utilities/relationshipCardinalityStats.ts';
 
 export type CardinalityOverrides = Record<string, number>;
 export type ForceEmbedOverrides = Record<string, boolean>;
 /** When true, force-embed puts the parent table inside the child collection (reversed FK direction). */
 export type EmbedDirectionOverrides = Record<string, boolean>;
 
-const SAFE_EMBED_MAX_CHILDREN = 5000;
-
 export function relationshipOverrideKey(relationship: RelationshipModel): string {
-  return `${relationship.parentTable}::${relationship.childTable}::${relationship.fkColumn}`;
+  return sharedRelationshipOverrideKey(relationship);
 }
 
 export function relationshipLabel(relationship: RelationshipModel): string {
@@ -38,10 +40,6 @@ export function relationshipEmbedDirectionLabel(
   };
 }
 
-function avgFromMax(maxChildrenPerParent: number): number {
-  return Math.max(1, Math.ceil(maxChildrenPerParent / 2));
-}
-
 export function applyCardinalityOverrides(
   model: SqlStructuralModel,
   overrides: CardinalityOverrides,
@@ -62,9 +60,7 @@ export function applyCardinalityOverrides(
       ...relationship,
       ...(hasMaxOverride
         ? {
-            avgChildrenPerParent: avgFromMax(maxChildrenPerParent),
-            maxChildrenPerParent,
-            isBounded: maxChildrenPerParent <= SAFE_EMBED_MAX_CHILDREN,
+            ...estimateRelationshipCardinalityFromMax(maxChildrenPerParent),
             cardinalitySource: 'developer' as const,
           }
         : {}),

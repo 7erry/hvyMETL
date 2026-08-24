@@ -42,7 +42,10 @@ describe('cardinalityOverrides', () => {
     const adjusted = applyCardinalityOverrides(model, { [key]: 12 });
 
     expect(adjusted.relationships[0]).toMatchObject({
+      minChildrenPerParent: 1,
       avgChildrenPerParent: 6,
+      p95ChildrenPerParent: 12,
+      p99ChildrenPerParent: 12,
       maxChildrenPerParent: 12,
       isBounded: true,
       cardinalitySource: 'developer',
