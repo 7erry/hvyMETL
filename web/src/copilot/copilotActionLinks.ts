@@ -3,8 +3,7 @@ import type { CopilotNextStep, MongoInspectToolName, WorkflowToolName } from './
 /** Prefix for markdown links that trigger copilot actions when clicked. */
 export const COPILOT_ACTION_HREF_PREFIX = 'copilot-action:';
 
-export const VERIFY_IMPORTED_COLLECTIONS_PROMPT =
-  'List collections in the logical database I just imported to with the pipeline.';
+export const VERIFY_IMPORTED_COLLECTIONS_PROMPT = 'Verify imported collections';
 
 export const POST_IMPORT_ARCHITECTURE_REVIEW_PROMPT = [
   'Produce a collective **Architecture Review** of all collections I just imported into Atlas.',
@@ -164,7 +163,7 @@ const WORKFLOW_STEP_LINKS: Array<{ pattern: RegExp; action: CopilotAction; label
     label: 'Architecture Review',
   },
   {
-    pattern: /\bVerify collections\b/g,
+    pattern: /\bVerify collections\b(?!\s+in\s+\S)/gi,
     action: { type: 'prompt', prompt: VERIFY_IMPORTED_COLLECTIONS_PROMPT },
     label: 'Verify collections',
   },

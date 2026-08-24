@@ -33,6 +33,11 @@ describe('copilotActionLinks', () => {
     expect(linked).toContain('Refresh design');
   });
 
+  it('does not replace Verify collections when a database name follows', () => {
+    const linked = linkifyCopilotWorkflowSteps('Next step: Verify collections in finops');
+    expect(linked).toBe('Next step: Verify collections in finops');
+  });
+
   it('builds a migration guide with clickable steps', () => {
     const guide = buildMigrationWorkflowGuideMessage();
     expect(guide).toContain('Clear session');

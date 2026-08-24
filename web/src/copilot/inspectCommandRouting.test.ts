@@ -4,6 +4,7 @@ import {
   isInspectOnlyUserMessage,
   looksLikeInspectListingEcho,
   parseDirectMongoInspectCommand,
+  parseVerifyCollectionsCommand,
   shouldSuppressListMongoDatabasesDisplay,
 } from './inspectCommandRouting';
 import type { ParsedCopilotToolCall } from './llmTools';
@@ -15,6 +16,35 @@ describe('inspectCommandRouting', () => {
     );
     expect(extractNamedDatabaseForListCollectionsRequest('List collections in csv_to_atlas')).toBe('csv_to_atlas');
     expect(extractNamedDatabaseForListCollectionsRequest('what collections are in mytrains')).toBe('mytrains');
+  });
+
+  it('does not treat English stopwords as database names', () => {
+    expect(
+      extractNamedDatabaseForListCollectionsRequest(
+        'List collections in the logical database I just imported to with the pipeline.',
+      ),
+    ).toBeNull();
+    expect(extractNamedDatabaseForListCollectionsRequest('List collections in the csv_to_atlas')).toBe(
+      'csv_to_atlas',
+    );
+  });
+
+  it('routes verify-collections commands to listMongoCollections', () => {
+    expect(parseVerifyCollectionsCommand('Verify imported collections', 'finops')).toEqual({
+      kind: 'mongoInspect',
+      tool: 'listMongoCollections',
+      args: { database: 'finops' },
+    });
+    expect(parseVerifyCollectionsCommand('Verify collections in fromoraclewithlove', '')).toEqual({
+      kind: 'mongoInspect',
+      tool: 'listMongoCollections',
+      args: { database: 'fromoraclewithlove' },
+    });
+    expect(parseDirectMongoInspectCommand('Verify collections in finops')).toEqual({
+      kind: 'mongoInspect',
+      tool: 'listMongoCollections',
+      args: { database: 'finops' },
+    });
   });
 
   it('routes list-collections commands directly to listMongoCollections', () => {

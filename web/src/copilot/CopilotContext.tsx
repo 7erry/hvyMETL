@@ -13,6 +13,7 @@ import { analyzeMigrationRisks } from './guardrails';
 import { parseOpenAiToolCall, isServerMongoInspectToolCall, isServerMongoVectorIndexToolCall, isServerMongoAtlasSearchToolCall, isWorkflowToolCallParsed } from './llmTools';
 import {
   parseDirectMongoInspectCommand,
+  parseVerifyCollectionsCommand,
   shouldSuppressListMongoDatabasesDisplay,
   isInspectOnlyUserMessage,
   looksLikeInspectListingEcho,
@@ -935,6 +936,12 @@ export function CopilotProvider({
       const directWorkflow = parseDirectWorkflowCommand(trimmed);
       if (directWorkflow) {
         void runWorkflowDirect(directWorkflow);
+        return;
+      }
+
+      const verifyCollections = parseVerifyCollectionsCommand(trimmed, targetDatabase);
+      if (verifyCollections) {
+        void runMongoInspectDirect(verifyCollections.tool, verifyCollections.args);
         return;
       }
 
