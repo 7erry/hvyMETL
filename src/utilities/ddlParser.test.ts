@@ -172,7 +172,7 @@ describe('parseDdlToModel — additional dialects', () => {
     expect(model.tables.map((t) => t.name)).toContain('SALES.ORDERS');
     const orders = model.tables.find((t) => t.name === 'SALES.ORDERS');
     expect(orders?.foreignKeys).toEqual([
-      { column: 'CUSTOMER_ID', referencesTable: 'CUSTOMERS', referencesColumn: 'CUSTOMER_ID' },
+      { column: 'CUSTOMER_ID', referencesTable: 'SALES.CUSTOMERS', referencesColumn: 'CUSTOMER_ID' },
     ]);
   });
 
@@ -210,8 +210,8 @@ describe('parseDdlToModel — additional dialects', () => {
 
     const orders = model.tables.find((t) => t.name === 'inventory.dbo.orders');
     expect(orders?.foreignKeys).toEqual([
-      { column: 'customer_id', referencesTable: 'customers', referencesColumn: 'customer_id' },
-      { column: 'product_id', referencesTable: 'products', referencesColumn: 'product_id' },
+      { column: 'customer_id', referencesTable: 'dbo.customers', referencesColumn: 'customer_id' },
+      { column: 'product_id', referencesTable: 'inventory.dbo.products', referencesColumn: 'product_id' },
     ]);
   });
 
@@ -377,7 +377,7 @@ describe('parseDdlToModel — cloud and OLTP dialects', () => {
     expect(model.tables.map((table) => table.name)).toContain('analytics.customers');
     const orders = model.tables.find((table) => table.name === 'analytics.orders');
     expect(orders?.primaryKey).toEqual(['order_id']);
-    expect(orders?.foreignKeys[0]?.referencesTable).toBe('customers');
+    expect(orders?.foreignKeys[0]?.referencesTable).toBe('analytics.customers');
   });
 
   it('parses Amazon Redshift IDENTITY columns and PostgreSQL-style FKs', () => {
@@ -435,5 +435,91 @@ describe('parseDdlToModel — cloud and OLTP dialects', () => {
       column: 'customer_id',
       referencesTable: 'customers',
     });
+  });
+});
+
+const MSSQL_ADVENTUREWORKS_DDL = `
+USE [adventureWorks2012]
+GO
+CREATE TABLE [dbo].[Customer](
+	[CustomerID] [int] IDENTITY(1,1) NOT FOR REPLICATION NOT NULL,
+	[NameStyle] [dbo].[NameStyle] NOT NULL,
+	[FirstName] [dbo].[Name] NOT NULL,
+	[rowguid] [uniqueidentifier] ROWGUIDCOL NOT NULL,
+	[ModifiedDate] [datetime] NOT NULL,
+ CONSTRAINT [PK_Customer_CustomerID] PRIMARY KEY CLUSTERED ([CustomerID] ASC),
+ CONSTRAINT [AK_Customer_rowguid] UNIQUE NONCLUSTERED ([rowguid] ASC)
+) ON [PRIMARY]
+GO
+CREATE TABLE [dbo].[ProductCategory](
+	[ProductCategoryID] [int] IDENTITY(1,1) NOT NULL,
+	[ParentProductCategoryID] [int] NULL,
+	[Name] [dbo].[Name] NOT NULL,
+ CONSTRAINT [PK_ProductCategory_ProductCategoryID] PRIMARY KEY CLUSTERED ([ProductCategoryID] ASC)
+) ON [PRIMARY]
+GO
+CREATE TABLE [dbo].[Product](
+	[ProductID] [int] IDENTITY(1,1) NOT NULL,
+	[Name] [dbo].[Name] NOT NULL,
+	[ProductCategoryID] [int] NULL,
+	[LineTotal]  AS (isnull(([ListPrice]*((1.0)-[UnitPriceDiscount]))*[OrderQty],(0.0))),
+ CONSTRAINT [PK_Product_ProductID] PRIMARY KEY CLUSTERED ([ProductID] ASC)
+) ON [PRIMARY]
+GO
+ALTER TABLE [dbo].[Product] WITH CHECK ADD CONSTRAINT [FK_Product_ProductCategory_ProductCategoryID] FOREIGN KEY([ProductCategoryID])
+REFERENCES [dbo].[ProductCategory] ([ProductCategoryID])
+GO
+CREATE TABLE [dbo].[BuildVersion](
+	[SystemInformationID] [tinyint] IDENTITY(1,1) NOT NULL,
+	[Database Version] [nvarchar](25) NOT NULL,
+	[VersionDate] [datetime] NOT NULL,
+	[ModifiedDate] [datetime] NOT NULL
+) ON [PRIMARY]
+GO
+`;
+
+describe('parseDdlToModel — MSSQL / SSMS bracket identifiers', () => {
+  it('parses bracket-qualified CREATE TABLE blocks from SSMS scripts', () => {
+    const model = parseDdlToModel(MSSQL_ADVENTUREWORKS_DDL, 'ddl:mssql');
+    expect(model.tables.map((table) => table.name).sort()).toEqual([
+      'dbo.BuildVersion',
+      'dbo.Customer',
+      'dbo.Product',
+      'dbo.ProductCategory',
+    ]);
+  });
+
+  it('parses MSSQL column types, identity, and table-level clustered primary keys', () => {
+    const model = parseDdlToModel(MSSQL_ADVENTUREWORKS_DDL, 'ddl:mssql');
+    const customer = model.tables.find((table) => table.name === 'dbo.Customer');
+    expect(customer?.primaryKey).toEqual(['CustomerID']);
+    expect(customer?.columns.find((column) => column.name === 'CustomerID')).toMatchObject({
+      sqlType: 'int',
+      nullable: false,
+      isPrimaryKey: true,
+    });
+    expect(customer?.columns.find((column) => column.name === 'FirstName')).toMatchObject({
+      sqlType: 'dbo.Name',
+      nullable: false,
+    });
+    expect(customer?.columns.some((column) => column.name === 'LineTotal')).toBe(false);
+  });
+
+  it('parses ALTER TABLE ADD CONSTRAINT FOREIGN KEY from SSMS scripts', () => {
+    const model = parseDdlToModel(MSSQL_ADVENTUREWORKS_DDL, 'ddl:mssql');
+    const product = model.tables.find((table) => table.name === 'dbo.Product');
+    expect(product?.foreignKeys).toEqual([
+      {
+        column: 'ProductCategoryID',
+        referencesTable: 'dbo.ProductCategory',
+        referencesColumn: 'ProductCategoryID',
+      },
+    ]);
+  });
+
+  it('parses column names containing spaces inside brackets', () => {
+    const model = parseDdlToModel(MSSQL_ADVENTUREWORKS_DDL, 'ddl:mssql');
+    const buildVersion = model.tables.find((table) => table.name === 'dbo.BuildVersion');
+    expect(buildVersion?.columns.map((column) => column.name)).toContain('Database Version');
   });
 });
