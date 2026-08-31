@@ -1,3 +1,21 @@
+## hvyMETL 4.3.10
+
+**Schema import: JSON Schema nested documents and MSSQL SSMS DDL** — single-document JSON Schema imports now promote nested objects and array-of-object fields into child tables with foreign keys (instead of one table with `_id` / `data` / `meta` blob columns). SSMS-style MSSQL scripts with bracket identifiers and `ALTER TABLE` foreign keys import correctly. ALL_CAPS SQL identifiers map to lowercase collection names (`REGIONS` → `regions`).
+
+### Highlights
+
+- **JSON Schema nested expansion** — monolithic document schemas decompose into `Document`, `Document_data`, `Document_data_ClassificationReferences`, etc., with `{Parent}_id` FK columns.
+- **MSSQL bracket identifiers** — `[dbo].[Customer]`, clustered PK constraints, computed columns skipped, `ALTER TABLE … ADD CONSTRAINT … FOREIGN KEY` parsed.
+- **`toCamelCase` ALL_CAPS fix** — identifiers like `REGIONS` no longer become `rEGIONS`.
+
+### Verification
+
+- `npm test -- src/utilities/jsonSchemaParser.test.ts src/utilities/ddlParser.test.ts src/utilities/naming.test.ts`
+- Paste a nested JSON Schema (draft-07/2020-12 root object) with dialect **json-schema** → multiple tables in the ER diagram.
+- Paste AdventureWorks SSMS `CREATE TABLE` script with dialect **mssql** → 12 tables imported.
+
+---
+
 ## hvyMETL 4.3.9
 
 **Relationship cardinality percentiles for Architecture Review** — CSV/SQLite enrichment and Embed Overrides now supply min, avg, p95, p99, and max children-per-parent to Copilot (replacing "Unavailable" in §2 when data exists). Design-with-CSV returns measured stats into the session model.

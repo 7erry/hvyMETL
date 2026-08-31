@@ -18,7 +18,7 @@ the JSON Schema site: [JSON Schema examples](https://json-schema.org/learn/json-
 
 | Format | Description |
 | --- | --- |
-| **Single schema** | One root document with `"type": "object"` and `"properties"`. |
+| **Single schema** | One root document with `"type": "object"` and `"properties"`. Nested objects and array-of-object fields are promoted to child tables with foreign keys. |
 | **hvyMETL bundle** | `{ "description": "…", "schemas": [ … ] }` — preferred for multi-entity models. |
 | **`$defs` document** | Root document whose `"$defs"` contains object schemas (e.g. [ecommerce example](https://json-schema.org/learn/json-schema-examples)); `$anchor` and `#Anchor` `$ref` values are resolved. |
 

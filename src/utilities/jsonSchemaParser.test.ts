@@ -158,6 +158,97 @@ describe('parseJsonSchemaToModel', () => {
       expect(model.tables.map((table) => table.name)).toContain('product');
     }
   });
+
+  it('expands nested objects and array-of-object items in a single document schema', () => {
+    const productDocument = {
+      $schema: 'http://json-schema.org/draft-07/schema#',
+      type: 'object',
+      required: ['_id', 'data', 'meta'],
+      properties: {
+        _id: { type: 'string' },
+        data: {
+          type: 'object',
+          required: ['StepId', 'productId'],
+          properties: {
+            StepId: { type: 'string' },
+            productId: { type: 'string' },
+            productNumber: { type: 'string' },
+            ClassificationReferences: {
+              type: 'array',
+              items: {
+                type: 'object',
+                required: ['ClassificationID', 'Type'],
+                properties: {
+                  ClassificationID: { type: 'string' },
+                  Type: { type: 'string' },
+                },
+              },
+            },
+            attributes: {
+              type: 'object',
+              required: ['ItemNumber', 'Active'],
+              properties: {
+                ItemNumber: { type: 'string' },
+                Active: { type: 'string' },
+                weight_TXT: {
+                  type: 'object',
+                  required: ['UnitID', 'Value'],
+                  properties: {
+                    UnitID: { type: 'string' },
+                    Value: { type: 'string' },
+                  },
+                },
+                EDP: { type: 'array', items: { type: 'string' } },
+              },
+            },
+          },
+        },
+        meta: {
+          type: 'object',
+          required: ['source'],
+          properties: {
+            source: { type: 'string' },
+            descriptionKeywords: { type: 'array', items: { type: 'string' } },
+          },
+        },
+      },
+    };
+
+    const model = parseJsonSchemaToModel(JSON.stringify(productDocument));
+    const tableNames = model.tables.map((table) => table.name).sort();
+
+    expect(tableNames).toEqual([
+      'Document',
+      'Document_data',
+      'Document_data_ClassificationReferences',
+      'Document_data_attributes',
+      'Document_data_attributes_weight_TXT',
+      'Document_meta',
+    ]);
+
+    const root = model.tables.find((table) => table.name === 'Document');
+    expect(root?.primaryKey).toEqual(['_id']);
+    expect(root?.columns.map((column) => column.name)).toEqual(['_id']);
+
+    const data = model.tables.find((table) => table.name === 'Document_data');
+    expect(data?.foreignKeys[0]).toMatchObject({
+      column: 'Document_id',
+      referencesTable: 'Document',
+      referencesColumn: '_id',
+    });
+    expect(data?.columns.some((column) => column.name === 'ClassificationReferences')).toBe(false);
+    expect(data?.columns.some((column) => column.name === 'productNumber')).toBe(true);
+
+    const classifications = model.tables.find((table) => table.name === 'Document_data_ClassificationReferences');
+    expect(classifications?.primaryKey).toEqual(['ClassificationID']);
+    expect(classifications?.foreignKeys[0]?.referencesTable).toBe('Document_data');
+
+    const attributes = model.tables.find((table) => table.name === 'Document_data_attributes');
+    expect(attributes?.columns.some((column) => column.name === 'EDP')).toBe(true);
+    expect(attributes?.columns.some((column) => column.name === 'weight_TXT')).toBe(false);
+
+    expect(model.relationships.length).toBeGreaterThanOrEqual(5);
+  });
 });
 
 describe('renderJsonSchemaBundleText', () => {
