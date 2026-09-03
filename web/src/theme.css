@@ -1083,6 +1083,15 @@ textarea {
   height: 100%;
 }
 
+/* Keep FK / embed edges behind collection and table nodes */
+.schema-canvas-wrap .react-flow__edges {
+  z-index: 0;
+}
+
+.schema-canvas-wrap .react-flow__nodes {
+  z-index: 1;
+}
+
 .schema-canvas-empty {
   flex: 1;
   display: flex;

@@ -110,10 +110,13 @@ function modelToFlow(
 
     const badge = guardrailMap.get(table.name)?.[0];
 
+    const isFocused = table.name === selectedTable || highlightedTables.includes(table.name);
+
     return {
       id: table.name,
       type: 'table',
       position: pos,
+      zIndex: isFocused ? 2 : 1,
       data: {
         table,
         selected: table.name === selectedTable,
@@ -158,7 +161,7 @@ function modelToFlow(
           refColumn: fk.referencesColumn,
         },
         markerEnd: { type: MarkerType.ArrowClosed, width: 18, height: 18, color: highlighted ? '#E3FCF7' : '#00A35C' },
-        zIndex: highlighted ? 2 : 0,
+        zIndex: 0,
       });
     }
   }
@@ -272,6 +275,7 @@ export function SchemaCanvas({
         minZoom={0.15}
         maxZoom={compactLayout ? 1.25 : 1.5}
         proOptions={{ hideAttribution: true }}
+        elevateEdgesOnSelect={false}
       >
         <DiagramCanvasFitView
           fitKey={`${tableCount}-${compactLayout ? 'compact' : 'wide'}`}

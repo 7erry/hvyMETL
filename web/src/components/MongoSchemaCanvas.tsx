@@ -89,10 +89,13 @@ function planToFlow(
   const nodes: Node<CollectionNodeData>[] = plan.collections.map((collection) => {
     const pos = positions[collection.name] ?? autoLayout[collection.name] ?? { x: 40, y: 40 };
 
+    const isFocused = collection.name === selectedCollection;
+
     return {
       id: collection.name,
       type: 'collection',
       position: pos,
+      zIndex: isFocused ? 2 : 1,
       data: {
         collection,
         fields: fieldsForCollection(collection),
@@ -128,7 +131,7 @@ function planToFlow(
         color: highlighted ? '#E3FCF7' : '#00ED64',
       },
       style: edge.kind === 'archive' ? { strokeDasharray: '6 4' } : undefined,
-      zIndex: highlighted ? 2 : 0,
+      zIndex: 0,
     };
   });
 
@@ -220,6 +223,7 @@ export function MongoSchemaCanvas({
         maxZoom={2}
         defaultViewport={{ x: 0, y: 0, zoom: 1 }}
         proOptions={{ hideAttribution: true }}
+        elevateEdgesOnSelect={false}
       >
         <DiagramCanvasFitView
           fitKey={`${collectionCount}-mongo-${compactLayout ? 'compact' : 'wide'}`}
