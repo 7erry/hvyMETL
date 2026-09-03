@@ -16,6 +16,7 @@ import {
   type MigrationLogDocument,
   type ScoredLesson,
 } from './feedbackTypes.js';
+import { isMongoConnectivityError } from '../utilities/mongoConnectivity.js';
 import { getMigrationStore, type MigrationStore } from './migrationStore.js';
 import { serializeTelemetryContext } from './telemetrySerializer.js';
 
@@ -160,7 +161,18 @@ export async function retrieveLessonsLearned(
   options: { store?: MigrationStore } = {},
 ): Promise<ScoredLesson[]> {
   const store = options.store ?? getMigrationStore();
-  const lessons = await store.listLessons(LESSONS_LEARNED_NAMESPACE);
+  let lessons: LessonLearnedDocument[];
+  try {
+    lessons = await store.listLessons(LESSONS_LEARNED_NAMESPACE);
+  } catch (error) {
+    if (isMongoConnectivityError(error)) {
+      console.warn(
+        `[ml_engine/memoryEngine] MongoDB unavailable for lessons_learned (${String((error as Error).message).split('\n')[0]}); continuing design without historical lessons.`,
+      );
+      return [];
+    }
+    throw error;
+  }
   if (lessons.length === 0) {
     console.info('[ml_engine/memoryEngine] No lessons_learned documents found — memory retrieval skipped.');
     return [];

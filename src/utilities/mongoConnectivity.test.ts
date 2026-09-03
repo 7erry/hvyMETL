@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   enrichHostedMongoHint,
   formatMongoConnectivityFailure,
+  isMongoConnectivityError,
   maskMongoUri,
   verifyMongoUri,
 } from '../utilities/mongoConnectivity.js';
@@ -30,6 +31,16 @@ describe('mongoConnectivity', () => {
       expect(result.code).toBe('ENOTFOUND');
       expect(formatMongoConnectivityFailure(result)).toContain('HVYMETL_SKIP_ATLAS_IMPORT');
     }
+  });
+
+  it('detects TLS server selection errors', () => {
+    expect(
+      isMongoConnectivityError(
+        new Error(
+          'MongoServerSelectionError: 4072A6DAF57F0000:error:0A000438:SSL routines:ssl3_read_bytes:tlsv1 alert internal error',
+        ),
+      ),
+    ).toBe(true);
   });
 
   it('adds hosted studio guidance for TLS failures', () => {

@@ -13,6 +13,21 @@ export type MongoConnectivityFailure = {
 
 export type MongoConnectivityResult = { ok: true } | MongoConnectivityFailure;
 
+/** True when an error looks like Atlas DNS/TLS/auth/server-selection failure. */
+export function isMongoConnectivityError(error: unknown): boolean {
+  const message = String((error as { message?: string })?.message ?? error);
+  const code = (error as { code?: string })?.code;
+  return (
+    message.includes('MongoServerSelectionError') ||
+    message.includes('SSL routines') ||
+    message.includes('tlsv1 alert') ||
+    message.includes('querySrv ENOTFOUND') ||
+    message.includes('Authentication failed') ||
+    message.includes('auth failed') ||
+    code === 'ENOTFOUND'
+  );
+}
+
 /** Mask credentials in a MongoDB URI for logs. */
 export function maskMongoUri(uri: string): string {
   return uri.replace(/\/\/[^@]+@/, '//***@').split('?')[0];

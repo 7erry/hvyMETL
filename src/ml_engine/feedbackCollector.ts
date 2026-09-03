@@ -21,6 +21,7 @@ import {
 } from './feedbackTypes.js';
 import { upsertLessonLearned } from './memoryEngine.js';
 import { getMigrationStore, type MigrationStore } from './migrationStore.js';
+import { isMongoConnectivityError } from '../utilities/mongoConnectivity.js';
 import type { PerformancePrediction, SchemaCandidate, TelemetryData } from './types.js';
 
 export type AtlasMetricsConnector = {
@@ -148,7 +149,17 @@ export async function logMigrationDecision(
     atlasCorrelation,
   };
 
-  await store.insertLog(document);
+  try {
+    await store.insertLog(document);
+  } catch (error) {
+    if (isMongoConnectivityError(error)) {
+      console.warn(
+        `[ml_engine/feedbackCollector] MongoDB unavailable — migration log not persisted (${String((error as Error).message).split('\n')[0]}).`,
+      );
+      return { migrationId };
+    }
+    throw error;
+  }
   console.info(
     `[ml_engine/feedbackCollector] Logged migration decision migrationId=${migrationId} table=${tableLabel(chosenSchema, tableId)} patterns=${patternLabel(patternsApplied)}`,
   );
