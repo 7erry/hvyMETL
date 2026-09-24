@@ -17,7 +17,7 @@ export type CollectionImportSummary = {
 export type CsvImportManifestSnapshot = {
   csvSource: string;
   schemaDialect: string;
-  collections: { name: string; files: string[] }[];
+  collections: { name: string; sourceTable: string; files: string[] }[];
 };
 
 /** ML feedback loop summary attached to each pipeline execution. */

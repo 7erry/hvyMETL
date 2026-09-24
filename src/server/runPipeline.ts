@@ -110,7 +110,7 @@ export type PipelineRunResult = {
   targetDb?: string;
   csvSource: {
     path: string;
-    collections: { name: string; files: string[] }[];
+    collections: { name: string; sourceTable: string; files: string[] }[];
   };
   imports: CollectionImportSummary[];
   errors: string[];
@@ -320,11 +320,11 @@ async function runFullPipelineInner(
       const shapedPath = join(shapedDir, `${collection.name}.csv`);
       const written = shapeCollectionCsv(collection, enrichedModel, csvRoot, shapedPath, embedPlansByTable);
       if (written) {
-        return { name: collection.name, files: [written] };
+        return { name: collection.name, sourceTable: collection.sourceTable, files: [written] };
       }
     }
     const files = matchCsvFilesForCollection(allCsvFiles, collection);
-    return { name: collection.name, files };
+    return { name: collection.name, sourceTable: collection.sourceTable, files };
   });
 
   const manifestPath = join(outDir, 'csv-import-manifest.json');
