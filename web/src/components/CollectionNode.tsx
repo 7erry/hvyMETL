@@ -52,6 +52,8 @@ function CollectionNodeComponent({ id, data }: NodeProps & { data: CollectionNod
 
   useLayoutEffect(() => {
     updateNodeInternals(id);
+    const frame = requestAnimationFrame(() => updateNodeInternals(id));
+    return () => cancelAnimationFrame(frame);
   }, [id, updateNodeInternals, fieldsExpanded, schemaFields, collectionExpandedPaths]);
 
   useEffect(() => {
