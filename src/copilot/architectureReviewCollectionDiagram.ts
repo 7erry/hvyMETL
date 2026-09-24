@@ -30,6 +30,7 @@ function escapeHtml(text: string): string {
     .replace(/"/g, '&quot;');
 }
 
+/** Keep in sync with web/src/schema/schemaFields.ts (jsonSchemaPropertyToDisplayType). */
 function formatBsonType(prop: JsonSchemaProperty): string {
   if (Array.isArray(prop.bsonType)) return prop.bsonType.join(' | ');
   if (prop.bsonType === 'array') {

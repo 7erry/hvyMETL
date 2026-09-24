@@ -1,14 +1,11 @@
 import type { CollectionPlan, MigrationPlan } from './migrationPlanTypes';
+import { flattenSchemaFields, schemaFieldsFromCollection } from './schema/schemaFields';
+import type { SchemaField } from './schema/schemaFields';
 import type { SqlStructuralModel } from './types';
 import { layoutMigrationPlan, MONGO_GRAPH_LAYOUT_OPTIONS } from './graphLayout';
 
-type JsonSchemaProperty = {
-  bsonType?: string | string[];
-  description?: string;
-  items?: JsonSchemaProperty;
-  properties?: Record<string, JsonSchemaProperty>;
-  maxItems?: number;
-};
+export type { SchemaField } from './schema/schemaFields';
+export { schemaFieldsFromCollection } from './schema/schemaFields';
 
 /** One row shown on a collection node in the MongoDB diagram. */
 export type CollectionFieldRow = {
@@ -97,47 +94,14 @@ export function patchMigrationPlanJsonWithProfile(planJson: string, profile: Mig
   return JSON.stringify(next, null, 2);
 }
 
-function formatBsonType(prop: JsonSchemaProperty): string {
-  if (Array.isArray(prop.bsonType)) return prop.bsonType.join(' | ');
-  if (prop.bsonType === 'array') {
-    const inner = prop.items ? formatBsonType(prop.items) : 'object';
-    const cap = prop.maxItems != null ? `[≤${prop.maxItems}]` : '';
-    return `array<${inner}>${cap}`;
-  }
-  if (prop.bsonType === 'object' && prop.properties) {
-    const keys = Object.keys(prop.properties).slice(0, 3);
-    const suffix = Object.keys(prop.properties).length > 3 ? ', …' : '';
-    return `{ ${keys.join(', ')}${suffix} }`;
-  }
-  return prop.bsonType ?? 'unknown';
-}
-
-/** Flatten jsonSchema.properties into display rows with pattern tags. */
-export function fieldsForCollection(collection: CollectionPlan): CollectionFieldRow[] {
-  const schema = collection.jsonSchema as { properties?: Record<string, JsonSchemaProperty> };
-  const props = schema.properties ?? {};
-  const indexedFields = new Set<string>();
-  for (const index of collection.indexes) {
-    for (const key of Object.keys(index.keys)) indexedFields.add(key);
-  }
-  const computed = new Set(collection.computedFields.map((f) => f.field));
-  const embedded = new Set(collection.embeddedArrays.map((e) => e.field));
-  const extended = new Set(collection.extendedReferences.map((e) => e.field));
-  const bucketField = collection.bucket?.measurementsField;
-
-  const rows: CollectionFieldRow[] = [];
-  for (const [name, prop] of Object.entries(props)) {
-    const tags: string[] = [];
-    if (name === '_id') tags.push('id');
-    else if (name === 'schemaVersion') tags.push('meta');
-    if (computed.has(name)) tags.push('computed');
-    if (embedded.has(name)) tags.push('embed');
-    if (extended.has(name)) tags.push('denorm');
-    if (bucketField === name) tags.push('bucket');
-    if (indexedFields.has(name)) tags.push('index');
-    rows.push({ name, bsonType: formatBsonType(prop), tags });
-  }
-  return rows;
+/** Flatten jsonSchema into display rows with pattern tags (includes nested dot paths). */
+export function fieldsForCollection(collection: CollectionPlan, plan?: MigrationPlan | null): CollectionFieldRow[] {
+  const tree = schemaFieldsFromCollection(collection, plan);
+  return flattenSchemaFields(tree).map((row) => ({
+    name: row.path,
+    bsonType: row.type,
+    tags: row.tags,
+  }));
 }
 
 function collectionByName(plan: MigrationPlan): Map<string, CollectionPlan> {

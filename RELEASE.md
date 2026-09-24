@@ -1,3 +1,22 @@
+## hvyMETL 4.3.11
+
+**MongoDB visualizer: nested embed schemas and diagram polish** — After-view collection boxes and the sidebar inspector expand embedded documents and `array<object>` fields using migration-plan `$jsonSchema`. Design now fills embed array `items.properties` from child SQL tables. ER relationship lines render behind collection/table nodes. Design refresh continues when MongoDB Atlas is unreachable (lessons/logs skipped with a warning).
+
+### Highlights
+
+- **Nested schema tree** — `schemaFieldsFromCollection` walks `$jsonSchema`; chevron expand in **Collection details** and on diagram nodes (collapsed by default).
+- **Embed item schemas** — `patternSelector` populates embedded array element properties; client fallback hydrates from sibling collections in older plans.
+- **Diagram z-order** — FK/embed edges stay under node boxes; selected nodes stay above edges.
+- **Mongo connectivity** — design does not fail on TLS/server-selection errors when persisting lessons or migration logs.
+
+### Verification
+
+- `npm test -- web/src/schema/schemaFields.test.ts src/design/patternSelector.test.ts`
+- `cd web && npm run build`
+- Import schema → **Generate schema** → After view: expand an embed field (e.g. `orders`) in sidebar and on a collection node.
+
+---
+
 ## hvyMETL 4.3.10
 
 **Schema import: JSON Schema nested documents and MSSQL SSMS DDL** — single-document JSON Schema imports now promote nested objects and array-of-object fields into child tables with foreign keys (instead of one table with `_id` / `data` / `meta` blob columns). SSMS-style MSSQL scripts with bracket identifiers and `ALTER TABLE` foreign keys import correctly. ALL_CAPS SQL identifiers map to lowercase collection names (`REGIONS` → `regions`).

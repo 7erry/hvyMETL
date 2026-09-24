@@ -85,12 +85,12 @@ import {
 import type { DiagramViewMode } from './diagramViewMode';
 import { mergeWorkspaceIntoSession, sessionToWorkspace } from './workspaceSync';
 import {
-  fieldsForCollection,
   designMetaFromPlan,
   formatTransformSummary,
   initialCollectionPositions,
   parseMigrationPlan,
   patchMigrationPlanJsonWithProfile,
+  schemaFieldsFromCollection,
 } from './migrationPlanDisplay';
 import { fetchMigrationPrompts, mapPromptExportResponse } from './migrationPrompts';
 import { layoutSqlModel, SQL_GRAPH_LAYOUT_OPTIONS } from './graphLayout';
@@ -164,6 +164,17 @@ export default function App() {
   const [timeSeriesOverridesPanelOpen, setTimeSeriesOverridesPanelOpen] = useState(false);
   const diagramFileInputRef = useRef<HTMLInputElement>(null);
   const mongoDiagramFileInputRef = useRef<HTMLInputElement>(null);
+  const [collectionFieldExpandedPaths, setCollectionFieldExpandedPaths] = useState<Set<string>>(() => new Set());
+
+  const toggleCollectionFieldPath = useCallback((collectionName: string, fieldPath: string) => {
+    const key = `${collectionName}:${fieldPath}`;
+    setCollectionFieldExpandedPaths((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  }, []);
 
   const {
     profileId,
@@ -481,9 +492,12 @@ export default function App() {
     [migrationPlan, selectedCollection],
   );
 
-  const selectedCollectionFields = useMemo(
-    () => (selectedCollectionPlan ? fieldsForCollection(selectedCollectionPlan) : []),
-    [selectedCollectionPlan],
+  const selectedCollectionSchemaFields = useMemo(
+    () =>
+      selectedCollectionPlan && migrationPlan
+        ? schemaFieldsFromCollection(selectedCollectionPlan, migrationPlan)
+        : [],
+    [selectedCollectionPlan, migrationPlan],
   );
 
   const effectiveCollectionPositions = useMemo(() => {
@@ -1519,7 +1533,7 @@ export default function App() {
                   <div style={{ marginBottom: '0.75rem' }}>
                     <CollectionDetails
                       collection={selectedCollectionPlan}
-                      fields={selectedCollectionFields}
+                      schemaFields={selectedCollectionSchemaFields}
                       onClose={() => setSessionField('selectedCollection', null)}
                     />
                   </div>
@@ -1723,6 +1737,8 @@ export default function App() {
                         positions={effectiveCollectionPositions}
                         selectedCollection={selectedCollection}
                         onSelectCollection={(name) => setSessionField('selectedCollection', name)}
+                        expandedFieldPaths={collectionFieldExpandedPaths}
+                        onToggleFieldPath={toggleCollectionFieldPath}
                         onGeneratePlan={() => void handleGeneratePlan()}
                         generating={designingPlan}
                       />

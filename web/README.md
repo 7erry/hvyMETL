@@ -392,6 +392,10 @@ The **Before** view shows tables, primary keys, foreign keys, and relationship c
 The **After** view shows folded collections, embeds, denormalized fields, and transform
 summary (e.g. `31 SQL tables → 20 MongoDB collections (11 folded)`).
 
+Embedded documents and `array<object>` fields can be expanded in the sidebar **Collection
+details** panel and on each collection box in the diagram (chevron on embed/object fields;
+nested columns show the item schema from the migration plan `$jsonSchema`).
+
 ![Before SQL ER diagram — Oracle E-commerce Catalog](docs/screenshots/before-sql-diagram.png)
 
 ![After MongoDB diagram — folded collections and pattern decisions](docs/screenshots/after-mongodb-diagram.png)

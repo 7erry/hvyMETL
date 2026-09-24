@@ -1,13 +1,14 @@
-import type { CollectionFieldRow } from '../migrationPlanDisplay';
+import { SchemaFieldTree } from './SchemaFieldTree';
+import type { SchemaField } from '../schema/schemaFields';
 import type { CollectionPlan } from '../migrationPlanTypes';
 
 type CollectionDetailsProps = {
   collection: CollectionPlan | null;
-  fields: CollectionFieldRow[];
+  schemaFields: SchemaField[];
   onClose: () => void;
 };
 
-export function CollectionDetails({ collection, fields, onClose }: CollectionDetailsProps) {
+export function CollectionDetails({ collection, schemaFields, onClose }: CollectionDetailsProps) {
   if (!collection) return null;
 
   return (
@@ -43,24 +44,7 @@ export function CollectionDetails({ collection, fields, onClose }: CollectionDet
         </>
       ) : null}
 
-      <table className="details-table">
-        <thead>
-          <tr>
-            <th>Field</th>
-            <th>BSON type</th>
-            <th>Tags</th>
-          </tr>
-        </thead>
-        <tbody>
-          {fields.map((field) => (
-            <tr key={field.name}>
-              <td className={field.tags.includes('id') ? 'pk' : ''}>{field.name}</td>
-              <td>{field.bsonType}</td>
-              <td>{field.tags.join(', ') || '—'}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      <SchemaFieldTree fields={schemaFields} collection={collection} variant="inspector" />
 
       {collection.indexes.length > 0 ? (
         <>

@@ -180,6 +180,13 @@ describe('buildMigrationPlan', () => {
     expect(locations?.patterns.find((decision) => decision.pattern === 'embed')?.reason).toContain(
       'Developer forced company_assets',
     );
+    const companyAssetsSchema = (
+      locations?.jsonSchema as { properties?: Record<string, { items?: { properties?: Record<string, unknown> } }> }
+    ).properties?.companyAssets;
+    expect(companyAssetsSchema?.items?.properties).toMatchObject({
+      id: expect.objectContaining({ bsonType: 'long' }),
+      name: expect.objectContaining({ bsonType: 'string' }),
+    });
     expect(plan.collections.some((collection) => collection.sourceTable === 'company_assets')).toBe(false);
   });
 

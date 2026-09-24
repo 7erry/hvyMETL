@@ -20,8 +20,8 @@ import { RelationshipDisplayControls } from './RelationshipDisplayControls';
 import { CollectionNode, type CollectionNodeData } from './CollectionNode';
 import {
   edgesForPlan,
-  fieldsForCollection,
   relatedCollectionNames,
+  schemaFieldsFromCollection,
   type MongoCollectionEdge,
 } from '../migrationPlanDisplay';
 import { MONGO_GRAPH_LAYOUT_OPTIONS, layoutMigrationPlan } from '../graphLayout';
@@ -46,6 +46,8 @@ type MongoSchemaCanvasProps = {
   positions: Record<string, { x: number; y: number }>;
   selectedCollection: string | null;
   onSelectCollection: (name: string | null) => void;
+  expandedFieldPaths: Set<string>;
+  onToggleFieldPath: (collectionName: string, fieldPath: string) => void;
   onGeneratePlan?: () => void;
   generating?: boolean;
 };
@@ -68,6 +70,8 @@ function planToFlow(
   connectionType: RelationshipConnectionType,
   relationshipNotation: RelationshipNotation,
   compactLayout: boolean,
+  expandedFieldPaths: Set<string>,
+  onToggleFieldPath: (collectionName: string, fieldPath: string) => void,
 ): { nodes: Node<CollectionNodeData>[]; edges: Edge[] } {
   const planEdges = edgesForPlan(plan);
   const related = relatedCollectionNames(plan, selectedCollection);
@@ -98,13 +102,15 @@ function planToFlow(
       zIndex: isFocused ? 2 : 1,
       data: {
         collection,
-        fields: fieldsForCollection(collection),
+        schemaFields: schemaFieldsFromCollection(collection, plan),
         selected: collection.name === selectedCollection,
         related: related.has(collection.name),
         dimmed: hasSelection && !related.has(collection.name),
         linkFields: linkFieldsByCollection.get(collection.name) ?? [],
         hasIncoming: incomingTargets.has(collection.name),
         hasOutgoing: outgoingSources.has(collection.name),
+        expandedFieldPaths,
+        onToggleFieldPath,
       },
     };
   });
@@ -149,6 +155,8 @@ export function MongoSchemaCanvas({
   positions,
   selectedCollection,
   onSelectCollection,
+  expandedFieldPaths,
+  onToggleFieldPath,
   onGeneratePlan,
   generating,
 }: MongoSchemaCanvasProps) {
@@ -157,9 +165,27 @@ export function MongoSchemaCanvas({
   const flow = useMemo(
     () =>
       plan
-        ? planToFlow(plan, positions, selectedCollection, connectionType, relationshipNotation, compactLayout)
+        ? planToFlow(
+            plan,
+            positions,
+            selectedCollection,
+            connectionType,
+            relationshipNotation,
+            compactLayout,
+            expandedFieldPaths,
+            onToggleFieldPath,
+          )
         : { nodes: [], edges: [] },
-    [plan, positions, selectedCollection, connectionType, relationshipNotation, compactLayout],
+    [
+      plan,
+      positions,
+      selectedCollection,
+      connectionType,
+      relationshipNotation,
+      compactLayout,
+      expandedFieldPaths,
+      onToggleFieldPath,
+    ],
   );
 
   const handleAutoLayout = useCallback(() => {

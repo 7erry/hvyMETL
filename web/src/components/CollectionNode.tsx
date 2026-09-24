@@ -1,12 +1,12 @@
-import { memo } from 'react';
+import { memo, useMemo } from 'react';
 import { Handle, Position, type NodeProps } from '@xyflow/react';
-import type { CollectionFieldRow } from '../migrationPlanDisplay';
+import { SchemaFieldTree } from './SchemaFieldTree';
+import type { SchemaField } from '../schema/schemaFields';
 import type { CollectionPlan } from '../migrationPlanTypes';
-import { mongoFieldTagPrefix } from '../fieldTagIcons';
 
 export type CollectionNodeData = {
   collection: CollectionPlan;
-  fields: CollectionFieldRow[];
+  schemaFields: SchemaField[];
   selected?: boolean;
   related?: boolean;
   dimmed?: boolean;
@@ -16,11 +16,34 @@ export type CollectionNodeData = {
   hasIncoming: boolean;
   /** Whether this collection has non-field outgoing edges. */
   hasOutgoing: boolean;
+  /** Keys `${collectionName}:${fieldPath}` for expanded nested fields on the canvas. */
+  expandedFieldPaths: Set<string>;
+  onToggleFieldPath: (collectionName: string, fieldPath: string) => void;
 };
 
 function CollectionNodeComponent({ data }: NodeProps & { data: CollectionNodeData }) {
-  const { collection, fields, selected, related, dimmed, linkFields, hasIncoming, hasOutgoing } = data;
-  const linkSet = new Set(linkFields);
+  const {
+    collection,
+    schemaFields,
+    selected,
+    related,
+    dimmed,
+    linkFields,
+    hasIncoming,
+    hasOutgoing,
+    expandedFieldPaths,
+    onToggleFieldPath,
+  } = data;
+  const linkSet = useMemo(() => new Set(linkFields), [linkFields]);
+
+  const collectionExpandedPaths = useMemo(() => {
+    const prefix = `${collection.name}:`;
+    const paths = new Set<string>();
+    for (const key of expandedFieldPaths) {
+      if (key.startsWith(prefix)) paths.add(key.slice(prefix.length));
+    }
+    return paths;
+  }, [collection.name, expandedFieldPaths]);
 
   const patternLabels = [...new Set(collection.patterns.map((p) => p.pattern))].slice(0, 3);
 
@@ -72,39 +95,15 @@ function CollectionNodeComponent({ data }: NodeProps & { data: CollectionNodeDat
           ))}
         </div>
       ) : null}
-      <ul>
-        {fields.map((field) => {
-          const isLink = linkSet.has(field.name);
-          const rowClass = [
-            field.tags.includes('id') ? 'pk' : '',
-            field.tags.includes('embed') ? 'embed' : '',
-            field.tags.includes('denorm') ? 'denorm' : '',
-            isLink ? 'linked' : '',
-          ]
-            .filter(Boolean)
-            .join(' ');
-
-          return (
-            <li key={field.name} className={rowClass}>
-              <span className="column-name">
-                {mongoFieldTagPrefix(field.tags)}
-                {field.name}
-              </span>
-              <span className="column-type" title={field.bsonType}>
-                {field.bsonType}
-              </span>
-              {isLink ? (
-                <Handle
-                  type="source"
-                  position={Position.Right}
-                  id={`${field.name}-out`}
-                  className="column-handle column-handle--out"
-                  title={`Linked field (${field.name})`}
-                />
-              ) : null}
-            </li>
-          );
-        })}
+      <ul className="collection-node__fields">
+        <SchemaFieldTree
+          fields={schemaFields}
+          collection={collection}
+          variant="node"
+          linkFields={linkSet}
+          expandedPaths={collectionExpandedPaths}
+          onTogglePath={(path) => onToggleFieldPath(collection.name, path)}
+        />
       </ul>
       {collection.archive ? (
         <footer className="collection-node__footer">

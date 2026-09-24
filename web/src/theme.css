@@ -682,6 +682,15 @@ textarea {
   color: var(--mdb-spring-green);
 }
 
+.collection-node__fields {
+  --schema-nest: 0.65rem;
+  list-style: none;
+  margin: 0;
+  padding: 0.15rem 0;
+  max-height: min(420px, 55vh);
+  overflow-y: auto;
+}
+
 .collection-node ul {
   list-style: none;
   margin: 0;
@@ -734,6 +743,51 @@ textarea {
 
 .collection-node li.linked {
   border-right: 2px solid rgba(0, 237, 100, 0.35);
+}
+
+.schema-field-tree__toggle {
+  flex-shrink: 0;
+  width: 1.1rem;
+  padding: 0;
+  margin: 0 0.15rem 0 0;
+  border: none;
+  background: transparent;
+  color: var(--mdb-spring-green);
+  cursor: pointer;
+  font-size: 0.7rem;
+  line-height: 1;
+}
+
+.schema-field-tree__toggle--table {
+  margin-right: 0.35rem;
+  vertical-align: middle;
+}
+
+.schema-field-tree__toggle-spacer {
+  display: inline-block;
+  width: 1.1rem;
+  margin-right: 0.15rem;
+}
+
+.schema-field-tree__toggle:focus-visible {
+  outline: 2px solid var(--mdb-spring-green);
+  outline-offset: 1px;
+  border-radius: 2px;
+}
+
+.schema-field-tree__embed-hint {
+  font-size: 0.68rem;
+  opacity: 0.75;
+  font-family: var(--font-sans, system-ui, sans-serif);
+  margin-top: 0.1rem;
+}
+
+.schema-field-tree__name-cell {
+  vertical-align: top;
+}
+
+.collection-node li.schema-field-tree__node-row {
+  align-items: center;
 }
 
 .collection-node__footer {

@@ -13,7 +13,7 @@ export function enrichSchemaFieldRowsFromPlan(
   );
   if (!collectionPlan) return inferred;
 
-  const planRows = fieldsForCollection(collectionPlan);
+  const planRows = fieldsForCollection(collectionPlan, plan ?? undefined);
   const planTypeByField = new Map(planRows.map((row) => [row.name, row.bsonType]));
   const seenPaths = new Set<string>();
 
