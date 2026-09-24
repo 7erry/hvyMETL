@@ -115,10 +115,50 @@ export function csvBaseNameMatchesKeys(filePath: string, keys: ReadonlySet<strin
   return keys.has(csvBaseName(filePath));
 }
 
+/** All CSV paths (including chunk exports) that share one logical table basename. */
+function csvFilesForLogicalBasename(allCsvFiles: string[], logicalBase: string): string[] {
+  const target = logicalBase.toLowerCase();
+  return allCsvFiles
+    .filter((file) => csvBaseName(file) === target)
+    .sort((left, right) => {
+      const leftChunk = basename(left).toLowerCase().includes('.chunk');
+      const rightChunk = basename(right).toLowerCase().includes('.chunk');
+      if (leftChunk !== rightChunk) return leftChunk ? 1 : -1;
+      return left.localeCompare(right);
+    });
+}
+
+/**
+ * Resolve CSV file(s) for one SQL table when several alias basenames match
+ * (e.g. `users.csv` and `ion_user.users.csv`). Prefers the fully qualified name,
+ * then the longest basename, so imports and shaping never double-load the same table.
+ */
+export function resolveCsvFilesForTable(allCsvFiles: string[], tableName: string): string[] {
+  const keys = new Set(csvMatchKeysForTableIdentifier(tableName));
+  const matched = allCsvFiles.filter((file) => csvBaseNameMatchesKeys(file, keys));
+  if (matched.length === 0) return [];
+
+  const exactBase = tableName.trim().toLowerCase();
+  const exact = csvFilesForLogicalBasename(allCsvFiles, exactBase);
+  if (exact.length > 0) return exact;
+
+  const basenames = [...new Set(matched.map((file) => csvBaseName(file)))];
+  basenames.sort((a, b) => b.length - a.length);
+  return csvFilesForLogicalBasename(allCsvFiles, basenames[0]!);
+}
+
 /** Find CSV files that match a migration plan collection by name or source table. */
 export function matchCsvFilesForCollection(allCsvFiles: string[], collection: CollectionPlan): string[] {
+  const bySource = resolveCsvFilesForTable(allCsvFiles, collection.sourceTable);
+  if (bySource.length > 0) return bySource;
+
   const keys = new Set(csvMatchKeysForCollection(collection));
-  return allCsvFiles.filter((file) => csvBaseNameMatchesKeys(file, keys));
+  const matched = allCsvFiles.filter((file) => csvBaseNameMatchesKeys(file, keys));
+  if (matched.length === 0) return [];
+
+  const basenames = [...new Set(matched.map((file) => csvBaseName(file)))];
+  basenames.sort((a, b) => b.length - a.length);
+  return csvFilesForLogicalBasename(allCsvFiles, basenames[0]!);
 }
 
 /** Map each collection in the plan to matching CSV files under csvRoot. */

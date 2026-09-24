@@ -4,6 +4,7 @@ import {
   csvMatchKeysForTableIdentifier,
   csvTableMatchWarnings,
   matchCsvFilesForCollection,
+  resolveCsvFilesForTable,
 } from './csvSource.js';
 import type { CollectionPlan } from '../types.js';
 
@@ -30,6 +31,12 @@ describe('csvSource', () => {
     expect(csvMatchKeysForTableIdentifier('ion_user.users')).toEqual(
       expect.arrayContaining(['ion_user.users', 'users', 'ion_user_users']),
     );
+  });
+
+  it('prefers qualified CSV basenames over short table aliases', () => {
+    const files = ['/mock/users.csv', '/mock/ion_user.users.csv', '/mock/unrelated.csv'];
+    expect(resolveCsvFilesForTable(files, 'ion_user.users')).toEqual(['/mock/ion_user.users.csv']);
+    expect(resolveCsvFilesForTable(files, 'users')).toEqual(['/mock/users.csv']);
   });
 
   it('matches PostgreSQL mock CSV short names to qualified source tables', () => {

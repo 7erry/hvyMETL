@@ -5,11 +5,7 @@
 
 import { readFileSync } from 'node:fs';
 import type { RelationshipModel, SqlStructuralModel, TableModel } from '../types.js';
-import {
-  csvBaseNameMatchesKeys,
-  csvMatchKeysForTableIdentifier,
-  listCsvFiles,
-} from './csvSource.js';
+import { listCsvFiles, resolveCsvFilesForTable } from './csvSource.js';
 import { parseCsv } from './csv.js';
 import { computeRelationshipCardinalityStats } from './relationshipCardinalityStats.js';
 
@@ -31,8 +27,7 @@ function readCsvRecords(filePath: string): Record<string, string>[] {
 
 /** Find CSV export files whose basename matches a SQL table name. */
 export function findCsvFilesForTable(allCsvFiles: string[], tableName: string): string[] {
-  const keys = new Set(csvMatchKeysForTableIdentifier(tableName));
-  return allCsvFiles.filter((file) => csvBaseNameMatchesKeys(file, keys));
+  return resolveCsvFilesForTable(allCsvFiles, tableName);
 }
 
 /** Load and merge all CSV rows exported for one table (supports chunked exports). */
