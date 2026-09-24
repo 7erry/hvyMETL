@@ -748,14 +748,19 @@ textarea {
 .schema-field-tree__toggle {
   flex-shrink: 0;
   width: 1.1rem;
+  min-width: 1.1rem;
+  min-height: 0;
+  height: auto;
   padding: 0;
   margin: 0 0.15rem 0 0;
   border: none;
+  border-radius: 2px;
   background: transparent;
   color: var(--mdb-spring-green);
   cursor: pointer;
   font-size: 0.7rem;
   line-height: 1;
+  box-shadow: none;
 }
 
 .schema-field-tree__toggle--table {
@@ -794,8 +799,9 @@ textarea {
 .collection-node .schema-field-tree__row {
   display: flex;
   align-items: baseline;
-  gap: 0.45rem;
-  padding: 0.12rem 0.75rem;
+  gap: 0.35rem;
+  padding: 0.08rem 0.75rem;
+  line-height: 1.2;
 }
 
 .collection-node .schema-field-tree__children {
@@ -818,12 +824,16 @@ textarea {
   position: relative;
   display: flex;
   align-items: baseline;
-  gap: 0.45rem;
-  padding: 0.12rem 0.75rem 0.12rem 0;
+  gap: 0.35rem;
+  padding: 0.08rem 0.75rem 0.08rem 0;
+  line-height: 1.2;
 }
 
-.collection-node li.schema-field-tree__node-row {
-  align-items: center;
+.collection-node li.schema-field-tree__node-row:not(.schema-field-tree__branch) {
+  align-items: baseline;
+  padding: 0.08rem 0.75rem;
+  gap: 0.35rem;
+  line-height: 1.2;
 }
 
 .collection-node__footer {
