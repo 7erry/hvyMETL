@@ -1,5 +1,5 @@
-import { memo, useMemo } from 'react';
-import { Handle, Position, type NodeProps } from '@xyflow/react';
+import { memo, useEffect, useLayoutEffect, useMemo, useRef } from 'react';
+import { Handle, Position, useUpdateNodeInternals, type NodeProps } from '@xyflow/react';
 import { SchemaFieldTree } from './SchemaFieldTree';
 import type { SchemaField } from '../schema/schemaFields';
 import type { CollectionPlan } from '../migrationPlanTypes';
@@ -21,7 +21,9 @@ export type CollectionNodeData = {
   onToggleFieldPath: (collectionName: string, fieldPath: string) => void;
 };
 
-function CollectionNodeComponent({ data }: NodeProps & { data: CollectionNodeData }) {
+function CollectionNodeComponent({ id, data }: NodeProps & { data: CollectionNodeData }) {
+  const rootRef = useRef<HTMLDivElement>(null);
+  const updateNodeInternals = useUpdateNodeInternals();
   const {
     collection,
     schemaFields,
@@ -46,11 +48,28 @@ function CollectionNodeComponent({ data }: NodeProps & { data: CollectionNodeDat
   }, [collection.name, expandedFieldPaths]);
 
   const patternLabels = [...new Set(collection.patterns.map((p) => p.pattern))].slice(0, 3);
+  const fieldsExpanded = collectionExpandedPaths.size > 0;
+
+  useLayoutEffect(() => {
+    updateNodeInternals(id);
+  }, [id, updateNodeInternals, fieldsExpanded, schemaFields, collectionExpandedPaths]);
+
+  useEffect(() => {
+    const root = rootRef.current;
+    if (!root) return;
+    const observer = new ResizeObserver(() => {
+      updateNodeInternals(id);
+    });
+    observer.observe(root);
+    return () => observer.disconnect();
+  }, [id, updateNodeInternals]);
 
   return (
     <div
+      ref={rootRef}
       className={[
         'collection-node',
+        fieldsExpanded ? 'collection-node--fields-expanded' : '',
         selected ? 'selected' : '',
         related && !selected ? 'related' : '',
         dimmed ? 'dimmed' : '',

@@ -689,6 +689,12 @@ textarea {
   padding: 0.15rem 0;
   max-height: min(420px, 55vh);
   overflow-y: auto;
+  transition: max-height 0.2s ease;
+}
+
+.collection-node--fields-expanded .collection-node__fields {
+  max-height: none;
+  overflow: visible;
 }
 
 .collection-node ul {
