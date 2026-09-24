@@ -777,6 +777,11 @@ describe('buildMigrationPlan', () => {
     const products = plan.collections.find((collection) => collection.sourceTable === 'products');
 
     expect(products?.embeddedArrays.some((array) => array.field === 'attributes')).toBe(true);
+    const attributeItems = (
+      products?.jsonSchema as { properties?: Record<string, { items?: { properties?: Record<string, { bsonType?: unknown }> } }> }
+    ).properties?.attributes?.items?.properties;
+    expect(attributeItems?.k).toMatchObject({ bsonType: 'string' });
+    expect(attributeItems?.v).toMatchObject({ bsonType: 'string' });
     expect(products?.patterns.some((decision) => decision.pattern === 'attribute')).toBe(true);
     expect(products?.indexes.some((index) => index.options.name.includes('attributes_kv'))).toBe(true);
     // The EAV table disappears into its parent.

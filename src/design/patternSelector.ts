@@ -102,11 +102,50 @@ function payloadColumns(table: TableModel): ColumnModel[] {
  * Attribute pattern's k/v array.
  */
 export function isEavTable(table: TableModel): boolean {
+  return eavKeyValueColumns(table) !== null;
+}
+
+/** Resolve the key/value payload columns on an entity-attribute-value table. */
+function eavKeyValueColumns(
+  table: TableModel,
+): { keyColumn: TableModel['columns'][number]; valueColumn: TableModel['columns'][number] } | null {
   const payload = payloadColumns(table).filter((column) => column.bsonType !== 'date');
-  if (payload.length !== 2) return false;
-  const hasKeyish = payload.some((column) => /(_key|_k$|^key$|name$)/i.test(column.name));
-  const hasValueish = payload.some((column) => /(_value|_v$|^value$)/i.test(column.name));
-  return hasKeyish && hasValueish;
+  if (payload.length !== 2) return null;
+  const keyColumn = payload.find((column) => /(_key|_k$|^key$|name$)/i.test(column.name));
+  const valueColumn = payload.find((column) => /(_value|_v$|^value$)/i.test(column.name));
+  if (!keyColumn || !valueColumn || keyColumn.name === valueColumn.name) return null;
+  return { keyColumn, valueColumn };
+}
+
+/** $jsonSchema properties for one element of an Attribute-pattern k/v array. */
+function buildEavAttributeItemProperties(table: TableModel): Record<string, unknown> {
+  const pair = eavKeyValueColumns(table);
+  const keyColumn = pair?.keyColumn;
+  const valueColumn = pair?.valueColumn;
+  const keyTypes = keyColumn
+    ? keyColumn.nullable
+      ? [keyColumn.bsonType, 'null']
+      : keyColumn.bsonType
+    : 'string';
+  const valueTypes = valueColumn
+    ? valueColumn.nullable
+      ? [valueColumn.bsonType, 'null']
+      : valueColumn.bsonType
+    : 'string';
+  return {
+    k: {
+      bsonType: keyTypes,
+      description: keyColumn
+        ? `From SQL column ${table.name}.${keyColumn.name} (${keyColumn.sqlType}).`
+        : 'Attribute key.',
+    },
+    v: {
+      bsonType: valueTypes,
+      description: valueColumn
+        ? `From SQL column ${table.name}.${valueColumn.name} (${valueColumn.sqlType}).`
+        : 'Attribute value.',
+    },
+  };
 }
 
 /**
@@ -681,7 +720,7 @@ function planChildRelationships(
       });
       properties.attributes = {
         bsonType: 'array',
-        items: { bsonType: 'object', properties: { k: { bsonType: 'string' }, v: {} } },
+        items: { bsonType: 'object', properties: buildEavAttributeItemProperties(childTable) },
         description: `Attribute pattern array from EAV table ${childTable.name}.`,
       };
       patterns.push({
