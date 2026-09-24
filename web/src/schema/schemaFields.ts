@@ -180,6 +180,18 @@ function propertyToSchemaField(
   return field;
 }
 
+/** Parent scalars/objects first; embedded array fields last (diagram + inspector). */
+function compareTopLevelPropertyNames(
+  leftName: string,
+  rightName: string,
+  ctx: CollectionTagContext,
+): number {
+  const leftEmbed = ctx.embedded.has(leftName);
+  const rightEmbed = ctx.embedded.has(rightName);
+  if (leftEmbed !== rightEmbed) return leftEmbed ? 1 : -1;
+  return leftName.localeCompare(rightName);
+}
+
 /** Build a nested schema tree from a collection's $jsonSchema and plan metadata. */
 export function schemaFieldsFromCollection(
   collection: CollectionPlan,
@@ -191,7 +203,7 @@ export function schemaFieldsFromCollection(
   const planArg = plan ?? undefined;
 
   return Object.entries(props)
-    .sort(([a], [b]) => a.localeCompare(b))
+    .sort(([left], [right]) => compareTopLevelPropertyNames(left, right, ctx))
     .map(([name, prop]) => propertyToSchemaField(name, prop, '', ctx, planArg, true));
 }
 

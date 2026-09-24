@@ -60,6 +60,27 @@ describe('schemaFieldsFromCollection', () => {
     expect(paint?.children?.map((c) => c.name)).toEqual(['colorName', 'paintCode']);
   });
 
+  it('lists embedded array fields after parent scalar fields', () => {
+    const collection = minimalCollection({
+      name: 'customers',
+      embeddedArrays: [{ field: 'orders', sourceTable: 'orders', joinColumn: 'customer_id' }],
+      jsonSchema: {
+        bsonType: 'object',
+        properties: {
+          _id: { bsonType: 'string' },
+          email: { bsonType: 'string' },
+          orders: { bsonType: 'array', items: { bsonType: 'object' } },
+          name: { bsonType: 'string' },
+        },
+      },
+    });
+
+    const names = schemaFieldsFromCollection(collection).map((field) => field.name);
+    expect(names.indexOf('orders')).toBeGreaterThan(names.indexOf('email'));
+    expect(names.indexOf('orders')).toBeGreaterThan(names.indexOf('name'));
+    expect(names.at(-1)).toBe('orders');
+  });
+
   it('hydrates stub embed array items from sibling collection in plan', () => {
     const ordersCollection = minimalCollection({
       name: 'orders',
