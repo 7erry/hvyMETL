@@ -121,8 +121,7 @@ def find_create_table_blocks(ddl: str) -> List[Tuple[str, str]]:
                 depth -= 1
             pos += 1
         body = ddl[body_start:pos - 1]
-        short_name = table_name.split(".")[-1]
-        blocks.append((short_name, body))
+        blocks.append((table_name, body))
     return blocks
 
 

@@ -5,6 +5,7 @@
 import { existsSync, readdirSync, statSync } from 'node:fs';
 import { basename, extname, join, relative, resolve, isAbsolute } from 'node:path';
 import type { CollectionPlan } from '../types.js';
+import { toCamelCase } from './naming.js';
 
 /** Read default CSV source directory from the environment. */
 export function readCsvSourceFromEnv(env: NodeJS.ProcessEnv = process.env): string | undefined {
@@ -72,10 +73,51 @@ export function csvBaseName(filePath: string): string {
   return withoutExt.replace(/\.chunk\d+$/i, '').toLowerCase();
 }
 
+/**
+ * Basename keys that should match a SQL table or Mongo collection name in CSV exports.
+ * Supports schema-qualified PostgreSQL names (ion_user.users), camelCase collection
+ * names (ionUser.users), and common export shortcuts (users.csv).
+ */
+export function csvMatchKeysForTableIdentifier(tableIdentifier: string): string[] {
+  const trimmed = tableIdentifier.trim();
+  if (!trimmed) return [];
+
+  const lower = trimmed.toLowerCase();
+  const keys = new Set<string>([lower, toCamelCase(trimmed).toLowerCase()]);
+
+  const segments = lower.split('.');
+  if (segments.length >= 2) {
+    const tableOnly = segments[segments.length - 1]!;
+    keys.add(tableOnly);
+    keys.add(`${segments.slice(0, -1).join('_')}_${tableOnly}`);
+    keys.add(lower.replace(/\./g, '_'));
+  }
+
+  return [...keys];
+}
+
+/** All CSV basename keys for one migration plan collection (parent + merged/embed tables). */
+export function csvMatchKeysForCollection(collection: CollectionPlan): string[] {
+  const keys = new Set<string>();
+  const add = (identifier: string): void => {
+    for (const key of csvMatchKeysForTableIdentifier(identifier)) keys.add(key);
+  };
+  add(collection.name);
+  add(collection.sourceTable);
+  for (const table of collection.mergedTables) add(table);
+  for (const embedded of collection.embeddedArrays) add(embedded.sourceTable);
+  return [...keys];
+}
+
+/** True when a CSV basename matches any of the given table/collection keys. */
+export function csvBaseNameMatchesKeys(filePath: string, keys: ReadonlySet<string>): boolean {
+  return keys.has(csvBaseName(filePath));
+}
+
 /** Find CSV files that match a migration plan collection by name or source table. */
 export function matchCsvFilesForCollection(allCsvFiles: string[], collection: CollectionPlan): string[] {
-  const keys = new Set([collection.name.toLowerCase(), collection.sourceTable.toLowerCase()]);
-  return allCsvFiles.filter((file) => keys.has(csvBaseName(file)));
+  const keys = new Set(csvMatchKeysForCollection(collection));
+  return allCsvFiles.filter((file) => csvBaseNameMatchesKeys(file, keys));
 }
 
 /** Map each collection in the plan to matching CSV files under csvRoot. */
@@ -99,9 +141,11 @@ export function buildCollectionCsvMap(
 export function csvTableMatchWarnings(csvFileNames: string[], expectedTableNames: string[]): string[] {
   if (csvFileNames.length === 0 || expectedTableNames.length === 0) return [];
 
-  const expected = new Set(expectedTableNames.map((name) => name.toLowerCase()));
-  const matched = csvFileNames.filter((fileName) => expected.has(csvBaseName(fileName)));
-  const unmatched = csvFileNames.filter((fileName) => !expected.has(csvBaseName(fileName)));
+  const expectedKeys = new Set(
+    expectedTableNames.flatMap((name) => csvMatchKeysForTableIdentifier(name)),
+  );
+  const matched = csvFileNames.filter((fileName) => csvBaseNameMatchesKeys(fileName, expectedKeys));
+  const unmatched = csvFileNames.filter((fileName) => !csvBaseNameMatchesKeys(fileName, expectedKeys));
 
   const warnings: string[] = [];
   if (matched.length === 0) {
@@ -121,9 +165,10 @@ export function csvTableMatchWarnings(csvFileNames: string[], expectedTableNames
     );
   }
 
-  const missingTables = expectedTableNames.filter(
-    (table) => !csvFileNames.some((fileName) => csvBaseName(fileName) === table.toLowerCase()),
-  );
+  const missingTables = expectedTableNames.filter((table) => {
+    const keys = new Set(csvMatchKeysForTableIdentifier(table));
+    return !csvFileNames.some((fileName) => csvBaseNameMatchesKeys(fileName, keys));
+  });
   if (missingTables.length > 0) {
     const listed = missingTables.slice(0, 6).join(', ');
     warnings.push(

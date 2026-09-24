@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { csvBaseName, csvTableMatchWarnings, matchCsvFilesForCollection } from './csvSource.js';
+import {
+  csvBaseName,
+  csvMatchKeysForTableIdentifier,
+  csvTableMatchWarnings,
+  matchCsvFilesForCollection,
+} from './csvSource.js';
 import type { CollectionPlan } from '../types.js';
 
 const sampleCollection = (name: string, sourceTable: string): CollectionPlan => ({
@@ -19,6 +24,21 @@ describe('csvSource', () => {
   it('strips chunk suffix from csv basenames', () => {
     expect(csvBaseName('/data/products.chunk1.csv')).toBe('products');
     expect(csvBaseName('/data/orders.csv')).toBe('orders');
+  });
+
+  it('includes schema-qualified and short table keys', () => {
+    expect(csvMatchKeysForTableIdentifier('ion_user.users')).toEqual(
+      expect.arrayContaining(['ion_user.users', 'users', 'ion_user_users']),
+    );
+  });
+
+  it('matches PostgreSQL mock CSV short names to qualified source tables', () => {
+    const files = ['/mock/users.csv', '/mock/fact_context.csv'];
+    const users = sampleCollection('ionUser.users', 'ion_user.users');
+    const factContext = sampleCollection('ionFacts.factContext', 'ion_facts.fact_context');
+
+    expect(matchCsvFilesForCollection(files, users)).toEqual(['/mock/users.csv']);
+    expect(matchCsvFilesForCollection(files, factContext)).toEqual(['/mock/fact_context.csv']);
   });
 
   it('matches files by collection name or source table', () => {

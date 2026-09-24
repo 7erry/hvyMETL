@@ -356,7 +356,9 @@ async function runFullPipelineInner(
         ok: false,
         error: 'No matching CSV files found for this collection',
       });
-      errors.push(`${coll.name}: no CSV files (export ${coll.name}.csv or matching source table name)`);
+      errors.push(
+        `${coll.name}: no CSV files (export ${coll.sourceTable}.csv, ${coll.name}.csv, or the unqualified table name)`,
+      );
       continue;
     }
 
