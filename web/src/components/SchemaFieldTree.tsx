@@ -21,18 +21,8 @@ function isEmbedContainerField(field: SchemaField): boolean {
   return field.type.startsWith('array<') || field.type === 'object';
 }
 
-function fieldRowPaddingLeft(
-  depth: number,
-  nestedUnderEmbed: boolean,
-  variant: 'inspector' | 'node',
-): string | undefined {
-  if (depth < 1) return undefined;
-  if (variant === 'node') {
-    if (nestedUnderEmbed) {
-      return `calc(1.85rem + ${depth - 1} * 1.2rem)`;
-    }
-    return `calc(1.25rem + ${depth - 1} * 1rem)`;
-  }
+function inspectorCellPaddingLeft(depth: number, nestedUnderEmbed: boolean): string {
+  if (depth < 1) return '0.5rem';
   if (nestedUnderEmbed) {
     return `calc(0.85rem + ${depth} * 1.15rem)`;
   }
@@ -72,75 +62,101 @@ function SchemaFieldTreeRow({
     field.tags?.includes('id') ? 'pk' : '',
     field.tags?.includes('embed') ? 'embed' : '',
     field.tags?.includes('denorm') ? 'denorm' : '',
-    variant === 'node' ? 'schema-field-tree__node-row' : '',
   ]
     .filter(Boolean)
     .join(' ');
 
   const isLink = depth === 0 && linkFields?.has(field.name);
+  const childNestedUnderEmbed = nestedUnderEmbed || (depth === 0 && isEmbedContainerField(field));
+
+  const nodeRowContent = (
+    <>
+      {hasChildren ? (
+        <button
+          type="button"
+          className="schema-field-tree__toggle"
+          aria-expanded={expanded}
+          aria-label={expanded ? `Collapse ${field.name}` : `Expand ${field.name}`}
+          onClick={(event) => {
+            event.stopPropagation();
+            onTogglePath(field.path);
+          }}
+        >
+          {expanded ? '▾' : '▸'}
+        </button>
+      ) : (
+        <span className="schema-field-tree__toggle-spacer" aria-hidden />
+      )}
+      <span className="column-name">
+        {mongoFieldTagPrefix(field.tags ?? [])}
+        {field.name}
+      </span>
+      <span className="column-type" title={field.type}>
+        {field.type}
+      </span>
+      {isLink ? (
+        <Handle
+          type="source"
+          position={Position.Right}
+          id={`${field.name}-out`}
+          className="column-handle column-handle--out"
+          title={`Linked field (${field.name})`}
+        />
+      ) : null}
+    </>
+  );
 
   if (variant === 'node') {
-    return (
-      <>
+    if (hasChildren) {
+      return (
         <li
-          className={[rowClass, isLink ? 'linked' : ''].filter(Boolean).join(' ')}
-          style={{ paddingLeft: depth > 0 ? `calc(${depth} * var(--schema-nest, 0.65rem))` : undefined }}
+          className={[
+            rowClass,
+            isLink ? 'linked' : '',
+            'schema-field-tree__branch',
+            'schema-field-tree__node-row',
+          ]
+            .filter(Boolean)
+            .join(' ')}
         >
-          {hasChildren ? (
-            <button
-              type="button"
-              className="schema-field-tree__toggle"
-              aria-expanded={expanded}
-              aria-label={expanded ? `Collapse ${field.name}` : `Expand ${field.name}`}
-              onClick={(event) => {
-                event.stopPropagation();
-                onTogglePath(field.path);
-              }}
-            >
-              {expanded ? '▾' : '▸'}
-            </button>
-          ) : (
-            <span className="schema-field-tree__toggle-spacer" aria-hidden />
-          )}
-          <span className="column-name">
-            {mongoFieldTagPrefix(field.tags ?? [])}
-            {field.name}
-          </span>
-          <span className="column-type" title={field.type}>
-            {field.type}
-          </span>
-          {isLink ? (
-            <Handle
-              type="source"
-              position={Position.Right}
-              id={`${field.name}-out`}
-              className="column-handle column-handle--out"
-              title={`Linked field (${field.name})`}
-            />
+          <div className="schema-field-tree__row">{nodeRowContent}</div>
+          {expanded && field.children ? (
+            <ul className="schema-field-tree__children">
+              {field.children.map((child) => (
+                <SchemaFieldTreeRow
+                  key={child.path}
+                  field={child}
+                  collection={collection}
+                  depth={depth + 1}
+                  nestedUnderEmbed={childNestedUnderEmbed}
+                  expandedPaths={expandedPaths}
+                  onTogglePath={onTogglePath}
+                  variant={variant}
+                  linkFields={linkFields}
+                />
+              ))}
+            </ul>
           ) : null}
         </li>
-        {expanded && field.children
-          ? field.children.map((child) => (
-              <SchemaFieldTreeRow
-                key={child.path}
-                field={child}
-                collection={collection}
-                depth={depth + 1}
-                expandedPaths={expandedPaths}
-                onTogglePath={onTogglePath}
-                variant={variant}
-                linkFields={linkFields}
-              />
-            ))
-          : null}
-      </>
+      );
+    }
+
+    return (
+      <li
+        className={[rowClass, isLink ? 'linked' : '', 'schema-field-tree__node-row'].filter(Boolean).join(' ')}
+      >
+        {nodeRowContent}
+      </li>
     );
   }
 
   return (
     <>
       <tr className={rowClass}>
-        <td className="schema-field-tree__name-cell" style={{ paddingLeft: `calc(0.5rem + ${depth} * 0.75rem)` }}>
+        <td
+          className="schema-field-tree__name-cell"
+          style={{ paddingLeft: inspectorCellPaddingLeft(depth, nestedUnderEmbed) }}
+        >
           {hasChildren ? (
             <button
               type="button"
@@ -170,6 +186,7 @@ function SchemaFieldTreeRow({
               field={child}
               collection={collection}
               depth={depth + 1}
+              nestedUnderEmbed={childNestedUnderEmbed}
               expandedPaths={expandedPaths}
               onTogglePath={onTogglePath}
               variant={variant}
@@ -217,6 +234,7 @@ export function SchemaFieldTree({
           field={field}
           collection={collection}
           depth={0}
+          nestedUnderEmbed={false}
           expandedPaths={expandedPaths}
           onTogglePath={togglePath}
           variant={variant}
