@@ -252,13 +252,13 @@ export function SchemaImportPanel({
             runDialectDetection(value);
           });
         }}
-        placeholder="Paste CREATE TABLE statements, JSON Schema, or CloudFormation YAML…"
+        placeholder="Paste CREATE TABLE DDL, JSON Schema, SqlStructuralModel JSON, or CloudFormation YAML…"
         rows={compact ? 6 : 8}
         className="schema-import-panel__textarea"
       />
       <div className="button-row schema-import-panel__actions">
         <button type="button" className="primary" onClick={onImportQuery} disabled={!apiConnected}>
-          Import DDL
+          Import schema
         </button>
         <button
           type="button"
@@ -271,7 +271,7 @@ export function SchemaImportPanel({
         <input
           ref={fileInputRef}
           type="file"
-          accept=".sql,.ddl,.txt,.db,.sqlite,.sqlite3"
+          accept=".sql,.ddl,.txt,.json,.yaml,.yml,.db,.sqlite,.sqlite3"
           className="schema-import-panel__file-input"
           onChange={(e) => {
             const file = e.target.files?.[0];

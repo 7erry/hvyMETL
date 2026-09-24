@@ -106,6 +106,11 @@ YAML or JSON CloudFormation templates containing `AWS::DynamoDB::Table` resource
 uses [`parseJsonSchemaToModel`](../src/utilities/jsonSchemaParser.ts) — see
 [19-json-schema-import.md](19-json-schema-import.md).
 
+Pasted **JSON** is also auto-detected when it is a **`SqlStructuralModel`** (`{ "source", "tables", "relationships" }`)
+or a **Migration Studio diagram export** (`{ "version", "dialect", "ddl", "model" }` — see
+`examples/*/hvymetl-diagram-*.json`). The API accepts `ddl` as a string or a JSON object; the response
+includes synthesized or bundled SQL in `ddl` for the editor.
+
 ### `parseDdlToModel(ddl, sourceLabel): SqlStructuralModel`
 
 [`src/utilities/ddlParser.ts`](../src/utilities/ddlParser.ts) — lightweight parser for

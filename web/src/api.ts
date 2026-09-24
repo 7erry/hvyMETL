@@ -230,7 +230,12 @@ export async function importDdl(
   });
   if (!res.ok) throw new Error(await readApiError(res));
   const data = await res.json();
-  return { model: data.model, ddl, dialect: data.dialect ?? dialect, inferred: data.inferred };
+  return {
+    model: data.model,
+    ddl: typeof data.ddl === 'string' && data.ddl.trim() ? data.ddl : ddl,
+    dialect: data.dialect ?? dialect,
+    inferred: data.inferred,
+  };
 }
 
 export type BuiltinExampleSummary = {

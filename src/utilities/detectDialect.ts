@@ -2,7 +2,8 @@
  * Lightweight dialect / format detection for pasted schema import text.
  */
 
-import { getDialectLabel, isSupportedDialect, normalizeDialectId } from '../dialects.js';
+import { dialectFromModelSource, getDialectLabel, isSupportedDialect, normalizeDialectId } from '../dialects.js';
+import { isHvyMetlDiagramExportRecord, isSqlStructuralModelRecord } from './structuralModelJsonParser.js';
 
 /** Maximum characters scanned for performance. */
 export const DIALECT_DETECT_SCAN_LIMIT = 5000;
@@ -181,6 +182,21 @@ function scoreJsonDialect(trimmed: string): { id: string; score: number } | null
   try {
     const parsed = JSON.parse(trimmed) as unknown;
     if (!parsed || typeof parsed !== 'object') return null;
+    if (isHvyMetlDiagramExportRecord(parsed)) {
+      const record = parsed as { dialect?: string; model?: { source?: string } };
+      const fromDialect =
+        typeof record.dialect === 'string' ? normalizeDialectId(record.dialect) : undefined;
+      const fromSource = dialectFromModelSource(record.model?.source ?? '');
+      const id =
+        (fromDialect && isSupportedDialect(fromDialect) ? fromDialect : undefined) ??
+        fromSource ??
+        DIALECT_DETECT_FALLBACK_ID;
+      return { id, score: 10 };
+    }
+    if (isSqlStructuralModelRecord(parsed)) {
+      const fromSource = dialectFromModelSource((parsed as { source?: string }).source ?? '');
+      return { id: fromSource ?? DIALECT_DETECT_FALLBACK_ID, score: 9 };
+    }
     const text = trimmed;
     let score = 2;
     if (/"(\$schema|properties|definitions)"\s*:/.test(text)) score += 6;

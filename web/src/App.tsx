@@ -564,9 +564,12 @@ export default function App() {
         return;
       }
       setStatus('Importing schema…');
-      const { model: m, inferred, dialect: resolvedDialect } = await importDdl(payload, dialect);
+      const { model: m, ddl: importedDdl, inferred, dialect: resolvedDialect } = await importDdl(
+        payload,
+        dialect,
+      );
       setSessionField('dialect', resolvedDialect);
-      await applySchema(payload, m, inferred?.profileId);
+      await applySchema(importedDdl, m, inferred?.profileId);
       if (m.tables.some((table) => table.dynamoDb)) {
         void handleGeneratePlan();
       }

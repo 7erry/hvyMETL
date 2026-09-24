@@ -85,6 +85,23 @@ export function parseJsonSchemaRootDocument(jsonText: string): unknown {
   }
 }
 
+function looksLikeStructuralModelJsonRoot(root: Record<string, unknown>): boolean {
+  if (typeof root.version === 'number') {
+    const nested = asRecord(root.model);
+    if (Array.isArray(nested.tables) && nested.tables.length > 0) return true;
+  }
+  const tables = root.tables;
+  if (!Array.isArray(tables) || tables.length === 0) return false;
+  return tables.every((entry) => {
+    const table = asRecord(entry);
+    return Boolean(asString(table.name).trim()) && Array.isArray(table.columns) && table.columns.length > 0;
+  });
+}
+
+function asString(value: unknown): string {
+  return typeof value === 'string' ? value : '';
+}
+
 /** True when pasted text is JSON Schema (bundle, root object schema, or $defs document). */
 export function looksLikeJsonSchemaImport(content: string): boolean {
   const trimmed = content.trim();
@@ -92,6 +109,7 @@ export function looksLikeJsonSchemaImport(content: string): boolean {
 
   try {
     const root = asRecord(parseJsonSchemaRootDocument(content));
+    if (looksLikeStructuralModelJsonRoot(root)) return false;
     if (Array.isArray(root.schemas)) return true;
     if (String(root.$schema ?? '').includes('json-schema.org')) return true;
     if (root.type === 'object' || root.properties) return true;
