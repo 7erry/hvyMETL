@@ -16,6 +16,29 @@ type SchemaFieldTreeProps = {
   linkFields?: Set<string>;
 };
 
+function isEmbedContainerField(field: SchemaField): boolean {
+  if (field.tags?.includes('embed') || field.tags?.includes('denorm')) return true;
+  return field.type.startsWith('array<') || field.type === 'object';
+}
+
+function fieldRowPaddingLeft(
+  depth: number,
+  nestedUnderEmbed: boolean,
+  variant: 'inspector' | 'node',
+): string | undefined {
+  if (depth < 1) return undefined;
+  if (variant === 'node') {
+    if (nestedUnderEmbed) {
+      return `calc(1.85rem + ${depth - 1} * 1.2rem)`;
+    }
+    return `calc(1.25rem + ${depth - 1} * 1rem)`;
+  }
+  if (nestedUnderEmbed) {
+    return `calc(0.85rem + ${depth} * 1.15rem)`;
+  }
+  return `calc(0.5rem + ${depth} * 0.9rem)`;
+}
+
 function embedJoinHint(collection: CollectionPlan, field: SchemaField): string | null {
   if (!field.tags?.includes('embed')) return null;
   const embed = collection.embeddedArrays.find((entry) => entry.field === field.name);
@@ -27,6 +50,7 @@ function SchemaFieldTreeRow({
   field,
   collection,
   depth,
+  nestedUnderEmbed,
   expandedPaths,
   onTogglePath,
   variant,
@@ -35,6 +59,7 @@ function SchemaFieldTreeRow({
   field: SchemaField;
   collection: CollectionPlan;
   depth: number;
+  nestedUnderEmbed: boolean;
   expandedPaths: Set<string>;
   onTogglePath: (path: string) => void;
   variant: 'inspector' | 'node';
