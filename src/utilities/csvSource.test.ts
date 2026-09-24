@@ -34,8 +34,8 @@ describe('csvSource', () => {
 
   it('matches PostgreSQL mock CSV short names to qualified source tables', () => {
     const files = ['/mock/users.csv', '/mock/fact_context.csv'];
-    const users = sampleCollection('ionUser.users', 'ion_user.users');
-    const factContext = sampleCollection('ionFacts.factContext', 'ion_facts.fact_context');
+    const users = sampleCollection('ionUser_users', 'ion_user.users');
+    const factContext = sampleCollection('ionFacts_factContext', 'ion_facts.fact_context');
 
     expect(matchCsvFilesForCollection(files, users)).toEqual(['/mock/users.csv']);
     expect(matchCsvFilesForCollection(files, factContext)).toEqual(['/mock/fact_context.csv']);

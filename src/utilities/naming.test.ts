@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { toCamelCase, toPascalCase } from './naming.js';
+import { mongoCollectionNameFromTable, normalizeMongoCollectionName, toCamelCase, toPascalCase } from './naming.js';
 
 describe('toCamelCase', () => {
   it('converts snake_case to camelCase', () => {
@@ -22,6 +22,24 @@ describe('toCamelCase', () => {
     expect(toCamelCase('orderItems')).toBe('orderItems');
     expect(toCamelCase('MyTable')).toBe('myTable');
     expect(toCamelCase('department_name')).toBe('departmentName');
+  });
+});
+
+describe('mongoCollectionNameFromTable', () => {
+  it('joins schema-qualified tables with underscores', () => {
+    expect(mongoCollectionNameFromTable('ion_user.users')).toBe('ionUser_users');
+    expect(mongoCollectionNameFromTable('ion_facts.fact_context')).toBe('ionFacts_factContext');
+  });
+
+  it('leaves unqualified tables as camelCase', () => {
+    expect(mongoCollectionNameFromTable('order_items')).toBe('orderItems');
+    expect(mongoCollectionNameFromTable('users')).toBe('users');
+  });
+});
+
+describe('normalizeMongoCollectionName', () => {
+  it('maps legacy dotted collection names using sourceTable', () => {
+    expect(normalizeMongoCollectionName('ionUser.users', 'ion_user.users')).toBe('ionUser_users');
   });
 });
 

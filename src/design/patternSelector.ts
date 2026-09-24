@@ -52,7 +52,7 @@ import type {
   WorkloadProfile,
 } from '../types.js';
 import { isActiveTimeSeriesOverride, normalizeTimeSeriesOverrides } from './timeSeriesOverrides.js';
-import { singularize, toCamelCase, toPascalCase } from '../utilities/naming.js';
+import { mongoCollectionNameFromTable, singularize, toCamelCase, toPascalCase } from '../utilities/naming.js';
 import { mongoFieldNameForColumn } from '../utilities/mongoFieldNaming.js';
 import {
   EMBED_LEANING_PERCENT,
@@ -1059,7 +1059,7 @@ function planChildRelationships(
         sourceTable: childTable.name,
         joinColumn: relationship.fkColumn,
         subsetLimit: SUBSET_LIMIT,
-        overflowCollection: toCamelCase(childTable.name),
+        overflowCollection: mongoCollectionNameFromTable(childTable.name),
       });
       properties[field] = {
         bsonType: 'array',
@@ -1163,7 +1163,7 @@ function planBucketCollection(
     windowMinutes: BUCKET_WINDOW_MINUTES,
     measurementsField: 'measurements',
   };
-  const collectionName = toCamelCase(table.name);
+  const collectionName = mongoCollectionNameFromTable(table.name);
   const ratioLabel = `${profile.telemetry.readPercent}:${profile.telemetry.writePercent} R:W at ${profile.telemetry.peakRpm.toLocaleString('en-US')} RPM`;
 
   return {
@@ -1248,7 +1248,7 @@ function planTimeSeriesCollection(
     ...(expireAfterSeconds !== undefined ? { expireAfterSeconds } : {}),
   };
 
-  const collectionName = toCamelCase(table.name);
+  const collectionName = mongoCollectionNameFromTable(table.name);
   const ratioLabel = `${profile.telemetry.readPercent}:${profile.telemetry.writePercent} R:W at ${profile.telemetry.peakRpm.toLocaleString('en-US')} RPM`;
   const properties = buildBaseProperties(table);
   properties[timeField] = {
@@ -1465,7 +1465,7 @@ export function buildMigrationPlan(
       knowledgeSource: 'schema-versioning.md',
     });
 
-    const collectionName = toCamelCase(table.name);
+    const collectionName = mongoCollectionNameFromTable(table.name);
     const properties: Record<string, unknown> = {
       ...buildBaseProperties(table, reverseEmbeddedJoinColumns),
       ...childPlan.properties,

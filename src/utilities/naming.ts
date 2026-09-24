@@ -30,6 +30,41 @@ export function toPascalCase(name: string): string {
   return camel.charAt(0).toUpperCase() + camel.slice(1);
 }
 
+/** csvToAtlas / MongoDB collection names: letter or underscore start, alphanumeric + underscore only. */
+export const MONGO_COLLECTION_NAME_PATTERN = /^[a-zA-Z_][a-zA-Z0-9_]*$/;
+
+/**
+ * Build a valid MongoDB collection name from a SQL table identifier.
+ * Schema-qualified PostgreSQL names (`ion_user.users`) become `ionUser_users`
+ * instead of `ionUser.users`, which csvToAtlas rejects.
+ */
+export function mongoCollectionNameFromTable(tableName: string): string {
+  const trimmed = tableName.trim();
+  if (!trimmed) return trimmed;
+
+  const segments = trimmed
+    .split('.')
+    .map((segment) => segment.trim())
+    .filter(Boolean);
+  if (segments.length <= 1) return toCamelCase(trimmed);
+
+  return segments.map((segment) => toCamelCase(segment)).join('_');
+}
+
+/**
+ * Normalize a migration plan collection name for csvToAtlas import when legacy
+ * plans still contain dots from older naming.
+ */
+export function normalizeMongoCollectionName(name: string, sourceTable?: string): string {
+  if (MONGO_COLLECTION_NAME_PATTERN.test(name)) return name;
+  if (sourceTable?.includes('.')) return mongoCollectionNameFromTable(sourceTable);
+  const sanitized = name.replace(/\./g, '_').replace(/[^a-zA-Z0-9_]/g, '_');
+  if (!sanitized || !MONGO_COLLECTION_NAME_PATTERN.test(sanitized)) {
+    throw new Error(`Invalid MongoDB collection name "${name}".`);
+  }
+  return sanitized;
+}
+
 /**
  * Very small singularizer for table names ("reviews" -> "review",
  * "categories" -> "category"). Only handles the common English suffixes the

@@ -5,7 +5,7 @@
 import { existsSync, readdirSync, statSync } from 'node:fs';
 import { basename, extname, join, relative, resolve, isAbsolute } from 'node:path';
 import type { CollectionPlan } from '../types.js';
-import { toCamelCase } from './naming.js';
+import { mongoCollectionNameFromTable, toCamelCase } from './naming.js';
 
 /** Read default CSV source directory from the environment. */
 export function readCsvSourceFromEnv(env: NodeJS.ProcessEnv = process.env): string | undefined {
@@ -104,6 +104,7 @@ export function csvMatchKeysForCollection(collection: CollectionPlan): string[] 
   };
   add(collection.name);
   add(collection.sourceTable);
+  add(mongoCollectionNameFromTable(collection.sourceTable));
   for (const table of collection.mergedTables) add(table);
   for (const embedded of collection.embeddedArrays) add(embedded.sourceTable);
   return [...keys];

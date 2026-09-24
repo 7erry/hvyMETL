@@ -20,6 +20,7 @@ import {
 import { resolveWorkloadProfile } from '../profiles/resolveProfile.js';
 import type { SqlStructuralModel, WorkloadProfile } from '../types.js';
 import { listCsvFiles, matchCsvFilesForCollection, resolveCsvSourcePath } from '../utilities/csvSource.js';
+import { normalizeMongoCollectionName } from '../utilities/naming.js';
 import { enrichModelFromCsv } from '../utilities/csvModelEnrichment.js';
 import {
   estimateRelationshipCardinalityFromMax,
@@ -363,9 +364,10 @@ async function runFullPipelineInner(
     }
 
     const flags = request.drop === false ? [] : ['--drop'];
-    const result = runImportCli(actualFiles, coll.name, flags, importEnv);
+    const importCollection = normalizeMongoCollectionName(coll.name, coll.sourceTable);
+    const result = runImportCli(actualFiles, importCollection, flags, importEnv);
     imports.push({
-      collection: coll.name,
+      collection: importCollection,
       files: actualFiles,
       ok: result.ok,
       insertedCount: typeof result.parsed?.insertedCount === 'number' ? result.parsed.insertedCount : undefined,
