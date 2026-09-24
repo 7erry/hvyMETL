@@ -684,7 +684,7 @@ textarea {
 }
 
 .collection-node__fields {
-  --schema-nest: 0.65rem;
+  --schema-nest: 1.2rem;
   list-style: none;
   margin: 0;
   padding: 0.15rem 0 0.4rem;
