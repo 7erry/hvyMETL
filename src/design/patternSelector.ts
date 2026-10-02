@@ -61,6 +61,19 @@ import {
   subsetLimitForChildTable,
   WRITE_HEAVY_PERCENT,
 } from './embedThresholds.js';
+import {
+  appendQueryPathIndexes,
+  isDenormReferenceTarget,
+  pickDenormReferenceColumns,
+  requiredAddressEmbedItemFields,
+  rootRequiredFields,
+} from './collectionSchemaExtras.js';
+import {
+  computedTotalFieldName,
+  fullEmbedFieldName,
+  shouldFullEmbedLoyaltyChild,
+  subsetEmbedFieldName,
+} from './embedFieldNaming.js';
 import { isAddressLikeTable, mongoJsonSchemaForColumn } from './mongoSchemaProperty.js';
 
 /** Developer-provided max cardinality at or below this value can force embedding. */
@@ -545,7 +558,7 @@ function buildEmbeddedChildItemProperties(
 function embeddedArrayItemsSchema(
   childTable: TableModel,
   joinColumn: string,
-): { bsonType: 'object'; properties: Record<string, unknown> } {
+): { bsonType: 'object'; properties: Record<string, unknown>; required?: string[] } {
   const flat = buildEmbeddedChildItemProperties(childTable, joinColumn);
   if (!isAddressLikeTable(childTable.name)) {
     return { bsonType: 'object', properties: flat };
@@ -562,9 +575,14 @@ function embeddedArrayItemsSchema(
     addressProperties[key] = value;
   }
 
+  const addressRequired: string[] = [];
+  for (const key of ['streetAddress', 'city']) {
+    if (key in addressProperties) addressRequired.push(key);
+  }
   const itemProperties: Record<string, unknown> = {
     address: {
       bsonType: 'object',
+      ...(addressRequired.length > 0 ? { required: addressRequired } : {}),
       properties: addressProperties,
       description: 'Normalized address lines (city, postalCode, streetAddress, countryId).',
     },
@@ -573,7 +591,10 @@ function embeddedArrayItemsSchema(
     itemProperties[pkField] = mongoJsonSchemaForColumn(pkColumn, childTable.name);
   }
 
-  return { bsonType: 'object', properties: itemProperties };
+  const required = requiredAddressEmbedItemFields(itemProperties);
+  return required.length > 0
+    ? { bsonType: 'object', properties: itemProperties, required }
+    : { bsonType: 'object', properties: itemProperties };
 }
 
 /** Nested schema for a reverse-embedded parent whose standalone collection was absorbed (no PK/id fields). */
@@ -698,7 +719,7 @@ function planChildRelationships(
 
   /** Add a Computed-pattern counter for one child relationship. */
   function addComputedCounter(childTable: TableModel, relationship: RelationshipModel, reason: string): void {
-    const counterField = `total${toPascalCase(childTable.name)}`;
+    const counterField = computedTotalFieldName(table.name, childTable.name);
     if (computedFields.some((field) => field.field === counterField)) return;
     computedFields.push({
       field: counterField,
@@ -813,7 +834,7 @@ function planChildRelationships(
         }
         continue;
       }
-      const field = toCamelCase(childTable.name);
+      const field = fullEmbedFieldName(table.name, childTable.name);
       embeddedArrays.push({ field, sourceTable: childTable.name, joinColumn: relationship.fkColumn });
       properties[field] = {
         bsonType: 'array',
@@ -882,7 +903,7 @@ function planChildRelationships(
         }
         continue;
       }
-      const field = toCamelCase(childTable.name);
+      const field = fullEmbedFieldName(table.name, childTable.name);
       embeddedArrays.push({ field, sourceTable: childTable.name, joinColumn: relationship.fkColumn });
       properties[field] = {
         bsonType: 'array',
@@ -962,7 +983,7 @@ function planChildRelationships(
         });
         continue;
       }
-      const field = toCamelCase(childTable.name);
+      const field = fullEmbedFieldName(table.name, childTable.name);
       embeddedArrays.push({ field, sourceTable: childTable.name, joinColumn: relationship.fkColumn });
       properties[field] = {
         bsonType: 'array',
@@ -1013,7 +1034,7 @@ function planChildRelationships(
         });
         continue;
       }
-      const field = toCamelCase(childTable.name);
+      const field = fullEmbedFieldName(table.name, childTable.name);
       embeddedArrays.push({ field, sourceTable: childTable.name, joinColumn: relationship.fkColumn });
       properties[field] = {
         bsonType: 'array',
@@ -1048,7 +1069,7 @@ function planChildRelationships(
         }
         continue;
       }
-      const field = toCamelCase(childTable.name);
+      const field = fullEmbedFieldName(table.name, childTable.name);
       embeddedArrays.push({ field, sourceTable: childTable.name, joinColumn: relationship.fkColumn });
       properties[field] = {
         bsonType: 'array',
@@ -1065,12 +1086,31 @@ function planChildRelationships(
       continue;
     }
 
+    // Loyalty enrollments are bounded in practice — full embed, no overflow collection.
+    if (shouldFullEmbedLoyaltyChild(childTable.name) && !isWriteHeavy) {
+      const field = fullEmbedFieldName(table.name, childTable.name);
+      embeddedArrays.push({ field, sourceTable: childTable.name, joinColumn: relationship.fkColumn });
+      properties[field] = {
+        bsonType: 'array',
+        items: embeddedArrayItemsSchema(childTable, relationship.fkColumn),
+        description: `Fully embedded ${childTable.name} (typically a handful of active programs per ${singularize(table.name)}).`,
+      };
+      patterns.push({
+        pattern: 'embed',
+        target: `${table.name}.${field}`,
+        reason: `${childTable.name} stays small per parent (loyalty programs are bounded); full embed avoids subset overflow complexity.`,
+        knowledgeSource: 'embed-vs-reference.md',
+      });
+      absorbedTables.add(childTable.name);
+      continue;
+    }
+
     // Rule 5: unbounded (or skewed) children on read-leaning workloads get the
     // Subset pattern: newest N embedded, full set referenced.
     // Time-series children without volume stats reference outright — subset/full embed need measured fan-out.
     if ((isEmbedLeaning || !isWriteHeavy) && !timeSeriesWithoutStats) {
       const subsetLimit = subsetLimitForChildTable(childTable.name);
-      const field = `recent${toPascalCase(childTable.name)}`;
+      const field = subsetEmbedFieldName(table.name, childTable.name);
       embeddedArrays.push({
         field,
         sourceTable: childTable.name,
@@ -1143,9 +1183,11 @@ function planLookupReferences(
     if (excludeViaColumns.has(fk.column)) continue;
     const lookupTable = tablesByName.get(fk.referencesTable);
     if (!lookupTable) continue;
-    if (!isReadLeaning || !isLookupTable(lookupTable, model)) continue;
+    const isLookup = isLookupTable(lookupTable, model);
+    const isDenormParent = isDenormReferenceTarget(lookupTable);
+    if (!isReadLeaning || (!isLookup && !isDenormParent)) continue;
 
-    const lookupColumns = pickLookupColumns(lookupTable);
+    const lookupColumns = isLookup ? pickLookupColumns(lookupTable) : pickDenormReferenceColumns(lookupTable);
     if (lookupColumns.length === 0) continue;
 
     const field = toCamelCase(singularize(lookupTable.name));
@@ -1537,6 +1579,8 @@ export function buildMigrationPlan(
       });
     }
 
+    appendQueryPathIndexes(table, collectionName, childPlan.embeddedArrays, indexes);
+
     collections.push({
       name: collectionName,
       sourceTable: table.name,
@@ -1550,7 +1594,7 @@ export function buildMigrationPlan(
         strategy: primaryKeyColumns.length === 1 ? 'direct' : 'composite',
       },
       patterns,
-      jsonSchema: { bsonType: 'object', required: ['_id', 'schemaVersion'], properties },
+      jsonSchema: { bsonType: 'object', required: rootRequiredFields(table), properties },
       indexes,
       embeddedArrays: childPlan.embeddedArrays,
       extendedReferences: lookupPlan.extendedReferences,

@@ -1,3 +1,9 @@
+## hvyMETL 5.1.21
+
+**Customer-centric schema modeling** — Full **`loyalty`** embed (no subset overflow for loyalty joins), cleaner **`recentAddresses`** / **`totalAddresses`** naming, **Extended Reference** metadata when denormalizing **customers** onto tickets/orders, **query-path indexes** (unique email, name compound, country multikey), and stricter **$jsonSchema** `required` on roots and address embed items.
+
+---
+
 ## hvyMETL 5.1.20
 
 **Collection inspector Table / JSON toggle** — Restore Patterns, indexes, embeds, and field table view; switch to colorized plan JSON when needed. Inspector mode persists in session.

@@ -755,7 +755,14 @@ describe('buildMigrationPlan', () => {
     const model: SqlStructuralModel = {
       source: 'synthetic.db',
       tables: [
-        table({ name: 'customers' }),
+        table({
+          name: 'customers',
+          columns: [
+            { name: 'customer_id', sqlType: 'NUMBER', bsonType: 'long', nullable: false, isPrimaryKey: true },
+            { name: 'email', sqlType: 'VARCHAR(120)', bsonType: 'string', nullable: false, isPrimaryKey: false },
+          ],
+          primaryKey: ['customer_id'],
+        }),
         table({
           name: 'customer_addresses',
           rowCount: 2000,
@@ -785,14 +792,110 @@ describe('buildMigrationPlan', () => {
 
     const plan = buildMigrationPlan(model, WORKLOAD_PROFILES.catalog);
     const customers = plan.collections.find((collection) => collection.sourceTable === 'customers');
-    const recent = customers?.embeddedArrays.find((array) => array.field === 'recentCustomerAddresses');
+    const recent = customers?.embeddedArrays.find((array) => array.field === 'recentAddresses');
 
     expect(recent?.subsetLimit).toBe(5);
     const recentSchema = (customers?.jsonSchema as { properties?: Record<string, { maxItems?: number; items?: { properties?: Record<string, unknown> } }> })
-      .properties?.recentCustomerAddresses;
+      .properties?.recentAddresses;
     expect(recentSchema?.maxItems).toBe(5);
     expect(recentSchema?.items?.properties?.address).toMatchObject({ bsonType: 'object' });
     expect(recentSchema?.items?.properties?.addressId).toBeDefined();
+    expect(customers?.indexes.some((index) => index.options.unique && 'email' in index.keys)).toBe(true);
+    expect(customers?.indexes.some((index) => 'recentAddresses.address.countryId' in index.keys)).toBe(true);
+  });
+
+  it('fully embeds customer_loyalty as loyalty without subset overflow', () => {
+    const model: SqlStructuralModel = {
+      source: 'synthetic.db',
+      tables: [
+        table({
+          name: 'customers',
+          rowCount: 500,
+          columns: [
+            { name: 'customer_id', sqlType: 'NUMBER', bsonType: 'long', nullable: false, isPrimaryKey: true },
+            { name: 'email', sqlType: 'VARCHAR(120)', bsonType: 'string', nullable: false, isPrimaryKey: false },
+          ],
+          primaryKey: ['customer_id'],
+        }),
+        table({
+          name: 'customer_loyalty',
+          rowCount: 800,
+          columns: [
+            { name: 'customer_id', sqlType: 'NUMBER', bsonType: 'long', nullable: false, isPrimaryKey: false },
+            { name: 'program_id', sqlType: 'NUMBER', bsonType: 'long', nullable: false, isPrimaryKey: false },
+            { name: 'current_points', sqlType: 'NUMBER', bsonType: 'long', nullable: false, isPrimaryKey: false },
+          ],
+          foreignKeys: [{ column: 'customer_id', referencesTable: 'customers', referencesColumn: 'customer_id' }],
+        }),
+      ],
+      relationships: [
+        relationship({
+          parentTable: 'customers',
+          childTable: 'customer_loyalty',
+          fkColumn: 'customer_id',
+          avgChildrenPerParent: 2,
+          maxChildrenPerParent: 120,
+          isBounded: false,
+        }),
+      ],
+    };
+
+    const plan = buildMigrationPlan(model, WORKLOAD_PROFILES.catalog);
+    const customers = plan.collections.find((collection) => collection.sourceTable === 'customers');
+    const loyaltyEmbed = customers?.embeddedArrays.find((array) => array.sourceTable === 'customer_loyalty');
+
+    expect(loyaltyEmbed?.field).toBe('loyalty');
+    expect(loyaltyEmbed?.subsetLimit).toBeUndefined();
+    expect(loyaltyEmbed?.overflowCollection).toBeUndefined();
+    expect(plan.collections.some((collection) => collection.name === 'customerLoyalty')).toBe(false);
+    expect(customers?.computedFields.some((field) => field.field.includes('loyalty'))).toBe(false);
+  });
+
+  it('denormalizes customers onto support_tickets via extended reference', () => {
+    const model: SqlStructuralModel = {
+      source: 'synthetic.db',
+      tables: [
+        table({
+          name: 'customers',
+          rowCount: 5000,
+          columns: [
+            { name: 'customer_id', sqlType: 'NUMBER', bsonType: 'long', nullable: false, isPrimaryKey: true },
+            { name: 'email', sqlType: 'VARCHAR(120)', bsonType: 'string', nullable: false, isPrimaryKey: false },
+            { name: 'first_name', sqlType: 'VARCHAR(60)', bsonType: 'string', nullable: false, isPrimaryKey: false },
+            { name: 'last_name', sqlType: 'VARCHAR(60)', bsonType: 'string', nullable: false, isPrimaryKey: false },
+          ],
+          primaryKey: ['customer_id'],
+        }),
+        table({
+          name: 'support_tickets',
+          rowCount: 20000,
+          columns: [
+            { name: 'ticket_id', sqlType: 'NUMBER', bsonType: 'long', nullable: false, isPrimaryKey: true },
+            { name: 'customer_id', sqlType: 'NUMBER', bsonType: 'long', nullable: false, isPrimaryKey: false },
+            { name: 'subject', sqlType: 'VARCHAR(200)', bsonType: 'string', nullable: false, isPrimaryKey: false },
+          ],
+          foreignKeys: [{ column: 'customer_id', referencesTable: 'customers', referencesColumn: 'customer_id' }],
+        }),
+      ],
+      relationships: [
+        relationship({
+          parentTable: 'customers',
+          childTable: 'support_tickets',
+          fkColumn: 'customer_id',
+          avgChildrenPerParent: 4,
+          maxChildrenPerParent: 400,
+          isBounded: false,
+        }),
+      ],
+    };
+
+    const plan = buildMigrationPlan(model, WORKLOAD_PROFILES.catalog);
+    const tickets = plan.collections.find((collection) => collection.sourceTable === 'support_tickets');
+    const customerRef = tickets?.extendedReferences.find((reference) => reference.sourceTable === 'customers');
+
+    expect(customerRef?.field).toBe('customer');
+    expect(customerRef?.lookupColumns).toEqual(expect.arrayContaining(['email', 'first_name']));
+    expect(tickets?.patterns.some((decision) => decision.pattern === 'extended-reference')).toBe(true);
   });
 
   it('folds EAV tables into the Attribute pattern and drops their standalone collection', () => {
