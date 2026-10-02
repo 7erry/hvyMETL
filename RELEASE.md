@@ -1,3 +1,9 @@
+## hvyMETL 5.1.27
+
+**JSON Crack + collection selection fix** — Collection graph uses the **jsoncrack-react** component (no third-party iframe/postMessage). Single-click selection on the Mongo canvas works again; double-click still opens the JSON Crack dialog.
+
+---
+
 ## hvyMETL 5.1.26
 
 **JSON Crack dialog** — Double-click a MongoDB collection to open an in-app dialog with the [JSON Crack](https://jsoncrack.com/) widget loaded with the collection plan JSON (replaces the blank blob-tab approach).
