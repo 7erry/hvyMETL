@@ -162,6 +162,8 @@ export type ApiHealthResponse = {
   version: string;
   releaseHeading?: string;
   releaseNotes?: string;
+  /** Aggregated RELEASE.md entries for the current major version (e.g. all 5.x). */
+  releaseNotesSummary?: string;
 };
 
 export async function fetchApiHealth(): Promise<ApiHealthResponse> {

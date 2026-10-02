@@ -64,6 +64,12 @@ export function JsonCrackCollectionModal({ open, collection, onClose }: JsonCrac
             className="jsoncrack-collection-modal__graph"
           />
         </div>
+
+        <footer className="jsoncrack-collection-modal__footer">
+          <a href={HVYMETL_RELEASES_URL} target="_blank" rel="noreferrer">
+            hvyMETL releases
+          </a>
+        </footer>
       </div>
     </div>
   );

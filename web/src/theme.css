@@ -356,8 +356,8 @@ textarea {
 }
 
 .app-logo-release-modal {
-  width: min(520px, 94vw);
-  max-height: min(85vh, 640px);
+  width: min(640px, 94vw);
+  max-height: min(88vh, 720px);
   display: flex;
   flex-direction: column;
 }
@@ -373,6 +373,10 @@ textarea {
   width: auto;
   flex-shrink: 0;
   color: var(--mdb-green-base);
+}
+
+.app-logo-release-modal__leaf--interactive {
+  cursor: pointer;
 }
 
 .app-logo-release-modal__body {

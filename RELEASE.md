@@ -1,3 +1,9 @@
+## hvyMETL 5.1.35
+
+**Version dialog** — Release notes show a **5.x summary** (all entries from [RELEASE.md](RELEASE.md) for the current major line). Double-click the leaf in the dialog header to play the hvyMETL logo animation.
+
+---
+
 ## hvyMETL 5.1.34
 
 **Collection plan graph footer** — The collection plan popup includes a link to [GitHub releases](https://github.com/7erry/hvyMETL/releases).

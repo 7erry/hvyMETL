@@ -9,7 +9,11 @@ import cors from 'cors';
 import express, { type Request } from 'express';
 import multer from 'multer';
 import { loadProjectEnv } from './loadProjectEnv.js';
-import { parseLatestReleaseSection } from './releaseNotes.js';
+import {
+  buildMajorVersionReleaseMarkdown,
+  majorVersionFromSemver,
+  parseLatestReleaseSection,
+} from './releaseNotes.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '../..');
 loadProjectEnv(ROOT);
@@ -257,12 +261,17 @@ app.get('/api/health', (_req, res) => {
   }
   let releaseHeading: string | undefined;
   let releaseNotes: string | undefined;
+  let releaseNotesSummary: string | undefined;
   try {
     const releaseMarkdown = readFileSync(join(ROOT, 'RELEASE.md'), 'utf8');
     const latest = parseLatestReleaseSection(releaseMarkdown);
     if (latest) {
       releaseHeading = latest.heading;
       releaseNotes = latest.body;
+    }
+    const major = majorVersionFromSemver(version);
+    if (major !== null) {
+      releaseNotesSummary = buildMajorVersionReleaseMarkdown(releaseMarkdown, major) ?? undefined;
     }
   } catch {
     // ignore missing RELEASE.md
@@ -273,6 +282,7 @@ app.get('/api/health', (_req, res) => {
     version,
     releaseHeading,
     releaseNotes,
+    releaseNotesSummary,
     cli: 'available',
     ui,
     uiHealthy: ui === 'static',

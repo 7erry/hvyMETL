@@ -20,6 +20,7 @@ export function MongoLogo() {
   const [releaseOpen, setReleaseOpen] = useState(false);
   const [releaseHeading, setReleaseHeading] = useState('hvyMETL');
   const [releaseNotes, setReleaseNotes] = useState<string | null>(null);
+  const [releaseNotesSummary, setReleaseNotesSummary] = useState<string | null>(null);
   const [releaseVersion, setReleaseVersion] = useState<string | null>(null);
   const [releaseLoading, setReleaseLoading] = useState(false);
   const [releaseError, setReleaseError] = useState<string | null>(null);
@@ -50,6 +51,7 @@ export function MongoLogo() {
         setReleaseVersion(health.version);
         setReleaseHeading(health.releaseHeading ?? `hvyMETL ${health.version}`);
         setReleaseNotes(health.releaseNotes ?? null);
+        setReleaseNotesSummary(health.releaseNotesSummary ?? health.releaseNotes ?? null);
       })
       .catch(() => {
         setReleaseError('Could not load release notes. Confirm the hvyMETL API is running.');
@@ -68,6 +70,13 @@ export function MongoLogo() {
     },
     [openReleaseDialog],
   );
+
+  const launchLogoAnimation = useCallback((event: MouseEvent) => {
+    event.preventDefault();
+    event.stopPropagation();
+    setReleaseOpen(false);
+    setVideoOpen(true);
+  }, []);
 
   useEffect(() => {
     if (!videoOpen) return;
@@ -116,11 +125,19 @@ export function MongoLogo() {
               <div className="pipeline-modal panel app-logo-release-modal" onClick={(event) => event.stopPropagation()}>
                 <header className="pipeline-modal__header">
                   <div className="app-logo-release-modal__brand">
-                    <MongoLogoLeaf className="app-logo-release-modal__leaf" />
+                    <MongoLogoLeaf
+                      className="app-logo-release-modal__leaf app-logo-release-modal__leaf--interactive app-logo__leaf--interactive"
+                      onDoubleClick={launchLogoAnimation}
+                      aria-label="Double-click for hvyMETL animation"
+                      role="img"
+                    />
                     <div>
                       <h2 id="app-logo-release-title">{releaseHeading}</h2>
                       {releaseVersion ? (
-                        <p className="pipeline-modal__subtitle">Version {releaseVersion}</p>
+                        <p className="pipeline-modal__subtitle">
+                          Version {releaseVersion}
+                          {releaseNotesSummary ? ' · full major-version highlights below' : null}
+                        </p>
                       ) : null}
                     </div>
                   </div>
@@ -136,17 +153,17 @@ export function MongoLogo() {
                 <div className="pipeline-modal__body app-logo-release-modal__body">
                   {releaseLoading ? <p className="manager-hint">Loading release notes…</p> : null}
                   {releaseError ? <p className="app-logo-release-modal__error">{releaseError}</p> : null}
-                  {!releaseLoading && releaseNotes ? (
+                  {!releaseLoading && releaseNotesSummary ? (
                     <div className="app-logo-release-modal__markdown copilot-message__body copilot-message__body--markdown">
                       <ReactMarkdown
                         remarkPlugins={[remarkGfm]}
                         rehypePlugins={[rehypeRaw, [rehypeSanitize, copilotMarkdownSanitizeSchema]]}
                       >
-                        {releaseNotes}
+                        {releaseNotesSummary}
                       </ReactMarkdown>
                     </div>
                   ) : null}
-                  {!releaseLoading && !releaseError && !releaseNotes ? (
+                  {!releaseLoading && !releaseError && !releaseNotesSummary ? (
                     <p className="manager-hint">No release notes available for this build.</p>
                   ) : null}
                 </div>
