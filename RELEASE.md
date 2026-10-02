@@ -1,3 +1,15 @@
+## hvyMETL 5.1.33
+
+**Migration export Shiki highlighting** — **Export migration** tabs (plan JSON, design report, prompts, generated repos, Atlas JSON) use **Shiki** for read-only and editable artifact panes, with Prism only as a brief fallback until grammars load.
+
+---
+
+## hvyMETL 5.1.32
+
+**Collection inspector JSON default + Shiki** — **Fields** view defaults to **JSON** (`$jsonSchema`) with **Shiki** syntax highlighting (lazy-loaded); **Table** remains one click away. Sessions that explicitly chose Table stay on Table.
+
+---
+
 ## hvyMETL 5.1.31
 
 **Collection plan graph dialog** — Removed “JSON Crack” branding from the header; dialog defaults to **80%** of the viewport and is **resizable** from the bottom-right corner (expand button removed).

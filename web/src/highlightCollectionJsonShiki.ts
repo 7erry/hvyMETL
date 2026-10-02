@@ -1,24 +1,7 @@
-import type { HighlighterCore } from 'shiki/core';
-import { createHighlighterCore } from 'shiki/core';
-import { createOnigurumaEngine } from 'shiki/engine/oniguruma';
-import json from 'shiki/langs/json';
-import materialThemeDarker from 'shiki/themes/material-theme-darker';
 import { highlightCollectionJsonManual } from './highlightCollectionJson';
+import { highlightArtifactCodeToHtml } from './shikiArtifactHighlight';
 
 const MAX_JSON_CHARS = 200_000;
-
-let highlighterPromise: Promise<HighlighterCore> | null = null;
-
-async function getCollectionJsonHighlighter(): Promise<HighlighterCore> {
-  if (!highlighterPromise) {
-    highlighterPromise = createHighlighterCore({
-      themes: [materialThemeDarker],
-      langs: [json],
-      engine: createOnigurumaEngine(() => import('shiki/wasm')),
-    });
-  }
-  return highlighterPromise;
-}
 
 function truncateJson(json: string): string {
   if (json.length <= MAX_JSON_CHARS) return json;
@@ -34,11 +17,7 @@ function manualFallbackHtml(json: string): string {
 export async function highlightCollectionJsonWithShiki(json: string): Promise<string> {
   const slice = truncateJson(json);
   try {
-    const highlighter = await getCollectionJsonHighlighter();
-    return highlighter.codeToHtml(slice, {
-      lang: 'json',
-      theme: 'material-theme-darker',
-    });
+    return await highlightArtifactCodeToHtml(slice, 'json');
   } catch {
     return manualFallbackHtml(slice);
   }

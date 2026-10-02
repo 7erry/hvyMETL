@@ -1,6 +1,7 @@
+import { useCallback, useEffect, useState } from 'react';
 import Editor from 'react-simple-code-editor';
-import { highlightPrismCode } from '../prismHighlight';
-import { PrismCodeBlock } from './PrismCodeBlock';
+import { ensureShikiLanguage, highlightArtifactForEditor } from '../shikiArtifactHighlight';
+import { ShikiCodeBlock } from './ShikiCodeBlock';
 
 type ArtifactCodePanelProps = {
   value: string;
@@ -54,10 +55,6 @@ function highlighterLanguage(language: string): string {
   return language;
 }
 
-function highlightCode(code: string, language: string): string {
-  return highlightPrismCode(code, language);
-}
-
 const EDITOR_FONT_FAMILY = 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace';
 const EDITOR_FONT_SIZE = '13px';
 const EDITOR_LINE_HEIGHT = '19.5px';
@@ -88,8 +85,8 @@ const editorSurfaceStyle = {
 };
 
 /**
- * Syntax-highlighted artifact view (oneDark / Chroma-style tokens).
- * Read-only files use PrismCodeBlock; editable tabs use a transparent textarea over Prism HTML.
+ * Syntax-highlighted artifact view for Migration export.
+ * Read-only files use Shiki; editable tabs use Shiki when the grammar is loaded (Prism fallback until then).
  */
 export function ArtifactCodePanel({
   value,
@@ -101,13 +98,30 @@ export function ArtifactCodePanel({
 }: ArtifactCodePanelProps) {
   const language = languageForArtifact(fileName, mime, isJson);
   const displayLanguage = highlighterLanguage(language);
+  const [shikiLangReady, setShikiLangReady] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    setShikiLangReady(false);
+    void ensureShikiLanguage(displayLanguage).then(() => {
+      if (!cancelled) setShikiLangReady(true);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [displayLanguage]);
+
+  const highlight = useCallback(
+    (code: string) => highlightArtifactForEditor(code, language),
+    [language, shikiLangReady],
+  );
 
   if (readOnly) {
     return (
       <div className="artifact-code-panel artifact-code-panel--readonly artifact-code-panel--with-lines" data-language={language}>
         <CodeLineNumbers value={value} />
         <div className="artifact-code-panel__body">
-          <PrismCodeBlock
+          <ShikiCodeBlock
             code={value}
             language={displayLanguage}
             preClassName="artifact-code-pre"
@@ -129,9 +143,10 @@ export function ArtifactCodePanel({
       <CodeLineNumbers value={value} />
       <div className="artifact-code-panel__body">
         <Editor
+          key={`${language}-${shikiLangReady ? 'shiki' : 'prism'}`}
           value={value}
           onValueChange={(next) => onChange?.(next)}
-          highlight={(code) => highlightCode(code, language)}
+          highlight={highlight}
           readOnly={false}
           tabSize={2}
           insertSpaces

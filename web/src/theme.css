@@ -2678,6 +2678,29 @@ textarea {
   outline: none !important;
 }
 
+.artifact-shiki-block {
+  min-height: 100%;
+}
+
+.artifact-shiki-block pre.shiki,
+.artifact-code-panel .artifact-shiki-fallback {
+  margin: 0;
+  background: transparent !important;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 13px;
+  line-height: 19.5px;
+  tab-size: 2;
+  white-space: pre-wrap;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+
+.artifact-shiki-block pre.shiki code {
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+}
+
 /* Prism / oneDark-style tokens for editable overlay and readonly pre */
 .artifact-code-panel .token.comment,
 .artifact-code-panel .token.prolog,
