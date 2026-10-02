@@ -1711,6 +1711,34 @@ textarea {
   letter-spacing: normal;
 }
 
+.collection-details__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.collection-details__title {
+  display: flex;
+  align-items: center;
+  gap: 0.1rem;
+  min-width: 0;
+}
+
+.collection-details__title h3 {
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.collection-details__json-download {
+  flex-shrink: 0;
+  min-width: 2.25rem;
+  min-height: 2.25rem;
+}
+
 .workspace-split {
   display: flex;
   flex: 1;

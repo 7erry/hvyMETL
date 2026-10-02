@@ -1,3 +1,9 @@
+## hvyMETL 5.1.11
+
+**Collection JSON download** — On the MongoDB canvas, the selected-collection sidebar shows a **{ }** control next to the collection name to download that collection’s migration-plan slice as `<name>.json`.
+
+---
+
 ## hvyMETL 5.1.10
 
 **Sidebar sizing on MongoDB canvas** — **Sizing Cost Projection**, **Recommended Tier**, and **High Availability** stay visible after design (MongoDB / `after` workflow), not only on the SQL import canvas.
