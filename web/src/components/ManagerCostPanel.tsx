@@ -15,6 +15,8 @@ import {
   type ManagerWorkloadType,
   type TargetWorkloadProfileId,
 } from '../managerCostEstimate';
+import { ATLAS_TIER_REFERENCE_ROWS } from '../../../src/atlas/atlasTierSizing.ts';
+import { DATASET_TIER_SLIDER_ANCHORS_GB } from '../../../src/atlas/atlasTargetWorkloadProfiles.ts';
 import type { MigrationPlan } from '../migrationPlanTypes';
 import type { SqlStructuralModel } from '../types';
 import { CollapsiblePanel } from './CollapsiblePanel';
@@ -38,7 +40,13 @@ type ManagerCostPanelProps = {
 
 const DATASET_SLIDER_MIN_GB = 1;
 const DATASET_SLIDER_MAX_GB = 100 * 1024;
-const DATASET_SLIDER_STEP_GB = 64;
+/** 1 GB steps so recommended tier can walk M10→M20→… without 64 GB jumps. */
+const DATASET_SLIDER_STEP_GB = 1;
+
+function datasetScaleSliderPercent(rawDataGb: number): number {
+  const clamped = Math.max(DATASET_SLIDER_MIN_GB, Math.min(DATASET_SLIDER_MAX_GB, rawDataGb));
+  return ((clamped - DATASET_SLIDER_MIN_GB) / (DATASET_SLIDER_MAX_GB - DATASET_SLIDER_MIN_GB)) * 100;
+}
 
 const WORKLOAD_OPTIONS: { id: ManagerWorkloadType; title: string; hint: string }[] = [
   {
@@ -148,14 +156,33 @@ export function ManagerCostPanel({
             <span className="manager-cost-field__label">
               Dataset scale — raw data: <strong>{formatGb(datasetScaleGb)}</strong>
             </span>
-            <input
-              type="range"
-              min={DATASET_SLIDER_MIN_GB}
-              max={DATASET_SLIDER_MAX_GB}
-              step={DATASET_SLIDER_STEP_GB}
-              value={datasetScaleGb}
-              onChange={(e) => setDataSize(Number(e.target.value))}
-            />
+            <div className="manager-cost-dataset-scale">
+              <input
+                type="range"
+                min={DATASET_SLIDER_MIN_GB}
+                max={DATASET_SLIDER_MAX_GB}
+                step={DATASET_SLIDER_STEP_GB}
+                value={datasetScaleGb}
+                onChange={(e) => setDataSize(Number(e.target.value))}
+                aria-valuetext={`${formatGb(datasetScaleGb)} raw data · recommended ${projection.recommendedTier.label}`}
+              />
+              <div className="manager-cost-tier-ruler" aria-hidden="true">
+                {DATASET_TIER_SLIDER_ANCHORS_GB.map(({ tierId, rawDataGb }) => (
+                  <button
+                    key={tierId}
+                    type="button"
+                    className={
+                      projection.recommendedTier.id === tierId ? 'manager-cost-tier-ruler__mark active' : 'manager-cost-tier-ruler__mark'
+                    }
+                    style={{ left: `${datasetScaleSliderPercent(rawDataGb)}%` }}
+                    title={`${tierId} · ~${formatGb(rawDataGb)} raw`}
+                    onClick={() => setDataSize(rawDataGb)}
+                  >
+                    {tierId}
+                  </button>
+                ))}
+              </div>
+            </div>
             {hasSchemaRowStats ? (
               <span className="manager-cost-field__note">
                 Schema statistics estimate document shape; slider scenarios scale raw data up to{' '}
@@ -313,9 +340,12 @@ export function ManagerCostPanel({
             <dt>Recommended tier</dt>
             <dd>
               {projection.recommendedTier.label} ({projection.recommendedTier.ramGb} GB RAM,{' '}
-              {projection.recommendedTier.vcpu} vCPU, {projection.recommendedTier.maxConnections.toLocaleString()}{' '}
-              max connections, up to {formatGb(projection.recommendedTier.storageGb)} storage)
+              {projection.recommendedTier.vcpu} vCPU, up to {formatGb(projection.recommendedTier.storageGb)} storage)
             </dd>
+          </div>
+          <div>
+            <dt>Max connections</dt>
+            <dd>{projection.recommendedTier.maxConnections.toLocaleString()}</dd>
           </div>
           <div>
             <dt>Dataset size (est.)</dt>
@@ -359,6 +389,42 @@ export function ManagerCostPanel({
             {projection.workingSetPercent}% of index + active working set fits in WiredTiger cache
           </span>
         </div>
+
+        <details className="manager-cost-tier-reference">
+          <summary>Atlas tier reference (vCPU, RAM, storage scale, max connections)</summary>
+          <div className="manager-cost-tier-reference__wrap">
+            <table className="manager-cost-tier-reference__table">
+              <thead>
+                <tr>
+                  <th scope="col">Tier</th>
+                  <th scope="col">vCPU</th>
+                  <th scope="col">RAM</th>
+                  <th scope="col">Standard storage scale</th>
+                  <th scope="col">Max connections</th>
+                </tr>
+              </thead>
+              <tbody>
+                {ATLAS_TIER_REFERENCE_ROWS.map((row) => (
+                  <tr
+                    key={row.tierLabel}
+                    className={
+                      row.tierLabel.includes(projection.recommendedTier.label) ||
+                      row.tierLabel.startsWith(projection.recommendedTier.label)
+                        ? 'manager-cost-tier-reference__row--active'
+                        : undefined
+                    }
+                  >
+                    <td>{row.tierLabel}</td>
+                    <td>{row.vcpuLabel}</td>
+                    <td>{row.ramGb} GB</td>
+                    <td>{row.storageScaleLabel}</td>
+                    <td>{row.maxConnectionsLabel}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </details>
       </CollapsiblePanel>
   );
 

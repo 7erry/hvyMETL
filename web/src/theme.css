@@ -4387,9 +4387,84 @@ textarea {
   opacity: 0.8;
 }
 
+.sidebar-scroll .manager-cost-dataset-scale {
+  width: 100%;
+}
+
 .sidebar-scroll .manager-cost-field input[type='range'] {
   width: 100%;
   accent-color: var(--mdb-green-base);
+}
+
+.sidebar-scroll .manager-cost-tier-ruler {
+  position: relative;
+  height: 2.75rem;
+  margin-top: 0.35rem;
+}
+
+.sidebar-scroll .manager-cost-tier-ruler__mark {
+  position: absolute;
+  top: 0;
+  transform: translateX(-50%);
+  min-width: auto;
+  min-height: auto;
+  padding: 0.1rem 0.2rem;
+  border: none;
+  background: transparent;
+  color: rgba(0, 237, 100, 0.55);
+  font-size: 0.55rem;
+  font-weight: 600;
+  line-height: 1.1;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.sidebar-scroll .manager-cost-tier-ruler__mark:hover,
+.sidebar-scroll .manager-cost-tier-ruler__mark.active {
+  color: var(--mdb-spring-green);
+}
+
+.sidebar-scroll .manager-cost-tier-ruler__mark.active {
+  text-decoration: underline;
+}
+
+.sidebar-scroll .manager-cost-tier-reference {
+  margin-top: 0.75rem;
+  font-size: var(--sidebar-panel-font-size);
+}
+
+.sidebar-scroll .manager-cost-tier-reference summary {
+  cursor: pointer;
+  color: var(--mdb-spring-green);
+  margin-bottom: 0.35rem;
+}
+
+.sidebar-scroll .manager-cost-tier-reference__wrap {
+  overflow-x: auto;
+}
+
+.sidebar-scroll .manager-cost-tier-reference__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.65rem;
+}
+
+.sidebar-scroll .manager-cost-tier-reference__table th,
+.sidebar-scroll .manager-cost-tier-reference__table td {
+  padding: 0.25rem 0.35rem;
+  border-bottom: 1px solid var(--mdb-green-dark-2);
+  text-align: left;
+  vertical-align: top;
+}
+
+.sidebar-scroll .manager-cost-tier-reference__table th {
+  color: var(--mdb-spring-green);
+  font-weight: 600;
+}
+
+.sidebar-scroll .manager-cost-tier-reference__row--active td {
+  color: var(--mdb-spring-green);
+  font-weight: 600;
 }
 
 .sidebar-scroll .manager-cost-workload__grid {

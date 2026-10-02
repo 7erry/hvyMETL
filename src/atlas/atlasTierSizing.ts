@@ -42,20 +42,50 @@ export type SelectAtlasTierInput = {
   productionMinTierId?: string;
 };
 
-/** Dedicated Atlas tiers (M10–M700) for sizing guardrails and recommendations. */
+/** Dedicated Atlas tiers (M10–M700) aligned with Atlas standard storage / connection limits. */
 export const ATLAS_PRODUCTION_TIER_MATRIX: AtlasProductionTierSpec[] = [
   { id: 'M10', ramGb: 2, vcpu: 2, maxConnections: 1500, extendedStorageMaxGb: 128, diskToRamRatioMax: 60 },
   { id: 'M20', ramGb: 4, vcpu: 2, maxConnections: 3000, extendedStorageMaxGb: 256, diskToRamRatioMax: 60 },
   { id: 'M30', ramGb: 8, vcpu: 2, maxConnections: 3000, extendedStorageMaxGb: 512, diskToRamRatioMax: 60 },
-  { id: 'M40', ramGb: 16, vcpu: 4, maxConnections: 6000, extendedStorageMaxGb: 4096, diskToRamRatioMax: 60 },
-  { id: 'M50', ramGb: 32, vcpu: 8, maxConnections: 16000, extendedStorageMaxGb: 8192, diskToRamRatioMax: 120 },
-  { id: 'M60', ramGb: 64, vcpu: 16, maxConnections: 32000, extendedStorageMaxGb: 8192, diskToRamRatioMax: 120 },
-  { id: 'M80', ramGb: 128, vcpu: 32, maxConnections: 96000, extendedStorageMaxGb: 14336, diskToRamRatioMax: 120 },
-  { id: 'M140', ramGb: 192, vcpu: 48, maxConnections: 96000, extendedStorageMaxGb: 14336, diskToRamRatioMax: 120 },
-  { id: 'M200', ramGb: 256, vcpu: 64, maxConnections: 128000, extendedStorageMaxGb: 14336, diskToRamRatioMax: 120 },
-  { id: 'M300', ramGb: 384, vcpu: 96, maxConnections: 128000, extendedStorageMaxGb: 14336, diskToRamRatioMax: 120 },
-  { id: 'M400', ramGb: 488, vcpu: 96, maxConnections: 128000, extendedStorageMaxGb: 32768, diskToRamRatioMax: 120 },
+  { id: 'M40', ramGb: 16, vcpu: 4, maxConnections: 6000, extendedStorageMaxGb: 1024, diskToRamRatioMax: 60 },
+  { id: 'M50', ramGb: 32, vcpu: 8, maxConnections: 16000, extendedStorageMaxGb: 2048, diskToRamRatioMax: 120 },
+  { id: 'M60', ramGb: 64, vcpu: 16, maxConnections: 32000, extendedStorageMaxGb: 4096, diskToRamRatioMax: 120 },
+  { id: 'M80', ramGb: 128, vcpu: 32, maxConnections: 96000, extendedStorageMaxGb: 4096, diskToRamRatioMax: 120 },
+  { id: 'M140', ramGb: 192, vcpu: 48, maxConnections: 96000, extendedStorageMaxGb: 4096, diskToRamRatioMax: 120 },
+  { id: 'M200', ramGb: 256, vcpu: 64, maxConnections: 128000, extendedStorageMaxGb: 4096, diskToRamRatioMax: 120 },
+  { id: 'M300', ramGb: 384, vcpu: 96, maxConnections: 128000, extendedStorageMaxGb: 4096, diskToRamRatioMax: 120 },
+  { id: 'M400', ramGb: 488, vcpu: 96, maxConnections: 128000, extendedStorageMaxGb: 4096, diskToRamRatioMax: 120 },
+  { id: 'M600', ramGb: 640, vcpu: 96, maxConnections: 128000, extendedStorageMaxGb: 4096, diskToRamRatioMax: 120 },
   { id: 'M700', ramGb: 768, vcpu: 96, maxConnections: 128000, extendedStorageMaxGb: 49152, diskToRamRatioMax: 120 },
+];
+
+/** Atlas tier reference (UI / docs) — storage scale labels match Atlas product chart. */
+export const ATLAS_TIER_REFERENCE_ROWS: ReadonlyArray<{
+  tierLabel: string;
+  vcpuLabel: string;
+  ramGb: number;
+  storageScaleLabel: string;
+  maxConnections: number;
+  maxConnectionsLabel: string;
+}> = [
+  { tierLabel: 'M10', vcpuLabel: '2 vCPU', ramGb: 2, storageScaleLabel: '10 GB – 128 GB', maxConnections: 1500, maxConnectionsLabel: '1,500' },
+  { tierLabel: 'M20', vcpuLabel: '2 vCPU', ramGb: 4, storageScaleLabel: '20 GB – 256 GB', maxConnections: 3000, maxConnectionsLabel: '3,000' },
+  { tierLabel: 'M30', vcpuLabel: '2 vCPU', ramGb: 8, storageScaleLabel: '40 GB – 512 GB', maxConnections: 3000, maxConnectionsLabel: '3,000' },
+  { tierLabel: 'M40', vcpuLabel: '4 vCPU', ramGb: 16, storageScaleLabel: '80 GB – 1 TB', maxConnections: 6000, maxConnectionsLabel: '6,000' },
+  { tierLabel: 'M50', vcpuLabel: '8 vCPU', ramGb: 32, storageScaleLabel: '160 GB – 2 TB', maxConnections: 16000, maxConnectionsLabel: '16,000' },
+  { tierLabel: 'M60', vcpuLabel: '16 vCPU', ramGb: 64, storageScaleLabel: '320 GB – 4 TB', maxConnections: 32000, maxConnectionsLabel: '32,000' },
+  { tierLabel: 'M80', vcpuLabel: '32 vCPU', ramGb: 128, storageScaleLabel: 'Up to 4 TB', maxConnections: 96000, maxConnectionsLabel: '96,000' },
+  { tierLabel: 'M140', vcpuLabel: '48 vCPU', ramGb: 192, storageScaleLabel: 'Up to 4 TB', maxConnections: 96000, maxConnectionsLabel: '96,000' },
+  { tierLabel: 'M200', vcpuLabel: '64 vCPU', ramGb: 256, storageScaleLabel: 'Up to 4 TB', maxConnections: 128000, maxConnectionsLabel: '128,000' },
+  { tierLabel: 'M300', vcpuLabel: '96 vCPU', ramGb: 384, storageScaleLabel: 'Up to 4 TB', maxConnections: 128000, maxConnectionsLabel: '128,000' },
+  {
+    tierLabel: 'M400 / M600',
+    vcpuLabel: 'Up to 96+ vCPU',
+    ramGb: 768,
+    storageScaleLabel: 'Up to 4 TB (per node)',
+    maxConnections: 128000,
+    maxConnectionsLabel: '128,000+',
+  },
 ];
 
 /** WiredTiger cache share of physical RAM (M10–M30: 25%; M40+: ~50%). */
@@ -91,15 +121,76 @@ export function activeWorkingSetGb(rawDataGb: number, ramRatio: number): number 
   return Math.min(uncapped, scaleCap);
 }
 
-/** Illustrative RAM ceiling (GB) from raw dataset size before Atlas tier pick. */
-export function tierRamCeilingHeuristic(rawDataGb: number): number {
+/** Smallest tier RAM (GB) whose WiredTiger cache holds index + hot working set. */
+export function tierRamForCacheFit(indexGb: number, hotFootprintGb: number): number {
+  const needInCacheGb = Math.max(0.25, indexGb + hotFootprintGb);
+  const tiers = ATLAS_PRODUCTION_TIER_MATRIX;
+  for (const tier of tiers) {
+    if (wiredTigerCacheGb(tier.ramGb) >= needInCacheGb) return tier.ramGb;
+  }
+  return tiers[tiers.length - 1]!.ramGb;
+}
+
+/**
+ * Physical RAM target for display (2× index + hot). Tier pick uses {@link tierRamForCacheFit} + storage.
+ * Very large datasets: cap runaway index math on the 2× target only.
+ */
+export function tierRamRequirementGb(indexGb: number, hotFootprintGb: number, rawDataGb: number): number {
+  const need = targetPhysicalRamGb(indexGb, hotFootprintGb);
   const raw = Math.max(0, rawDataGb);
-  if (raw <= 64) return 32;
-  if (raw <= 256) return 64;
-  if (raw <= 1024) return 128;
-  if (raw <= 4096) return 256;
-  if (raw <= 16384) return 384;
-  return 512;
+  if (raw >= 6144) return Math.min(need, 768);
+  if (raw >= 2560) return Math.min(need, 512);
+  return need;
+}
+
+/** Single replica-set planning disk used for tier ladder (Atlas ~4 TB/node before sharding). */
+export const SINGLE_REPLICA_SET_PLANNING_DISK_CAP_GB = 4096;
+
+function productionTierRank(tierId: string): number {
+  return ATLAS_PRODUCTION_TIER_MATRIX.findIndex((tier) => tier.id === tierId);
+}
+
+/** Pick tier from planning storage first, then raise only if cache/RAM requires a higher class. */
+export function selectAtlasTierForDatasetScale(input: {
+  planningStorageGb: number;
+  indexGb: number;
+  hotFootprintGb: number;
+  tiers?: AtlasProductionTierSpec[];
+  productionMinTierId?: string;
+}): AtlasProductionTierSpec {
+  const tiers = input.tiers ?? ATLAS_PRODUCTION_TIER_MATRIX;
+  const productionMinTierId = input.productionMinTierId ?? 'M10';
+  const planningGb = Math.max(1, input.planningStorageGb);
+  /** Hot working set only for tier bumps — full index+hot stays on the 2× Target RAM line. */
+  const cacheRamGb = tierRamForCacheFit(0, input.hotFootprintGb);
+  const startIndex = Math.max(0, tiers.findIndex((tier) => tier.id === productionMinTierId));
+  const candidates = tiers.slice(startIndex);
+
+  if (planningGb > SINGLE_REPLICA_SET_PLANNING_DISK_CAP_GB) {
+    const m300Index = candidates.findIndex((tier) => tier.id === 'M300');
+    const largeDataCandidates = m300Index >= 0 ? candidates.slice(m300Index) : candidates;
+    let picked =
+      largeDataCandidates.find((tier) => tierMeetsAtlasGuardrails(tier, cacheRamGb, SINGLE_REPLICA_SET_PLANNING_DISK_CAP_GB)) ??
+      largeDataCandidates[largeDataCandidates.length - 1]!;
+    while (picked.ramGb < cacheRamGb) {
+      const rank = productionTierRank(picked.id);
+      const next = candidates.find((tier) => productionTierRank(tier.id) === rank + 1);
+      if (!next) break;
+      picked = next;
+    }
+    return picked;
+  }
+
+  const picked =
+    candidates.find((tier) => tierMeetsAtlasGuardrails(tier, cacheRamGb, planningGb)) ??
+    candidates[candidates.length - 1]!;
+
+  return picked;
+}
+
+/** @deprecated Use tierRamRequirementGb — kept for tests referencing legacy name. */
+export function tierRamCeilingHeuristic(rawDataGb: number): number {
+  return tierRamRequirementGb(0, activeWorkingSetGb(rawDataGb, 0.2), rawDataGb);
 }
 
 /** Target physical RAM: 2 × (index size + hot data footprint). */

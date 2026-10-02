@@ -6,8 +6,10 @@ import {
   estimateIndexSizeGb,
   maxAllocatableDiskGb,
   planningStorageGb,
+  selectAtlasTierForDatasetScale,
   selectAtlasTierForRequirements,
   targetPhysicalRamGb,
+  tierRamRequirementGb,
   tierMeetsAtlasGuardrails,
   wiredTigerCacheFraction,
   wiredTigerCacheGb,
@@ -28,9 +30,9 @@ describe('disk guardrails', () => {
     expect(maxAllocatableDiskGb(m40)).toBe(960);
   });
 
-  it('allows M50 up to 3840 GB via 120:1 ratio', () => {
+  it('allows M50 up to 2 TB extended storage cap', () => {
     const m50 = ATLAS_PRODUCTION_TIER_MATRIX.find((t) => t.id === 'M50')!;
-    expect(maxAllocatableDiskGb(m50)).toBe(3840);
+    expect(maxAllocatableDiskGb(m50)).toBe(2048);
   });
 });
 
@@ -94,6 +96,23 @@ describe('targetPhysicalRamGb and planningStorageGb', () => {
       horizonMonths: 12,
     });
     expect(base).toBeCloseTo(1000 * 1.33 * 1.12, 1);
+  });
+});
+
+describe('selectAtlasTierForDatasetScale', () => {
+  it('walks storage ladder before large RAM jumps', () => {
+    const at32 = selectAtlasTierForDatasetScale({
+      planningStorageGb: 53,
+      indexGb: 5,
+      hotFootprintGb: activeWorkingSetGb(32, 0.2),
+    });
+    expect(['M10', 'M20', 'M30', 'M40']).toContain(at32.id);
+    const at65 = selectAtlasTierForDatasetScale({
+      planningStorageGb: 108,
+      indexGb: 5,
+      hotFootprintGb: activeWorkingSetGb(65, 0.2),
+    });
+    expect(['M10', 'M20', 'M30', 'M40', 'M50']).toContain(at65.id);
   });
 });
 

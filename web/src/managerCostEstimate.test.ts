@@ -82,8 +82,8 @@ describe('managerCostEstimate', () => {
   it('selects atlas tier by RAM, disk ratio, and working-set guardrails', () => {
     expect(selectAtlasTier(8, 400, 0.5, 1.5).id).toBe('M30');
     expect(selectAtlasTier(16, 900, 2, 6).id).toBe('M40');
-    expect(selectAtlasTier(32, 2500, 4, 12).id).toBe('M50');
-    expect(selectAtlasTier(256, 12_000, 20, 108).id).toBe('M200');
+    expect(selectAtlasTier(32, 2500, 4, 12).id).toBe('M60');
+    expect(selectAtlasTier(256, 12_000, 20, 108).id).toBe('M300');
   });
 
   it('honors target workload profile floor above computed tier', () => {
@@ -99,13 +99,13 @@ describe('managerCostEstimate', () => {
     });
     expect(floored.recommendedTier.id).toBe('M50');
     const tierRank = (id: string) =>
-      ['M10', 'M20', 'M30', 'M40', 'M50', 'M60', 'M80', 'M140', 'M200', 'M300', 'M400', 'M700'].indexOf(id);
+      ['M10', 'M20', 'M30', 'M40', 'M50', 'M60', 'M80', 'M140', 'M200', 'M300', 'M400', 'M600', 'M700'].indexOf(id);
     expect(tierRank(floored.recommendedTier.id)).toBeGreaterThanOrEqual(tierRank(computed.recommendedTier.id));
   });
 
   it('increases recommended tier as dataset scale slider rises', () => {
     const tierRank = (id: string) =>
-      ['M10', 'M20', 'M30', 'M40', 'M50', 'M60', 'M80', 'M140', 'M200', 'M300', 'M400', 'M700'].indexOf(id);
+      ['M10', 'M20', 'M30', 'M40', 'M50', 'M60', 'M80', 'M140', 'M200', 'M300', 'M400', 'M600', 'M700'].indexOf(id);
     let lastRank = -1;
     for (const estimatedDataGb of [128, 512, 2048, 8192]) {
       const { recommendedTier } = computeManagerCostProjection(model, plan, {
@@ -118,9 +118,29 @@ describe('managerCostEstimate', () => {
     }
   });
 
+  it('steps through intermediate tiers when scaling from M10 class (not M10→M60 jump)', () => {
+    const tierRank = (id: string) =>
+      ['M10', 'M20', 'M30', 'M40', 'M50', 'M60', 'M80', 'M140', 'M200', 'M300', 'M400', 'M600', 'M700'].indexOf(id);
+    const tiersSeen = new Set<string>();
+    for (const estimatedDataGb of [1, 32, 64, 96, 128, 256, 512]) {
+      const { recommendedTier } = computeManagerCostProjection(model, plan, {
+        ...DEFAULT_MANAGER_COST_INPUTS,
+        estimatedDataGb,
+        growthRatePercent: 15,
+      });
+      tiersSeen.add(recommendedTier.id);
+    }
+    expect(tiersSeen.has('M20') || tiersSeen.has('M30') || tiersSeen.has('M40')).toBe(true);
+    const at65 = computeManagerCostProjection(model, plan, {
+      ...DEFAULT_MANAGER_COST_INPUTS,
+      estimatedDataGb: 65,
+    }).recommendedTier.id;
+    expect(tierRank(at65)).toBeLessThan(tierRank('M60'));
+  });
+
   it('does not decrease tier when growth rate increases at fixed dataset scale', () => {
     const tierRank = (id: string) =>
-      ['M10', 'M20', 'M30', 'M40', 'M50', 'M60', 'M80', 'M140', 'M200', 'M300', 'M400', 'M700'].indexOf(id);
+      ['M10', 'M20', 'M30', 'M40', 'M50', 'M60', 'M80', 'M140', 'M200', 'M300', 'M400', 'M600', 'M700'].indexOf(id);
     const low = computeManagerCostProjection(model, plan, {
       ...DEFAULT_MANAGER_COST_INPUTS,
       estimatedDataGb: 1024,
@@ -262,7 +282,7 @@ describe('managerCostEstimate', () => {
     });
     expect(projection.rawDataGb).toBeCloseTo(6.2 * 1024, 0);
     expect(projection.recommendedTier.id).not.toBe('M700');
-    expect(projection.requiredRamGb).toBeLessThanOrEqual(512);
+    expect(projection.requiredRamGb).toBeLessThanOrEqual(768);
     expect(projection.planningStorageGb).toBeLessThan(projection.activeStorageGb);
   });
 
@@ -275,7 +295,7 @@ describe('managerCostEstimate', () => {
     expect(projection.rawDataGb).toBeCloseTo(100 * 1024, 1);
     expect(projection.totalStorageGb).toBeGreaterThan(projection.rawDataGb);
     expect(projection.estimatedTotalRows).toBeGreaterThan(DEFAULT_MANAGER_COST_INPUTS.estimatedTotalRows);
-    expect(['M300', 'M400', 'M700']).toContain(projection.recommendedTier.id);
+    expect(['M300', 'M400', 'M600', 'M700']).toContain(projection.recommendedTier.id);
     expect(projection.requiresSharding).toBe(true);
     expect(projection.shardingRecommendations.length).toBeGreaterThan(0);
     expect(projection.shardingRecommendations[0]?.shardKey).toBeDefined();

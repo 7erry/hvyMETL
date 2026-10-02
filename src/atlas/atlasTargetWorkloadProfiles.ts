@@ -14,6 +14,7 @@ export type TargetWorkloadProfileId =
   | 'm200'
   | 'm300'
   | 'm400'
+  | 'm600'
   | 'm700';
 
 export type TargetWorkloadProfileOption = {
@@ -115,6 +116,12 @@ export const TARGET_WORKLOAD_PROFILES: TargetWorkloadProfileOption[] = [
     summary: 'Beyond M300 — largest standard dedicated classes before sharding.',
   },
   {
+    id: 'm600',
+    tierId: 'M600',
+    label: 'M600',
+    summary: 'High-memory dedicated tier for extreme working sets (M400/M600 class).',
+  },
+  {
     id: 'm700',
     tierId: 'M700',
     label: 'M700',
@@ -134,6 +141,7 @@ const TIER_RANK: string[] = [
   'M200',
   'M300',
   'M400',
+  'M600',
   'M700',
 ];
 
@@ -180,15 +188,16 @@ export function decisionMatrixSummaryForTier(tierId: string): string {
 
 export const DATASET_TIER_SLIDER_ANCHORS_GB: ReadonlyArray<{ tierId: string; rawDataGb: number }> = [
   { tierId: 'M10', rawDataGb: 1 },
-  { tierId: 'M20', rawDataGb: 16 },
-  { tierId: 'M30', rawDataGb: 64 },
-  { tierId: 'M40', rawDataGb: 256 },
-  { tierId: 'M50', rawDataGb: 768 },
-  { tierId: 'M60', rawDataGb: 2048 },
-  { tierId: 'M80', rawDataGb: 4096 },
-  { tierId: 'M140', rawDataGb: 8192 },
-  { tierId: 'M200', rawDataGb: 16384 },
-  { tierId: 'M300', rawDataGb: 32768 },
-  { tierId: 'M400', rawDataGb: 65536 },
-  { tierId: 'M700', rawDataGb: 102400 },
+  { tierId: 'M20', rawDataGb: 12 },
+  { tierId: 'M30', rawDataGb: 40 },
+  { tierId: 'M40', rawDataGb: 120 },
+  { tierId: 'M50', rawDataGb: 350 },
+  { tierId: 'M60', rawDataGb: 900 },
+  { tierId: 'M80', rawDataGb: 1800 },
+  { tierId: 'M140', rawDataGb: 3200 },
+  { tierId: 'M200', rawDataGb: 5500 },
+  { tierId: 'M300', rawDataGb: 9000 },
+  { tierId: 'M400', rawDataGb: 14000 },
+  { tierId: 'M600', rawDataGb: 22000 },
+  { tierId: 'M700', rawDataGb: 35000 },
 ];
