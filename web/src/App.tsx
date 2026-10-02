@@ -1695,7 +1695,7 @@ export default function App() {
                           <li
                             key={c.name}
                             className={selectedCollection === c.name ? 'selected' : ''}
-                            title="Double-click to open in JSON Crack"
+                            title="Double-click for collection plan graph"
                             onClick={() => setSessionField('selectedCollection', c.name)}
                             onDoubleClick={() => setJsonCrackCollection(c)}
                           >
