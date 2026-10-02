@@ -1,3 +1,9 @@
+## hvyMETL 5.1.15
+
+**Piecewise dataset scale slider** — **Sizing Cost Projection** maps **1 GB→4 TB** across the **left half** of the track and **4 TB→50 TB** across the **right half** (**4 TB at center**). Tier ruler marks use the same scale so M10–M60 labels spread out.
+
+---
+
 ## hvyMETL 5.1.14
 
 **MongoDB diagram & schema modeling cleanup** — Subset embeds use semantic caps (addresses **5**, loyalty **3**, default **10**). Address array items nest under **`address`** with top-level **`addressId`**. Money/country columns get **Decimal128** / **ISO country** hints; computed counters clarify **$inc** vs capped **`recent*`** arrays. Collection nodes stack field names and types to avoid mid-word wraps (e.g. `recentCustomerAddresses`).

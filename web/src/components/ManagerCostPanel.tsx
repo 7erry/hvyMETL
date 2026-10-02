@@ -19,6 +19,14 @@ import { ATLAS_TIER_REFERENCE_ROWS } from '../../../src/atlas/atlasTierSizing.ts
 import { DATASET_TIER_SLIDER_ANCHORS_GB } from '../../../src/atlas/atlasTargetWorkloadProfiles.ts';
 import type { MigrationPlan } from '../migrationPlanTypes';
 import type { SqlStructuralModel } from '../types';
+import {
+  DATASET_SLIDER_MAX_GB,
+  DATASET_SLIDER_MIN_GB,
+  DATASET_SLIDER_POSITION_STEPS,
+  datasetScaleSliderTrackPercent,
+  rawDataGbFromSliderPosition,
+  sliderPositionFromRawDataGb,
+} from '../datasetScaleSlider';
 import { CollapsiblePanel } from './CollapsiblePanel';
 
 /** Sidebar panel title for Atlas sizing and monthly cost heuristics. */
@@ -37,16 +45,6 @@ type ManagerCostPanelProps = {
   sizingPanelOpen?: boolean;
   onSizingPanelOpenChange?: (open: boolean) => void;
 };
-
-const DATASET_SLIDER_MIN_GB = 1;
-const DATASET_SLIDER_MAX_GB = 50 * 1024;
-/** 1 GB steps so recommended tier can walk M10→M20→… without 64 GB jumps. */
-const DATASET_SLIDER_STEP_GB = 1;
-
-function datasetScaleSliderPercent(rawDataGb: number): number {
-  const clamped = Math.max(DATASET_SLIDER_MIN_GB, Math.min(DATASET_SLIDER_MAX_GB, rawDataGb));
-  return ((clamped - DATASET_SLIDER_MIN_GB) / (DATASET_SLIDER_MAX_GB - DATASET_SLIDER_MIN_GB)) * 100;
-}
 
 const WORKLOAD_OPTIONS: { id: ManagerWorkloadType; title: string; hint: string }[] = [
   {
@@ -137,6 +135,7 @@ export function ManagerCostPanel({
     DATASET_SLIDER_MIN_GB,
     Math.min(DATASET_SLIDER_MAX_GB, inputs.estimatedDataGb > 0 ? inputs.estimatedDataGb : projection.rawDataGb),
   );
+  const datasetSliderPosition = sliderPositionFromRawDataGb(datasetScaleGb);
 
   const sizingSection = (
     <CollapsiblePanel
@@ -159,14 +158,17 @@ export function ManagerCostPanel({
             <div className="manager-cost-dataset-scale">
               <input
                 type="range"
-                min={DATASET_SLIDER_MIN_GB}
-                max={DATASET_SLIDER_MAX_GB}
-                step={DATASET_SLIDER_STEP_GB}
-                value={datasetScaleGb}
-                onChange={(e) => setDataSize(Number(e.target.value))}
+                min={0}
+                max={DATASET_SLIDER_POSITION_STEPS}
+                step={1}
+                value={datasetSliderPosition}
+                onChange={(e) => setDataSize(rawDataGbFromSliderPosition(Number(e.target.value)))}
                 aria-valuetext={`${formatGb(datasetScaleGb)} raw data · recommended ${projection.recommendedTier.label}`}
               />
               <div className="manager-cost-tier-ruler" aria-hidden="true">
+                <span className="manager-cost-tier-ruler__center" style={{ left: '50%' }} title="4 TB pivot">
+                  4 TB
+                </span>
                 {DATASET_TIER_SLIDER_ANCHORS_GB.map(({ tierId, rawDataGb }) => (
                   <button
                     key={tierId}
@@ -174,7 +176,7 @@ export function ManagerCostPanel({
                     className={
                       projection.recommendedTier.id === tierId ? 'manager-cost-tier-ruler__mark active' : 'manager-cost-tier-ruler__mark'
                     }
-                    style={{ left: `${datasetScaleSliderPercent(rawDataGb)}%` }}
+                    style={{ left: `${datasetScaleSliderTrackPercent(rawDataGb)}%` }}
                     title={`${tierId} · ~${formatGb(rawDataGb)} raw`}
                     onClick={() => setDataSize(rawDataGb)}
                   >
@@ -183,13 +185,16 @@ export function ManagerCostPanel({
                 ))}
               </div>
             </div>
-            {hasSchemaRowStats ? (
-              <span className="manager-cost-field__note">
-                Schema statistics estimate document shape; slider scenarios scale raw data up to{' '}
-                {formatGb(DATASET_SLIDER_MAX_GB)}. Approximate documents:{' '}
-                {formatRowCount(projection.estimatedTotalRows)}.
-              </span>
-            ) : null}
+            <span className="manager-cost-field__note">
+              Slider is piecewise: 1 GB–{formatGb(4 * 1024)} uses the left half; larger sizes scale faster to{' '}
+              {formatGb(DATASET_SLIDER_MAX_GB)} (4 TB at center).
+              {hasSchemaRowStats ? (
+                <>
+                  {' '}
+                  Schema stats estimate shape; ~{formatRowCount(projection.estimatedTotalRows)} documents.
+                </>
+              ) : null}
+            </span>
           </label>
 
           <div className="manager-cost-workload" role="group" aria-label="Workload type">
