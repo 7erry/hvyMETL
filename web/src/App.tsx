@@ -96,7 +96,6 @@ import {
   initialCollectionPositions,
   parseMigrationPlan,
   patchMigrationPlanJsonWithProfile,
-  schemaFieldsFromCollection,
 } from './migrationPlanDisplay';
 import { fetchMigrationPrompts, mapPromptExportResponse } from './migrationPrompts';
 import { layoutSqlModel, SQL_GRAPH_LAYOUT_OPTIONS } from './graphLayout';
