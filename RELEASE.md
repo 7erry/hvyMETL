@@ -1,3 +1,9 @@
+## hvyMETL 5.1.20
+
+**Collection inspector Table / JSON toggle** — Restore Patterns, indexes, embeds, and field table view; switch to colorized plan JSON when needed. Inspector mode persists in session.
+
+---
+
 ## hvyMETL 5.1.19
 
 **Fix blank UI when selecting a MongoDB collection** — Cache per-collection schema trees so selection no longer retriggers React Flow layout on every node; normalize partial plans; wrap the collection inspector in an error boundary.

@@ -97,6 +97,7 @@ import {
   initialCollectionPositions,
   parseMigrationPlan,
   patchMigrationPlanJsonWithProfile,
+  schemaFieldsFromCollection,
 } from './migrationPlanDisplay';
 import { fetchMigrationPrompts, mapPromptExportResponse } from './migrationPrompts';
 import { layoutSqlModel, SQL_GRAPH_LAYOUT_OPTIONS } from './graphLayout';
@@ -211,6 +212,7 @@ export default function App() {
     snapToGrid,
     selectedTable,
     selectedCollection,
+    collectionInspectorView,
     schemaPhase,
     diagramViewMode,
     diagramDualSplitBottomHeight,
@@ -542,6 +544,11 @@ export default function App() {
     () => migrationPlan?.collections.find((c) => c.name === selectedCollection) ?? null,
     [migrationPlan, selectedCollection],
   );
+
+  const selectedCollectionSchemaFields = useMemo(() => {
+    if (!selectedCollectionPlan || !migrationPlan) return [];
+    return schemaFieldsFromCollection(selectedCollectionPlan, migrationPlan);
+  }, [selectedCollectionPlan, migrationPlan]);
 
   const effectiveCollectionPositions = useMemo(() => {
     if (!migrationPlan) return collectionPositions;
@@ -1616,6 +1623,9 @@ export default function App() {
                     <StudioErrorBoundary label="Collection inspector">
                       <CollectionDetails
                         collection={selectedCollectionPlan}
+                        schemaFields={selectedCollectionSchemaFields}
+                        viewMode={collectionInspectorView}
+                        onViewModeChange={(mode) => setSessionField('collectionInspectorView', mode)}
                         onClose={() => setSessionField('selectedCollection', null)}
                       />
                     </StudioErrorBoundary>

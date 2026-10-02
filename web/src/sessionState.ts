@@ -109,6 +109,8 @@ export type SessionState = {
   snapToGrid: boolean;
   selectedTable: string | null;
   selectedCollection: string | null;
+  /** Sidebar collection inspector: field table vs raw plan JSON. */
+  collectionInspectorView: 'table' | 'json';
   schemaPhase: SchemaPhase;
   diagramViewMode: DiagramViewMode;
   diagramDualSplitBottomHeight: number;
@@ -145,6 +147,7 @@ export const defaultSessionState = (): SessionState => ({
   snapToGrid: true,
   selectedTable: null,
   selectedCollection: null,
+  collectionInspectorView: 'table',
   schemaPhase: 'before',
   diagramViewMode: 'rel',
   diagramDualSplitBottomHeight: DIAGRAM_DUAL_SPLIT_BOTTOM_DEFAULT,
@@ -201,6 +204,7 @@ export function loadSessionState(userId?: string): SessionState {
         ...(rest.managerCostInputs ?? {}),
       },
       haClusterInputs: haClusterInputsWithDefaults(rest.haClusterInputs),
+      collectionInspectorView: rest.collectionInspectorView === 'json' ? 'json' : 'table',
     };
   } catch {
     return defaultSessionState();

@@ -1760,6 +1760,37 @@ textarea {
   opacity: 0.85;
 }
 
+.collection-details__view-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.65rem;
+}
+
+.collection-details__view-toggle-label {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  opacity: 0.75;
+}
+
+.collection-details__segmented {
+  flex-shrink: 0;
+}
+
+.collection-details__footnote {
+  margin: 0.75rem 0 0;
+  font-size: 0.8rem;
+  opacity: 0.85;
+}
+
+.collection-details__table-view {
+  max-height: min(70vh, 520px);
+  overflow: auto;
+  padding-right: 0.15rem;
+}
+
 .collection-details__json {
   max-height: min(70vh, 520px);
   overflow: auto;
