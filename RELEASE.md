@@ -1,3 +1,9 @@
+## hvyMETL 5.1.28
+
+**JSON Crack dialog sizing** — Default dialog is **80%** of the viewport; use **Expand** (⤢) in the header to go nearly full screen and **Restore** (⤡) to return.
+
+---
+
 ## hvyMETL 5.1.27
 
 **JSON Crack + collection selection fix** — Collection graph uses the **jsoncrack-react** component (no third-party iframe/postMessage). Single-click selection on the Mongo canvas works again; double-click still opens the JSON Crack dialog.

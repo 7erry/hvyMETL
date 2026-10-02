@@ -2911,12 +2911,28 @@ textarea {
 }
 
 .jsoncrack-collection-modal {
-  width: min(1200px, 96vw);
-  height: min(900px, 92vh);
-  max-height: 92vh;
+  width: 80vw;
+  height: 80vh;
+  max-width: 80vw;
+  max-height: 80vh;
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  transition: width 0.2s ease, height 0.2s ease, max-width 0.2s ease, max-height 0.2s ease;
+}
+
+.jsoncrack-collection-modal--expanded {
+  width: calc(100vw - 1.25rem);
+  height: calc(100vh - 1.25rem);
+  max-width: calc(100vw - 1.25rem);
+  max-height: calc(100vh - 1.25rem);
+}
+
+.jsoncrack-collection-modal__header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  flex-shrink: 0;
 }
 
 .jsoncrack-collection-modal__canvas {
@@ -2931,7 +2947,7 @@ textarea {
 .jsoncrack-collection-modal__graph {
   width: 100%;
   height: 100%;
-  min-height: 480px;
+  min-height: 0;
 }
 
 .pipeline-modal__subtitle {
