@@ -1,3 +1,9 @@
+## hvyMETL 5.1.3
+
+**Sidebar panel typography** — Unified **0.875rem** body text (`--sidebar-panel-font-size`) across Sizing Cost Projection, High Availability, embed overrides, and other sidebar panels.
+
+---
+
 ## hvyMETL 5.1.2
 
 **Sizing workload highlight** — Workload type buttons in **Sizing Cost Projection** show a clear selected state in Developer view (same styling as Manager).

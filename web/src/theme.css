@@ -31,6 +31,9 @@
   --btn-secondary-text: var(--mdb-spring-green);
   --btn-tertiary-text: var(--accent-secondary);
   --btn-tertiary-text-hover: var(--mdb-spring-green);
+  /** Body copy inside sidebar disclosure panels (Sizing, HA, overrides, import). */
+  --sidebar-panel-font-size: 0.875rem;
+  --sidebar-panel-line-height: 1.45;
   --btn-danger-border: #b44;
   --btn-danger-text: #f5a8a8;
   --btn-danger-bg-hover: rgba(180, 68, 68, 0.2);
@@ -1904,6 +1907,25 @@ textarea {
 
 .panel-dropdown__body {
   padding: 0 1rem 1rem;
+  font-size: var(--sidebar-panel-font-size);
+  line-height: var(--sidebar-panel-line-height);
+  font-family: inherit;
+}
+
+.sidebar-scroll .manager-hint,
+.sidebar-scroll .pipeline-hint,
+.sidebar-scroll .cardinality-overrides__hint,
+.sidebar-scroll .ha-cluster-intro,
+.sidebar-scroll .manager-cost-panel__intro {
+  font-size: var(--sidebar-panel-font-size);
+  line-height: var(--sidebar-panel-line-height);
+  font-family: inherit;
+}
+
+.sidebar-scroll .manager-cost-panel__intro {
+  font-weight: 500;
+  opacity: 0.92;
+  margin: 0 0 0.75rem;
 }
 
 .cardinality-overrides {
@@ -1914,8 +1936,8 @@ textarea {
 
 .cardinality-overrides__hint {
   margin: 0;
-  font-size: 0.75rem;
-  line-height: 1.45;
+  font-size: var(--sidebar-panel-font-size);
+  line-height: var(--sidebar-panel-line-height);
   opacity: 0.85;
 }
 
@@ -3398,8 +3420,10 @@ textarea {
   gap: 0.5rem;
 }
 
-.app--manager .manager-hint {
-  font-size: 0.75rem;
+.app--manager .manager-hint,
+.sidebar-scroll .manager-hint {
+  font-size: var(--sidebar-panel-font-size);
+  line-height: var(--sidebar-panel-line-height);
   opacity: 0.85;
   margin: 0 0 0.5rem;
 }
@@ -4248,16 +4272,7 @@ textarea {
   color: #ffb347;
 }
 
-.app--manager .manager-cost-panel__intro {
-  margin-bottom: 0.75rem;
-  color: var(--mdb-spring-green);
-  font-size: 0.9rem;
-  font-weight: 600;
-  line-height: 1.45;
-  opacity: 0.95;
-}
-
-.app--manager .manager-cost-inputs {
+.sidebar-scroll .manager-cost-inputs {
   display: flex;
   flex-direction: column;
   gap: 0.85rem;
@@ -4265,38 +4280,36 @@ textarea {
   min-width: 0;
 }
 
-.app-root .manager-cost-workload,
-.app--manager .manager-cost-workload {
+.sidebar-scroll .manager-cost-workload {
   min-width: 0;
 }
 
-.app--manager .manager-cost-field {
+.sidebar-scroll .manager-cost-field {
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
-  font-size: 0.78rem;
+  font-size: var(--sidebar-panel-font-size);
 }
 
-.app--manager .manager-cost-field__label {
+.sidebar-scroll .manager-cost-field__label {
   opacity: 0.9;
 }
 
-.app--manager .manager-cost-field__label strong {
+.sidebar-scroll .manager-cost-field__label strong {
   color: var(--mdb-spring-green);
 }
 
-.app--manager .manager-cost-field__note {
-  font-size: 0.7rem;
-  opacity: 0.75;
+.sidebar-scroll .manager-cost-field__note {
+  font-size: var(--sidebar-panel-font-size);
+  opacity: 0.8;
 }
 
-.app--manager .manager-cost-field input[type='range'] {
+.sidebar-scroll .manager-cost-field input[type='range'] {
   width: 100%;
   accent-color: var(--mdb-green-base);
 }
 
-.app-root .manager-cost-workload__grid,
-.app--manager .manager-cost-workload__grid {
+.sidebar-scroll .manager-cost-workload__grid {
   display: flex;
   flex-direction: column;
   gap: 0.4rem;
@@ -4304,8 +4317,7 @@ textarea {
   min-width: 0;
 }
 
-.app-root .manager-cost-workload__grid button,
-.app--manager .manager-cost-workload__grid button {
+.sidebar-scroll .manager-cost-workload__grid button {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -4323,48 +4335,42 @@ textarea {
   background: rgba(0, 30, 43, 0.35);
   color: inherit;
   cursor: pointer;
-  font-size: 0.72rem;
+  font-size: var(--sidebar-panel-font-size);
   font-weight: 500;
   box-shadow: none;
-  line-height: 1.4;
+  line-height: var(--sidebar-panel-line-height);
 }
 
-.app-root .manager-cost-workload__grid button:hover:not(:disabled),
-.app--manager .manager-cost-workload__grid button:hover:not(:disabled) {
+.sidebar-scroll .manager-cost-workload__grid button:hover:not(:disabled) {
   background: rgba(0, 104, 74, 0.35);
   border-color: var(--mdb-green-base);
   box-shadow: none;
 }
 
-.app-root .manager-cost-workload__grid button:focus-visible,
-.app--manager .manager-cost-workload__grid button:focus-visible {
+.sidebar-scroll .manager-cost-workload__grid button:focus-visible {
   box-shadow: var(--btn-focus-ring);
 }
 
-.app-root .manager-cost-workload__grid button.active,
-.app--manager .manager-cost-workload__grid button.active {
+.sidebar-scroll .manager-cost-workload__grid button.active {
   border-color: var(--mdb-spring-green);
   background: rgba(0, 237, 100, 0.18);
   box-shadow: inset 0 0 0 1px rgba(0, 237, 100, 0.35);
 }
 
-.app-root .manager-cost-workload__grid button.active strong,
-.app--manager .manager-cost-workload__grid button.active strong {
+.sidebar-scroll .manager-cost-workload__grid button.active strong {
   color: var(--mdb-spring-green);
 }
 
-.app-root .manager-cost-workload__grid button strong,
-.app--manager .manager-cost-workload__grid button strong {
+.sidebar-scroll .manager-cost-workload__grid button strong {
   display: block;
   width: 100%;
-  font-size: 0.78rem;
+  font-size: var(--sidebar-panel-font-size);
   color: var(--mdb-spring-green);
   margin-bottom: 0.2rem;
   white-space: normal;
 }
 
-.app-root .manager-cost-workload__grid button span,
-.app--manager .manager-cost-workload__grid button span {
+.sidebar-scroll .manager-cost-workload__grid button span {
   display: block;
   width: 100%;
   opacity: 0.85;
@@ -4517,7 +4523,7 @@ textarea {
   font-size: 0.7rem;
 }
 
-.app--manager .manager-cost-card {
+.sidebar-scroll .manager-cost-card {
   border: 1px solid var(--mdb-green-dark-2);
   border-radius: 10px;
   padding: 0.85rem;
@@ -4525,25 +4531,25 @@ textarea {
   font-size: 0.78rem;
 }
 
-.app--manager .manager-cost-card__header {
+.sidebar-scroll .manager-cost-card__header {
   display: flex;
   gap: 0.65rem;
   align-items: flex-start;
   margin-bottom: 0.65rem;
 }
 
-.app--manager .manager-cost-card__header p {
+.sidebar-scroll .manager-cost-card__header p {
   margin: 0.2rem 0 0;
   opacity: 0.8;
-  font-size: 0.72rem;
+  font-size: var(--sidebar-panel-font-size);
 }
 
-.app--manager .manager-cost-card__icon {
+.sidebar-scroll .manager-cost-card__icon {
   font-size: 1.25rem;
   line-height: 1;
 }
 
-.app--manager .manager-cost-savings {
+.sidebar-scroll .manager-cost-savings {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   gap: 0.55rem;
@@ -4556,13 +4562,13 @@ textarea {
     rgba(0, 104, 74, 0.28);
 }
 
-.app--manager .manager-cost-savings__primary {
+.sidebar-scroll .manager-cost-savings__primary {
   display: flex;
   flex-direction: column;
   gap: 0.15rem;
 }
 
-.app--manager .manager-cost-savings__primary span {
+.sidebar-scroll .manager-cost-savings__primary span {
   font-size: 0.72rem;
   font-weight: 600;
   letter-spacing: 0.04em;
@@ -4570,14 +4576,14 @@ textarea {
   opacity: 0.82;
 }
 
-.app--manager .manager-cost-savings__primary strong {
+.sidebar-scroll .manager-cost-savings__primary strong {
   color: var(--mdb-green-base);
   font-size: clamp(1.75rem, 6vw, 2.6rem);
   line-height: 1;
   letter-spacing: -0.04em;
 }
 
-.app--manager .manager-cost-savings__meta {
+.sidebar-scroll .manager-cost-savings__meta {
   display: flex;
   flex-direction: column;
   gap: 0.2rem;
@@ -4586,7 +4592,7 @@ textarea {
   opacity: 0.9;
 }
 
-.app--manager .manager-cost-manpower {
+.sidebar-scroll .manager-cost-manpower {
   display: grid;
   gap: 0.35rem;
   margin: 0 0 0.8rem;
@@ -4598,13 +4604,13 @@ textarea {
     rgba(0, 30, 43, 0.56);
 }
 
-.app--manager .manager-cost-manpower__primary {
+.sidebar-scroll .manager-cost-manpower__primary {
   display: flex;
   flex-direction: column;
   gap: 0.15rem;
 }
 
-.app--manager .manager-cost-manpower__primary span {
+.sidebar-scroll .manager-cost-manpower__primary span {
   font-size: 0.72rem;
   font-weight: 600;
   letter-spacing: 0.04em;
@@ -4612,27 +4618,27 @@ textarea {
   opacity: 0.82;
 }
 
-.app--manager .manager-cost-manpower__primary strong {
+.sidebar-scroll .manager-cost-manpower__primary strong {
   color: var(--mdb-blue-base);
   font-size: clamp(1.45rem, 5vw, 2.15rem);
   line-height: 1;
   letter-spacing: -0.04em;
 }
 
-.app--manager .manager-cost-manpower p {
+.sidebar-scroll .manager-cost-manpower p {
   margin: 0;
   font-size: 0.74rem;
   line-height: 1.4;
   opacity: 0.9;
 }
 
-.app--manager .manager-cost-manpower__breakdown {
+.sidebar-scroll .manager-cost-manpower__breakdown {
   display: grid;
   gap: 0.45rem;
   margin-top: 0.25rem;
 }
 
-.app--manager .manager-cost-manpower__category {
+.sidebar-scroll .manager-cost-manpower__category {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 0.6rem;
@@ -4643,25 +4649,25 @@ textarea {
   background: rgba(255, 255, 255, 0.04);
 }
 
-.app--manager .manager-cost-manpower__category div {
+.sidebar-scroll .manager-cost-manpower__category div {
   display: flex;
   flex-direction: column;
   gap: 0.15rem;
   min-width: 0;
 }
 
-.app--manager .manager-cost-manpower__category strong {
+.sidebar-scroll .manager-cost-manpower__category strong {
   font-size: 0.74rem;
   line-height: 1.25;
 }
 
-.app--manager .manager-cost-manpower__category span {
+.sidebar-scroll .manager-cost-manpower__category span {
   font-size: 0.68rem;
   line-height: 1.35;
   opacity: 0.72;
 }
 
-.app--manager .manager-cost-manpower__category em {
+.sidebar-scroll .manager-cost-manpower__category em {
   color: var(--mdb-blue-light-2);
   font-size: 0.72rem;
   font-style: normal;
@@ -4669,20 +4675,20 @@ textarea {
   white-space: nowrap;
 }
 
-.app--manager .manager-cost-card__metrics {
+.sidebar-scroll .manager-cost-card__metrics {
   margin: 0 0 0.65rem;
 }
 
-.app--manager .manager-cost-card__metrics div {
+.sidebar-scroll .manager-cost-card__metrics div {
   margin-bottom: 0.35rem;
 }
 
-.app--manager .manager-cost-card__metrics dt {
+.sidebar-scroll .manager-cost-card__metrics dt {
   font-size: 0.7rem;
   opacity: 0.75;
 }
 
-.app--manager .manager-cost-card__metrics dd {
+.sidebar-scroll .manager-cost-card__metrics dd {
   margin: 0;
   font-size: 0.85rem;
   font-weight: 600;
@@ -4690,38 +4696,38 @@ textarea {
   line-height: 1.35;
 }
 
-.app--manager .manager-cost-working-set {
+.sidebar-scroll .manager-cost-working-set {
   margin-bottom: 0.75rem;
 }
 
-.app--manager .manager-cost-working-set__track {
+.sidebar-scroll .manager-cost-working-set__track {
   height: 8px;
   border-radius: 999px;
   background: rgba(0, 104, 74, 0.35);
   overflow: hidden;
 }
 
-.app--manager .manager-cost-working-set__fill {
+.sidebar-scroll .manager-cost-working-set__fill {
   height: 100%;
   background: linear-gradient(90deg, var(--mdb-green-dark-2), var(--mdb-green-base));
   border-radius: 999px;
   min-width: 4px;
 }
 
-.app--manager .manager-cost-working-set__label {
+.sidebar-scroll .manager-cost-working-set__label {
   display: block;
   margin-top: 0.35rem;
   font-size: 0.7rem;
   opacity: 0.85;
 }
 
-.app--manager .manager-cost-totals {
+.sidebar-scroll .manager-cost-totals {
   border-top: 1px solid rgba(0, 104, 74, 0.45);
   padding-top: 0.5rem;
   margin-bottom: 0.5rem;
 }
 
-.app--manager .manager-cost-totals__row {
+.sidebar-scroll .manager-cost-totals__row {
   display: flex;
   justify-content: space-between;
   align-items: baseline;
@@ -4730,29 +4736,29 @@ textarea {
   padding: 0.2rem 0;
 }
 
-.app--manager .manager-cost-totals__row span,
-.app--manager .manager-cost-totals__row strong {
+.sidebar-scroll .manager-cost-totals__row span,
+.sidebar-scroll .manager-cost-totals__row strong {
   min-width: 0;
 }
 
-.app--manager .manager-cost-totals__row strong {
+.sidebar-scroll .manager-cost-totals__row strong {
   color: var(--mdb-spring-green);
   font-size: 0.95rem;
 }
 
-.app--manager .manager-cost-totals__row--total {
+.sidebar-scroll .manager-cost-totals__row--total {
   margin-top: 0.25rem;
   padding-top: 0.35rem;
   border-top: 1px dashed rgba(0, 104, 74, 0.45);
   font-size: 0.95rem;
 }
 
-.app--manager .manager-cost-totals__row--total strong {
+.sidebar-scroll .manager-cost-totals__row--total strong {
   color: var(--mdb-spring-green);
   font-size: 1.25rem;
 }
 
-.app-root .manager-cost-sharding {
+.sidebar-scroll .manager-cost-sharding {
   margin-top: 1rem;
   padding-top: 0.85rem;
   border-top: 1px solid rgba(0, 104, 74, 0.45);
@@ -4761,87 +4767,87 @@ textarea {
   gap: 0.65rem;
 }
 
-.app-root .manager-cost-sharding__header p {
+.sidebar-scroll .manager-cost-sharding__header p {
   margin: 0.25rem 0 0;
   font-size: 0.78rem;
   opacity: 0.9;
 }
 
-.app-root .manager-cost-sharding__header a {
+.sidebar-scroll .manager-cost-sharding__header a {
   color: var(--mdb-spring-green);
 }
 
-.app-root .manager-cost-sharding__guidance {
+.sidebar-scroll .manager-cost-sharding__guidance {
   margin: 0;
   padding-left: 1.1rem;
-  font-size: 0.75rem;
+  font-size: var(--sidebar-panel-font-size);
   opacity: 0.92;
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
 }
 
-.app-root .manager-cost-sharding__table {
+.sidebar-scroll .manager-cost-sharding__table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 0.75rem;
+  font-size: var(--sidebar-panel-font-size);
 }
 
-.app-root .manager-cost-sharding__table th,
-.app-root .manager-cost-sharding__table td {
+.sidebar-scroll .manager-cost-sharding__table th,
+.sidebar-scroll .manager-cost-sharding__table td {
   padding: 0.45rem 0.5rem;
   border-bottom: 1px solid rgba(0, 104, 74, 0.35);
   vertical-align: top;
   text-align: left;
 }
 
-.app-root .manager-cost-sharding__table th {
+.sidebar-scroll .manager-cost-sharding__table th {
   font-size: 0.68rem;
   text-transform: uppercase;
   letter-spacing: 0.04em;
   color: var(--mdb-green-base);
 }
 
-.app-root .manager-cost-sharding__table td strong {
+.sidebar-scroll .manager-cost-sharding__table td strong {
   display: block;
   margin-bottom: 0.2rem;
 }
 
-.app-root .manager-cost-sharding__table td span {
+.sidebar-scroll .manager-cost-sharding__table td span {
   display: block;
   opacity: 0.88;
   line-height: 1.35;
 }
 
-.app-root .manager-cost-sharding__table code {
+.sidebar-scroll .manager-cost-sharding__table code {
   font-size: 0.72rem;
   white-space: nowrap;
 }
 
-.app-root .manager-cost-sharding__warnings {
+.sidebar-scroll .manager-cost-sharding__warnings {
   margin: 0.35rem 0 0;
   padding-left: 1rem;
   color: #ffb347;
 }
 
-.app-root .manager-cost-sharding__query {
+.sidebar-scroll .manager-cost-sharding__query {
   margin-top: 0.35rem;
   font-size: 0.72rem;
   font-style: italic;
 }
 
-.app--manager .manager-cost-egress {
+.sidebar-scroll .manager-cost-egress {
   margin: 0;
   font-size: 0.75rem;
   opacity: 0.9;
 }
 
-.app--manager .manager-cost-egress__rate {
+.sidebar-scroll .manager-cost-egress__rate {
   opacity: 0.7;
   font-size: 0.68rem;
 }
 
-.app--manager .manager-cost-footnote {
+.sidebar-scroll .manager-cost-footnote {
   margin: 0.5rem 0 0;
   font-size: 0.7rem;
   opacity: 0.8;
@@ -4862,7 +4868,7 @@ textarea {
   border-top: none;
 }
 
-.app--manager .manager-cost-legal {
+.sidebar-scroll .manager-cost-legal {
   margin-top: 0.75rem;
   border: 1px solid rgba(255, 179, 71, 0.38);
   border-radius: 10px;
@@ -5297,11 +5303,11 @@ textarea {
     min-width: 640px;
   }
 
-  .app--manager .manager-cost-workload__grid {
+  .sidebar-scroll .manager-cost-workload__grid {
     grid-template-columns: 1fr;
   }
 
-  .app--manager .manager-cost-manpower__breakdown {
+  .sidebar-scroll .manager-cost-manpower__breakdown {
     grid-template-columns: 1fr;
   }
 
@@ -6641,23 +6647,7 @@ textarea {
   color: #ffabab;
 }
 
-.app-root .manager-cost-panel__intro,
-.app-root .manager-cost-panel .manager-hint.manager-cost-panel__intro {
-  margin: 0.35rem 0 0.75rem;
-  padding-top: 0.15rem;
-  font-size: 0.82rem;
-  line-height: 1.45;
-  opacity: 0.92;
-}
-
-.app-root .ha-cluster-intro {
-  margin: 0 0 0.75rem;
-  font-size: 0.78rem;
-  opacity: 0.9;
-  line-height: 1.4;
-}
-
-.app-root .ha-cost-badge {
+.sidebar-scroll .ha-cost-badge {
   margin-bottom: 0.85rem;
   padding: 0.55rem 0.65rem;
   border-radius: 10px;
@@ -6668,30 +6658,30 @@ textarea {
   gap: 0.15rem;
 }
 
-.app-root .ha-cost-badge__label {
+.sidebar-scroll .ha-cost-badge__label {
   font-size: 0.68rem;
   text-transform: uppercase;
   letter-spacing: 0.04em;
   opacity: 0.85;
 }
 
-.app-root .ha-cost-badge__value {
+.sidebar-scroll .ha-cost-badge__value {
   font-size: 1.15rem;
   color: var(--mdb-spring-green);
 }
 
-.app-root .ha-cost-badge__meta {
-  font-size: 0.72rem;
+.sidebar-scroll .ha-cost-badge__meta {
+  font-size: var(--sidebar-panel-font-size);
   opacity: 0.88;
 }
 
-.app-root .ha-segmented {
+.sidebar-scroll .ha-segmented {
   display: flex;
   gap: 0.35rem;
   flex-wrap: wrap;
 }
 
-.app-root .ha-segmented__btn {
+.sidebar-scroll .ha-segmented__btn {
   flex: 1 1 30%;
   min-height: var(--btn-min-height, 2.25rem);
   padding: 0.45rem 0.5rem;
@@ -6699,20 +6689,20 @@ textarea {
   border-radius: 8px;
   background: rgba(0, 0, 0, 0.2);
   color: inherit;
-  font-size: 0.78rem;
+  font-size: var(--sidebar-panel-font-size);
   font-weight: 600;
   cursor: pointer;
 }
 
-.app-root .ha-segmented__btn.active {
+.sidebar-scroll .ha-segmented__btn.active {
   background: rgba(0, 104, 74, 0.35);
   border-color: var(--mdb-spring-green);
   color: var(--mdb-spring-green);
 }
 
-.app-root .ha-cluster-use-recommended {
+.sidebar-scroll .ha-cluster-use-recommended {
   margin-top: 0.35rem;
-  font-size: 0.72rem;
+  font-size: var(--sidebar-panel-font-size);
 }
 
 .ha-payload-drawer {
@@ -6739,62 +6729,62 @@ textarea {
   color: var(--mdb-spring-green);
 }
 
-.app-root .ha-cluster-controls {
+.sidebar-scroll .ha-cluster-controls {
   display: flex;
   flex-direction: column;
   gap: 0.65rem;
   margin-bottom: 0.75rem;
 }
 
-.app-root .ha-cluster-field {
+.sidebar-scroll .ha-cluster-field {
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
-  font-size: 0.78rem;
+  font-size: var(--sidebar-panel-font-size);
 }
 
-.app-root .ha-cluster-field__label {
+.sidebar-scroll .ha-cluster-field__label {
   font-weight: 600;
   opacity: 0.92;
 }
 
-.app-root .ha-cluster-field select,
-.app-root .ha-cluster-field input[type='text'],
-.app-root .ha-cluster-field input[type='number'] {
+.sidebar-scroll .ha-cluster-field select,
+.sidebar-scroll .ha-cluster-field input[type='text'],
+.sidebar-scroll .ha-cluster-field input[type='number'] {
   width: 100%;
-  font-size: 0.78rem;
+  font-size: var(--sidebar-panel-font-size);
 }
 
-.app-root .ha-cluster-radio-row {
+.sidebar-scroll .ha-cluster-radio-row {
   display: flex;
   gap: 0.75rem;
 }
 
-.app-root .ha-cluster-radio {
+.sidebar-scroll .ha-cluster-radio {
   display: flex;
   align-items: center;
   gap: 0.25rem;
 }
 
-.app-root .ha-cluster-table-wrap {
+.sidebar-scroll .ha-cluster-table-wrap {
   overflow-x: auto;
   margin-bottom: 0.65rem;
 }
 
-.app-root .ha-cluster-table {
+.sidebar-scroll .ha-cluster-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 0.75rem;
+  font-size: var(--sidebar-panel-font-size);
 }
 
-.app-root .ha-cluster-table th,
-.app-root .ha-cluster-table td {
+.sidebar-scroll .ha-cluster-table th,
+.sidebar-scroll .ha-cluster-table td {
   padding: 0.4rem 0.45rem;
   border-bottom: 1px solid rgba(0, 104, 74, 0.35);
   text-align: left;
 }
 
-.app-root .ha-cluster-actions {
+.sidebar-scroll .ha-cluster-actions {
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
