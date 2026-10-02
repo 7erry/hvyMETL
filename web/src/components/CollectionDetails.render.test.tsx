@@ -39,6 +39,13 @@ describe('CollectionDetails render', () => {
         }),
       );
       expect(jsonHtml).toContain('language-json');
+      expect(jsonHtml).toContain('Patterns');
+      if (collection.embeddedArrays.length > 0) {
+        expect(jsonHtml).toContain('Embedded arrays');
+      }
+      if (collection.computedFields.length > 0) {
+        expect(jsonHtml).toContain('Computed fields');
+      }
     }
   });
 

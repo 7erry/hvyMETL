@@ -1785,10 +1785,18 @@ textarea {
   opacity: 0.85;
 }
 
-.collection-details__table-view {
+.collection-details__body {
   max-height: min(70vh, 520px);
   overflow: auto;
   padding-right: 0.15rem;
+}
+
+.collection-details__fields {
+  margin-bottom: 0.35rem;
+}
+
+.collection-details__fields .collection-details__view-toggle {
+  margin-bottom: 0.45rem;
 }
 
 .collection-details__json {

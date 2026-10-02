@@ -195,41 +195,45 @@ export function CollectionDetails({
         _id: {idDerivation.strategy} ({sourceColumns.join(', ')})
       </p>
 
-      <div className="collection-details__view-toggle" role="group" aria-labelledby={toggleId}>
-        <span id={toggleId} className="collection-details__view-toggle-label">
-          Inspector
-        </span>
-        <div className="collection-details__segmented ha-segmented">
-          <button
-            type="button"
-            className={`ha-segmented__btn${viewMode === 'table' ? ' active' : ''}`}
-            aria-pressed={viewMode === 'table'}
-            onClick={() => onViewModeChange('table')}
-          >
-            Table
-          </button>
-          <button
-            type="button"
-            className={`ha-segmented__btn${viewMode === 'json' ? ' active' : ''}`}
-            aria-pressed={viewMode === 'json'}
-            onClick={() => onViewModeChange('json')}
-          >
-            JSON
-          </button>
-        </div>
-      </div>
+      <div className="collection-details__body">
+        <CollectionPatternList plan={plan} />
 
-      {viewMode === 'table' ? (
-        <div className="collection-details__table-view">
-          <CollectionPatternList plan={plan} />
-          <SchemaFieldTree fields={schemaFields} collection={plan} variant="inspector" />
-          <CollectionPlanDetailSections plan={plan} />
+        <div className="collection-details__fields">
+          <div className="collection-details__view-toggle" role="group" aria-labelledby={toggleId}>
+            <span id={toggleId} className="collection-details__view-toggle-label">
+              Fields
+            </span>
+            <div className="collection-details__segmented ha-segmented">
+              <button
+                type="button"
+                className={`ha-segmented__btn${viewMode === 'table' ? ' active' : ''}`}
+                aria-pressed={viewMode === 'table'}
+                onClick={() => onViewModeChange('table')}
+              >
+                Table
+              </button>
+              <button
+                type="button"
+                className={`ha-segmented__btn${viewMode === 'json' ? ' active' : ''}`}
+                aria-pressed={viewMode === 'json'}
+                onClick={() => onViewModeChange('json')}
+              >
+                JSON
+              </button>
+            </div>
+          </div>
+
+          {viewMode === 'table' ? (
+            <SchemaFieldTree fields={schemaFields} collection={plan} variant="inspector" />
+          ) : (
+            <div className="collection-details__json" aria-label={`${plan.name} $jsonSchema`}>
+              <CollectionJsonView collection={plan} variant="jsonSchema" />
+            </div>
+          )}
         </div>
-      ) : (
-        <div className="collection-details__json" aria-label={`${plan.name} migration plan JSON`}>
-          <CollectionJsonView collection={plan} />
-        </div>
-      )}
+
+        <CollectionPlanDetailSections plan={plan} />
+      </div>
     </div>
   );
 }

@@ -1,3 +1,9 @@
+## hvyMETL 5.1.24
+
+**Collection inspector Table / JSON scope** — **Table | JSON** toggles only the **Fields** block (field tree vs colorized **$jsonSchema**). **Patterns**, indexes, **Embedded arrays**, **Computed fields**, and other plan sections stay visible in both modes.
+
+---
+
 ## hvyMETL 5.1.23
 
 **SQL table → Mongo collection selection sync** — When you switch to **After · MongoDB** (or use split view), the highlighted SQL table maps to the matching collection, or the **parent collection** when that table is embedded or folded into another document.
