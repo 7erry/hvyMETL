@@ -1,3 +1,9 @@
+## hvyMETL 5.1.22
+
+**Richer collection JSON coloring** — Prism JSON highlighting with MongoDB-themed token colors; property keys vs string values, punctuation, and literals are easier to scan in the sidebar inspector.
+
+---
+
 ## hvyMETL 5.1.21
 
 **Customer-centric schema modeling** — Full **`loyalty`** embed (no subset overflow for loyalty joins), cleaner **`recentAddresses`** / **`totalAddresses`** naming, **Extended Reference** metadata when denormalizing **customers** onto tickets/orders, **query-path indexes** (unique email, name compound, country multikey), and stricter **$jsonSchema** `required` on roots and address embed items.

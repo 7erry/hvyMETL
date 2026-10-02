@@ -1,14 +1,6 @@
 import { useDeferredValue, useMemo } from 'react';
+import { highlightCollectionJson } from '../highlightCollectionJson';
 import type { CollectionPlan } from '../migrationPlanTypes';
-
-const MAX_JSON_CHARS = 200_000;
-
-function escapeHtml(text: string): string {
-  return text
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;');
-}
 
 /** Serialize collection plan for display (never throws). */
 export function serializeCollectionPlanJson(collection: CollectionPlan): string {
@@ -27,26 +19,6 @@ export function serializeCollectionPlanJson(collection: CollectionPlan): string 
   }
 }
 
-/** Lightweight JSON syntax colors (avoids Prism stack issues on large schemas). */
-function highlightJsonHtml(json: string): string {
-  const slice = json.length > MAX_JSON_CHARS ? `${json.slice(0, MAX_JSON_CHARS)}\n… truncated` : json;
-  const escaped = escapeHtml(slice);
-  try {
-    return escaped.replace(
-      /("(?:\\.|[^"\\])*")(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?/g,
-      (match, _quoted, colon) => {
-        if (colon) return `<span class="collection-json__key">${match}</span>`;
-        if (match.startsWith('"')) return `<span class="collection-json__string">${match}</span>`;
-        if (match === 'true' || match === 'false') return `<span class="collection-json__boolean">${match}</span>`;
-        if (match === 'null') return `<span class="collection-json__null">${match}</span>`;
-        return `<span class="collection-json__number">${match}</span>`;
-      },
-    );
-  } catch {
-    return escaped;
-  }
-}
-
 type CollectionJsonViewProps = {
   collection: CollectionPlan;
 };
@@ -55,7 +27,7 @@ type CollectionJsonViewProps = {
 export function CollectionJsonView({ collection }: CollectionJsonViewProps) {
   const jsonText = useMemo(() => serializeCollectionPlanJson(collection), [collection]);
   const deferredJson = useDeferredValue(jsonText);
-  const html = useMemo(() => highlightJsonHtml(deferredJson), [deferredJson]);
+  const html = useMemo(() => highlightCollectionJson(deferredJson), [deferredJson]);
 
   return (
     <pre className="collection-json prism-code-block collection-details__json-pre">

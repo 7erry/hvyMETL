@@ -1808,24 +1808,47 @@ textarea {
   border: none;
 }
 
-.collection-json__key {
-  color: #79c0ff;
+/* Collection inspector JSON — manual highlighter + Prism token overrides */
+.collection-details__json-pre.collection-json {
+  background: rgba(0, 12, 18, 0.92);
+  color: #b8c4c1;
 }
 
-.collection-json__string {
-  color: #a5d6ff;
+.collection-json__property,
+.collection-details__json-pre.collection-json .token.property {
+  color: #00ed64;
+  font-weight: 500;
 }
 
-.collection-json__number {
+.collection-json__string,
+.collection-details__json-pre.collection-json .token.string {
+  color: #7ee787;
+}
+
+.collection-json__number,
+.collection-details__json-pre.collection-json .token.number {
   color: #f2cc60;
 }
 
-.collection-json__boolean {
-  color: #ff7b72;
+.collection-json__boolean,
+.collection-details__json-pre.collection-json .token.boolean {
+  color: #ffa657;
 }
 
-.collection-json__null {
+.collection-json__null,
+.collection-details__json-pre.collection-json .token.null {
   color: #ff7b72;
+  font-style: italic;
+}
+
+.collection-json__punctuation,
+.collection-details__json-pre.collection-json .token.punctuation,
+.collection-details__json-pre.collection-json .token.operator {
+  color: #8b949e;
+}
+
+.collection-details__json-pre.collection-json .token.keyword {
+  color: #ffa657;
 }
 
 .workspace-split {
