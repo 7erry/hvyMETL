@@ -1754,6 +1754,29 @@ textarea {
   min-height: 2.25rem;
 }
 
+.collection-details__meta {
+  margin: 0 0 0.65rem;
+  font-size: 0.8rem;
+  opacity: 0.85;
+}
+
+.collection-details__json {
+  max-height: min(70vh, 520px);
+  overflow: auto;
+  border: 1px solid var(--mdb-green-dark-2);
+  border-radius: 6px;
+  background: rgba(0, 20, 28, 0.65);
+}
+
+.collection-details__json-pre {
+  margin: 0;
+  padding: 0.65rem 0.75rem;
+  font-size: 0.72rem;
+  line-height: 1.45;
+  background: transparent;
+  border: none;
+}
+
 .workspace-split {
   display: flex;
   flex: 1;

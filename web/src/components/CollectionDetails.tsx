@@ -1,11 +1,10 @@
+import { useMemo } from 'react';
 import { downloadJson } from '../api';
-import { SchemaFieldTree } from './SchemaFieldTree';
-import type { SchemaField } from '../schema/schemaFields';
 import type { CollectionPlan } from '../migrationPlanTypes';
+import { PrismCodeBlock } from './PrismCodeBlock';
 
 type CollectionDetailsProps = {
   collection: CollectionPlan | null;
-  schemaFields: SchemaField[];
   onClose: () => void;
 };
 
@@ -33,7 +32,12 @@ function JsonDownloadIcon() {
   );
 }
 
-export function CollectionDetails({ collection, schemaFields, onClose }: CollectionDetailsProps) {
+export function CollectionDetails({ collection, onClose }: CollectionDetailsProps) {
+  const collectionJson = useMemo(
+    () => (collection ? JSON.stringify(collection, null, 2) : ''),
+    [collection],
+  );
+
   if (!collection) return null;
 
   return (
@@ -56,7 +60,7 @@ export function CollectionDetails({ collection, schemaFields, onClose }: Collect
         </button>
       </div>
 
-      <p style={{ margin: '0 0 0.75rem', fontSize: '0.8rem', opacity: 0.85 }}>
+      <p className="collection-details__meta">
         Source table: <code>{collection.sourceTable}</code>
         {collection.mergedTables.length > 1
           ? ` · merged: ${collection.mergedTables.filter((t) => t !== collection.sourceTable).join(', ')}`
@@ -65,110 +69,9 @@ export function CollectionDetails({ collection, schemaFields, onClose }: Collect
         _id: {collection.idDerivation.strategy} ({collection.idDerivation.sourceColumns.join(', ')})
       </p>
 
-      {collection.patterns.length > 0 ? (
-        <>
-          <h4 className="table-details__section">Patterns</h4>
-          <ul className="table-details__rels">
-            {collection.patterns.map((p) => (
-              <li key={`${p.pattern}-${p.target}`}>
-                <code>{p.pattern}</code>
-                <span className="rel-arrow">→</span>
-                <span>{p.target}</span>
-              </li>
-            ))}
-          </ul>
-        </>
-      ) : null}
-
-      <SchemaFieldTree fields={schemaFields} collection={collection} variant="inspector" />
-
-      {collection.indexes.length > 0 ? (
-        <>
-          <h4 className="table-details__section">Indexes</h4>
-          <ul className="table-details__rels">
-            {collection.indexes.map((idx) => (
-              <li key={idx.options.name}>
-                <code>{idx.options.name}</code>
-                <span className="rel-arrow">·</span>
-                {Object.entries(idx.keys)
-                  .map(([k, dir]) => `${k}:${dir}`)
-                  .join(', ')}
-              </li>
-            ))}
-          </ul>
-        </>
-      ) : null}
-
-      {collection.embeddedArrays.length > 0 ? (
-        <>
-          <h4 className="table-details__section">Embedded arrays</h4>
-          <ul className="table-details__rels">
-            {collection.embeddedArrays.map((e) => (
-              <li key={e.field}>
-                <code>{e.field}</code>
-                <span className="rel-arrow">←</span>
-                {e.sourceTable}.{e.joinColumn}
-                {e.subsetLimit != null ? ` (subset ${e.subsetLimit})` : ''}
-                {e.overflowCollection ? ` → overflow: ${e.overflowCollection}` : ''}
-              </li>
-            ))}
-          </ul>
-        </>
-      ) : null}
-
-      {collection.extendedReferences.length > 0 ? (
-        <>
-          <h4 className="table-details__section">Extended references</h4>
-          <ul className="table-details__rels">
-            {collection.extendedReferences.map((e) => (
-              <li key={e.field}>
-                <code>{e.field}</code>
-                <span className="rel-arrow">←</span>
-                {e.sourceTable} via {e.viaColumn} ({e.lookupColumns.join(', ')})
-              </li>
-            ))}
-          </ul>
-        </>
-      ) : null}
-
-      {collection.computedFields.length > 0 ? (
-        <>
-          <h4 className="table-details__section">Computed fields</h4>
-          <ul className="table-details__rels">
-            {collection.computedFields.map((f) => (
-              <li key={f.field}>
-                <code>{f.field}</code>
-                <span className="rel-arrow">·</span>
-                {f.description}
-              </li>
-            ))}
-          </ul>
-        </>
-      ) : null}
-
-      {collection.bucket ? (
-        <p style={{ margin: '0.75rem 0 0', fontSize: '0.8rem', opacity: 0.85 }}>
-          Bucket: {collection.bucket.windowMinutes}m windows on {collection.bucket.groupByColumn} /{' '}
-          {collection.bucket.timeColumn} → {collection.bucket.measurementsField}[]
-        </p>
-      ) : null}
-
-      {collection.timeSeries ? (
-        <p style={{ margin: '0.5rem 0 0', fontSize: '0.8rem', opacity: 0.85 }}>
-          Time series: timeField={collection.timeSeries.timeField}
-          {collection.timeSeries.metaField ? `, metaField=${collection.timeSeries.metaField}` : ''}, granularity=
-          {collection.timeSeries.granularity}
-          {collection.timeSeries.expireAfterSeconds
-            ? `, expireAfterSeconds=${collection.timeSeries.expireAfterSeconds}`
-            : ''}
-        </p>
-      ) : null}
-
-      {collection.archive ? (
-        <p style={{ margin: '0.5rem 0 0', fontSize: '0.8rem', opacity: 0.85 }}>
-          Archive: {collection.archive.archiveAfterDays}d → {collection.archive.archiveCollection}
-        </p>
-      ) : null}
+      <div className="collection-details__json" aria-label={`${collection.name} migration plan JSON`}>
+        <PrismCodeBlock code={collectionJson} language="json" preClassName="collection-details__json-pre" />
+      </div>
     </div>
   );
 }

@@ -1,3 +1,15 @@
+## hvyMETL 5.1.17
+
+**Collection inspector JSON** — MongoDB **after** view: selecting a collection in the left pane shows a **syntax-highlighted JSON** migration-plan slice (replaces the Field/BSON table).
+
+---
+
+## hvyMETL 5.1.16
+
+**Sizing slider UI** — Removed the **4 TB** pivot label under the dataset scale tier ruler (piecewise mapping unchanged).
+
+---
+
 ## hvyMETL 5.1.15
 
 **Piecewise dataset scale slider** — **Sizing Cost Projection** maps **1 GB→4 TB** across the **left half** of the track and **4 TB→50 TB** across the **right half** (**4 TB at center**). Tier ruler marks use the same scale so M10–M60 labels spread out.

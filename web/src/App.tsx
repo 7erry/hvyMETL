@@ -1621,7 +1621,6 @@ export default function App() {
                   <div style={{ marginBottom: '0.75rem' }}>
                     <CollectionDetails
                       collection={selectedCollectionPlan}
-                      schemaFields={selectedCollectionSchemaFields}
                       onClose={() => setSessionField('selectedCollection', null)}
                     />
                   </div>
