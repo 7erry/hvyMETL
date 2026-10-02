@@ -1,3 +1,9 @@
+## hvyMETL 5.1.26
+
+**JSON Crack dialog** — Double-click a MongoDB collection to open an in-app dialog with the [JSON Crack](https://jsoncrack.com/) widget loaded with the collection plan JSON (replaces the blank blob-tab approach).
+
+---
+
 ## hvyMETL 5.1.25
 
 **JSON Crack on collection double-click** — Double-click a MongoDB collection on the canvas (or in the collection list) to open a new tab with the full collection plan in [JSON Crack](https://jsoncrack.com/) graph view (dark theme).
