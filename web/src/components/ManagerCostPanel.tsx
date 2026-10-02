@@ -290,7 +290,7 @@ export function ManagerCostPanel({
             <dt>Recommended tier</dt>
             <dd>
               {projection.recommendedTier.label} ({projection.recommendedTier.ramGb} GB RAM,{' '}
-              {projection.recommendedTier.storageGb} GB storage)
+              {projection.recommendedTier.vcpu} vCPU, up to {formatGb(projection.recommendedTier.storageGb)} storage)
             </dd>
           </div>
           <div>

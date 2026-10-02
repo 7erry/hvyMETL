@@ -1,3 +1,15 @@
+## hvyMETL 5.1.6
+
+**Atlas tier decision matrix** — Recommended Tier now steps **M30→M300** using Atlas guardrails: **2× (index + hot footprint)** on **10–25% of raw data** (not full on-cluster volume), **60:1 / 120:1 disk:RAM** limits, extended storage caps, and WiredTiger cache fit. Eliminates erroneous jumps to **M700**; M400/M700 remain available manually in HA only.
+
+---
+
+## hvyMETL 5.1.5
+
+**Release notes on the logo** — Double-click the MongoDB **leaf** in the header to open a dialog with a large leaf mark, version, and the current release notes from `RELEASE.md`. Triple-click the logo still plays the hvyMETL video easter egg.
+
+---
+
 ## hvyMETL 5.1.4
 
 **Recommended Tier vs dataset scale** — Tier selection uses Atlas-aligned **2× (index + active working set)** RAM, **12-month planning storage** `max(hot, raw on-disk) × growth`, and tracks the Dataset scale slider. Recommended Tier panel shows target RAM and planning storage; write-heavy preset is **20/80**.

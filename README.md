@@ -9,7 +9,7 @@ every schema decision in a retrievable knowledge base of MongoDB design patterns
 your workload telemetry (read:write ratio, peak RPM, data growth), then runs a
 parallel, pattern-aware ETL into MongoDB Atlas.
 
-**Release:** [`5.1.4`](RELEASE.md#hvymetl-514) — see [RELEASE.md](RELEASE.md) for full release history.
+**Release:** [`5.1.6`](RELEASE.md#hvymetl-516) — see [RELEASE.md](RELEASE.md) for full release history.
 
 An optional **ML engine** (`src/ml_engine/`) adds telemetry-aware reranking
 ([Voyage rerank-2.5](https://docs.voyageai.com/reference/reranker-api) when

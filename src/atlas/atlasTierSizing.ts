@@ -1,7 +1,19 @@
 /** Index size as a fraction of hot document bytes (matches Manager cost heuristics). */
 export const DEFAULT_INDEX_OVERHEAD_FACTOR = 0.08;
 
-/** Minimal tier row for RAM/storage selection. */
+/** Atlas dedicated tier row for production sizing (M30–M300 decision matrix). */
+export type AtlasProductionTierSpec = {
+  id: string;
+  ramGb: number;
+  vcpu: number;
+  maxConnections: number;
+  /** Standard / extended storage ceiling (GB). */
+  extendedStorageMaxGb: number;
+  /** Max disk:RAM ratio (60 for M10–M40, 120 for M50+). */
+  diskToRamRatioMax: number;
+};
+
+/** @deprecated Use AtlasProductionTierSpec — kept for callers passing minimal rows. */
 export type AtlasTierCatalogEntry = {
   id: string;
   ramGb: number;
@@ -20,12 +32,29 @@ export type PlanningStorageInput = {
 
 export type SelectAtlasTierInput = {
   requiredRamGb: number;
-  requiredStorageGb: number;
-  tiers: AtlasTierCatalogEntry[];
-  productionMinTierId: string;
+  planningStorageGb: number;
+  indexGb: number;
+  hotFootprintGb: number;
+  tiers?: AtlasProductionTierSpec[];
+  productionMinTierId?: string;
 };
 
-/** WiredTiger cache share of physical RAM (M30 and below vs M40+). */
+/**
+ * Production Atlas tiers (M30–M300) aligned to Atlas sizing decision matrix.
+ * M10/M20 omitted from automatic production recommendations (dev/staging only).
+ */
+export const ATLAS_PRODUCTION_TIER_MATRIX: AtlasProductionTierSpec[] = [
+  { id: 'M30', ramGb: 8, vcpu: 2, maxConnections: 3000, extendedStorageMaxGb: 512, diskToRamRatioMax: 60 },
+  { id: 'M40', ramGb: 16, vcpu: 4, maxConnections: 6000, extendedStorageMaxGb: 4096, diskToRamRatioMax: 60 },
+  { id: 'M50', ramGb: 32, vcpu: 8, maxConnections: 16000, extendedStorageMaxGb: 8192, diskToRamRatioMax: 120 },
+  { id: 'M60', ramGb: 64, vcpu: 16, maxConnections: 32000, extendedStorageMaxGb: 8192, diskToRamRatioMax: 120 },
+  { id: 'M80', ramGb: 128, vcpu: 32, maxConnections: 96000, extendedStorageMaxGb: 14336, diskToRamRatioMax: 120 },
+  { id: 'M140', ramGb: 192, vcpu: 48, maxConnections: 96000, extendedStorageMaxGb: 14336, diskToRamRatioMax: 120 },
+  { id: 'M200', ramGb: 256, vcpu: 64, maxConnections: 128000, extendedStorageMaxGb: 14336, diskToRamRatioMax: 120 },
+  { id: 'M300', ramGb: 384, vcpu: 96, maxConnections: 128000, extendedStorageMaxGb: 14336, diskToRamRatioMax: 120 },
+];
+
+/** WiredTiger cache share of physical RAM (M10–M30: 25%; M40+: ~50%). */
 export function wiredTigerCacheFraction(ramGb: number): number {
   return ramGb <= 8 ? 0.25 : 0.5;
 }
@@ -35,25 +64,28 @@ export function wiredTigerCacheGb(ramGb: number): number {
   return ramGb * wiredTigerCacheFraction(ramGb);
 }
 
-/** Estimated index footprint on disk / in RAM (GB). */
-export function estimateIndexSizeGb(hotDocumentGb: number, indexCount: number, indexOverheadFactor = DEFAULT_INDEX_OVERHEAD_FACTOR): number {
+/** Estimated index footprint in GB from on-disk document data volume. */
+export function estimateIndexSizeGb(
+  onDiskDocumentGb: number,
+  indexCount: number,
+  indexOverheadFactor = DEFAULT_INDEX_OVERHEAD_FACTOR,
+): number {
   const count = Math.max(0, indexCount);
-  return Math.max(0, hotDocumentGb * count * indexOverheadFactor);
+  return Math.max(0, onDiskDocumentGb * count * indexOverheadFactor);
 }
 
-/** Frequently accessed document data (GB) from hot document size and workload ratio. */
-export function activeWorkingSetGb(hotDocumentGb: number, ramRatio: number): number {
-  return Math.max(0, hotDocumentGb * Math.max(0.05, Math.min(1, ramRatio)));
+/** Hot data footprint in GB (typically 10–25% of document data) from workload ratio. */
+export function activeWorkingSetGb(onDiskDocumentGb: number, ramRatio: number): number {
+  return Math.max(0, onDiskDocumentGb * Math.max(0.05, Math.min(1, ramRatio)));
 }
 
-/** Target physical RAM: 2 × (index size + active working set). */
-export function targetPhysicalRamGb(indexGb: number, activeWorkingSetSizeGb: number): number {
-  return Math.max(0.5, 2 * (Math.max(0, indexGb) + Math.max(0, activeWorkingSetSizeGb)));
+/** Target physical RAM: 2 × (index size + hot data footprint). */
+export function targetPhysicalRamGb(indexGb: number, hotFootprintGb: number): number {
+  return Math.max(0.5, 2 * (Math.max(0, indexGb) + Math.max(0, hotFootprintGb)));
 }
 
 /**
  * Storage used for tier disk planning: max(hot on cluster, raw on-disk footprint) with growth over horizon.
- * Growth is applied as a single compound factor for the horizon (12 mo → yearly growth rate).
  */
 export function planningStorageGb(input: PlanningStorageInput): number {
   const horizonMonths = input.horizonMonths ?? 12;
@@ -65,23 +97,56 @@ export function planningStorageGb(input: PlanningStorageInput): number {
   return Math.max(1, baseGb * growthFactor);
 }
 
-/** Smallest production tier meeting RAM and storage, or the largest tier in catalog. */
-export function selectAtlasTierForRequirements(input: SelectAtlasTierInput): AtlasTierCatalogEntry {
-  const requiredRam = Math.max(0.5, input.requiredRamGb);
-  const requiredStorage = Math.max(1, input.requiredStorageGb);
-  const startIndex = input.tiers.findIndex((tier) => tier.id === input.productionMinTierId);
-  const candidates = input.tiers.slice(Math.max(0, startIndex));
-  const match = candidates.find((tier) => tier.ramGb >= requiredRam && tier.storageGb >= requiredStorage);
-  return match ?? input.tiers[input.tiers.length - 1]!;
+/** Max disk Atlas allows on a tier given extended storage cap and disk:RAM ratio guardrail. */
+export function maxAllocatableDiskGb(tier: AtlasProductionTierSpec): number {
+  return Math.min(tier.extendedStorageMaxGb, tier.ramGb * tier.diskToRamRatioMax);
 }
 
-/** Share of index + active working set that fits in the tier WiredTiger cache (0–100). */
-export function workingSetFitPercent(
+/** Baseline IOPS heuristic for AWS/GCP standard storage (illustrative). */
+export function estimateBaselineIops(planningStorageGb: number): number {
+  const storage = Math.max(0, planningStorageGb);
+  if (storage < 1000) return 3000;
+  return Math.min(80_000, Math.round(3000 + (storage - 1000) * 3));
+}
+
+/** Whether a tier satisfies RAM, disk ratio, extended storage, and WiredTiger cache for working set. */
+export function tierMeetsAtlasGuardrails(
+  tier: AtlasProductionTierSpec,
+  requiredRamGb: number,
+  planningStorageGb: number,
   indexGb: number,
-  activeWsGb: number,
-  tierRamGb: number,
-): number {
-  const needGb = Math.max(0.001, indexGb + activeWsGb);
+  hotFootprintGb: number,
+): boolean {
+  if (tier.ramGb < requiredRamGb) return false;
+  if (planningStorageGb > maxAllocatableDiskGb(tier)) return false;
+  const workingSetGb = indexGb + hotFootprintGb;
+  if (wiredTigerCacheGb(tier.ramGb) < workingSetGb) return false;
+  return true;
+}
+
+/** Smallest production tier meeting Atlas guardrails, or the largest tier in the list. */
+export function selectAtlasTierForRequirements(input: SelectAtlasTierInput): AtlasProductionTierSpec {
+  const tiers = input.tiers ?? ATLAS_PRODUCTION_TIER_MATRIX;
+  const productionMinTierId = input.productionMinTierId ?? 'M30';
+  const requiredRam = Math.max(0.5, input.requiredRamGb);
+  const planningStorage = Math.max(1, input.planningStorageGb);
+  const startIndex = tiers.findIndex((tier) => tier.id === productionMinTierId);
+  const candidates = tiers.slice(Math.max(0, startIndex));
+  const match = candidates.find((tier) =>
+    tierMeetsAtlasGuardrails(
+      tier,
+      requiredRam,
+      planningStorage,
+      input.indexGb,
+      input.hotFootprintGb,
+    ),
+  );
+  return match ?? candidates[candidates.length - 1] ?? tiers[tiers.length - 1]!;
+}
+
+/** Share of index + hot footprint that fits in the tier WiredTiger cache (0–100). */
+export function workingSetFitPercent(indexGb: number, hotFootprintGb: number, tierRamGb: number): number {
+  const needGb = Math.max(0.001, indexGb + hotFootprintGb);
   const cacheGb = wiredTigerCacheGb(tierRamGb);
   return Math.min(100, Math.round((cacheGb / needGb) * 100));
 }

@@ -79,15 +79,25 @@ describe('managerCostEstimate', () => {
     expect(estimateColumnBytes('TEXT')).toBe(256);
   });
 
-  it('selects atlas tier by target physical RAM and planning storage', () => {
-    expect(selectAtlasTier(8, 400).id).toBe('M30');
-    expect(selectAtlasTier(16, 600).id).toBe('M40');
-    expect(selectAtlasTier(256, 20_000).id).toBe('M300');
+  it('selects atlas tier by RAM, disk ratio, and working-set guardrails', () => {
+    expect(selectAtlasTier(8, 400, 0.5, 1.5).id).toBe('M30');
+    expect(selectAtlasTier(16, 900, 2, 6).id).toBe('M40');
+    expect(selectAtlasTier(32, 2500, 4, 12).id).toBe('M50');
+    expect(selectAtlasTier(256, 12_000, 20, 108).id).toBe('M200');
+  });
+
+  it('steps through intermediate tiers instead of jumping to M700 at moderate scale', () => {
+    const projection = computeManagerCostProjection(model, plan, {
+      ...DEFAULT_MANAGER_COST_INPUTS,
+      estimatedDataGb: 512,
+    });
+    expect(projection.recommendedTier.id).not.toBe('M700');
+    expect(projection.recommendedTier.id).not.toBe('M400');
   });
 
   it('increases recommended tier as dataset scale slider rises', () => {
     const tierRank = (id: string) =>
-      ['M10', 'M20', 'M30', 'M40', 'M50', 'M60', 'M80', 'M140', 'M200', 'M300', 'M400', 'M700'].indexOf(id);
+      ['M10', 'M20', 'M30', 'M40', 'M50', 'M60', 'M80', 'M140', 'M200', 'M300'].indexOf(id);
     let lastRank = -1;
     for (const estimatedDataGb of [128, 512, 2048, 8192]) {
       const { recommendedTier } = computeManagerCostProjection(model, plan, {
@@ -102,7 +112,7 @@ describe('managerCostEstimate', () => {
 
   it('does not decrease tier when growth rate increases at fixed dataset scale', () => {
     const tierRank = (id: string) =>
-      ['M10', 'M20', 'M30', 'M40', 'M50', 'M60', 'M80', 'M140', 'M200', 'M300', 'M400', 'M700'].indexOf(id);
+      ['M10', 'M20', 'M30', 'M40', 'M50', 'M60', 'M80', 'M140', 'M200', 'M300'].indexOf(id);
     const low = computeManagerCostProjection(model, plan, {
       ...DEFAULT_MANAGER_COST_INPUTS,
       estimatedDataGb: 1024,
@@ -236,8 +246,7 @@ describe('managerCostEstimate', () => {
     expect(projection.rawDataGb).toBeCloseTo(100 * 1024, 1);
     expect(projection.totalStorageGb).toBeGreaterThan(projection.rawDataGb);
     expect(projection.estimatedTotalRows).toBeGreaterThan(DEFAULT_MANAGER_COST_INPUTS.estimatedTotalRows);
-    expect(projection.recommendedTier.id).not.toBe('M50');
-    expect(['M300', 'M400', 'M700']).toContain(projection.recommendedTier.id);
+    expect(projection.recommendedTier.id).toBe('M300');
     expect(projection.requiresSharding).toBe(true);
     expect(projection.shardingRecommendations.length).toBeGreaterThan(0);
     expect(projection.shardingRecommendations[0]?.shardKey).toBeDefined();

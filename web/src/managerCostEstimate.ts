@@ -1,6 +1,8 @@
 import {
   activeWorkingSetGb,
+  ATLAS_PRODUCTION_TIER_MATRIX,
   estimateIndexSizeGb,
+  maxAllocatableDiskGb,
   planningStorageGb,
   selectAtlasTierForRequirements,
   targetPhysicalRamGb,
@@ -26,6 +28,8 @@ export type AtlasTierSpec = {
   id: string;
   label: string;
   ramGb: number;
+  vcpu: number;
+  maxConnections: number;
   /** Practical single-replica-set storage scale before sharding should be evaluated. */
   storageGb: number;
   monthlyUsd: number;
@@ -119,18 +123,18 @@ export const DEFAULT_MANAGER_COST_INPUTS: ManagerCostInputs = {
 
 /** Representative MongoDB Atlas dedicated cluster tiers (USD/month, illustrative). */
 export const ATLAS_CLUSTER_TIERS: AtlasTierSpec[] = [
-  { id: 'M10', label: 'M10', ramGb: 2, storageGb: 128, monthlyUsd: 57, productionRecommended: false },
-  { id: 'M20', label: 'M20', ramGb: 4, storageGb: 256, monthlyUsd: 140, productionRecommended: false },
-  { id: 'M30', label: 'M30', ramGb: 8, storageGb: 512, monthlyUsd: 182.5, productionRecommended: true },
-  { id: 'M40', label: 'M40', ramGb: 16, storageGb: 1024, monthlyUsd: 280, productionRecommended: true },
-  { id: 'M50', label: 'M50', ramGb: 32, storageGb: 2048, monthlyUsd: 570, productionRecommended: true },
-  { id: 'M60', label: 'M60', ramGb: 64, storageGb: 4096, monthlyUsd: 1100, productionRecommended: true },
-  { id: 'M80', label: 'M80', ramGb: 128, storageGb: 8192, monthlyUsd: 2100, productionRecommended: true },
-  { id: 'M140', label: 'M140', ramGb: 192, storageGb: 12288, monthlyUsd: 3200, productionRecommended: true },
-  { id: 'M200', label: 'M200', ramGb: 256, storageGb: 16384, monthlyUsd: 4300, productionRecommended: true },
-  { id: 'M300', label: 'M300', ramGb: 384, storageGb: 24576, monthlyUsd: 6150, productionRecommended: true },
-  { id: 'M400', label: 'M400', ramGb: 488, storageGb: 32768, monthlyUsd: 8200, productionRecommended: true },
-  { id: 'M700', label: 'M700', ramGb: 768, storageGb: 49152, monthlyUsd: 12900, productionRecommended: true },
+  { id: 'M10', label: 'M10', ramGb: 2, vcpu: 2, maxConnections: 1500, storageGb: 128, monthlyUsd: 57, productionRecommended: false },
+  { id: 'M20', label: 'M20', ramGb: 4, vcpu: 2, maxConnections: 3000, storageGb: 256, monthlyUsd: 140, productionRecommended: false },
+  { id: 'M30', label: 'M30', ramGb: 8, vcpu: 2, maxConnections: 3000, storageGb: 512, monthlyUsd: 182.5, productionRecommended: true },
+  { id: 'M40', label: 'M40', ramGb: 16, vcpu: 4, maxConnections: 6000, storageGb: 4096, monthlyUsd: 280, productionRecommended: true },
+  { id: 'M50', label: 'M50', ramGb: 32, vcpu: 8, maxConnections: 16000, storageGb: 8192, monthlyUsd: 570, productionRecommended: true },
+  { id: 'M60', label: 'M60', ramGb: 64, vcpu: 16, maxConnections: 32000, storageGb: 8192, monthlyUsd: 1100, productionRecommended: true },
+  { id: 'M80', label: 'M80', ramGb: 128, vcpu: 32, maxConnections: 96000, storageGb: 14336, monthlyUsd: 2100, productionRecommended: true },
+  { id: 'M140', label: 'M140', ramGb: 192, vcpu: 48, maxConnections: 96000, storageGb: 14336, monthlyUsd: 3200, productionRecommended: true },
+  { id: 'M200', label: 'M200', ramGb: 256, vcpu: 64, maxConnections: 128000, storageGb: 14336, monthlyUsd: 4300, productionRecommended: true },
+  { id: 'M300', label: 'M300', ramGb: 384, vcpu: 96, maxConnections: 128000, storageGb: 14336, monthlyUsd: 6150, productionRecommended: true },
+  { id: 'M400', label: 'M400', ramGb: 488, vcpu: 96, maxConnections: 128000, storageGb: 14336, monthlyUsd: 8200, productionRecommended: false },
+  { id: 'M700', label: 'M700', ramGb: 768, vcpu: 96, maxConnections: 128000, storageGb: 14336, monthlyUsd: 12900, productionRecommended: false },
 ];
 
 const BSON_OVERHEAD = 1.25;
@@ -434,11 +438,18 @@ function atlasTierFromCatalogId(tierId: string): AtlasTierSpec {
   return ATLAS_CLUSTER_TIERS.find((tier) => tier.id === tierId) ?? ATLAS_CLUSTER_TIERS[ATLAS_CLUSTER_TIERS.length - 1]!;
 }
 
-function recommendAtlasTier(requiredRamGb: number, requiredStorageGb: number): AtlasTierSpec {
+function recommendAtlasTier(
+  requiredRamGb: number,
+  planningStorageSizeGb: number,
+  indexGb: number,
+  hotFootprintGb: number,
+): AtlasTierSpec {
   const picked = selectAtlasTierForRequirements({
     requiredRamGb,
-    requiredStorageGb,
-    tiers: ATLAS_CLUSTER_TIERS,
+    planningStorageGb: planningStorageSizeGb,
+    indexGb,
+    hotFootprintGb,
+    tiers: ATLAS_PRODUCTION_TIER_MATRIX,
     productionMinTierId: ATLAS_PRODUCTION_MIN_TIER,
   });
   return atlasTierFromCatalogId(picked.id);
@@ -631,9 +642,14 @@ export function buildShardingRecommendations(
   };
 }
 
-/** Picks the smallest production Atlas tier meeting target physical RAM and planning storage (GB). */
-export function selectAtlasTier(requiredRamGb: number, requiredStorageGb: number): AtlasTierSpec {
-  return recommendAtlasTier(requiredRamGb, requiredStorageGb);
+/** Picks the smallest production Atlas tier meeting RAM, disk ratio, and working-set guardrails. */
+export function selectAtlasTier(
+  requiredRamGb: number,
+  planningStorageGb: number,
+  indexGb = 0,
+  hotFootprintGb = 0,
+): AtlasTierSpec {
+  return recommendAtlasTier(requiredRamGb, planningStorageGb, indexGb, hotFootprintGb);
 }
 
 export function computeManagerCostProjection(
@@ -707,9 +723,9 @@ export function computeManagerCostProjection(
   const manpower = estimateManpowerReduction(model, plan, rawDataGb);
 
   const growth = Math.max(0, inputs.growthRatePercent);
-  const hotDocumentGb = (activeRawBytes * BSON_OVERHEAD) / BYTES_PER_GB;
-  const indexSizeGb = estimateIndexSizeGb(hotDocumentGb, indexCount, INDEX_OVERHEAD_FACTOR);
-  const activeWorkingSetSizeGb = activeWorkingSetGb(hotDocumentGb, preset.ramRatio);
+  const onDiskRawDocumentGb = rawDataGb * BSON_OVERHEAD;
+  const indexSizeGb = estimateIndexSizeGb(onDiskRawDocumentGb, indexCount, INDEX_OVERHEAD_FACTOR);
+  const activeWorkingSetSizeGb = activeWorkingSetGb(onDiskRawDocumentGb, preset.ramRatio);
   const requiredRamGb = targetPhysicalRamGb(indexSizeGb, activeWorkingSetSizeGb);
   const rawOnDiskMultiplier = BSON_OVERHEAD * (1 + indexCount * INDEX_OVERHEAD_FACTOR);
   const planningStorageSizeGb = planningStorageGb({
@@ -719,19 +735,26 @@ export function computeManagerCostProjection(
     rawOnDiskMultiplier,
     horizonMonths: 12,
   });
-  const recommendedTier = recommendAtlasTier(requiredRamGb, planningStorageSizeGb);
-  const exceedsReplicaSetDiskCap = planningStorageSizeGb > recommendedTier.storageGb;
+  const recommendedTier = recommendAtlasTier(
+    requiredRamGb,
+    planningStorageSizeGb,
+    indexSizeGb,
+    activeWorkingSetSizeGb,
+  );
+  const matrixTier = ATLAS_PRODUCTION_TIER_MATRIX.find((tier) => tier.id === recommendedTier.id);
+  const replicaSetDiskCapGb = matrixTier ? maxAllocatableDiskGb(matrixTier) : recommendedTier.storageGb;
+  const exceedsReplicaSetDiskCap = planningStorageSizeGb > replicaSetDiskCapGb;
   const workingSetPercent = workingSetFitPercent(indexSizeGb, activeWorkingSetSizeGb, recommendedTier.ramGb);
 
   const monthlyComputeUsd = recommendedTier.monthlyUsd;
   const monthlyBackupUsd = activeStorageGb * BACKUP_USD_PER_GB;
   const monthlyArchiveUsd = archiveStorageGb * ARCHIVE_STORAGE_USD_PER_GB;
   const monthlyTotalUsd = monthlyComputeUsd + monthlyBackupUsd + monthlyArchiveUsd;
-  const baselineHotDocumentGb = (rawBytes * BSON_OVERHEAD) / BYTES_PER_GB;
   const baselineHotStorageBytes = rawBytes * BSON_OVERHEAD * (1 + indexCount * INDEX_OVERHEAD_FACTOR);
   const baselineHotStorageGb = baselineHotStorageBytes / BYTES_PER_GB;
-  const baselineIndexGb = estimateIndexSizeGb(baselineHotDocumentGb, indexCount, INDEX_OVERHEAD_FACTOR);
-  const baselineActiveWsGb = activeWorkingSetGb(baselineHotDocumentGb, preset.ramRatio);
+  const baselineOnDiskRawDocumentGb = rawDataGb * BSON_OVERHEAD;
+  const baselineIndexGb = estimateIndexSizeGb(baselineOnDiskRawDocumentGb, indexCount, INDEX_OVERHEAD_FACTOR);
+  const baselineActiveWsGb = activeWorkingSetGb(baselineOnDiskRawDocumentGb, preset.ramRatio);
   const baselineRequiredRamGb = targetPhysicalRamGb(baselineIndexGb, baselineActiveWsGb);
   const baselinePlanningStorageGb = planningStorageGb({
     rawDataGb,
@@ -740,7 +763,12 @@ export function computeManagerCostProjection(
     rawOnDiskMultiplier,
     horizonMonths: 12,
   });
-  const baselineTier = recommendAtlasTier(baselineRequiredRamGb, baselinePlanningStorageGb);
+  const baselineTier = recommendAtlasTier(
+    baselineRequiredRamGb,
+    baselinePlanningStorageGb,
+    baselineIndexGb,
+    baselineActiveWsGb,
+  );
   const baselineInfrastructureMonthlyTotalUsd = baselineTier.monthlyUsd + baselineHotStorageGb * BACKUP_USD_PER_GB;
   const infrastructureMonthlySavingsUsd = Math.max(0, baselineInfrastructureMonthlyTotalUsd - monthlyTotalUsd);
   const monthlyManpowerSavingsUsd =
