@@ -28,6 +28,7 @@ import { MONGO_GRAPH_LAYOUT_OPTIONS, layoutMigrationPlan } from '../graphLayout'
 import { useCompactDiagramLayout } from '../hooks/useCompactDiagramLayout';
 import type { RelationshipConnectionType, RelationshipNotation } from '../relationshipDisplay';
 import type { MigrationPlan } from '../migrationPlanTypes';
+import { openCollectionPlanInJsonCrack } from '../openJsonCrackWindow';
 
 const GRID = 20;
 const MONGO_FIT_PADDING = 0.04;
@@ -251,6 +252,10 @@ export function MongoSchemaCanvas({
         onEdgesChange={onEdgesChange}
         onNodeDragStop={onNodeDragStop}
         onNodeClick={(_event, node) => onSelectCollection(node.id)}
+        onNodeDoubleClick={(_event, node) => {
+          const data = node.data as CollectionNodeData;
+          if (data?.collection) openCollectionPlanInJsonCrack(data.collection);
+        }}
         onPaneClick={() => onSelectCollection(null)}
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}

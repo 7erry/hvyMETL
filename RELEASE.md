@@ -1,3 +1,9 @@
+## hvyMETL 5.1.25
+
+**JSON Crack on collection double-click** — Double-click a MongoDB collection on the canvas (or in the collection list) to open a new tab with the full collection plan in [JSON Crack](https://jsoncrack.com/) graph view (dark theme).
+
+---
+
 ## hvyMETL 5.1.24
 
 **Collection inspector Table / JSON scope** — **Table | JSON** toggles only the **Fields** block (field tree vs colorized **$jsonSchema**). **Patterns**, indexes, **Embedded arrays**, **Computed fields**, and other plan sections stay visible in both modes.

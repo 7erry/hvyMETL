@@ -40,6 +40,7 @@ import { mergeAtlasHaIntoArtifacts } from './ha/attachAtlasHaArtifacts';
 import { haClusterInputsWithDefaults } from './ha/defaultHaClusterInputs';
 import { computeManagerCostProjection } from './managerCostEstimate';
 import { edgesForPlan } from './migrationPlanDisplay';
+import { openCollectionPlanInJsonCrack } from './openJsonCrackWindow';
 import { mergeMeasuredModelStats } from './mergeMeasuredModelStats';
 import { CardinalityOverridesPanel } from './components/CardinalityOverridesPanel';
 import { TimeSeriesOverridesPanel } from './components/TimeSeriesOverridesPanel';
@@ -1701,7 +1702,9 @@ export default function App() {
                           <li
                             key={c.name}
                             className={selectedCollection === c.name ? 'selected' : ''}
+                            title="Double-click to open in JSON Crack"
                             onClick={() => setSessionField('selectedCollection', c.name)}
+                            onDoubleClick={() => openCollectionPlanInJsonCrack(c)}
                           >
                             <span>{c.name}</span>
                             <span style={{ opacity: 0.6, fontSize: '0.7rem' }}>{c.sourceTable}</span>
