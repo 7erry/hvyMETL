@@ -4736,7 +4736,7 @@ textarea {
   font-size: 1.25rem;
 }
 
-.app--manager .manager-cost-sharding {
+.app-root .manager-cost-sharding {
   margin-top: 1rem;
   padding-top: 0.85rem;
   border-top: 1px solid rgba(0, 104, 74, 0.45);
@@ -4745,17 +4745,17 @@ textarea {
   gap: 0.65rem;
 }
 
-.app--manager .manager-cost-sharding__header p {
+.app-root .manager-cost-sharding__header p {
   margin: 0.25rem 0 0;
   font-size: 0.78rem;
   opacity: 0.9;
 }
 
-.app--manager .manager-cost-sharding__header a {
+.app-root .manager-cost-sharding__header a {
   color: var(--mdb-spring-green);
 }
 
-.app--manager .manager-cost-sharding__guidance {
+.app-root .manager-cost-sharding__guidance {
   margin: 0;
   padding-left: 1.1rem;
   font-size: 0.75rem;
@@ -4765,50 +4765,50 @@ textarea {
   gap: 0.25rem;
 }
 
-.app--manager .manager-cost-sharding__table {
+.app-root .manager-cost-sharding__table {
   width: 100%;
   border-collapse: collapse;
   font-size: 0.75rem;
 }
 
-.app--manager .manager-cost-sharding__table th,
-.app--manager .manager-cost-sharding__table td {
+.app-root .manager-cost-sharding__table th,
+.app-root .manager-cost-sharding__table td {
   padding: 0.45rem 0.5rem;
   border-bottom: 1px solid rgba(0, 104, 74, 0.35);
   vertical-align: top;
   text-align: left;
 }
 
-.app--manager .manager-cost-sharding__table th {
+.app-root .manager-cost-sharding__table th {
   font-size: 0.68rem;
   text-transform: uppercase;
   letter-spacing: 0.04em;
   color: var(--mdb-green-base);
 }
 
-.app--manager .manager-cost-sharding__table td strong {
+.app-root .manager-cost-sharding__table td strong {
   display: block;
   margin-bottom: 0.2rem;
 }
 
-.app--manager .manager-cost-sharding__table td span {
+.app-root .manager-cost-sharding__table td span {
   display: block;
   opacity: 0.88;
   line-height: 1.35;
 }
 
-.app--manager .manager-cost-sharding__table code {
+.app-root .manager-cost-sharding__table code {
   font-size: 0.72rem;
   white-space: nowrap;
 }
 
-.app--manager .manager-cost-sharding__warnings {
+.app-root .manager-cost-sharding__warnings {
   margin: 0.35rem 0 0;
   padding-left: 1rem;
   color: #ffb347;
 }
 
-.app--manager .manager-cost-sharding__query {
+.app-root .manager-cost-sharding__query {
   margin-top: 0.35rem;
   font-size: 0.72rem;
   font-style: italic;

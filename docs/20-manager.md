@@ -101,7 +101,7 @@ The same value is persisted in session state as `managerCostInputs.estimatedData
 
 - Direct answers to *what is the current raw data size?*
 - Atlas tier and storage guidance in architecture reviews
-- Sharding recommendations when projected hot storage exceeds the 2 TB heuristic threshold
+- Sharding recommendations when projected hot storage exceeds the 2 TB heuristic threshold (the **Sharding Recommended** panel lives in **Developer** sidebar sizing, not Manager Configure)
 
 See [20-agent-copilot.md](20-agent-copilot.md#manager-dataset-scale-in-copilot).
 

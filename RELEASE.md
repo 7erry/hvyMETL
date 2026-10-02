@@ -1,6 +1,12 @@
+## hvyMETL 4.3.14
+
+**Sharding stays on Developer** — **Sharding Recommended** is only in the Developer sizing sidebar (not Manager Configure). Sharding panel styles apply in Developer view.
+
+---
+
 ## hvyMETL 4.3.13
 
-**Split sizing vs manager cost panels** — Developer sidebar keeps **Sizing Cost Projection** and **Recommended Tier** (plus sharding when applicable). Manager **Configure** shows **Estimated Manpower Eliminated**, **Monthly Cost**, and the estimates legal disclaimer.
+**Split sizing vs manager cost panels** — Developer sidebar keeps **Sizing Cost Projection**, **Recommended Tier**, and **Sharding Recommended** when applicable. Manager **Configure** shows **Estimated Manpower Eliminated**, **Monthly Cost**, and the estimates legal disclaimer only.
 
 ---
 

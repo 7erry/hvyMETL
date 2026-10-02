@@ -400,6 +400,7 @@ export function ManagerCostPanel({
       </CollapsiblePanel>
   );
 
+  /** Sharding recommendations render only in the developer variant (not Manager Configure). */
   const shardingSection =
     projection.requiresSharding ? (
         <CollapsiblePanel
