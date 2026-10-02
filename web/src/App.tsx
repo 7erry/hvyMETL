@@ -534,21 +534,13 @@ export default function App() {
     [diagramViewMode, migrationPlan, schemaPhase, setSessionField],
   );
 
+  /** Sync SQL table → Mongo collection when the table, phase, or plan changes — not when the user picks another collection on After. */
   useEffect(() => {
     if (!selectedTable || !migrationPlan) return;
     if (schemaPhase !== 'after' && !isDualDiagramView(diagramViewMode)) return;
     const collectionName = resolveCollectionNameForSqlTable(selectedTable, migrationPlan);
-    if (collectionName && collectionName !== selectedCollection) {
-      setSessionField('selectedCollection', collectionName);
-    }
-  }, [
-    diagramViewMode,
-    migrationPlan,
-    schemaPhase,
-    selectedCollection,
-    selectedTable,
-    setSessionField,
-  ]);
+    if (collectionName) setSessionField('selectedCollection', collectionName);
+  }, [diagramViewMode, migrationPlan, schemaPhase, selectedTable, setSessionField]);
 
   const recommendedAtlasTierId = useMemo(() => {
     if (!model && !migrationPlan) return undefined;

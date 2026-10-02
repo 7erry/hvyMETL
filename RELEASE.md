@@ -1,3 +1,9 @@
+## hvyMETL 5.1.30
+
+**After-view collection selection** — SQL table → collection sync still runs when you switch to **After · MongoDB** (or change the selected SQL table), but no longer overrides manual collection clicks or pane deselect on the Mongo canvas.
+
+---
+
 ## hvyMETL 5.1.29
 
 **Knowledge doc links in plans** — Pattern `knowledgeSource` values are full GitHub URLs (`github.com/7erry/hvyMETL/blob/main/knowledge/…`) so JSON Crack and exports no longer treat filenames like `embed-vs-reference.md` as broken `https://embed-vs-reference.md` links. Existing saved plans are normalized in the UI.
