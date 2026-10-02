@@ -27,8 +27,7 @@ import {
 import { MONGO_GRAPH_LAYOUT_OPTIONS, layoutMigrationPlan } from '../graphLayout';
 import { useCompactDiagramLayout } from '../hooks/useCompactDiagramLayout';
 import type { RelationshipConnectionType, RelationshipNotation } from '../relationshipDisplay';
-import type { MigrationPlan } from '../migrationPlanTypes';
-import { openCollectionPlanInJsonCrack } from '../openJsonCrackWindow';
+import type { CollectionPlan, MigrationPlan } from '../migrationPlanTypes';
 
 const GRID = 20;
 const MONGO_FIT_PADDING = 0.04;
@@ -47,6 +46,7 @@ type MongoSchemaCanvasProps = {
   positions: Record<string, { x: number; y: number }>;
   selectedCollection: string | null;
   onSelectCollection: (name: string | null) => void;
+  onCollectionDoubleClick?: (collection: CollectionPlan) => void;
   expandedFieldPaths: Set<string>;
   onToggleFieldPath: (collectionName: string, fieldPath: string) => void;
   onGeneratePlan?: () => void;
@@ -157,6 +157,7 @@ export function MongoSchemaCanvas({
   positions,
   selectedCollection,
   onSelectCollection,
+  onCollectionDoubleClick,
   expandedFieldPaths,
   onToggleFieldPath,
   onGeneratePlan,
@@ -254,7 +255,7 @@ export function MongoSchemaCanvas({
         onNodeClick={(_event, node) => onSelectCollection(node.id)}
         onNodeDoubleClick={(_event, node) => {
           const data = node.data as CollectionNodeData;
-          if (data?.collection) openCollectionPlanInJsonCrack(data.collection);
+          if (data?.collection) onCollectionDoubleClick?.(data.collection);
         }}
         onPaneClick={() => onSelectCollection(null)}
         nodeTypes={nodeTypes}

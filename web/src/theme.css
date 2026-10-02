@@ -2910,6 +2910,31 @@ textarea {
   margin: 0;
 }
 
+.jsoncrack-collection-modal {
+  width: min(1200px, 96vw);
+  height: min(900px, 92vh);
+  max-height: 92vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.jsoncrack-collection-modal__frame-wrap {
+  flex: 1;
+  min-height: 0;
+  border: 1px solid var(--mdb-green-dark-2);
+  border-radius: 6px;
+  overflow: hidden;
+  background: #001e2b;
+}
+
+.jsoncrack-collection-modal__frame {
+  width: 100%;
+  height: 100%;
+  border: none;
+  display: block;
+}
+
 .pipeline-modal__subtitle {
   margin: 0.25rem 0 0;
   font-size: 0.8rem;

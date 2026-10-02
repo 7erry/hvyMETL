@@ -40,7 +40,7 @@ import { mergeAtlasHaIntoArtifacts } from './ha/attachAtlasHaArtifacts';
 import { haClusterInputsWithDefaults } from './ha/defaultHaClusterInputs';
 import { computeManagerCostProjection } from './managerCostEstimate';
 import { edgesForPlan } from './migrationPlanDisplay';
-import { openCollectionPlanInJsonCrack } from './openJsonCrackWindow';
+import { JsonCrackCollectionModal } from './components/JsonCrackCollectionModal';
 import { mergeMeasuredModelStats } from './mergeMeasuredModelStats';
 import { CardinalityOverridesPanel } from './components/CardinalityOverridesPanel';
 import { TimeSeriesOverridesPanel } from './components/TimeSeriesOverridesPanel';
@@ -193,6 +193,7 @@ export default function App() {
   const diagramFileInputRef = useRef<HTMLInputElement>(null);
   const mongoDiagramFileInputRef = useRef<HTMLInputElement>(null);
   const [collectionFieldExpandedPaths, setCollectionFieldExpandedPaths] = useState<Set<string>>(() => new Set());
+  const [jsonCrackCollection, setJsonCrackCollection] = useState<CollectionPlan | null>(null);
 
   const toggleCollectionFieldPath = useCallback((collectionName: string, fieldPath: string) => {
     const key = `${collectionName}:${fieldPath}`;
@@ -1704,7 +1705,7 @@ export default function App() {
                             className={selectedCollection === c.name ? 'selected' : ''}
                             title="Double-click to open in JSON Crack"
                             onClick={() => setSessionField('selectedCollection', c.name)}
-                            onDoubleClick={() => openCollectionPlanInJsonCrack(c)}
+                            onDoubleClick={() => setJsonCrackCollection(c)}
                           >
                             <span>{c.name}</span>
                             <span style={{ opacity: 0.6, fontSize: '0.7rem' }}>{c.sourceTable}</span>
@@ -1866,6 +1867,7 @@ export default function App() {
                         positions={effectiveCollectionPositions}
                         selectedCollection={selectedCollection}
                         onSelectCollection={(name) => setSessionField('selectedCollection', name)}
+                        onCollectionDoubleClick={(plan) => setJsonCrackCollection(plan)}
                         expandedFieldPaths={collectionFieldExpandedPaths}
                         onToggleFieldPath={toggleCollectionFieldPath}
                         onGeneratePlan={() => void handleGeneratePlan()}
@@ -1967,6 +1969,11 @@ export default function App() {
         onClose={closeSchemaImportDialog}
       />
 
+      <JsonCrackCollectionModal
+        open={jsonCrackCollection != null}
+        collection={jsonCrackCollection}
+        onClose={() => setJsonCrackCollection(null)}
+      />
       <CustomTelemetryModal
         open={customTelemetryOpen}
         initial={customTelemetryInitial}
