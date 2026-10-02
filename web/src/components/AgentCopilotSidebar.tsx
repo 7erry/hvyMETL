@@ -188,7 +188,7 @@ export function AgentCopilotSidebar() {
         ) : copilot.activeTab === 'sizing' ? (
           <SizingAssistantPanel />
         ) : copilot.activeTab === 'ha' ? (
-          <HaAssistantPanel />
+          <HaAssistantPanel recommendedTierId={copilot.recommendedAtlasTierId} />
         ) : (
           <>
             <div className="agent-copilot-sidebar__thread" ref={threadRef}>

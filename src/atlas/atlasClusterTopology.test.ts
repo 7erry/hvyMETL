@@ -86,6 +86,19 @@ describe('buildAtlasClusterCreateRequest', () => {
     }
   });
 
+  it('honors explicit regionNames for 5-node layout', () => {
+    const payload = buildAtlasClusterCreateRequest({
+      ...base3Aws,
+      electableNodeCount: 5,
+      regionNames: ['US_EAST_1', 'US_WEST_2', 'EU_WEST_1'],
+    });
+    expect(payload.replicationSpecs[0]?.regionConfigs.map((r) => r.regionName)).toEqual([
+      'US_EAST_1',
+      'US_WEST_2',
+      'EU_WEST_1',
+    ]);
+  });
+
   it('uses AZURE provider name for Azure', () => {
     const payload = buildAtlasClusterCreateRequest({
       ...base3Aws,

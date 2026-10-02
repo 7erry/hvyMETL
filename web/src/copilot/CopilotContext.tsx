@@ -110,6 +110,7 @@ export type CopilotContextValue = {
   targetDatabase: string;
   /** Loaded migration plan used for architecture review Google Docs collection diagrams. */
   migrationPlan: MigrationPlan | null;
+  recommendedAtlasTierId?: string;
   /** Remember the logical database from the most recent successful pipeline import. */
   setTargetDatabase: (database: string) => void;
   /** autoEmbed vector search indexes created in this studio session. */
@@ -182,6 +183,8 @@ type CopilotProviderProps = {
   workflowHandlers: CopilotWorkflowHandlers;
   managerCostInputs?: ManagerCostInputs;
   haClusterInputs?: HaClusterInputs;
+  /** Sizing projection tier — syncs HA instance size when not locked. */
+  recommendedAtlasTierId?: string;
   /** Called when Mongo inspect returns collection stats useful for Atlas Sizing. */
   onSizingAtlasHints?: (patch: { avgDocSizeKb?: number; secondaryIndexCount?: number }) => void;
 };
@@ -200,6 +203,7 @@ export function CopilotProvider({
   workflowHandlers,
   managerCostInputs = DEFAULT_MANAGER_COST_INPUTS,
   haClusterInputs = DEFAULT_HA_CLUSTER_INPUTS,
+  recommendedAtlasTierId,
   onSizingAtlasHints,
 }: CopilotProviderProps) {
   const [open, setOpenState] = useState(false);
@@ -1333,6 +1337,7 @@ export function CopilotProvider({
       mongoInspectMessage,
       targetDatabase,
       migrationPlan: plan,
+      recommendedAtlasTierId,
       setTargetDatabase,
       vectorSearchIndexes,
       recordVectorSearchIndex,
@@ -1393,6 +1398,7 @@ export function CopilotProvider({
       mongoInspectMessage,
       targetDatabase,
       plan,
+      recommendedAtlasTierId,
       setTargetDatabase,
       vectorSearchIndexes,
       recordVectorSearchIndex,

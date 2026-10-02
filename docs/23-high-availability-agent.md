@@ -10,7 +10,10 @@ After schema import, open **High Availability** under **Sizing Cost Projection**
 
 - **Cloud provider:** AWS, GCP, or Azure (single provider for all regions)
 - **Electable nodes:** 3, 5, or 7 — region splits `2+1`, `2+2+1`, `3+2+2`
-- **Primary region:** highest election priority; secondary regions from a curated catalog
+- **Regions:** one selector per layout slot (primary + secondaries), labeled with electable node counts (e.g. 5-node → 2+2+1)
+- **Instance size:** follows sizing **Recommended Tier** until you change the dropdown (or click **Use recommended**)
+- **Est. Atlas compute:** illustrative monthly/hourly total (tier × electable + read-only nodes)
+- **Generated REST / Terraform payload:** expandable drawer — copy JSON, export `.tf`, validate, copy deploy curl
 - **Instance size:** defaults from sizing **Recommended Tier**; overridable
 - **Read-only replicas per region:** adds `readOnlySpecs` on every electable region
 - **Cluster name:** sanitized for Atlas naming rules

@@ -521,6 +521,22 @@ export default function App() {
     return computeManagerCostProjection(model, migrationPlan, managerCostInputs).recommendedTier.id;
   }, [model, migrationPlan, managerCostInputs]);
 
+  useEffect(() => {
+    if (!recommendedAtlasTierId) return;
+    setSession((prev) => {
+      const ha = prev.haClusterInputs;
+      if (ha.instanceSizeLocked) return prev;
+      if (ha.instanceSize === recommendedAtlasTierId) return prev;
+      return {
+        ...prev,
+        haClusterInputs: {
+          ...ha,
+          instanceSize: recommendedAtlasTierId,
+        },
+      };
+    });
+  }, [recommendedAtlasTierId]);
+
   const selectedCollectionPlan = useMemo(
     () => migrationPlan?.collections.find((c) => c.name === selectedCollection) ?? null,
     [migrationPlan, selectedCollection],
@@ -1335,6 +1351,7 @@ export default function App() {
       workflowHandlers={copilotWorkflowHandlers}
       managerCostInputs={managerCostInputs}
       haClusterInputs={haClusterInputs}
+      recommendedAtlasTierId={recommendedAtlasTierId}
       onSizingAtlasHints={(patch) =>
         setSession((prev) => ({
           ...prev,

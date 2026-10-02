@@ -1,5 +1,6 @@
 import { useHaAssistant } from '../../ha/HaAssistantContext';
-import { CopyButton } from '../CopyButton';
+import { HaEstimatedCostBadge } from './HaEstimatedCostBadge';
+import { HaPayloadPreview } from './HaPayloadPreview';
 
 const QUICK_ACTIONS = [
   {
@@ -14,7 +15,11 @@ const QUICK_ACTIONS = [
   },
 ];
 
-export function HaAssistantPanel() {
+type HaAssistantPanelProps = {
+  recommendedTierId?: string;
+};
+
+export function HaAssistantPanel({ recommendedTierId }: HaAssistantPanelProps) {
   const ha = useHaAssistant();
 
   return (
@@ -26,9 +31,10 @@ export function HaAssistantPanel() {
         </span>
       </div>
 
+      <HaEstimatedCostBadge inputs={ha.inputs} recommendedTierId={recommendedTierId} />
+
       <p className="agent-copilot-sidebar__empty">
-        Topology matches the Developer sidebar. Adjust controls there or use quick actions below. Export via Migration
-        Export or Download HA pack.
+        Topology matches the Developer sidebar. Adjust controls there or use quick actions below.
       </p>
 
       <div className="ha-assistant-quick">
@@ -57,7 +63,7 @@ export function HaAssistantPanel() {
           </thead>
           <tbody>
             {ha.summary.regions.map((row) => (
-              <tr key={row.regionName}>
+              <tr key={`${row.regionName}-${row.priority}`}>
                 <td>{row.regionName}</td>
                 <td>{row.priority}</td>
                 <td>{row.electable}</td>
@@ -68,16 +74,7 @@ export function HaAssistantPanel() {
         </table>
       </div>
 
-      <pre className="ha-assistant-json" aria-label="Atlas cluster create JSON">
-        {ha.jsonPreview}
-      </pre>
-
-      <div className="ha-cluster-actions">
-        <CopyButton label="Copy JSON" text={ha.jsonPreview} />
-        <button type="button" className="secondary" onClick={ha.downloadHaPack}>
-          Download HA pack
-        </button>
-      </div>
+      <HaPayloadPreview inputs={ha.inputs} />
     </div>
   );
 }

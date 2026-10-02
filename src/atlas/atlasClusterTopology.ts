@@ -9,9 +9,13 @@ export type HaElectableSize = 3 | 5 | 7;
 export type HaClusterInputs = {
   provider: AtlasCloudProvider;
   electableNodeCount: HaElectableSize;
-  /** Highest-priority region (Atlas regionName enum). */
+  /** Highest-priority region (Atlas regionName enum). Index 0 of {@link regionNames}. */
   primaryRegion: string;
+  /** Explicit region per layout slot (length = electable split length). When omitted, derived from primary + catalog. */
+  regionNames?: string[];
   instanceSize: string;
+  /** When false, UI may sync instanceSize to sizing recommended tier. */
+  instanceSizeLocked?: boolean;
   readOnlyReplicasPerRegion: number;
   clusterName: string;
 };
@@ -111,10 +115,44 @@ export function defaultHaClusterName(electableNodeCount: HaElectableSize): strin
   return `MultiRegionCluster-${electableNodeCount}Node`;
 }
 
+/** Resolves full region list for the active electable layout. */
+export function resolveHaRegionNames(inputs: HaClusterInputs): string[] {
+  const split = electableSplit(inputs.electableNodeCount);
+  const catalog = regionCatalog(inputs.provider);
+  const auto = resolveHaRegions(inputs.provider, inputs.primaryRegion, split.length);
+
+  if (!inputs.regionNames?.length) return auto;
+
+  const normalized = inputs.regionNames.map((r) => r.trim().toUpperCase());
+  if (normalized.length !== split.length) return auto;
+
+  const used = new Set<string>();
+  return normalized.map((name, index) => {
+    const valid = catalog.includes(name) && !used.has(name);
+    const picked = valid ? name : (auto[index] ?? auto[0] ?? inputs.primaryRegion);
+    used.add(picked);
+    return picked;
+  });
+}
+
+export type HaRegionSlotLabel = {
+  index: number;
+  role: 'primary' | 'secondary';
+  electableNodes: number;
+};
+
+export function haRegionSlotLabels(electableNodeCount: HaElectableSize): HaRegionSlotLabel[] {
+  return electableSplit(electableNodeCount).map((electableNodes, index) => ({
+    index,
+    role: index === 0 ? 'primary' : 'secondary',
+    electableNodes,
+  }));
+}
+
 /** Builds regionConfigs with descending election priority (7 = preferred primary region). */
 export function buildRegionConfigs(inputs: HaClusterInputs): AtlasRegionConfig[] {
   const split = electableSplit(inputs.electableNodeCount);
-  const regions = resolveHaRegions(inputs.provider, inputs.primaryRegion, split.length);
+  const regions = resolveHaRegionNames(inputs);
   const instanceSize = inputs.instanceSize.trim().toUpperCase();
 
   return split.map((electableCount, index) => {

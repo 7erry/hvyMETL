@@ -1691,6 +1691,8 @@ textarea {
   height: 100%;
   overflow-y: auto;
   padding: 0.75rem;
+  padding-top: 1rem;
+  scroll-padding-top: 0.5rem;
   -webkit-overflow-scrolling: touch;
 }
 
@@ -6625,11 +6627,102 @@ textarea {
   color: #ffabab;
 }
 
+.app-root .manager-cost-panel__intro,
+.app-root .manager-cost-panel .manager-hint.manager-cost-panel__intro {
+  margin: 0.35rem 0 0.75rem;
+  padding-top: 0.15rem;
+  font-size: 0.82rem;
+  line-height: 1.45;
+  opacity: 0.92;
+}
+
 .app-root .ha-cluster-intro {
   margin: 0 0 0.75rem;
   font-size: 0.78rem;
   opacity: 0.9;
   line-height: 1.4;
+}
+
+.app-root .ha-cost-badge {
+  margin-bottom: 0.85rem;
+  padding: 0.55rem 0.65rem;
+  border-radius: 10px;
+  border: 1px solid rgba(0, 104, 74, 0.45);
+  background: rgba(0, 104, 74, 0.12);
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.app-root .ha-cost-badge__label {
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  opacity: 0.85;
+}
+
+.app-root .ha-cost-badge__value {
+  font-size: 1.15rem;
+  color: var(--mdb-spring-green);
+}
+
+.app-root .ha-cost-badge__meta {
+  font-size: 0.72rem;
+  opacity: 0.88;
+}
+
+.app-root .ha-segmented {
+  display: flex;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+}
+
+.app-root .ha-segmented__btn {
+  flex: 1 1 30%;
+  min-height: var(--btn-min-height, 2.25rem);
+  padding: 0.45rem 0.5rem;
+  border: 1px solid rgba(0, 104, 74, 0.5);
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.2);
+  color: inherit;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.app-root .ha-segmented__btn.active {
+  background: rgba(0, 104, 74, 0.35);
+  border-color: var(--mdb-spring-green);
+  color: var(--mdb-spring-green);
+}
+
+.app-root .ha-cluster-use-recommended {
+  margin-top: 0.35rem;
+  font-size: 0.72rem;
+}
+
+.ha-payload-drawer {
+  margin: 0.75rem 0;
+}
+
+.ha-payload-drawer__body {
+  padding-top: 0.35rem;
+}
+
+.ha-payload-drawer__endpoint {
+  margin: 0 0 0.5rem;
+  font-size: 0.72rem;
+  word-break: break-all;
+}
+
+.ha-payload-drawer__actions {
+  margin-bottom: 0.5rem;
+}
+
+.ha-payload-drawer__validation {
+  margin: 0 0 0.5rem;
+  font-size: 0.75rem;
+  color: var(--mdb-spring-green);
 }
 
 .app-root .ha-cluster-controls {

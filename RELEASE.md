@@ -1,3 +1,9 @@
+## hvyMETL 5.1.0
+
+**HA Agent UX & cost** — Instance size syncs to sizing recommended tier (unless locked). Per-slot **primary/secondary region** selectors for 3/5/7 layouts. **Est. Atlas compute** badge, segmented node picker, **REST/Terraform payload** drawer (validate + deploy curl). Developer sidebar padding fix for sizing intro text.
+
+---
+
 ## hvyMETL 5.0.0
 
 **High Availability Agent** — Developer **High Availability** panel (cloud provider, 3/5/7 electable nodes, read-only replicas per region, Atlas tier) plus Copilot **HA** tab. **AI Migration Export** adds `atlas-ha-provisioning-guide.md` and `atlas-cluster-create.json` (Atlas Admin API `replicationSpecs` templates). See [docs/23-high-availability-agent.md](docs/23-high-availability-agent.md).

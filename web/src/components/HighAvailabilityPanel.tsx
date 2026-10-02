@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import {
   buildAtlasClusterCreateRequest,
   defaultHaClusterName,
+  haRegionSlotLabels,
   sanitizeAtlasClusterName,
   summarizeHaTopology,
   type AtlasCloudProvider,
@@ -10,10 +11,16 @@ import {
 } from '../../../src/atlas/atlasClusterTopology.ts';
 import { buildAtlasHaArtifactBundle } from '../../../src/atlas/atlasHaExport.ts';
 import { ATLAS_CLUSTER_TIERS } from '../managerCostEstimate';
-import { primaryRegionOptions } from '../ha/defaultHaClusterInputs';
+import {
+  patchHaElectableCount,
+  patchHaProvider,
+  patchHaRegionAtIndex,
+  primaryRegionOptions,
+} from '../ha/defaultHaClusterInputs';
 import { downloadText } from '../api';
 import { CollapsiblePanel } from './CollapsiblePanel';
-import { CopyButton } from './CopyButton';
+import { HaEstimatedCostBadge } from './ha/HaEstimatedCostBadge';
+import { HaPayloadPreview } from './ha/HaPayloadPreview';
 
 type HighAvailabilityPanelProps = {
   inputs: HaClusterInputs;
@@ -35,30 +42,21 @@ export function HighAvailabilityPanel({
   onOpenChange,
   onOpenCopilotHa,
 }: HighAvailabilityPanelProps) {
-  const payload = useMemo(() => buildAtlasClusterCreateRequest(inputs), [inputs]);
   const summary = useMemo(() => summarizeHaTopology(inputs), [inputs]);
-  const jsonPreview = useMemo(() => JSON.stringify(payload, null, 2), [payload]);
-
+  const regionSlots = useMemo(() => haRegionSlotLabels(inputs.electableNodeCount), [inputs.electableNodeCount]);
   const regionOptions = useMemo(() => primaryRegionOptions(inputs.provider), [inputs.provider]);
-
-  const setProvider = (provider: AtlasCloudProvider) => {
-    const regions = primaryRegionOptions(provider);
-    onChange({
-      ...inputs,
-      provider,
-      primaryRegion: regions.includes(inputs.primaryRegion) ? inputs.primaryRegion : regions[0] ?? inputs.primaryRegion,
-    });
-  };
+  const regionNames = inputs.regionNames ?? summary.regions.map((r) => r.regionName);
 
   const setElectable = (electableNodeCount: HaElectableSize) => {
-    onChange({
-      ...inputs,
-      electableNodeCount,
-      clusterName: sanitizeAtlasClusterName(
-        inputs.clusterName,
-        defaultHaClusterName(electableNodeCount),
+    onChange(
+      patchHaElectableCount(
+        {
+          ...inputs,
+          clusterName: sanitizeAtlasClusterName(inputs.clusterName, defaultHaClusterName(electableNodeCount)),
+        },
+        electableNodeCount,
       ),
-    });
+    );
   };
 
   const handleDownloadHaPack = () => {
@@ -74,10 +72,15 @@ export function HighAvailabilityPanel({
         3+2+2 on your selected cloud provider.
       </p>
 
+      <HaEstimatedCostBadge inputs={inputs} recommendedTierId={recommendedTierId} />
+
       <div className="ha-cluster-controls">
         <label className="ha-cluster-field">
           <span className="ha-cluster-field__label">Cloud provider</span>
-          <select value={inputs.provider} onChange={(e) => setProvider(e.target.value as AtlasCloudProvider)}>
+          <select
+            value={inputs.provider}
+            onChange={(e) => onChange(patchHaProvider(inputs, e.target.value as AtlasCloudProvider))}
+          >
             {PROVIDERS.map((p) => (
               <option key={p} value={p}>
                 {p}
@@ -86,42 +89,56 @@ export function HighAvailabilityPanel({
           </select>
         </label>
 
-        <fieldset className="ha-cluster-field">
-          <legend className="ha-cluster-field__label">Electable nodes</legend>
-          <div className="ha-cluster-radio-row">
+        <div className="ha-cluster-field">
+          <span className="ha-cluster-field__label">Electable nodes</span>
+          <div className="ha-segmented" role="group" aria-label="Electable node count">
             {ELECTABLE_SIZES.map((n) => (
-              <label key={n} className="ha-cluster-radio">
-                <input
-                  type="radio"
-                  name="ha-electable"
-                  checked={inputs.electableNodeCount === n}
-                  onChange={() => setElectable(n)}
-                />
-                {n}
-              </label>
+              <button
+                key={n}
+                type="button"
+                className={inputs.electableNodeCount === n ? 'ha-segmented__btn active' : 'ha-segmented__btn'}
+                aria-pressed={inputs.electableNodeCount === n}
+                onClick={() => setElectable(n)}
+              >
+                {n} nodes
+              </button>
             ))}
           </div>
-        </fieldset>
+        </div>
 
-        <label className="ha-cluster-field">
-          <span className="ha-cluster-field__label">Primary region</span>
-          <select
-            value={inputs.primaryRegion}
-            onChange={(e) => onChange({ ...inputs, primaryRegion: e.target.value })}
-          >
-            {regionOptions.map((r) => (
-              <option key={r} value={r}>
-                {r}
-              </option>
-            ))}
-          </select>
-        </label>
+        {regionSlots.map((slot) => {
+          const label =
+            slot.role === 'primary'
+              ? `Primary region (${slot.electableNodes} node${slot.electableNodes === 1 ? '' : 's'})`
+              : `Secondary region ${slot.index} (${slot.electableNodes} node${slot.electableNodes === 1 ? '' : 's'})`;
+          return (
+            <label key={slot.index} className="ha-cluster-field">
+              <span className="ha-cluster-field__label">{label}</span>
+              <select
+                value={regionNames[slot.index] ?? regionOptions[0]}
+                onChange={(e) => onChange(patchHaRegionAtIndex(inputs, slot.index, e.target.value))}
+              >
+                {regionOptions.map((r) => (
+                  <option key={r} value={r}>
+                    {r}
+                  </option>
+                ))}
+              </select>
+            </label>
+          );
+        })}
 
         <label className="ha-cluster-field">
           <span className="ha-cluster-field__label">Instance size</span>
           <select
             value={inputs.instanceSize}
-            onChange={(e) => onChange({ ...inputs, instanceSize: e.target.value })}
+            onChange={(e) =>
+              onChange({
+                ...inputs,
+                instanceSize: e.target.value,
+                instanceSizeLocked: true,
+              })
+            }
           >
             {ATLAS_CLUSTER_TIERS.map((tier) => (
               <option key={tier.id} value={tier.id}>
@@ -130,6 +147,21 @@ export function HighAvailabilityPanel({
               </option>
             ))}
           </select>
+          {recommendedTierId && recommendedTierId !== inputs.instanceSize ? (
+            <button
+              type="button"
+              className="tertiary ha-cluster-use-recommended"
+              onClick={() =>
+                onChange({
+                  ...inputs,
+                  instanceSize: recommendedTierId,
+                  instanceSizeLocked: false,
+                })
+              }
+            >
+              Use recommended {recommendedTierId}
+            </button>
+          ) : null}
         </label>
 
         <label className="ha-cluster-field">
@@ -170,7 +202,7 @@ export function HighAvailabilityPanel({
           </thead>
           <tbody>
             {summary.regions.map((row) => (
-              <tr key={row.regionName}>
+              <tr key={`${row.regionName}-${row.priority}`}>
                 <td>{row.regionName}</td>
                 <td>{row.priority}</td>
                 <td>{row.electable}</td>
@@ -181,8 +213,9 @@ export function HighAvailabilityPanel({
         </table>
       </div>
 
+      <HaPayloadPreview inputs={inputs} />
+
       <div className="ha-cluster-actions">
-        <CopyButton label="Copy JSON" text={jsonPreview} />
         <button type="button" className="secondary" onClick={handleDownloadHaPack}>
           Download HA pack
         </button>
