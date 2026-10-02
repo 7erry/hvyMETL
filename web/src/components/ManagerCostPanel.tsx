@@ -39,7 +39,7 @@ type ManagerCostPanelProps = {
 };
 
 const DATASET_SLIDER_MIN_GB = 1;
-const DATASET_SLIDER_MAX_GB = 100 * 1024;
+const DATASET_SLIDER_MAX_GB = 50 * 1024;
 /** 1 GB steps so recommended tier can walk M10→M20→… without 64 GB jumps. */
 const DATASET_SLIDER_STEP_GB = 1;
 

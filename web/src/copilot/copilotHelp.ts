@@ -114,7 +114,7 @@ export function buildCopilotCommandsResponse(): string {
     '',
     '### Manager dataset scale',
     '- **what is the current raw data size?** / **dataset scale — raw data** — Manager slider override or schema estimate',
-    '- Manager **Dataset scale — raw data** (up to 100 TB) feeds Atlas sizing and sharding guidance in architecture reviews when CSV row counts are unavailable',
+    '- Manager **Dataset scale — raw data** (up to 50 TB) feeds Atlas sizing and sharding guidance in architecture reviews when CSV row counts are unavailable',
     '',
     '### Quick-action chips (footer)',
     '- **Migration steps**, **Check Guardrails**, **Optimize Schema**, **Translate SQL**',

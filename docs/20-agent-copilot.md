@@ -84,7 +84,7 @@ The **Dataset scale — raw data** slider in Developer view (`Sizing Cost Projec
 
 | Source | When used |
 | --- | --- |
-| **Manager slider override** | `estimatedDataGb > 0` — authoritative raw data size (up to 100 TB) |
+| **Manager slider override** | `estimatedDataGb > 0` — authoritative raw data size (up to 50 TB) |
 | **Schema estimate** | DDL loaded, no slider override — heuristics from column types and default/plan row counts |
 | **Unavailable** | No schema and no slider override |
 

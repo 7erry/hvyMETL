@@ -1,3 +1,9 @@
+## hvyMETL 5.1.13
+
+**Dataset scale slider cap** — **Sizing Cost Projection** raw data slider maximum is **50 TB** (was 100 TB).
+
+---
+
 ## hvyMETL 5.1.12
 
 **Sizing tier ladder (M10–M600)** — Dataset scale uses **1 GB** slider steps and tier markers for every dedicated class. Recommendations follow **planning storage** plus WiredTiger **hot-set** fit (no M10→M60 RAM cliffs). Atlas **max connections** chart in Recommended Tier; matrix adds **M600** and Atlas storage caps.
