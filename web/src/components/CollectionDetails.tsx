@@ -1,7 +1,6 @@
-import { useMemo } from 'react';
 import { downloadJson } from '../api';
 import type { CollectionPlan } from '../migrationPlanTypes';
-import { PrismCodeBlock } from './PrismCodeBlock';
+import { CollectionJsonView } from './CollectionJsonView';
 
 type CollectionDetailsProps = {
   collection: CollectionPlan | null;
@@ -33,12 +32,11 @@ function JsonDownloadIcon() {
 }
 
 export function CollectionDetails({ collection, onClose }: CollectionDetailsProps) {
-  const collectionJson = useMemo(
-    () => (collection ? JSON.stringify(collection, null, 2) : ''),
-    [collection],
-  );
-
   if (!collection) return null;
+
+  const mergedTables = collection.mergedTables ?? [];
+  const idDerivation = collection.idDerivation ?? { strategy: 'direct' as const, sourceColumns: ['_id'] };
+  const sourceColumns = idDerivation.sourceColumns ?? [];
 
   return (
     <div className="panel table-details collection-details">
@@ -62,15 +60,15 @@ export function CollectionDetails({ collection, onClose }: CollectionDetailsProp
 
       <p className="collection-details__meta">
         Source table: <code>{collection.sourceTable}</code>
-        {collection.mergedTables.length > 1
-          ? ` · merged: ${collection.mergedTables.filter((t) => t !== collection.sourceTable).join(', ')}`
+        {mergedTables.length > 1
+          ? ` · merged: ${mergedTables.filter((t) => t !== collection.sourceTable).join(', ')}`
           : ''}
         {' · '}
-        _id: {collection.idDerivation.strategy} ({collection.idDerivation.sourceColumns.join(', ')})
+        _id: {idDerivation.strategy} ({sourceColumns.join(', ')})
       </p>
 
       <div className="collection-details__json" aria-label={`${collection.name} migration plan JSON`}>
-        <PrismCodeBlock code={collectionJson} language="json" preClassName="collection-details__json-pre" />
+        <CollectionJsonView collection={collection} />
       </div>
     </div>
   );

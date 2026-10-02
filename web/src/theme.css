@@ -1777,6 +1777,26 @@ textarea {
   border: none;
 }
 
+.collection-json__key {
+  color: #79c0ff;
+}
+
+.collection-json__string {
+  color: #a5d6ff;
+}
+
+.collection-json__number {
+  color: #f2cc60;
+}
+
+.collection-json__boolean {
+  color: #ff7b72;
+}
+
+.collection-json__null {
+  color: #ff7b72;
+}
+
 .workspace-split {
   display: flex;
   flex: 1;

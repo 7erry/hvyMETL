@@ -1,3 +1,9 @@
+## hvyMETL 5.1.18
+
+**Fix collection JSON inspector crash** — Replaced Prism highlighting in the sidebar collection view with a lightweight highlighter and safe serialization so selecting a collection no longer blanks the UI.
+
+---
+
 ## hvyMETL 5.1.17
 
 **Collection inspector JSON** — MongoDB **after** view: selecting a collection in the left pane shows a **syntax-highlighted JSON** migration-plan slice (replaces the Field/BSON table).
