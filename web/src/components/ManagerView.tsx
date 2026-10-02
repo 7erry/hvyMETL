@@ -17,7 +17,7 @@ import {
   buildCollectionReviewItems,
   rejectTableReview,
 } from '../managerReview';
-import type { ManagerReviewAcceptances, ManagerCostInputs, MigrationArtifacts } from '../sessionState';
+import type { ManagerReviewAcceptances, MigrationArtifacts } from '../sessionState';
 import type { MigrationPlan } from '../migrationPlanTypes';
 import type { Dialect, SqlStructuralModel } from '../types';
 
@@ -40,8 +40,6 @@ type ManagerViewProps = {
   onOpenMigrationView: () => void;
   onReviewAcceptancesChange: (acceptances: ManagerReviewAcceptances) => void;
   managerReviewAcceptances: ManagerReviewAcceptances | null;
-  managerCostInputs: ManagerCostInputs;
-  onManagerCostInputsChange: (inputs: ManagerCostInputs) => void;
   dialects: Dialect[];
   dialect: string;
   ddl: string;
@@ -71,8 +69,6 @@ export function ManagerView({
   onOpenMigrationView,
   onReviewAcceptancesChange,
   managerReviewAcceptances,
-  managerCostInputs,
-  onManagerCostInputsChange,
   dialects,
   dialect,
   ddl,
@@ -193,8 +189,6 @@ export function ManagerView({
             blockerCount={progress.blockedCount}
             reviewCount={pendingReviewCount}
             profileInfo={profileInfo}
-            managerCostInputs={managerCostInputs}
-            onManagerCostInputsChange={onManagerCostInputsChange}
             dialects={dialects}
             dialect={dialect}
             ddl={ddl}

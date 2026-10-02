@@ -17,11 +17,17 @@ import type { MigrationPlan } from '../migrationPlanTypes';
 import type { SqlStructuralModel } from '../types';
 import { CollapsiblePanel } from './CollapsiblePanel';
 
+/** Sidebar panel title for Atlas sizing and monthly cost heuristics. */
+export const SIZING_COST_PROJECTION_TITLE = 'Sizing Cost Projection';
+
 type ManagerCostPanelProps = {
   model: SqlStructuralModel | null;
   migrationPlan: MigrationPlan | null;
   inputs: ManagerCostInputs;
   onChange: (inputs: ManagerCostInputs) => void;
+  /** Controlled open state for the primary sizing panel (developer sidebar flow). */
+  sizingPanelOpen?: boolean;
+  onSizingPanelOpenChange?: (open: boolean) => void;
 };
 
 const DATASET_SLIDER_MIN_GB = 1;
@@ -57,6 +63,8 @@ export function ManagerCostPanel({
   migrationPlan,
   inputs,
   onChange,
+  sizingPanelOpen,
+  onSizingPanelOpenChange,
 }: ManagerCostPanelProps) {
   const projection = useMemo(
     () => computeManagerCostProjection(model, migrationPlan, inputs),
@@ -91,7 +99,11 @@ export function ManagerCostPanel({
 
   if (!model) {
     return (
-      <CollapsiblePanel title="Migration Cost Projection">
+      <CollapsiblePanel
+        title={SIZING_COST_PROJECTION_TITLE}
+        open={sizingPanelOpen}
+        onOpenChange={onSizingPanelOpenChange}
+      >
         <p className="manager-hint">Import a source schema to estimate Atlas sizing and monthly run costs.</p>
       </CollapsiblePanel>
     );
@@ -106,8 +118,10 @@ export function ManagerCostPanel({
   return (
     <>
       <CollapsiblePanel
-        title="Migration Cost Projection"
-        defaultOpen
+        title={SIZING_COST_PROJECTION_TITLE}
+        open={sizingPanelOpen}
+        onOpenChange={onSizingPanelOpenChange}
+        defaultOpen={sizingPanelOpen === undefined}
         className="manager-cost-panel"
         collapsedHint={`${formatGb(datasetScaleGb)} · ${WORKLOAD_SHORT[inputs.workloadType]}`}
       >

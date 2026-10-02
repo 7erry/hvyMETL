@@ -1,3 +1,14 @@
+## hvyMETL 4.3.12
+
+**Sizing Cost Projection in Developer sidebar** — Renamed **Migration Cost Projection** to **Sizing Cost Projection** and placed it directly under **Instant Schema Import** in Developer view. After a successful schema import, the import panel collapses and sizing opens automatically. Manager Configure tab no longer duplicates the panel.
+
+### Verification
+
+- Developer view → import DDL → **Sizing Cost Projection** opens with dataset scale slider.
+- `cd web && npm run build`
+
+---
+
 ## hvyMETL 4.3.11
 
 **MongoDB visualizer: nested embed schemas and diagram polish** — After-view collection boxes and the sidebar inspector expand embedded documents and `array<object>` fields using migration-plan `$jsonSchema`. Design now fills embed array `items.properties` from child SQL tables. ER relationship lines render behind collection/table nodes. Design refresh continues when MongoDB Atlas is unreachable (lessons/logs skipped with a warning).

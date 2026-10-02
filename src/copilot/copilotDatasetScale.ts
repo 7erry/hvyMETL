@@ -124,7 +124,7 @@ export function buildCopilotDatasetScaleResponse(scale: CopilotDatasetScaleConte
     return [
       'Raw data size is not set yet.',
       '',
-      'In **Manager** view, open **Migration Cost Projection** and adjust **Dataset scale — raw data** (up to 21 TB).',
+      'In **Developer** view, open **Sizing Cost Projection** (under Instant Schema Import) and adjust **Dataset scale — raw data** (up to 21 TB).',
       'That override is used for Atlas sizing and sharding guidance when CSV import row counts are unavailable.',
     ].join('\n');
   }
@@ -162,7 +162,7 @@ export function buildCopilotDatasetScaleResponse(scale: CopilotDatasetScaleConte
     }
   }
 
-  lines.push('', 'Open **Manager → Migration Cost Projection** to adjust the slider or review full sharding guidance.');
+  lines.push('', 'Open **Developer → Sizing Cost Projection** to adjust the slider or review full sharding guidance.');
   return lines.join('\n');
 }
 

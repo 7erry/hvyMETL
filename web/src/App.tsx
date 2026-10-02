@@ -32,6 +32,7 @@ import { SchemaImportModal } from './components/SchemaImportModal';
 import { DiagramStatusFooter } from './components/DiagramStatusFooter';
 import { FooterDiagramLegend } from './components/FooterDiagramLegend';
 import { CollapsiblePanel } from './components/CollapsiblePanel';
+import { ManagerCostPanel } from './components/ManagerCostPanel';
 import { edgesForPlan } from './migrationPlanDisplay';
 import { mergeMeasuredModelStats } from './mergeMeasuredModelStats';
 import { CardinalityOverridesPanel } from './components/CardinalityOverridesPanel';
@@ -208,6 +209,9 @@ export default function App() {
     embedDirectionOverrides,
     timeSeriesOverrides,
   } = session;
+
+  const [schemaImportPanelOpen, setSchemaImportPanelOpen] = useState(() => !model);
+  const [sizingCostPanelOpen, setSizingCostPanelOpen] = useState(() => Boolean(model));
 
   const profileFields = useMemo(
     () => profileRequestBody(profileId, customProfile),
@@ -554,6 +558,8 @@ export default function App() {
     }
     setSchemaImportModalOpen(false);
     setSchemaImportUserOpened(false);
+    setSchemaImportPanelOpen(false);
+    setSizingCostPanelOpen(true);
   }, [profiles]);
 
   const handleImportQuery = async (ddlText = ddl) => {
@@ -1386,8 +1392,6 @@ export default function App() {
               onReviewAcceptancesChange={(acceptances) =>
                 setSessionField('managerReviewAcceptances', acceptances)
               }
-              managerCostInputs={managerCostInputs}
-              onManagerCostInputsChange={(inputs) => setSessionField('managerCostInputs', inputs)}
               dialects={dialects}
               dialect={dialect}
               ddl={ddl}
@@ -1407,7 +1411,11 @@ export default function App() {
               <div className="sidebar-scroll">
                 {schemaPhase === 'before' ? (
                   <>
-                    <CollapsiblePanel title="Instant Schema Import" defaultOpen={!model}>
+                    <CollapsiblePanel
+                      title="Instant Schema Import"
+                      open={schemaImportPanelOpen}
+                      onOpenChange={setSchemaImportPanelOpen}
+                    >
                       <SchemaImportPanel
                         dialects={dialects}
                         dialect={dialect}
@@ -1422,6 +1430,14 @@ export default function App() {
                         framed={false}
                       />
                     </CollapsiblePanel>
+                    <ManagerCostPanel
+                      model={model}
+                      migrationPlan={migrationPlan}
+                      inputs={managerCostInputs}
+                      onChange={(inputs) => setSessionField('managerCostInputs', inputs)}
+                      sizingPanelOpen={sizingCostPanelOpen}
+                      onSizingPanelOpenChange={setSizingCostPanelOpen}
+                    />
                     {model ? (
                       <>
                         <CollapsiblePanel

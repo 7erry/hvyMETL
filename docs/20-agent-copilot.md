@@ -80,7 +80,7 @@ These bypass the LLM and return static reference text:
 
 ## Manager dataset scale in copilot
 
-The **Dataset scale — raw data** slider in Manager view (`Migration Cost Projection`) is sent to Copilot on every LLM turn as `schemaContext.datasetScale`. Use it when CSV import has not loaded real row counts but you still need sizing, tier, or sharding guidance.
+The **Dataset scale — raw data** slider in Developer view (`Sizing Cost Projection`) is sent to Copilot on every LLM turn as `schemaContext.datasetScale`. Use it when CSV import has not loaded real row counts but you still need sizing, tier, or sharding guidance.
 
 | Source | When used |
 | --- | --- |
