@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo } from 'react';
 import { JSONCrack } from 'jsoncrack-react';
 import { normalizeCollectionPlan } from '../normalizeCollectionPlan';
 import type { CollectionPlan } from '../migrationPlanTypes';
@@ -9,18 +9,12 @@ type JsonCrackCollectionModalProps = {
   onClose: () => void;
 };
 
-/** In-app dialog with the jsoncrack-react graph canvas for a collection plan. */
+/** In-app resizable dialog with the jsoncrack-react graph canvas for a collection plan. */
 export function JsonCrackCollectionModal({ open, collection, onClose }: JsonCrackCollectionModalProps) {
-  const [expanded, setExpanded] = useState(false);
-
   const plan = useMemo(
     () => (collection ? normalizeCollectionPlan(collection) : null),
     [collection],
   );
-
-  useEffect(() => {
-    if (!open) setExpanded(false);
-  }, [open]);
 
   useEffect(() => {
     if (!open) return;
@@ -36,14 +30,6 @@ export function JsonCrackCollectionModal({ open, collection, onClose }: JsonCrac
   if (!open || !plan) return null;
 
   const titleId = 'jsoncrack-collection-title';
-  const modalClass = [
-    'pipeline-modal',
-    'panel',
-    'jsoncrack-collection-modal',
-    expanded ? 'jsoncrack-collection-modal--expanded' : '',
-  ]
-    .filter(Boolean)
-    .join(' ');
 
   return (
     <div
@@ -55,32 +41,17 @@ export function JsonCrackCollectionModal({ open, collection, onClose }: JsonCrac
         if (event.target === event.currentTarget) onClose();
       }}
     >
-      <div className={modalClass}>
+      <div className="pipeline-modal panel jsoncrack-collection-modal">
         <header className="pipeline-modal__header jsoncrack-collection-modal__header">
-          <div>
-            <h2 id={titleId}>{plan.name}</h2>
-            <p className="pipeline-modal__subtitle">JSON Crack · collection plan</p>
-          </div>
-          <div className="jsoncrack-collection-modal__header-actions">
-            <button
-              type="button"
-              className="btn-icon"
-              onClick={() => setExpanded((prev) => !prev)}
-              aria-pressed={expanded}
-              aria-label={expanded ? 'Restore dialog size' : 'Expand dialog to full screen'}
-              title={expanded ? 'Restore size' : 'Expand'}
-            >
-              {expanded ? '⤡' : '⤢'}
-            </button>
-            <button type="button" className="btn-icon" onClick={onClose} aria-label="Close JSON Crack dialog">
-              ✕
-            </button>
-          </div>
+          <h2 id={titleId}>{plan.name}</h2>
+          <button type="button" className="btn-icon" onClick={onClose} aria-label="Close collection plan graph">
+            ✕
+          </button>
         </header>
 
         <div className="jsoncrack-collection-modal__canvas">
           <JSONCrack
-            key={`${plan.name}-${expanded ? 'expanded' : 'default'}`}
+            key={plan.name}
             json={plan}
             theme="dark"
             layoutDirection="RIGHT"

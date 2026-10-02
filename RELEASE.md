@@ -1,3 +1,9 @@
+## hvyMETL 5.1.31
+
+**Collection plan graph dialog** — Removed “JSON Crack” branding from the header; dialog defaults to **80%** of the viewport and is **resizable** from the bottom-right corner (expand button removed).
+
+---
+
 ## hvyMETL 5.1.30
 
 **After-view collection selection** — SQL table → collection sync still runs when you switch to **After · MongoDB** (or change the selected SQL table), but no longer overrides manual collection clicks or pane deselect on the Mongo canvas.

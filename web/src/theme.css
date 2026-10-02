@@ -2913,26 +2913,23 @@ textarea {
 .jsoncrack-collection-modal {
   width: 80vw;
   height: 80vh;
-  max-width: 80vw;
-  max-height: 80vh;
+  min-width: min(360px, 92vw);
+  min-height: min(280px, 80vh);
+  max-width: calc(100vw - 1rem);
+  max-height: calc(100vh - 1rem);
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  transition: width 0.2s ease, height 0.2s ease, max-width 0.2s ease, max-height 0.2s ease;
+  resize: both;
 }
 
-.jsoncrack-collection-modal--expanded {
-  width: calc(100vw - 1.25rem);
-  height: calc(100vh - 1.25rem);
-  max-width: calc(100vw - 1.25rem);
-  max-height: calc(100vh - 1.25rem);
-}
-
-.jsoncrack-collection-modal__header-actions {
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
+.jsoncrack-collection-modal__header {
   flex-shrink: 0;
+  cursor: default;
+}
+
+.jsoncrack-collection-modal__header h2 {
+  margin: 0;
 }
 
 .jsoncrack-collection-modal__canvas {
