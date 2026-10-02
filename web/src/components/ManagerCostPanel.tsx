@@ -166,9 +166,6 @@ export function ManagerCostPanel({
                 aria-valuetext={`${formatGb(datasetScaleGb)} raw data · recommended ${projection.recommendedTier.label}`}
               />
               <div className="manager-cost-tier-ruler" aria-hidden="true">
-                <span className="manager-cost-tier-ruler__center" style={{ left: '50%' }} title="4 TB pivot">
-                  4 TB
-                </span>
                 {DATASET_TIER_SLIDER_ANCHORS_GB.map(({ tierId, rawDataGb }) => (
                   <button
                     key={tierId}
