@@ -1,3 +1,9 @@
+## hvyMETL 4.3.13
+
+**Split sizing vs manager cost panels** — Developer sidebar keeps **Sizing Cost Projection** and **Recommended Tier** (plus sharding when applicable). Manager **Configure** shows **Estimated Manpower Eliminated**, **Monthly Cost**, and the estimates legal disclaimer.
+
+---
+
 ## hvyMETL 4.3.12
 
 **Sizing Cost Projection in Developer sidebar** — Renamed **Migration Cost Projection** to **Sizing Cost Projection** and placed it directly under **Instant Schema Import** in Developer view. After a successful schema import, the import panel collapses and sizing opens automatically. Manager Configure tab no longer duplicates the panel.

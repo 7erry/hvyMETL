@@ -1392,6 +1392,8 @@ export default function App() {
               onReviewAcceptancesChange={(acceptances) =>
                 setSessionField('managerReviewAcceptances', acceptances)
               }
+              managerCostInputs={managerCostInputs}
+              onManagerCostInputsChange={(inputs) => setSessionField('managerCostInputs', inputs)}
               dialects={dialects}
               dialect={dialect}
               ddl={ddl}
@@ -1431,6 +1433,7 @@ export default function App() {
                       />
                     </CollapsiblePanel>
                     <ManagerCostPanel
+                      variant="developer"
                       model={model}
                       migrationPlan={migrationPlan}
                       inputs={managerCostInputs}

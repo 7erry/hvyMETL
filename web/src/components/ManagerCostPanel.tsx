@@ -20,11 +20,15 @@ import { CollapsiblePanel } from './CollapsiblePanel';
 /** Sidebar panel title for Atlas sizing and monthly cost heuristics. */
 export const SIZING_COST_PROJECTION_TITLE = 'Sizing Cost Projection';
 
+export type ManagerCostPanelVariant = 'developer' | 'manager';
+
 type ManagerCostPanelProps = {
   model: SqlStructuralModel | null;
   migrationPlan: MigrationPlan | null;
   inputs: ManagerCostInputs;
   onChange: (inputs: ManagerCostInputs) => void;
+  /** Developer: sizing inputs + tier. Manager: manpower + monthly cost + legal note. */
+  variant?: ManagerCostPanelVariant;
   /** Controlled open state for the primary sizing panel (developer sidebar flow). */
   sizingPanelOpen?: boolean;
   onSizingPanelOpenChange?: (open: boolean) => void;
@@ -58,11 +62,15 @@ const WORKLOAD_SHORT: Record<ManagerWorkloadType, string> = {
   'write-heavy': '20/80',
 };
 
+const MANAGER_COST_LEGAL_NOTE =
+  'Estimates only. Not a quote, invoice, legal commitment, SLA, or financial advice. Actual MongoDB Atlas pricing, credits, taxes, usage, data transfer, support, and regional charges may vary.';
+
 export function ManagerCostPanel({
   model,
   migrationPlan,
   inputs,
   onChange,
+  variant = 'developer',
   sizingPanelOpen,
   onSizingPanelOpenChange,
 }: ManagerCostPanelProps) {
@@ -98,6 +106,7 @@ export function ManagerCostPanel({
   };
 
   if (!model) {
+    if (variant === 'manager') return null;
     return (
       <CollapsiblePanel
         title={SIZING_COST_PROJECTION_TITLE}
@@ -115,9 +124,8 @@ export function ManagerCostPanel({
     Math.min(DATASET_SLIDER_MAX_GB, inputs.estimatedDataGb > 0 ? inputs.estimatedDataGb : projection.rawDataGb),
   );
 
-  return (
-    <>
-      <CollapsiblePanel
+  const sizingSection = (
+    <CollapsiblePanel
         title={SIZING_COST_PROJECTION_TITLE}
         open={sizingPanelOpen}
         onOpenChange={onSizingPanelOpenChange}
@@ -239,7 +247,9 @@ export function ManagerCostPanel({
           ) : null}
         </div>
       </CollapsiblePanel>
+  );
 
+  const manpowerSection = (
       <CollapsiblePanel
         title="Estimated Manpower Eliminated"
         collapsedHint={formatPersonWeeks(projection.personWeeksEliminated)}
@@ -267,7 +277,9 @@ export function ManagerCostPanel({
           </div>
         </div>
       </CollapsiblePanel>
+  );
 
+  const recommendedTierSection = (
       <CollapsiblePanel
         title="Recommended Tier"
         collapsedHint={`${projection.recommendedTier.label} · ${projection.recommendedTier.ramGb} GB RAM`}
@@ -306,7 +318,9 @@ export function ManagerCostPanel({
           </span>
         </div>
       </CollapsiblePanel>
+  );
 
+  const monthlyCostSection = (
       <CollapsiblePanel
         title="Monthly Cost"
         defaultOpen
@@ -384,8 +398,10 @@ export function ManagerCostPanel({
           </p>
         ) : null}
       </CollapsiblePanel>
+  );
 
-      {projection.requiresSharding ? (
+  const shardingSection =
+    projection.requiresSharding ? (
         <CollapsiblePanel
           title="Sharding Recommended"
           collapsedHint={`${projection.shardingRecommendations.length} collections`}
@@ -458,12 +474,29 @@ export function ManagerCostPanel({
             </div>
           </div>
         </CollapsiblePanel>
-      ) : null}
+      ) : null;
 
-      <div className="manager-cost-legal" role="note">
-        Estimates only. Not a quote, invoice, legal commitment, SLA, or financial advice. Actual MongoDB Atlas pricing,
-        credits, taxes, usage, data transfer, support, and regional charges may vary.
-      </div>
+  const legalNote = (
+    <div className="manager-cost-legal" role="note">
+      {MANAGER_COST_LEGAL_NOTE}
+    </div>
+  );
+
+  if (variant === 'manager') {
+    return (
+      <>
+        {manpowerSection}
+        {monthlyCostSection}
+        {legalNote}
+      </>
+    );
+  }
+
+  return (
+    <>
+      {sizingSection}
+      {recommendedTierSection}
+      {shardingSection}
     </>
   );
 }

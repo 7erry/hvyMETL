@@ -10,8 +10,9 @@ import {
   modelTokenUsageEmptyHint,
   tokenUsageSourceLabel,
 } from '../modelUsage';
-import type { MigrationArtifacts } from '../sessionState';
+import type { ManagerCostInputs, MigrationArtifacts } from '../sessionState';
 import type { PipelineExecutionListItem } from '../transformationSummaryTypes';
+import { ManagerCostPanel } from './ManagerCostPanel';
 import { ManagerAtlasLogsPanel } from './ManagerAtlasLogsPanel';
 import { ManagerReflectionJobsPanel } from './ManagerReflectionJobsPanel';
 import { SchemaImportPanel } from './SchemaImportPanel';
@@ -27,6 +28,8 @@ type ManagerSidebarProps = {
   blockerCount: number;
   reviewCount: number;
   profileInfo: { label: string; readPercent: number; writePercent: number } | null;
+  managerCostInputs: ManagerCostInputs;
+  onManagerCostInputsChange: (inputs: ManagerCostInputs) => void;
   dialects: Dialect[];
   dialect: string;
   ddl: string;
@@ -88,6 +91,8 @@ export function ManagerSidebar({
   blockerCount,
   reviewCount,
   profileInfo,
+  managerCostInputs,
+  onManagerCostInputsChange,
   dialects,
   dialect,
   ddl,
@@ -245,6 +250,14 @@ export function ManagerSidebar({
 
       {model && sidebarTab === 'configure' ? (
         <>
+          <ManagerCostPanel
+            variant="manager"
+            model={model}
+            migrationPlan={migrationPlan}
+            inputs={managerCostInputs}
+            onChange={onManagerCostInputsChange}
+          />
+
           <ManagerReflectionJobsPanel />
 
           <CollapsiblePanel title="Model API Usage" collapsedHint={modelApiUsageHint}>
