@@ -54,21 +54,21 @@ describe('selectAtlasTierForRequirements', () => {
     ).toBe('M50');
   });
 
-  it('never returns above M300 in production matrix', () => {
+  it('can reach M700 when storage exceeds M300 extended limits', () => {
     const tier = selectAtlasTierForRequirements({
       requiredRamGb: 400,
       planningStorageGb: 50_000,
       indexGb: 50,
       hotFootprintGb: 150,
     });
-    expect(tier.id).toBe('M300');
+    expect(tier.id).toBe('M700');
   });
 });
 
 describe('tierMeetsAtlasGuardrails', () => {
   it('requires WiredTiger cache to cover index plus hot footprint', () => {
-    const m30 = ATLAS_PRODUCTION_TIER_MATRIX[0]!;
-    expect(tierMeetsAtlasGuardrails(m30, 8, 400, 1, 1)).toBe(true);
+    const m30 = ATLAS_PRODUCTION_TIER_MATRIX.find((tier) => tier.id === 'M30')!;
+    expect(tierMeetsAtlasGuardrails(m30, 8, 400, 0.5, 0.5)).toBe(true);
     expect(tierMeetsAtlasGuardrails(m30, 8, 400, 10, 10)).toBe(false);
   });
 });

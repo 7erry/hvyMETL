@@ -4335,6 +4335,33 @@ textarea {
   opacity: 0.9;
 }
 
+.sidebar-scroll .manager-cost-profile-select {
+  width: 100%;
+  font-size: var(--sidebar-panel-font-size);
+  line-height: 1.4;
+  padding: 0.45rem 0.55rem;
+  border-radius: var(--btn-border-radius);
+  border: 1px solid var(--mdb-green-dark-2);
+  background: rgba(0, 30, 43, 0.55);
+  color: var(--text-primary, #e8f5e9);
+}
+
+.sidebar-scroll .manager-cost-tier-scale {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.15rem;
+  font-size: 0.62rem;
+  opacity: 0.75;
+  letter-spacing: -0.02em;
+  margin-top: 0.15rem;
+}
+
+.sidebar-scroll .manager-cost-tier-scale span {
+  flex: 1;
+  text-align: center;
+  min-width: 0;
+}
+
 .sidebar-scroll .manager-cost-field__label strong {
   color: var(--mdb-spring-green);
 }

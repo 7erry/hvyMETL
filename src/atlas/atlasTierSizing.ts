@@ -39,11 +39,10 @@ export type SelectAtlasTierInput = {
   productionMinTierId?: string;
 };
 
-/**
- * Production Atlas tiers (M30–M300) aligned to Atlas sizing decision matrix.
- * M10/M20 omitted from automatic production recommendations (dev/staging only).
- */
+/** Dedicated Atlas tiers (M10–M700) for sizing guardrails and recommendations. */
 export const ATLAS_PRODUCTION_TIER_MATRIX: AtlasProductionTierSpec[] = [
+  { id: 'M10', ramGb: 2, vcpu: 2, maxConnections: 1500, extendedStorageMaxGb: 128, diskToRamRatioMax: 60 },
+  { id: 'M20', ramGb: 4, vcpu: 2, maxConnections: 3000, extendedStorageMaxGb: 256, diskToRamRatioMax: 60 },
   { id: 'M30', ramGb: 8, vcpu: 2, maxConnections: 3000, extendedStorageMaxGb: 512, diskToRamRatioMax: 60 },
   { id: 'M40', ramGb: 16, vcpu: 4, maxConnections: 6000, extendedStorageMaxGb: 4096, diskToRamRatioMax: 60 },
   { id: 'M50', ramGb: 32, vcpu: 8, maxConnections: 16000, extendedStorageMaxGb: 8192, diskToRamRatioMax: 120 },
@@ -52,6 +51,8 @@ export const ATLAS_PRODUCTION_TIER_MATRIX: AtlasProductionTierSpec[] = [
   { id: 'M140', ramGb: 192, vcpu: 48, maxConnections: 96000, extendedStorageMaxGb: 14336, diskToRamRatioMax: 120 },
   { id: 'M200', ramGb: 256, vcpu: 64, maxConnections: 128000, extendedStorageMaxGb: 14336, diskToRamRatioMax: 120 },
   { id: 'M300', ramGb: 384, vcpu: 96, maxConnections: 128000, extendedStorageMaxGb: 14336, diskToRamRatioMax: 120 },
+  { id: 'M400', ramGb: 488, vcpu: 96, maxConnections: 128000, extendedStorageMaxGb: 32768, diskToRamRatioMax: 120 },
+  { id: 'M700', ramGb: 768, vcpu: 96, maxConnections: 128000, extendedStorageMaxGb: 49152, diskToRamRatioMax: 120 },
 ];
 
 /** WiredTiger cache share of physical RAM (M10–M30: 25%; M40+: ~50%). */
@@ -127,7 +128,7 @@ export function tierMeetsAtlasGuardrails(
 /** Smallest production tier meeting Atlas guardrails, or the largest tier in the list. */
 export function selectAtlasTierForRequirements(input: SelectAtlasTierInput): AtlasProductionTierSpec {
   const tiers = input.tiers ?? ATLAS_PRODUCTION_TIER_MATRIX;
-  const productionMinTierId = input.productionMinTierId ?? 'M30';
+  const productionMinTierId = input.productionMinTierId ?? 'M10';
   const requiredRam = Math.max(0.5, input.requiredRamGb);
   const planningStorage = Math.max(1, input.planningStorageGb);
   const startIndex = tiers.findIndex((tier) => tier.id === productionMinTierId);

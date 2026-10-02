@@ -8,6 +8,14 @@ import {
   targetPhysicalRamGb,
   workingSetFitPercent,
 } from '../../src/atlas/atlasTierSizing.ts';
+import {
+  applyTargetWorkloadProfile,
+  TARGET_WORKLOAD_PROFILES,
+  type TargetWorkloadProfileId,
+} from '../../src/atlas/atlasTargetWorkloadProfiles.ts';
+
+export type { TargetWorkloadProfileId };
+export { TARGET_WORKLOAD_PROFILES };
 import type { MigrationPlan } from './migrationPlanTypes';
 import type { SqlStructuralModel, TableModel } from './types';
 
@@ -19,6 +27,8 @@ export type ManagerCostInputs = {
   /** Optional raw data-size override in GB for manager scenario modeling. */
   estimatedDataGb: number;
   workloadType: ManagerWorkloadType;
+  /** Atlas decision-matrix target workload profile (auto sizes from dataset scale). */
+  targetWorkloadProfile: TargetWorkloadProfileId;
   growthRatePercent: number;
   /** Per-collection hot retention before Online Archive moves older documents cold. */
   collectionRetentionYears: Record<string, number>;
@@ -54,6 +64,7 @@ export type ManagerCostProjection = {
   planningStorageGb: number;
   /** True when 12-month planning storage exceeds the recommended tier single-RS disk cap. */
   exceedsReplicaSetDiskCap: boolean;
+  targetWorkloadProfileLabel: string;
   recommendedTier: AtlasTierSpec;
   workingSetPercent: number;
   monthlyComputeUsd: number;
@@ -117,6 +128,7 @@ export const DEFAULT_MANAGER_COST_INPUTS: ManagerCostInputs = {
   estimatedTotalRows: 10_000_000,
   estimatedDataGb: 0,
   workloadType: 'read-heavy',
+  targetWorkloadProfile: 'auto',
   growthRatePercent: 15,
   collectionRetentionYears: {},
 };
@@ -133,8 +145,8 @@ export const ATLAS_CLUSTER_TIERS: AtlasTierSpec[] = [
   { id: 'M140', label: 'M140', ramGb: 192, vcpu: 48, maxConnections: 96000, storageGb: 14336, monthlyUsd: 3200, productionRecommended: true },
   { id: 'M200', label: 'M200', ramGb: 256, vcpu: 64, maxConnections: 128000, storageGb: 14336, monthlyUsd: 4300, productionRecommended: true },
   { id: 'M300', label: 'M300', ramGb: 384, vcpu: 96, maxConnections: 128000, storageGb: 14336, monthlyUsd: 6150, productionRecommended: true },
-  { id: 'M400', label: 'M400', ramGb: 488, vcpu: 96, maxConnections: 128000, storageGb: 14336, monthlyUsd: 8200, productionRecommended: false },
-  { id: 'M700', label: 'M700', ramGb: 768, vcpu: 96, maxConnections: 128000, storageGb: 14336, monthlyUsd: 12900, productionRecommended: false },
+  { id: 'M400', label: 'M400', ramGb: 488, vcpu: 96, maxConnections: 128000, storageGb: 32768, monthlyUsd: 8200, productionRecommended: true },
+  { id: 'M700', label: 'M700', ramGb: 768, vcpu: 96, maxConnections: 128000, storageGb: 49152, monthlyUsd: 12900, productionRecommended: true },
 ];
 
 const BSON_OVERHEAD = 1.25;
@@ -147,7 +159,7 @@ const DEFAULT_ARCHIVE_RETENTION_YEARS = 5;
 const MIN_ARCHIVE_RETENTION_YEARS = 1;
 const MAX_ARCHIVE_RETENTION_YEARS = 10;
 const BYTES_PER_GB = 1024 ** 3;
-const ATLAS_PRODUCTION_MIN_TIER = 'M30';
+const ATLAS_PRODUCTION_MIN_TIER = 'M10';
 const BASELINE_DISCOVERY_WEEKS = 1.5;
 const MANUAL_TABLE_WEEKS = 0.35;
 const MANUAL_RELATIONSHIP_WEEKS = 0.25;
@@ -443,6 +455,7 @@ function recommendAtlasTier(
   planningStorageSizeGb: number,
   indexGb: number,
   hotFootprintGb: number,
+  targetWorkloadProfile: TargetWorkloadProfileId,
 ): AtlasTierSpec {
   const picked = selectAtlasTierForRequirements({
     requiredRamGb,
@@ -452,7 +465,8 @@ function recommendAtlasTier(
     tiers: ATLAS_PRODUCTION_TIER_MATRIX,
     productionMinTierId: ATLAS_PRODUCTION_MIN_TIER,
   });
-  return atlasTierFromCatalogId(picked.id);
+  const resolvedId = applyTargetWorkloadProfile(picked.id, targetWorkloadProfile);
+  return atlasTierFromCatalogId(resolvedId);
 }
 
 const TENANT_FIELD_PATTERN = /(^tenantId$|^accountId$|^customerId$|^orgId$|^organizationId$|^userId$)/i;
@@ -648,8 +662,9 @@ export function selectAtlasTier(
   planningStorageGb: number,
   indexGb = 0,
   hotFootprintGb = 0,
+  targetWorkloadProfile: TargetWorkloadProfileId = 'auto',
 ): AtlasTierSpec {
-  return recommendAtlasTier(requiredRamGb, planningStorageGb, indexGb, hotFootprintGb);
+  return recommendAtlasTier(requiredRamGb, planningStorageGb, indexGb, hotFootprintGb, targetWorkloadProfile);
 }
 
 export function computeManagerCostProjection(
@@ -735,11 +750,15 @@ export function computeManagerCostProjection(
     rawOnDiskMultiplier,
     horizonMonths: 12,
   });
+  const profileOption =
+    TARGET_WORKLOAD_PROFILES.find((entry) => entry.id === inputs.targetWorkloadProfile) ??
+    TARGET_WORKLOAD_PROFILES[0]!;
   const recommendedTier = recommendAtlasTier(
     requiredRamGb,
     planningStorageSizeGb,
     indexSizeGb,
     activeWorkingSetSizeGb,
+    inputs.targetWorkloadProfile,
   );
   const matrixTier = ATLAS_PRODUCTION_TIER_MATRIX.find((tier) => tier.id === recommendedTier.id);
   const replicaSetDiskCapGb = matrixTier ? maxAllocatableDiskGb(matrixTier) : recommendedTier.storageGb;
@@ -768,6 +787,7 @@ export function computeManagerCostProjection(
     baselinePlanningStorageGb,
     baselineIndexGb,
     baselineActiveWsGb,
+    'auto',
   );
   const baselineInfrastructureMonthlyTotalUsd = baselineTier.monthlyUsd + baselineHotStorageGb * BACKUP_USD_PER_GB;
   const infrastructureMonthlySavingsUsd = Math.max(0, baselineInfrastructureMonthlyTotalUsd - monthlyTotalUsd);
@@ -813,6 +833,7 @@ export function computeManagerCostProjection(
     activeWorkingSetGb: activeWorkingSetSizeGb,
     planningStorageGb: planningStorageSizeGb,
     exceedsReplicaSetDiskCap,
+    targetWorkloadProfileLabel: profileOption.label,
     recommendedTier,
     workingSetPercent,
     monthlyComputeUsd,

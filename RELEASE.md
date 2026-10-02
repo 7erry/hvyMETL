@@ -1,3 +1,9 @@
+## hvyMETL 5.1.7
+
+**Target workload profile & tier slider** — Sizing adds **Target workload profile** (Auto, M0, Flex, M10–M700 decision matrix). Dataset scale slider spans **M10→M700** anchors (1 GB–100 TB) with tier markers; recommendations use the full **M10–M700** guardrail matrix.
+
+---
+
 ## hvyMETL 5.1.6
 
 **Atlas tier decision matrix** — Recommended Tier now steps **M30→M300** using Atlas guardrails: **2× (index + hot footprint)** on **10–25% of raw data** (not full on-cluster volume), **60:1 / 120:1 disk:RAM** limits, extended storage caps, and WiredTiger cache fit. Eliminates erroneous jumps to **M700**; M400/M700 remain available manually in HA only.
