@@ -1816,6 +1816,30 @@ textarea {
   border: none;
 }
 
+.collection-details__json-pre--plain {
+  background: rgba(0, 12, 18, 0.92);
+  color: #b8c4c1;
+  white-space: pre;
+  overflow: auto;
+}
+
+.collection-details__json-shiki {
+  overflow: auto;
+  background: rgba(0, 12, 18, 0.92);
+}
+
+.collection-details__json-shiki pre.shiki {
+  margin: 0;
+  padding: 0.65rem 0.75rem;
+  font-size: 0.72rem;
+  line-height: 1.45;
+  background: transparent !important;
+}
+
+.collection-details__json-shiki code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
 /* Collection inspector JSON — manual highlighter + Prism token overrides */
 .collection-details__json-pre.collection-json {
   background: rgba(0, 12, 18, 0.92);

@@ -147,7 +147,7 @@ export const defaultSessionState = (): SessionState => ({
   snapToGrid: true,
   selectedTable: null,
   selectedCollection: null,
-  collectionInspectorView: 'table',
+  collectionInspectorView: 'json',
   schemaPhase: 'before',
   diagramViewMode: 'rel',
   diagramDualSplitBottomHeight: DIAGRAM_DUAL_SPLIT_BOTTOM_DEFAULT,
@@ -204,7 +204,7 @@ export function loadSessionState(userId?: string): SessionState {
         ...(rest.managerCostInputs ?? {}),
       },
       haClusterInputs: haClusterInputsWithDefaults(rest.haClusterInputs),
-      collectionInspectorView: rest.collectionInspectorView === 'json' ? 'json' : 'table',
+      collectionInspectorView: rest.collectionInspectorView === 'table' ? 'table' : 'json',
     };
   } catch {
     return defaultSessionState();

@@ -38,7 +38,7 @@ describe('CollectionDetails render', () => {
           onClose: () => undefined,
         }),
       );
-      expect(jsonHtml).toContain('language-json');
+      expect(jsonHtml).toMatch(/collection-details__json-(shiki|pre--plain)/);
       expect(jsonHtml).toContain('Patterns');
       if (collection.embeddedArrays.length > 0) {
         expect(jsonHtml).toContain('Embedded arrays');

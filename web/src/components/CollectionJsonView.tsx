@@ -1,5 +1,4 @@
-import { useDeferredValue, useMemo } from 'react';
-import { highlightCollectionJson } from '../highlightCollectionJson';
+import { useDeferredValue, useEffect, useMemo, useState } from 'react';
 import type { CollectionPlan } from '../migrationPlanTypes';
 
 /** Serialize a value for display (never throws). */
@@ -22,7 +21,7 @@ type CollectionJsonViewProps = {
   variant?: 'jsonSchema' | 'plan';
 };
 
-/** Colorized read-only JSON for collection fields or the full migration-plan slice. */
+/** Shiki-highlighted read-only JSON for collection fields or the full migration-plan slice. */
 export function CollectionJsonView({ collection, variant = 'jsonSchema' }: CollectionJsonViewProps) {
   const payload = variant === 'jsonSchema' ? collection.jsonSchema : collection;
   const jsonText = useMemo(
@@ -30,11 +29,33 @@ export function CollectionJsonView({ collection, variant = 'jsonSchema' }: Colle
     [payload, variant],
   );
   const deferredJson = useDeferredValue(jsonText);
-  const html = useMemo(() => highlightCollectionJson(deferredJson), [deferredJson]);
+  const [html, setHtml] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    setHtml(null);
+    void import('../highlightCollectionJsonShiki').then(({ highlightCollectionJsonWithShiki }) =>
+      highlightCollectionJsonWithShiki(deferredJson).then((marked) => {
+        if (!cancelled) setHtml(marked);
+      }),
+    );
+    return () => {
+      cancelled = true;
+    };
+  }, [deferredJson]);
+
+  if (html === null) {
+    return (
+      <pre className="collection-details__json-pre collection-details__json-pre--plain">
+        <code>{deferredJson}</code>
+      </pre>
+    );
+  }
 
   return (
-    <pre className="collection-json prism-code-block collection-details__json-pre">
-      <code className="language-json" dangerouslySetInnerHTML={{ __html: html }} />
-    </pre>
+    <div
+      className="collection-details__json-shiki collection-json"
+      dangerouslySetInnerHTML={{ __html: html }}
+    />
   );
 }
