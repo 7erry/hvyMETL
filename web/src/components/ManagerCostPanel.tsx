@@ -35,7 +35,7 @@ type ManagerCostPanelProps = {
 };
 
 const DATASET_SLIDER_MIN_GB = 1;
-const DATASET_SLIDER_MAX_GB = 21 * 1024;
+const DATASET_SLIDER_MAX_GB = 100 * 1024;
 const DATASET_SLIDER_STEP_GB = 64;
 
 const WORKLOAD_OPTIONS: { id: ManagerWorkloadType; title: string; hint: string }[] = [
@@ -152,7 +152,7 @@ export function ManagerCostPanel({
             />
             {hasSchemaRowStats ? (
               <span className="manager-cost-field__note">
-                Schema statistics estimate document shape; slider scenarios scale raw data up to 21 TB. Approximate
+                Schema statistics estimate document shape; slider scenarios scale raw data up to 100 TB. Approximate
                 documents: {formatRowCount(projection.estimatedTotalRows)}.
               </span>
             ) : null}

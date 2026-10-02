@@ -124,7 +124,7 @@ export function buildCopilotDatasetScaleResponse(scale: CopilotDatasetScaleConte
     return [
       'Raw data size is not set yet.',
       '',
-      'In **Developer** view, open **Sizing Cost Projection** (under Instant Schema Import) and adjust **Dataset scale — raw data** (up to 21 TB).',
+      'In **Developer** view, open **Sizing Cost Projection** (under Instant Schema Import) and adjust **Dataset scale — raw data** (up to 100 TB).',
       'That override is used for Atlas sizing and sharding guidance when CSV import row counts are unavailable.',
     ].join('\n');
   }
