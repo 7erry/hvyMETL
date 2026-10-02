@@ -1,3 +1,11 @@
+import {
+  activeWorkingSetGb,
+  estimateIndexSizeGb,
+  planningStorageGb,
+  selectAtlasTierForRequirements,
+  targetPhysicalRamGb,
+  workingSetFitPercent,
+} from '../../src/atlas/atlasTierSizing.ts';
 import type { MigrationPlan } from './migrationPlanTypes';
 import type { SqlStructuralModel, TableModel } from './types';
 
@@ -37,6 +45,11 @@ export type ManagerCostProjection = {
   totalStorageGb: number;
   indexCount: number;
   requiredRamGb: number;
+  indexSizeGb: number;
+  activeWorkingSetGb: number;
+  planningStorageGb: number;
+  /** True when 12-month planning storage exceeds the recommended tier single-RS disk cap. */
+  exceedsReplicaSetDiskCap: boolean;
   recommendedTier: AtlasTierSpec;
   workingSetPercent: number;
   monthlyComputeUsd: number;
@@ -163,13 +176,13 @@ const WORKLOAD_PRESETS: Record<
     label: 'Balanced (50/50)',
     readPercent: 50,
     writePercent: 50,
-    ramRatio: 0.3,
+    ramRatio: 0.25,
   },
   'write-heavy': {
-    label: 'Write-heavy (50/50)',
-    readPercent: 50,
-    writePercent: 50,
-    ramRatio: 0.4,
+    label: 'Write-heavy (20/80)',
+    readPercent: 20,
+    writePercent: 80,
+    ramRatio: 0.3,
   },
 };
 
@@ -417,12 +430,18 @@ function estimateManpowerReduction(
   };
 }
 
-function wiredTigerCacheGb(tier: AtlasTierSpec): number {
-  return tier.ramGb * (tier.ramGb <= 8 ? 0.25 : 0.5);
+function atlasTierFromCatalogId(tierId: string): AtlasTierSpec {
+  return ATLAS_CLUSTER_TIERS.find((tier) => tier.id === tierId) ?? ATLAS_CLUSTER_TIERS[ATLAS_CLUSTER_TIERS.length - 1]!;
 }
 
-function atlasWorkingSetRequirementGb(activeStorageGb: number, workingSetRatio: number): number {
-  return Math.max(0.5, activeStorageGb * workingSetRatio);
+function recommendAtlasTier(requiredRamGb: number, requiredStorageGb: number): AtlasTierSpec {
+  const picked = selectAtlasTierForRequirements({
+    requiredRamGb,
+    requiredStorageGb,
+    tiers: ATLAS_CLUSTER_TIERS,
+    productionMinTierId: ATLAS_PRODUCTION_MIN_TIER,
+  });
+  return atlasTierFromCatalogId(picked.id);
 }
 
 const TENANT_FIELD_PATTERN = /(^tenantId$|^accountId$|^customerId$|^orgId$|^organizationId$|^userId$)/i;
@@ -612,13 +631,9 @@ export function buildShardingRecommendations(
   };
 }
 
-export function selectAtlasTier(requiredWorkingSetGb: number, requiredStorageGb: number): AtlasTierSpec {
-  const workingSet = Math.max(0.5, requiredWorkingSetGb);
-  const storage = Math.max(1, requiredStorageGb);
-  const productionStartIndex = ATLAS_CLUSTER_TIERS.findIndex((tier) => tier.id === ATLAS_PRODUCTION_MIN_TIER);
-  const candidates = ATLAS_CLUSTER_TIERS.slice(Math.max(0, productionStartIndex));
-  const match = candidates.find((tier) => wiredTigerCacheGb(tier) >= workingSet && tier.storageGb >= storage);
-  return match ?? ATLAS_CLUSTER_TIERS[ATLAS_CLUSTER_TIERS.length - 1];
+/** Picks the smallest production Atlas tier meeting target physical RAM and planning storage (GB). */
+export function selectAtlasTier(requiredRamGb: number, requiredStorageGb: number): AtlasTierSpec {
+  return recommendAtlasTier(requiredRamGb, requiredStorageGb);
 }
 
 export function computeManagerCostProjection(
@@ -691,23 +706,41 @@ export function computeManagerCostProjection(
   const rawDataGb = rawBytes / BYTES_PER_GB;
   const manpower = estimateManpowerReduction(model, plan, rawDataGb);
 
-  const requiredWorkingSetGb = atlasWorkingSetRequirementGb(activeStorageGb, preset.ramRatio);
-  const recommendedTier = selectAtlasTier(requiredWorkingSetGb, activeStorageGb);
-  const requiredRamGb = requiredWorkingSetGb / (recommendedTier.ramGb <= 8 ? 0.25 : 0.5);
-
-  const workingSetPercent = Math.min(
-    100,
-    Math.round(((recommendedTier.ramGb * 1024 ** 3) / Math.max(1, activeStorageBytes)) * 100),
-  );
+  const growth = Math.max(0, inputs.growthRatePercent);
+  const hotDocumentGb = (activeRawBytes * BSON_OVERHEAD) / BYTES_PER_GB;
+  const indexSizeGb = estimateIndexSizeGb(hotDocumentGb, indexCount, INDEX_OVERHEAD_FACTOR);
+  const activeWorkingSetSizeGb = activeWorkingSetGb(hotDocumentGb, preset.ramRatio);
+  const requiredRamGb = targetPhysicalRamGb(indexSizeGb, activeWorkingSetSizeGb);
+  const rawOnDiskMultiplier = BSON_OVERHEAD * (1 + indexCount * INDEX_OVERHEAD_FACTOR);
+  const planningStorageSizeGb = planningStorageGb({
+    rawDataGb,
+    activeStorageGb,
+    growthRatePercent: growth,
+    rawOnDiskMultiplier,
+    horizonMonths: 12,
+  });
+  const recommendedTier = recommendAtlasTier(requiredRamGb, planningStorageSizeGb);
+  const exceedsReplicaSetDiskCap = planningStorageSizeGb > recommendedTier.storageGb;
+  const workingSetPercent = workingSetFitPercent(indexSizeGb, activeWorkingSetSizeGb, recommendedTier.ramGb);
 
   const monthlyComputeUsd = recommendedTier.monthlyUsd;
   const monthlyBackupUsd = activeStorageGb * BACKUP_USD_PER_GB;
   const monthlyArchiveUsd = archiveStorageGb * ARCHIVE_STORAGE_USD_PER_GB;
   const monthlyTotalUsd = monthlyComputeUsd + monthlyBackupUsd + monthlyArchiveUsd;
+  const baselineHotDocumentGb = (rawBytes * BSON_OVERHEAD) / BYTES_PER_GB;
   const baselineHotStorageBytes = rawBytes * BSON_OVERHEAD * (1 + indexCount * INDEX_OVERHEAD_FACTOR);
   const baselineHotStorageGb = baselineHotStorageBytes / BYTES_PER_GB;
-  const baselineRequiredWorkingSetGb = atlasWorkingSetRequirementGb(baselineHotStorageGb, preset.ramRatio);
-  const baselineTier = selectAtlasTier(baselineRequiredWorkingSetGb, baselineHotStorageGb);
+  const baselineIndexGb = estimateIndexSizeGb(baselineHotDocumentGb, indexCount, INDEX_OVERHEAD_FACTOR);
+  const baselineActiveWsGb = activeWorkingSetGb(baselineHotDocumentGb, preset.ramRatio);
+  const baselineRequiredRamGb = targetPhysicalRamGb(baselineIndexGb, baselineActiveWsGb);
+  const baselinePlanningStorageGb = planningStorageGb({
+    rawDataGb,
+    activeStorageGb: baselineHotStorageGb,
+    growthRatePercent: 0,
+    rawOnDiskMultiplier,
+    horizonMonths: 12,
+  });
+  const baselineTier = recommendAtlasTier(baselineRequiredRamGb, baselinePlanningStorageGb);
   const baselineInfrastructureMonthlyTotalUsd = baselineTier.monthlyUsd + baselineHotStorageGb * BACKUP_USD_PER_GB;
   const infrastructureMonthlySavingsUsd = Math.max(0, baselineInfrastructureMonthlyTotalUsd - monthlyTotalUsd);
   const monthlyManpowerSavingsUsd =
@@ -719,7 +752,6 @@ export function computeManagerCostProjection(
       ? Math.max(0.1, Math.round((monthlySavingsUsd / baselineMonthlyTotalUsd) * 1000) / 10)
       : 0;
   const oneTimeEgressUsd = rawDataGb * EGRESS_USD_PER_GB;
-  const growth = Math.max(0, inputs.growthRatePercent);
   const projectedMonthlyNextYearUsd = monthlyTotalUsd * (1 + growth / 100);
   const archiveHotDataPercent = rawBytes > 0 ? Math.round((activeRawBytes / rawBytes) * 100) : 100;
 
@@ -749,6 +781,10 @@ export function computeManagerCostProjection(
     totalStorageGb,
     indexCount,
     requiredRamGb,
+    indexSizeGb,
+    activeWorkingSetGb: activeWorkingSetSizeGb,
+    planningStorageGb: planningStorageSizeGb,
+    exceedsReplicaSetDiskCap,
     recommendedTier,
     workingSetPercent,
     monthlyComputeUsd,

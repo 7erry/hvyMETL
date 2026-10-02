@@ -302,6 +302,23 @@ export function ManagerCostPanel({
             </dd>
           </div>
           <div>
+            <dt>Planning storage (12 mo)</dt>
+            <dd>
+              {formatGb(projection.planningStorageGb)}
+              {projection.growthRatePercent > 0 ? ` incl. ${projection.growthRatePercent}% YoY growth` : ''}
+              {projection.exceedsReplicaSetDiskCap
+                ? ' · exceeds single replica set disk — sharding recommended'
+                : ''}
+            </dd>
+          </div>
+          <div>
+            <dt>Target RAM (est.)</dt>
+            <dd>
+              {formatGb(projection.requiredRamGb)} — 2× (indexes {formatGb(projection.indexSizeGb)} + active data{' '}
+              {formatGb(projection.activeWorkingSetGb)})
+            </dd>
+          </div>
+          <div>
             <dt>Avg document size</dt>
             <dd>{projection.averageDocumentBytes.toLocaleString()} bytes</dd>
           </div>
@@ -315,7 +332,7 @@ export function ManagerCostPanel({
             />
           </div>
           <span className="manager-cost-working-set__label">
-            {projection.workingSetPercent}% working set fits in tier RAM
+            {projection.workingSetPercent}% of index + active working set fits in WiredTiger cache
           </span>
         </div>
       </CollapsiblePanel>

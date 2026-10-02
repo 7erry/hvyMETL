@@ -79,10 +79,50 @@ describe('managerCostEstimate', () => {
     expect(estimateColumnBytes('TEXT')).toBe(256);
   });
 
-  it('selects atlas tier by RAM and storage needs', () => {
-    expect(selectAtlasTier(1, 30).id).toBe('M30');
-    expect(selectAtlasTier(6, 30).id).toBe('M40');
-    expect(selectAtlasTier(100, 1000).id).toBe('M200');
+  it('selects atlas tier by target physical RAM and planning storage', () => {
+    expect(selectAtlasTier(8, 400).id).toBe('M30');
+    expect(selectAtlasTier(16, 600).id).toBe('M40');
+    expect(selectAtlasTier(256, 20_000).id).toBe('M300');
+  });
+
+  it('increases recommended tier as dataset scale slider rises', () => {
+    const tierRank = (id: string) =>
+      ['M10', 'M20', 'M30', 'M40', 'M50', 'M60', 'M80', 'M140', 'M200', 'M300', 'M400', 'M700'].indexOf(id);
+    let lastRank = -1;
+    for (const estimatedDataGb of [128, 512, 2048, 8192]) {
+      const { recommendedTier } = computeManagerCostProjection(model, plan, {
+        ...DEFAULT_MANAGER_COST_INPUTS,
+        estimatedDataGb,
+      });
+      const rank = tierRank(recommendedTier.id);
+      expect(rank).toBeGreaterThanOrEqual(lastRank);
+      lastRank = rank;
+    }
+  });
+
+  it('does not decrease tier when growth rate increases at fixed dataset scale', () => {
+    const tierRank = (id: string) =>
+      ['M10', 'M20', 'M30', 'M40', 'M50', 'M60', 'M80', 'M140', 'M200', 'M300', 'M400', 'M700'].indexOf(id);
+    const low = computeManagerCostProjection(model, plan, {
+      ...DEFAULT_MANAGER_COST_INPUTS,
+      estimatedDataGb: 1024,
+      growthRatePercent: 0,
+    });
+    const high = computeManagerCostProjection(model, plan, {
+      ...DEFAULT_MANAGER_COST_INPUTS,
+      estimatedDataGb: 1024,
+      growthRatePercent: 40,
+    });
+    expect(tierRank(high.recommendedTier.id)).toBeGreaterThanOrEqual(tierRank(low.recommendedTier.id));
+    expect(high.planningStorageGb).toBeGreaterThan(low.planningStorageGb);
+  });
+
+  it('sets requiredRamGb to twice index plus active working set', () => {
+    const projection = computeManagerCostProjection(model, plan, DEFAULT_MANAGER_COST_INPUTS);
+    expect(projection.requiredRamGb).toBeCloseTo(
+      2 * (projection.indexSizeGb + projection.activeWorkingSetGb),
+      5,
+    );
   });
 
   it('projects monthly and egress costs from schema stats', () => {

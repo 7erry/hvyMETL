@@ -1,3 +1,9 @@
+## hvyMETL 5.1.4
+
+**Recommended Tier vs dataset scale** — Tier selection uses Atlas-aligned **2× (index + active working set)** RAM, **12-month planning storage** `max(hot, raw on-disk) × growth`, and tracks the Dataset scale slider. Recommended Tier panel shows target RAM and planning storage; write-heavy preset is **20/80**.
+
+---
+
 ## hvyMETL 5.1.3
 
 **Sidebar panel typography** — Unified **0.875rem** body text (`--sidebar-panel-font-size`) across Sizing Cost Projection, High Availability, embed overrides, and other sidebar panels.
