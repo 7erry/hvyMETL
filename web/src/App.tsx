@@ -1490,22 +1490,6 @@ export default function App() {
                         framed={false}
                       />
                     </CollapsiblePanel>
-                    <ManagerCostPanel
-                      variant="developer"
-                      model={model}
-                      migrationPlan={migrationPlan}
-                      inputs={managerCostInputs}
-                      onChange={(inputs) => setSessionField('managerCostInputs', inputs)}
-                      sizingPanelOpen={sizingCostPanelOpen}
-                      onSizingPanelOpenChange={setSizingCostPanelOpen}
-                    />
-                    <HighAvailabilityPanelConnected
-                      inputs={haClusterInputsWithDefaults(haClusterInputs, recommendedAtlasTierId)}
-                      onChange={(inputs) => setSessionField('haClusterInputs', inputs)}
-                      recommendedTierId={recommendedAtlasTierId}
-                      open={haPanelOpen}
-                      onOpenChange={setHaPanelOpen}
-                    />
                     {model ? (
                       <>
                         <CollapsiblePanel
@@ -1592,6 +1576,23 @@ export default function App() {
                     </div>
                   </CollapsiblePanel>
                 )}
+
+                <ManagerCostPanel
+                  variant="developer"
+                  model={model}
+                  migrationPlan={migrationPlan}
+                  inputs={managerCostInputs}
+                  onChange={(inputs) => setSessionField('managerCostInputs', inputs)}
+                  sizingPanelOpen={sizingCostPanelOpen}
+                  onSizingPanelOpenChange={setSizingCostPanelOpen}
+                />
+                <HighAvailabilityPanelConnected
+                  inputs={haClusterInputsWithDefaults(haClusterInputs, recommendedAtlasTierId)}
+                  onChange={(inputs) => setSessionField('haClusterInputs', inputs)}
+                  recommendedTierId={recommendedAtlasTierId}
+                  open={haPanelOpen}
+                  onOpenChange={setHaPanelOpen}
+                />
 
                 {schemaPhase === 'after' ? (
                   <CollapsiblePanel title="Transformation Summary" defaultOpen>

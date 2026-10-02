@@ -1,3 +1,9 @@
+## hvyMETL 5.1.10
+
+**Sidebar sizing on MongoDB canvas** — **Sizing Cost Projection**, **Recommended Tier**, and **High Availability** stay visible after design (MongoDB / `after` workflow), not only on the SQL import canvas.
+
+---
+
 ## hvyMETL 5.1.9
 
 **Tier sizing fix (multi-TB + many indexes)** — Index RAM uses **aggregate** overhead (not indexCount × full corpus). Hot footprint is a capped % of **raw** GB; planning storage ignores index-inflated active totals; tier pick uses RAM ceiling by dataset size. Fixes erroneous **M700** at ~6 TB raw.
