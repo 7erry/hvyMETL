@@ -97,6 +97,7 @@ import {
   initialCollectionPositions,
   parseMigrationPlan,
   patchMigrationPlanJsonWithProfile,
+  resolveCollectionNameForSqlTable,
   schemaFieldsFromCollection,
 } from './migrationPlanDisplay';
 import { fetchMigrationPrompts, mapPromptExportResponse } from './migrationPrompts';
@@ -518,6 +519,34 @@ export default function App() {
     () => parseMigrationPlan(migrationArtifacts?.planJson),
     [migrationArtifacts?.planJson],
   );
+
+  const handleSelectSqlTable = useCallback(
+    (tableName: string | null) => {
+      setSessionField('selectedTable', tableName);
+      if (!tableName || !migrationPlan) return;
+      if (schemaPhase === 'after' || isDualDiagramView(diagramViewMode)) {
+        const collectionName = resolveCollectionNameForSqlTable(tableName, migrationPlan);
+        if (collectionName) setSessionField('selectedCollection', collectionName);
+      }
+    },
+    [diagramViewMode, migrationPlan, schemaPhase, setSessionField],
+  );
+
+  useEffect(() => {
+    if (!selectedTable || !migrationPlan) return;
+    if (schemaPhase !== 'after' && !isDualDiagramView(diagramViewMode)) return;
+    const collectionName = resolveCollectionNameForSqlTable(selectedTable, migrationPlan);
+    if (collectionName && collectionName !== selectedCollection) {
+      setSessionField('selectedCollection', collectionName);
+    }
+  }, [
+    diagramViewMode,
+    migrationPlan,
+    schemaPhase,
+    selectedCollection,
+    selectedTable,
+    setSessionField,
+  ]);
 
   const recommendedAtlasTierId = useMemo(() => {
     if (!model && !migrationPlan) return undefined;
@@ -1026,6 +1055,10 @@ export default function App() {
   const handleSchemaPhaseChange = (phase: SchemaPhase) => {
     setSessionField('schemaPhase', phase);
     setSessionField('diagramViewMode', diagramViewModeFromSchemaPhase(phase));
+    if (phase === 'after' && selectedTable && migrationPlan) {
+      const collectionName = resolveCollectionNameForSqlTable(selectedTable, migrationPlan);
+      if (collectionName) setSessionField('selectedCollection', collectionName);
+    }
     const activeModel = designModel ?? model;
     const staleDynamoPlan =
       activeModel && migrationPlan ? isDynamoMigrationPlanStale(activeModel, migrationPlan) : false;
@@ -1655,7 +1688,7 @@ export default function App() {
                           <li
                             key={t.name}
                             className={selectedTable === t.name ? 'selected' : ''}
-                            onClick={() => setSessionField('selectedTable', t.name)}
+                            onClick={() => handleSelectSqlTable(t.name)}
                           >
                             <span>{t.name}</span>
                           </li>
@@ -1813,7 +1846,7 @@ export default function App() {
                         onPositionsChange={(p) => setSessionField('positions', p)}
                         positions={positions}
                         selectedTable={selectedTable}
-                        onSelectTable={(name) => setSessionField('selectedTable', name)}
+                        onSelectTable={handleSelectSqlTable}
                       />
                     );
                     const mongoCanvas = (

@@ -71,6 +71,37 @@ export function parseMigrationPlan(planJson: string | null | undefined): Migrati
   }
 }
 
+/**
+ * Map a Before-view SQL table to the After-view collection that should be highlighted.
+ * Embedded / folded tables resolve to their parent collection name.
+ */
+export function resolveCollectionNameForSqlTable(
+  tableName: string,
+  plan: MigrationPlan,
+): string | null {
+  const trimmed = tableName.trim();
+  if (!trimmed) return null;
+
+  const embedParent = plan.collections.find((collection) =>
+    (collection.embeddedArrays ?? []).some((embed) => embed.sourceTable === trimmed),
+  );
+  if (embedParent) return embedParent.name;
+
+  const foldHost = plan.collections.find(
+    (collection) =>
+      (collection.mergedTables ?? []).includes(trimmed) && collection.sourceTable !== trimmed,
+  );
+  if (foldHost) return foldHost.name;
+
+  const asSource = plan.collections.find((collection) => collection.sourceTable === trimmed);
+  if (asSource) return asSource.name;
+
+  const byCollectionName = plan.collections.find((collection) => collection.name === trimmed);
+  if (byCollectionName) return byCollectionName.name;
+
+  return null;
+}
+
 /** Driver and telemetry fields stamped on migration-plan.json from the active workload profile. */
 export type MigrationPlanProfilePatch = Pick<
   MigrationPlan,

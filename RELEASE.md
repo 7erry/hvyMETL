@@ -1,3 +1,9 @@
+## hvyMETL 5.1.23
+
+**SQL table → Mongo collection selection sync** — When you switch to **After · MongoDB** (or use split view), the highlighted SQL table maps to the matching collection, or the **parent collection** when that table is embedded or folded into another document.
+
+---
+
 ## hvyMETL 5.1.22
 
 **Richer collection JSON coloring** — Prism JSON highlighting with MongoDB-themed token colors; property keys vs string values, punctuation, and literals are easier to scan in the sidebar inspector.
