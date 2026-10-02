@@ -1,3 +1,9 @@
+## hvyMETL 5.1.29
+
+**Knowledge doc links in plans** — Pattern `knowledgeSource` values are full GitHub URLs (`github.com/7erry/hvyMETL/blob/main/knowledge/…`) so JSON Crack and exports no longer treat filenames like `embed-vs-reference.md` as broken `https://embed-vs-reference.md` links. Existing saved plans are normalized in the UI.
+
+---
+
 ## hvyMETL 5.1.28
 
 **JSON Crack dialog sizing** — Default dialog is **80%** of the viewport; use **Expand** (⤢) in the header to go nearly full screen and **Restore** (⤡) to return.

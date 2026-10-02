@@ -1330,7 +1330,11 @@ describe('buildMigrationPlan', () => {
     const users = plan.collections.find((collection) => collection.sourceTable === 'users');
 
     expect(users?.embeddedArrays.some((array) => array.sourceTable === 'usermeta')).toBe(true);
-    expect(users?.patterns.some((decision) => decision.knowledgeSource === 'migration-principles.md')).toBe(true);
+    expect(
+      users?.patterns.some((decision) =>
+        decision.knowledgeSource.endsWith('/migration-principles.md'),
+      ),
+    ).toBe(true);
     expect(plan.collections.some((collection) => collection.sourceTable === 'usermeta')).toBe(false);
   });
 
@@ -1369,7 +1373,8 @@ describe('buildMigrationPlan', () => {
     expect(orders?.embeddedArrays.some((array) => array.sourceTable === 'order_items')).toBe(true);
     expect(
       orders?.patterns.some(
-        (decision) => decision.pattern === 'embed' && decision.knowledgeSource === 'migration-principles.md',
+        (decision) =>
+          decision.pattern === 'embed' && decision.knowledgeSource.endsWith('/migration-principles.md'),
       ),
     ).toBe(true);
     expect(plan.collections.some((collection) => collection.sourceTable === 'order_items')).toBe(false);

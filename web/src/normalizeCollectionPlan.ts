@@ -1,3 +1,4 @@
+import { normalizePatternKnowledgeSource } from '../../src/knowledge/knowledgeDocUrl.ts';
 import type { CollectionPlan, MigrationPlan } from './migrationPlanTypes';
 
 /** Ensure optional migration-plan arrays exist so UI code does not throw on partial plans. */
@@ -5,7 +6,10 @@ export function normalizeCollectionPlan(collection: CollectionPlan): CollectionP
   return {
     ...collection,
     mergedTables: collection.mergedTables ?? [collection.sourceTable],
-    patterns: collection.patterns ?? [],
+    patterns: (collection.patterns ?? []).map((decision) => ({
+      ...decision,
+      knowledgeSource: normalizePatternKnowledgeSource(decision.knowledgeSource),
+    })),
     indexes: collection.indexes ?? [],
     embeddedArrays: collection.embeddedArrays ?? [],
     extendedReferences: collection.extendedReferences ?? [],

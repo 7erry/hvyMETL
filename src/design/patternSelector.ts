@@ -30,6 +30,7 @@
  *   Every collection                            -> Schema Versioning stamp
  */
 
+import { normalizePatternKnowledgeSource } from '../knowledge/knowledgeDocUrl.js';
 import type {
   ArchivePlan,
   BucketPlan,
@@ -1663,6 +1664,14 @@ export function buildMigrationPlan(
     (collection) => !absorbedTables.has(collection.sourceTable) || overflowNames.has(collection.name),
   );
 
+  const collectionsWithKnowledgeUrls = finalCollections.map((collection) => ({
+    ...collection,
+    patterns: collection.patterns.map((decision) => ({
+      ...decision,
+      knowledgeSource: normalizePatternKnowledgeSource(decision.knowledgeSource),
+    })),
+  }));
+
   return {
     source: model.source,
     profileId: profile.id,
@@ -1672,6 +1681,6 @@ export function buildMigrationPlan(
     compression: profile.compression,
     pool: profile.pool,
     generatedAt: new Date().toISOString(),
-    collections: finalCollections,
+    collections: collectionsWithKnowledgeUrls,
   };
 }

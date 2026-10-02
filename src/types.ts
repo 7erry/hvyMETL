@@ -245,7 +245,7 @@ export type PatternDecision = {
   target: string;
   /** Plain-English explanation tied back to the workload telemetry. */
   reason: string;
-  /** Knowledge-base document the decision is grounded in, e.g. "bucket.md". */
+  /** GitHub URL to the knowledge-base document, e.g. embed-vs-reference.md on main. */
   knowledgeSource: string;
 };
 
