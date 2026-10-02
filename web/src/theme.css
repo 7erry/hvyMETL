@@ -4265,6 +4265,7 @@ textarea {
   min-width: 0;
 }
 
+.app-root .manager-cost-workload,
 .app--manager .manager-cost-workload {
   min-width: 0;
 }
@@ -4294,6 +4295,7 @@ textarea {
   accent-color: var(--mdb-green-base);
 }
 
+.app-root .manager-cost-workload__grid,
 .app--manager .manager-cost-workload__grid {
   display: flex;
   flex-direction: column;
@@ -4302,6 +4304,7 @@ textarea {
   min-width: 0;
 }
 
+.app-root .manager-cost-workload__grid button,
 .app--manager .manager-cost-workload__grid button {
   display: flex;
   flex-direction: column;
@@ -4326,21 +4329,31 @@ textarea {
   line-height: 1.4;
 }
 
+.app-root .manager-cost-workload__grid button:hover:not(:disabled),
 .app--manager .manager-cost-workload__grid button:hover:not(:disabled) {
   background: rgba(0, 104, 74, 0.35);
   border-color: var(--mdb-green-base);
   box-shadow: none;
 }
 
+.app-root .manager-cost-workload__grid button:focus-visible,
 .app--manager .manager-cost-workload__grid button:focus-visible {
   box-shadow: var(--btn-focus-ring);
 }
 
+.app-root .manager-cost-workload__grid button.active,
 .app--manager .manager-cost-workload__grid button.active {
-  border-color: var(--mdb-green-base);
-  background: rgba(0, 237, 100, 0.12);
+  border-color: var(--mdb-spring-green);
+  background: rgba(0, 237, 100, 0.18);
+  box-shadow: inset 0 0 0 1px rgba(0, 237, 100, 0.35);
 }
 
+.app-root .manager-cost-workload__grid button.active strong,
+.app--manager .manager-cost-workload__grid button.active strong {
+  color: var(--mdb-spring-green);
+}
+
+.app-root .manager-cost-workload__grid button strong,
 .app--manager .manager-cost-workload__grid button strong {
   display: block;
   width: 100%;
@@ -4350,6 +4363,7 @@ textarea {
   white-space: normal;
 }
 
+.app-root .manager-cost-workload__grid button span,
 .app--manager .manager-cost-workload__grid button span {
   display: block;
   width: 100%;

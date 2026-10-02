@@ -1,3 +1,9 @@
+## hvyMETL 5.1.2
+
+**Sizing workload highlight** — Workload type buttons in **Sizing Cost Projection** show a clear selected state in Developer view (same styling as Manager).
+
+---
+
 ## hvyMETL 5.1.1
 
 **Dataset scale slider** — **Sizing Cost Projection** raw data slider now scales up to **100 TB** (was 21 TB).

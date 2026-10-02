@@ -166,6 +166,7 @@ export function ManagerCostPanel({
                   key={option.id}
                   type="button"
                   className={inputs.workloadType === option.id ? 'active' : ''}
+                  aria-pressed={inputs.workloadType === option.id}
                   onClick={() => setWorkload(option.id)}
                 >
                   <strong>{option.title}</strong>
