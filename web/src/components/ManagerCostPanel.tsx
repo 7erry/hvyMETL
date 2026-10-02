@@ -15,7 +15,6 @@ import {
   type ManagerWorkloadType,
   type TargetWorkloadProfileId,
 } from '../managerCostEstimate';
-import { DATASET_TIER_SLIDER_ANCHORS_GB } from '../../../src/atlas/atlasTargetWorkloadProfiles.ts';
 import type { MigrationPlan } from '../migrationPlanTypes';
 import type { SqlStructuralModel } from '../types';
 import { CollapsiblePanel } from './CollapsiblePanel';
@@ -37,10 +36,8 @@ type ManagerCostPanelProps = {
   onSizingPanelOpenChange?: (open: boolean) => void;
 };
 
-/** Matches M10 anchor through M700 anchor on the dataset scale slider (100 TB). */
-const DATASET_SLIDER_MIN_GB = DATASET_TIER_SLIDER_ANCHORS_GB[0]?.rawDataGb ?? 1;
-const DATASET_SLIDER_MAX_GB =
-  DATASET_TIER_SLIDER_ANCHORS_GB[DATASET_TIER_SLIDER_ANCHORS_GB.length - 1]?.rawDataGb ?? 100 * 1024;
+const DATASET_SLIDER_MIN_GB = 1;
+const DATASET_SLIDER_MAX_GB = 100 * 1024;
 const DATASET_SLIDER_STEP_GB = 64;
 
 const WORKLOAD_OPTIONS: { id: ManagerWorkloadType; title: string; hint: string }[] = [
@@ -140,7 +137,7 @@ export function ManagerCostPanel({
         onOpenChange={onSizingPanelOpenChange}
         defaultOpen={sizingPanelOpen === undefined}
         className="manager-cost-panel"
-        collapsedHint={`${formatGb(datasetScaleGb)} · ${projection.recommendedTier.label} · ${WORKLOAD_SHORT[inputs.workloadType]}`}
+        collapsedHint={`${formatGb(datasetScaleGb)} · ${WORKLOAD_SHORT[inputs.workloadType]}`}
       >
         <p className="manager-hint manager-cost-panel__intro">
           Heuristic sizing from your DDL and workload profile — not a formal Atlas quote.
@@ -157,48 +154,15 @@ export function ManagerCostPanel({
               max={DATASET_SLIDER_MAX_GB}
               step={DATASET_SLIDER_STEP_GB}
               value={datasetScaleGb}
-              list="manager-cost-tier-scale"
               onChange={(e) => setDataSize(Number(e.target.value))}
             />
-            <datalist id="manager-cost-tier-scale">
-              {DATASET_TIER_SLIDER_ANCHORS_GB.map((anchor) => (
-                <option key={anchor.tierId} value={anchor.rawDataGb} label={anchor.tierId} />
-              ))}
-            </datalist>
-            <div className="manager-cost-tier-scale" aria-hidden>
-              {DATASET_TIER_SLIDER_ANCHORS_GB.map((anchor) => (
-                <span key={anchor.tierId}>{anchor.tierId}</span>
-              ))}
-            </div>
             {hasSchemaRowStats ? (
               <span className="manager-cost-field__note">
-                Slider spans illustrative {DATASET_TIER_SLIDER_ANCHORS_GB[0]?.tierId}–
-                {DATASET_TIER_SLIDER_ANCHORS_GB[DATASET_TIER_SLIDER_ANCHORS_GB.length - 1]?.tierId} raw-data anchors up
-                to {formatGb(DATASET_SLIDER_MAX_GB)}. Approximate documents:{' '}
+                Schema statistics estimate document shape; slider scenarios scale raw data up to{' '}
+                {formatGb(DATASET_SLIDER_MAX_GB)}. Approximate documents:{' '}
                 {formatRowCount(projection.estimatedTotalRows)}.
               </span>
-            ) : (
-              <span className="manager-cost-field__note">
-                Illustrative tier anchors from {DATASET_TIER_SLIDER_ANCHORS_GB[0]?.tierId} to{' '}
-                {DATASET_TIER_SLIDER_ANCHORS_GB[DATASET_TIER_SLIDER_ANCHORS_GB.length - 1]?.tierId} (
-                {formatGb(DATASET_SLIDER_MIN_GB)}–{formatGb(DATASET_SLIDER_MAX_GB)}).
-              </span>
-            )}
-          </label>
-
-          <label className="manager-cost-field">
-            <span className="manager-cost-field__label">Target workload profile</span>
-            <select
-              className="manager-cost-profile-select"
-              value={inputs.targetWorkloadProfile ?? 'auto'}
-              onChange={(e) => setTargetWorkloadProfile(e.target.value as TargetWorkloadProfileId)}
-            >
-              {TARGET_WORKLOAD_PROFILES.map((profile) => (
-                <option key={profile.id} value={profile.id}>
-                  {profile.label} — {profile.summary}
-                </option>
-              ))}
-            </select>
+            ) : null}
           </label>
 
           <div className="manager-cost-workload" role="group" aria-label="Workload type">
@@ -328,17 +292,30 @@ export function ManagerCostPanel({
         title="Recommended Tier"
         collapsedHint={`${projection.recommendedTier.label} · ${projection.recommendedTier.ramGb} GB RAM`}
       >
+        <label className="manager-cost-field manager-cost-field--tier-profile">
+          <span className="manager-cost-field__label">Target workload profile</span>
+          <select
+            className="manager-cost-profile-select"
+            value={inputs.targetWorkloadProfile ?? 'auto'}
+            onChange={(e) => setTargetWorkloadProfile(e.target.value as TargetWorkloadProfileId)}
+          >
+            {TARGET_WORKLOAD_PROFILES.map((profile) => (
+              <option key={profile.id} value={profile.id}>
+                {profile.label}
+              </option>
+            ))}
+          </select>
+          <span className="manager-cost-field__note">{projection.recommendedTierWorkloadSummary}</span>
+        </label>
+
         <dl className="manager-cost-card__metrics">
           <div>
             <dt>Recommended tier</dt>
             <dd>
               {projection.recommendedTier.label} ({projection.recommendedTier.ramGb} GB RAM,{' '}
-              {projection.recommendedTier.vcpu} vCPU, up to {formatGb(projection.recommendedTier.storageGb)} storage)
+              {projection.recommendedTier.vcpu} vCPU, {projection.recommendedTier.maxConnections.toLocaleString()}{' '}
+              max connections, up to {formatGb(projection.recommendedTier.storageGb)} storage)
             </dd>
-          </div>
-          <div>
-            <dt>Target workload profile</dt>
-            <dd>{projection.targetWorkloadProfileLabel}</dd>
           </div>
           <div>
             <dt>Dataset size (est.)</dt>

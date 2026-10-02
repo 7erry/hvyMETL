@@ -169,6 +169,15 @@ export function applyTargetWorkloadProfile(computedTierId: string, profileId: Ta
  * Illustrative raw-data GB anchors for slider markers (M10 → M700).
  * Values are scenario hints, not Atlas quotes.
  */
+/** Decision-matrix workload copy for a dedicated tier id (M10–M700). */
+export function decisionMatrixSummaryForTier(tierId: string): string {
+  const normalized = tierId.trim().toUpperCase();
+  const profile = TARGET_WORKLOAD_PROFILES.find(
+    (entry) => entry.tierId === normalized && entry.id !== 'auto' && entry.id !== 'm0' && entry.id !== 'flex',
+  );
+  return profile?.summary ?? 'Sized from dataset scale, growth, and Atlas RAM/storage guardrails.';
+}
+
 export const DATASET_TIER_SLIDER_ANCHORS_GB: ReadonlyArray<{ tierId: string; rawDataGb: number }> = [
   { tierId: 'M10', rawDataGb: 1 },
   { tierId: 'M20', rawDataGb: 16 },

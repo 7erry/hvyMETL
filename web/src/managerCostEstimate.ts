@@ -10,6 +10,7 @@ import {
 } from '../../src/atlas/atlasTierSizing.ts';
 import {
   applyTargetWorkloadProfile,
+  decisionMatrixSummaryForTier,
   TARGET_WORKLOAD_PROFILES,
   type TargetWorkloadProfileId,
 } from '../../src/atlas/atlasTargetWorkloadProfiles.ts';
@@ -65,6 +66,8 @@ export type ManagerCostProjection = {
   /** True when 12-month planning storage exceeds the recommended tier single-RS disk cap. */
   exceedsReplicaSetDiskCap: boolean;
   targetWorkloadProfileLabel: string;
+  /** Atlas decision-matrix target workload copy for the recommended tier. */
+  recommendedTierWorkloadSummary: string;
   recommendedTier: AtlasTierSpec;
   workingSetPercent: number;
   monthlyComputeUsd: number;
@@ -834,6 +837,10 @@ export function computeManagerCostProjection(
     planningStorageGb: planningStorageSizeGb,
     exceedsReplicaSetDiskCap,
     targetWorkloadProfileLabel: profileOption.label,
+    recommendedTierWorkloadSummary:
+      inputs.targetWorkloadProfile === 'auto'
+        ? decisionMatrixSummaryForTier(recommendedTier.id)
+        : profileOption.summary,
     recommendedTier,
     workingSetPercent,
     monthlyComputeUsd,

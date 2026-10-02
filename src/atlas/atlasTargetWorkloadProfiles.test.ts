@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   applyTargetWorkloadProfile,
   DATASET_TIER_SLIDER_ANCHORS_GB,
+  decisionMatrixSummaryForTier,
   TARGET_WORKLOAD_PROFILES,
 } from './atlasTargetWorkloadProfiles.js';
 
@@ -16,6 +17,12 @@ describe('applyTargetWorkloadProfile', () => {
 
   it('leaves auto unchanged', () => {
     expect(applyTargetWorkloadProfile('M40', 'auto')).toBe('M40');
+  });
+});
+
+describe('decisionMatrixSummaryForTier', () => {
+  it('returns matrix copy for dedicated tiers', () => {
+    expect(decisionMatrixSummaryForTier('M40')).toContain('Standard production');
   });
 });
 

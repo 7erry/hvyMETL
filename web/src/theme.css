@@ -4346,20 +4346,8 @@ textarea {
   color: var(--text-primary, #e8f5e9);
 }
 
-.sidebar-scroll .manager-cost-tier-scale {
-  display: flex;
-  justify-content: space-between;
-  gap: 0.15rem;
-  font-size: 0.62rem;
-  opacity: 0.75;
-  letter-spacing: -0.02em;
-  margin-top: 0.15rem;
-}
-
-.sidebar-scroll .manager-cost-tier-scale span {
-  flex: 1;
-  text-align: center;
-  min-width: 0;
+.sidebar-scroll .manager-cost-field--tier-profile {
+  margin-bottom: 0.75rem;
 }
 
 .sidebar-scroll .manager-cost-field__label strong {

@@ -1,3 +1,9 @@
+## hvyMETL 5.1.8
+
+**Sizing UI cleanup** — Removed tier marker row and anchor copy from **Sizing Cost Projection**. **Target workload profile** and Atlas decision-matrix summary live under **Recommended Tier** (with max connections and matrix workload text).
+
+---
+
 ## hvyMETL 5.1.7
 
 **Target workload profile & tier slider** — Sizing adds **Target workload profile** (Auto, M0, Flex, M10–M700 decision matrix). Dataset scale slider spans **M10→M700** anchors (1 GB–100 TB) with tier markers; recommendations use the full **M10–M700** guardrail matrix.
