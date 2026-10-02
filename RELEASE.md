@@ -1,3 +1,9 @@
+## hvyMETL 5.1.1
+
+**Dataset scale slider** — **Sizing Cost Projection** raw data slider now scales up to **100 TB** (was 21 TB).
+
+---
+
 ## hvyMETL 5.1.0
 
 **HA Agent UX & cost** — Instance size syncs to sizing recommended tier (unless locked). Per-slot **primary/secondary region** selectors for 3/5/7 layouts. **Est. Atlas compute** badge, segmented node picker, **REST/Terraform payload** drawer (validate + deploy curl). Developer sidebar padding fix for sizing intro text.
