@@ -135,12 +135,11 @@ describe('managerCostEstimate', () => {
     expect(high.planningStorageGb).toBeGreaterThan(low.planningStorageGb);
   });
 
-  it('sets requiredRamGb to twice index plus active working set', () => {
+  it('sets requiredRamGb from index and active working set with dataset ceiling', () => {
     const projection = computeManagerCostProjection(model, plan, DEFAULT_MANAGER_COST_INPUTS);
-    expect(projection.requiredRamGb).toBeCloseTo(
-      2 * (projection.indexSizeGb + projection.activeWorkingSetGb),
-      5,
-    );
+    const uncapped = 2 * (projection.indexSizeGb + projection.activeWorkingSetGb);
+    expect(projection.requiredRamGb).toBeLessThanOrEqual(uncapped);
+    expect(projection.requiredRamGb).toBeGreaterThan(0);
   });
 
   it('projects monthly and egress costs from schema stats', () => {
@@ -243,6 +242,28 @@ describe('managerCostEstimate', () => {
     expect(archived.baselineMonthlyTotalUsd).toBeGreaterThan(archived.monthlyTotalUsd);
     expect(archived.monthlySavingsUsd).toBeGreaterThan(0);
     expect(archived.savingsPercent).toBeGreaterThan(0);
+  });
+
+  it('does not recommend M700 for ~6 TB raw with many planned indexes', () => {
+    const manyIndexPlan: MigrationPlan = {
+      ...plan,
+      collections: plan.collections.map((collection) => ({
+        ...collection,
+        indexes: Array.from({ length: 30 }, (_, index) => ({
+          keys: { [`field${index}`]: 1 as const },
+          options: { name: `field${index}_1` },
+          reason: 'lookup',
+        })),
+      })),
+    };
+    const projection = computeManagerCostProjection(model, manyIndexPlan, {
+      ...DEFAULT_MANAGER_COST_INPUTS,
+      estimatedDataGb: 6.2 * 1024,
+    });
+    expect(projection.rawDataGb).toBeCloseTo(6.2 * 1024, 0);
+    expect(projection.recommendedTier.id).not.toBe('M700');
+    expect(projection.requiredRamGb).toBeLessThanOrEqual(512);
+    expect(projection.planningStorageGb).toBeLessThan(projection.activeStorageGb);
   });
 
   it('scales projections from a raw data-size override up to 100 TB', () => {

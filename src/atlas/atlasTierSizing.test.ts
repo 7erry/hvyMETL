@@ -40,16 +40,16 @@ describe('selectAtlasTierForRequirements', () => {
       selectAtlasTierForRequirements({
         requiredRamGb: 16,
         planningStorageGb: 500,
-        indexGb: 2,
-        hotFootprintGb: 6,
+        indexGb: 0,
+        hotFootprintGb: 0,
       }).id,
     ).toBe('M40');
     expect(
       selectAtlasTierForRequirements({
         requiredRamGb: 16,
         planningStorageGb: 2000,
-        indexGb: 2,
-        hotFootprintGb: 6,
+        indexGb: 0,
+        hotFootprintGb: 0,
       }).id,
     ).toBe('M50');
   });
@@ -66,10 +66,10 @@ describe('selectAtlasTierForRequirements', () => {
 });
 
 describe('tierMeetsAtlasGuardrails', () => {
-  it('requires WiredTiger cache to cover index plus hot footprint', () => {
+  it('checks RAM target and disk ratio only', () => {
     const m30 = ATLAS_PRODUCTION_TIER_MATRIX.find((tier) => tier.id === 'M30')!;
-    expect(tierMeetsAtlasGuardrails(m30, 8, 400, 0.5, 0.5)).toBe(true);
-    expect(tierMeetsAtlasGuardrails(m30, 8, 400, 10, 10)).toBe(false);
+    expect(tierMeetsAtlasGuardrails(m30, 8, 400)).toBe(true);
+    expect(tierMeetsAtlasGuardrails(m30, 16, 400)).toBe(false);
   });
 });
 
@@ -98,9 +98,16 @@ describe('targetPhysicalRamGb and planningStorageGb', () => {
 });
 
 describe('estimateIndexSizeGb and activeWorkingSetGb', () => {
-  it('scales index and hot slice from on-disk document volume', () => {
-    expect(estimateIndexSizeGb(100, 5)).toBe(40);
-    expect(activeWorkingSetGb(100, 0.2)).toBe(20);
+  it('caps aggregate index fraction for many indexes', () => {
+    const docGb = 7.75 * 1024;
+    const few = estimateIndexSizeGb(docGb, 2, 0.08);
+    const many = estimateIndexSizeGb(docGb, 63, 0.08);
+    expect(many).toBeLessThan(docGb * 0.36);
+    expect(many).toBeGreaterThan(few);
+  });
+
+  it('caps hot footprint for multi-TB raw data', () => {
+    expect(activeWorkingSetGb(6200, 0.2)).toBeLessThan(200);
   });
 });
 

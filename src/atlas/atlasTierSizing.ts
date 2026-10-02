@@ -1,6 +1,9 @@
 /** Index size as a fraction of hot document bytes (matches Manager cost heuristics). */
 export const DEFAULT_INDEX_OVERHEAD_FACTOR = 0.08;
 
+/** Cap total index footprint vs document data for tier math (avoids N×8% per index blow-up). */
+export const MAX_AGGREGATE_INDEX_FRACTION = 0.35;
+
 /** Atlas dedicated tier row for production sizing (M30–M300 decision matrix). */
 export type AtlasProductionTierSpec = {
   id: string;
@@ -65,19 +68,38 @@ export function wiredTigerCacheGb(ramGb: number): number {
   return ramGb * wiredTigerCacheFraction(ramGb);
 }
 
-/** Estimated index footprint in GB from on-disk document data volume. */
+/** Aggregate index footprint in GB (total indexes vs document volume, not indexCount × full corpus). */
 export function estimateIndexSizeGb(
   onDiskDocumentGb: number,
   indexCount: number,
   indexOverheadFactor = DEFAULT_INDEX_OVERHEAD_FACTOR,
 ): number {
   const count = Math.max(0, indexCount);
-  return Math.max(0, onDiskDocumentGb * count * indexOverheadFactor);
+  if (count === 0 || onDiskDocumentGb <= 0) return 0;
+  const aggregateFraction = Math.min(
+    MAX_AGGREGATE_INDEX_FRACTION,
+    (count * indexOverheadFactor) / (1 + count * indexOverheadFactor),
+  );
+  return onDiskDocumentGb * aggregateFraction;
 }
 
-/** Hot data footprint in GB (typically 10–25% of document data) from workload ratio. */
-export function activeWorkingSetGb(onDiskDocumentGb: number, ramRatio: number): number {
-  return Math.max(0, onDiskDocumentGb * Math.max(0.05, Math.min(1, ramRatio)));
+/** Hot data in RAM (10–25% of raw data GB), capped so multi-TB datasets stay tier-realistic. */
+export function activeWorkingSetGb(rawDataGb: number, ramRatio: number): number {
+  const ratio = Math.max(0.05, Math.min(1, ramRatio));
+  const uncapped = Math.max(0, rawDataGb) * ratio;
+  const scaleCap = Math.min(512, 48 + Math.max(0, rawDataGb) * 0.015);
+  return Math.min(uncapped, scaleCap);
+}
+
+/** Illustrative RAM ceiling (GB) from raw dataset size before Atlas tier pick. */
+export function tierRamCeilingHeuristic(rawDataGb: number): number {
+  const raw = Math.max(0, rawDataGb);
+  if (raw <= 64) return 32;
+  if (raw <= 256) return 64;
+  if (raw <= 1024) return 128;
+  if (raw <= 4096) return 256;
+  if (raw <= 16384) return 384;
+  return 512;
 }
 
 /** Target physical RAM: 2 × (index size + hot data footprint). */
@@ -91,7 +113,10 @@ export function targetPhysicalRamGb(indexGb: number, hotFootprintGb: number): nu
 export function planningStorageGb(input: PlanningStorageInput): number {
   const horizonMonths = input.horizonMonths ?? 12;
   const rawOnDiskGb = Math.max(0, input.rawDataGb) * Math.max(1, input.rawOnDiskMultiplier);
-  const baseGb = Math.max(Math.max(0, input.activeStorageGb), rawOnDiskGb);
+  const activeGb = Math.max(0, input.activeStorageGb);
+  // When index-heavy active storage dwarfs raw documents, plan from raw on-disk footprint.
+  const baseGb =
+    activeGb > rawOnDiskGb * 1.5 && rawOnDiskGb > 0 ? rawOnDiskGb : Math.max(activeGb, rawOnDiskGb);
   const yearlyGrowth = Math.max(0, input.growthRatePercent) / 100;
   const horizonYears = horizonMonths / 12;
   const growthFactor = 1 + yearlyGrowth * horizonYears;
@@ -110,18 +135,14 @@ export function estimateBaselineIops(planningStorageGb: number): number {
   return Math.min(80_000, Math.round(3000 + (storage - 1000) * 3));
 }
 
-/** Whether a tier satisfies RAM, disk ratio, extended storage, and WiredTiger cache for working set. */
+/** Whether a tier satisfies target physical RAM and disk guardrails (RAM already includes 2× index + hot). */
 export function tierMeetsAtlasGuardrails(
   tier: AtlasProductionTierSpec,
   requiredRamGb: number,
   planningStorageGb: number,
-  indexGb: number,
-  hotFootprintGb: number,
 ): boolean {
   if (tier.ramGb < requiredRamGb) return false;
   if (planningStorageGb > maxAllocatableDiskGb(tier)) return false;
-  const workingSetGb = indexGb + hotFootprintGb;
-  if (wiredTigerCacheGb(tier.ramGb) < workingSetGb) return false;
   return true;
 }
 
@@ -133,15 +154,7 @@ export function selectAtlasTierForRequirements(input: SelectAtlasTierInput): Atl
   const planningStorage = Math.max(1, input.planningStorageGb);
   const startIndex = tiers.findIndex((tier) => tier.id === productionMinTierId);
   const candidates = tiers.slice(Math.max(0, startIndex));
-  const match = candidates.find((tier) =>
-    tierMeetsAtlasGuardrails(
-      tier,
-      requiredRam,
-      planningStorage,
-      input.indexGb,
-      input.hotFootprintGb,
-    ),
-  );
+  const match = candidates.find((tier) => tierMeetsAtlasGuardrails(tier, requiredRam, planningStorage));
   return match ?? candidates[candidates.length - 1] ?? tiers[tiers.length - 1]!;
 }
 

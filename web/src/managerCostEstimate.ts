@@ -6,7 +6,9 @@ import {
   planningStorageGb,
   selectAtlasTierForRequirements,
   targetPhysicalRamGb,
+  tierRamCeilingHeuristic,
   workingSetFitPercent,
+  MAX_AGGREGATE_INDEX_FRACTION,
 } from '../../src/atlas/atlasTierSizing.ts';
 import {
   applyTargetWorkloadProfile,
@@ -743,9 +745,13 @@ export function computeManagerCostProjection(
   const growth = Math.max(0, inputs.growthRatePercent);
   const onDiskRawDocumentGb = rawDataGb * BSON_OVERHEAD;
   const indexSizeGb = estimateIndexSizeGb(onDiskRawDocumentGb, indexCount, INDEX_OVERHEAD_FACTOR);
-  const activeWorkingSetSizeGb = activeWorkingSetGb(onDiskRawDocumentGb, preset.ramRatio);
-  const requiredRamGb = targetPhysicalRamGb(indexSizeGb, activeWorkingSetSizeGb);
-  const rawOnDiskMultiplier = BSON_OVERHEAD * (1 + indexCount * INDEX_OVERHEAD_FACTOR);
+  const activeWorkingSetSizeGb = activeWorkingSetGb(rawDataGb, preset.ramRatio);
+  const requiredRamGb = Math.min(
+    targetPhysicalRamGb(indexSizeGb, activeWorkingSetSizeGb),
+    tierRamCeilingHeuristic(rawDataGb),
+  );
+  const cappedIndexMultiplier = Math.min(indexCount * INDEX_OVERHEAD_FACTOR, MAX_AGGREGATE_INDEX_FRACTION);
+  const rawOnDiskMultiplier = BSON_OVERHEAD * (1 + cappedIndexMultiplier);
   const planningStorageSizeGb = planningStorageGb({
     rawDataGb,
     activeStorageGb,
@@ -776,8 +782,11 @@ export function computeManagerCostProjection(
   const baselineHotStorageGb = baselineHotStorageBytes / BYTES_PER_GB;
   const baselineOnDiskRawDocumentGb = rawDataGb * BSON_OVERHEAD;
   const baselineIndexGb = estimateIndexSizeGb(baselineOnDiskRawDocumentGb, indexCount, INDEX_OVERHEAD_FACTOR);
-  const baselineActiveWsGb = activeWorkingSetGb(baselineOnDiskRawDocumentGb, preset.ramRatio);
-  const baselineRequiredRamGb = targetPhysicalRamGb(baselineIndexGb, baselineActiveWsGb);
+  const baselineActiveWsGb = activeWorkingSetGb(rawDataGb, preset.ramRatio);
+  const baselineRequiredRamGb = Math.min(
+    targetPhysicalRamGb(baselineIndexGb, baselineActiveWsGb),
+    tierRamCeilingHeuristic(rawDataGb),
+  );
   const baselinePlanningStorageGb = planningStorageGb({
     rawDataGb,
     activeStorageGb: baselineHotStorageGb,

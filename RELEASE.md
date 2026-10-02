@@ -1,3 +1,9 @@
+## hvyMETL 5.1.9
+
+**Tier sizing fix (multi-TB + many indexes)** — Index RAM uses **aggregate** overhead (not indexCount × full corpus). Hot footprint is a capped % of **raw** GB; planning storage ignores index-inflated active totals; tier pick uses RAM ceiling by dataset size. Fixes erroneous **M700** at ~6 TB raw.
+
+---
+
 ## hvyMETL 5.1.8
 
 **Sizing UI cleanup** — Removed tier marker row and anchor copy from **Sizing Cost Projection**. **Target workload profile** and Atlas decision-matrix summary live under **Recommended Tier** (with max connections and matrix workload text).
