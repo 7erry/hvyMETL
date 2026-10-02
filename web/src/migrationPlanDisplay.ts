@@ -1,4 +1,5 @@
 import type { CollectionPlan, MigrationPlan } from './migrationPlanTypes';
+import { normalizeMigrationPlan } from './normalizeCollectionPlan';
 import { flattenSchemaFields, schemaFieldsFromCollection } from './schema/schemaFields';
 import type { SchemaField } from './schema/schemaFields';
 import type { SqlStructuralModel } from './types';
@@ -64,7 +65,7 @@ export function designMetaFromPlan(
 export function parseMigrationPlan(planJson: string | null | undefined): MigrationPlan | null {
   if (!planJson?.trim()) return null;
   try {
-    return JSON.parse(planJson) as MigrationPlan;
+    return normalizeMigrationPlan(JSON.parse(planJson) as MigrationPlan);
   } catch {
     return null;
   }
@@ -119,7 +120,7 @@ export function edgesForPlan(plan: MigrationPlan): MongoCollectionEdge[] {
   const edges: MongoCollectionEdge[] = [];
 
   for (const collection of plan.collections) {
-    for (const embed of collection.embeddedArrays) {
+    for (const embed of collection.embeddedArrays ?? []) {
       if (embed.overflowCollection && names.has(embed.overflowCollection)) {
         edges.push({
           id: `${collection.name}.${embed.field}->overflow:${embed.overflowCollection}`,
@@ -146,7 +147,7 @@ export function edgesForPlan(plan: MigrationPlan): MongoCollectionEdge[] {
       }
     }
 
-    for (const ext of collection.extendedReferences) {
+    for (const ext of collection.extendedReferences ?? []) {
       const lookup = collectionForTable(plan, ext.sourceTable);
       if (lookup && lookup.name !== collection.name && names.has(lookup.name)) {
         edges.push({

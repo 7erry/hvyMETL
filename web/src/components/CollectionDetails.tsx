@@ -1,4 +1,5 @@
 import { downloadJson } from '../api';
+import { normalizeCollectionPlan } from '../normalizeCollectionPlan';
 import type { CollectionPlan } from '../migrationPlanTypes';
 import { CollectionJsonView } from './CollectionJsonView';
 
@@ -34,21 +35,22 @@ function JsonDownloadIcon() {
 export function CollectionDetails({ collection, onClose }: CollectionDetailsProps) {
   if (!collection) return null;
 
-  const mergedTables = collection.mergedTables ?? [];
-  const idDerivation = collection.idDerivation ?? { strategy: 'direct' as const, sourceColumns: ['_id'] };
+  const plan = normalizeCollectionPlan(collection);
+  const mergedTables = plan.mergedTables;
+  const idDerivation = plan.idDerivation;
   const sourceColumns = idDerivation.sourceColumns ?? [];
 
   return (
     <div className="panel table-details collection-details">
       <div className="collection-details__header">
         <div className="collection-details__title">
-          <h3>{collection.name}</h3>
+          <h3>{plan.name}</h3>
           <button
             type="button"
             className="btn-icon collection-details__json-download"
-            onClick={() => downloadCollectionJson(collection)}
-            title={`Download ${collection.name}.json`}
-            aria-label={`Download ${collection.name} as JSON`}
+            onClick={() => downloadCollectionJson(plan)}
+            title={`Download ${plan.name}.json`}
+            aria-label={`Download ${plan.name} as JSON`}
           >
             <JsonDownloadIcon />
           </button>
@@ -59,16 +61,16 @@ export function CollectionDetails({ collection, onClose }: CollectionDetailsProp
       </div>
 
       <p className="collection-details__meta">
-        Source table: <code>{collection.sourceTable}</code>
+        Source table: <code>{plan.sourceTable}</code>
         {mergedTables.length > 1
-          ? ` · merged: ${mergedTables.filter((t) => t !== collection.sourceTable).join(', ')}`
+          ? ` · merged: ${mergedTables.filter((t) => t !== plan.sourceTable).join(', ')}`
           : ''}
         {' · '}
         _id: {idDerivation.strategy} ({sourceColumns.join(', ')})
       </p>
 
-      <div className="collection-details__json" aria-label={`${collection.name} migration plan JSON`}>
-        <CollectionJsonView collection={collection} />
+      <div className="collection-details__json" aria-label={`${plan.name} migration plan JSON`}>
+        <CollectionJsonView collection={plan} />
       </div>
     </div>
   );

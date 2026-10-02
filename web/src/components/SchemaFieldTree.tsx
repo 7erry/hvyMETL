@@ -31,7 +31,7 @@ function inspectorCellPaddingLeft(depth: number, nestedUnderEmbed: boolean): str
 
 function embedJoinHint(collection: CollectionPlan, field: SchemaField): string | null {
   if (!field.tags?.includes('embed')) return null;
-  const embed = collection.embeddedArrays.find((entry) => entry.field === field.name);
+  const embed = (collection.embeddedArrays ?? []).find((entry) => entry.field === field.name);
   if (!embed) return null;
   return `from ${embed.sourceTable}.${embed.joinColumn}`;
 }

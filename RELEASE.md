@@ -1,3 +1,9 @@
+## hvyMETL 5.1.19
+
+**Fix blank UI when selecting a MongoDB collection** — Cache per-collection schema trees so selection no longer retriggers React Flow layout on every node; normalize partial plans; wrap the collection inspector in an error boundary.
+
+---
+
 ## hvyMETL 5.1.18
 
 **Fix collection JSON inspector crash** — Replaced Prism highlighting in the sidebar collection view with a lightweight highlighter and safe serialization so selecting a collection no longer blanks the UI.

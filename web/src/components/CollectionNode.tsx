@@ -47,14 +47,20 @@ function CollectionNodeComponent({ id, data }: NodeProps & { data: CollectionNod
     return paths;
   }, [collection.name, expandedFieldPaths]);
 
-  const patternLabels = [...new Set(collection.patterns.map((p) => p.pattern))].slice(0, 3);
+  const mergedTables = collection.mergedTables ?? [collection.sourceTable];
+  const patterns = collection.patterns ?? [];
+  const patternLabels = [...new Set(patterns.map((p) => p.pattern))].slice(0, 3);
   const fieldsExpanded = collectionExpandedPaths.size > 0;
+  const schemaFieldLayoutKey = useMemo(
+    () => schemaFields.map((field) => field.path).join('\u0001'),
+    [schemaFields],
+  );
 
   useLayoutEffect(() => {
     updateNodeInternals(id);
     const frame = requestAnimationFrame(() => updateNodeInternals(id));
     return () => cancelAnimationFrame(frame);
-  }, [id, updateNodeInternals, fieldsExpanded, schemaFields, collectionExpandedPaths]);
+  }, [id, updateNodeInternals, fieldsExpanded, schemaFieldLayoutKey, collectionExpandedPaths]);
 
   useEffect(() => {
     const root = rootRef.current;
@@ -102,9 +108,9 @@ function CollectionNodeComponent({ id, data }: NodeProps & { data: CollectionNod
         ) : null}
       </header>
       <p className="collection-node__source">from {collection.sourceTable}</p>
-      {collection.mergedTables.filter((table) => table !== collection.sourceTable).length > 0 ? (
+      {mergedTables.filter((table) => table !== collection.sourceTable).length > 0 ? (
         <p className="collection-node__merged">
-          + {collection.mergedTables.filter((table) => table !== collection.sourceTable).join(', ')}
+          + {mergedTables.filter((table) => table !== collection.sourceTable).join(', ')}
         </p>
       ) : null}
       {patternLabels.length > 0 ? (

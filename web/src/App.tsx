@@ -16,6 +16,7 @@ import { suggestPipelineSelfHeal } from './copilot/selfHeal';
 import { MongoSchemaCanvas } from './components/MongoSchemaCanvas';
 import { TableDetails } from './components/TableDetails';
 import { CollectionDetails } from './components/CollectionDetails';
+import { StudioErrorBoundary } from './components/StudioErrorBoundary';
 import { TransformationSummaryPanel } from './components/TransformationSummaryPanel';
 import { PipelineHistoryPanel } from './components/PipelineHistoryPanel';
 import { MigrationWorkflowBar } from './components/MigrationWorkflowBar';
@@ -100,6 +101,7 @@ import {
 import { fetchMigrationPrompts, mapPromptExportResponse } from './migrationPrompts';
 import { layoutSqlModel, SQL_GRAPH_LAYOUT_OPTIONS } from './graphLayout';
 import { pickCsvDirectory } from './directoryPicker';
+import { normalizeMigrationPlan } from './normalizeCollectionPlan';
 import type { CollectionPlan, MigrationPlan } from './migrationPlanTypes';
 import type { PipelineExecutionDetail } from './transformationSummaryTypes';
 import { EMBED_OVERRIDES_PANEL_ID } from './transformationSummaryTypes';
@@ -541,14 +543,6 @@ export default function App() {
     [migrationPlan, selectedCollection],
   );
 
-  const selectedCollectionSchemaFields = useMemo(
-    () =>
-      selectedCollectionPlan && migrationPlan
-        ? schemaFieldsFromCollection(selectedCollectionPlan, migrationPlan)
-        : [],
-    [selectedCollectionPlan, migrationPlan],
-  );
-
   const effectiveCollectionPositions = useMemo(() => {
     if (!migrationPlan) return collectionPositions;
     return initialCollectionPositions(migrationPlan, positions, collectionPositions);
@@ -791,7 +785,8 @@ export default function App() {
         if (data.version !== 1 || data.phase !== 'after' || !data.plan?.collections?.length) {
           throw new Error('Not a valid MongoDB diagram export (version 1, phase after, plan required).');
         }
-        const planJson = JSON.stringify(data.plan, null, 2);
+        const normalizedPlan = normalizeMigrationPlan(data.plan);
+        const planJson = JSON.stringify(normalizedPlan, null, 2);
         setSession((prev) => ({
           ...prev,
           dialect: data.dialect ?? prev.dialect,
@@ -1618,10 +1613,12 @@ export default function App() {
 
                 {schemaPhase === 'after' && selectedCollectionPlan && (
                   <div style={{ marginBottom: '0.75rem' }}>
-                    <CollectionDetails
-                      collection={selectedCollectionPlan}
-                      onClose={() => setSessionField('selectedCollection', null)}
-                    />
+                    <StudioErrorBoundary label="Collection inspector">
+                      <CollectionDetails
+                        collection={selectedCollectionPlan}
+                        onClose={() => setSessionField('selectedCollection', null)}
+                      />
+                    </StudioErrorBoundary>
                   </div>
                 )}
 

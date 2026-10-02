@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useDeferredValue, useMemo } from 'react';
 import type { CollectionPlan } from '../migrationPlanTypes';
 
 const MAX_JSON_CHARS = 200_000;
@@ -31,16 +31,20 @@ export function serializeCollectionPlanJson(collection: CollectionPlan): string 
 function highlightJsonHtml(json: string): string {
   const slice = json.length > MAX_JSON_CHARS ? `${json.slice(0, MAX_JSON_CHARS)}\n… truncated` : json;
   const escaped = escapeHtml(slice);
-  return escaped.replace(
-    /("(?:\\.|[^"\\])*")(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?/g,
-    (match, _quoted, colon) => {
-      if (colon) return `<span class="collection-json__key">${match}</span>`;
-      if (match.startsWith('"')) return `<span class="collection-json__string">${match}</span>`;
-      if (match === 'true' || match === 'false') return `<span class="collection-json__boolean">${match}</span>`;
-      if (match === 'null') return `<span class="collection-json__null">${match}</span>`;
-      return `<span class="collection-json__number">${match}</span>`;
-    },
-  );
+  try {
+    return escaped.replace(
+      /("(?:\\.|[^"\\])*")(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?/g,
+      (match, _quoted, colon) => {
+        if (colon) return `<span class="collection-json__key">${match}</span>`;
+        if (match.startsWith('"')) return `<span class="collection-json__string">${match}</span>`;
+        if (match === 'true' || match === 'false') return `<span class="collection-json__boolean">${match}</span>`;
+        if (match === 'null') return `<span class="collection-json__null">${match}</span>`;
+        return `<span class="collection-json__number">${match}</span>`;
+      },
+    );
+  } catch {
+    return escaped;
+  }
 }
 
 type CollectionJsonViewProps = {
@@ -49,7 +53,9 @@ type CollectionJsonViewProps = {
 
 /** Colorized read-only JSON for the collection migration-plan slice. */
 export function CollectionJsonView({ collection }: CollectionJsonViewProps) {
-  const html = useMemo(() => highlightJsonHtml(serializeCollectionPlanJson(collection)), [collection]);
+  const jsonText = useMemo(() => serializeCollectionPlanJson(collection), [collection]);
+  const deferredJson = useDeferredValue(jsonText);
+  const html = useMemo(() => highlightJsonHtml(deferredJson), [deferredJson]);
 
   return (
     <pre className="collection-json prism-code-block collection-details__json-pre">

@@ -35,18 +35,18 @@ export type CollectionTagContext = {
 /** Build tag lookup sets from migration-plan metadata (top-level field names only). */
 export function buildCollectionTagContext(collection: CollectionPlan): CollectionTagContext {
   const indexedFields = new Set<string>();
-  for (const index of collection.indexes) {
+  for (const index of collection.indexes ?? []) {
     for (const key of Object.keys(index.keys)) indexedFields.add(key);
   }
   const embedByField = new Map<string, { sourceTable: string; joinColumn: string }>();
-  for (const embed of collection.embeddedArrays) {
+  for (const embed of collection.embeddedArrays ?? []) {
     embedByField.set(embed.field, { sourceTable: embed.sourceTable, joinColumn: embed.joinColumn });
   }
   return {
     indexedFields,
-    computed: new Set(collection.computedFields.map((f) => f.field)),
-    embedded: new Set(collection.embeddedArrays.map((e) => e.field)),
-    extended: new Set(collection.extendedReferences.map((e) => e.field)),
+    computed: new Set((collection.computedFields ?? []).map((f) => f.field)),
+    embedded: new Set((collection.embeddedArrays ?? []).map((e) => e.field)),
+    extended: new Set((collection.extendedReferences ?? []).map((e) => e.field)),
     bucketField: collection.bucket?.measurementsField,
     embedByField,
   };

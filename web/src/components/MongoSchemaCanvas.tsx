@@ -72,6 +72,7 @@ function planToFlow(
   compactLayout: boolean,
   expandedFieldPaths: Set<string>,
   onToggleFieldPath: (collectionName: string, fieldPath: string) => void,
+  schemaFieldsByCollection: Map<string, ReturnType<typeof schemaFieldsFromCollection>>,
 ): { nodes: Node<CollectionNodeData>[]; edges: Edge[] } {
   const planEdges = edgesForPlan(plan);
   const related = relatedCollectionNames(plan, selectedCollection);
@@ -102,7 +103,7 @@ function planToFlow(
       zIndex: isFocused ? 2 : 1,
       data: {
         collection,
-        schemaFields: schemaFieldsFromCollection(collection, plan),
+        schemaFields: schemaFieldsByCollection.get(collection.name) ?? [],
         selected: collection.name === selectedCollection,
         related: related.has(collection.name),
         dimmed: hasSelection && !related.has(collection.name),
@@ -162,6 +163,16 @@ export function MongoSchemaCanvas({
 }: MongoSchemaCanvasProps) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const compactLayout = useCompactDiagramLayout();
+  const schemaFieldsByCollection = useMemo(() => {
+    if (!plan) return new Map<string, ReturnType<typeof schemaFieldsFromCollection>>();
+    return new Map(
+      plan.collections.map(
+        (collection) =>
+          [collection.name, schemaFieldsFromCollection(collection, plan)] as const,
+      ),
+    );
+  }, [plan]);
+
   const flow = useMemo(
     () =>
       plan
@@ -174,6 +185,7 @@ export function MongoSchemaCanvas({
             compactLayout,
             expandedFieldPaths,
             onToggleFieldPath,
+            schemaFieldsByCollection,
           )
         : { nodes: [], edges: [] },
     [
@@ -185,6 +197,7 @@ export function MongoSchemaCanvas({
       compactLayout,
       expandedFieldPaths,
       onToggleFieldPath,
+      schemaFieldsByCollection,
     ],
   );
 
