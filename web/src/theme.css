@@ -351,6 +351,46 @@ textarea {
   color: var(--mdb-green-base);
 }
 
+.app-logo__leaf--interactive {
+  cursor: pointer;
+}
+
+.app-logo-release-modal {
+  width: min(520px, 94vw);
+  max-height: min(85vh, 640px);
+  display: flex;
+  flex-direction: column;
+}
+
+.app-logo-release-modal__brand {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.app-logo-release-modal__leaf {
+  height: 72px;
+  width: auto;
+  flex-shrink: 0;
+  color: var(--mdb-green-base);
+}
+
+.app-logo-release-modal__body {
+  overflow: auto;
+  flex: 1;
+  min-height: 0;
+}
+
+.app-logo-release-modal__markdown {
+  font-size: var(--sidebar-panel-font-size, 0.875rem);
+  line-height: 1.5;
+}
+
+.app-logo-release-modal__error {
+  margin: 0;
+  color: var(--mdb-red, #c7384f);
+}
+
 .app-logo__title {
   font-weight: 700;
   font-size: 1.15rem;

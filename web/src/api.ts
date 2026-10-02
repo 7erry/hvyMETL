@@ -156,6 +156,20 @@ async function parseApiJsonResponse<T>(res: Response): Promise<T> {
   }
 }
 
+export type ApiHealthResponse = {
+  ok: boolean;
+  name: string;
+  version: string;
+  releaseHeading?: string;
+  releaseNotes?: string;
+};
+
+export async function fetchApiHealth(): Promise<ApiHealthResponse> {
+  const res = await apiFetch(`${base}/api/health`);
+  if (!res.ok) throw new Error(await readApiError(res));
+  return parseApiJsonResponse<ApiHealthResponse>(res);
+}
+
 export async function checkApiHealth(): Promise<boolean> {
   try {
     const res = await apiFetch(`${base}/api/health`);

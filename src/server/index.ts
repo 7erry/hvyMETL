@@ -9,6 +9,7 @@ import cors from 'cors';
 import express, { type Request } from 'express';
 import multer from 'multer';
 import { loadProjectEnv } from './loadProjectEnv.js';
+import { parseLatestReleaseSection } from './releaseNotes.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '../..');
 loadProjectEnv(ROOT);
@@ -254,10 +255,24 @@ app.get('/api/health', (_req, res) => {
   } catch {
     // ignore
   }
+  let releaseHeading: string | undefined;
+  let releaseNotes: string | undefined;
+  try {
+    const releaseMarkdown = readFileSync(join(ROOT, 'RELEASE.md'), 'utf8');
+    const latest = parseLatestReleaseSection(releaseMarkdown);
+    if (latest) {
+      releaseHeading = latest.heading;
+      releaseNotes = latest.body;
+    }
+  } catch {
+    // ignore missing RELEASE.md
+  }
   res.json({
     ok: true,
     name: 'hvyMETL',
     version,
+    releaseHeading,
+    releaseNotes,
     cli: 'available',
     ui,
     uiHealthy: ui === 'static',
