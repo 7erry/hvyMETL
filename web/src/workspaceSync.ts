@@ -9,6 +9,7 @@ export type TenantWorkspace = {
   model?: SessionState['model'];
   csvSourcePath?: string | null;
   managerCostInputs?: SessionState['managerCostInputs'];
+  haClusterInputs?: SessionState['haClusterInputs'];
   customProfile?: SessionState['customProfile'];
   customTelemetryInput?: SessionState['customTelemetryInput'];
   cardinalityOverrides?: SessionState['cardinalityOverrides'];
@@ -26,6 +27,7 @@ export function sessionToWorkspace(state: SessionState): TenantWorkspace {
     model: state.model,
     csvSourcePath: state.csvSourcePath,
     managerCostInputs: state.managerCostInputs,
+    haClusterInputs: state.haClusterInputs,
     customProfile: state.customProfile,
     customTelemetryInput: state.customTelemetryInput,
     cardinalityOverrides: state.cardinalityOverrides,
@@ -46,6 +48,14 @@ export function mergeWorkspaceIntoSession(state: SessionState, workspace: Tenant
     ...(workspace.csvSourcePath !== undefined ? { csvSourcePath: workspace.csvSourcePath } : {}),
     ...(workspace.managerCostInputs !== undefined
       ? { managerCostInputs: { ...state.managerCostInputs, ...workspace.managerCostInputs } }
+      : {}),
+    ...(workspace.haClusterInputs !== undefined
+      ? {
+          haClusterInputs: {
+            ...state.haClusterInputs,
+            ...workspace.haClusterInputs,
+          },
+        }
       : {}),
     ...(workspace.customProfile !== undefined ? { customProfile: workspace.customProfile } : {}),
     ...(workspace.customTelemetryInput !== undefined

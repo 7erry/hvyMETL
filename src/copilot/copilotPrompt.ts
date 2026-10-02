@@ -2,6 +2,7 @@ import type { CopilotSchemaContext } from './groveChat.js';
 import { COPILOT_PROMPT_INJECTION_GUARD } from './copilotPromptInjectionGuard.js';
 import { COPILOT_ARCHITECTURE_RESPONSE_INSTRUCTIONS } from './copilotArchitecturePrompt.js';
 import { formatDatasetScaleSection } from './copilotDatasetScale.js';
+import { formatHaTopologySection } from './copilotHaTopology.js';
 import {
   COPILOT_VECTOR_SEARCH_OPERATIONAL_GUIDANCE,
   formatVectorSearchIndexesForSystemPrompt,
@@ -43,6 +44,7 @@ export function buildCopilotSystemPrompt(
     : '(run design to generate MongoDB plan)';
 
   const datasetScale = formatDatasetScaleSection(context.datasetScale);
+  const haTopology = formatHaTopologySection(context.haTopology);
 
   const targetDatabase = context.targetDatabase?.trim()
     ? context.targetDatabase.trim()
@@ -73,6 +75,9 @@ ${collections}
 
 ## Manager dataset scale & Atlas sizing
 ${datasetScale}
+
+## High Availability Agent (Atlas multi-region topology)
+${haTopology}
 
 ## Target MongoDB database
 ${targetDatabase}

@@ -7,6 +7,8 @@ import {
   type RepogenLanguageOption,
 } from '../api';
 import { downloadRepositoriesZip, repositoriesZipFilename } from '../repositoryDownload';
+import type { HaClusterInputs } from '../../../src/atlas/atlasClusterTopology.ts';
+import { buildAtlasHaMigrationSlice } from '../ha/attachAtlasHaArtifacts';
 import type { MigrationArtifacts } from '../sessionState';
 import { ArtifactCodePanel } from './ArtifactCodePanel';
 import { ApiArtifactsExplorer } from './ApiArtifactsExplorer';
@@ -27,12 +29,14 @@ type ArtifactTab = {
 type MigrationArtifactsViewProps = {
   artifacts: MigrationArtifacts;
   onChange: (next: MigrationArtifacts) => void;
+  /** Live HA inputs used when export snapshot is missing or stale. */
+  haClusterInputs?: HaClusterInputs;
 };
 
 const DEFAULT_API_PANEL_HEIGHT = 300;
 const COLLAPSED_API_PANEL_HEIGHT = 44;
 
-function buildTabs(artifacts: MigrationArtifacts): ArtifactTab[] {
+function buildTabs(artifacts: MigrationArtifacts, atlasHa?: MigrationArtifacts['atlasHa']): ArtifactTab[] {
   const tabs: ArtifactTab[] = [
     {
       id: 'plan',
@@ -53,6 +57,28 @@ function buildTabs(artifacts: MigrationArtifacts): ArtifactTab[] {
     },
   ];
 
+  if (atlasHa) {
+    tabs.push(
+      {
+        id: 'atlas-ha-guide',
+        label: 'Atlas HA guide',
+        fileName: 'atlas-ha-provisioning-guide.md',
+        mime: 'text/markdown',
+        content: atlasHa.provisioningGuideMd,
+        group: 'core',
+      },
+      {
+        id: 'atlas-cluster-create',
+        label: 'Atlas cluster JSON',
+        fileName: 'atlas-cluster-create.json',
+        mime: 'application/json',
+        content: atlasHa.clusterCreateJson,
+        isJson: true,
+        group: 'core',
+      },
+    );
+  }
+
   for (const prompt of artifacts.prompts) {
     tabs.push({
       id: prompt.fileName,
@@ -67,8 +93,14 @@ function buildTabs(artifacts: MigrationArtifacts): ArtifactTab[] {
   return tabs;
 }
 
-export function MigrationArtifactsView({ artifacts, onChange }: MigrationArtifactsViewProps) {
-  const tabs = useMemo(() => buildTabs(artifacts), [artifacts]);
+export function MigrationArtifactsView({ artifacts, onChange, haClusterInputs }: MigrationArtifactsViewProps) {
+  const atlasHa = useMemo(
+    () =>
+      artifacts.atlasHa ??
+      (haClusterInputs ? buildAtlasHaMigrationSlice(haClusterInputs) : undefined),
+    [artifacts.atlasHa, haClusterInputs],
+  );
+  const tabs = useMemo(() => buildTabs(artifacts, atlasHa), [artifacts, atlasHa]);
   const repoFiles = artifacts.repositories?.files ?? [];
   const [activeId, setActiveId] = useState(tabs[0]?.id ?? 'plan');
   const [languages, setLanguages] = useState<RepogenLanguageOption[]>([]);

@@ -5,6 +5,7 @@ import { COPILOT_SLASH_COMMANDS, COPILOT_COMMANDS_USER_PROMPT, buildQuickActionC
 import { ToolExecutionCard } from './copilot/ToolExecutionCard';
 import { QueryTranslatorPanel } from './copilot/QueryTranslatorPanel';
 import { SizingAssistantPanel } from './sizing/SizingAssistantPanel';
+import { HaAssistantPanel } from './ha/HaAssistantPanel';
 import { CopilotMessageBody } from './copilot/CopilotMessageBody';
 import { MigrationWorkflowGuide } from './copilot/MigrationWorkflowGuide';
 import { CopilotTypingIndicator } from './copilot/CopilotTypingIndicator';
@@ -113,7 +114,9 @@ export function AgentCopilotSidebar() {
               <p className="agent-copilot-sidebar__meta">
                 {copilot.activeTab === 'sizing'
                   ? 'Atlas cluster sizing'
-                  : `${STATUS_LABEL[copilot.status]} · ${PRESET_LABEL[copilot.preset]}`}
+                  : copilot.activeTab === 'ha'
+                    ? 'High Availability'
+                    : `${STATUS_LABEL[copilot.status]} · ${PRESET_LABEL[copilot.preset]}`}
                 {copilot.llmConfigured && copilot.llmModel ? (
                   <> · {copilot.llmModel}</>
                 ) : (
@@ -167,6 +170,15 @@ export function AgentCopilotSidebar() {
           >
             Atlas Sizing
           </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={copilot.activeTab === 'ha'}
+            className={copilot.activeTab === 'ha' ? 'active' : ''}
+            onClick={() => copilot.setActiveTab('ha')}
+          >
+            HA
+          </button>
         </div>
 
         {copilot.activeTab === 'translator' ? (
@@ -175,6 +187,8 @@ export function AgentCopilotSidebar() {
           </div>
         ) : copilot.activeTab === 'sizing' ? (
           <SizingAssistantPanel />
+        ) : copilot.activeTab === 'ha' ? (
+          <HaAssistantPanel />
         ) : (
           <>
             <div className="agent-copilot-sidebar__thread" ref={threadRef}>

@@ -33,6 +33,7 @@ Inside the \`<details>\` block, use \`###\` subheadings and include **all five p
 
 **3. Replica Set & Backup Sizing**
 - **Replica Set:** minimum **3-node** replica set (Primary + Secondaries); each node identical RAM/CPU (state total footprint, e.g. 3× M50).
+- When **High Availability Agent** context is present in the system prompt, cite the planned multi-region electable layout (priorities, read-only nodes per region) and note that \`atlas-cluster-create.json\` in Migration Export reflects Atlas Admin API \`replicationSpecs\` — not a production runbook.
 - **Backups:** Atlas Continuous Backups / PITR; snapshots billed separately — account for **oplog size** and write change velocity.
 
 **4. Architecture: Single Replica Set vs. Sharding**

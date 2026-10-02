@@ -5,6 +5,8 @@ import type { CardinalityOverrides, EmbedDirectionOverrides, ForceEmbedOverrides
 import type { TimeSeriesOverrides } from './timeSeriesOverrides';
 import type { RelationshipConnectionType, RelationshipNotation } from './relationshipDisplay';
 import type { CustomProfileInput, WorkloadProfile } from './customProfileShared';
+import type { HaClusterInputs } from '../../src/atlas/atlasClusterTopology.ts';
+import { DEFAULT_HA_CLUSTER_INPUTS, haClusterInputsWithDefaults } from './ha/defaultHaClusterInputs';
 import { DEFAULT_MANAGER_COST_INPUTS, type ManagerCostInputs } from './managerCostEstimate';
 import {
   COPILOT_WIDTH_DEFAULT,
@@ -60,6 +62,12 @@ export type MigrationArtifacts = {
     outDir: string;
   };
   apiArtifacts?: import('./api').ApiArtifactBundleInfo;
+  atlasHa?: {
+    provisioningGuideMd: string;
+    clusterCreateJson: string;
+    generatedAt: string;
+    inputsSnapshot: HaClusterInputs;
+  };
 };
 
 export type AppView = 'diagram' | 'migration';
@@ -118,6 +126,7 @@ export type SessionState = {
   uiRole: UiRole;
   managerReviewAcceptances: ManagerReviewAcceptances | null;
   managerCostInputs: ManagerCostInputs;
+  haClusterInputs: HaClusterInputs;
   cardinalityOverrides: CardinalityOverrides;
   forceEmbedOverrides: ForceEmbedOverrides;
   embedDirectionOverrides: EmbedDirectionOverrides;
@@ -153,6 +162,7 @@ export const defaultSessionState = (): SessionState => ({
   uiRole: 'developer',
   managerReviewAcceptances: null,
   managerCostInputs: { ...DEFAULT_MANAGER_COST_INPUTS },
+  haClusterInputs: { ...DEFAULT_HA_CLUSTER_INPUTS },
   cardinalityOverrides: {},
   forceEmbedOverrides: {},
   embedDirectionOverrides: {},
@@ -190,6 +200,7 @@ export function loadSessionState(userId?: string): SessionState {
         ...DEFAULT_MANAGER_COST_INPUTS,
         ...(rest.managerCostInputs ?? {}),
       },
+      haClusterInputs: haClusterInputsWithDefaults(rest.haClusterInputs),
     };
   } catch {
     return defaultSessionState();

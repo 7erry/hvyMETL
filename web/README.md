@@ -480,7 +480,8 @@ use **Download repositories** to save one zip with the full generated source tre
 | **Example diagrams** | Import bundled `examples/*/hvymetl-diagram-*.json` — see [10-examples.md](../docs/10-examples.md) |
 | **Session state** | Auto-saved in `sessionStorage`; use **Clear session** to reset |
 | **Workload profiles** | Header dropdown (catalog, cms, iot, …) |
-| **AI Migration Export** | Generates migration plan JSON, design report, and 3 RAG prompts |
+| **High Availability** | Developer sidebar + Copilot **HA** tab — multi-region Atlas `replicationSpecs` (3/5/7 electable nodes, read-only replicas) |
+| **AI Migration Export** | Migration plan, design report, RAG prompts, plus `atlas-ha-provisioning-guide.md` and `atlas-cluster-create.json` |
 | **Repository codegen** | After export: pick language (C, C++, C#, Go, Java, Kotlin, Node.js, PHP, Python, Ruby, Rust, Scala, Swift) → generate + download repositories |
 | **Run Full Pipeline** | Header button — design → csvToAtlas import from CSV exports |
 

@@ -82,6 +82,8 @@ import type {
 import type { MigrationPlan } from '../migrationPlanTypes';
 import type { CardinalityOverrides, ForceEmbedOverrides } from '../cardinalityOverrides';
 import type { SqlStructuralModel } from '../types';
+import type { HaClusterInputs } from '../../../src/atlas/atlasClusterTopology.ts';
+import { DEFAULT_HA_CLUSTER_INPUTS } from '../ha/defaultHaClusterInputs';
 import type { ManagerCostInputs } from '../managerCostEstimate';
 import { DEFAULT_MANAGER_COST_INPUTS } from '../managerCostEstimate';
 import { extractAtlasSizingHintsFromInspect } from '../sizing/extractAtlasSizingHints';
@@ -90,7 +92,7 @@ export type CopilotContextValue = {
   open: boolean;
   width: number;
   setWidth: (width: number) => void;
-  activeTab: 'chat' | 'translator' | 'sizing';
+  activeTab: 'chat' | 'translator' | 'sizing' | 'ha';
   status: AgentStatus;
   preset: CopilotWorkflowPreset;
   messages: CopilotMessage[];
@@ -120,7 +122,7 @@ export type CopilotContextValue = {
   openAtlasSearchIndexDialog: (request: AtlasSearchDialogRequest) => void;
   toggleOpen: () => void;
   setOpen: (open: boolean) => void;
-  setActiveTab: (tab: 'chat' | 'translator' | 'sizing') => void;
+  setActiveTab: (tab: 'chat' | 'translator' | 'sizing' | 'ha') => void;
   setPreset: (preset: CopilotWorkflowPreset) => void;
   sendMessage: (text: string) => void;
   openWithPrompt: (prompt: string) => void;
@@ -179,6 +181,7 @@ type CopilotProviderProps = {
   onReRunPipeline?: () => void;
   workflowHandlers: CopilotWorkflowHandlers;
   managerCostInputs?: ManagerCostInputs;
+  haClusterInputs?: HaClusterInputs;
   /** Called when Mongo inspect returns collection stats useful for Atlas Sizing. */
   onSizingAtlasHints?: (patch: { avgDocSizeKb?: number; secondaryIndexCount?: number }) => void;
 };
@@ -196,10 +199,11 @@ export function CopilotProvider({
   onReRunPipeline,
   workflowHandlers,
   managerCostInputs = DEFAULT_MANAGER_COST_INPUTS,
+  haClusterInputs = DEFAULT_HA_CLUSTER_INPUTS,
   onSizingAtlasHints,
 }: CopilotProviderProps) {
   const [open, setOpenState] = useState(false);
-  const [activeTab, setActiveTabState] = useState<'chat' | 'translator' | 'sizing'>('chat');
+  const [activeTab, setActiveTabState] = useState<'chat' | 'translator' | 'sizing' | 'ha'>('chat');
   const [status, setStatus] = useState<AgentStatus>('idle');
   const [preset, setPreset] = useState<CopilotWorkflowPreset>('schema-design');
   const [messages, setMessages] = useState<CopilotMessage[]>([]);
@@ -707,6 +711,7 @@ export function CopilotProvider({
         forceEmbedOverrides,
         guardrailIssues,
         managerCostInputs,
+        haClusterInputs,
         targetDatabase,
         vectorSearchIndexes,
         atlasSearchIndexes,
@@ -951,6 +956,7 @@ export function CopilotProvider({
       forceEmbedOverrides,
       guardrailIssues,
       managerCostInputs,
+      haClusterInputs,
       model,
       plan,
       runMongoInspectTool,

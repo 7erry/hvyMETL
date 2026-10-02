@@ -2,6 +2,7 @@
  * Phase 0 guardrails for Copilot and sizing-assistant LLM API requests.
  */
 
+import type { CopilotHaTopologyContext } from './copilotHaTopology.js';
 import type { CopilotChatMessage, CopilotSchemaContext } from './groveChat.js';
 
 export const COPILOT_MAX_MESSAGES = 50;
@@ -231,6 +232,31 @@ function parseDatasetScale(raw: unknown): CopilotSchemaContext['datasetScale'] {
   };
 }
 
+function parseHaTopology(raw: unknown): CopilotHaTopologyContext | undefined {
+  if (!raw || typeof raw !== 'object') return undefined;
+  const body = raw as Record<string, unknown>;
+  if (typeof body.provider !== 'string' || typeof body.clusterName !== 'string') return undefined;
+  const regions = Array.isArray(body.regions)
+    ? body.regions.slice(0, 8).map((item) => {
+        const row = item as Record<string, unknown>;
+        return {
+          regionName: truncateString(String(row.regionName ?? ''), COPILOT_MAX_SCHEMA_STRING_FIELD_CHARS),
+          priority: Number(row.priority ?? 0),
+          electable: Number(row.electable ?? 0),
+          readOnly: Number(row.readOnly ?? 0),
+        };
+      })
+    : [];
+  return {
+    provider: truncateString(body.provider.trim(), 32),
+    electableNodes: Number(body.electableNodes ?? 0),
+    instanceSize: truncateString(String(body.instanceSize ?? ''), 16),
+    readOnlyPerRegion: Number(body.readOnlyPerRegion ?? 0),
+    clusterName: truncateString(body.clusterName.trim(), 64),
+    regions,
+  };
+}
+
 /** Bound and sanitize client-supplied schema context before Grove system prompt assembly. */
 export function sanitizeCopilotSchemaContext(raw: unknown): CopilotSchemaContext {
   const body = raw && typeof raw === 'object' ? (raw as Record<string, unknown>) : {};
@@ -326,6 +352,7 @@ export function sanitizeCopilotSchemaContext(raw: unknown): CopilotSchemaContext
     forceEmbedOverrides,
     collections,
     datasetScale: parseDatasetScale(body.datasetScale),
+    haTopology: parseHaTopology(body.haTopology),
     targetDatabase,
     vectorSearchIndexes: Array.isArray(body.vectorSearchIndexes)
       ? (body.vectorSearchIndexes as CopilotSchemaContext['vectorSearchIndexes'])

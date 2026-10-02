@@ -1,3 +1,15 @@
+## hvyMETL 5.0.0
+
+**High Availability Agent** — Developer **High Availability** panel (cloud provider, 3/5/7 electable nodes, read-only replicas per region, Atlas tier) plus Copilot **HA** tab. **AI Migration Export** adds `atlas-ha-provisioning-guide.md` and `atlas-cluster-create.json` (Atlas Admin API `replicationSpecs` templates). See [docs/23-high-availability-agent.md](docs/23-high-availability-agent.md).
+
+### Test plan
+
+- Unit: `npm test -- src/atlas/atlasClusterTopology.test.ts`
+- `cd web && npm run build`
+- Manual: import DDL → configure HA → Copilot HA tab → AI Migration Export → Download all includes HA files
+
+---
+
 ## hvyMETL 4.3.14
 
 **Sharding stays on Developer** — **Sharding Recommended** is only in the Developer sizing sidebar (not Manager Configure). Sharding panel styles apply in Developer view.

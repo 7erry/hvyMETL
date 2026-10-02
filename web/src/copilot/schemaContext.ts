@@ -6,7 +6,9 @@ import type { GuardrailIssue } from './types';
 import type { CopilotDatasetScaleContext } from '../../../src/copilot/copilotDatasetScale.ts';
 import type { CopilotVectorSearchIndexRecord } from '../../../src/copilot/copilotVectorSearchContext.ts';
 import type { CopilotAtlasSearchIndexRecord } from '../../../src/copilot/copilotAtlasSearchContext.ts';
+import type { HaClusterInputs } from '../../../src/atlas/atlasClusterTopology.ts';
 import type { ManagerCostInputs } from '../managerCostEstimate';
+import { buildHaTopologyContext, type CopilotHaTopologyContext } from '../ha/buildHaTopologyContext';
 import { buildDatasetScaleContext } from './buildDatasetScaleContext';
 import { buildSearchFieldHintsFromPlan } from './buildSearchFieldHints';
 import type { CopilotRelationshipCardinality } from '../../../src/copilot/formatRelationshipCardinality.ts';
@@ -24,6 +26,7 @@ export type CopilotSchemaContextPayload = {
   forceEmbedOverrides: Record<string, boolean>;
   collections?: { name: string; sourceTable: string }[];
   datasetScale?: CopilotDatasetScaleContext;
+  haTopology?: CopilotHaTopologyContext;
   targetDatabase?: string;
   vectorSearchIndexes?: CopilotVectorSearchIndexRecord[];
   atlasSearchIndexes?: CopilotAtlasSearchIndexRecord[];
@@ -57,6 +60,7 @@ export function buildSchemaContextPayload(input: {
   forceEmbedOverrides: ForceEmbedOverrides;
   guardrailIssues: GuardrailIssue[];
   managerCostInputs?: ManagerCostInputs;
+  haClusterInputs?: HaClusterInputs;
   targetDatabase?: string;
   vectorSearchIndexes?: CopilotVectorSearchIndexRecord[];
   atlasSearchIndexes?: CopilotAtlasSearchIndexRecord[];
@@ -68,6 +72,7 @@ export function buildSchemaContextPayload(input: {
     forceEmbedOverrides,
     guardrailIssues,
     managerCostInputs,
+    haClusterInputs,
     targetDatabase,
     vectorSearchIndexes,
     atlasSearchIndexes,
@@ -96,6 +101,7 @@ export function buildSchemaContextPayload(input: {
     forceEmbedOverrides,
     collections: plan?.collections.map((c) => ({ name: c.name, sourceTable: c.sourceTable })),
     datasetScale: managerCostInputs ? buildDatasetScaleContext(model, plan, managerCostInputs) : undefined,
+    haTopology: haClusterInputs ? buildHaTopologyContext(haClusterInputs) : undefined,
     targetDatabase: targetDatabase?.trim() || undefined,
     vectorSearchIndexes: vectorSearchIndexes?.length ? vectorSearchIndexes : undefined,
     atlasSearchIndexes: atlasSearchIndexes?.length ? atlasSearchIndexes : undefined,

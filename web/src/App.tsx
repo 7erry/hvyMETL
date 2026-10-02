@@ -33,6 +33,11 @@ import { DiagramStatusFooter } from './components/DiagramStatusFooter';
 import { FooterDiagramLegend } from './components/FooterDiagramLegend';
 import { CollapsiblePanel } from './components/CollapsiblePanel';
 import { ManagerCostPanel } from './components/ManagerCostPanel';
+import { HighAvailabilityPanel } from './components/HighAvailabilityPanel';
+import { HaAssistantProvider } from './ha/HaAssistantContext';
+import { mergeAtlasHaIntoArtifacts } from './ha/attachAtlasHaArtifacts';
+import { haClusterInputsWithDefaults } from './ha/defaultHaClusterInputs';
+import { computeManagerCostProjection } from './managerCostEstimate';
 import { edgesForPlan } from './migrationPlanDisplay';
 import { mergeMeasuredModelStats } from './mergeMeasuredModelStats';
 import { CardinalityOverridesPanel } from './components/CardinalityOverridesPanel';
@@ -108,6 +113,24 @@ function CopilotHeaderToggle() {
     <button type="button" className="tertiary" onClick={copilot.toggleOpen} title="Copilot (⌘K)">
       ◈ Copilot
     </button>
+  );
+}
+
+type HighAvailabilityPanelConnectedProps = Omit<
+  ComponentProps<typeof HighAvailabilityPanel>,
+  'onOpenCopilotHa'
+>;
+
+function HighAvailabilityPanelConnected(props: HighAvailabilityPanelConnectedProps) {
+  const copilot = useCopilot();
+  return (
+    <HighAvailabilityPanel
+      {...props}
+      onOpenCopilotHa={() => {
+        copilot.setOpen(true);
+        copilot.setActiveTab('ha');
+      }}
+    />
   );
 }
 
@@ -204,6 +227,7 @@ export default function App() {
     uiRole,
     managerReviewAcceptances,
     managerCostInputs,
+    haClusterInputs,
     cardinalityOverrides,
     forceEmbedOverrides,
     embedDirectionOverrides,
@@ -212,6 +236,7 @@ export default function App() {
 
   const [schemaImportPanelOpen, setSchemaImportPanelOpen] = useState(() => !model);
   const [sizingCostPanelOpen, setSizingCostPanelOpen] = useState(() => Boolean(model));
+  const [haPanelOpen, setHaPanelOpen] = useState(() => Boolean(model));
 
   const profileFields = useMemo(
     () => profileRequestBody(profileId, customProfile),
@@ -490,6 +515,11 @@ export default function App() {
     () => parseMigrationPlan(migrationArtifacts?.planJson),
     [migrationArtifacts?.planJson],
   );
+
+  const recommendedAtlasTierId = useMemo(() => {
+    if (!model && !migrationPlan) return undefined;
+    return computeManagerCostProjection(model, migrationPlan, managerCostInputs).recommendedTier.id;
+  }, [model, migrationPlan, managerCostInputs]);
 
   const selectedCollectionPlan = useMemo(
     () => migrationPlan?.collections.find((c) => c.name === selectedCollection) ?? null,
@@ -1086,14 +1116,17 @@ export default function App() {
       });
       const promptsResult = await exportPrompts(ddl, profileFields);
       const promptBundle = mapPromptExportResponse(promptsResult);
-      const artifacts: MigrationArtifacts = {
-        planJson: JSON.stringify(result.migrationPlanJson ?? result.plan, null, 2),
-        designReportMarkdown: enrichDesignReportMarkdown(result.designReportMarkdown ?? ''),
-        prompts: promptBundle.prompts,
-        retrievalStrategy: promptBundle.retrievalStrategy,
-        generatedAt: new Date().toISOString(),
-        apiArtifacts: result.apiArtifacts ?? undefined,
-      };
+      const artifacts: MigrationArtifacts = mergeAtlasHaIntoArtifacts(
+        {
+          planJson: JSON.stringify(result.migrationPlanJson ?? result.plan, null, 2),
+          designReportMarkdown: enrichDesignReportMarkdown(result.designReportMarkdown ?? ''),
+          prompts: promptBundle.prompts,
+          retrievalStrategy: promptBundle.retrievalStrategy,
+          generatedAt: new Date().toISOString(),
+          apiArtifacts: result.apiArtifacts ?? undefined,
+        },
+        haClusterInputsWithDefaults(haClusterInputs, recommendedAtlasTierId),
+      );
       setSession((prev) => ({ ...prev, migrationArtifacts: artifacts, view: 'migration' }));
       setStatus(`Generated migration plan, design report, and ${artifacts.prompts.length} RAG prompts.`);
     } catch (e) {
@@ -1109,28 +1142,31 @@ export default function App() {
       const meta = designModel ? designMetaFromPlan(designModel, plan) : undefined;
       setSession((prev) => ({
         ...prev,
-        migrationArtifacts: {
-          planJson: JSON.stringify(result.migrationPlanJson, null, 2),
-          designReportMarkdown: enrichDesignReportMarkdown(result.designReportMarkdown),
-          prompts: [],
-          retrievalStrategy: result.retrievalStrategy,
-          designMeta: meta,
-          modelTokenUsage: result.modelTokenUsage
-            ? mergeModelTokenUsage(prev.migrationArtifacts?.modelTokenUsage ?? emptyModelTokenUsage(), result.modelTokenUsage)
-            : prev.migrationArtifacts?.modelTokenUsage,
-          generatedAt: new Date().toISOString(),
-          pipelineResult: {
-            ok: result.ok,
-            imports: result.imports.map((i) => ({
-              collection: i.collection,
-              ok: i.ok,
-              insertedCount: i.insertedCount,
-              error: i.error,
-            })),
-            outDir: result.paths.outDir,
+        migrationArtifacts: mergeAtlasHaIntoArtifacts(
+          {
+            planJson: JSON.stringify(result.migrationPlanJson, null, 2),
+            designReportMarkdown: enrichDesignReportMarkdown(result.designReportMarkdown),
+            prompts: [],
+            retrievalStrategy: result.retrievalStrategy,
+            designMeta: meta,
+            modelTokenUsage: result.modelTokenUsage
+              ? mergeModelTokenUsage(prev.migrationArtifacts?.modelTokenUsage ?? emptyModelTokenUsage(), result.modelTokenUsage)
+              : prev.migrationArtifacts?.modelTokenUsage,
+            generatedAt: new Date().toISOString(),
+            pipelineResult: {
+              ok: result.ok,
+              imports: result.imports.map((i) => ({
+                collection: i.collection,
+                ok: i.ok,
+                insertedCount: i.insertedCount,
+                error: i.error,
+              })),
+              outDir: result.paths.outDir,
+            },
+            apiArtifacts: result.apiArtifacts ?? undefined,
           },
-          apiArtifacts: result.apiArtifacts ?? undefined,
-        },
+          haClusterInputsWithDefaults(prev.haClusterInputs, recommendedAtlasTierId),
+        ),
       }));
       if (ddl.trim()) {
         void fetchMigrationPrompts(ddl, profileFields)
@@ -1298,12 +1334,17 @@ export default function App() {
       onReRunPipeline={() => setPipelineOpen(true)}
       workflowHandlers={copilotWorkflowHandlers}
       managerCostInputs={managerCostInputs}
+      haClusterInputs={haClusterInputs}
       onSizingAtlasHints={(patch) =>
         setSession((prev) => ({
           ...prev,
           sizingAtlasHints: mergeSizingAtlasHints(prev.sizingAtlasHints, patch),
         }))
       }
+    >
+    <HaAssistantProvider
+      inputs={haClusterInputs}
+      onChange={(inputs) => setSessionField('haClusterInputs', inputs)}
     >
     <SizingAssistantStudioBridge
       model={model}
@@ -1440,6 +1481,13 @@ export default function App() {
                       onChange={(inputs) => setSessionField('managerCostInputs', inputs)}
                       sizingPanelOpen={sizingCostPanelOpen}
                       onSizingPanelOpenChange={setSizingCostPanelOpen}
+                    />
+                    <HighAvailabilityPanelConnected
+                      inputs={haClusterInputsWithDefaults(haClusterInputs, recommendedAtlasTierId)}
+                      onChange={(inputs) => setSessionField('haClusterInputs', inputs)}
+                      recommendedTierId={recommendedAtlasTierId}
+                      open={haPanelOpen}
+                      onOpenChange={setHaPanelOpen}
                     />
                     {model ? (
                       <>
@@ -1818,6 +1866,7 @@ export default function App() {
                 <MigrationArtifactsView
                   artifacts={migrationArtifacts}
                   onChange={(next) => setSessionField('migrationArtifacts', next)}
+                  haClusterInputs={haClusterInputsWithDefaults(haClusterInputs, recommendedAtlasTierId)}
                 />
               ) : null}
               <DiagramStatusFooter status={status} />
@@ -1887,6 +1936,7 @@ export default function App() {
       />
     </div>
     </SizingAssistantStudioBridge>
+    </HaAssistantProvider>
     </CopilotProvider>
     </AuthGate>
   );

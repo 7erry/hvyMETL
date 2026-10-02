@@ -39,6 +39,7 @@ import { getPipelineConfigStatus } from './pipelineConfig.js';
 import { createAtlasLogsRouter } from './atlasLogsRoutes.js';
 import { createArchitectureExportDownloadRouter, createCopilotRouter } from './copilotRoutes.js';
 import { createSizingAssistantRouter } from '../routes/sizingAssistantRoute.js';
+import { createHaAssistantRouter } from './haAssistantRouter.js';
 import { createReflectionJobRouter } from '../routes/reflectionJobRoutes.js';
 import { ReflectionJobScheduler } from '../ml_engine/reflectionJobScheduler.js';
 import { getReflectionJobStore } from '../ml_engine/reflectionJobStore.js';
@@ -305,6 +306,7 @@ app.use('/api/atlas', ...requireRole(['admin', 'developer', 'manager']), createA
 app.use('/api/copilot', createArchitectureExportDownloadRouter());
 app.use('/api/copilot', ...requireRole(['admin', 'developer']), createCopilotRouter());
 app.use('/api/sizing-assistant', ...requireRole(['admin', 'developer']), createSizingAssistantRouter());
+app.use('/api/ha-assistant', ...requireRole(['admin', 'developer']), createHaAssistantRouter());
 app.use(
   '/api/reflection-jobs',
   ...requireRole(['admin', 'developer', 'manager']),

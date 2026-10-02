@@ -92,6 +92,10 @@ The system prompt includes projected storage, workload profile, illustrative Atl
 
 Manager settings persist in session state (`managerCostInputs`) and sync to hosted workspace storage when enabled.
 
+## High Availability Agent in copilot
+
+Developer **High Availability** inputs are sent as `schemaContext.haTopology` (provider, electable node count, regions, read-only replicas, cluster name). The Copilot **HA** tab mirrors the sidebar JSON. Architecture review §8 should reference Migration Export `atlas-cluster-create.json` when this context is present. See [23-high-availability-agent.md](23-high-availability-agent.md).
+
 ## Canvas & schema tools
 
 Executed in the browser against live ERD / embed state:
