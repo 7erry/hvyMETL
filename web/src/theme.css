@@ -2919,7 +2919,7 @@ textarea {
   overflow: hidden;
 }
 
-.jsoncrack-collection-modal__frame-wrap {
+.jsoncrack-collection-modal__canvas {
   flex: 1;
   min-height: 0;
   border: 1px solid var(--mdb-green-dark-2);
@@ -2928,11 +2928,10 @@ textarea {
   background: #001e2b;
 }
 
-.jsoncrack-collection-modal__frame {
+.jsoncrack-collection-modal__graph {
   width: 100%;
   height: 100%;
-  border: none;
-  display: block;
+  min-height: 480px;
 }
 
 .pipeline-modal__subtitle {

@@ -12,6 +12,7 @@
     "@auth0/auth0-react": "^2.21.0",
     "@xyflow/react": "^12.10.0",
     "fflate": "^0.8.3",
+    "jsoncrack-react": "^1.0.5",
     "prismjs": "^1.30.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
