@@ -1,3 +1,9 @@
+## hvyMETL 5.1.34
+
+**Collection plan graph footer** — The collection plan popup includes a link to [GitHub releases](https://github.com/7erry/hvyMETL/releases).
+
+---
+
 ## hvyMETL 5.1.33
 
 **Migration export Shiki highlighting** — **Export migration** tabs (plan JSON, design report, prompts, generated repos, Atlas JSON) use **Shiki** for read-only and editable artifact panes, with Prism only as a brief fallback until grammars load.

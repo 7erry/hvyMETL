@@ -3,6 +3,8 @@ import { JSONCrack } from 'jsoncrack-react';
 import { normalizeCollectionPlan } from '../normalizeCollectionPlan';
 import type { CollectionPlan } from '../migrationPlanTypes';
 
+const HVYMETL_RELEASES_URL = 'https://github.com/7erry/hvyMETL/releases';
+
 type JsonCrackCollectionModalProps = {
   open: boolean;
   collection: CollectionPlan | null;

@@ -2994,6 +2994,24 @@ textarea {
   min-height: 0;
 }
 
+.jsoncrack-collection-modal__footer {
+  flex-shrink: 0;
+  margin-top: 0.5rem;
+  padding-top: 0.45rem;
+  border-top: 1px solid var(--mdb-green-dark-2);
+  font-size: 0.75rem;
+  text-align: right;
+}
+
+.jsoncrack-collection-modal__footer a {
+  color: var(--mdb-spring-green);
+  text-decoration: none;
+}
+
+.jsoncrack-collection-modal__footer a:hover {
+  text-decoration: underline;
+}
+
 .pipeline-modal__subtitle {
   margin: 0.25rem 0 0;
   font-size: 0.8rem;
