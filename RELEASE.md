@@ -1,3 +1,9 @@
+## hvyMETL 5.1.14
+
+**MongoDB diagram & schema modeling cleanup** — Subset embeds use semantic caps (addresses **5**, loyalty **3**, default **10**). Address array items nest under **`address`** with top-level **`addressId`**. Money/country columns get **Decimal128** / **ISO country** hints; computed counters clarify **$inc** vs capped **`recent*`** arrays. Collection nodes stack field names and types to avoid mid-word wraps (e.g. `recentCustomerAddresses`).
+
+---
+
 ## hvyMETL 5.1.13
 
 **Dataset scale slider cap** — **Sizing Cost Projection** raw data slider maximum is **50 TB** (was 100 TB).

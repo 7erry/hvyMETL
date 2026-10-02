@@ -58,9 +58,10 @@ import {
   EMBED_LEANING_PERCENT,
   LINE_ITEMS_EMBED_MAX,
   READ_HEAVY_PERCENT,
-  SUBSET_LIMIT,
+  subsetLimitForChildTable,
   WRITE_HEAVY_PERCENT,
 } from './embedThresholds.js';
+import { isAddressLikeTable, mongoJsonSchemaForColumn } from './mongoSchemaProperty.js';
 
 /** Developer-provided max cardinality at or below this value can force embedding. */
 const DEVELOPER_OVERRIDE_EMBED_MAX_CHILDREN = 5000;
@@ -522,11 +523,7 @@ export function reverseJoinFkColumns(collection: CollectionPlan): Set<string> {
 function buildTableColumnProperties(table: TableModel): Record<string, unknown> {
   const properties: Record<string, unknown> = {};
   for (const column of table.columns) {
-    const types = column.nullable ? [column.bsonType, 'null'] : column.bsonType;
-    properties[mongoFieldNameForColumn(column)] = {
-      bsonType: types,
-      description: `From SQL column ${table.name}.${column.name} (${column.sqlType}).`,
-    };
+    properties[mongoFieldNameForColumn(column)] = mongoJsonSchemaForColumn(column, table.name);
   }
   return properties;
 }
@@ -540,11 +537,7 @@ function buildEmbeddedChildItemProperties(
   const properties: Record<string, unknown> = {};
   for (const column of childTable.columns) {
     if (excludeColumns.has(column.name)) continue;
-    const types = column.nullable ? [column.bsonType, 'null'] : column.bsonType;
-    properties[mongoFieldNameForColumn(column)] = {
-      bsonType: types,
-      description: `From SQL column ${childTable.name}.${column.name} (${column.sqlType}).`,
-    };
+    properties[mongoFieldNameForColumn(column)] = mongoJsonSchemaForColumn(column, childTable.name);
   }
   return properties;
 }
@@ -553,10 +546,34 @@ function embeddedArrayItemsSchema(
   childTable: TableModel,
   joinColumn: string,
 ): { bsonType: 'object'; properties: Record<string, unknown> } {
-  return {
-    bsonType: 'object',
-    properties: buildEmbeddedChildItemProperties(childTable, joinColumn),
+  const flat = buildEmbeddedChildItemProperties(childTable, joinColumn);
+  if (!isAddressLikeTable(childTable.name)) {
+    return { bsonType: 'object', properties: flat };
+  }
+
+  const pkColumn =
+    childTable.primaryKey.length === 1
+      ? childTable.columns.find((column) => column.name === childTable.primaryKey[0])
+      : undefined;
+  const pkField = pkColumn ? mongoFieldNameForColumn(pkColumn) : 'addressId';
+  const addressProperties: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(flat)) {
+    if (key === pkField) continue;
+    addressProperties[key] = value;
+  }
+
+  const itemProperties: Record<string, unknown> = {
+    address: {
+      bsonType: 'object',
+      properties: addressProperties,
+      description: 'Normalized address lines (city, postalCode, streetAddress, countryId).',
+    },
   };
+  if (pkColumn) {
+    itemProperties[pkField] = mongoJsonSchemaForColumn(pkColumn, childTable.name);
+  }
+
+  return { bsonType: 'object', properties: itemProperties };
 }
 
 /** Nested schema for a reverse-embedded parent whose standalone collection was absorbed (no PK/id fields). */
@@ -586,11 +603,7 @@ function buildBaseProperties(
   for (const column of table.columns) {
     if (column.isPrimaryKey && table.primaryKey.length === 1) continue; // becomes _id
     if (excludeColumns.has(column.name)) continue;
-    const types = column.nullable ? [column.bsonType, 'null'] : column.bsonType;
-    properties[mongoFieldNameForColumn(column)] = {
-      bsonType: types,
-      description: `From SQL column ${table.name}.${column.name} (${column.sqlType}).`,
-    };
+    properties[mongoFieldNameForColumn(column)] = mongoJsonSchemaForColumn(column, table.name);
   }
   return properties;
 }
@@ -689,10 +702,13 @@ function planChildRelationships(
     if (computedFields.some((field) => field.field === counterField)) return;
     computedFields.push({
       field: counterField,
-      description: `Running count of ${childTable.name} rows for this ${singularize(table.name)}.`,
+      description: `Total ${childTable.name} rows for this ${singularize(table.name)} (including overflow collection); update atomically with $inc on write.`,
       initialExpression: `COUNT(*) FROM ${childTable.name} WHERE ${relationship.fkColumn} = ${table.name}.${table.primaryKey[0] ?? 'id'}`,
     });
-    properties[counterField] = { bsonType: 'long', description: 'Computed pattern counter maintained with $inc.' };
+    properties[counterField] = {
+      bsonType: 'long',
+      description: 'Computed counter for full child cardinality; not the same as a capped recent* array length.',
+    };
     patterns.push({
       pattern: 'computed',
       target: `${table.name}.${counterField}`,
@@ -1053,24 +1069,25 @@ function planChildRelationships(
     // Subset pattern: newest N embedded, full set referenced.
     // Time-series children without volume stats reference outright — subset/full embed need measured fan-out.
     if ((isEmbedLeaning || !isWriteHeavy) && !timeSeriesWithoutStats) {
+      const subsetLimit = subsetLimitForChildTable(childTable.name);
       const field = `recent${toPascalCase(childTable.name)}`;
       embeddedArrays.push({
         field,
         sourceTable: childTable.name,
         joinColumn: relationship.fkColumn,
-        subsetLimit: SUBSET_LIMIT,
+        subsetLimit,
         overflowCollection: mongoCollectionNameFromTable(childTable.name),
       });
       properties[field] = {
         bsonType: 'array',
-        maxItems: SUBSET_LIMIT,
+        maxItems: subsetLimit,
         items: embeddedArrayItemsSchema(childTable, relationship.fkColumn),
-        description: `Subset pattern: the ${SUBSET_LIMIT} newest ${childTable.name}; full set lives in its own collection.`,
+        description: `Subset pattern: the ${subsetLimit} newest ${childTable.name}; older rows live in ${mongoCollectionNameFromTable(childTable.name)}.`,
       };
       patterns.push({
         pattern: 'subset',
         target: `${table.name}.${field}`,
-        reason: `${childTable.name} can reach ${relationship.maxChildrenPerParent} rows per parent (avg ${relationship.avgChildrenPerParent}); capping the embedded array at ${SUBSET_LIMIT} bounds document size strictly below 16MB while keeping the hot read single-document (${ratioLabel}).`,
+        reason: `${childTable.name} can reach ${relationship.maxChildrenPerParent} rows per parent (avg ${relationship.avgChildrenPerParent}); capping the embedded array at ${subsetLimit} bounds document size while keeping hot reads on the parent (${ratioLabel}).`,
         knowledgeSource: 'subset.md',
       });
       if (skewed) {

@@ -571,7 +571,7 @@ describe('buildMigrationPlan', () => {
     const locations = plan.collections.find((collection) => collection.sourceTable === 'locations');
 
     const partialEmbed = locations?.embeddedArrays.find((array) => array.sourceTable === 'company_assets');
-    expect(partialEmbed?.subsetLimit).toBe(25);
+    expect(partialEmbed?.subsetLimit).toBe(10);
     expect(plan.collections.some((collection) => collection.sourceTable === 'company_assets')).toBe(true);
   });
 
@@ -742,13 +742,57 @@ describe('buildMigrationPlan', () => {
     const products = plan.collections.find((collection) => collection.sourceTable === 'products');
 
     const subsetArray = products?.embeddedArrays.find((array) => array.field === 'recentReviews');
-    expect(subsetArray?.subsetLimit).toBe(25);
+    expect(subsetArray?.subsetLimit).toBe(10);
     expect(subsetArray?.overflowCollection).toBe('reviews');
     expect(products?.patterns.some((decision) => decision.pattern === 'subset')).toBe(true);
     expect(products?.patterns.some((decision) => decision.pattern === 'outlier')).toBe(true);
 
     // The overflow collection holding the full history must still exist.
     expect(plan.collections.some((collection) => collection.name === 'reviews')).toBe(true);
+  });
+
+  it('caps address subset arrays at five and nests address lines under address', () => {
+    const model: SqlStructuralModel = {
+      source: 'synthetic.db',
+      tables: [
+        table({ name: 'customers' }),
+        table({
+          name: 'customer_addresses',
+          rowCount: 2000,
+          columns: [
+            { name: 'address_id', sqlType: 'NUMBER', bsonType: 'long', nullable: false, isPrimaryKey: true },
+            { name: 'customer_id', sqlType: 'NUMBER', bsonType: 'long', nullable: false, isPrimaryKey: false },
+            { name: 'street_address', sqlType: 'VARCHAR(200)', bsonType: 'string', nullable: false, isPrimaryKey: false },
+            { name: 'city', sqlType: 'VARCHAR(80)', bsonType: 'string', nullable: false, isPrimaryKey: false },
+            { name: 'postal_code', sqlType: 'VARCHAR(20)', bsonType: 'string', nullable: true, isPrimaryKey: false },
+            { name: 'country_id', sqlType: 'VARCHAR(2)', bsonType: 'string', nullable: true, isPrimaryKey: false },
+          ],
+          primaryKey: ['address_id'],
+          foreignKeys: [{ column: 'customer_id', referencesTable: 'customers', referencesColumn: 'id' }],
+        }),
+      ],
+      relationships: [
+        relationship({
+          parentTable: 'customers',
+          childTable: 'customer_addresses',
+          fkColumn: 'customer_id',
+          avgChildrenPerParent: 8,
+          maxChildrenPerParent: 40,
+          isBounded: false,
+        }),
+      ],
+    };
+
+    const plan = buildMigrationPlan(model, WORKLOAD_PROFILES.catalog);
+    const customers = plan.collections.find((collection) => collection.sourceTable === 'customers');
+    const recent = customers?.embeddedArrays.find((array) => array.field === 'recentCustomerAddresses');
+
+    expect(recent?.subsetLimit).toBe(5);
+    const recentSchema = (customers?.jsonSchema as { properties?: Record<string, { maxItems?: number; items?: { properties?: Record<string, unknown> } }> })
+      .properties?.recentCustomerAddresses;
+    expect(recentSchema?.maxItems).toBe(5);
+    expect(recentSchema?.items?.properties?.address).toMatchObject({ bsonType: 'object' });
+    expect(recentSchema?.items?.properties?.addressId).toBeDefined();
   });
 
   it('folds EAV tables into the Attribute pattern and drops their standalone collection', () => {
