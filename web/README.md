@@ -99,30 +99,17 @@ development skips login when Auth0 env vars are unset.
 Configure Auth0 **Allowed Callback URLs** and **Allowed Logout URLs** for
 `http://localhost:3847` and `https://hvymetl.studio`.
 
-### Reverse proxy (nginx) — Copilot / Architecture Review
+### Reverse proxy (nginx) — design, Copilot, export
 
-Architecture Review Copilot calls can run **2–5 minutes**. The UI uses **SSE keepalive**
-(`POST /api/copilot/chat?stream=1`) so idle connections stay open, but the edge proxy
-must still allow long upstream reads.
+**After · MongoDB** runs `POST /api/design`. Large DDL (e.g. Oracle) can take **several
+minutes** on the hosted ML engine. If nginx (or Cloudflare) closes the connection first,
+the UI shows **Design failed (HTTP 504)** and the Mongo canvas stays empty.
 
-If users see `Copilot request timed out (HTTP 504)` on hosted Studio, extend nginx (or
-Cloudflare) timeouts for the API path:
+Canonical origin config: [`scripts/deploy/nginx-hvymetl.conf`](../scripts/deploy/nginx-hvymetl.conf)
+(600s for `/api/design`, 300s for Copilot/export).
 
-```nginx
-location /api/copilot/chat {
-  proxy_pass http://127.0.0.1:3847;
-  proxy_http_version 1.1;
-  proxy_set_header Connection '';
-  proxy_buffering off;
-  proxy_read_timeout 300s;
-  proxy_send_timeout 300s;
-}
-
-location /api/ {
-  proxy_pass http://127.0.0.1:3847;
-  proxy_read_timeout 120s;
-}
-```
+Architecture Review Copilot uses **SSE keepalive**
+(`POST /api/copilot/chat?stream=1`); the edge proxy must still allow long upstream reads.
 
 PM2 `listen_timeout` in `ecosystem.config.cjs` is separate from nginx `proxy_read_timeout`.
 Set both when deploying behind a reverse proxy.

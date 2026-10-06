@@ -1,5 +1,9 @@
 import type { DiagramViewMode } from './diagramViewMode';
-import { diagramViewModeFromSchemaPhase, parseDiagramViewMode } from './diagramViewMode';
+import {
+  diagramViewModeFromSchemaPhase,
+  parseDiagramViewMode,
+  reconcileDiagramViewWithSchemaPhase,
+} from './diagramViewMode';
 import type { SqlStructuralModel } from './types';
 import type { CardinalityOverrides, EmbedDirectionOverrides, ForceEmbedOverrides } from './cardinalityOverrides';
 import type { TimeSeriesOverrides } from './timeSeriesOverrides';
@@ -179,8 +183,9 @@ export function loadSessionState(userId?: string): SessionState {
     const parsed = JSON.parse(raw) as Partial<SessionState> & { sourceDbPath?: string | null };
     const { sourceDbPath: _legacy, ...rest } = parsed;
     const phase = rest.schemaPhase === 'after' ? 'after' : 'before';
-    const diagramViewMode =
+    const rawDiagramViewMode =
       parseDiagramViewMode(rest.diagramViewMode) ?? diagramViewModeFromSchemaPhase(phase);
+    const diagramViewMode = reconcileDiagramViewWithSchemaPhase(phase, rawDiagramViewMode);
     return {
       ...defaultSessionState(),
       ...rest,

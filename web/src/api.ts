@@ -16,8 +16,8 @@ const COPILOT_CHAT_CLIENT_TIMEOUT_MS = 300_000;
 function gatewayErrorMessage(status: number): string {
   if (status === 504) {
     return (
-      'Copilot request timed out (HTTP 504). Architecture Review can take several minutes — wait and retry. ' +
-      'If this persists on hosted Studio, contact support; the edge proxy may need longer read timeouts.'
+      'Request timed out (HTTP 504). Large schema design and Architecture Review can take several minutes — wait and retry. ' +
+      'If this persists on hosted Studio, the edge proxy may need longer read timeouts for /api/design.'
     );
   }
   if (status === 502 || status === 503) {

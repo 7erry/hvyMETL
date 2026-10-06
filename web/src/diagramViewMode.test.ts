@@ -1,15 +1,17 @@
 import { describe, expect, it } from 'vitest';
-import { diagramViewModeFromSchemaPhase, isDualDiagramView } from './diagramViewMode';
+import { reconcileDiagramViewWithSchemaPhase } from './diagramViewMode';
 
-describe('diagramViewMode', () => {
-  it('maps schema phase to rel/mdb single views', () => {
-    expect(diagramViewModeFromSchemaPhase('before')).toBe('rel');
-    expect(diagramViewModeFromSchemaPhase('after')).toBe('mdb');
+describe('reconcileDiagramViewWithSchemaPhase', () => {
+  it('maps After phase away from SQL-only REL view', () => {
+    expect(reconcileDiagramViewWithSchemaPhase('after', 'rel')).toBe('mdb');
   });
 
-  it('detects dual split modes', () => {
-    expect(isDualDiagramView('split-horizontal')).toBe(true);
-    expect(isDualDiagramView('split-vertical')).toBe(true);
-    expect(isDualDiagramView('rel')).toBe(false);
+  it('maps Before phase away from Mongo-only MDB view', () => {
+    expect(reconcileDiagramViewWithSchemaPhase('before', 'mdb')).toBe('rel');
+  });
+
+  it('preserves split views for either phase', () => {
+    expect(reconcileDiagramViewWithSchemaPhase('after', 'split-vertical')).toBe('split-vertical');
+    expect(reconcileDiagramViewWithSchemaPhase('before', 'split-horizontal')).toBe('split-horizontal');
   });
 });

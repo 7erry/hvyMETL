@@ -11,6 +11,16 @@ export function diagramViewModeFromSchemaPhase(phase: 'before' | 'after'): Diagr
   return phase === 'before' ? 'rel' : 'mdb';
 }
 
+/** Keep canvas mode aligned with Before/After — e.g. After + REL (SQL-only) is invalid. */
+export function reconcileDiagramViewWithSchemaPhase(
+  phase: 'before' | 'after',
+  mode: DiagramViewMode,
+): DiagramViewMode {
+  if (phase === 'after' && mode === 'rel') return 'mdb';
+  if (phase === 'before' && mode === 'mdb') return 'rel';
+  return mode;
+}
+
 export function parseDiagramViewMode(value: unknown): DiagramViewMode | undefined {
   if (value === 'split-horizontal' || value === 'split-vertical' || value === 'rel' || value === 'mdb') {
     return value;

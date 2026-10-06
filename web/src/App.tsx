@@ -830,6 +830,7 @@ export default function App() {
           collectionPositions: data.collectionPositions ?? {},
           selectedCollection: null,
           schemaPhase: 'after',
+          diagramViewMode: diagramViewModeFromSchemaPhase('after'),
           view: 'diagram',
           migrationArtifacts: {
             planJson,
@@ -908,6 +909,7 @@ export default function App() {
       ...prev,
       migrationArtifacts: artifacts,
       schemaPhase: 'after',
+      diagramViewMode: diagramViewModeFromSchemaPhase('after'),
       selectedCollection: null,
       collectionPositions: initialCollectionPositions(plan, prev.positions, {}),
     }));
@@ -1010,6 +1012,7 @@ export default function App() {
         ),
         selectedCollection: null,
         schemaPhase: 'after',
+        diagramViewMode: diagramViewModeFromSchemaPhase('after'),
       }));
       const summary = formatTransformSummary(meta);
       let statusMessage: string;

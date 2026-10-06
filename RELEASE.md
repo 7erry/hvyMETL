@@ -1,3 +1,9 @@
+## hvyMETL 5.1.36
+
+**After · MongoDB on hosted Studio** — Switching to After or finishing design now sets the diagram to **MDB** view (no more After sidebar with SQL canvas). Session restore fixes `after` + `REL` mismatch. Nginx template adds **600s** timeouts for `/api/design` so large schemas are less likely to 504 before the plan returns.
+
+---
+
 ## hvyMETL 5.1.35
 
 **Version dialog** — Release notes show a **5.x summary** (all entries from [RELEASE.md](RELEASE.md) for the current major line). Double-click the leaf in the dialog header to play the hvyMETL logo animation.
