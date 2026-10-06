@@ -141,7 +141,10 @@ const mongoStoreSingleton = createModelSingleton(async (): Promise<MongoStoreCon
   if (!uri) {
     throw new Error('MONGODB_URI is not set');
   }
-  const client = new MongoClient(uri);
+  const client = new MongoClient(uri, {
+    serverSelectionTimeoutMS: 4_000,
+    connectTimeoutMS: 4_000,
+  });
   await client.connect();
   const db = client.db(resolveMongoDbName());
   const logs = db.collection<MigrationLogDocument>(MIGRATION_LOGS_COLLECTION);

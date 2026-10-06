@@ -10,6 +10,9 @@ import { createPipelineStreamConsumer } from './pipelineStream.js';
 
 const base = '';
 
+/** Client timeout for ML/RAG design (large Oracle DDL on hosted Studio). */
+export const DESIGN_REQUEST_TIMEOUT_MS = 600_000;
+
 /** Client timeout for copilot Grove proxy calls (Architecture Review + tool rounds). */
 const COPILOT_CHAT_CLIENT_TIMEOUT_MS = 300_000;
 
@@ -825,6 +828,7 @@ export async function runDesign(request: DesignRequest): Promise<DesignResult> {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify(request),
+    signal: AbortSignal.timeout(DESIGN_REQUEST_TIMEOUT_MS),
   });
   if (!res.ok) throw new Error((await res.json()).error ?? res.statusText);
   return res.json();

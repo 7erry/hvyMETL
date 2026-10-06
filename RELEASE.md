@@ -1,3 +1,9 @@
+## hvyMETL 5.1.37
+
+**Hosted design hang** — Missing ONNX critic no longer triggers dozens of parallel `onnxruntime-node` loads (Oracle-sized plans). Atlas migration-log writes fail fast (4s connect timeout, skip after first SSL/network error). Design status shows elapsed seconds; client timeout 10 minutes.
+
+---
+
 ## hvyMETL 5.1.36
 
 **After · MongoDB on hosted Studio** — Switching to After or finishing design now sets the diagram to **MDB** view (no more After sidebar with SQL canvas). Session restore fixes `after` + `REL` mismatch. Nginx template adds **600s** timeouts for `/api/design` so large schemas are less likely to 504 before the plan returns.

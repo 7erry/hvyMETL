@@ -30,8 +30,15 @@ type CriticOnnxSession = {
   outputNames: readonly string[];
 };
 
+/** After a missing model or load failure, skip ONNX for the rest of the process (avoids N× dynamic imports). */
+let onnxCriticPermanentlyUnavailable = false;
+
+function resolveCriticModelPath(): string {
+  return process.env.HVYMETL_CRITIC_MODEL_PATH?.trim() || DEFAULT_CRITIC_MODEL_PATH;
+}
+
 const criticSessionSingleton = createModelSingleton(async (): Promise<CriticOnnxSession> => {
-  const modelPath = process.env.HVYMETL_CRITIC_MODEL_PATH?.trim() || DEFAULT_CRITIC_MODEL_PATH;
+  const modelPath = resolveCriticModelPath();
   if (!existsSync(modelPath)) {
     throw new Error(`ONNX critic model not found at ${modelPath}`);
   }
@@ -118,7 +125,18 @@ function buildRejectionExplanation(
 }
 
 async function runOnnxInference(features: Float32Array): Promise<PerformancePrediction | null> {
-  if (process.env.HVYMETL_DISABLE_ML_CRITIC === '1') return null;
+  if (process.env.HVYMETL_DISABLE_ML_CRITIC === '1' || onnxCriticPermanentlyUnavailable) return null;
+
+  const modelPath = resolveCriticModelPath();
+  if (!existsSync(modelPath)) {
+    if (!onnxCriticPermanentlyUnavailable) {
+      onnxCriticPermanentlyUnavailable = true;
+      console.warn(
+        `[ml_engine/critic] ONNX critic model not found at ${modelPath}; using heuristic critic for this process.`,
+      );
+    }
+    return null;
+  }
 
   try {
     const session = await criticSessionSingleton.getInstance();
@@ -138,6 +156,7 @@ async function runOnnxInference(features: Float32Array): Promise<PerformancePred
       storageFootprintMultiplier: data[2],
     };
   } catch (error) {
+    onnxCriticPermanentlyUnavailable = true;
     console.warn(`[ml_engine/critic] ONNX inference unavailable (${String(error)}); using heuristic critic.`);
     return null;
   }
@@ -177,4 +196,5 @@ export async function evaluateAllSchemaCandidates(
 /** Reset cached ONNX session (tests). */
 export function resetCriticSingleton(): void {
   criticSessionSingleton.reset();
+  onnxCriticPermanentlyUnavailable = false;
 }

@@ -956,6 +956,11 @@ export default function App() {
     if (!designModel) {
       return { ok: false, summary: 'No schema loaded.' };
     }
+    const designStartedAt = Date.now();
+    const designStatusTick = window.setInterval(() => {
+      const seconds = Math.round((Date.now() - designStartedAt) / 1000);
+      setStatus(`Running ML/RAG design engine for MongoDB schema… (${seconds}s — large schemas can take several minutes on hosted Studio)`);
+    }, 2_000);
     try {
       setDesigningPlan(true);
       setStatus('Running ML/RAG design engine for MongoDB schema…');
@@ -1033,6 +1038,7 @@ export default function App() {
       setStatus(`Design failed: ${message}`);
       return { ok: false, summary: message };
     } finally {
+      window.clearInterval(designStatusTick);
       setDesigningPlan(false);
     }
   };

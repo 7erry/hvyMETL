@@ -74,6 +74,9 @@ export class StubAtlasMetricsConnector implements AtlasMetricsConnector {
 
 let atlasConnector: AtlasMetricsConnector = new StubAtlasMetricsConnector();
 
+/** When Atlas memory logs are unreachable, skip further insert attempts this process. */
+let migrationLogPersistenceSkipped = false;
+
 /** Swap the Atlas metrics connector (production API client). */
 export function setAtlasMetricsConnector(connector: AtlasMetricsConnector): void {
   atlasConnector = connector;
@@ -149,12 +152,17 @@ export async function logMigrationDecision(
     atlasCorrelation,
   };
 
+  if (migrationLogPersistenceSkipped) {
+    return { migrationId };
+  }
+
   try {
     await store.insertLog(document);
   } catch (error) {
     if (isMongoConnectivityError(error)) {
+      migrationLogPersistenceSkipped = true;
       console.warn(
-        `[ml_engine/feedbackCollector] MongoDB unavailable — migration log not persisted (${String((error as Error).message).split('\n')[0]}).`,
+        `[ml_engine/feedbackCollector] MongoDB unavailable — migration log not persisted (${String((error as Error).message).split('\n')[0]}). Skipping further migration log writes this process.`,
       );
       return { migrationId };
     }
