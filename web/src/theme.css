@@ -395,11 +395,35 @@ textarea {
   color: var(--mdb-red, #c7384f);
 }
 
+.app-logo__title-row {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
 .app-logo__title {
   font-weight: 700;
   font-size: 1.15rem;
   color: var(--mdb-green-base);
   line-height: 1.1;
+}
+
+.app-logo__architecture {
+  display: inline-flex;
+  flex-shrink: 0;
+  line-height: 0;
+  border-radius: 4px;
+}
+
+.app-logo__architecture:focus-visible {
+  outline: 2px solid var(--mdb-green-base);
+  outline-offset: 2px;
+}
+
+.app-logo__architecture img {
+  height: 1.15rem;
+  width: auto;
+  display: block;
 }
 
 .app-logo__tagline {

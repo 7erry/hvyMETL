@@ -9,6 +9,7 @@ import { copilotMarkdownSanitizeSchema } from '../copilot/copilotMarkdownSanitiz
 import { MongoLogoLeaf } from './MongoLogoLeaf';
 
 const LOGO_VIDEO_SRC = '/hvyMETL.mp4';
+const ARCHITECTURE_DIAGRAM_HREF = '/architecture?theme=dark';
 const TRIPLE_CLICK_WINDOW_MS = 500;
 
 /**
@@ -107,8 +108,19 @@ export function MongoLogo() {
           role="img"
         />
         <div className="app-logo__text">
-          <div className="app-logo__title app-logo__trigger" onClick={registerLogoClick}>
-            hvyMETL
+          <div className="app-logo__title-row">
+            <div className="app-logo__title app-logo__trigger" onClick={registerLogoClick}>
+              hvyMETL
+            </div>
+            <a
+              className="app-logo__architecture"
+              href={ARCHITECTURE_DIAGRAM_HREF}
+              target="_blank"
+              rel="noreferrer"
+              aria-label="Architecture diagram"
+            >
+              <img src="/studio-architecture-icon.png" alt="" />
+            </a>
           </div>
           <div className="app-logo__tagline">SQL to MongoDB Migration Studio</div>
         </div>

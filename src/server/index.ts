@@ -89,6 +89,7 @@ import {
   requireRole,
   resolveEffectiveRoles,
 } from './auth.js';
+import { loadArchitecturePageHtml } from './architecturePage.js';
 import { loadTermsPageHtml } from './termsPage.js';
 import {
   assertPathWithinTenantStorage,
@@ -313,6 +314,14 @@ app.get('/api/auth/me', requireAuth, (req, res) => {
 app.get('/terms', (_req, res) => {
   try {
     res.type('html').send(loadTermsPageHtml(ROOT));
+  } catch (error) {
+    res.status(500).type('text/plain').send(String(error));
+  }
+});
+
+app.get('/architecture', (_req, res) => {
+  try {
+    res.type('html').send(loadArchitecturePageHtml(ROOT));
   } catch (error) {
     res.status(500).type('text/plain').send(String(error));
   }
