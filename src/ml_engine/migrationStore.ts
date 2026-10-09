@@ -4,8 +4,8 @@
  * storage for local development and unit tests.
  */
 
+import { AsyncLocalStorage } from 'node:async_hooks';
 import { MongoClient, type Collection, type Db } from 'mongodb';
-import { createModelSingleton } from './modelSingleton.js';
 import {
   LESSONS_LEARNED_COLLECTION,
   MIGRATION_LOGS_COLLECTION,
@@ -104,10 +104,15 @@ export type MigrationStoreConnection = {
   dbName?: string;
 };
 
-let connectionOverride: MigrationStoreConnection | null = null;
+const connectionStorage = new AsyncLocalStorage<MigrationStoreConnection>();
+const clientCache = new Map<string, Promise<MongoStoreContext>>();
+
+function activeConnection(): MigrationStoreConnection {
+  return connectionStorage.getStore() ?? {};
+}
 
 function resolveMongoUri(): string | null {
-  return connectionOverride?.mongoUri?.trim() || process.env.MONGODB_URI?.trim() || null;
+  return activeConnection().mongoUri?.trim() || process.env.MONGODB_URI?.trim() || null;
 }
 
 /**
@@ -116,7 +121,7 @@ function resolveMongoUri(): string | null {
  */
 export function resolveMemoryDbName(env: NodeJS.ProcessEnv = process.env): string {
   return (
-    connectionOverride?.dbName?.trim() ||
+    activeConnection().dbName?.trim() ||
     env.HVYMETL_MEMORY_DB?.trim() ||
     env.MONGODB_DB?.trim() ||
     'hvymetl_memory'
@@ -127,26 +132,23 @@ function resolveMongoDbName(): string {
   return resolveMemoryDbName(process.env);
 }
 
-/**
- * Point the feedback/memory store at a specific Atlas cluster before design or reflection.
- * Resets any cached Mongo client so the next getMigrationStore() uses the new settings.
- */
-export function configureMigrationStore(connection: MigrationStoreConnection): void {
-  connectionOverride = { ...connectionOverride, ...connection };
-  resetMigrationStoreSingleton();
+/** Run `fn` against one Atlas URI without replacing the process-wide client. */
+export function withMigrationStore<T>(connection: MigrationStoreConnection, fn: () => Promise<T>): Promise<T> {
+  const parent = connectionStorage.getStore();
+  return connectionStorage.run({ ...parent, ...connection }, fn);
 }
 
-const mongoStoreSingleton = createModelSingleton(async (): Promise<MongoStoreContext> => {
-  const uri = resolveMongoUri();
-  if (!uri) {
-    throw new Error('MONGODB_URI is not set');
-  }
+function clientCacheKey(uri: string, dbName: string): string {
+  return `${uri}\0${dbName}`;
+}
+
+async function openMongoContext(uri: string, dbName: string): Promise<MongoStoreContext> {
   const client = new MongoClient(uri, {
     serverSelectionTimeoutMS: 4_000,
     connectTimeoutMS: 4_000,
   });
   await client.connect();
-  const db = client.db(resolveMongoDbName());
+  const db = client.db(dbName);
   const logs = db.collection<MigrationLogDocument>(MIGRATION_LOGS_COLLECTION);
   const lessons = db.collection<LessonLearnedDocument>(LESSONS_LEARNED_COLLECTION);
   const executions = db.collection<PipelineExecutionDocument>(PIPELINE_EXECUTIONS_COLLECTION);
@@ -158,11 +160,28 @@ const mongoStoreSingleton = createModelSingleton(async (): Promise<MongoStoreCon
   await executions.createIndex({ completedAt: -1 });
   await executions.createIndex({ tenantId: 1, completedAt: -1 });
   return { client, db, logs, lessons, executions };
-});
+}
+
+function getMongoContext(): Promise<MongoStoreContext> {
+  const uri = resolveMongoUri();
+  if (!uri) {
+    throw new Error('MONGODB_URI is not set');
+  }
+  const dbName = resolveMongoDbName();
+  const key = clientCacheKey(uri, dbName);
+  const existing = clientCache.get(key);
+  if (existing) return existing;
+  const pending = openMongoContext(uri, dbName);
+  clientCache.set(key, pending);
+  pending.catch(() => {
+    if (clientCache.get(key) === pending) clientCache.delete(key);
+  });
+  return pending;
+}
 
 class MongoMigrationStore implements MigrationStore {
   private async ctx(): Promise<MongoStoreContext> {
-    return mongoStoreSingleton.getInstance();
+    return getMongoContext();
   }
 
   async insertLog(document: MigrationLogDocument): Promise<void> {
@@ -223,30 +242,32 @@ class MongoMigrationStore implements MigrationStore {
   }
 }
 
-let defaultStore: MigrationStore | null = null;
+let testStore: MigrationStore | null = null;
+const mongoStore = new MongoMigrationStore();
+let memoryStore: InMemoryMigrationStore | null = null;
 
 /**
  * Resolve the active migration store: MongoDB when URI is set, otherwise in-memory.
  * Pass an explicit store in tests via feedbackCollector options.
  */
 export function getMigrationStore(): MigrationStore {
-  if (defaultStore) return defaultStore;
-  if (resolveMongoUri()) {
-    defaultStore = new MongoMigrationStore();
-  } else {
-    defaultStore = new InMemoryMigrationStore();
+  if (testStore) return testStore;
+  if (resolveMongoUri()) return mongoStore;
+  if (!memoryStore) {
+    memoryStore = new InMemoryMigrationStore();
     console.info('[ml_engine/migrationStore] MONGODB_URI unset — using in-memory migration logs.');
   }
-  return defaultStore;
+  return memoryStore;
 }
 
 /** Override the default store (tests). */
 export function setMigrationStore(store: MigrationStore | null): void {
-  defaultStore = store;
+  testStore = store;
 }
 
-/** Reset Mongo singleton (tests). */
+/** Reset cached Mongo clients (tests). */
 export function resetMigrationStoreSingleton(): void {
-  mongoStoreSingleton.reset();
-  defaultStore = null;
+  clientCache.clear();
+  testStore = null;
+  memoryStore = null;
 }

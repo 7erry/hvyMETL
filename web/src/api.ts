@@ -32,26 +32,9 @@ function gatewayErrorMessage(status: number): string {
 type AccessTokenProvider = () => Promise<string>;
 
 let accessTokenProvider: AccessTokenProvider | undefined;
-let dbPrefixProvider: (() => string | undefined) | undefined;
 
 export function setAccessTokenProvider(provider: AccessTokenProvider | undefined): void {
   accessTokenProvider = provider;
-}
-
-/** Supply the slugified UI display name so server-side MongoDB inspect can match Atlas prefixes. */
-export function setDbPrefixProvider(provider: (() => string | undefined) | undefined): void {
-  dbPrefixProvider = provider;
-}
-
-function slugifyClientDbPrefix(raw: string): string | undefined {
-  const normalized = raw.includes('@') ? (raw.split('@')[0] ?? raw) : raw;
-  const slug = normalized
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '_')
-    .replace(/^_+|_+$/g, '')
-    .replace(/_+/g, '_')
-    .slice(0, 24);
-  return slug || undefined;
 }
 
 async function apiFetch(input: RequestInfo | URL, init: RequestInit = {}): Promise<Response> {
@@ -65,14 +48,6 @@ async function apiFetch(input: RequestInfo | URL, init: RequestInit = {}): Promi
     }
   }
   return fetch(input, { ...init, headers });
-}
-
-async function copilotApiFetch(input: RequestInfo | URL, init: RequestInit = {}): Promise<Response> {
-  const headers = new Headers(init.headers);
-  const prefix = dbPrefixProvider?.()?.trim();
-  const slug = prefix ? slugifyClientDbPrefix(prefix) : undefined;
-  if (slug) headers.set('x-hvymetl-db-prefix', slug);
-  return apiFetch(input, { ...init, headers });
 }
 
 /** User-facing message for failed API calls (including auth token renewal). */
@@ -847,7 +822,11 @@ export async function runDesignWithCsv(files: File[], request: DesignRequest): P
   if (request.embedDirectionOverrides) body.append('embedDirectionOverrides', JSON.stringify(request.embedDirectionOverrides));
   if (request.timeSeriesOverrides) body.append('timeSeriesOverrides', JSON.stringify(request.timeSeriesOverrides));
 
-  const res = await apiFetch(`${base}/api/design/with-csv`, { method: 'POST', body });
+  const res = await apiFetch(`${base}/api/design/with-csv`, {
+    method: 'POST',
+    body,
+    signal: AbortSignal.timeout(DESIGN_REQUEST_TIMEOUT_MS),
+  });
   const data = await res.json();
   if (!res.ok) throw new Error(data.error ?? res.statusText);
   return data;
@@ -962,7 +941,7 @@ export function downloadText(filename: string, text: string, mime = 'text/plain'
 }
 
 export async function fetchCopilotStatus(): Promise<CopilotStatusResponse> {
-  const res = await copilotApiFetch(`${base}/api/copilot/status`);
+  const res = await apiFetch(`${base}/api/copilot/status`);
   return parseApiJsonResponse<CopilotStatusResponse>(res);
 }
 
@@ -979,7 +958,7 @@ export type CopilotMongoAutoEmbedVectorIndexResponse = {
 export async function createCopilotMongoAutoEmbedVectorIndex(
   request: import('../../../../src/copilot/mongoVectorAutoEmbedIndex.ts').MongoAutoEmbedVectorIndexInput,
 ): Promise<CopilotMongoAutoEmbedVectorIndexResponse> {
-  const res = await copilotApiFetch(`${base}/api/copilot/mongo/vector-index`, {
+  const res = await apiFetch(`${base}/api/copilot/mongo/vector-index`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify(request),
@@ -1016,7 +995,7 @@ export type CopilotMongoAtlasSearchIndexResponse = {
 export async function createCopilotMongoAtlasSearchIndex(
   request: import('../../../../src/copilot/mongoAtlasSearchIndex.ts').MongoAtlasSearchIndexInput,
 ): Promise<CopilotMongoAtlasSearchIndexResponse> {
-  const res = await copilotApiFetch(`${base}/api/copilot/mongo/atlas-search-index`, {
+  const res = await apiFetch(`${base}/api/copilot/mongo/atlas-search-index`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify(request),
@@ -1052,7 +1031,7 @@ export type CopilotMongoClassicIndexResponse = {
 export async function createCopilotMongoClassicIndex(
   request: import('../../../../src/copilot/mongoClassicIndex.ts').MongoClassicIndexInput,
 ): Promise<CopilotMongoClassicIndexResponse> {
-  const res = await copilotApiFetch(`${base}/api/copilot/mongo/classic-index`, {
+  const res = await apiFetch(`${base}/api/copilot/mongo/classic-index`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify(request),
@@ -1079,7 +1058,7 @@ export async function invokeCopilotMongoInspect(
   args: Record<string, unknown>,
   planContext?: import('./copilot/mongoPlanContextPayload').MongoPlanContextPayload,
 ): Promise<import('./copilot/types').MongoInspectInvokeResponse> {
-  const res = await copilotApiFetch(`${base}/api/copilot/mongo/inspect`, {
+  const res = await apiFetch(`${base}/api/copilot/mongo/inspect`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ tool, args, ...(planContext ? { planContext } : {}) }),
@@ -1106,7 +1085,7 @@ export async function sendCopilotChat(request: {
   schemaContext: CopilotSchemaContextPayload;
   toolsEnabled?: boolean;
 }): Promise<CopilotChatApiResponse> {
-  const res = await copilotApiFetch(`${base}/api/copilot/chat?stream=1`, {
+  const res = await apiFetch(`${base}/api/copilot/chat?stream=1`, {
     method: 'POST',
     headers: {
       'content-type': 'application/json',
@@ -1166,7 +1145,7 @@ export type SizingAssistantChatResponse = {
 };
 
 export async function fetchSizingAssistantStatus(): Promise<SizingAssistantStatusResponse> {
-  const res = await copilotApiFetch(`${base}/api/sizing-assistant/status`);
+  const res = await apiFetch(`${base}/api/sizing-assistant/status`);
   if (!res.ok) throw new Error((await res.json()).error ?? res.statusText);
   return res.json();
 }
@@ -1174,7 +1153,7 @@ export async function fetchSizingAssistantStatus(): Promise<SizingAssistantStatu
 export async function createSizingAssistantSession(
   studioSeed?: SizingAssistantStudioSeed,
 ): Promise<SizingAssistantSessionResponse> {
-  const res = await copilotApiFetch(`${base}/api/sizing-assistant/session`, {
+  const res = await apiFetch(`${base}/api/sizing-assistant/session`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify(studioSeed ? { studioSeed } : {}),
@@ -1187,7 +1166,7 @@ export async function seedSizingAssistantSession(
   sessionId: string,
   studioSeed: SizingAssistantStudioSeed,
 ): Promise<SizingAssistantSessionResponse> {
-  const res = await copilotApiFetch(`${base}/api/sizing-assistant/session/${encodeURIComponent(sessionId)}/seed`, {
+  const res = await apiFetch(`${base}/api/sizing-assistant/session/${encodeURIComponent(sessionId)}/seed`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ studioSeed }),
@@ -1202,7 +1181,7 @@ export async function sendSizingAssistantChat(request: {
   maxToolRounds?: number;
   studioSeed?: SizingAssistantStudioSeed;
 }): Promise<SizingAssistantChatResponse> {
-  const res = await copilotApiFetch(`${base}/api/sizing-assistant/chat`, {
+  const res = await apiFetch(`${base}/api/sizing-assistant/chat`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify(request),
@@ -1223,7 +1202,7 @@ export async function createArchitectureReviewExport(request: {
   content: string;
   filename: string;
 }): Promise<ArchitectureReviewExportResponse> {
-  const res = await copilotApiFetch(`${base}/api/copilot/architecture-export`, {
+  const res = await apiFetch(`${base}/api/copilot/architecture-export`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify(request),

@@ -1,5 +1,6 @@
-import { useDeferredValue, useEffect, useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import type { CollectionPlan } from '../migrationPlanTypes';
+import { ShikiCodeBlock } from './ShikiCodeBlock';
 
 /** Serialize a value for display (never throws). */
 export function serializeJsonForDisplay(value: unknown, fallbackLabel: string): string {
@@ -15,47 +16,18 @@ export function serializeCollectionPlanJson(collection: CollectionPlan): string 
   return serializeJsonForDisplay(collection, 'Plan');
 }
 
-type CollectionJsonViewProps = {
-  collection: CollectionPlan;
-  /** `jsonSchema` shows field/BSON definitions; `plan` shows the full collection slice. */
-  variant?: 'jsonSchema' | 'plan';
-};
-
-/** Shiki-highlighted read-only JSON for collection fields or the full migration-plan slice. */
-export function CollectionJsonView({ collection, variant = 'jsonSchema' }: CollectionJsonViewProps) {
-  const payload = variant === 'jsonSchema' ? collection.jsonSchema : collection;
+/** Shiki-highlighted read-only JSON for a collection $jsonSchema. */
+export function CollectionJsonView({ collection }: { collection: CollectionPlan }) {
   const jsonText = useMemo(
-    () => serializeJsonForDisplay(payload, variant === 'jsonSchema' ? 'Schema' : 'Plan'),
-    [payload, variant],
+    () => serializeJsonForDisplay(collection.jsonSchema, 'Schema'),
+    [collection.jsonSchema],
   );
-  const deferredJson = useDeferredValue(jsonText);
-  const [html, setHtml] = useState<string | null>(null);
-
-  useEffect(() => {
-    let cancelled = false;
-    setHtml(null);
-    void import('../highlightCollectionJsonShiki').then(({ highlightCollectionJsonWithShiki }) =>
-      highlightCollectionJsonWithShiki(deferredJson).then((marked) => {
-        if (!cancelled) setHtml(marked);
-      }),
-    );
-    return () => {
-      cancelled = true;
-    };
-  }, [deferredJson]);
-
-  if (html === null) {
-    return (
-      <pre className="collection-details__json-pre collection-details__json-pre--plain">
-        <code>{deferredJson}</code>
-      </pre>
-    );
-  }
-
   return (
-    <div
-      className="collection-details__json-shiki collection-json"
-      dangerouslySetInnerHTML={{ __html: html }}
+    <ShikiCodeBlock
+      code={jsonText}
+      language="json"
+      className="collection-json"
+      preClassName="collection-details__json-pre"
     />
   );
 }

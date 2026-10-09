@@ -2,7 +2,7 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { afterEach, describe, expect, it } from 'vitest';
-import { resolvePipelineCredentials } from './pipelineCredentials.js';
+import { assertRequestMongoUri, queryMongoUriOverride, resolvePipelineCredentials } from './pipelineCredentials.js';
 import { writeTenantSecrets } from './tenantSecrets.js';
 import { LOCAL_DEV_TENANT_ID } from './tenant.js';
 
@@ -32,5 +32,15 @@ describe('resolvePipelineCredentials', () => {
     expect(creds.mongoUri).toBe('mongodb+srv://body@cluster.example.net/db');
     expect(creds.mongodbModelKey).toBe('al-tenant-key');
     expect(creds.csvToAtlasPath).toBeUndefined();
+  });
+
+  it('ignores a hosted query mongoUri and rejects loopback', () => {
+    expect(queryMongoUriOverride(true, 'mongodb://127.0.0.1:27017')).toBeUndefined();
+    expect(queryMongoUriOverride(false, 'mongodb+srv://user@cluster.example.net/db')).toBe(
+      'mongodb+srv://user@cluster.example.net/db',
+    );
+    expect(() => assertRequestMongoUri('mongodb://127.0.0.1:27017')).toThrow(/not allowed/);
+    expect(() => assertRequestMongoUri('mongodb://169.254.1.1:27017')).toThrow(/not allowed/);
+    expect(() => assertRequestMongoUri('mongodb://[::1]:27017')).toThrow(/not allowed/);
   });
 });

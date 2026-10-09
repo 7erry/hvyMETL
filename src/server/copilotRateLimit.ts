@@ -33,12 +33,17 @@ export function readCopilotRateLimitWindowMs(): number {
   return readPositiveInt(process.env.HVYMETL_COPILOT_RATE_LIMIT_WINDOW_MS, 60_000);
 }
 
-function clientKey(req: Request): string {
-  const forwarded = req.headers['x-forwarded-for'];
-  if (typeof forwarded === 'string' && forwarded.trim()) {
-    return forwarded.split(',')[0]!.trim();
-  }
-  return req.ip ?? req.socket.remoteAddress ?? 'unknown';
+type RequestWithAuth = Request & {
+  auth?: { payload?: { sub?: string } };
+};
+
+/** Rate-limit identity. Auth0 sub first. Never the client-supplied X-Forwarded-For list. */
+export function copilotRateLimitClientKey(req: Request): string {
+  const sub = (req as RequestWithAuth).auth?.payload?.sub?.trim();
+  if (sub) return `sub:${sub}`;
+  const realIp = req.headers['x-real-ip'];
+  if (typeof realIp === 'string' && realIp.trim()) return `ip:${realIp.trim()}`;
+  return `ip:${req.socket.remoteAddress ?? 'unknown'}`;
 }
 
 function isRateLimitDisabled(): boolean {
@@ -61,11 +66,18 @@ export function checkCopilotRateLimitForTests(
   return takeToken(kind, key);
 }
 
+function pruneExpiredBuckets(now: number, windowMs: number): void {
+  for (const [key, bucket] of buckets) {
+    if (now - bucket.windowStartMs >= windowMs) buckets.delete(key);
+  }
+}
+
 function takeToken(kind: CopilotRateLimitKind, key: string): { allowed: boolean; retryAfterSec: number } {
   const max = readCopilotRateLimitMax(kind);
   const windowMs = readCopilotRateLimitWindowMs();
   const bucketKey = `${kind}:${key}`;
   const now = Date.now();
+  pruneExpiredBuckets(now, windowMs);
   const existing = buckets.get(bucketKey);
 
   if (!existing || now - existing.windowStartMs >= windowMs) {
@@ -90,7 +102,7 @@ export function createCopilotRateLimitMiddleware(kind: CopilotRateLimitKind) {
       return;
     }
 
-    const { allowed, retryAfterSec } = takeToken(kind, clientKey(req));
+    const { allowed, retryAfterSec } = takeToken(kind, copilotRateLimitClientKey(req));
     if (!allowed) {
       res.setHeader('Retry-After', String(retryAfterSec));
       res.status(429).json({

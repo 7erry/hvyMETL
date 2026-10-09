@@ -1,3 +1,6 @@
+import { mkdtempSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { describe, expect, it, vi } from 'vitest';
 import * as auth from './auth.js';
 import {
@@ -8,9 +11,11 @@ import {
   resolveTargetDbForRequest,
   sanitizeExecutionTargetDbForClient,
   sanitizeTenantId,
+  tenantDbPrefixFromSub,
   tenantDbPrefixFromPayload,
   tenantDbPrefixFromRequest,
   tenantDefaultTargetDb,
+  tenantPipelineRunDir,
   tenantIdFromPayload,
   toLogicalTargetDb,
   assertPathWithinRoot,
@@ -37,18 +42,19 @@ describe('tenant helpers', () => {
     expect(tenantDbPrefixFromPayload({ email: 'terry.walters@example.com' })).toBe('terry_walters');
     expect(
       tenantDbPrefixFromPayload({ given_name: 'Terry', family_name: 'Walters', sub: 'auth0|abc' }),
-    ).toBe('terry_walters');
+    ).toBe(tenantDbPrefixFromSub('auth0|abc'));
     expect(tenantDbPrefixFromPayload({ sub: 'auth0|abc' })).toMatch(/^u_[a-f0-9]{8}$/);
   });
 
-  it('loads display name from Auth0 userinfo when the access token lacks profile claims', async () => {
+  it('names new databases from the Auth0 sub even when a display name is present', async () => {
     vi.spyOn(auth, 'isAuthConfigured').mockReturnValue(true);
     vi.spyOn(auth, 'resolveAuthDisplayName').mockResolvedValue('Terry Walters');
+    const sub = 'google-oauth2|104005738020757337481';
     const req = {
-      auth: { payload: { sub: 'google-oauth2|104005738020757337481' } },
+      auth: { payload: { sub } },
       headers: { authorization: 'Bearer access-token' },
     } as Parameters<typeof tenantDbPrefixFromRequest>[0];
-    await expect(tenantDbPrefixFromRequest(req)).resolves.toBe('terry_walters');
+    await expect(tenantDbPrefixFromRequest(req)).resolves.toBe(tenantDbPrefixFromSub(sub));
     vi.restoreAllMocks();
   });
 
@@ -77,9 +83,10 @@ describe('tenant helpers', () => {
       auth: { payload: { sub: 'google-oauth2|104005738020757337481' } },
       headers: { authorization: 'Bearer access-token' },
     } as Parameters<typeof resolveTargetDbForRequest>[0];
+    const prefix = tenantDbPrefixFromSub('google-oauth2|104005738020757337481');
     await expect(resolveTargetDbForRequest(req, 'csv_to_atlas')).resolves.toEqual({
       logical: 'csv_to_atlas',
-      physical: 'terry_walters__csv_to_atlas',
+      physical: `${prefix}__csv_to_atlas`,
     });
     vi.restoreAllMocks();
   });
@@ -122,6 +129,15 @@ describe('tenant helpers', () => {
       assertPathWithinTenantStorage(rootDir, tenantId, '/tmp/hvymetl/web-uploads/tenants/user_a/csv/a.csv'),
     ).not.toThrow();
     expect(() => assertPathWithinTenantStorage(rootDir, tenantId, '/tmp/hvymetl/out/ui-pipeline/plan.json')).toThrow();
+  });
+
+  it('gives two pipeline runs started together different directories', () => {
+    const rootDir = mkdtempSync(join(tmpdir(), 'hvymetl-runs-'));
+    const first = tenantPipelineRunDir(rootDir, 'user_a');
+    const second = tenantPipelineRunDir(rootDir, 'user_a');
+    expect(first.runId).not.toBe(second.runId);
+    expect(first.dir).not.toBe(second.dir);
+    rmSync(rootDir, { recursive: true, force: true });
   });
 });
 

@@ -164,7 +164,6 @@ export function MongoSchemaCanvas({
   generating,
 }: MongoSchemaCanvasProps) {
   const wrapRef = useRef<HTMLDivElement>(null);
-  const lastNodeClickRef = useRef<{ nodeId: string; time: number } | null>(null);
   const compactLayout = useCompactDiagramLayout();
   const schemaFieldsByCollection = useMemo(() => {
     if (!plan) return new Map<string, ReturnType<typeof schemaFieldsFromCollection>>();
@@ -253,17 +252,10 @@ export function MongoSchemaCanvas({
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onNodeDragStop={onNodeDragStop}
-        onNodeClick={(_event, node) => {
-          const now = Date.now();
-          const prev = lastNodeClickRef.current;
-          if (prev && prev.nodeId === node.id && now - prev.time < 400) {
-            lastNodeClickRef.current = null;
-            const data = node.data as CollectionNodeData;
-            if (data?.collection) onCollectionDoubleClick?.(data.collection);
-            return;
-          }
-          lastNodeClickRef.current = { nodeId: node.id, time: now };
-          onSelectCollection(node.id);
+        onNodeClick={(_event, node) => onSelectCollection(node.id)}
+        onNodeDoubleClick={(_event, node) => {
+          const data = node.data as CollectionNodeData;
+          if (data.collection) onCollectionDoubleClick?.(data.collection);
         }}
         onPaneClick={() => onSelectCollection(null)}
         nodeTypes={nodeTypes}

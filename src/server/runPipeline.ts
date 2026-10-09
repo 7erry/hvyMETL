@@ -11,10 +11,10 @@ import { designFromModelWithMlEngine } from '../ml_engine/pipelinePatch.js';
 import { buildDirectEmbedPlansByTable } from '../design/patternSelector.js';
 import { triggerPostMigrationReflection } from '../ml_engine/feedbackHooks.js';
 import {
-  configureMigrationStore,
   getMigrationStore,
   resolveMemoryDbName,
   setMigrationStore,
+  withMigrationStore,
   type MigrationStore,
 } from '../ml_engine/migrationStore.js';
 import { resolveWorkloadProfile } from '../profiles/resolveProfile.js';
@@ -213,6 +213,16 @@ async function runFullPipelineInner(
   request: PipelineRunRequest,
   importEnv: NodeJS.ProcessEnv,
 ): Promise<PipelineRunResult> {
+  return withMigrationStore(
+    { mongoUri: importEnv.MONGODB_URI, dbName: resolveMemoryDbName(importEnv) },
+    () => runFullPipelineWithStore(request, importEnv),
+  );
+}
+
+async function runFullPipelineWithStore(
+  request: PipelineRunRequest,
+  importEnv: NodeJS.ProcessEnv,
+): Promise<PipelineRunResult> {
   const startedAt = new Date().toISOString();
   const errors: string[] = [];
   reportProgress(request, { stage: 'validating', message: 'Validating MongoDB URI and csvToAtlas configuration…' });
@@ -270,8 +280,6 @@ async function runFullPipelineInner(
   const memoryDb = resolveMemoryDbName(importEnv);
   if (request.migrationStore) {
     setMigrationStore(request.migrationStore);
-  } else {
-    configureMigrationStore({ mongoUri: importEnv.MONGODB_URI, dbName: memoryDb });
   }
 
   const logicalTargetDb =

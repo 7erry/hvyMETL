@@ -108,7 +108,8 @@ export function resolveEffectiveRoles(
   }
 
   const configuredDefault = env('HVYMETL_DEFAULT_ROLE');
-  if (configuredDefault.toLowerCase() === 'none') {
+  const hostedProcess = env('HVYMETL_HOSTED') === '1' || Boolean(env('HVYMETL_HOSTED_URL'));
+  if (configuredDefault.toLowerCase() === 'none' || (!configuredDefault && hostedProcess)) {
     return { roles: [], source: 'none' };
   }
 
@@ -120,8 +121,8 @@ export function resolveEffectiveRoles(
 }
 
 /**
- * Roles from the JWT, with a hosted-studio fallback when Auth0 login succeeds but no role claim
- * is present (e.g. post-login Action not wired yet). Set HVYMETL_DEFAULT_ROLE=none to disable.
+ * Roles from the JWT. A hosted process with no HVYMETL_DEFAULT_ROLE grants nothing.
+ * Locally, a token with no role still gets developer. Set HVYMETL_DEFAULT_ROLE=none to disable that.
  * Set HVYMETL_ADMIN_SUBS to comma-separated Auth0 user IDs (JWT sub) for bootstrap admins.
  */
 export function effectiveRolesFromPayload(

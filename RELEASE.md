@@ -1,3 +1,11 @@
+## hvyMETL 5.1.38
+
+**Hosted tenant isolation** — Copilot inspect ignores `x-hvymetl-db-prefix`. Each request keeps its own Atlas client, cached by URI. Hosted `?mongoUri=` is ignored, and a request cannot point the server at loopback or a link-local address. A hosted process with no `HVYMETL_DEFAULT_ROLE` grants no role. Copilot rate limits key on the Auth0 user id. New databases use that user-id hash. Pipeline run folders no longer share one directory when two runs start in the same millisecond.
+
+**Studio** — Collection field JSON uses one Shiki block. Canvas double-click uses the diagram library's double-click event. A split canvas stays split after design, import, and pipeline load. CSV design uses the same 10-minute timeout as JSON design.
+
+---
+
 ## hvyMETL 5.1.37
 
 **Hosted design hang** — Missing ONNX critic no longer triggers dozens of parallel `onnxruntime-node` loads (Oracle-sized plans). Atlas migration-log writes fail fast (4s connect timeout, skip after first SSL/network error). Design status shows elapsed seconds; client timeout 10 minutes.

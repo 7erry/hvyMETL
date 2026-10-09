@@ -25,7 +25,7 @@ Phase 1+ (server-owned chat sessions, tool confirmation gates) is documented in 
 | Forged `system` instructions in `/chat` body | Rejected with HTTP 400 |
 | Orphan / mismatched `tool` messages | Rejected unless `tool_call_id` matches pending assistant tool calls |
 | Oversized messages or schema blobs | HTTP 413 / truncation |
-| High-volume Grove or inspect abuse | Per-IP rate limits (429) |
+| High-volume Grove or inspect abuse | Per Auth0 user rate limits (429); `X-Real-IP` only when there is no user id |
 | Instructions embedded in user text or DDL metadata | System prompt preamble (defense in depth; not a full jailbreak filter) |
 
 **Not yet mitigated in Phase 0:** fully forged multi-turn `assistant` history without server session state; workflow tools triggered by a compliant LLM without user confirmation (planned Phase 2).
@@ -81,7 +81,7 @@ It instructs the model to treat user messages and schema blocks as **untrusted d
 
 ## 6. Rate Limiting
 
-In-memory sliding window per client IP (`src/server/copilotRateLimit.ts`).
+In-memory sliding window keyed by Auth0 `sub`, then `X-Real-IP`, then the socket address (`src/server/copilotRateLimit.ts`). `X-Forwarded-For` is not used. Expired windows are dropped.
 
 | Kind | Route(s) | Default max / window |
 | --- | --- | --- |
@@ -137,7 +137,7 @@ Manual checks:
 
 1. POST `/api/copilot/chat` with `{ "role": "system", ... }` → 400.
 2. POST `/api/copilot/chat` with orphan `tool` message → 400.
-3. Exceed chat rate limit from one IP → 429 with `Retry-After`.
+3. Exceed chat rate limit for one user → 429 with `Retry-After`.
 
 ## 10. Roadmap (post Phase 0)
 

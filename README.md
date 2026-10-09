@@ -9,7 +9,7 @@ every schema decision in a retrievable knowledge base of MongoDB design patterns
 your workload telemetry (read:write ratio, peak RPM, data growth), then runs a
 parallel, pattern-aware ETL into MongoDB Atlas.
 
-**Release:** [`5.1.37`](RELEASE.md#hvymetl-5137) — see [RELEASE.md](RELEASE.md) for full release history.
+**Release:** [`5.1.38`](RELEASE.md#hvymetl-5138) — see [RELEASE.md](RELEASE.md) for full release history.
 
 An optional **ML engine** (`src/ml_engine/`) adds telemetry-aware reranking
 ([Voyage rerank-2.5](https://docs.voyageai.com/reference/reranker-api) when
@@ -20,6 +20,10 @@ an **in-context self-reflection loop** that logs migration outcomes and writes
 Full per-module reference documentation lives in [docs/](docs/README.md), including a
 mapping of every automated pattern to MongoDB's
 [Building with Patterns series](https://www.mongodb.com/company/blog/building-with-patterns-a-summary).
+
+**Effort (5.1.37):** about **1,300 person-hours** to produce the current product
+(range 900–1,800). Breakdown, line counts, and the git record:
+**[docs/26-effort-estimate.md](docs/26-effort-estimate.md)**.
 
 ## How it works
 

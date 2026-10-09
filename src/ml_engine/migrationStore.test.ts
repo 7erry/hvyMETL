@@ -1,5 +1,5 @@
 import { describe, expect, it, afterEach } from 'vitest';
-import { configureMigrationStore, resolveMemoryDbName, resetMigrationStoreSingleton } from './migrationStore.js';
+import { resolveMemoryDbName, resetMigrationStoreSingleton, withMigrationStore } from './migrationStore.js';
 
 describe('migrationStore connection', () => {
   afterEach(() => {
@@ -14,8 +14,17 @@ describe('migrationStore connection', () => {
     expect(resolveMemoryDbName(process.env)).toBe('hvymetl_memory');
   });
 
-  it('configureMigrationStore applies URI and db overrides', () => {
-    configureMigrationStore({ mongoUri: 'mongodb://example', dbName: 'custom_memory' });
-    expect(resolveMemoryDbName(process.env)).toBe('custom_memory');
+  it('keeps concurrent migration store contexts on their own database', async () => {
+    const seen: string[] = [];
+    await Promise.all([
+      withMigrationStore({ mongoUri: 'mongodb://a', dbName: 'db_a' }, async () => {
+        await new Promise((resolve) => setTimeout(resolve, 20));
+        seen.push(resolveMemoryDbName(process.env));
+      }),
+      withMigrationStore({ mongoUri: 'mongodb://b', dbName: 'db_b' }, async () => {
+        seen.push(resolveMemoryDbName(process.env));
+      }),
+    ]);
+    expect(seen.sort()).toEqual(['db_a', 'db_b']);
   });
 });

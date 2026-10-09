@@ -8,7 +8,7 @@ import {
   type ReactNode,
 } from 'react';
 import { Auth0Provider, useAuth0 } from '@auth0/auth0-react';
-import { fetchAuthConfig, fetchAuthSession, setAccessTokenProvider, setDbPrefixProvider, type AuthConfigResponse } from '../api';
+import { fetchAuthConfig, fetchAuthSession, setAccessTokenProvider, type AuthConfigResponse } from '../api';
 import {
   DEFAULT_AUTH0_ROLES_CLAIM,
   parseJwtPayload,
@@ -166,16 +166,13 @@ function Auth0Bridge({
   useLayoutEffect(() => {
     if (!isAuthenticated || sessionExpired) {
       setAccessTokenProvider(undefined);
-      setDbPrefixProvider(undefined);
       return;
     }
     setAccessTokenProvider(() => getApiAccessToken());
-    setDbPrefixProvider(() => user?.name ?? user?.nickname ?? user?.email ?? undefined);
     return () => {
       setAccessTokenProvider(undefined);
-      setDbPrefixProvider(undefined);
     };
-  }, [getApiAccessToken, isAuthenticated, sessionExpired, user?.email, user?.name, user?.nickname]);
+  }, [getApiAccessToken, isAuthenticated, sessionExpired]);
 
   useEffect(() => {
     if (!isAuthenticated || isLoading) {

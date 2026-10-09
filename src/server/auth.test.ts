@@ -78,7 +78,7 @@ describe('getPublicAuthConfig', () => {
 });
 
 describe('effectiveRolesFromPayload', () => {
-  const envKeys = ['HVYMETL_AUTH_DISABLED', 'AUTH0_ISSUER_BASE_URL', 'AUTH0_AUDIENCE', 'HVYMETL_DEFAULT_ROLE', 'HVYMETL_ADMIN_SUBS'] as const;
+  const envKeys = ['HVYMETL_AUTH_DISABLED', 'AUTH0_ISSUER_BASE_URL', 'AUTH0_AUDIENCE', 'HVYMETL_DEFAULT_ROLE', 'HVYMETL_ADMIN_SUBS', 'HVYMETL_HOSTED', 'HVYMETL_HOSTED_URL'] as const;
   const originalEnv = Object.fromEntries(envKeys.map((key) => [key, process.env[key]]));
 
   afterEach(() => {
@@ -106,6 +106,14 @@ describe('effectiveRolesFromPayload', () => {
         'https://hvymetl.studio/roles': ['admin'],
       }),
     ).toEqual(['admin']);
+  });
+
+  it('grants no role on a hosted process when HVYMETL_DEFAULT_ROLE is unset', () => {
+    for (const key of envKeys) delete process.env[key];
+    process.env.AUTH0_ISSUER_BASE_URL = 'https://tenant.us.auth0.com/';
+    process.env.AUTH0_AUDIENCE = 'https://api.hvymetl.studio';
+    process.env.HVYMETL_HOSTED = '1';
+    expect(effectiveRolesFromPayload({ sub: 'auth0|1' })).toEqual([]);
   });
 
   it('can disable the default with HVYMETL_DEFAULT_ROLE=none', () => {

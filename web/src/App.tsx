@@ -22,7 +22,7 @@ import { PipelineHistoryPanel } from './components/PipelineHistoryPanel';
 import { MigrationWorkflowBar } from './components/MigrationWorkflowBar';
 import { DiagramViewSelector } from './components/DiagramViewSelector';
 import { DiagramDualCanvasLayout } from './components/DiagramDualCanvasLayout';
-import { isDualDiagramView, diagramViewModeFromSchemaPhase } from './diagramViewMode';
+import { isDualDiagramView, reconcileDiagramViewWithSchemaPhase } from './diagramViewMode';
 import type { SchemaPhase } from './components/SchemaPhaseToggle';
 import { ResizableSplit } from './components/ResizableSplit';
 import { PipelinePanel } from './components/PipelinePanel';
@@ -830,7 +830,7 @@ export default function App() {
           collectionPositions: data.collectionPositions ?? {},
           selectedCollection: null,
           schemaPhase: 'after',
-          diagramViewMode: diagramViewModeFromSchemaPhase('after'),
+          diagramViewMode: reconcileDiagramViewWithSchemaPhase('after', prev.diagramViewMode),
           view: 'diagram',
           migrationArtifacts: {
             planJson,
@@ -909,7 +909,7 @@ export default function App() {
       ...prev,
       migrationArtifacts: artifacts,
       schemaPhase: 'after',
-      diagramViewMode: diagramViewModeFromSchemaPhase('after'),
+      diagramViewMode: reconcileDiagramViewWithSchemaPhase('after', prev.diagramViewMode),
       selectedCollection: null,
       collectionPositions: initialCollectionPositions(plan, prev.positions, {}),
     }));
@@ -1017,7 +1017,7 @@ export default function App() {
         ),
         selectedCollection: null,
         schemaPhase: 'after',
-        diagramViewMode: diagramViewModeFromSchemaPhase('after'),
+        diagramViewMode: reconcileDiagramViewWithSchemaPhase('after', prev.diagramViewMode),
       }));
       const summary = formatTransformSummary(meta);
       let statusMessage: string;
@@ -1056,8 +1056,11 @@ export default function App() {
   };
 
   const handleSchemaPhaseChange = (phase: SchemaPhase) => {
-    setSessionField('schemaPhase', phase);
-    setSessionField('diagramViewMode', diagramViewModeFromSchemaPhase(phase));
+    setSession((prev) => ({
+      ...prev,
+      schemaPhase: phase,
+      diagramViewMode: reconcileDiagramViewWithSchemaPhase(phase, prev.diagramViewMode),
+    }));
     if (phase === 'after' && selectedTable && migrationPlan) {
       const collectionName = resolveCollectionNameForSqlTable(selectedTable, migrationPlan);
       if (collectionName) setSessionField('selectedCollection', collectionName);

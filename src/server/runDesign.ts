@@ -6,7 +6,7 @@
 import { existsSync } from 'node:fs';
 import type { DesignFromModelResult } from '../design/designFromModel.js';
 import { designFromModelWithMlEngine } from '../ml_engine/pipelinePatch.js';
-import { configureMigrationStore, resolveMemoryDbName } from '../ml_engine/migrationStore.js';
+import { resolveMemoryDbName, withMigrationStore } from '../ml_engine/migrationStore.js';
 import type { MigrationPlan, SqlStructuralModel, TimeSeriesOverrides, WorkloadProfile } from '../types.js';
 import { buildMigrationPlan } from '../design/patternSelector.js';
 import { enrichModelFromCsv } from '../utilities/csvModelEnrichment.js';
@@ -71,11 +71,10 @@ export type DesignRequest = {
   env?: NodeJS.ProcessEnv;
 };
 
-function configureDesignMigrationStore(env: NodeJS.ProcessEnv): void {
+function designMigrationConnection(env: NodeJS.ProcessEnv): { mongoUri: string; dbName: string } | null {
   const mongoUri = env.MONGODB_URI?.trim();
-  if (mongoUri) {
-    configureMigrationStore({ mongoUri, dbName: resolveMemoryDbName(env) });
-  }
+  if (!mongoUri) return null;
+  return { mongoUri, dbName: resolveMemoryDbName(env) };
 }
 
 function applyCardinalityOverrides(
@@ -175,13 +174,14 @@ export async function runDesignForModel(request: DesignRequest): Promise<DesignR
   const env = request.env ?? process.env;
   const { enrichedModel, measuredModel, resolvedCsvRoot } = enrichModelForDesign(request, env);
 
-  configureDesignMigrationStore(env);
-
-  const mlDesign = await designFromModelWithMlEngine(enrichedModel, request.profile, request.knowledgeDir, {
-    schedulePostMigrationReflection: false,
-    clusterId: env.HVYMETL_ATLAS_CLUSTER_ID?.trim(),
-    timeSeriesOverrides: request.timeSeriesOverrides,
-  });
+  const connection = designMigrationConnection(env);
+  const designWithStore = () =>
+    designFromModelWithMlEngine(enrichedModel, request.profile, request.knowledgeDir, {
+      schedulePostMigrationReflection: false,
+      clusterId: env.HVYMETL_ATLAS_CLUSTER_ID?.trim(),
+      timeSeriesOverrides: request.timeSeriesOverrides,
+    });
+  const mlDesign = connection ? await withMigrationStore(connection, designWithStore) : await designWithStore();
 
   const designMeta = buildDesignMeta(request.model, enrichedModel, mlDesign.plan, resolvedCsvRoot);
   const transformationSummary = explainTransformation(request.model, enrichedModel, mlDesign.plan, request.profile, {

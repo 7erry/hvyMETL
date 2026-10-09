@@ -3,12 +3,12 @@ import { reflectPendingMigrationLogs } from './reflectPending.js';
 import type { ReflectionJobDocument, ReflectionJobRunSummary } from './reflectionJobTypes.js';
 import { REFLECTION_SCHEDULE_INTERVAL_MS, computeNextRunAt } from './reflectionJobTypes.js';
 import type { ReflectionJobStore } from './reflectionJobStore.js';
-import { getMigrationStore } from './migrationStore.js';
+import { getMigrationStore, withMigrationStore, type MigrationStoreConnection } from './migrationStore.js';
 
 /** Prepares tenant-scoped migration store before a scheduled reflection tick. */
 export type ReflectionTenantStorePreparer = (
   tenantId: string,
-) => Promise<{ ok: true } | { ok: false; error: string }>;
+) => Promise<{ ok: true; connection?: MigrationStoreConnection } | { ok: false; error: string }>;
 
 export type ReflectionJobRuntime = {
   prepareTenantStore: ReflectionTenantStorePreparer;
@@ -29,19 +29,21 @@ export async function executeReflectionJobTick(
     };
   }
 
-  bootstrapAtlasMetricsConnector(process.env);
-  const store = getMigrationStore();
-  const result = await reflectPendingMigrationLogs({
-    store,
-    minAgeMs: job.minAgeMs,
-  });
+  return withMigrationStore(prepared.connection ?? {}, async () => {
+    bootstrapAtlasMetricsConnector(process.env);
+    const store = getMigrationStore();
+    const result = await reflectPendingMigrationLogs({
+      store,
+      minAgeMs: job.minAgeMs,
+    });
 
-  return {
-    processed: result.processed,
-    lessonsPersisted: result.lessonsPersisted,
-    errors: result.errors,
-    finishedAt: new Date().toISOString(),
-  };
+    return {
+      processed: result.processed,
+      lessonsPersisted: result.lessonsPersisted,
+      errors: result.errors,
+      finishedAt: new Date().toISOString(),
+    };
+  });
 }
 
 /** Persists run metadata and next run time after a tick completes. */

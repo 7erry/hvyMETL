@@ -51,9 +51,10 @@ import { getReflectionJobStore } from '../ml_engine/reflectionJobStore.js';
 import { runFullPipeline } from './runPipeline.js';
 import { runFullPipelineWithStream } from './pipelineStream.js';
 import {
-  configureMigrationStore,
   getMigrationStore,
   resolveMemoryDbName,
+  withMigrationStore,
+  type MigrationStoreConnection,
 } from '../ml_engine/migrationStore.js';
 import { PIPELINE_EXECUTIONS_COLLECTION } from './pipelineExecutionTypes.js';
 import { generateFromPlan } from '../repogen/generate.js';
@@ -68,6 +69,7 @@ import {
 import { hostedStudioUrl, isHostedStudioRequest } from './hosted.js';
 import {
   persistPipelineCredentialOverrides,
+  queryMongoUriOverride,
   resolvePipelineCredentials,
   type PipelineCredentialOverrides,
 } from './pipelineCredentials.js';
@@ -125,7 +127,7 @@ mkdirSync(UPLOAD_DIR, { recursive: true });
 
 async function prepareTenantMigrationStoreForReflection(
   tenantId: string,
-): Promise<{ ok: true } | { ok: false; error: string }> {
+): Promise<{ ok: true; connection: MigrationStoreConnection } | { ok: false; error: string }> {
   const hosted = process.env.HVYMETL_HOSTED === '1';
   const creds = resolvePipelineCredentials(ROOT, tenantId, {
     hosted,
@@ -139,8 +141,7 @@ async function prepareTenantMigrationStoreForReflection(
       error: 'MONGODB_URI is required for scheduled reflection (set in .env or tenant secrets).',
     };
   }
-  configureMigrationStore({ mongoUri, dbName: resolveMemoryDbName(process.env) });
-  return { ok: true };
+  return { ok: true, connection: { mongoUri, dbName: resolveMemoryDbName(process.env) } };
 }
 
 const reflectionJobScheduler = new ReflectionJobScheduler(getReflectionJobStore(), {
@@ -189,7 +190,7 @@ function resolveTenantMongoUriForRequest(
   const creds = resolvePipelineCredentials(ROOT, tenantId, {
     hosted,
     authEnabled,
-    overrides: { mongoUri: queryOverride },
+    overrides: { mongoUri: queryMongoUriOverride(hosted, queryOverride) },
   });
   return creds.mongoUri?.trim() || '';
 }
@@ -861,13 +862,14 @@ app.get('/api/pipeline/executions', async (req, res) => {
       res.status(400).json({ error: 'MONGODB_URI is required to list pipeline executions.' });
       return;
     }
-    configureMigrationStore({
-      mongoUri,
-      dbName: resolveMemoryDbName(process.env),
-    });
     const limit = Math.min(Math.max(Number(req.query?.limit ?? 20), 1), 100);
-    const store = getMigrationStore();
-    const executions = await store.listPipelineExecutions(limit, isAuthConfigured() ? tenantId : undefined);
+    const executions = await withMigrationStore(
+      { mongoUri, dbName: resolveMemoryDbName(process.env) },
+      async () => {
+        const store = getMigrationStore();
+        return store.listPipelineExecutions(limit, isAuthConfigured() ? tenantId : undefined);
+      },
+    );
     res.json({
       memoryDb: resolveMemoryDbName(process.env),
       collection: PIPELINE_EXECUTIONS_COLLECTION,
@@ -888,14 +890,15 @@ app.get('/api/pipeline/executions/:executionId', async (req, res) => {
       res.status(400).json({ error: 'MONGODB_URI is required to fetch pipeline executions.' });
       return;
     }
-    configureMigrationStore({
-      mongoUri,
-      dbName: resolveMemoryDbName(process.env),
-    });
-    const store = getMigrationStore();
-    const execution = await store.findPipelineExecution(
-      String(req.params.executionId),
-      isAuthConfigured() ? tenantId : undefined,
+    const execution = await withMigrationStore(
+      { mongoUri, dbName: resolveMemoryDbName(process.env) },
+      async () => {
+        const store = getMigrationStore();
+        return store.findPipelineExecution(
+          String(req.params.executionId),
+          isAuthConfigured() ? tenantId : undefined,
+        );
+      },
     );
     if (!execution) {
       res.status(404).json({ error: 'Pipeline execution not found.' });

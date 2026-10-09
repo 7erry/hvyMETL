@@ -1,4 +1,4 @@
-import { createHash } from 'node:crypto';
+import { createHash, randomBytes } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { isAbsolute, join, relative, resolve } from 'node:path';
 import type { Request } from 'express';
@@ -155,35 +155,24 @@ export function tenantDbPrefixFromDisplayName(raw: string): string | null {
   return slug || null;
 }
 
-/** Derive a stable MongoDB namespace prefix from Auth0 JWT claims (sync; no userinfo fetch). */
+/** Prefix for new physical databases. Uses the Auth0 sub hash when the token has one. */
 export function tenantDbPrefixFromPayload(payload: Record<string, unknown> | undefined): string {
+  const rawSub = typeof payload?.sub === 'string' ? payload.sub.trim() : '';
+  if (rawSub) return tenantDbPrefixFromSub(rawSub);
   const candidates = authIdentitySlugCandidates(payload);
-  const fromProfile = candidates.find((slug) => !slug.startsWith('u_'));
-  if (fromProfile) return fromProfile;
   return candidates[0] ?? LOCAL_DEV_TENANT_ID;
 }
 
-/** Resolve the tenant DB prefix using the same display name shown in the web UI header. */
+/** Prefix for new physical databases on this request. Display name stays a label. */
 export async function tenantDbPrefixFromRequest(req: RequestWithAuth): Promise<string> {
   const payload = req.auth?.payload;
+  const rawSub = typeof payload?.sub === 'string' ? payload.sub.trim() : '';
+  if (rawSub) return tenantDbPrefixFromSub(rawSub);
   const displayName = await resolveAuthDisplayName(payload, readBearerToken(req));
   const candidates = authIdentitySlugCandidates(payload, displayName);
-  const fromProfile = candidates.find((slug) => !slug.startsWith('u_'));
-  if (fromProfile) return fromProfile;
   return candidates[0] ?? LOCAL_DEV_TENANT_ID;
 }
 
-/** HTTP header the SPA sends with the slugified UI display name for MongoDB inspect scoping. */
-export const CLIENT_DB_PREFIX_HEADER = 'x-hvymetl-db-prefix';
-
-/** Read a validated tenant DB prefix supplied by the authenticated web client. */
-export function readClientDbPrefix(req: Request): string | null {
-  const raw = req.headers[CLIENT_DB_PREFIX_HEADER.toLowerCase()] ?? req.headers[CLIENT_DB_PREFIX_HEADER];
-  const value =
-    typeof raw === 'string' ? raw.trim() : Array.isArray(raw) ? (raw[0]?.trim() ?? '') : '';
-  if (!value || !/^[a-z0-9_]{1,24}$/.test(value)) return null;
-  return value;
-}
 /** Collect slug prefixes derived from Auth0 profile fields for import DB ownership checks. */
 export function authIdentitySlugCandidates(
   payload: Record<string, unknown> | undefined,
@@ -204,6 +193,7 @@ export function authIdentitySlugCandidates(
     typeof payload?.email === 'string' ? payload.email : undefined,
   ];
 
+  // shortcut: display-name prefixes stay readable so existing Atlas DBs are not hidden; two users with the same name still share those old DBs until renamed to the sub-hash prefix.
   for (const raw of fields) {
     if (typeof raw !== 'string' || !raw.trim()) continue;
     const slug = tenantDbPrefixFromDisplayName(raw);
@@ -343,14 +333,14 @@ export function writeTenantWorkspace(
   return next;
 }
 
-const PIPELINE_RUN_ID_PATTERN = /^run-\d+$/;
+const PIPELINE_RUN_ID_PATTERN = /^run-\d+(?:-[a-f0-9]{8})?$/;
 
 /** Timestamped pipeline output directory for one run (under ui-pipeline/). */
 export function tenantPipelineRunDir(
   rootDir: string,
   tenantId: string,
 ): { runId: string; dir: string } {
-  const runId = `run-${Date.now()}`;
+  const runId = `run-${Date.now()}-${randomBytes(4).toString('hex')}`;
   const dir = join(tenantOutRoot(rootDir, tenantId), 'ui-pipeline', runId);
   mkdirSync(dir, { recursive: true });
   return { runId, dir };

@@ -5,9 +5,7 @@ import {
   augmentTenantMongoInspectScope,
   discoverPrefixCandidatesFromCluster,
   discoverTenantPhysicalDatabases,
-  listLogicalDatabasesFromPhysical,
   mergeDiscoveredLogicalDatabases,
-  resolveInspectScopeForCluster,
   resolveTenantMongoInspectScope,
   sanitizeDatabaseListForClient,
 } from './mongoInspectScope.js';
@@ -30,7 +28,8 @@ describe('mongoInspectScope', () => {
     ]);
 
     expect(sanitized).toEqual([{ name: 'csv_to_atlas', size: 100 }]);
-    expect(scope.resolvePhysicalDatabase('csv_to_atlas')).toBe('terry_walters__csv_to_atlas');
+    expect(scope.primaryPrefix.startsWith('u_')).toBe(true);
+    expect(scope.resolvePhysicalDatabase('csv_to_atlas')).toBe(`${scope.primaryPrefix}__csv_to_atlas`);
     expect(() => assertDatabaseAccess(scope, 'other_user__csv_to_atlas')).toThrow(/outside your workspace/i);
     vi.restoreAllMocks();
   });
@@ -103,11 +102,11 @@ describe('mongoInspectScope', () => {
       ['terry_walters__mytrains'],
       ['terry_walters'],
     );
-    expect(augmented.resolvePhysicalDatabase('mytrains')).toBe('terry_walters__mytrains');
+    expect(augmented.resolvePhysicalDatabase('mytrains')).toBe(`${augmented.primaryPrefix}__mytrains`);
     vi.restoreAllMocks();
   });
 
-  it('discovers prefixed databases via unique logical suffix when JWT prefix differs from Atlas', async () => {
+  it('does not grant terry_walters databases from the client prefix header', async () => {
     vi.spyOn(auth, 'isAuthConfigured').mockReturnValue(true);
     vi.spyOn(auth, 'resolveAuthDisplayName').mockResolvedValue('');
 
@@ -118,14 +117,8 @@ describe('mongoInspectScope', () => {
 
     const baseScope = await resolveTenantMongoInspectScope(req);
     expect(baseScope.prefixCandidates.some((prefix) => prefix.startsWith('u_'))).toBe(true);
-
-    const clusterDatabaseNames = ['terry_walters__mytrains', 'terry_walters__railway_ops', 'other_user__app'];
-    const resolved = resolveInspectScopeForCluster(baseScope, clusterDatabaseNames, ['mytrains', 'railway_ops']);
-    const physical = discoverTenantPhysicalDatabases(resolved.scope, clusterDatabaseNames, ['mytrains', 'railway_ops']);
-    const logical = listLogicalDatabasesFromPhysical(resolved.scope, physical);
-
-    expect(resolved.scope.prefixCandidates).toContain('terry_walters');
-    expect(logical.map((entry) => entry.name).sort()).toEqual(['mytrains', 'railway_ops']);
+    expect(baseScope.prefixCandidates).not.toContain('terry_walters');
+    expect(baseScope.ownsPhysicalDatabase('terry_walters__mytrains')).toBe(false);
     vi.restoreAllMocks();
   });
 

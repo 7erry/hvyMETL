@@ -227,7 +227,7 @@ export function CollectionDetails({
             <SchemaFieldTree fields={schemaFields} collection={plan} variant="inspector" />
           ) : (
             <div className="collection-details__json" aria-label={`${plan.name} $jsonSchema`}>
-              <CollectionJsonView collection={plan} variant="jsonSchema" />
+              <CollectionJsonView collection={plan} />
             </div>
           )}
         </div>

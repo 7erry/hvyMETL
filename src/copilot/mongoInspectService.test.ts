@@ -78,7 +78,7 @@ describe('mongoInspectService', () => {
 
     const req = {
       auth: { payload: { sub: 'google-oauth2|abc' } },
-      headers: { authorization: 'Bearer token', 'x-hvymetl-db-prefix': 'terry_walters' },
+      headers: { authorization: 'Bearer token' },
     } as import('express').Request;
 
     const result = await invokeMongoInspectTool(req, 'listMongoDatabases', {});
@@ -116,7 +116,7 @@ describe('mongoInspectService', () => {
 
     const req = {
       auth: { payload: { sub: 'google-oauth2|abc' } },
-      headers: { authorization: 'Bearer token', 'x-hvymetl-db-prefix': 'terry_walters' },
+      headers: { authorization: 'Bearer token' },
     } as import('express').Request;
 
     const result = await invokeMongoInspectTool(req, 'listMongoCollections', {});
@@ -133,7 +133,7 @@ describe('mongoInspectService', () => {
     vi.restoreAllMocks();
   });
 
-  it('lists mytrains from terry_walters__mytrains when JWT only has sub hash prefix', async () => {
+  it('lists mytrains from the display-name prefix on the token', async () => {
     vi.spyOn(mongoMcpClient, 'isMongoMcpEnabled').mockReturnValue(true);
     mockInspectMcp(async (name) => {
       if (name === 'list-databases') {
@@ -148,11 +148,11 @@ describe('mongoInspectService', () => {
       throw new Error(`Unexpected tool ${name}`);
     });
     vi.spyOn(auth, 'isAuthConfigured').mockReturnValue(true);
-    vi.spyOn(auth, 'resolveAuthDisplayName').mockResolvedValue('');
+    vi.spyOn(auth, 'resolveAuthDisplayName').mockResolvedValue('Terry Walters');
 
     const req = {
-      auth: { payload: { sub: 'google-oauth2|abc' } },
-      headers: { authorization: 'Bearer token', 'x-hvymetl-db-prefix': 'terry_walters' },
+      auth: { payload: { sub: 'google-oauth2|abc', name: 'Terry Walters' } },
+      headers: { authorization: 'Bearer token' },
     } as import('express').Request;
 
     const result = await invokeMongoInspectTool(req, 'listMongoDatabases', {});
@@ -189,11 +189,11 @@ describe('mongoInspectService', () => {
       };
     });
     vi.spyOn(auth, 'isAuthConfigured').mockReturnValue(true);
-    vi.spyOn(auth, 'resolveAuthDisplayName').mockResolvedValue('');
+    vi.spyOn(auth, 'resolveAuthDisplayName').mockResolvedValue('Terry Walters');
 
     const req = {
-      auth: { payload: { sub: 'google-oauth2|abc' } },
-      headers: { authorization: 'Bearer token', 'x-hvymetl-db-prefix': 'terry_walters' },
+      auth: { payload: { sub: 'google-oauth2|abc', name: 'Terry Walters' } },
+      headers: { authorization: 'Bearer token' },
     } as import('express').Request;
 
     const result = await invokeMongoInspectTool(req, 'listMongoCollections', { database: 'mytrains' });
@@ -232,7 +232,7 @@ describe('mongoInspectService', () => {
 
     const req = {
       auth: { payload: { sub: 'google-oauth2|abc' } },
-      headers: { authorization: 'Bearer token', 'x-hvymetl-db-prefix': 'terry_walters' },
+      headers: { authorization: 'Bearer token' },
     } as import('express').Request;
 
     const result = await invokeMongoInspectTool(req, 'listMongoCollections', {
@@ -271,7 +271,7 @@ describe('mongoInspectService', () => {
 
     const req = {
       auth: { payload: { sub: 'google-oauth2|abc' } },
-      headers: { 'x-hvymetl-db-prefix': 'terry_walters' },
+      headers: {},
     } as import('express').Request;
 
     const result = await invokeMongoInspectTool(req, 'aggregateMongoCollection', {
@@ -318,7 +318,7 @@ describe('mongoInspectService', () => {
 
     const req = {
       auth: { payload: { sub: 'google-oauth2|abc' } },
-      headers: { 'x-hvymetl-db-prefix': 'terry_walters' },
+      headers: {},
     } as import('express').Request;
 
     const result = await invokeMongoInspectTool(req, 'describeMongoCollectionSchema', {
@@ -359,7 +359,7 @@ describe('mongoInspectService', () => {
 
     const req = {
       auth: { payload: { sub: 'google-oauth2|abc' } },
-      headers: { 'x-hvymetl-db-prefix': 'terry_walters' },
+      headers: {},
     } as import('express').Request;
 
     const result = await invokeMongoInspectTool(
@@ -447,7 +447,7 @@ describe('mongoInspectService', () => {
 
     const req = {
       auth: { payload: { sub: 'google-oauth2|abc' } },
-      headers: { authorization: 'Bearer token', 'x-hvymetl-db-prefix': 'terry_walters' },
+      headers: { authorization: 'Bearer token' },
     } as import('express').Request;
 
     const result = await invokeMongoInspectTool(req, 'listMongoCollectionIndexes', {
@@ -489,7 +489,7 @@ describe('mongoInspectService', () => {
 
     const req = {
       auth: { payload: { sub: 'google-oauth2|abc' } },
-      headers: { authorization: 'Bearer token', 'x-hvymetl-db-prefix': 'terry_walters' },
+      headers: { authorization: 'Bearer token' },
     } as import('express').Request;
 
     const result = await invokeMongoInspectTool(req, 'listMongoCollectionIndexes', {
@@ -546,7 +546,7 @@ describe('mongoInspectService', () => {
 
     const req = {
       auth: { payload: { sub: 'google-oauth2|abc' } },
-      headers: { authorization: 'Bearer token', 'x-hvymetl-db-prefix': 'terry_walters' },
+      headers: { authorization: 'Bearer token' },
     } as import('express').Request;
 
     const result = await invokeMongoInspectTool(req, 'explainMongoOperation', {
@@ -583,7 +583,7 @@ describe('mongoInspectService', () => {
 
     const req = {
       auth: { payload: { sub: 'google-oauth2|abc' } },
-      headers: { authorization: 'Bearer token', 'x-hvymetl-db-prefix': 'terry_walters' },
+      headers: { authorization: 'Bearer token' },
     } as import('express').Request;
 
     const result = await invokeMongoInspectTool(req, 'explainMongoOperation', {

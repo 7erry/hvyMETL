@@ -11,7 +11,6 @@ import {
   authIdentitySlugCandidates,
   legacyTenantImportDatabaseName,
   parseLogicalTargetDb,
-  readClientDbPrefix,
   resolvePhysicalTargetDb,
   tenantDbPrefixCandidates,
   tenantDbPrefixFromRequest,
@@ -29,7 +28,7 @@ type RequestWithAuth = Request & {
 export type TenantMongoInspectScope = {
   authEnabled: boolean;
   tenantId: string | null;
-  /** Primary prefix used for new imports (display name when available). */
+  /** Primary prefix used for new imports (Auth0 sub hash when the token has one). */
   primaryPrefix: string;
   /** All prefixes that may own databases for this Auth0 user. */
   prefixCandidates: string[];
@@ -58,11 +57,9 @@ export async function resolveTenantMongoInspectScope(
 
   const payload = req.auth?.payload;
   const displayName = await resolveAuthDisplayName(payload, readBearerToken(req));
-  const clientPrefix = readClientDbPrefix(req);
-  const extraPrefixes = clientPrefix ? [clientPrefix] : [];
   const tenantId = tenantIdFromPayload(payload);
-  const identitySlugs = authIdentitySlugCandidates(payload, displayName, extraPrefixes);
-  const prefixCandidates = tenantDbPrefixCandidates(payload, displayName, extraPrefixes);
+  const identitySlugs = authIdentitySlugCandidates(payload, displayName);
+  const prefixCandidates = tenantDbPrefixCandidates(payload, displayName);
   const primaryPrefix = (await tenantDbPrefixFromRequest(req)) || prefixCandidates[0] || 'local-dev';
 
   let scope = buildScope({

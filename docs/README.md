@@ -49,6 +49,7 @@ merge-mode diagrams.
 | [10-examples.md](10-examples.md) | The seven example SQL domains and the deterministic seeder | `examples/`, `src/examples/` |
 | [examples/README.md](../examples/README.md) | Pattern → example → verify-command matrix for the knowledge base | `examples/` |
 | [11-run-all-examples.md](11-run-all-examples.md) | End-to-end Atlas run for all seven domains with automated validation | `scripts/run-all-examples.mjs` |
+| [26-effort-estimate.md](26-effort-estimate.md) | Person-hour estimate for hvyMETL 5.1.37 (planning, actual, traditional) | repository snapshot |
 
 ## Architectural Role
 
