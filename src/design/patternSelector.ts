@@ -556,6 +556,14 @@ function buildEmbeddedChildItemProperties(
   return properties;
 }
 
+type EmbedSchemaContext = {
+  model: SqlStructuralModel;
+  profile: WorkloadProfile;
+  tablesByName: Map<string, TableModel>;
+  /** Tables already being expanded, so embed-of-embed cycles stop. */
+  stack: Set<string>;
+};
+
 function embeddedArrayItemsSchema(
   childTable: TableModel,
   joinColumn: string,
@@ -682,6 +690,25 @@ function planReversedForceEmbedRelationships(
   }
 }
 
+/** Embed-array fields this table would nest, so a parent item schema matches the shaper. */
+function nestedEmbedProperties(childTable: TableModel, ctx: EmbedSchemaContext): Record<string, unknown> {
+  if (ctx.stack.has(childTable.name)) return {};
+  const childPlan = planChildRelationships(
+    childTable,
+    ctx.model,
+    ctx.profile,
+    ctx.tablesByName,
+    new Set(),
+    ctx.stack,
+  );
+  const properties: Record<string, unknown> = {};
+  for (const array of childPlan.embeddedArrays) {
+    const property = childPlan.properties[array.field];
+    if (property !== undefined) properties[array.field] = property;
+  }
+  return properties;
+}
+
 /**
  * Decide how every relationship where `table` is the PARENT gets handled,
  * and accumulate the resulting plan pieces onto the collection.
@@ -692,12 +719,30 @@ function planChildRelationships(
   profile: WorkloadProfile,
   tablesByName: Map<string, TableModel>,
   absorbedTables: Set<string>,
+  stack: Set<string> = new Set(),
 ): {
   embeddedArrays: EmbeddedArrayPlan[];
   computedFields: ComputedFieldPlan[];
   patterns: PatternDecision[];
   properties: Record<string, unknown>;
 } {
+  if (stack.has(table.name)) {
+    return { embeddedArrays: [], computedFields: [], patterns: [], properties: {} };
+  }
+  stack.add(table.name);
+  const embedSchemaContext: EmbedSchemaContext = { model, profile, tablesByName, stack };
+
+  /** Child columns plus embeds that child itself nests (sensors under devices, and so on). */
+  function embedItems(
+    childTable: TableModel,
+    joinColumn: string,
+  ): { bsonType: 'object'; properties: Record<string, unknown>; required?: string[] } {
+    const schema = embeddedArrayItemsSchema(childTable, joinColumn);
+    const nested = nestedEmbedProperties(childTable, embedSchemaContext);
+    if (Object.keys(nested).length === 0) return schema;
+    return { ...schema, properties: { ...schema.properties, ...nested } };
+  }
+
   const isReadHeavy = profile.telemetry.readPercent >= READ_HEAVY_PERCENT;
   const isEmbedLeaning = profile.telemetry.readPercent >= EMBED_LEANING_PERCENT;
   const isWriteHeavy = profile.telemetry.writePercent >= WRITE_HEAVY_PERCENT;
@@ -781,7 +826,7 @@ function planChildRelationships(
       });
       properties[field] = {
         bsonType: 'array',
-        items: embeddedArrayItemsSchema(childTable, relationship.fkColumn),
+        items: embedItems(childTable, relationship.fkColumn),
         description: `Meta rows from ${childTable.name} folded into parent ${table.name}.`,
       };
       patterns.push({
@@ -839,7 +884,7 @@ function planChildRelationships(
       embeddedArrays.push({ field, sourceTable: childTable.name, joinColumn: relationship.fkColumn });
       properties[field] = {
         bsonType: 'array',
-        items: embeddedArrayItemsSchema(childTable, relationship.fkColumn),
+        items: embedItems(childTable, relationship.fkColumn),
         description: `Embedded ${childTable.name} because the developer explicitly forced this linked relationship.`,
       };
       patterns.push({
@@ -908,7 +953,7 @@ function planChildRelationships(
       embeddedArrays.push({ field, sourceTable: childTable.name, joinColumn: relationship.fkColumn });
       properties[field] = {
         bsonType: 'array',
-        items: embeddedArrayItemsSchema(childTable, relationship.fkColumn),
+        items: embedItems(childTable, relationship.fkColumn),
         description: `Embedded ${childTable.name} from developer-provided max cardinality ${relationship.maxChildrenPerParent}.`,
       };
       patterns.push({
@@ -988,7 +1033,7 @@ function planChildRelationships(
       embeddedArrays.push({ field, sourceTable: childTable.name, joinColumn: relationship.fkColumn });
       properties[field] = {
         bsonType: 'array',
-        items: embeddedArrayItemsSchema(childTable, relationship.fkColumn),
+        items: embedItems(childTable, relationship.fkColumn),
         description: `Embedded line items from ${childTable.name} (strict dependent child).`,
       };
       const boundHint =
@@ -1039,7 +1084,7 @@ function planChildRelationships(
       embeddedArrays.push({ field, sourceTable: childTable.name, joinColumn: relationship.fkColumn });
       properties[field] = {
         bsonType: 'array',
-        items: embeddedArrayItemsSchema(childTable, relationship.fkColumn),
+        items: embedItems(childTable, relationship.fkColumn),
         description: `Embedded ${childTable.name} by default (no cardinality stats; assumed small dependent child).`,
       };
       patterns.push({
@@ -1074,7 +1119,7 @@ function planChildRelationships(
       embeddedArrays.push({ field, sourceTable: childTable.name, joinColumn: relationship.fkColumn });
       properties[field] = {
         bsonType: 'array',
-        items: embeddedArrayItemsSchema(childTable, relationship.fkColumn),
+        items: embedItems(childTable, relationship.fkColumn),
         description: `Fully embedded ${childTable.name} (bounded: max ${relationship.maxChildrenPerParent} per parent).`,
       };
       patterns.push({
@@ -1093,7 +1138,7 @@ function planChildRelationships(
       embeddedArrays.push({ field, sourceTable: childTable.name, joinColumn: relationship.fkColumn });
       properties[field] = {
         bsonType: 'array',
-        items: embeddedArrayItemsSchema(childTable, relationship.fkColumn),
+        items: embedItems(childTable, relationship.fkColumn),
         description: `Fully embedded ${childTable.name} (typically a handful of active programs per ${singularize(table.name)}).`,
       };
       patterns.push({
@@ -1122,7 +1167,7 @@ function planChildRelationships(
       properties[field] = {
         bsonType: 'array',
         maxItems: subsetLimit,
-        items: embeddedArrayItemsSchema(childTable, relationship.fkColumn),
+        items: embedItems(childTable, relationship.fkColumn),
         description: `Subset pattern: the ${subsetLimit} newest ${childTable.name}; older rows live in ${mongoCollectionNameFromTable(childTable.name)}.`,
       };
       patterns.push({

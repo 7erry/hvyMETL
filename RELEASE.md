@@ -1,3 +1,9 @@
+## hvyMETL 5.1.39
+
+**After · MongoDB nested embeds** — An embedded child's own embed fields are copied onto the parent item schema, so the After diagram can expand them. For the Sites example, expanding `devices` shows `sensors`, `sensorReadings`, and `deviceAlerts`.
+
+---
+
 ## hvyMETL 5.1.38
 
 **Hosted tenant isolation** — Copilot inspect ignores `x-hvymetl-db-prefix`. Each request keeps its own Atlas client, cached by URI. Hosted `?mongoUri=` is ignored, and a request cannot point the server at loopback or a link-local address. A hosted process with no `HVYMETL_DEFAULT_ROLE` grants no role. Copilot rate limits key on the Auth0 user id. New databases use that user-id hash. Pipeline run folders no longer share one directory when two runs start in the same millisecond.

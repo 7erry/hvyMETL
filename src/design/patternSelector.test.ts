@@ -12,6 +12,8 @@ import type { RelationshipModel, SqlStructuralModel, TableModel } from '../types
 import { WORKLOAD_PROFILES, buildCustomProfile } from '../profiles/profiles.js';
 import { buildDirectEmbedPlansByTable, buildMigrationPlan, isJunctionTable, isLineItemsChild, isMetaTable, isReverseEmbedHostTable, shouldDefaultEmbedLineItems } from './patternSelector.js';
 import { parseDynamoDbCloudFormationToModel } from '../utilities/dynamodbCloudFormationParser.js';
+import { parseDdlToModel } from '../utilities/ddlParser.js';
+import { schemaFieldsFromCollection } from '../../web/src/schema/schemaFields.ts';
 
 const ECOMMERCE_CATALOG_TEMPLATE = readFileSync(
   join(dirname(fileURLToPath(import.meta.url)), '../../examples/dynamodb/ecommerce-catalog-table.yaml'),
@@ -1378,6 +1380,25 @@ describe('buildMigrationPlan', () => {
       ),
     ).toBe(true);
     expect(plan.collections.some((collection) => collection.sourceTable === 'order_items')).toBe(false);
+  });
+
+  it('shows sensors, sensorReadings, and deviceAlerts nested inside embedded devices', () => {
+    const ddl = readFileSync(join(dirname(fileURLToPath(import.meta.url)), '../../examples/iot/iot.sql'), 'utf8');
+    const model = parseDdlToModel(ddl, 'ddl:sqlite');
+    for (const relationship of model.relationships) relationship.forceEmbed = true;
+
+    const plan = buildMigrationPlan(model, WORKLOAD_PROFILES.iot);
+    const sites = plan.collections.find((collection) => collection.sourceTable === 'sites');
+    if (!sites) throw new Error('expected sites collection');
+
+    const devices = schemaFieldsFromCollection(sites, plan).find((field) => field.name === 'devices');
+    const nested = devices?.children?.map((child) => child.name) ?? [];
+    expect(nested).toEqual(expect.arrayContaining(['sensors', 'sensorReadings', 'deviceAlerts']));
+    expect(devices?.children?.find((child) => child.name === 'sensorReadings')?.type.startsWith('array<')).toBe(true);
+    expect(devices?.children?.find((child) => child.name === 'sensors')?.type.startsWith('array<')).toBe(true);
+    expect(devices?.children?.find((child) => child.name === 'deviceAlerts')?.children?.map((child) => child.name)).toEqual(
+      expect.arrayContaining(['id', 'severity', 'message', 'raisedAt', 'acknowledgedAt']),
+    );
   });
 });
 
