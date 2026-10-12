@@ -10,7 +10,7 @@
  */
 
 import type { ForeignKeyModel, SqlStructuralModel, TableModel } from '../types.js';
-import { sqlTypeToBsonType } from '../adapters/sqlite.js';
+import { sqlTypeToBsonType } from './sqlTypeToBsonType.js';
 
 /** Words that begin table/column constraint clauses (not part of the SQL type). */
 const CONSTRAINT_KEYWORD =

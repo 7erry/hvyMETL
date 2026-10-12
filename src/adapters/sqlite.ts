@@ -17,6 +17,7 @@ import type {
   TableModel,
 } from '../types.js';
 import { computeRelationshipCardinalityStats } from '../utilities/relationshipCardinalityStats.js';
+import { sqlTypeToBsonType } from '../utilities/sqlTypeToBsonType.js';
 import type { KeyRange, SqlSourceAdapter } from './types.js';
 
 /** Shape of one row returned by PRAGMA table_info. */
@@ -33,21 +34,6 @@ type PragmaForeignKeyRow = {
   from: string;
   to: string | null;
 };
-
-/**
- * Map a raw SQLite column type to the closest BSON type, so the design
- * engine can emit accurate $jsonSchema validators.
- */
-export function sqlTypeToBsonType(sqlType: string): string {
-  const normalized = sqlType.toUpperCase();
-  if (/(^|\b)(INT64|INT32|INT16|INT8|INTEGER|INT|SMALLINT|BIGINT|TINYINT|BYTEINT|NUMBER)\b/.test(normalized)) return 'long';
-  if (/(^|\b)(FLOAT64|FLOAT32|REAL|FLOA|DOUB|NUMERIC|DECIMAL|DOUBLE)\b/.test(normalized)) return 'double';
-  if (/(^|\b)(BOOL|BOOLEAN|BIT)\b/.test(normalized)) return 'bool';
-  if (/(DATE|TIME|TIMESTAMP)/.test(normalized)) return 'date';
-  if (/(BLOB|BYTES|BINARY|VARBINARY)/.test(normalized)) return 'binData';
-  if (/(STRING|CHAR|CLOB|TEXT|VARCHAR|NVARCHAR|VARIANT|OBJECT|JSON|GEOGRAPHY)/.test(normalized)) return 'string';
-  return 'string';
-}
 
 /** Open a SQLite database file and wrap it in the adapter interface. */
 export function createSqliteAdapter(databasePath: string): SqlSourceAdapter {

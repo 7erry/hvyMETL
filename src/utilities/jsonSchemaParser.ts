@@ -4,7 +4,7 @@
  * Inspired by examples at https://json-schema.org/learn/json-schema-examples
  */
 
-import { sqlTypeToBsonType } from '../adapters/sqlite.js';
+import { sqlTypeToBsonType } from './sqlTypeToBsonType.js';
 import type { ColumnModel, ForeignKeyModel, RelationshipModel, SqlStructuralModel, TableModel } from '../types.js';
 
 function asRecord(value: unknown): Record<string, unknown> {
