@@ -252,6 +252,18 @@ describe('parseJsonSchemaToModel', () => {
 });
 
 describe('renderJsonSchemaBundleText', () => {
+  it('maps SQL BIT to JSON boolean', () => {
+    const model = parseDdlToModel(
+      'CREATE TABLE flags (id INTEGER PRIMARY KEY, active BIT NOT NULL);',
+      'ddl:bit',
+    );
+    const bundle = JSON.parse(renderJsonSchemaBundleText(model)) as {
+      schemas: { title: string; properties: Record<string, { type?: string }> }[];
+    };
+    const flags = bundle.schemas.find((schema) => schema.title === 'flags');
+    expect(flags?.properties.active.type).toBe('boolean');
+  });
+
   it('round-trips embed-pattern DDL through JSON Schema bundle', () => {
     const ddl = renderDialectExampleDdl('sqlite', 'embed');
     const model = parseDdlToModel(ddl, 'ddl:sqlite');

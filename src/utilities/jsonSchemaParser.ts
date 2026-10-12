@@ -4,6 +4,7 @@
  * Inspired by examples at https://json-schema.org/learn/json-schema-examples
  */
 
+import { sqlTypeToBsonType } from '../adapters/sqlite.js';
 import type { ColumnModel, ForeignKeyModel, RelationshipModel, SqlStructuralModel, TableModel } from '../types.js';
 
 function asRecord(value: unknown): Record<string, unknown> {
@@ -696,7 +697,7 @@ function columnToJsonSchemaProperty(column: ColumnModel, table: TableModel): Rec
   if (sql.includes('NUMERIC') || sql.includes('DECIMAL') || sql.includes('DOUBLE') || sql.includes('FLOAT') || sql.includes('REAL')) {
     return { type: 'number' };
   }
-  if (sql.includes('BOOL')) {
+  if (sqlTypeToBsonType(column.sqlType) === 'bool') {
     return { type: 'boolean' };
   }
   if (sql.includes('JSON')) {
