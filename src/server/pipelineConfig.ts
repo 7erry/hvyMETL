@@ -67,10 +67,11 @@ export function getPipelineConfigStatus(
   const schemaDialect = options?.schemaDialect;
   const schemaDialectLabel = schemaDialect ? getDialectLabel(schemaDialect) : undefined;
 
+  const jsonDocuments = schemaDialect === 'mongodb-json';
   const missing: string[] = [];
   if (!hasMongoUri) missing.push('MONGODB_URI');
-  if (!csvToAtlasValidation.ok) missing.push('CSV_TO_ATLAS_PATH');
-  if (!hasCsvSource && !options?.generateMockCsv) {
+  if (!jsonDocuments && !csvToAtlasValidation.ok) missing.push('CSV_TO_ATLAS_PATH');
+  if (!jsonDocuments && !hasCsvSource && !options?.generateMockCsv) {
     missing.push('HVYMETL_CSV_SOURCE or CSV export directory (or enable mock CSV generation)');
   }
 

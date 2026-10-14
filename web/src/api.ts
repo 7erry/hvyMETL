@@ -216,11 +216,12 @@ export async function fetchDialects(): Promise<Dialect[]> {
 export async function importDdl(
   ddl: string,
   dialect: string,
+  sourceLabel?: string,
 ): Promise<{ model: SqlStructuralModel; ddl: string; dialect: string; inferred?: ProfileInference }> {
   const res = await apiFetch(`${base}/api/schema/import-ddl`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ ddl, dialect }),
+    body: JSON.stringify({ ddl, dialect, sourceLabel }),
   });
   if (!res.ok) throw new Error(await readApiError(res));
   const data = await res.json();
@@ -430,6 +431,8 @@ export type PipelineRunRequest = ProfileRequestFields & {
   model: SqlStructuralModel;
   ddl: string;
   dialect?: string;
+  /** MongoDB JSON only. Stop on the first bad document. */
+  strictJson?: boolean;
   csvSourcePath?: string;
   cardinalityOverrides?: Record<string, number>;
   forceEmbedOverrides?: Record<string, boolean>;

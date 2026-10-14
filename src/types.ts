@@ -148,6 +148,8 @@ export type ColumnModel = {
   dynamoKeyRole?: 'pk-hash' | 'pk-range' | 'gsi-hash' | 'gsi-range' | 'ttl';
   /** GSI index name when dynamoKeyRole is gsi-hash or gsi-range. */
   dynamoGsiName?: string;
+  /** BSON types seen for this field when documents disagree. Set only for mixed fields. */
+  observedBsonTypes?: string[];
 };
 
 /** Global secondary index metadata from a DynamoDB CloudFormation table. */

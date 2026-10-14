@@ -1,3 +1,15 @@
+## hvyMETL 6.0.0
+
+**MongoDB JSON input** — Canonical and Relaxed Extended JSON, a JSON array, or NDJSON infer the same structural model SQL already uses. One document shape is one table. A JSON object whose values are arrays of documents becomes one table per array (`authors`, `categories`, `mediaAssets`, `posts`). Nested objects and arrays stay on that table. A field that has two BSON types stays, with `bsonType` `mixed` and the types that were seen. The import panel accepts paste and file upload. When the source dialect is MongoDB JSON, a pasted collection map bulk-writes with `insertMany`, one collection per array. A collection-map file path still loads as one collection. A bad line is counted and the rest continue, unless strict mode is on. SQL sources still load through csvToAtlas.
+
+**JSON Schema collection export** — A draft 2020-12 document whose root properties are arrays of `$ref`s into `$defs` or `definitions` imports as one table per array, using those property names. Nested objects (`dimensions`, `meta`) and arrays (`content`, `tags`) stay columns. `blocks` is not a table, and string refs such as `authorRef` are not foreign keys. That paste is JSON Schema even when the studio dialect is already MongoDB JSON. A Mongo document that only has a `properties` field stays MongoDB JSON.
+
+**Diagram** — MongoDB collection field types are right-aligned, matching Before SQL.
+
+Phased implementation notes: [docs/hvymetl-6.0-json-plan.md](docs/hvymetl-6.0-json-plan.md).
+
+---
+
 ## hvyMETL 5.1.39
 
 **After · MongoDB nested embeds** — An embedded child's own embed fields are copied onto the parent item schema, so the After diagram can expand them. For the Sites example, expanding `devices` shows `sensors`, `sensorReadings`, and `deviceAlerts`.

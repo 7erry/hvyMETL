@@ -32,6 +32,7 @@ const DIALECT_DEFINITIONS: DialectDefinition[] = [
   { id: 'databricks', label: 'Databricks SQL / Spark SQL', live: false, parserFamily: 'spark' },
   { id: 'dynamodb', label: 'Amazon DynamoDB (CloudFormation)', live: false, parserFamily: 'dynamodb' },
   { id: 'json-schema', label: 'JSON Schema', live: false, parserFamily: 'json-schema' },
+  { id: 'mongodb-json', label: 'MongoDB JSON', live: false, parserFamily: 'mongodb-json' },
   { id: 'singlestore', label: 'SingleStore (MemSQL)', live: false, parserFamily: 'mysql' },
   { id: 'sap-hana', label: 'SAP HANA', live: false, parserFamily: 'hana' },
   { id: 'teradata', label: 'Teradata', live: false, parserFamily: 'teradata' },
@@ -60,6 +61,9 @@ const DIALECT_ALIASES: Record<string, string> = {
   'dynamo-db': 'dynamodb',
   jsonschema: 'json-schema',
   'json_schema': 'json-schema',
+  mongodb: 'mongodb-json',
+  ejson: 'mongodb-json',
+  ndjson: 'mongodb-json',
 };
 
 /** Normalize a dialect id or alias to a canonical supported id. */
@@ -171,9 +175,9 @@ export function inferSchemaDialect(
   return 'postgresql';
 }
 
-/** Whether ETL row extraction uses CSV exports (all schema import dialects). */
-export function pipelineUsesCsvExports(_schemaDialect: string): boolean {
-  return true;
+/** Whether ETL row extraction uses CSV exports. MongoDB JSON loads documents directly. */
+export function pipelineUsesCsvExports(schemaDialect: string): boolean {
+  return normalizeDialectId(schemaDialect) !== 'mongodb-json';
 }
 
 /** User-facing note for CSV data source in the pipeline dialog. */

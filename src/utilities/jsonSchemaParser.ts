@@ -103,6 +103,10 @@ function asString(value: unknown): string {
   return typeof value === 'string' ? value : '';
 }
 
+function isObjectSchema(schema: Record<string, unknown>): boolean {
+  return schema.type === 'object' || Boolean(schema.properties);
+}
+
 /** True when pasted text is JSON Schema (bundle, root object schema, or $defs document). */
 export function looksLikeJsonSchemaImport(content: string): boolean {
   const trimmed = content.trim();
@@ -113,13 +117,29 @@ export function looksLikeJsonSchemaImport(content: string): boolean {
     if (looksLikeStructuralModelJsonRoot(root)) return false;
     if (Array.isArray(root.schemas)) return true;
     if (String(root.$schema ?? '').includes('json-schema.org')) return true;
-    if (root.type === 'object' || root.properties) return true;
+    if (isObjectSchema(root)) return true;
+    return Object.values(asRecord(root.$defs)).some((entry) => isObjectSchema(asRecord(entry)));
+  } catch {
+    return false;
+  }
+}
 
-    const defs = asRecord(root.$defs);
-    return Object.values(defs).some((entry) => {
-      const def = asRecord(entry);
-      return def.type === 'object' || def.properties;
-    });
+/**
+ * JSON Schema document: `$schema` on json-schema.org, or a `$defs` / `definitions` map.
+ * Narrower than looksLikeJsonSchemaImport so a Mongo document that only has `properties` stays MongoDB JSON.
+ */
+export function looksLikeJsonSchemaDocument(content: string): boolean {
+  const trimmed = content.trim();
+  // Skip the parse when the paste has no schema keywords, so MongoDB JSON is not parsed twice.
+  if (!/"\$schema"\s*:/.test(trimmed) && !/"\$defs"\s*:/.test(trimmed) && !/"definitions"\s*:/.test(trimmed)) {
+    return false;
+  }
+
+  try {
+    const root = asRecord(parseJsonSchemaRootDocument(content));
+    if (looksLikeStructuralModelJsonRoot(root)) return false;
+    if (String(root.$schema ?? '').includes('json-schema.org')) return true;
+    return Object.keys(asRecord(root.$defs)).length > 0 || Object.keys(asRecord(root.definitions)).length > 0;
   } catch {
     return false;
   }
@@ -158,6 +178,7 @@ function registerSchemaIdentifiers(
 
   if (defKey) {
     idBySchemaId.set(`#/$defs/${defKey}`, tableName);
+    idBySchemaId.set(`#/definitions/${defKey}`, tableName);
   }
 }
 
@@ -547,107 +568,90 @@ function buildRelationships(tables: TableModel[]): RelationshipModel[] {
   return relationships;
 }
 
-/** Pull object-shaped entries from a document `$defs` map (draft 2020-12). */
-function objectSchemasFromDefs(defs: Record<string, unknown>): Record<string, unknown>[] {
-  const schemas: Record<string, unknown>[] = [];
+type SchemaDocumentEntry = {
+  schema: Record<string, unknown>;
+  /** Set for a `$defs` / `definitions` entity. Those stay one table; only a lone root schema grows child tables. */
+  defKey?: string;
+};
 
+const DEF_POINTER = /^#\/(\$defs|definitions)\/([^/]+)$/;
+
+function objectDefEntries(defs: Record<string, unknown>): SchemaDocumentEntry[] {
+  const entries: SchemaDocumentEntry[] = [];
   for (const [defKey, defValue] of Object.entries(defs)) {
     const def = asRecord(defValue);
-    if (def.type !== 'object' && !def.properties) continue;
-    schemas.push({
-      ...def,
-      title: String(def.title ?? defKey),
+    if (!isObjectSchema(def)) continue;
+    entries.push({
+      schema: { ...def, title: String(def.title ?? defKey) },
+      defKey,
     });
   }
-
-  return schemas;
+  return entries;
 }
 
-/** Extract schema objects from pasted JSON text. */
-export function parseJsonSchemaDocuments(jsonText: string): Record<string, unknown>[] {
-  if (!jsonText.trim()) {
-    throw new Error('JSON Schema document is empty.');
-  }
+/**
+ * CMS export: every root property is an array of `#/$defs/<key>` or `#/definitions/<key>`.
+ * The table name is the property (`authors`), not the def key (`author`). Any other shape returns null.
+ */
+function collectionExportEntries(root: Record<string, unknown>): SchemaDocumentEntry[] | null {
+  const properties = asRecord(root.properties);
+  const names = Object.keys(properties);
+  if (names.length === 0) return null;
 
-  const document = parseJsonSchemaRootDocument(jsonText);
-  const root = asRecord(document);
+  const entries: SchemaDocumentEntry[] = [];
+  for (const name of names) {
+    const spec = asRecord(properties[name]);
+    if (resolveJsonSchemaPrimaryType(spec) !== 'array') return null;
+    const match = DEF_POINTER.exec(asString(asRecord(spec.items).$ref).trim());
+    const bucket = match?.[1];
+    const defKey = match?.[2];
+    if (!bucket || !defKey) return null;
+    const def = asRecord(asRecord(root[bucket])[defKey]);
+    if (!isObjectSchema(def)) return null;
+    entries.push({ schema: { ...def, title: name }, defKey });
+  }
+  return entries;
+}
+
+function readSchemaDocuments(jsonText: string): { entries: SchemaDocumentEntry[]; explicitBundle: boolean } {
+  const root = asRecord(parseJsonSchemaRootDocument(jsonText));
   if (Array.isArray(root.schemas)) {
-    const schemas = root.schemas.map((entry) => asRecord(entry)).filter((entry) => entry.type === 'object' || entry.properties);
-    if (schemas.length === 0) {
+    const entries = root.schemas
+      .map((entry) => asRecord(entry))
+      .filter((entry) => isObjectSchema(entry))
+      .map((schema) => ({ schema }));
+    if (entries.length === 0) {
       throw new Error('JSON Schema bundle must include at least one object schema in "schemas".');
     }
-    return schemas;
+    return { entries, explicitBundle: true };
   }
 
-  const defs = asRecord(root.$defs);
-  const fromDefs = objectSchemasFromDefs(defs);
-  if (fromDefs.length > 0) {
-    return fromDefs;
-  }
+  const fromProperties = collectionExportEntries(root);
+  if (fromProperties) return { entries: fromProperties, explicitBundle: false };
 
-  if (root.type === 'object' || root.properties) {
-    return [root];
-  }
+  const fromDefs = objectDefEntries(asRecord(root.$defs));
+  if (fromDefs.length > 0) return { entries: fromDefs, explicitBundle: false };
+
+  if (isObjectSchema(root)) return { entries: [{ schema: root }], explicitBundle: false };
 
   throw new Error(
     'JSON Schema import must be an object schema, a { "schemas": [...] } bundle, or a document with object-shaped "$defs".',
   );
 }
 
-type SchemaDocumentEntry = {
-  schema: Record<string, unknown>;
-  defKey?: string;
-};
-
-function listSchemaDocumentEntries(jsonText: string): SchemaDocumentEntry[] {
-  const document = parseJsonSchemaRootDocument(jsonText);
-  const root = asRecord(document);
-
-  if (Array.isArray(root.schemas)) {
-    return root.schemas
-      .map((entry) => asRecord(entry))
-      .filter((entry) => entry.type === 'object' || entry.properties)
-      .map((schema) => ({ schema }));
-  }
-
-  const defs = asRecord(root.$defs);
-  const entries: SchemaDocumentEntry[] = [];
-  for (const [defKey, defValue] of Object.entries(defs)) {
-    const def = asRecord(defValue);
-    if (def.type !== 'object' && !def.properties) continue;
-    entries.push({
-      schema: {
-        ...def,
-        title: String(def.title ?? defKey),
-      },
-      defKey,
-    });
-  }
-  if (entries.length > 0) {
-    return entries;
-  }
-
-  if (root.type === 'object' || root.properties) {
-    return [{ schema: root }];
-  }
-
-  return [];
+/** Extract schema objects from pasted JSON text. Same entries as the model import, including CMS property names. */
+export function parseJsonSchemaDocuments(jsonText: string): Record<string, unknown>[] {
+  return readSchemaDocuments(jsonText).entries.map((entry) => entry.schema);
 }
 
-/** Convert JSON Schema bundle text into the shared structural model. */
+/**
+ * Convert JSON Schema text into the shared structural model.
+ * Root arrays of `$ref`s become one table per property name. A `$defs` document without that shape uses the def key.
+ * Nested objects stay nested on those tables. A single root schema still expands child tables.
+ */
 export function parseJsonSchemaToModel(jsonText: string, sourceLabel = 'ddl:json-schema'): SqlStructuralModel {
-  const document = parseJsonSchemaRootDocument(jsonText);
-  const root = asRecord(document);
-  const entries = listSchemaDocumentEntries(jsonText);
-  if (entries.length === 0) {
-    throw new Error(
-      'JSON Schema import must be an object schema, a { "schemas": [...] } bundle, or a document with object-shaped "$defs".',
-    );
-  }
-
-  const isExplicitBundle = Array.isArray(root.schemas);
-  const isDefsDocument = Object.keys(asRecord(root.$defs)).length > 0 && !isExplicitBundle;
-  const useNestedExpansion = entries.length === 1 && !isExplicitBundle && !isDefsDocument;
+  const { entries, explicitBundle } = readSchemaDocuments(jsonText);
+  const useNestedExpansion = entries.length === 1 && !explicitBundle && !entries[0]!.defKey;
 
   const idBySchemaId = new Map<string, string>();
 

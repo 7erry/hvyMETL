@@ -5,6 +5,7 @@ import { sortDialectsByLabel } from '../dialectConstants';
 import { sidebarWidthForSchemaImportTextarea } from '../schemaImportSidebarSync';
 import { detectDialect, DIALECT_DETECT_MIN_CONFIDENCE } from '../schema/detectDialect';
 import { getDialectLabel, isSupportedDialect } from '../../../src/dialects.ts';
+import { validateMongoJsonPaste } from '../../../src/utilities/mongoJsonValidate.ts';
 import type { Dialect } from '../types';
 
 const DIALECT_DETECT_DEBOUNCE_MS = 280;
@@ -174,6 +175,7 @@ export function SchemaImportPanel({
   };
 
   const importDialectLabel = getDialectLabel(dialect);
+  const mongoJsonError = dialect === 'mongodb-json' ? validateMongoJsonPaste(ddl) : null;
 
   const content = (
     <>
@@ -252,10 +254,11 @@ export function SchemaImportPanel({
             runDialectDetection(value);
           });
         }}
-        placeholder="Paste CREATE TABLE DDL, JSON Schema, SqlStructuralModel JSON, or CloudFormation YAML…"
+        placeholder="Paste CREATE TABLE DDL, JSON Schema, MongoDB JSON, NDJSON, or CloudFormation YAML…"
         rows={compact ? 6 : 8}
         className="schema-import-panel__textarea"
       />
+      {mongoJsonError ? <p className="schema-import-panel__warn">{mongoJsonError}</p> : null}
       <div className="button-row schema-import-panel__actions">
         <button type="button" className="primary" onClick={onImportQuery} disabled={!apiConnected}>
           Import schema
@@ -271,7 +274,7 @@ export function SchemaImportPanel({
         <input
           ref={fileInputRef}
           type="file"
-          accept=".sql,.ddl,.txt,.json,.yaml,.yml,.db,.sqlite,.sqlite3"
+          accept=".sql,.ddl,.txt,.json,.ndjson,.yaml,.yml,.db,.sqlite,.sqlite3"
           className="schema-import-panel__file-input"
           onChange={(e) => {
             const file = e.target.files?.[0];

@@ -87,6 +87,7 @@ export function PipelinePanel({
   const [config, setConfig] = useState<PipelineConfigStatus | null>(null);
   const [loadingConfig, setLoadingConfig] = useState(false);
   const [running, setRunning] = useState(false);
+  const [strictJson, setStrictJson] = useState(false);
   const [progress, setProgress] = useState<PipelineProgressEvent | null>(null);
   const [error, setError] = useState('');
   const [result, setResult] = useState<PipelineRunResult | null>(null);
@@ -395,6 +396,8 @@ export function PipelinePanel({
         }${uploadedCsvCount > 0 ? ' on server' : ''})`
       : form.csvSourcePath;
 
+  const jsonDocuments = dialect === 'mongodb-json';
+
   const envChecks = useMemo(() => {
     if (!config) return [];
     return [
@@ -406,32 +409,36 @@ export function PipelinePanel({
           : 'MongoDB connection (MONGODB_URI)',
         ok: mongoReachable,
       },
-      {
-        id: 'csvToAtlas',
-        label: config.csvToAtlasResolvedPath
-          ? `csvToAtlas (${config.csvToAtlasLabel ?? config.csvToAtlasResolvedPath})`
-          : 'csvToAtlas import tool (CSV_TO_ATLAS_PATH)',
-        ok: hasCsvToAtlas,
-      },
-      ...(useMockCsv
-        ? [
-            {
-              id: 'mockGenerator',
-              label: config.mockCsvGenerator?.ok
-                ? `Mock CSV generator (${config.mockCsvGenerator.python ?? 'python3'})`
-                : 'Mock CSV generator (Python + deps)',
-              ok: mockGeneratorReady,
-            },
-          ]
+      ...(jsonDocuments
+        ? []
         : [
             {
-              id: 'data',
-              label: requiresCsvUpload ? 'CSV files uploaded to studio server' : 'CSV export folder or server path',
-              ok: hasCsvSource,
+              id: 'csvToAtlas',
+              label: config.csvToAtlasResolvedPath
+                ? `csvToAtlas (${config.csvToAtlasLabel ?? config.csvToAtlasResolvedPath})`
+                : 'csvToAtlas import tool (CSV_TO_ATLAS_PATH)',
+              ok: hasCsvToAtlas,
             },
+            ...(useMockCsv
+              ? [
+                  {
+                    id: 'mockGenerator',
+                    label: config.mockCsvGenerator?.ok
+                      ? `Mock CSV generator (${config.mockCsvGenerator.python ?? 'python3'})`
+                      : 'Mock CSV generator (Python + deps)',
+                    ok: mockGeneratorReady,
+                  },
+                ]
+              : [
+                  {
+                    id: 'data',
+                    label: requiresCsvUpload ? 'CSV files uploaded to studio server' : 'CSV export folder or server path',
+                    ok: hasCsvSource,
+                  },
+                ]),
           ]),
     ];
-  }, [config, dialectLabel, mongoReachable, hasCsvToAtlas, useMockCsv, hasCsvSource, mockGeneratorReady, requiresCsvUpload]);
+  }, [config, dialectLabel, mongoReachable, hasCsvToAtlas, useMockCsv, hasCsvSource, mockGeneratorReady, requiresCsvUpload, jsonDocuments]);
 
   const passedChecks = envChecks.filter((check) => check.ok).length;
   const envReady = envChecks.length > 0 && passedChecks === envChecks.length;
@@ -439,11 +446,12 @@ export function PipelinePanel({
   const canRun = useMemo(() => {
     if (running || csvUploading || !model) return false;
     if (!hasMongoUri) return false;
+    if (jsonDocuments) return true;
     if (!hasCsvToAtlas) return false;
     if (useMockCsv && !mockGeneratorReady) return false;
     if (!hasCsvSource && !useMockCsv) return false;
     return true;
-  }, [running, csvUploading, model, hasMongoUri, hasCsvToAtlas, hasCsvSource, useMockCsv, mockGeneratorReady]);
+  }, [running, csvUploading, model, hasMongoUri, hasCsvToAtlas, hasCsvSource, useMockCsv, mockGeneratorReady, jsonDocuments]);
 
   const handleRun = async () => {
     setRunning(true);
@@ -460,6 +468,7 @@ export function PipelinePanel({
         embedDirectionOverrides,
         timeSeriesOverrides,
         dialect,
+        strictJson: jsonDocuments ? strictJson : undefined,
         targetDb: form.targetDb.trim() || undefined,
         drop: form.drop,
         mongoUri: resolveMongoUriOverride(),
@@ -692,7 +701,7 @@ export function PipelinePanel({
           </div>
         ) : null}
 
-        {config?.csvToAtlasValidation.warnings?.length ? (
+        {config?.csvToAtlasValidation.warnings?.length && !jsonDocuments ? (
           <div className="pipeline-warn">
             {config.csvToAtlasValidation.warnings.map((w) => (
               <p key={w}>{w}</p>
@@ -700,7 +709,7 @@ export function PipelinePanel({
           </div>
         ) : null}
 
-        {config && !config.hasCsvToAtlas && config.csvToAtlasValidation.errors?.length ? (
+        {config && !jsonDocuments && !config.hasCsvToAtlas && config.csvToAtlasValidation.errors?.length ? (
           <div className="pipeline-error">
             {config.csvToAtlasValidation.errors.map((e) => (
               <p key={e} style={{ margin: '0.25rem 0' }}>{e}</p>
@@ -708,6 +717,12 @@ export function PipelinePanel({
           </div>
         ) : null}
 
+        {jsonDocuments ? (
+          <section className="pipeline-section">
+            <h3 className="pipeline-section__title">Data source</h3>
+            <p className="pipeline-hint">Documents from this MongoDB JSON import are bulk-written. csvToAtlas is not used.</p>
+          </section>
+        ) : (
         <section className="pipeline-section">
           <h3 className="pipeline-section__title">Data source</h3>
           <div className="pipeline-data-toggle" role="radiogroup" aria-label="Data source">
@@ -868,6 +883,7 @@ export function PipelinePanel({
               </div>
           ) : null}
         </section>
+        )}
 
         <section className="pipeline-section">
           <h3 className="pipeline-section__title">Destination</h3>
@@ -890,6 +906,17 @@ export function PipelinePanel({
               />
               Wipe existing collections before importing
             </label>
+            {jsonDocuments ? (
+              <label className="pipeline-checkbox">
+                <input
+                  type="checkbox"
+                  checked={strictJson}
+                  disabled={running}
+                  onChange={(e) => setStrictJson(e.target.checked)}
+                />
+                Stop on the first bad JSON document
+              </label>
+            ) : null}
           </div>
         </section>
 

@@ -65,7 +65,9 @@ function seededShuffle<T>(items: readonly T[], seed: number): T[] {
   return copy;
 }
 
-const SHUFFLED_DIALECTS = seededShuffle(SUPPORTED_DIALECT_IDS, 2_026_0711);
+/** MongoDB JSON is inferred from documents, so it does not take a shuffled SQL example. */
+const EXAMPLE_DIALECT_IDS = SUPPORTED_DIALECT_IDS.filter((id) => id !== 'mongodb-json');
+const SHUFFLED_DIALECTS = seededShuffle(EXAMPLE_DIALECT_IDS, 2_026_0711);
 const SHUFFLED_PATTERNS = seededShuffle(DIALECT_EXAMPLE_PATTERNS, 2_026_0711);
 
 /** One dialect example entry: dialect id, assigned pattern, suggested profile. */

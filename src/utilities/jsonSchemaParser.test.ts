@@ -249,6 +249,121 @@ describe('parseJsonSchemaToModel', () => {
 
     expect(model.relationships.length).toBeGreaterThanOrEqual(5);
   });
+
+  it('imports a CMS export as one table per root array, named by the property', () => {
+    const cmsExport = {
+      $schema: 'https://json-schema.org/draft/2020-12/schema',
+      title: 'CmsExport',
+      type: 'object',
+      properties: {
+        authors: { type: 'array', items: { $ref: '#/$defs/author' } },
+        categories: { type: 'array', items: { $ref: '#/$defs/category' } },
+        mediaAssets: { type: 'array', items: { $ref: '#/$defs/mediaAsset' } },
+        posts: { type: 'array', items: { $ref: '#/$defs/post' } },
+      },
+      $defs: {
+        author: {
+          title: 'Author',
+          type: 'object',
+          properties: { id: { type: 'string' }, name: { type: 'string' } },
+        },
+        category: {
+          title: 'Category',
+          type: 'object',
+          properties: { id: { type: 'string' }, name: { type: 'string' } },
+        },
+        mediaAsset: {
+          title: 'MediaAsset',
+          type: 'object',
+          properties: {
+            id: { type: 'string' },
+            dimensions: {
+              type: 'object',
+              properties: { width: { type: 'integer' }, height: { type: 'integer' } },
+            },
+          },
+        },
+        post: {
+          title: 'Post',
+          type: 'object',
+          properties: {
+            id: { type: 'string' },
+            authorRef: { type: 'string' },
+            categoryRefs: { type: 'array', items: { type: 'string' } },
+            tags: { type: 'array', items: { type: 'string' } },
+            publishedAt: { type: ['string', 'null'] },
+            meta: {
+              type: 'object',
+              properties: { title: { type: 'string' }, noIndex: { type: 'boolean' } },
+            },
+            content: {
+              type: 'array',
+              items: {
+                oneOf: [{ $ref: '#/$defs/blocks/hero' }, { $ref: '#/$defs/blocks/richText' }],
+              },
+            },
+          },
+        },
+        blocks: {
+          type: 'object',
+          properties: {
+            hero: { type: 'object', properties: { heading: { type: 'string' } } },
+            richText: { type: 'object', properties: { body: { type: 'string' } } },
+          },
+        },
+      },
+    };
+
+    const text = JSON.stringify(cmsExport);
+    expect(resolveSchemaImportDialect(text, 'mongodb-json')).toBe('json-schema');
+    expect(parseJsonSchemaDocuments(text).map((schema) => schema.title)).toEqual([
+      'authors',
+      'categories',
+      'mediaAssets',
+      'posts',
+    ]);
+
+    const model = parseSchemaImport(text, 'mongodb-json');
+    expect(model.tables.map((table) => table.name)).toEqual([
+      'authors',
+      'categories',
+      'mediaAssets',
+      'posts',
+    ]);
+    expect(model.relationships).toEqual([]);
+    expect(model.tables.every((table) => table.foreignKeys.length === 0)).toBe(true);
+
+    const column = (tableName: string, columnName: string) =>
+      model.tables
+        .find((table) => table.name === tableName)
+        ?.columns.find((entry) => entry.name === columnName);
+
+    expect(column('mediaAssets', 'dimensions')?.bsonType).toBe('object');
+    expect(column('posts', 'meta')?.bsonType).toBe('object');
+    expect(column('posts', 'content')?.bsonType).toBe('array');
+    expect(column('posts', 'tags')?.bsonType).toBe('array');
+    expect(column('posts', 'categoryRefs')?.bsonType).toBe('array');
+    expect(column('posts', 'authorRef')?.bsonType).toBe('string');
+    expect(column('posts', 'publishedAt')?.bsonType).toBe('string');
+    expect(model.tables.find((table) => table.name === 'posts')?.primaryKey).toEqual(['id']);
+  });
+
+  it('names a definitions-array export by the property and leaves mongodb-json documents alone', () => {
+    const schema = {
+      definitions: {
+        author: { title: 'Author', type: 'object', properties: { id: { type: 'string' } } },
+      },
+      properties: {
+        authors: { type: 'array', items: { $ref: '#/definitions/author' } },
+      },
+    };
+    const text = JSON.stringify(schema);
+    expect(resolveSchemaImportDialect(text, 'mongodb-json')).toBe('json-schema');
+    expect(parseJsonSchemaToModel(text).tables.map((table) => table.name)).toEqual(['authors']);
+
+    const mongoDocument = '{"id":"1","properties":{"color":"red"}}';
+    expect(resolveSchemaImportDialect(mongoDocument, 'mongodb-json')).toBe('mongodb-json');
+  });
 });
 
 describe('renderJsonSchemaBundleText', () => {

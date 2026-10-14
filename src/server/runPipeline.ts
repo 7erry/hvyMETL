@@ -29,6 +29,8 @@ import {
 import { collectionNeedsShapedCsv, shapeCollectionCsv } from '../utilities/csvShaper.js';
 import { generateMockCsvFromDdl, type MockCsvOptions } from '../utilities/mockCsvFromDdl.js';
 import { registerApiArtifacts, serializeApiArtifactBundle } from './apiArtifactStore.js';
+import { loadMongoJsonIntoCollection } from '../utilities/mongoJsonBulkWriter.js';
+import { mongoJsonCollectionGroups } from '../utilities/mongoJsonParser.js';
 import { runImportCli } from '../utilities/runImportCli.js';
 import {
   formatMongoConnectivityFailure,
@@ -77,6 +79,10 @@ export type PipelineRunRequest = {
   rootDir: string;
   /** When true (or no CSV path), generate one CSV per CREATE TABLE from `ddl`. */
   generateMockCsv?: boolean;
+  /** MongoDB JSON only. Stop the load on the first bad document. Default is lenient. */
+  strictJson?: boolean;
+  /** When set, re-read this NDJSON or JSON array instead of `ddl`. */
+  jsonFilePath?: string;
   mockCsvOptions?: MockCsvOptions;
   /** When set, reuse this run directory instead of creating a new timestamped folder. */
   runId?: string;
@@ -242,7 +248,8 @@ async function runFullPipelineWithStore(
     throw new Error(formatMongoConnectivityFailure(mongoCheck));
   }
 
-  if (!config.hasCsvToAtlas) {
+  const jsonDocuments = schemaDialect === 'mongodb-json';
+  if (!jsonDocuments && !config.hasCsvToAtlas) {
     throw new Error(config.csvToAtlasValidation.errors.join(' ') || 'CSV_TO_ATLAS_PATH is not configured.');
   }
 
@@ -262,16 +269,20 @@ async function runFullPipelineWithStore(
   }
   mkdirSync(outDir, { recursive: true });
 
-  const csvRoot = resolvePipelineCsvRoot(request, importEnv, outDir);
-
-  reportProgress(request, { stage: 'enriching', message: 'Measuring CSV row counts and relationship cardinality…' });
-
   const modelForDesign: SqlStructuralModel = request.dialect?.trim()
     ? { ...request.model, source: `ddl:${request.dialect.trim()}` }
     : request.model;
 
-  const enrichedModel = applyCardinalityOverrides(
-    enrichModelFromCsv(modelForDesign, csvRoot),
+  let csvRoot = '';
+  let enrichedModel = modelForDesign;
+  if (!jsonDocuments) {
+    csvRoot = resolvePipelineCsvRoot(request, importEnv, outDir);
+    reportProgress(request, { stage: 'enriching', message: 'Measuring CSV row counts and relationship cardinality…' });
+    enrichedModel = enrichModelFromCsv(modelForDesign, csvRoot);
+  }
+
+  enrichedModel = applyCardinalityOverrides(
+    enrichedModel,
     request.cardinalityOverrides,
     request.forceEmbedOverrides,
     request.embedDirectionOverrides,
@@ -317,74 +328,168 @@ async function runFullPipelineWithStore(
   const migrationLogIds = mlDesign.ml.migrationLogIds;
   const feedbackPath = join(outDir, 'feedback-manifest.json');
 
-  const allCsvFiles = listCsvFiles(csvRoot);
-  const shapedDir = join(outDir, 'csv-shaped');
-  mkdirSync(shapedDir, { recursive: true });
-  const embedPlansByTable = buildDirectEmbedPlansByTable(enrichedModel, profile);
-
-  reportProgress(request, { stage: 'shaping', message: 'Shaping CSV files with embedded arrays and references…' });
-
-  const csvCollections = design.plan.collections.map((collection) => {
-    if (collectionNeedsShapedCsv(collection, enrichedModel)) {
-      const shapedPath = join(shapedDir, `${collection.name}.csv`);
-      const written = shapeCollectionCsv(collection, enrichedModel, csvRoot, shapedPath, embedPlansByTable);
-      if (written) {
-        return { name: collection.name, sourceTable: collection.sourceTable, files: [written] };
-      }
-    }
-    const files = matchCsvFilesForCollection(allCsvFiles, collection);
-    return { name: collection.name, sourceTable: collection.sourceTable, files };
-  });
-
-  const manifestPath = join(outDir, 'csv-import-manifest.json');
-  const csvImportManifest = { csvSource: csvRoot, schemaDialect, collections: csvCollections };
-  writeFileSync(manifestPath, `${JSON.stringify(csvImportManifest, null, 2)}\n`);
-
   const requestedPhysicalDb = request.targetDb ?? logicalTargetDb;
   const physicalTargetDb = importEnv.MONGODB_URI?.trim()
     ? await resolveMongoDatabaseNameCasing(importEnv.MONGODB_URI, requestedPhysicalDb, { timeoutMs: 12_000 })
     : requestedPhysicalDb;
   importEnv.MONGODB_DB = physicalTargetDb;
-  const imports: CollectionImportSummary[] = [];
-  const importTotal = csvCollections.length;
-  let importIndex = 0;
-  for (const coll of csvCollections) {
-    importIndex += 1;
-    reportProgress(request, {
-      stage: 'importing',
-      message: `Importing ${coll.name}…`,
-      collection: coll.name,
-      current: importIndex,
-      total: importTotal,
-    });
-    const actualFiles = coll.files.filter((file) => existsSync(file));
-    if (actualFiles.length === 0) {
-      imports.push({
-        collection: coll.name,
-        files: coll.files,
-        ok: false,
-        error: 'No matching CSV files found for this collection',
-      });
-      errors.push(
-        `${coll.name}: no CSV files (export ${coll.sourceTable}.csv, ${coll.name}.csv, or the unqualified table name)`,
-      );
-      continue;
-    }
 
-    const flags = request.drop === false ? [] : ['--drop'];
-    const importCollection = normalizeMongoCollectionName(coll.name, coll.sourceTable);
-    const result = runImportCli(actualFiles, importCollection, flags, importEnv);
-    imports.push({
-      collection: importCollection,
-      files: actualFiles,
-      ok: result.ok,
-      insertedCount: typeof result.parsed?.insertedCount === 'number' ? result.parsed.insertedCount : undefined,
-      error: result.ok ? undefined : result.stderr || result.stdout || `exit ${result.status}`,
+  const imports: CollectionImportSummary[] = [];
+  let csvCollections: { name: string; sourceTable: string; files: string[] }[] = [];
+  const manifestPath = join(outDir, 'csv-import-manifest.json');
+
+  if (jsonDocuments) {
+    // shortcut: a collection-map file path still loads as one collection; paste splits by array name.
+    const groups = request.jsonFilePath ? null : mongoJsonCollectionGroups(request.ddl ?? '');
+    const targets = groups
+      ? design.plan.collections.flatMap((collection) => {
+          const group = groups.find(
+            (item) => item.name === collection.sourceTable || collection.mergedTables.includes(item.name),
+          );
+          return group ? [{ collection, documents: group.documents }] : [];
+        })
+      : [];
+    const rootTable = request.model.tables[0]?.name ?? 'documents';
+    const target =
+      design.plan.collections.find((collection) => collection.sourceTable === rootTable) ??
+      design.plan.collections.find((collection) => collection.mergedTables.includes(rootTable)) ??
+      design.plan.collections[0];
+    csvRoot = request.jsonFilePath?.trim() || 'mongodb-json';
+    csvCollections = (groups ? targets.map((item) => item.collection) : target ? [target] : []).map((collection) => ({
+      name: collection.name,
+      sourceTable: collection.sourceTable,
+      files: request.jsonFilePath ? [request.jsonFilePath] : [],
+    }));
+    const csvImportManifest = { csvSource: csvRoot, schemaDialect, collections: csvCollections };
+    writeFileSync(manifestPath, `${JSON.stringify(csvImportManifest, null, 2)}\n`);
+
+    if (groups && targets.length === 0) {
+      errors.push('MongoDB JSON import did not produce a collection plan.');
+    } else if (groups) {
+      let index = 0;
+      for (const item of targets) {
+        index += 1;
+        const importCollection = normalizeMongoCollectionName(item.collection.name, item.collection.sourceTable);
+        reportProgress(request, {
+          stage: 'importing',
+          message: `Importing ${importCollection}…`,
+          collection: importCollection,
+          current: index,
+          total: targets.length,
+        });
+        const loaded = await loadMongoJsonIntoCollection({
+          uri: importEnv.MONGODB_URI ?? '',
+          database: physicalTargetDb,
+          collection: importCollection,
+          schema: item.collection.jsonSchema,
+          documents: item.documents,
+          strict: request.strictJson === true,
+          drop: request.drop !== false,
+        });
+        imports.push({
+          collection: importCollection,
+          files: [],
+          ok: loaded.errors.length === 0,
+          insertedCount: loaded.inserted,
+          error: loaded.errors[0],
+        });
+        errors.push(...loaded.errors);
+      }
+    } else if (!target) {
+      errors.push('MongoDB JSON import did not produce a collection plan.');
+    } else {
+      const importCollection = normalizeMongoCollectionName(target.name, target.sourceTable);
+      reportProgress(request, {
+        stage: 'importing',
+        message: `Importing ${importCollection}…`,
+        collection: importCollection,
+        current: 1,
+        total: 1,
+      });
+      const loaded = await loadMongoJsonIntoCollection({
+        uri: importEnv.MONGODB_URI ?? '',
+        database: physicalTargetDb,
+        collection: importCollection,
+        schema: target.jsonSchema,
+        text: request.ddl,
+        filePath: request.jsonFilePath,
+        strict: request.strictJson === true,
+        drop: request.drop !== false,
+      });
+      imports.push({
+        collection: importCollection,
+        files: request.jsonFilePath ? [request.jsonFilePath] : [],
+        ok: loaded.errors.length === 0,
+        insertedCount: loaded.inserted,
+        error: loaded.errors[0],
+      });
+      errors.push(...loaded.errors);
+    }
+  } else {
+    const allCsvFiles = listCsvFiles(csvRoot);
+    const shapedDir = join(outDir, 'csv-shaped');
+    mkdirSync(shapedDir, { recursive: true });
+    const embedPlansByTable = buildDirectEmbedPlansByTable(enrichedModel, profile);
+
+    reportProgress(request, { stage: 'shaping', message: 'Shaping CSV files with embedded arrays and references…' });
+
+    csvCollections = design.plan.collections.map((collection) => {
+      if (collectionNeedsShapedCsv(collection, enrichedModel)) {
+        const shapedPath = join(shapedDir, `${collection.name}.csv`);
+        const written = shapeCollectionCsv(collection, enrichedModel, csvRoot, shapedPath, embedPlansByTable);
+        if (written) {
+          return { name: collection.name, sourceTable: collection.sourceTable, files: [written] };
+        }
+      }
+      const files = matchCsvFilesForCollection(allCsvFiles, collection);
+      return { name: collection.name, sourceTable: collection.sourceTable, files };
     });
-    if (!result.ok) {
-      errors.push(`${coll.name}: import failed`);
+
+    const csvImportManifest = { csvSource: csvRoot, schemaDialect, collections: csvCollections };
+    writeFileSync(manifestPath, `${JSON.stringify(csvImportManifest, null, 2)}\n`);
+
+    const importTotal = csvCollections.length;
+    let importIndex = 0;
+    for (const coll of csvCollections) {
+      importIndex += 1;
+      reportProgress(request, {
+        stage: 'importing',
+        message: `Importing ${coll.name}…`,
+        collection: coll.name,
+        current: importIndex,
+        total: importTotal,
+      });
+      const actualFiles = coll.files.filter((file) => existsSync(file));
+      if (actualFiles.length === 0) {
+        imports.push({
+          collection: coll.name,
+          files: coll.files,
+          ok: false,
+          error: 'No matching CSV files found for this collection',
+        });
+        errors.push(
+          `${coll.name}: no CSV files (export ${coll.sourceTable}.csv, ${coll.name}.csv, or the unqualified table name)`,
+        );
+        continue;
+      }
+
+      const flags = request.drop === false ? [] : ['--drop'];
+      const importCollection = normalizeMongoCollectionName(coll.name, coll.sourceTable);
+      const result = runImportCli(actualFiles, importCollection, flags, importEnv);
+      imports.push({
+        collection: importCollection,
+        files: actualFiles,
+        ok: result.ok,
+        insertedCount: typeof result.parsed?.insertedCount === 'number' ? result.parsed.insertedCount : undefined,
+        error: result.ok ? undefined : result.stderr || result.stdout || `exit ${result.status}`,
+      });
+      if (!result.ok) {
+        errors.push(`${coll.name}: import failed`);
+      }
     }
   }
+
+  const csvImportManifest = { csvSource: csvRoot, schemaDialect, collections: csvCollections };
 
   const reflectionScheduled = migrationLogIds.length > 0;
   const memoryStore = request.migrationStore ?? getMigrationStore();

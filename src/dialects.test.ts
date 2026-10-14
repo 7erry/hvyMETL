@@ -14,8 +14,8 @@ import {
 } from './dialects.js';
 
 describe('dialects', () => {
-  it('registers twenty-four supported dialects including DynamoDB and JSON Schema import', () => {
-    expect(SUPPORTED_DIALECT_IDS).toHaveLength(24);
+  it('registers supported dialects including DynamoDB, JSON Schema, and MongoDB JSON import', () => {
+    expect(SUPPORTED_DIALECT_IDS).toHaveLength(25);
     expect(SUPPORTED_DIALECT_IDS).toEqual(
       expect.arrayContaining([
         'snowflake',
@@ -24,6 +24,7 @@ describe('dialects', () => {
         'databricks',
         'dynamodb',
         'json-schema',
+        'mongodb-json',
         'mariadb',
         'yugabyte',
         'singlestore',

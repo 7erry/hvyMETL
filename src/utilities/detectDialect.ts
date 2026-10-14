@@ -3,6 +3,7 @@
  */
 
 import { dialectFromModelSource, getDialectLabel, isSupportedDialect, normalizeDialectId } from '../dialects.js';
+import { looksLikeMongoJsonImport } from './mongoJsonValidate.js';
 import { isHvyMetlDiagramExportRecord, isSqlStructuralModelRecord } from './structuralModelJsonParser.js';
 
 /** Maximum characters scanned for performance. */
@@ -197,6 +198,9 @@ function scoreJsonDialect(trimmed: string): { id: string; score: number } | null
       const fromSource = dialectFromModelSource((parsed as { source?: string }).source ?? '');
       return { id: fromSource ?? DIALECT_DETECT_FALLBACK_ID, score: 9 };
     }
+    if (looksLikeMongoJsonImport(trimmed)) {
+      return { id: 'mongodb-json', score: 8 };
+    }
     const text = trimmed;
     let score = 2;
     if (/"(\$schema|properties|definitions)"\s*:/.test(text)) score += 6;
@@ -271,6 +275,9 @@ export function detectDialect(rawInput: string): DialectDetectionResult {
     const jsonHit = scoreJsonDialect(trimmed);
     if (jsonHit && jsonHit.score >= DIALECT_DETECT_MIN_SCORE) {
       return buildResult(jsonHit.id, jsonHit.score, 0.9, 'json', true);
+    }
+    if (looksLikeMongoJsonImport(rawInput)) {
+      return buildResult('mongodb-json', 8, 0.9, 'json', true);
     }
   }
 

@@ -173,6 +173,14 @@ function scopedCsvSourcePath(req: Request, requestedPath?: string): string | und
   return path;
 }
 
+/** File name only, used as the MongoDB JSON collection name. */
+function schemaImportFileLabel(raw: unknown): string | undefined {
+  if (typeof raw !== 'string') return undefined;
+  const base = raw.split(/[/\\]/).pop()?.trim() ?? '';
+  if (!base || base.length > 180 || !/^[\w. -]+$/.test(base)) return undefined;
+  return base;
+}
+
 function pipelineCredentialOverridesFromBody(body: Record<string, unknown> | undefined): PipelineCredentialOverrides {
   return {
     mongoUri: typeof body?.mongoUri === 'string' ? body.mongoUri : undefined,
@@ -455,7 +463,7 @@ app.post('/api/schema/import-ddl', (req, res) => {
     return;
   }
   try {
-    const imported = parseSchemaImportWithMeta(ddl, dialect);
+    const imported = parseSchemaImportWithMeta(ddl, dialect, schemaImportFileLabel(req.body?.sourceLabel));
     if (imported.model.tables.length === 0) {
       throw new Error('No tables found in schema import. Check dialect and content.');
     }
@@ -982,6 +990,8 @@ app.post('/api/pipeline/run', async (req, res) => {
       model,
       ddl,
       dialect: req.body?.dialect as string | undefined,
+      strictJson: req.body?.strictJson === true,
+      jsonFilePath: scopedCsvSourcePath(req, typeof req.body?.jsonFilePath === 'string' ? req.body.jsonFilePath : undefined),
       csvSourcePath,
       csvAllowedRoots,
       tenantId,

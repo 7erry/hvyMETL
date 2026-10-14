@@ -631,7 +631,7 @@ export default function App() {
     setSizingCostPanelOpen(true);
   }, [profiles]);
 
-  const handleImportQuery = async (ddlText = ddl) => {
+  const handleImportQuery = async (ddlText = ddl, sourceLabel?: string) => {
     try {
       const payload = String(ddlText ?? '').trim();
       if (!payload) {
@@ -642,6 +642,7 @@ export default function App() {
       const { model: m, ddl: importedDdl, inferred, dialect: resolvedDialect } = await importDdl(
         payload,
         dialect,
+        sourceLabel,
       );
       setSessionField('dialect', resolvedDialect);
       await applySchema(importedDdl, m, inferred?.profileId);
@@ -675,7 +676,8 @@ export default function App() {
       setStatus(`Reading ${file.name}…`);
       const text = await file.text();
       setSessionField('ddl', text);
-      await handleImportQuery(text);
+      const sourceLabel = /\.(json|ndjson)$/i.test(file.name) ? file.name : undefined;
+      await handleImportQuery(text, sourceLabel);
     } catch (e) {
       setStatus(`DDL import failed: ${describeApiError(e)}`);
     }

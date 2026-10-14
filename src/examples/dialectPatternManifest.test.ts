@@ -10,7 +10,7 @@ import {
 describe('dialectPatternManifest', () => {
   it('covers thirteen design patterns across all supported dialects', () => {
     expect(DIALECT_EXAMPLE_PATTERNS).toHaveLength(13);
-    expect(DIALECT_PATTERN_MANIFEST).toHaveLength(SUPPORTED_DIALECT_IDS.length);
+    expect(DIALECT_PATTERN_MANIFEST).toHaveLength(SUPPORTED_DIALECT_IDS.filter((id) => id !== 'mongodb-json').length);
     const assigned = new Set(DIALECT_PATTERN_MANIFEST.map((entry) => entry.pattern));
     expect(assigned.size).toBeGreaterThan(8);
   });

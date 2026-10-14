@@ -20,10 +20,12 @@ the JSON Schema site: [JSON Schema examples](https://json-schema.org/learn/json-
 | --- | --- |
 | **Single schema** | One root document with `"type": "object"` and `"properties"`. Nested objects and array-of-object fields are promoted to child tables with foreign keys. |
 | **hvyMETL bundle** | `{ "description": "…", "schemas": [ … ] }` — preferred for multi-entity models. |
-| **`$defs` document** | Root document whose `"$defs"` contains object schemas (e.g. [ecommerce example](https://json-schema.org/learn/json-schema-examples)); `$anchor` and `#Anchor` `$ref` values are resolved. |
+| **`$defs` document** | Root document whose `"$defs"` contains object schemas (e.g. [ecommerce example](https://json-schema.org/learn/json-schema-examples)); `$anchor` and `#Anchor` `$ref` values are resolved. Table names are the def keys (`product`, `order`). Nested objects stay columns. |
+| **Collection export** | Root `properties` are arrays of `$ref` to `#/$defs/…` or `#/definitions/…` (CMS export). One table per array, named by the property (`authors`, not `author`). Nested objects and arrays stay columns. A `$defs` map such as `blocks` is not a table. String fields such as `authorRef` are not foreign keys. |
 
 Table names come from each schema’s **`title`**, or from the last segment of **`$id`**
 (for example `https://example.com/user-profile.schema.json` → `user_profile`).
+Collection-export tables use the root property name instead of the `$defs` key.
 
 ## Type mapping
 

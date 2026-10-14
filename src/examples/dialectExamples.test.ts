@@ -47,9 +47,10 @@ const STRUCTURAL_PATTERNS: PatternId[] = ['tree', 'attribute', 'polymorphic', 's
 
 describe('dialectPatternManifest', () => {
   it('assigns exactly one example per supported dialect', () => {
-    expect(DIALECT_PATTERN_MANIFEST).toHaveLength(SUPPORTED_DIALECT_IDS.length);
+    const exampleDialects = SUPPORTED_DIALECT_IDS.filter((id) => id !== 'mongodb-json');
+    expect(DIALECT_PATTERN_MANIFEST).toHaveLength(exampleDialects.length);
     const dialectIds = DIALECT_PATTERN_MANIFEST.map((entry) => entry.dialectId).sort();
-    expect(dialectIds).toEqual([...SUPPORTED_DIALECT_IDS].sort());
+    expect(dialectIds).toEqual([...exampleDialects].sort());
   });
 
   it('lookup returns manifest entry by dialect id', () => {

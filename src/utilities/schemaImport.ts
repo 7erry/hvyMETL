@@ -5,7 +5,9 @@ import {
   looksLikeCloudFormationImport,
   parseDynamoDbCloudFormationToModel,
 } from './dynamodbCloudFormationParser.js';
-import { looksLikeJsonSchemaImport, parseJsonSchemaToModel } from './jsonSchemaParser.js';
+import { looksLikeJsonSchemaDocument, looksLikeJsonSchemaImport, parseJsonSchemaToModel } from './jsonSchemaParser.js';
+import { parseMongoJsonToModel } from './mongoJsonParser.js';
+import { looksLikeMongoJsonImport } from './mongoJsonValidate.js';
 import { structuralModelToMockDdl } from './mockCsvDdlAdapter.js';
 import {
   looksLikeSqlStructuralModelJson,
@@ -32,6 +34,7 @@ export function normalizeSchemaImportContent(raw: unknown): string {
 /**
  * Pick json-schema or dynamodb when pasted content is clearly not SQL DDL,
  * even if the UI dialect is still a SQL engine (avoids silent 0-table imports).
+ * A JSON Schema document also wins over an already-selected mongodb-json dialect.
  */
 export function resolveSchemaImportDialect(content: string, dialect: string): string {
   const normalized = normalizeDialectId(dialect);
@@ -40,6 +43,10 @@ export function resolveSchemaImportDialect(content: string, dialect: string): st
   }
 
   const trimmed = content.trim();
+  if (normalized === 'mongodb-json') {
+    return looksLikeJsonSchemaDocument(trimmed) ? 'json-schema' : normalized;
+  }
+
   if (looksLikeSqlStructuralModelJson(trimmed)) {
     const structural = parseStructuralModelJsonImport(trimmed);
     if (structural?.dialect && isSupportedDialect(structural.dialect)) {
@@ -47,6 +54,9 @@ export function resolveSchemaImportDialect(content: string, dialect: string): st
     }
     const fromSource = dialectFromModelSource(structural?.model.source ?? '');
     if (fromSource) return fromSource;
+  }
+  if (looksLikeMongoJsonImport(trimmed)) {
+    return 'mongodb-json';
   }
   if (looksLikeJsonSchemaImport(trimmed)) {
     return 'json-schema';
@@ -103,6 +113,14 @@ export function parseSchemaImportWithMeta(
   if (normalized === 'json-schema') {
     return {
       model: parseJsonSchemaToModel(content, label),
+      displayText: trimmed,
+      resolvedDialect: normalized,
+    };
+  }
+
+  if (normalized === 'mongodb-json') {
+    return {
+      model: parseMongoJsonToModel(content, label),
       displayText: trimmed,
       resolvedDialect: normalized,
     };

@@ -120,7 +120,7 @@ describe('repo bundled examples', () => {
       .filter((item) => item.id.startsWith('dialects/'))
       .map((item) => item.id)
       .sort();
-    expect(dialectExamples).toHaveLength(SUPPORTED_DIALECT_IDS.length);
+    expect(dialectExamples).toHaveLength(SUPPORTED_DIALECT_IDS.filter((id) => id !== 'mongodb-json').length);
     expect(dialectExamples).toContain('dialects/postgresql.sql');
     expect(dialectExamples).toContain('dialects/dynamodb.yaml');
     expect(dialectExamples).toContain('dialects/json-schema.json');
