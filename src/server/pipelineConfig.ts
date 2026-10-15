@@ -1,5 +1,5 @@
 /**
- * Pipeline environment configuration for design → csvToAtlas import.
+ * Pipeline environment configuration for design, then csvToAtlas or mongoimport.
  */
 
 import { resolve } from 'node:path';

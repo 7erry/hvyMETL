@@ -1,3 +1,9 @@
+## hvyMETL 6.0.1
+
+**mongoimport for JSON sources** — The full pipeline loads MongoDB JSON, JSON Schema, and DynamoDB with `mongoimport` from [MongoDB Database Tools](https://www.mongodb.com/try/download/database-tools). SQL dialects still load through csvToAtlas. JSON Schema and DynamoDB still shape CSV, then write NDJSON. MongoDB JSON writes the documents themselves. Set `MONGOIMPORT_PATH`, or put `mongoimport` on `PATH`. The CLI `etl` command is unchanged.
+
+---
+
 ## hvyMETL 6.0.0
 
 **MongoDB JSON input** — Canonical and Relaxed Extended JSON, a JSON array, or NDJSON infer the same structural model SQL already uses. One document shape is one table. A JSON object whose values are arrays of documents becomes one table per array (`authors`, `categories`, `mediaAssets`, `posts`). Nested objects and arrays stay on that table. A field that has two BSON types stays, with `bsonType` `mixed` and the types that were seen. The import panel accepts paste and file upload. When the source dialect is MongoDB JSON, a pasted collection map bulk-writes with `insertMany`, one collection per array. A collection-map file path still loads as one collection. A bad line is counted and the rest continue, unless strict mode is on. SQL sources still load through csvToAtlas.
