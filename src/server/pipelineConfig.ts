@@ -3,7 +3,7 @@
  */
 
 import { resolve } from 'node:path';
-import { getDialectLabel, inferSchemaDialect } from '../dialects.js';
+import { getDialectLabel, inferSchemaDialect, pipelineImportsWithMongoTools } from '../dialects.js';
 import { basename } from 'node:path';
 import {
   csvTableMatchWarnings,
@@ -17,12 +17,15 @@ import {
   validateCsvToAtlasInstallation,
   type CsvToAtlasValidation,
 } from '../utilities/csvToAtlas.js';
+import { resolveMongoImportBinary } from '../utilities/mongoImport.js';
 
 /** Non-secret pipeline settings readable by the UI. */
 export type PipelineConfigStatus = {
   hasMongoUri: boolean;
   hasModelKey: boolean;
   hasCsvToAtlas: boolean;
+  hasMongoImport: boolean;
+  mongoImportPath?: string;
   csvToAtlasLabel?: string;
   csvToAtlasResolvedPath?: string;
   csvSourcePath?: string;
@@ -68,9 +71,12 @@ export function getPipelineConfigStatus(
   const schemaDialectLabel = schemaDialect ? getDialectLabel(schemaDialect) : undefined;
 
   const jsonDocuments = schemaDialect === 'mongodb-json';
+  const usesMongoImport = pipelineImportsWithMongoTools(schemaDialect ?? '');
+  const mongoImport = resolveMongoImportBinary(env);
   const missing: string[] = [];
   if (!hasMongoUri) missing.push('MONGODB_URI');
-  if (!jsonDocuments && !csvToAtlasValidation.ok) missing.push('CSV_TO_ATLAS_PATH');
+  if (usesMongoImport && !mongoImport.ok) missing.push('mongoimport');
+  if (!usesMongoImport && !csvToAtlasValidation.ok) missing.push('CSV_TO_ATLAS_PATH');
   if (!jsonDocuments && !hasCsvSource && !options?.generateMockCsv) {
     missing.push('HVYMETL_CSV_SOURCE or CSV export directory (or enable mock CSV generation)');
   }
@@ -92,6 +98,8 @@ export function getPipelineConfigStatus(
     hasMongoUri,
     hasModelKey,
     hasCsvToAtlas: csvToAtlasValidation.ok,
+    hasMongoImport: mongoImport.ok,
+    mongoImportPath: mongoImport.path,
     csvToAtlasLabel: csvToAtlasValidation.source?.label,
     csvToAtlasResolvedPath: csvToAtlasValidation.source?.rootPath,
     csvSourcePath: resolvedCsv,

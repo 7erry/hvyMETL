@@ -2,8 +2,9 @@
  * Full pipeline: ML design → csvToAtlas import from user CSV exports (web UI).
  */
 
-import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { pipelineImportsWithMongoTools } from '../dialects.js';
 import { runInScopedEnv } from '../runtime/scopedEnv.js';
 import { DEFAULT_LOGICAL_TARGET_DB, tenantArtifactDir, tenantPipelineRunDir } from './tenant.js';
 import { writeDesignArtifacts, type DesignFromModelResult } from '../design/designFromModel.js';
@@ -31,7 +32,9 @@ import { generateMockCsvFromDdl, type MockCsvOptions } from '../utilities/mockCs
 import { registerApiArtifacts, serializeApiArtifactBundle } from './apiArtifactStore.js';
 import { loadMongoJsonIntoCollection } from '../utilities/mongoJsonBulkWriter.js';
 import { mongoJsonCollectionGroups } from '../utilities/mongoJsonParser.js';
+import { resolveMongoImportBinary, runMongoImport } from '../utilities/mongoImport.js';
 import { runImportCli } from '../utilities/runImportCli.js';
+import { shapedCsvTextToNdjson } from '../utilities/shapedCsvToNdjson.js';
 import {
   formatMongoConnectivityFailure,
   resolveMongoDatabaseNameCasing,
@@ -231,9 +234,14 @@ async function runFullPipelineWithStore(
 ): Promise<PipelineRunResult> {
   const startedAt = new Date().toISOString();
   const errors: string[] = [];
-  reportProgress(request, { stage: 'validating', message: 'Validating MongoDB URI and csvToAtlas configuration…' });
-
   const schemaDialect = resolvePipelineSchemaDialect(request.dialect, request.model);
+  const usesMongoImport = pipelineImportsWithMongoTools(schemaDialect);
+  reportProgress(request, {
+    stage: 'validating',
+    message: usesMongoImport
+      ? 'Validating MongoDB URI and mongoimport…'
+      : 'Validating MongoDB URI and csvToAtlas configuration…',
+  });
   const config = getPipelineConfigStatus(importEnv, {
     schemaDialect,
     csvSourcePath: request.csvSourcePath,
@@ -249,7 +257,12 @@ async function runFullPipelineWithStore(
   }
 
   const jsonDocuments = schemaDialect === 'mongodb-json';
-  if (!jsonDocuments && !config.hasCsvToAtlas) {
+  if (usesMongoImport) {
+    const mongoImport = resolveMongoImportBinary(importEnv);
+    if (!mongoImport.ok) {
+      throw new Error(mongoImport.error ?? 'mongoimport not found.');
+    }
+  } else if (!config.hasCsvToAtlas) {
     throw new Error(config.csvToAtlasValidation.errors.join(' ') || 'CSV_TO_ATLAS_PATH is not configured.');
   }
 
@@ -477,8 +490,48 @@ async function runFullPipelineWithStore(
         continue;
       }
 
-      const flags = request.drop === false ? [] : ['--drop'];
       const importCollection = normalizeMongoCollectionName(coll.name, coll.sourceTable);
+      if (usesMongoImport) {
+        const ndjsonDir = join(outDir, 'mongo-import');
+        mkdirSync(ndjsonDir, { recursive: true });
+        const safe = importCollection.replace(/[^A-Za-z0-9._-]+/g, '_') || 'documents';
+        const ndjsonPath = join(ndjsonDir, `${safe}.ndjson`);
+        const body = actualFiles.map((file) => shapedCsvTextToNdjson(readFileSync(file, 'utf8'))).join('');
+        writeFileSync(ndjsonPath, body);
+        if (!body.trim()) {
+          imports.push({
+            collection: importCollection,
+            files: actualFiles,
+            ok: false,
+            error: 'Shaped CSV produced no documents',
+          });
+          errors.push(`${coll.name}: shaped CSV produced no documents`);
+          continue;
+        }
+        const drop = request.drop !== false;
+        const loaded = runMongoImport({
+          uri: importEnv.MONGODB_URI ?? '',
+          database: physicalTargetDb,
+          collection: importCollection,
+          filePath: ndjsonPath,
+          drop,
+          mode: drop ? 'insert' : 'upsert',
+          env: importEnv,
+        });
+        imports.push({
+          collection: importCollection,
+          files: actualFiles,
+          ok: loaded.ok,
+          insertedCount: loaded.insertedCount,
+          error: loaded.ok ? undefined : loaded.error,
+        });
+        if (!loaded.ok) {
+          errors.push(`${coll.name}: import failed`);
+        }
+        continue;
+      }
+
+      const flags = request.drop === false ? [] : ['--drop'];
       const result = runImportCli(actualFiles, importCollection, flags, importEnv);
       imports.push({
         collection: importCollection,

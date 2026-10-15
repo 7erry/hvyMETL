@@ -33,6 +33,7 @@ import {
 } from '../pipelineStages';
 import type { ProfileRequestFields } from '../customProfileShared';
 import type { SqlStructuralModel } from '../types';
+import { pipelineImportsWithMongoTools } from '../../../src/dialects.ts';
 
 type PipelinePanelProps = {
   open: boolean;
@@ -397,6 +398,8 @@ export function PipelinePanel({
       : form.csvSourcePath;
 
   const jsonDocuments = dialect === 'mongodb-json';
+  const mongoTools = pipelineImportsWithMongoTools(dialect);
+  const hasMongoImport = Boolean(config?.hasMongoImport);
 
   const envChecks = useMemo(() => {
     if (!config) return [];
@@ -409,8 +412,16 @@ export function PipelinePanel({
           : 'MongoDB connection (MONGODB_URI)',
         ok: mongoReachable,
       },
-      ...(jsonDocuments
-        ? []
+      ...(mongoTools
+        ? [
+            {
+              id: 'mongoimport',
+              label: config.mongoImportPath
+                ? `mongoimport (${config.mongoImportPath})`
+                : 'mongoimport (MongoDB Database Tools)',
+              ok: hasMongoImport,
+            },
+          ]
         : [
             {
               id: 'csvToAtlas',
@@ -419,6 +430,10 @@ export function PipelinePanel({
                 : 'csvToAtlas import tool (CSV_TO_ATLAS_PATH)',
               ok: hasCsvToAtlas,
             },
+          ]),
+      ...(jsonDocuments
+        ? []
+        : [
             ...(useMockCsv
               ? [
                   {
@@ -438,7 +453,7 @@ export function PipelinePanel({
                 ]),
           ]),
     ];
-  }, [config, dialectLabel, mongoReachable, hasCsvToAtlas, useMockCsv, hasCsvSource, mockGeneratorReady, requiresCsvUpload, jsonDocuments]);
+  }, [config, dialectLabel, mongoReachable, hasCsvToAtlas, hasMongoImport, useMockCsv, hasCsvSource, mockGeneratorReady, requiresCsvUpload, jsonDocuments, mongoTools]);
 
   const passedChecks = envChecks.filter((check) => check.ok).length;
   const envReady = envChecks.length > 0 && passedChecks === envChecks.length;
@@ -446,12 +461,13 @@ export function PipelinePanel({
   const canRun = useMemo(() => {
     if (running || csvUploading || !model) return false;
     if (!hasMongoUri) return false;
+    if (mongoTools && !hasMongoImport) return false;
     if (jsonDocuments) return true;
-    if (!hasCsvToAtlas) return false;
+    if (!mongoTools && !hasCsvToAtlas) return false;
     if (useMockCsv && !mockGeneratorReady) return false;
     if (!hasCsvSource && !useMockCsv) return false;
     return true;
-  }, [running, csvUploading, model, hasMongoUri, hasCsvToAtlas, hasCsvSource, useMockCsv, mockGeneratorReady, jsonDocuments]);
+  }, [running, csvUploading, model, hasMongoUri, hasCsvToAtlas, hasMongoImport, hasCsvSource, useMockCsv, mockGeneratorReady, jsonDocuments, mongoTools]);
 
   const handleRun = async () => {
     setRunning(true);
@@ -641,7 +657,7 @@ export function PipelinePanel({
                     </p>
                   </div>
 
-                  {!serverConfiguredCsvToAtlas ? (
+                  {!mongoTools && !serverConfiguredCsvToAtlas ? (
                     <div className="pipeline-env-field">
                       <div className="pipeline-env-field__header">
                         <code className="pipeline-env-field__name">CSV_TO_ATLAS_PATH</code>
@@ -701,7 +717,7 @@ export function PipelinePanel({
           </div>
         ) : null}
 
-        {config?.csvToAtlasValidation.warnings?.length && !jsonDocuments ? (
+        {config?.csvToAtlasValidation.warnings?.length && !mongoTools ? (
           <div className="pipeline-warn">
             {config.csvToAtlasValidation.warnings.map((w) => (
               <p key={w}>{w}</p>
@@ -709,7 +725,7 @@ export function PipelinePanel({
           </div>
         ) : null}
 
-        {config && !jsonDocuments && !config.hasCsvToAtlas && config.csvToAtlasValidation.errors?.length ? (
+        {config && !mongoTools && !config.hasCsvToAtlas && config.csvToAtlasValidation.errors?.length ? (
           <div className="pipeline-error">
             {config.csvToAtlasValidation.errors.map((e) => (
               <p key={e} style={{ margin: '0.25rem 0' }}>{e}</p>
@@ -720,7 +736,7 @@ export function PipelinePanel({
         {jsonDocuments ? (
           <section className="pipeline-section">
             <h3 className="pipeline-section__title">Data source</h3>
-            <p className="pipeline-hint">Documents from this MongoDB JSON import are bulk-written. csvToAtlas is not used.</p>
+            <p className="pipeline-hint">Documents from this MongoDB JSON import are loaded with mongoimport. csvToAtlas is not used.</p>
           </section>
         ) : (
         <section className="pipeline-section">

@@ -180,6 +180,14 @@ export function pipelineUsesCsvExports(schemaDialect: string): boolean {
   return normalizeDialectId(schemaDialect) !== 'mongodb-json';
 }
 
+const MONGO_IMPORT_DIALECTS = new Set(['mongodb-json', 'json-schema', 'dynamodb']);
+
+/** Pipeline load uses mongoimport. SQL dialects stay on csvToAtlas. */
+export function pipelineImportsWithMongoTools(schemaDialect: string): boolean {
+  const id = normalizeDialectId(schemaDialect);
+  return Boolean(id && MONGO_IMPORT_DIALECTS.has(id));
+}
+
 /** User-facing note for CSV data source in the pipeline dialog. */
 export function getCsvSourceHint(schemaDialect: string): string {
   const label = getDialectLabel(schemaDialect);

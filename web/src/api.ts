@@ -284,6 +284,8 @@ export type PipelineConfigStatus = {
   hasMongoUri: boolean;
   hasModelKey: boolean;
   hasCsvToAtlas: boolean;
+  hasMongoImport?: boolean;
+  mongoImportPath?: string;
   csvToAtlasLabel?: string;
   csvToAtlasResolvedPath?: string;
   csvSourcePath?: string;

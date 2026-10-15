@@ -1,5 +1,6 @@
 import { describe, expect, it, beforeEach, afterEach, vi } from 'vitest';
-import { readFileSync } from 'node:fs';
+import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { parseDdlToModel } from '../utilities/ddlParser.js';
 import { InMemoryMigrationStore, resetMigrationStoreSingleton, setMigrationStore } from '../ml_engine/migrationStore.js';
@@ -7,11 +8,17 @@ import { runFullPipeline } from './runPipeline.js';
 
 const mocks = vi.hoisted(() => ({
   runImportCli: vi.fn(() => ({ ok: true, parsed: { insertedCount: 10 }, status: 0, stdout: '', stderr: '' })),
+  runMongoImport: vi.fn(() => ({ ok: true, status: 0, stdout: '', stderr: '', insertedCount: 1 })),
   resolveMongoDatabaseNameCasing: vi.fn(async (_uri: string, requestedDbName: string) => requestedDbName),
 }));
 
 vi.mock('../utilities/runImportCli.js', () => ({
   runImportCli: mocks.runImportCli,
+}));
+
+vi.mock('../utilities/mongoImport.js', () => ({
+  resolveMongoImportBinary: () => ({ ok: true, path: '/fake/mongoimport' }),
+  runMongoImport: mocks.runMongoImport,
 }));
 
 vi.mock('../utilities/mongoConnectivity.js', () => ({
@@ -140,5 +147,48 @@ describe('runFullPipeline feedback memory', () => {
     expect(mocks.runImportCli).toHaveBeenCalled();
     const importEnv = mocks.runImportCli.mock.calls[0][3] as NodeJS.ProcessEnv;
     expect(importEnv.MONGODB_DB).toBe('Ass');
+    expect(mocks.runMongoImport).not.toHaveBeenCalled();
+  }, 30_000);
+
+  it('imports JSON Schema with mongoimport and leaves csvToAtlas unused', async () => {
+    const csvDir = mkdtempSync(join(tmpdir(), 'json-schema-csv-'));
+    writeFileSync(join(csvDir, 'posts.csv'), 'id,title\n1,Hello\n');
+    const outDir = mkdtempSync(join(tmpdir(), 'json-schema-out-'));
+
+    await runFullPipeline({
+      profileId: 'catalog',
+      model: {
+        source: 'ddl:json-schema',
+        tables: [
+          {
+            name: 'posts',
+            columns: [
+              { name: 'id', sqlType: 'INTEGER', bsonType: 'int', nullable: false, isPrimaryKey: true },
+              { name: 'title', sqlType: 'VARCHAR(255)', bsonType: 'string', nullable: true, isPrimaryKey: false },
+            ],
+            primaryKey: ['id'],
+            foreignKeys: [],
+            rowCount: 1,
+          },
+        ],
+        relationships: [],
+      },
+      ddl: '{"type":"object","title":"posts"}',
+      dialect: 'json-schema',
+      csvSourcePath: csvDir,
+      targetDb: 'posts_db',
+      mongoUri: 'mongodb://stub-for-validation',
+      knowledgeDir: join(ROOT, 'knowledge'),
+      rootDir: ROOT,
+      outDir,
+      migrationStore: store,
+    });
+
+    expect(mocks.runImportCli).not.toHaveBeenCalled();
+    expect(mocks.runMongoImport).toHaveBeenCalled();
+    const importCall = mocks.runMongoImport.mock.calls[0]?.[0] as { mode?: string; filePath?: string; collection?: string };
+    expect(importCall.mode).toBe('insert');
+    expect(importCall.filePath).toMatch(/\.ndjson$/);
+    expect(importCall.collection).toBeTruthy();
   }, 30_000);
 });
