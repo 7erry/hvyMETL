@@ -1,3 +1,9 @@
+## hvyMETL 6.0.2
+
+**JSON Schema enum refs** — A `$ref` to a string enum in `$defs`, such as `UserRole` or `PostStatus`, stays a string column. A `$ref` to an object schema, such as a post author pointing at `User`, stays a foreign key.
+
+---
+
 ## hvyMETL 6.0.1
 
 **mongoimport for JSON sources** — The full pipeline loads MongoDB JSON, JSON Schema, and DynamoDB with `mongoimport` from [MongoDB Database Tools](https://www.mongodb.com/try/download/database-tools). SQL dialects still load through csvToAtlas. JSON Schema and DynamoDB still shape CSV, then write NDJSON. MongoDB JSON writes the documents themselves. Set `MONGOIMPORT_PATH`, or put `mongoimport` on `PATH`. The CLI `etl` command is unchanged.

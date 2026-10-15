@@ -282,6 +282,48 @@ type NestedParentLink = {
   parentPrimaryKey: string;
 };
 
+function defsByPointer(root: Record<string, unknown>): Map<string, Record<string, unknown>> {
+  const map = new Map<string, Record<string, unknown>>();
+  for (const bucket of ['$defs', 'definitions']) {
+    for (const [key, value] of Object.entries(asRecord(root[bucket]))) {
+      map.set(`#/${bucket}/${key}`, asRecord(value));
+    }
+  }
+  return map;
+}
+
+/** A `$ref` to a string enum stays a string. A `$ref` to an object schema stays a foreign key. */
+function columnForRef(
+  propertyName: string,
+  ref: string,
+  isPrimaryKey: boolean,
+  idBySchemaId: Map<string, string>,
+  defs: Map<string, Record<string, unknown>>,
+): { column: ColumnModel; foreignKey?: ForeignKeyModel } {
+  const def = defs.get(ref.trim());
+  if (def && !isObjectSchema(def)) {
+    return { column: jsonSchemaTypeToColumn(propertyName, def, isPrimaryKey) };
+  }
+
+  const target = resolveRefTarget(ref, idBySchemaId);
+  const column: ColumnModel = {
+    name: propertyName,
+    sqlType: 'VARCHAR(64)',
+    bsonType: 'objectId',
+    nullable: !isPrimaryKey,
+    isPrimaryKey,
+  };
+  if (!target) return { column };
+  return {
+    column,
+    foreignKey: {
+      column: propertyName,
+      referencesTable: target.table,
+      referencesColumn: target.column,
+    },
+  };
+}
+
 /**
  * Expand a single monolithic document schema into multiple logical tables by promoting
  * nested objects and array-of-object properties to child tables with foreign keys.
@@ -292,6 +334,7 @@ function expandNestedJsonSchemaToTables(
   idBySchemaId: Map<string, string>,
   parentLink?: NestedParentLink,
   defKey?: string,
+  defs: Map<string, Record<string, unknown>> = new Map(),
 ): TableModel[] {
   registerSchemaIdentifiers(schema, tableName, idBySchemaId, defKey);
 
@@ -334,21 +377,15 @@ function expandNestedJsonSchemaToTables(
     const spec = asRecord(propertySpec);
 
     if (typeof spec.$ref === 'string') {
-      const target = resolveRefTarget(spec.$ref, idBySchemaId);
-      columns.push({
-        name: propertyName,
-        sqlType: 'VARCHAR(64)',
-        bsonType: 'objectId',
-        nullable: !primaryKey.includes(propertyName),
-        isPrimaryKey: primaryKey.includes(propertyName),
-      });
-      if (target) {
-        foreignKeys.push({
-          column: propertyName,
-          referencesTable: target.table,
-          referencesColumn: target.column,
-        });
-      }
+      const resolved = columnForRef(
+        propertyName,
+        spec.$ref,
+        primaryKey.includes(propertyName),
+        idBySchemaId,
+        defs,
+      );
+      columns.push(resolved.column);
+      if (resolved.foreignKey) foreignKeys.push(resolved.foreignKey);
       continue;
     }
 
@@ -359,6 +396,8 @@ function expandNestedJsonSchemaToTables(
           nestedChildTableName(tableName, propertyName),
           idBySchemaId,
           { parentTable: tableName, parentPrimaryKey: primaryKey[0] ?? '_id' },
+          undefined,
+          defs,
         ),
       );
       continue;
@@ -371,6 +410,8 @@ function expandNestedJsonSchemaToTables(
           nestedChildTableName(tableName, propertyName),
           idBySchemaId,
           { parentTable: tableName, parentPrimaryKey: primaryKey[0] ?? '_id' },
+          undefined,
+          defs,
         ),
       );
       continue;
@@ -457,6 +498,7 @@ function buildTableFromSchema(
   schema: Record<string, unknown>,
   idBySchemaId: Map<string, string>,
   defKey?: string,
+  defs: Map<string, Record<string, unknown>> = new Map(),
 ): TableModel {
   const name = schemaDocumentToTableName(schema);
   registerSchemaIdentifiers(schema, name, idBySchemaId, defKey);
@@ -476,21 +518,9 @@ function buildTableFromSchema(
     const isPrimaryKey = primaryKey.includes(propertyName);
 
     if (typeof spec.$ref === 'string') {
-      const target = resolveRefTarget(spec.$ref, idBySchemaId);
-      columns.push({
-        name: propertyName,
-        sqlType: 'VARCHAR(64)',
-        bsonType: 'objectId',
-        nullable: !isPrimaryKey,
-        isPrimaryKey,
-      });
-      if (target) {
-        foreignKeys.push({
-          column: propertyName,
-          referencesTable: target.table,
-          referencesColumn: target.column,
-        });
-      }
+      const resolved = columnForRef(propertyName, spec.$ref, isPrimaryKey, idBySchemaId, defs);
+      columns.push(resolved.column);
+      if (resolved.foreignKey) foreignKeys.push(resolved.foreignKey);
       continue;
     }
 
@@ -651,6 +681,7 @@ export function parseJsonSchemaDocuments(jsonText: string): Record<string, unkno
  */
 export function parseJsonSchemaToModel(jsonText: string, sourceLabel = 'ddl:json-schema'): SqlStructuralModel {
   const { entries, explicitBundle } = readSchemaDocuments(jsonText);
+  const defs = defsByPointer(asRecord(parseJsonSchemaRootDocument(jsonText)));
   const useNestedExpansion = entries.length === 1 && !explicitBundle && !entries[0]!.defKey;
 
   const idBySchemaId = new Map<string, string>();
@@ -667,8 +698,9 @@ export function parseJsonSchemaToModel(jsonText: string, sourceLabel = 'ddl:json
         idBySchemaId,
         undefined,
         entries[0]!.defKey,
+        defs,
       )
-    : entries.map(({ schema, defKey }) => buildTableFromSchema(schema, idBySchemaId, defKey));
+    : entries.map(({ schema, defKey }) => buildTableFromSchema(schema, idBySchemaId, defKey, defs));
   normalizeForeignKeys(tables);
 
   if (tables.length === 0) {

@@ -364,6 +364,68 @@ describe('parseJsonSchemaToModel', () => {
     const mongoDocument = '{"id":"1","properties":{"color":"red"}}';
     expect(resolveSchemaImportDialect(mongoDocument, 'mongodb-json')).toBe('mongodb-json');
   });
+
+  it('imports a CMS collection schema and keeps string enum refs as strings', () => {
+    const schema = {
+      $schema: 'https://json-schema.org/draft/2020-12/schema',
+      $id: 'https://example.com/schemas/cms.json',
+      title: 'CMS Database Schema',
+      type: 'object',
+      properties: {
+        users: { type: 'array', items: { $ref: '#/$defs/User' } },
+        posts: { type: 'array', items: { $ref: '#/$defs/Post' } },
+        comments: { type: 'array', items: { $ref: '#/$defs/Comment' } },
+      },
+      $defs: {
+        UserRole: { type: 'string', enum: ['admin', 'editor', 'author', 'subscriber'] },
+        PostStatus: { type: 'string', enum: ['draft', 'published'] },
+        CommentStatus: { type: 'string', enum: ['pending', 'approved'] },
+        User: {
+          type: 'object',
+          required: ['id', 'email', 'role'],
+          properties: {
+            id: { type: 'integer' },
+            email: { type: 'string', format: 'email' },
+            role: { $ref: '#/$defs/UserRole', default: 'subscriber' },
+            first_name: { type: ['string', 'null'] },
+          },
+        },
+        Post: {
+          type: 'object',
+          required: ['id', 'author', 'status'],
+          properties: {
+            id: { type: 'integer' },
+            author: { $ref: '#/$defs/User' },
+            status: { $ref: '#/$defs/PostStatus' },
+          },
+        },
+        Comment: {
+          type: 'object',
+          required: ['id'],
+          properties: {
+            id: { type: 'integer' },
+            status: { $ref: '#/$defs/CommentStatus' },
+          },
+        },
+      },
+    };
+
+    const model = parseSchemaImport(JSON.stringify(schema), 'json-schema');
+    expect(model.tables.map((table) => table.name)).toEqual(['users', 'posts', 'comments']);
+
+    const column = (tableName: string, columnName: string) =>
+      model.tables.find((table) => table.name === tableName)?.columns.find((entry) => entry.name === columnName);
+    const foreignKey = (tableName: string, columnName: string) =>
+      model.tables.find((table) => table.name === tableName)?.foreignKeys.find((entry) => entry.column === columnName);
+
+    expect(column('users', 'role')?.bsonType).toBe('string');
+    expect(column('users', 'first_name')?.bsonType).toBe('string');
+    expect(column('posts', 'status')?.bsonType).toBe('string');
+    expect(column('comments', 'status')?.bsonType).toBe('string');
+    expect(foreignKey('users', 'role')).toBeUndefined();
+    expect(foreignKey('posts', 'status')).toBeUndefined();
+    expect(foreignKey('posts', 'author')?.referencesTable).toBe('users');
+  });
 });
 
 describe('renderJsonSchemaBundleText', () => {
