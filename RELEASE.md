@@ -1,3 +1,9 @@
+## hvyMETL 6.0.3
+
+**Cookie consent** — The studio asks on the first visit before optional browser storage is used. Strictly necessary storage stays on. Functional, analytics, and marketing stay off until accepted, except a US browser language or time zone, which starts them on so they can be opted out. Global Privacy Control keeps analytics and marketing off. Cookie Preferences in the footer reopens the choice.
+
+---
+
 ## hvyMETL 6.0.2
 
 **JSON Schema enum refs** — A `$ref` to a string enum in `$defs`, such as `UserRole` or `PostStatus`, stays a string column. A `$ref` to an object schema, such as a post author pointing at `User`, stays a foreign key.

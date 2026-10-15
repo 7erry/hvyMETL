@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { SESSION_EXPIRED_DETAIL } from '../auth/authErrors';
 import { useAccess } from '../auth/HostedAuthProvider';
+import { PrivacyPreferencesLink } from '../consent/PrivacyPreferencesLink';
 
 type AuthGateProps = {
   children: ReactNode;
@@ -35,6 +36,7 @@ export function AuthGate({ children }: AuthGateProps) {
             Sign out
           </button>
           <a href="/terms">Terms and Conditions</a>
+          <PrivacyPreferencesLink />
         </section>
       </main>
     );
@@ -53,6 +55,7 @@ export function AuthGate({ children }: AuthGateProps) {
             Sign in
           </button>
           <a href="/terms">Terms and Conditions</a>
+          <PrivacyPreferencesLink />
           {access.error ? <p className="auth-gate__error">{access.error}</p> : null}
         </section>
       </main>
@@ -75,6 +78,7 @@ export function AuthGate({ children }: AuthGateProps) {
             did not add <code>https://hvymetl.studio/roles</code> to your access token.
           </p>
           <a href="/terms">Terms and Conditions</a>
+          <PrivacyPreferencesLink />
           <button type="button" className="secondary" onClick={access.logout}>
             Sign out
           </button>

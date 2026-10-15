@@ -7254,3 +7254,105 @@ textarea {
   padding: 0.65rem 0.75rem 1rem;
   overflow-y: auto;
 }
+
+.cookie-banner {
+  position: fixed;
+  z-index: 1100;
+  left: 1rem;
+  right: 1rem;
+  bottom: 1rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 1.1rem;
+  border: 1px solid var(--mdb-green-dark-2);
+  border-radius: 8px;
+  background: var(--mdb-gray-dark-4);
+  color: var(--mdb-spring-green);
+  font-family: 'Euclid Circular A', 'Segoe UI', system-ui, sans-serif;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.35);
+}
+
+.cookie-banner h2 {
+  margin: 0 0 0.35rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--mdb-spring-green);
+}
+
+.cookie-banner p {
+  margin: 0;
+  max-width: 46rem;
+  font-size: 0.8rem;
+  line-height: 1.45;
+}
+
+.cookie-banner__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  justify-content: flex-end;
+}
+
+.cookie-preferences {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.cookie-preferences__list {
+  display: flex;
+  flex-direction: column;
+}
+
+.cookie-preferences__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.75rem 0;
+  border-top: 1px solid var(--mdb-green-dark-2);
+  font-size: 0.875rem;
+  line-height: 1.45;
+}
+
+.cookie-preferences__row strong {
+  display: block;
+  font-weight: 600;
+}
+
+.cookie-preferences__row p {
+  margin: 0.2rem 0 0;
+  font-size: 0.8rem;
+  opacity: 0.85;
+}
+
+.cookie-preferences__row input {
+  accent-color: var(--mdb-green-base);
+  width: 1.1rem;
+  height: 1.1rem;
+}
+
+button.cookie-preferences-link,
+button.diagram-status-footer__privacy {
+  min-height: 0;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--mdb-green-base);
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 1.35;
+  white-space: nowrap;
+}
+
+button.cookie-preferences-link:hover,
+button.diagram-status-footer__privacy:hover {
+  color: var(--mdb-spring-green);
+  text-decoration: underline;
+  background: transparent;
+  transform: none;
+}
