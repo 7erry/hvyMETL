@@ -35,4 +35,12 @@ describe('structuralModelJsonParser', () => {
     expect(result.resolvedDialect).toBe('postgresql');
     expect(result.displayText).toMatch(/CREATE TABLE/i);
   });
+
+  it('reports a cut-off JSON Schema paste instead of an empty SQL model', () => {
+    const cutOff = `{
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "$defs": { "Tag": { "type": "object", "properties": { "slug": { "type": "string", "minLength":
+    `;
+    expect(() => parseSchemaImportWithMeta(cutOff, 'postgresql')).toThrow(/Unexpected end of JSON input/);
+  });
 });

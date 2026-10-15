@@ -137,6 +137,14 @@ export function parseSchemaImportWithMeta(
       'Content looks like a SqlStructuralModel JSON export but could not be parsed. Check table and column shapes.',
     );
   }
+  if (model.tables.length === 0 && (trimmed.startsWith('{') || trimmed.startsWith('['))) {
+    try {
+      JSON.parse(trimmed);
+    } catch (error) {
+      const detail = error instanceof Error ? error.message : String(error);
+      throw new Error(`Schema import is not valid JSON. ${detail}`);
+    }
+  }
   return { model, displayText: trimmed, resolvedDialect: normalized };
 }
 
