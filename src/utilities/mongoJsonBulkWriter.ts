@@ -1,11 +1,14 @@
 /**
- * Bulk-write Extended JSON documents with the MongoDB driver.
+ * Project Extended JSON documents and load them with mongoimport.
  * SQL sources stay on csvToAtlas.
  */
 
-import { MongoClient } from 'mongodb';
+import { mkdirSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { BSON } from 'mongodb';
 import type { ExtendedJsonRecord } from './mongoExtendedJson.js';
 import { iterateExtendedJsonFile, iterateExtendedJsonText } from './mongoExtendedJson.js';
+import { runMongoImport, type MongoImportSpawn } from './mongoImport.js';
 
 const DEFAULT_BATCH_SIZE = 500;
 
@@ -119,7 +122,12 @@ export async function writeExtendedJsonBatches(
   return { inserted, errors };
 }
 
-/** Read NDJSON or a JSON array and insertMany into one collection. */
+function ndjsonFileName(collection: string): string {
+  const safe = collection.replace(/[^A-Za-z0-9._-]+/g, '_') || 'documents';
+  return `${safe}.ndjson`;
+}
+
+/** Read NDJSON or a JSON array, project it, and mongoimport one collection. */
 export async function loadMongoJsonIntoCollection(options: {
   uri: string;
   database: string;
@@ -129,33 +137,54 @@ export async function loadMongoJsonIntoCollection(options: {
   filePath?: string;
   /** Already-parsed documents. Used when one JSON object holds several collections. */
   documents?: Record<string, unknown>[];
+  /** Run directory that receives the NDJSON file mongoimport reads. */
+  ndjsonDir: string;
   strict: boolean;
   drop: boolean;
+  env?: NodeJS.ProcessEnv;
+  spawnImport?: MongoImportSpawn;
 }): Promise<JsonBulkWriteResult> {
   if (!options.filePath && !options.text?.trim() && !options.documents) {
     return { inserted: 0, errors: ['MongoDB JSON load has no documents.'] };
   }
-  const client = new MongoClient(options.uri);
-  await client.connect();
-  try {
-    const collection = client.db(options.database).collection(options.collection);
-    if (options.drop) {
-      await collection.drop().catch(() => undefined);
-    }
-    const records = options.documents
-      ? options.documents.map((value, index) => ({ ok: true as const, value, line: index + 1 }))
-      : options.filePath
-        ? iterateExtendedJsonFile(options.filePath)
-        : iterateExtendedJsonText(options.text ?? '');
-    return await writeExtendedJsonBatches(records, {
-      strict: options.strict,
-      schema: options.schema,
-      insertMany: async (docs) => {
-        const result = await collection.insertMany(docs, { ordered: options.strict });
-        return { insertedCount: result.insertedCount };
-      },
-    });
-  } finally {
-    await client.close();
+  const records = options.documents
+    ? options.documents.map((value, index) => ({ ok: true as const, value, line: index + 1 }))
+    : options.filePath
+      ? iterateExtendedJsonFile(options.filePath)
+      : iterateExtendedJsonText(options.text ?? '');
+  const collected: Record<string, unknown>[] = [];
+  const batched = await writeExtendedJsonBatches(records, {
+    strict: options.strict,
+    schema: options.schema,
+    insertMany: async (docs) => {
+      collected.push(...docs);
+      return { insertedCount: docs.length };
+    },
+  });
+  if (collected.length === 0) {
+    return {
+      inserted: 0,
+      errors: batched.errors.length > 0 ? batched.errors : ['MongoDB JSON load has no documents.'],
+    };
   }
+
+  mkdirSync(options.ndjsonDir, { recursive: true });
+  const filePath = join(options.ndjsonDir, ndjsonFileName(options.collection));
+  const body = `${collected.map((doc) => BSON.EJSON.stringify(doc, { relaxed: false })).join('\n')}\n`;
+  writeFileSync(filePath, body);
+
+  const imported = runMongoImport({
+    uri: options.uri,
+    database: options.database,
+    collection: options.collection,
+    filePath,
+    drop: options.drop,
+    stopOnError: options.strict,
+    mode: 'insert',
+    env: options.env,
+    spawnImport: options.spawnImport,
+  });
+  const errors = [...batched.errors];
+  if (!imported.ok && imported.error) errors.push(imported.error);
+  return { inserted: imported.insertedCount ?? 0, errors };
 }

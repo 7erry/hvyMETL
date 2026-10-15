@@ -383,8 +383,10 @@ async function runFullPipelineWithStore(
           collection: importCollection,
           schema: item.collection.jsonSchema,
           documents: item.documents,
+          ndjsonDir: join(outDir, 'mongo-import'),
           strict: request.strictJson === true,
           drop: request.drop !== false,
+          env: importEnv,
         });
         imports.push({
           collection: importCollection,
@@ -413,8 +415,10 @@ async function runFullPipelineWithStore(
         schema: target.jsonSchema,
         text: request.ddl,
         filePath: request.jsonFilePath,
+        ndjsonDir: join(outDir, 'mongo-import'),
         strict: request.strictJson === true,
         drop: request.drop !== false,
+        env: importEnv,
       });
       imports.push({
         collection: importCollection,
