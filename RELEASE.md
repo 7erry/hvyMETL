@@ -1,3 +1,9 @@
+## hvyMETL 7.0.0
+
+**Import live data** — Next to Import schema, the studio can sample a MongoDB database and infer the same structural model as a MongoDB JSON paste. The studio server opens the connection. Up to 50 documents are read from each collection. The hosted website refuses the request, because it cannot reach a database on your computer. Paste, file upload, and SQLite file import are unchanged. Pipeline load still uses CSV or mongoimport.
+
+---
+
 ## hvyMETL 6.0.3
 
 **Cookie consent** — The studio asks on the first visit before optional browser storage is used. Strictly necessary storage stays on. Functional, analytics, and marketing stay off until accepted, except a US browser language or time zone, which starts them on so they can be opted out. Global Privacy Control keeps analytics and marketing off. Cookie Preferences in the footer reopens the choice.

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { detectDialect } from './detectDialect.js';
 import { validateMongoJsonPaste } from './mongoJsonValidate.js';
-import { parseMongoJsonToModel } from './mongoJsonParser.js';
+import { modelFromMongoCollections, parseMongoJsonToModel } from './mongoJsonParser.js';
 import { parseSchemaImportWithMeta, resolveSchemaImportDialect } from './schemaImport.js';
 
 const DOCUMENTS = [
@@ -83,5 +83,19 @@ describe('parseMongoJsonToModel', () => {
     expect(posts?.columns.find((column) => column.name === 'meta')?.bsonType).toBe('object');
     expect(posts?.columns.find((column) => column.name === 'content')?.bsonType).toBe('array');
     expect(posts?.columns.find((column) => column.name === 'tags')?.bsonType).toBe('array');
+  });
+
+  it('builds one table per sampled live collection and skips empty ones', () => {
+    const model = modelFromMongoCollections(
+      [
+        { name: 'users', documents: [{ _id: 'u1', email: 'a@b.c' }] },
+        { name: 'system.indexes', documents: [] },
+        { name: 'posts', documents: [{ _id: 'p1', title: 'Hi' }] },
+      ],
+      'ddl:mongodb-json',
+    );
+    expect(model.tables.map((table) => table.name)).toEqual(['users', 'posts']);
+    expect(model.tables[0]?.primaryKey).toEqual(['_id']);
+    expect(model.tables[0]?.columns.find((column) => column.name === 'email')?.bsonType).toBe('string');
   });
 });

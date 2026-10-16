@@ -10,6 +10,7 @@ type SchemaImportModalProps = {
   onDialectChange: (dialect: string) => void;
   onDdlChange: (ddl: string) => void;
   onImportQuery: () => void;
+  onImportLive: (uri: string, database: string) => void;
   onSchemaFile: (file: File) => void;
   onImportBuiltinExample?: (exampleId: string) => void | Promise<void>;
   onClose: () => void;
@@ -25,6 +26,7 @@ export function SchemaImportModal({
   onDialectChange,
   onDdlChange,
   onImportQuery,
+  onImportLive,
   onSchemaFile,
   onImportBuiltinExample,
   onClose,
@@ -54,6 +56,7 @@ export function SchemaImportModal({
           onDialectChange={onDialectChange}
           onDdlChange={onDdlChange}
           onImportQuery={onImportQuery}
+          onImportLive={onImportLive}
           onSchemaFile={onSchemaFile}
           onImportBuiltinExample={onImportBuiltinExample}
           framed={false}

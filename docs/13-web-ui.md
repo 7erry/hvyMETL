@@ -80,6 +80,7 @@ All six pipeline steps (Knowledge + RAG, profiles, design, ETL, import, codegen)
 | `GET` | `/api/schema/builtin-examples` | — | `{ examples, examplesDir, source }` |
 | `POST` | `/api/schema/import-builtin-example` | `{ exampleId }` | `{ model, ddl, dialect, suggestedProfileId, inferred }` |
 | `POST` | `/api/schema/import-sqlite` | `multipart database` | `{ model, ddl, sourcePath }` |
+| `POST` | `/api/schema/import-live` | `{ uri, database? }` | `{ model, ddl, dialect, inferred }` from a sampled MongoDB database. Refused on the hosted studio. |
 | `POST` | `/api/design` | `{ model, profileId, ddl, cardinalityOverrides?, forceEmbedOverrides? }` | `{ plan, designReport, retrievalStrategy }` |
 | `POST` | `/api/export/migration` | `{ model, profileId, ddl, cardinalityOverrides?, forceEmbedOverrides? }` | Downloads: plan JSON, design report, RAG prompts |
 | `POST` | `/api/export/prompts` | `{ ddl, profileId }` | RAG prompt bundle |

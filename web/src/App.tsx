@@ -69,6 +69,7 @@ import {
   fetchProfiles,
   importDdl,
   importBuiltinExample,
+  importLiveMongo,
   importSqlite,
   runDesign,
   runDesignWithCsv,
@@ -680,6 +681,17 @@ export default function App() {
       await handleImportQuery(text, sourceLabel);
     } catch (e) {
       setStatus(`DDL import failed: ${describeApiError(e)}`);
+    }
+  };
+
+  const handleImportLive = async (uri: string, database: string) => {
+    try {
+      setStatus('Sampling live MongoDB…');
+      const { model: m, ddl: importedDdl, inferred, dialect: resolvedDialect } = await importLiveMongo(uri, database);
+      setSessionField('dialect', resolvedDialect);
+      await applySchema(importedDdl, m, inferred?.profileId);
+    } catch (e) {
+      setStatus(`Import failed: ${describeApiError(e)}`);
     }
   };
 
@@ -1501,6 +1513,7 @@ export default function App() {
               onDialectChange={(value) => setSessionField('dialect', value)}
               onDdlChange={(value) => setSessionField('ddl', value)}
               onImportQuery={() => void handleImportQuery()}
+              onImportLive={(uri, database) => void handleImportLive(uri, database)}
               onSchemaFile={(file) => void handleSchemaFileUpload(file)}
               onImportBuiltinExample={(id) => void handleImportBuiltinExample(id)}
             />
@@ -1526,6 +1539,7 @@ export default function App() {
                         onDialectChange={(value) => setSessionField('dialect', value)}
                         onDdlChange={(value) => setSessionField('ddl', value)}
                         onImportQuery={() => void handleImportQuery()}
+                        onImportLive={(uri, database) => void handleImportLive(uri, database)}
                         onSchemaFile={(file) => void handleSchemaFileUpload(file)}
                         onImportBuiltinExample={(id) => void handleImportBuiltinExample(id)}
                         onRequestSidebarWidth={handleSchemaImportSidebarWidth}
@@ -1970,6 +1984,7 @@ export default function App() {
         onDialectChange={(value) => setSessionField('dialect', value)}
         onDdlChange={(value) => setSessionField('ddl', value)}
         onImportQuery={() => void handleImportQuery()}
+        onImportLive={(uri, database) => void handleImportLive(uri, database)}
         onSchemaFile={(file) => void handleSchemaFileUpload(file)}
         onImportBuiltinExample={(id) => void handleImportBuiltinExample(id)}
         onClose={closeSchemaImportDialog}

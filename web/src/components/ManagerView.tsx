@@ -49,6 +49,7 @@ type ManagerViewProps = {
   onDialectChange: (dialect: string) => void;
   onDdlChange: (ddl: string) => void;
   onImportQuery: () => void;
+  onImportLive: (uri: string, database: string) => void;
   onSchemaFile: (file: File) => void;
   onImportBuiltinExample?: (exampleId: string) => void | Promise<void>;
   exporting: boolean;
@@ -80,6 +81,7 @@ export function ManagerView({
   onDialectChange,
   onDdlChange,
   onImportQuery,
+  onImportLive,
   onSchemaFile,
   onImportBuiltinExample,
   exporting,
@@ -202,6 +204,7 @@ export function ManagerView({
             onDialectChange={onDialectChange}
             onDdlChange={onDdlChange}
             onImportQuery={onImportQuery}
+            onImportLive={onImportLive}
             onSchemaFile={onSchemaFile}
             onImportBuiltinExample={onImportBuiltinExample}
             onRequestSidebarWidth={handleSchemaImportSidebarWidth}

@@ -270,6 +270,19 @@ export async function importBuiltinExample(exampleId: string): Promise<{
   return res.json();
 }
 
+export async function importLiveMongo(
+  uri: string,
+  database: string,
+): Promise<{ model: SqlStructuralModel; ddl: string; dialect: string; inferred?: ProfileInference }> {
+  const res = await apiFetch(`${base}/api/schema/import-live`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ uri, database }),
+  });
+  if (!res.ok) throw new Error(await readApiError(res));
+  return res.json();
+}
+
 export async function importSqlite(
   file: File,
 ): Promise<{ model: SqlStructuralModel; ddl: string; sourcePath?: string; inferred?: ProfileInference }> {

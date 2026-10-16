@@ -7,6 +7,7 @@ import { detectDialect, DIALECT_DETECT_MIN_CONFIDENCE } from '../schema/detectDi
 import { getDialectLabel, isSupportedDialect } from '../../../src/dialects.ts';
 import { validateMongoJsonPaste } from '../../../src/utilities/mongoJsonValidate.ts';
 import type { Dialect } from '../types';
+import { LiveMongoImportForm } from './LiveMongoImportForm';
 
 const DIALECT_DETECT_DEBOUNCE_MS = 280;
 
@@ -18,6 +19,7 @@ type SchemaImportPanelProps = {
   onDialectChange: (dialect: string) => void;
   onDdlChange: (ddl: string) => void;
   onImportQuery: () => void;
+  onImportLive: (uri: string, database: string) => void;
   onSchemaFile: (file: File) => void;
   onImportBuiltinExample?: (exampleId: string) => void | Promise<void>;
   /** When the DDL textarea is resized wider than the sidebar, expand the split pane. */
@@ -34,6 +36,7 @@ export function SchemaImportPanel({
   onDialectChange,
   onDdlChange,
   onImportQuery,
+  onImportLive,
   onSchemaFile,
   onImportBuiltinExample,
   onRequestSidebarWidth,
@@ -283,6 +286,7 @@ export function SchemaImportPanel({
           }}
         />
       </div>
+      <LiveMongoImportForm disabled={!apiConnected} onImport={onImportLive} />
       {onImportBuiltinExample ? (
         <div className="schema-import-panel__examples">
           <label className="schema-import-panel__label" htmlFor="builtin-example-select">

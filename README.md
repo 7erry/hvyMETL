@@ -9,7 +9,7 @@ every schema decision in a retrievable knowledge base of MongoDB design patterns
 your workload telemetry (read:write ratio, peak RPM, data growth), then runs a
 parallel, pattern-aware ETL into MongoDB Atlas.
 
-**Release:** [`6.0.3`](RELEASE.md#hvymetl-603) — see [RELEASE.md](RELEASE.md) for full release history.
+**Release:** [`7.0.0`](RELEASE.md#hvymetl-700) — see [RELEASE.md](RELEASE.md) for full release history.
 
 An optional **ML engine** (`src/ml_engine/`) adds telemetry-aware reranking
 ([Voyage rerank-2.5](https://docs.voyageai.com/reference/reranker-api) when
@@ -278,9 +278,10 @@ command per collection.
 
 ## Supported SQL dialects
 
-Eleven dialects are recognized for schema import; only **SQLite** has a live database
-adapter (CLI + file upload). All others use **DDL paste** (web UI or API). Row data in
-the web pipeline comes from **CSV exports** per table.
+Schema import recognizes the dialects below. **SQLite** has a live file adapter (CLI + file upload).
+**MongoDB** can be sampled from a `mongodb://` URI when the studio server runs on a machine that can
+reach that database. The hosted website refuses that call. Other dialects use **DDL paste**. Row data
+in the web pipeline still comes from **CSV exports** per table.
 
 | Tier | Dialects |
 | --- | --- |

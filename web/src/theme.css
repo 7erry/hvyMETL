@@ -5310,6 +5310,19 @@ textarea {
   margin-bottom: 0.35rem;
 }
 
+.live-mongo-import {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  margin-top: 0.75rem;
+}
+
+.live-mongo-import input {
+  display: block;
+  width: 100%;
+  margin-top: 0.3rem;
+}
+
 .schema-import-panel__select {
   width: 100%;
 }

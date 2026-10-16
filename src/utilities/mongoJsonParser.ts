@@ -241,3 +241,17 @@ export function parseMongoJsonToModel(text: string, sourceLabel: string): SqlStr
     relationships: [],
   };
 }
+
+/** One table per sampled collection. Empty collections are skipped. */
+export function modelFromMongoCollections(
+  collections: { name: string; documents: Record<string, unknown>[] }[],
+  sourceLabel: string,
+): SqlStructuralModel {
+  const tables = collections
+    .filter((collection) => collection.documents.length > 0)
+    .map((collection) => tableFromDocuments(tableNameFromKey(collection.name), collection.documents));
+  if (tables.length === 0) {
+    throw new Error('MongoDB database has no documents to infer a schema from.');
+  }
+  return { source: sourceLabel, tables, relationships: [] };
+}

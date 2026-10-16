@@ -67,6 +67,7 @@ import {
   resolveCsvUploadBatchDir,
 } from './csvUpload.js';
 import { hostedStudioUrl, isHostedStudioRequest } from './hosted.js';
+import { createLiveMongoImportRouter } from './liveMongoRoute.js';
 import {
   persistPipelineCredentialOverrides,
   queryMongoUriOverride,
@@ -339,6 +340,7 @@ app.use('/api/dialects', ...requireRole(['admin', 'developer', 'manager']));
 app.use('/api/profiles', ...requireRole(['admin', 'developer', 'manager']));
 app.use('/api/artifacts', ...requireRole(['admin', 'developer', 'manager']));
 app.use('/api/schema', ...requireRole(['admin', 'developer']));
+app.use('/api/schema', createLiveMongoImportRouter());
 app.use('/api/design', ...requireRole(['admin', 'developer']));
 app.use('/api/export', ...requireRole(['admin', 'developer']));
 app.use('/api/repogen', ...requireRole(['admin', 'developer']));

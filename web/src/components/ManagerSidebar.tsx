@@ -37,6 +37,7 @@ type ManagerSidebarProps = {
   onDialectChange: (dialect: string) => void;
   onDdlChange: (ddl: string) => void;
   onImportQuery: () => void;
+  onImportLive: (uri: string, database: string) => void;
   onSchemaFile: (file: File) => void;
   onImportBuiltinExample?: (exampleId: string) => void | Promise<void>;
   onRequestSidebarWidth?: (widthPx: number) => void;
@@ -100,6 +101,7 @@ export function ManagerSidebar({
   onDialectChange,
   onDdlChange,
   onImportQuery,
+  onImportLive,
   onSchemaFile,
   onImportBuiltinExample,
   onRequestSidebarWidth,
@@ -161,6 +163,7 @@ export function ManagerSidebar({
           onDialectChange={onDialectChange}
           onDdlChange={onDdlChange}
           onImportQuery={onImportQuery}
+          onImportLive={onImportLive}
           onSchemaFile={onSchemaFile}
           onImportBuiltinExample={onImportBuiltinExample}
           onRequestSidebarWidth={onRequestSidebarWidth}
