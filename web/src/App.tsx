@@ -29,6 +29,7 @@ import { PipelinePanel } from './components/PipelinePanel';
 import { CustomTelemetryModal } from './components/CustomTelemetryModal';
 import { ManagerView } from './components/ManagerView';
 import { SchemaImportPanel } from './components/SchemaImportPanel';
+import { liveAgentRunCommand } from './components/LiveMongoImportForm';
 import { SchemaImportModal } from './components/SchemaImportModal';
 import { DiagramStatusFooter } from './components/DiagramStatusFooter';
 import { FooterDiagramLegend } from './components/FooterDiagramLegend';
@@ -692,9 +693,7 @@ export default function App() {
       setStatus('Reading the live database…');
       if (await studioIsHosted()) {
         const session = await createLiveAgentSession();
-        const quotedUri = `'${uri.replace(/'/g, `'\\''`)}'`;
-        const quotedDatabase = database ? ` --database '${database.replace(/'/g, `'\\''`)}'` : '';
-        setStatus(`On the computer with the database, run: npx hvymetl agent --token ${session.token} --uri ${quotedUri}${quotedDatabase}`);
+        setStatus(`On the computer with the database, run: ${liveAgentRunCommand(session.token, uri.trim(), database.trim())}`);
         const { model: m, ddl: importedDdl, inferred, dialect: resolvedDialect } = await waitForLiveAgentResult(session.token);
         setSessionField('dialect', resolvedDialect);
         await applySchema(importedDdl, m, inferred?.profileId);

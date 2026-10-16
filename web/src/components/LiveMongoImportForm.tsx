@@ -50,6 +50,21 @@ export function liveConnectionHint(engine: LiveConnectionEngine): LiveConnection
   }
 }
 
+/** Apple silicon build attached to the GitHub release. Other platforms are not in this file yet. */
+export const LIVE_AGENT_FILE = 'hvymetl-agent-macos-aarch64';
+
+export const LIVE_AGENT_DOWNLOAD_URL = `https://github.com/7erry/hvyMETL/releases/download/v7.6.0/${LIVE_AGENT_FILE}`;
+
+function shellQuote(value: string): string {
+  return `'${value.replace(/'/g, `'\\''`)}'`;
+}
+
+/** Command the hosted page prints after the user downloads the agent. */
+export function liveAgentRunCommand(token: string, uri: string, database: string): string {
+  const databaseFlag = database ? ` --database ${shellQuote(database)}` : '';
+  return `chmod +x ${LIVE_AGENT_FILE} && ./${LIVE_AGENT_FILE} --token ${token} --uri ${shellQuote(uri)}${databaseFlag}`;
+}
+
 /** Messages that belong next to this form. Other studio status stays in the footer. */
 export function liveImportFormNotice(status: string): string {
   if (
@@ -81,9 +96,14 @@ export function LiveMongoImportForm({ disabled, status = '', onImport }: LiveMon
 
   return (
     <form className="live-mongo-import" onSubmit={submit}>
-      <p className="pipeline-hint">
-        A local studio connects directly. On the hosted website, this form shows an npx hvymetl agent command to run on your computer.
-      </p>
+      <div className="live-mongo-import__agent">
+        <p className="pipeline-hint">
+          hvymetl.studio cannot open a database on your computer. Download the agent, click Import live data, then run the command shown here on the computer that has the database.
+        </p>
+        <a className="live-mongo-import__download" href={LIVE_AGENT_DOWNLOAD_URL}>
+          Download macOS agent (Apple silicon)
+        </a>
+      </div>
       <label className="schema-import-panel__label">
         Database type
         <select

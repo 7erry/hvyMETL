@@ -133,7 +133,8 @@ button.link-button:disabled {
 }
 
 /* —— Button hierarchy: primary · secondary (.ghost) · tertiary —— */
-button {
+button,
+a.live-mongo-import__download {
   font: inherit;
   cursor: pointer;
   display: inline-flex;
@@ -194,7 +195,8 @@ button.primary:active:not(:disabled) {
 
 /* Secondary — outline / ghost alternative actions */
 button.secondary,
-button.ghost {
+button.ghost,
+a.live-mongo-import__download {
   background: transparent;
   border-color: var(--btn-secondary-border);
   color: var(--btn-secondary-text);
@@ -202,7 +204,8 @@ button.ghost {
 }
 
 button.secondary:hover:not(:disabled),
-button.ghost:hover:not(:disabled) {
+button.ghost:hover:not(:disabled),
+a.live-mongo-import__download:hover {
   background: var(--btn-secondary-bg-hover);
   border-color: var(--mdb-green-base);
   color: var(--mdb-green-base);
@@ -5321,6 +5324,13 @@ textarea {
   display: block;
   width: 100%;
   margin-top: 0.3rem;
+}
+
+.live-mongo-import__agent {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.5rem;
 }
 
 .live-mongo-import__status {

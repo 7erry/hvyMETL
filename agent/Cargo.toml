@@ -1,0 +1,16 @@
+[package]
+name = "hvymetl-agent"
+version = "7.6.0"
+description = "Send a local MongoDB schema to an hvyMETL studio session"
+edition = "2021"
+license = "BUSL-1.1"
+publish = false
+
+[[bin]]
+name = "hvymetl-agent"
+path = "src/main.rs"
+
+[dependencies]
+mongodb = { version = "3.9.1", features = ["sync"] }
+serde_json = "1"
+ureq = { version = "2.12.1", features = ["json"] }

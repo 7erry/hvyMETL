@@ -1,3 +1,9 @@
+## hvyMETL 7.6.0
+
+**Downloadable agent** — Connect Live Database on the hosted site offers a macOS Apple silicon download. Run that file with the command the form prints. The connection string stays on your computer. PostgreSQL and MySQL from the website still use a studio on that computer.
+
+---
+
 ## hvyMETL 7.5.0
 
 **Schema import paths** — The schema dialog splits paste/upload and live connect into two tabs. Try with a sample schema sits at the top. The dialect is a dropdown above the text box, and a schema file can be dropped on that box. The live tab shows a connection-string example for MongoDB, PostgreSQL, or MySQL. Progress and errors for that connection show in the form.

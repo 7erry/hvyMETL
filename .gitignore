@@ -10,4 +10,5 @@ examples/**/*.csv
 .cursor/
 web/node_modules/
 web/dist/
+agent/target/
 web-uploads/

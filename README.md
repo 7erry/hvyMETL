@@ -9,7 +9,7 @@ every schema decision in a retrievable knowledge base of MongoDB design patterns
 your workload telemetry (read:write ratio, peak RPM, data growth), then runs a
 parallel, pattern-aware ETL into MongoDB Atlas.
 
-**Release:** [`7.5.0`](RELEASE.md#hvymetl-750) — see [RELEASE.md](RELEASE.md) for full release history.
+**Release:** [`7.6.0`](RELEASE.md#hvymetl-760) — see [RELEASE.md](RELEASE.md) for full release history.
 
 An optional **ML engine** (`src/ml_engine/`) adds telemetry-aware reranking
 ([Voyage rerank-2.5](https://docs.voyageai.com/reference/reranker-api) when
@@ -281,7 +281,7 @@ command per collection.
 
 Schema import recognizes the dialects below. **SQLite** has a live file adapter (CLI + file upload).
 **MongoDB**, **PostgreSQL**, and **MySQL** can be read from a connection URI when the studio server runs on a machine that can
-reach that database. On the hosted website, run the `npx hvymetl agent --token … --uri …` command shown in the status line so the connection string stays on your computer. Other dialects use **DDL paste**. Row data
+reach that database. On the hosted website, download the macOS agent from Connect Live Database and run the command shown there so the connection string stays on your computer. Other dialects use **DDL paste**. Row data
 in the web pipeline still comes from **CSV exports** per table, unless you choose **Read live data** for a PostgreSQL, MySQL, or MongoDB JSON schema. That read is capped and still loads through csvToAtlas or mongoimport.
 
 | Tier | Dialects |
