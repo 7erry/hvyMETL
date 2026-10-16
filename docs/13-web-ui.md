@@ -91,7 +91,7 @@ All six pipeline steps (Knowledge + RAG, profiles, design, ETL, import, codegen)
 | `GET` | `/api/repogen/languages` | — | Supported client languages (`node`, `python`, `go`, `java`, …) |
 | `POST` | `/api/repogen/generate` | `{ planJson, language }` | Typed repositories for the chosen driver |
 | `GET` | `/api/pipeline/config` | — | Non-secret pipeline status (Mongo URI, csvToAtlas, source DB) |
-| `POST` | `/api/pipeline/run` | `{ model, profileId, ddl, dialect?, csvSourcePath?, cardinalityOverrides?, forceEmbedOverrides?, mongoUri?, csvToAtlasPath?, targetDb?, drop? }` | ML design + csvToAtlas import + MongoDB execution record |
+| `POST` | `/api/pipeline/run` | `{ model, profileId, ddl, dialect?, csvSourcePath?, liveUri?, liveDatabase?, cardinalityOverrides?, forceEmbedOverrides?, mongoUri?, csvToAtlasPath?, targetDb?, drop? }` | ML design + csvToAtlas or mongoimport. `liveUri` reads a capped sample on the local studio. |
 | `POST` | `/api/pipeline/run-with-csv` | `multipart csvs` + form fields | Same as run, with uploaded CSV files |
 | `GET` | `/api/pipeline/executions?limit=20` | — | Recent pipeline runs from `hvymetl_pipeline_executions` |
 | `GET` | `/api/pipeline/executions/:executionId` | — | One run (includes migration plan, design report, csv manifest) |

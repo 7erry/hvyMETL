@@ -1,3 +1,9 @@
+## hvyMETL 7.4.0
+
+**Live pipeline read** — After a schema is on the canvas, the pipeline can read from the same kind of connection instead of CSV or mock rows. PostgreSQL and MySQL write at most 1,000 rows per table and still load through csvToAtlas. MongoDB JSON samples 50 documents per collection and still loads through mongoimport. The connection string is used for that run and is not saved. The hosted studio refuses the read.
+
+---
+
 ## hvyMETL 7.3.0
 
 **Desktop shell** — `npm run desktop` opens the existing studio in a Tauri window at `http://127.0.0.1:3847`. The shell starts `node dist/server/index.js` when that port is free, and leaves an already running studio alone. Rust and a built UI are required. The import path is the same local server as the browser studio.

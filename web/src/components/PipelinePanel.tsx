@@ -33,6 +33,7 @@ import {
 } from '../pipelineStages';
 import type { ProfileRequestFields } from '../customProfileShared';
 import type { SqlStructuralModel } from '../types';
+import { LivePipelineFields } from './LivePipelineFields';
 import { pipelineImportsWithMongoTools } from '../../../src/dialects.ts';
 
 type PipelinePanelProps = {
@@ -61,12 +62,15 @@ type PipelineForm = {
   csvSourcePath: string;
   drop: boolean;
   generateMockCsv: boolean;
+  liveEnabled: boolean;
+  liveUri: string;
+  liveDatabase: string;
   mockBaseRows: number;
   mockChildMultiplier: number;
   mockSeed: number;
 };
 
-type DataSourceMode = 'real' | 'mock';
+type DataSourceMode = 'real' | 'mock' | 'live';
 
 export function PipelinePanel({
   open,
@@ -105,6 +109,9 @@ export function PipelinePanel({
     csvSourcePath: csvSourcePath ?? '',
     drop: true,
     generateMockCsv: false,
+    liveEnabled: false,
+    liveUri: '',
+    liveDatabase: '',
     mockBaseRows: 500,
     mockChildMultiplier: 3,
     mockSeed: 42,
@@ -228,7 +235,7 @@ export function PipelinePanel({
     refreshConfig,
   ]);
 
-  const dataSourceMode: DataSourceMode = form.generateMockCsv ? 'mock' : 'real';
+  const dataSourceMode: DataSourceMode = form.liveEnabled ? 'live' : form.generateMockCsv ? 'mock' : 'real';
   const requiresCsvUpload = Boolean(config?.requiresCsvUpload);
   const serverManagedCsvToAtlas = Boolean(config?.serverManagedCsvToAtlas);
   const csvToAtlasOverridePath = csvToAtlasUserOverridePath(form.csvToAtlasPath, config);
@@ -279,6 +286,7 @@ export function PipelinePanel({
     setForm((prev) => ({
       ...prev,
       generateMockCsv: mode === 'mock',
+      liveEnabled: mode === 'live',
     }));
     if (mode === 'mock') {
       setCsvFiles([]);
@@ -462,12 +470,19 @@ export function PipelinePanel({
     if (running || csvUploading || !model) return false;
     if (!hasMongoUri) return false;
     if (mongoTools && !hasMongoImport) return false;
-    if (jsonDocuments) return true;
+    if (jsonDocuments && !form.liveEnabled) return true;
+    if (jsonDocuments && form.liveEnabled) return Boolean(form.liveUri.trim());
+    if (dataSourceMode === 'live') {
+      if (!form.liveUri.trim()) return false;
+      if (mongoTools && !hasMongoImport) return false;
+      if (!mongoTools && !hasCsvToAtlas) return false;
+      return true;
+    }
     if (!mongoTools && !hasCsvToAtlas) return false;
     if (useMockCsv && !mockGeneratorReady) return false;
     if (!hasCsvSource && !useMockCsv) return false;
     return true;
-  }, [running, csvUploading, model, hasMongoUri, hasCsvToAtlas, hasMongoImport, hasCsvSource, useMockCsv, mockGeneratorReady, jsonDocuments, mongoTools]);
+  }, [running, csvUploading, model, hasMongoUri, hasCsvToAtlas, hasMongoImport, hasCsvSource, useMockCsv, mockGeneratorReady, jsonDocuments, mongoTools, dataSourceMode, form.liveEnabled, form.liveUri]);
 
   const handleRun = async () => {
     setRunning(true);
@@ -490,8 +505,10 @@ export function PipelinePanel({
         mongoUri: resolveMongoUriOverride(),
         mongodbModelKey: resolveModelKeyOverride(),
         csvToAtlasPath: serverConfiguredCsvToAtlas ? undefined : form.csvToAtlasPath.trim() || undefined,
-        csvSourcePath: useMockCsv || csvFiles.length > 0 ? undefined : effectiveCsvPath || undefined,
-        generateMockCsv: useMockCsv,
+        csvSourcePath: useMockCsv || dataSourceMode === 'live' || csvFiles.length > 0 ? undefined : effectiveCsvPath || undefined,
+        generateMockCsv: dataSourceMode === 'live' ? false : useMockCsv,
+        liveUri: dataSourceMode === 'live' || form.liveEnabled ? form.liveUri.trim() : undefined,
+        liveDatabase: dataSourceMode === 'live' || form.liveEnabled ? form.liveDatabase.trim() || undefined : undefined,
         mockCsvOptions: useMockCsv
           ? {
               baseRowsPerTable: form.mockBaseRows,
@@ -504,7 +521,7 @@ export function PipelinePanel({
       const onProgress = (event: PipelineProgressEvent) => setProgress(event);
 
       const pipelineResult =
-        csvFiles.length > 0 && !useMockCsv
+        csvFiles.length > 0 && !useMockCsv && dataSourceMode !== 'live'
           ? await runPipelineWithCsv(csvFiles, overrides, onProgress)
           : await runPipeline(overrides, onProgress);
 
@@ -737,6 +754,23 @@ export function PipelinePanel({
           <section className="pipeline-section">
             <h3 className="pipeline-section__title">Data source</h3>
             <p className="pipeline-hint">Documents from this MongoDB JSON import are loaded with mongoimport. csvToAtlas is not used.</p>
+            <label>
+              <input
+                type="checkbox"
+                checked={form.liveEnabled}
+                disabled={running}
+                onChange={(event) => setForm((prev) => ({ ...prev, liveEnabled: event.target.checked }))}
+              />
+              Read from the live connection
+            </label>
+            {form.liveEnabled ? (
+              <LivePipelineFields
+                uri={form.liveUri}
+                database={form.liveDatabase}
+                disabled={running}
+                onChange={(next) => setForm((prev) => ({ ...prev, ...next }))}
+              />
+            ) : null}
           </section>
         ) : (
         <section className="pipeline-section">
@@ -762,7 +796,25 @@ export function PipelinePanel({
             >
               Generate mock data
             </button>
+            <button
+              type="button"
+              role="radio"
+              aria-checked={dataSourceMode === 'live'}
+              className={dataSourceMode === 'live' ? 'active' : ''}
+              onClick={() => setDataSourceMode('live')}
+              disabled={running}
+            >
+              Read live data
+            </button>
           </div>
+          {dataSourceMode === 'live' ? (
+            <LivePipelineFields
+              uri={form.liveUri}
+              database={form.liveDatabase}
+              disabled={running}
+              onChange={(next) => setForm((prev) => ({ ...prev, ...next }))}
+            />
+          ) : null}
 
           {dataSourceMode === 'real' ? (
             <div className="pipeline-card">

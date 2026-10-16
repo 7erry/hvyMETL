@@ -484,6 +484,8 @@ export type PipelineRunRequest = ProfileRequestFields & {
   embedDirectionOverrides?: Record<string, boolean>;
   timeSeriesOverrides?: import('./timeSeriesOverrides').TimeSeriesOverrides;
   generateMockCsv?: boolean;
+  liveUri?: string;
+  liveDatabase?: string;
   mockCsvOptions?: MockCsvOptions;
   targetDb?: string;
   drop?: boolean;

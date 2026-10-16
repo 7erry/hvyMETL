@@ -35,12 +35,12 @@ export function publicMongoError(error: unknown): string {
   return message;
 }
 
-/** Sample each user collection and infer the same structural model as a MongoDB JSON paste. */
-export async function importLiveMongoDatabase(
+/** Read a bounded sample from each user collection. */
+export async function sampleLiveMongoCollections(
   uri: string,
   database: string,
   sampleLimit = LIVE_MONGO_SAMPLE_LIMIT,
-): Promise<SqlStructuralModel> {
+): Promise<{ name: string; documents: Record<string, unknown>[] }[]> {
   const client = new MongoClient(assertLiveMongoUri(uri), { serverSelectionTimeoutMS: 5_000 });
   try {
     await client.connect();
@@ -54,8 +54,18 @@ export async function importLiveMongoDatabase(
       if (documents.length === 0) continue;
       collections.push({ name, documents });
     }
-    return modelFromMongoCollections(collections, 'ddl:mongodb-json');
+    return collections;
   } finally {
     await client.close();
   }
+}
+
+/** Sample each user collection and infer the same structural model as a MongoDB JSON paste. */
+export async function importLiveMongoDatabase(
+  uri: string,
+  database: string,
+  sampleLimit = LIVE_MONGO_SAMPLE_LIMIT,
+): Promise<SqlStructuralModel> {
+  const collections = await sampleLiveMongoCollections(uri, database, sampleLimit);
+  return modelFromMongoCollections(collections, 'ddl:mongodb-json');
 }

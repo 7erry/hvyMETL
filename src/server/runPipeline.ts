@@ -29,6 +29,7 @@ import {
 } from '../utilities/relationshipCardinalityStats.js';
 import { collectionNeedsShapedCsv, shapeCollectionCsv } from '../utilities/csvShaper.js';
 import { generateMockCsvFromDdl, type MockCsvOptions } from '../utilities/mockCsvFromDdl.js';
+import { assertLivePipelineAllowed, prepareLivePipelineSource, type LiveDocumentGroup } from '../utilities/livePipelineSource.js';
 import { registerApiArtifacts, serializeApiArtifactBundle } from './apiArtifactStore.js';
 import { loadMongoJsonIntoCollection } from '../utilities/mongoJsonBulkWriter.js';
 import { mongoJsonCollectionGroups } from '../utilities/mongoJsonParser.js';
@@ -82,6 +83,12 @@ export type PipelineRunRequest = {
   rootDir: string;
   /** When true (or no CSV path), generate one CSV per CREATE TABLE from `ddl`. */
   generateMockCsv?: boolean;
+  /** Source connection for this run. Not stored. */
+  liveUri?: string;
+  liveDatabase?: string;
+  /** True when the caller is the hosted studio. */
+  hosted?: boolean;
+  liveDocumentGroups?: LiveDocumentGroup[];
   /** MongoDB JSON only. Stop the load on the first bad document. Default is lenient. */
   strictJson?: boolean;
   /** When set, re-read this NDJSON or JSON array instead of `ddl`. */
@@ -281,6 +288,23 @@ async function runFullPipelineWithStore(
     }
   }
   mkdirSync(outDir, { recursive: true });
+  if (request.liveUri?.trim()) {
+    assertLivePipelineAllowed(request.hosted === true);
+    reportProgress(request, { stage: 'generating', message: 'Reading a sample from the live database…' });
+    const prepared = await prepareLivePipelineSource({
+      uri: request.liveUri,
+      database: request.liveDatabase,
+      dialect: schemaDialect,
+      model: request.model,
+      outDir,
+    });
+    if (prepared.csvDir) {
+      request.csvSourcePath = prepared.csvDir;
+      request.generateMockCsv = false;
+      request.csvAllowedRoots = [...(request.csvAllowedRoots ?? []), prepared.csvDir];
+    }
+    if (prepared.groups) request.liveDocumentGroups = prepared.groups;
+  }
 
   const modelForDesign: SqlStructuralModel = request.dialect?.trim()
     ? { ...request.model, source: `ddl:${request.dialect.trim()}` }
@@ -353,7 +377,7 @@ async function runFullPipelineWithStore(
 
   if (jsonDocuments) {
     // shortcut: a collection-map file path still loads as one collection; paste splits by array name.
-    const groups = request.jsonFilePath ? null : mongoJsonCollectionGroups(request.ddl ?? '');
+    const groups = request.liveDocumentGroups ?? (request.jsonFilePath ? null : mongoJsonCollectionGroups(request.ddl ?? ''));
     const targets = groups
       ? design.plan.collections.flatMap((collection) => {
           const group = groups.find(
