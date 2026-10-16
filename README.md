@@ -9,7 +9,7 @@ every schema decision in a retrievable knowledge base of MongoDB design patterns
 your workload telemetry (read:write ratio, peak RPM, data growth), then runs a
 parallel, pattern-aware ETL into MongoDB Atlas.
 
-**Release:** [`7.2.0`](RELEASE.md#hvymetl-720) — see [RELEASE.md](RELEASE.md) for full release history.
+**Release:** [`7.3.0`](RELEASE.md#hvymetl-730) — see [RELEASE.md](RELEASE.md) for full release history.
 
 An optional **ML engine** (`src/ml_engine/`) adds telemetry-aware reranking
 ([Voyage rerank-2.5](https://docs.voyageai.com/reference/reranker-api) when
@@ -213,6 +213,7 @@ honored by design, explain, export, and full pipeline APIs.
 ```bash
 npm run dev:ui      # http://localhost:3847 (API + Vite hot reload)
 npm run start:ui    # production build on http://localhost:3847
+npm run desktop     # same server in a desktop window (Rust + Tauri)
 ```
 
 **Hosted:** [https://hvymetl.studio](https://hvymetl.studio) — Auth0 social login,

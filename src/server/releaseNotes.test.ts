@@ -23,7 +23,7 @@ describe('parseLatestReleaseSection', () => {
     const markdown = readFileSync(join(ROOT, 'RELEASE.md'), 'utf8');
     const sections = parseAllReleaseSections(markdown);
     expect(sections.length).toBeGreaterThan(5);
-    expect(sections[0]?.heading).toMatch(/^hvyMETL\s+7\.2\.0$/);
+    expect(sections[0]?.heading).toMatch(/^hvyMETL\s+7\.3\.0$/);
   });
 
   it('builds a major-version summary for v5', () => {

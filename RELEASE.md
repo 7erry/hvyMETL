@@ -1,3 +1,9 @@
+## hvyMETL 7.3.0
+
+**Desktop shell** — `npm run desktop` opens the existing studio in a Tauri window at `http://127.0.0.1:3847`. The shell starts `node dist/server/index.js` when that port is free, and leaves an already running studio alone. Rust and a built UI are required. The import path is the same local server as the browser studio.
+
+---
+
 ## hvyMETL 7.2.0
 
 **Outbound agent** — On the hosted studio, Import live data does not open a database connection. It shows `npx hvymetl agent --token … --uri …`. That process dials the studio, reads the database on the machine where it runs, and returns the schema. The connection string stays in the command on your computer. A local studio still connects directly.
