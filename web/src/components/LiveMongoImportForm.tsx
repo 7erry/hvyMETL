@@ -27,7 +27,7 @@ export function LiveMongoImportForm({ disabled, onImport }: LiveMongoImportFormP
   return (
     <form className="live-mongo-import" onSubmit={submit}>
       <p className="pipeline-hint">
-        MongoDB, PostgreSQL, or MySQL. The studio server connects. The hosted website cannot reach a database on your computer.
+        MongoDB, PostgreSQL, or MySQL. A local studio connects directly. On the hosted website, the status line shows an npx hvymetl agent command to run on your computer.
       </p>
       <label className="schema-import-panel__label">
         Connection URI

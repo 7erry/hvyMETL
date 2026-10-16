@@ -270,6 +270,36 @@ export async function importBuiltinExample(exampleId: string): Promise<{
   return res.json();
 }
 
+export async function studioIsHosted(): Promise<boolean> {
+  const res = await apiFetch(`${base}/api/health`);
+  if (!res.ok) return false;
+  const body = (await res.json()) as { hosted?: boolean };
+  return body.hosted === true;
+}
+
+export async function createLiveAgentSession(): Promise<{ token: string; expiresAt: string }> {
+  const res = await apiFetch(`${base}/api/schema/agent-session`, { method: 'POST' });
+  if (!res.ok) throw new Error(await readApiError(res));
+  return res.json();
+}
+
+export async function waitForLiveAgentResult(
+  token: string,
+  timeoutMs = 180_000,
+): Promise<{ model: SqlStructuralModel; ddl: string; dialect: string; inferred?: ProfileInference }> {
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() < deadline) {
+    const res = await apiFetch(`${base}/api/schema/agent-result?token=${encodeURIComponent(token)}`);
+    if (res.status === 204) {
+      await new Promise((resolve) => setTimeout(resolve, 1_000));
+      continue;
+    }
+    if (!res.ok) throw new Error(await readApiError(res));
+    return res.json();
+  }
+  throw new Error('The local agent did not return a schema in time.');
+}
+
 export async function importLiveMongo(
   uri: string,
   database: string,

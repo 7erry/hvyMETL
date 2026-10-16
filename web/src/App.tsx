@@ -69,7 +69,10 @@ import {
   fetchProfiles,
   importDdl,
   importBuiltinExample,
+  createLiveAgentSession,
   importLiveMongo,
+  studioIsHosted,
+  waitForLiveAgentResult,
   importSqlite,
   runDesign,
   runDesignWithCsv,
@@ -686,7 +689,17 @@ export default function App() {
 
   const handleImportLive = async (uri: string, database: string) => {
     try {
-      setStatus('Sampling live MongoDB…');
+      if (await studioIsHosted()) {
+        const session = await createLiveAgentSession();
+        const quotedUri = `'${uri.replace(/'/g, `'\\''`)}'`;
+        const quotedDatabase = database ? ` --database '${database.replace(/'/g, `'\\''`)}'` : '';
+        setStatus(`On the computer with the database, run: npx hvymetl agent --token ${session.token} --uri ${quotedUri}${quotedDatabase}`);
+        const { model: m, ddl: importedDdl, inferred, dialect: resolvedDialect } = await waitForLiveAgentResult(session.token);
+        setSessionField('dialect', resolvedDialect);
+        await applySchema(importedDdl, m, inferred?.profileId);
+        return;
+      }
+      setStatus('Reading the live database…');
       const { model: m, ddl: importedDdl, inferred, dialect: resolvedDialect } = await importLiveMongo(uri, database);
       setSessionField('dialect', resolvedDialect);
       await applySchema(importedDdl, m, inferred?.profileId);

@@ -67,6 +67,7 @@ import {
   resolveCsvUploadBatchDir,
 } from './csvUpload.js';
 import { hostedStudioUrl, isHostedStudioRequest } from './hosted.js';
+import { createLiveAgentPublicRouter, createLiveAgentStudioRouter } from './liveAgent.js';
 import { createLiveMongoImportRouter } from './liveMongoRoute.js';
 import {
   persistPipelineCredentialOverrides,
@@ -261,7 +262,7 @@ function persistDesignApiArtifacts(
   };
 }
 
-app.get('/api/health', (_req, res) => {
+app.get('/api/health', (req, res) => {
   const ui = getWebUiMode();
   let version = 'unknown';
   try {
@@ -299,6 +300,7 @@ app.get('/api/health', (_req, res) => {
     uiHealthy: ui === 'static',
     uiBundle: getWebUiBundleAsset(ROOT),
     pid: process.pid,
+    hosted: isHostedStudioRequest(req),
   });
 });
 
@@ -341,6 +343,8 @@ app.use('/api/profiles', ...requireRole(['admin', 'developer', 'manager']));
 app.use('/api/artifacts', ...requireRole(['admin', 'developer', 'manager']));
 app.use('/api/schema', ...requireRole(['admin', 'developer']));
 app.use('/api/schema', createLiveMongoImportRouter());
+app.use('/api/schema', createLiveAgentStudioRouter());
+app.use('/api/agent', createLiveAgentPublicRouter());
 app.use('/api/design', ...requireRole(['admin', 'developer']));
 app.use('/api/export', ...requireRole(['admin', 'developer']));
 app.use('/api/repogen', ...requireRole(['admin', 'developer']));

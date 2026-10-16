@@ -40,6 +40,7 @@ import { loadKnowledgeBase } from './rag/chunker.js';
 import { createRetrievalConfigFromEnv, describeRetrievalStrategy, retrieve } from './rag/retrieval.js';
 import { buildPromptBundle, buildRetrievalQuery } from './rag/promptBundle.js';
 import { maybePhoneHome } from './utilities/phoneHome.js';
+import { runLiveAgent } from './utilities/runLiveAgent.js';
 import { readPackageVersion } from './utilities/version.js';
 
 /** Published semver from package.json (also used for CLI --version). */
@@ -275,6 +276,18 @@ program
   )
   .action((flags: { plan: string; out: string; lang: string }) => {
     runRepogen({ planPath: flags.plan, outDir: flags.out, language: flags.lang });
+  });
+
+program
+  .command('agent')
+  .description('Send a local database schema to a hosted studio session')
+  .requiredOption('--token <token>', 'short-lived token shown by the hosted studio')
+  .requiredOption('--uri <uri>', 'MongoDB, PostgreSQL, or MySQL URI on this machine')
+  .option('--database <name>', 'database name when the URI has none')
+  .option('--server <url>', 'studio origin', process.env.HVYMETL_HOSTED_URL || 'https://hvymetl.studio')
+  .action(async (flags: { token: string; uri: string; database?: string; server: string }) => {
+    await runLiveAgent({ token: flags.token, uri: flags.uri, database: flags.database, server: flags.server });
+    console.log('Schema sent to the studio.');
   });
 
 program

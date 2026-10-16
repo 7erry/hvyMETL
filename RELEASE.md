@@ -1,3 +1,9 @@
+## hvyMETL 7.2.0
+
+**Outbound agent** — On the hosted studio, Import live data does not open a database connection. It shows `npx hvymetl agent --token … --uri …`. That process dials the studio, reads the database on the machine where it runs, and returns the schema. The connection string stays in the command on your computer. A local studio still connects directly.
+
+---
+
 ## hvyMETL 7.1.0
 
 **PostgreSQL and MySQL live import** — The same Import live data form accepts a `postgresql://` or `mysql://` URI. The studio server reads `information_schema` into the existing structural model. Row counts are catalog estimates, and relationship sizes stay unknown until CSV or a later pipeline read. Other SQL dialects stay on DDL paste. SQLite stays a file upload.
