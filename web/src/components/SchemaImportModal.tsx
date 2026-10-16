@@ -10,7 +10,8 @@ type SchemaImportModalProps = {
   onDialectChange: (dialect: string) => void;
   onDdlChange: (ddl: string) => void;
   onImportQuery: () => void;
-  onImportLive: (uri: string, database: string) => void;
+  onImportLive: (uri: string, database: string) => void | Promise<void>;
+  status?: string;
   onSchemaFile: (file: File) => void;
   onImportBuiltinExample?: (exampleId: string) => void | Promise<void>;
   onClose: () => void;
@@ -27,6 +28,7 @@ export function SchemaImportModal({
   onDdlChange,
   onImportQuery,
   onImportLive,
+  status,
   onSchemaFile,
   onImportBuiltinExample,
   onClose,
@@ -40,7 +42,7 @@ export function SchemaImportModal({
           <div>
             <h2 id="schema-import-modal-title">Start with schema import</h2>
             <p className="pipeline-modal__subtitle">
-              Paste DDL or upload a schema file so hvyMETL can build the source ER model before design, cost, or ETL.
+              Paste a schema, upload a file, or connect to a live database. hvyMETL builds the source model before design, cost, or ETL.
             </p>
           </div>
           <button type="button" className="btn-icon" onClick={onClose} aria-label="Close schema import dialog">
@@ -57,6 +59,7 @@ export function SchemaImportModal({
           onDdlChange={onDdlChange}
           onImportQuery={onImportQuery}
           onImportLive={onImportLive}
+          status={status}
           onSchemaFile={onSchemaFile}
           onImportBuiltinExample={onImportBuiltinExample}
           framed={false}

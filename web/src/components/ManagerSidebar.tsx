@@ -37,7 +37,8 @@ type ManagerSidebarProps = {
   onDialectChange: (dialect: string) => void;
   onDdlChange: (ddl: string) => void;
   onImportQuery: () => void;
-  onImportLive: (uri: string, database: string) => void;
+  onImportLive: (uri: string, database: string) => void | Promise<void>;
+  statusMessage?: string;
   onSchemaFile: (file: File) => void;
   onImportBuiltinExample?: (exampleId: string) => void | Promise<void>;
   onRequestSidebarWidth?: (widthPx: number) => void;
@@ -102,6 +103,7 @@ export function ManagerSidebar({
   onDdlChange,
   onImportQuery,
   onImportLive,
+  statusMessage,
   onSchemaFile,
   onImportBuiltinExample,
   onRequestSidebarWidth,
@@ -163,8 +165,9 @@ export function ManagerSidebar({
           onDialectChange={onDialectChange}
           onDdlChange={onDdlChange}
           onImportQuery={onImportQuery}
-          onImportLive={onImportLive}
-          onSchemaFile={onSchemaFile}
+            onImportLive={onImportLive}
+            status={statusMessage}
+            onSchemaFile={onSchemaFile}
           onImportBuiltinExample={onImportBuiltinExample}
           onRequestSidebarWidth={onRequestSidebarWidth}
           compact

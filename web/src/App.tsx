@@ -689,6 +689,7 @@ export default function App() {
 
   const handleImportLive = async (uri: string, database: string) => {
     try {
+      setStatus('Reading the live database…');
       if (await studioIsHosted()) {
         const session = await createLiveAgentSession();
         const quotedUri = `'${uri.replace(/'/g, `'\\''`)}'`;
@@ -699,7 +700,6 @@ export default function App() {
         await applySchema(importedDdl, m, inferred?.profileId);
         return;
       }
-      setStatus('Reading the live database…');
       const { model: m, ddl: importedDdl, inferred, dialect: resolvedDialect } = await importLiveMongo(uri, database);
       setSessionField('dialect', resolvedDialect);
       await applySchema(importedDdl, m, inferred?.profileId);
@@ -1526,7 +1526,7 @@ export default function App() {
               onDialectChange={(value) => setSessionField('dialect', value)}
               onDdlChange={(value) => setSessionField('ddl', value)}
               onImportQuery={() => void handleImportQuery()}
-              onImportLive={(uri, database) => void handleImportLive(uri, database)}
+              onImportLive={handleImportLive}
               onSchemaFile={(file) => void handleSchemaFileUpload(file)}
               onImportBuiltinExample={(id) => void handleImportBuiltinExample(id)}
             />
@@ -1552,7 +1552,8 @@ export default function App() {
                         onDialectChange={(value) => setSessionField('dialect', value)}
                         onDdlChange={(value) => setSessionField('ddl', value)}
                         onImportQuery={() => void handleImportQuery()}
-                        onImportLive={(uri, database) => void handleImportLive(uri, database)}
+                        onImportLive={handleImportLive}
+                        status={status}
                         onSchemaFile={(file) => void handleSchemaFileUpload(file)}
                         onImportBuiltinExample={(id) => void handleImportBuiltinExample(id)}
                         onRequestSidebarWidth={handleSchemaImportSidebarWidth}
@@ -1997,7 +1998,8 @@ export default function App() {
         onDialectChange={(value) => setSessionField('dialect', value)}
         onDdlChange={(value) => setSessionField('ddl', value)}
         onImportQuery={() => void handleImportQuery()}
-        onImportLive={(uri, database) => void handleImportLive(uri, database)}
+        onImportLive={handleImportLive}
+        status={status}
         onSchemaFile={(file) => void handleSchemaFileUpload(file)}
         onImportBuiltinExample={(id) => void handleImportBuiltinExample(id)}
         onClose={closeSchemaImportDialog}

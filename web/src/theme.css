@@ -2982,7 +2982,7 @@ textarea {
 .pipeline-overlay {
   position: fixed;
   inset: 0;
-  z-index: 1000;
+  z-index: 1300;
   background: rgba(0, 30, 43, 0.85);
   display: flex;
   align-items: center;
@@ -5323,6 +5323,14 @@ textarea {
   margin-top: 0.3rem;
 }
 
+.live-mongo-import__status {
+  margin: 0;
+  color: var(--mdb-spring-green);
+  font-size: 0.85rem;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
 .schema-import-panel__select {
   width: 100%;
 }
@@ -5424,11 +5432,47 @@ textarea {
   width: fit-content;
 }
 
+.schema-import-tabs {
+  display: flex;
+  gap: 0.35rem;
+  margin: 0.85rem 0 0.75rem;
+}
+
+.schema-import-tabs button {
+  flex: 1 1 0;
+  white-space: normal;
+  border: 1px solid rgba(0, 104, 74, 0.5);
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.schema-import-tabs button.active {
+  background: rgba(0, 104, 74, 0.35);
+  border-color: var(--mdb-spring-green);
+  color: var(--mdb-spring-green);
+}
+
+.schema-import-panel__editor-bar {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  gap: 0.65rem;
+  flex-wrap: wrap;
+}
+
+.schema-import-panel__editor-bar .schema-import-panel__label {
+  flex: 1 1 12rem;
+  margin-bottom: 0;
+}
+
 .schema-import-panel__textarea {
   width: 100%;
   max-width: 100%;
   margin-bottom: 0.5rem;
   resize: both;
+}
+
+.schema-import-panel__textarea--drop {
+  outline: 2px solid var(--mdb-spring-green);
 }
 
 .schema-import-panel__warn {

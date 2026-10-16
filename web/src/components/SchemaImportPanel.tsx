@@ -19,7 +19,9 @@ type SchemaImportPanelProps = {
   onDialectChange: (dialect: string) => void;
   onDdlChange: (ddl: string) => void;
   onImportQuery: () => void;
-  onImportLive: (uri: string, database: string) => void;
+  onImportLive: (uri: string, database: string) => void | Promise<void>;
+  /** Repeated inside the live-import form because a modal covers the page status line. */
+  status?: string;
   onSchemaFile: (file: File) => void;
   onImportBuiltinExample?: (exampleId: string) => void | Promise<void>;
   /** When the DDL textarea is resized wider than the sidebar, expand the split pane. */
@@ -37,6 +39,7 @@ export function SchemaImportPanel({
   onDdlChange,
   onImportQuery,
   onImportLive,
+  status,
   onSchemaFile,
   onImportBuiltinExample,
   onRequestSidebarWidth,
@@ -110,6 +113,8 @@ export function SchemaImportPanel({
   const [selectedExampleId, setSelectedExampleId] = useState('');
   const [loadingExamples, setLoadingExamples] = useState(false);
   const [loadingExample, setLoadingExample] = useState(false);
+  const [importMode, setImportMode] = useState<'schema' | 'live'>('schema');
+  const [dragOver, setDragOver] = useState(false);
 
   useEffect(() => {
     if (!apiConnected || !onImportBuiltinExample) {
@@ -178,6 +183,10 @@ export function SchemaImportPanel({
   };
 
   const importDialectLabel = getDialectLabel(dialect);
+  const dialectChoices = useMemo(() => {
+    if (supportedDialects.some((entry) => entry.id === dialect)) return supportedDialects;
+    return [{ id: dialect, label: importDialectLabel, live: false }, ...supportedDialects];
+  }, [supportedDialects, dialect, importDialectLabel]);
   const mongoJsonError = dialect === 'mongodb-json' ? validateMongoJsonPaste(ddl) : null;
 
   const content = (
@@ -200,97 +209,10 @@ export function SchemaImportPanel({
         </p>
       ) : null}
 
-      <div className="schema-import-panel__supported-dialects">
-        {supportedDialects.length === 0 ? (
-          <span className="schema-import-panel__supported-trigger schema-import-panel__supported-trigger--static">
-            Supported dialects
-            <span className="schema-import-panel__hint"> (loading…)</span>
-          </span>
-        ) : (
-          <>
-            <button
-              type="button"
-              className="schema-import-panel__supported-trigger"
-              aria-describedby="schema-supported-dialects-popover"
-            >
-              Supported dialects
-            </button>
-            <div
-              id="schema-supported-dialects-popover"
-              className="schema-import-panel__supported-popover"
-              role="tooltip"
-            >
-              <p className="schema-import-panel__supported-popover-title">Supported import dialects</p>
-              <ul className="schema-import-panel__dialect-grid">
-                {supportedDialects.map((entry) => (
-                  <li key={entry.id}>{entry.label}</li>
-                ))}
-              </ul>
-            </div>
-          </>
-        )}
-      </div>
-
-      <div className="schema-import-panel__dialect-row" aria-live="polite">
-        {autoDetectedLabel ? (
-          <span className="schema-import-panel__auto-dialect" id="schema-dialect-auto-detected">
-            Auto-detected: {autoDetectedLabel}
-          </span>
-        ) : ddl.trim() ? (
-          <span className="schema-import-panel__import-dialect">
-            Import dialect: <strong>{importDialectLabel}</strong>
-          </span>
-        ) : (
-          <span className="schema-import-panel__import-dialect schema-import-panel__import-dialect--muted">
-            Paste or upload schema — dialect is detected automatically
-          </span>
-        )}
-      </div>
-
-      <textarea
-        ref={textareaRef}
-        value={ddl}
-        onChange={(e) => handleDdlChange(e.target.value)}
-        onPaste={() => {
-          requestAnimationFrame(() => {
-            const value = textareaRef.current?.value ?? ddl;
-            runDialectDetection(value);
-          });
-        }}
-        placeholder="Paste CREATE TABLE DDL, JSON Schema, MongoDB JSON, NDJSON, or CloudFormation YAML…"
-        rows={compact ? 6 : 8}
-        className="schema-import-panel__textarea"
-      />
-      {mongoJsonError ? <p className="schema-import-panel__warn">{mongoJsonError}</p> : null}
-      <div className="button-row schema-import-panel__actions">
-        <button type="button" className="primary" onClick={onImportQuery} disabled={!apiConnected}>
-          Import schema
-        </button>
-        <button
-          type="button"
-          className="secondary"
-          onClick={() => fileInputRef.current?.click()}
-          disabled={!apiConnected}
-        >
-          Upload file
-        </button>
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept=".sql,.ddl,.txt,.json,.ndjson,.yaml,.yml,.db,.sqlite,.sqlite3"
-          className="schema-import-panel__file-input"
-          onChange={(e) => {
-            const file = e.target.files?.[0];
-            if (file) onSchemaFile(file);
-            e.target.value = '';
-          }}
-        />
-      </div>
-      <LiveMongoImportForm disabled={!apiConnected} onImport={onImportLive} />
       {onImportBuiltinExample ? (
         <div className="schema-import-panel__examples">
           <label className="schema-import-panel__label" htmlFor="builtin-example-select">
-            Built-in example
+            Try with a sample schema
           </label>
           <div className="schema-import-panel__example-row">
             <select
@@ -327,19 +249,116 @@ export function SchemaImportPanel({
               {builtinExamples.find((example) => example.id === selectedExampleId)?.description ??
                 'Loads DDL from the server examples folder.'}
             </p>
-          ) : (
-            <p className="schema-import-panel__hint">
-              <a
-                href="https://github.com/7erry/hvyMETL/tree/main/examples#example-domains-and-design-pattern-coverage"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                Example domains and design-pattern coverage
-              </a>
-            </p>
-          )}
+          ) : null}
         </div>
       ) : null}
+
+      <div className="schema-import-tabs" role="tablist" aria-label="Schema source">
+        <button
+          type="button"
+          role="tab"
+          id="schema-import-tab-schema"
+          aria-selected={importMode === 'schema'}
+          aria-controls="schema-import-panel-schema"
+          className={importMode === 'schema' ? 'active' : ''}
+          onClick={() => setImportMode('schema')}
+        >
+          Import Schema (DDL/File)
+        </button>
+        <button
+          type="button"
+          role="tab"
+          id="schema-import-tab-live"
+          aria-selected={importMode === 'live'}
+          aria-controls="schema-import-panel-live"
+          className={importMode === 'live' ? 'active' : ''}
+          onClick={() => setImportMode('live')}
+        >
+          Connect Live Database
+        </button>
+      </div>
+
+      {importMode === 'schema' ? (
+        <div id="schema-import-panel-schema" role="tabpanel" aria-labelledby="schema-import-tab-schema">
+          <div className="schema-import-panel__editor-bar">
+            <label className="schema-import-panel__label" htmlFor="schema-import-dialect">
+              Import dialect
+              <select
+                id="schema-import-dialect"
+                className="schema-import-panel__select"
+                value={dialect}
+                onChange={(event) => onDialectChange(event.target.value)}
+                disabled={!apiConnected}
+              >
+                {dialectChoices.map((entry) => (
+                  <option key={entry.id} value={entry.id}>
+                    {entry.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <button
+              type="button"
+              className="secondary"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={!apiConnected}
+            >
+              Upload file
+            </button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".sql,.ddl,.txt,.json,.ndjson,.yaml,.yml,.db,.sqlite,.sqlite3"
+              className="schema-import-panel__file-input"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) onSchemaFile(file);
+                e.target.value = '';
+              }}
+            />
+          </div>
+          <p className="schema-import-panel__hint" aria-live="polite">
+            {autoDetectedLabel
+              ? `Auto-detected: ${autoDetectedLabel}. Change the dialect if that is wrong.`
+              : 'Dialect is detected from the paste. Drop a schema file on the box, or use Upload file.'}
+          </p>
+          <textarea
+            ref={textareaRef}
+            value={ddl}
+            onChange={(e) => handleDdlChange(e.target.value)}
+            onPaste={() => {
+              requestAnimationFrame(() => {
+                const value = textareaRef.current?.value ?? ddl;
+                runDialectDetection(value);
+              });
+            }}
+            onDragOver={(event) => {
+              event.preventDefault();
+              setDragOver(true);
+            }}
+            onDragLeave={() => setDragOver(false)}
+            onDrop={(event) => {
+              event.preventDefault();
+              setDragOver(false);
+              const file = event.dataTransfer.files[0];
+              if (file) onSchemaFile(file);
+            }}
+            placeholder="Paste CREATE TABLE DDL, JSON Schema, MongoDB JSON, NDJSON, or CloudFormation YAML…"
+            rows={compact ? 6 : 8}
+            className={`schema-import-panel__textarea${dragOver ? ' schema-import-panel__textarea--drop' : ''}`}
+          />
+          {mongoJsonError ? <p className="schema-import-panel__warn">{mongoJsonError}</p> : null}
+          <div className="button-row schema-import-panel__actions">
+            <button type="button" className="primary" onClick={onImportQuery} disabled={!apiConnected}>
+              Import schema
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div id="schema-import-panel-live" role="tabpanel" aria-labelledby="schema-import-tab-live">
+          <LiveMongoImportForm disabled={!apiConnected} status={status} onImport={onImportLive} />
+        </div>
+      )}
     </>
   );
 

@@ -1,3 +1,9 @@
+## hvyMETL 7.5.0
+
+**Schema import paths** — The schema dialog splits paste/upload and live connect into two tabs. Try with a sample schema sits at the top. The dialect is a dropdown above the text box, and a schema file can be dropped on that box. The live tab shows a connection-string example for MongoDB, PostgreSQL, or MySQL. Progress and errors for that connection show in the form.
+
+---
+
 ## hvyMETL 7.4.0
 
 **Live pipeline read** — After a schema is on the canvas, the pipeline can read from the same kind of connection instead of CSV or mock rows. PostgreSQL and MySQL write at most 1,000 rows per table and still load through csvToAtlas. MongoDB JSON samples 50 documents per collection and still loads through mongoimport. The connection string is used for that run and is not saved. The hosted studio refuses the read.
