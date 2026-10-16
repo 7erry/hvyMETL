@@ -29,7 +29,7 @@ import { PipelinePanel } from './components/PipelinePanel';
 import { CustomTelemetryModal } from './components/CustomTelemetryModal';
 import { ManagerView } from './components/ManagerView';
 import { SchemaImportPanel } from './components/SchemaImportPanel';
-import { liveAgentRunCommand } from './components/LiveMongoImportForm';
+import { isLiveAgentPlatform, liveAgentRunCommand } from './components/LiveMongoImportForm';
 import { SchemaImportModal } from './components/SchemaImportModal';
 import { DiagramStatusFooter } from './components/DiagramStatusFooter';
 import { FooterDiagramLegend } from './components/FooterDiagramLegend';
@@ -688,22 +688,29 @@ export default function App() {
     }
   };
 
-  const handleImportLive = async (uri: string, database: string) => {
+  const handleImportLive = async (uri: string, database: string, platform = ''): Promise<string> => {
     try {
       setStatus('Reading the live database…');
       if (await studioIsHosted()) {
+        if (!isLiveAgentPlatform(platform)) {
+          setStatus('Import failed: Choose your computer before copying the agent command.');
+          return '';
+        }
         const session = await createLiveAgentSession();
-        setStatus(`On the computer with the database, run: ${liveAgentRunCommand(session.token, uri.trim(), database.trim())}`);
+        const command = liveAgentRunCommand(platform, session.token, uri.trim(), database.trim());
+        setStatus(`Command copied. On the computer with the database, run: ${command}`);
         const { model: m, ddl: importedDdl, inferred, dialect: resolvedDialect } = await waitForLiveAgentResult(session.token);
         setSessionField('dialect', resolvedDialect);
         await applySchema(importedDdl, m, inferred?.profileId);
-        return;
+        return command;
       }
       const { model: m, ddl: importedDdl, inferred, dialect: resolvedDialect } = await importLiveMongo(uri, database);
       setSessionField('dialect', resolvedDialect);
       await applySchema(importedDdl, m, inferred?.profileId);
+      return '';
     } catch (e) {
       setStatus(`Import failed: ${describeApiError(e)}`);
+      return '';
     }
   };
 

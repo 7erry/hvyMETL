@@ -34,7 +34,7 @@ refresh-token rotation, and troubleshooting.
 
 ![Start with schema import modal](../web/docs/screenshots/schema-import-modal.png)
 
-The dialog has two paths: **Import Schema (DDL/File)** and **Connect Live Database**. Try with a sample schema sits above those tabs. The dialect is a dropdown on the file path, and a schema file can be dropped on the text box. The live path asks for MongoDB, PostgreSQL, or MySQL and shows a connection-string example for that engine. On the hosted site that path also downloads a macOS agent, because the website cannot open the database itself.
+The dialog has two paths: **Import Schema (DDL/File)** and **Connect Live Database**. Try with a sample schema sits above those tabs. The dialect is a dropdown on the file path, and a schema file can be dropped on the text box. The live path asks for MongoDB, PostgreSQL, or MySQL and shows a connection-string example for that engine. On the hosted site that path downloads the agent for the computer the browser reports, or the computer chosen in the menu, and copies the command to the clipboard.
 
 ![Before SQL ER diagram with collapsible developer sidebar](../web/docs/screenshots/before-sql-diagram.png)
 

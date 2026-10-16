@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
 
 type LiveConnectionEngine = 'mongodb' | 'postgresql' | 'mysql';
 
@@ -6,7 +6,7 @@ type LiveMongoImportFormProps = {
   disabled: boolean;
   /** Studio status line. The import dialog covers that line, so the form repeats live-import messages. */
   status?: string;
-  onImport: (uri: string, database: string) => void | Promise<void>;
+  onImport: (uri: string, database: string, platform: string) => void | Promise<string | void>;
 };
 
 type LiveConnectionHint = {
@@ -50,19 +50,120 @@ export function liveConnectionHint(engine: LiveConnectionEngine): LiveConnection
   }
 }
 
-/** Apple silicon build attached to the GitHub release. Other platforms are not in this file yet. */
-export const LIVE_AGENT_FILE = 'hvymetl-agent-macos-aarch64';
+export type LiveAgentPlatform = 'macos-aarch64' | 'macos-x64' | 'windows-x64' | 'linux-x64';
 
-export const LIVE_AGENT_DOWNLOAD_URL = `https://github.com/7erry/hvyMETL/releases/download/v7.6.0/${LIVE_AGENT_FILE}`;
+export const LIVE_AGENT_RELEASE = 'v7.7.0';
+
+const LIVE_AGENT_BUILDS: { id: LiveAgentPlatform; label: string; fileName: string }[] = [
+  { id: 'macos-aarch64', label: 'macOS Apple silicon', fileName: 'hvymetl-agent-macos-aarch64' },
+  { id: 'macos-x64', label: 'macOS Intel', fileName: 'hvymetl-agent-macos-x64' },
+  { id: 'windows-x64', label: 'Windows Intel/AMD', fileName: 'hvymetl-agent-windows-x64.exe' },
+  { id: 'linux-x64', label: 'Linux Intel/AMD', fileName: 'hvymetl-agent-linux-x64' },
+];
+
+export function isLiveAgentPlatform(value: string): value is LiveAgentPlatform {
+  switch (value) {
+    case 'macos-aarch64':
+    case 'macos-x64':
+    case 'windows-x64':
+    case 'linux-x64':
+      return true;
+    default:
+      return false;
+  }
+}
+
+function liveAgentBuild(platform: LiveAgentPlatform): { id: LiveAgentPlatform; label: string; fileName: string } {
+  const build = LIVE_AGENT_BUILDS.find((item) => item.id === platform);
+  if (build) return build;
+  const unexpected: never = platform;
+  return unexpected;
+}
+
+export function liveAgentDownloadUrl(platform: LiveAgentPlatform): string {
+  return `https://github.com/7erry/hvyMETL/releases/download/${LIVE_AGENT_RELEASE}/${liveAgentBuild(platform).fileName}`;
+}
+
+type LiveAgentClientHint = {
+  userAgent: string;
+  platform: string;
+  architecture?: string;
+};
+
+/** Pick a build when the browser is specific. Macs that only say Intel stay unset. */
+export function detectLiveAgentPlatform(hint: LiveAgentClientHint): LiveAgentPlatform | null {
+  const userAgent = hint.userAgent.toLowerCase();
+  const platform = hint.platform.toLowerCase();
+  const architecture = (hint.architecture ?? '').toLowerCase();
+  if (userAgent.includes('android')) return null;
+  if (platform.includes('win') || userAgent.includes('windows')) return 'windows-x64';
+  if (platform.includes('linux') || userAgent.includes('linux')) return 'linux-x64';
+  const mac = platform.includes('mac') || userAgent.includes('mac');
+  if (!mac) return null;
+  if (architecture === 'arm' || architecture === 'aarch64' || userAgent.includes('arm') || platform.includes('arm')) {
+    return 'macos-aarch64';
+  }
+  if (architecture === 'x86' || architecture === 'x86_64' || architecture === 'amd64') return 'macos-x64';
+  return null;
+}
+
+type AgentUserAgentData = {
+  platform?: string;
+  getHighEntropyValues?: (hints: string[]) => Promise<{ architecture?: string; platform?: string }>;
+};
+
+/** Browser hint for the agent menu. Returns null when the Mac architecture is ambiguous. */
+export async function detectClientLiveAgentPlatform(): Promise<LiveAgentPlatform | null> {
+  const nav = navigator as Navigator & { userAgentData?: AgentUserAgentData };
+  const data = nav.userAgentData;
+  let architecture: string | undefined;
+  let platform = data?.platform || navigator.platform;
+  if (data?.getHighEntropyValues) {
+    try {
+      const hints = await data.getHighEntropyValues(['architecture', 'platform']);
+      architecture = hints.architecture;
+      if (hints.platform) platform = hints.platform;
+    } catch {
+      architecture = undefined;
+    }
+  }
+  return detectLiveAgentPlatform({ userAgent: navigator.userAgent, platform, architecture });
+}
 
 function shellQuote(value: string): string {
   return `'${value.replace(/'/g, `'\\''`)}'`;
 }
 
-/** Command the hosted page prints after the user downloads the agent. */
-export function liveAgentRunCommand(token: string, uri: string, database: string): string {
+/** Full command for the downloaded file. Windows uses PowerShell quoting. */
+export function liveAgentRunCommand(platform: LiveAgentPlatform, token: string, uri: string, database: string): string {
+  const fileName = liveAgentBuild(platform).fileName;
   const databaseFlag = database ? ` --database ${shellQuote(database)}` : '';
-  return `chmod +x ${LIVE_AGENT_FILE} && ./${LIVE_AGENT_FILE} --token ${token} --uri ${shellQuote(uri)}${databaseFlag}`;
+  const args = `--token ${token} --uri ${shellQuote(uri)}${databaseFlag}`;
+  switch (platform) {
+    case 'windows-x64':
+      return `.\\${fileName} ${args}`;
+    case 'macos-aarch64':
+    case 'macos-x64':
+    case 'linux-x64':
+      return `chmod +x ${fileName} && ./${fileName} ${args}`;
+    default: {
+      const unexpected: never = platform;
+      return unexpected;
+    }
+  }
+}
+
+/** Copy during the click that started `command`, before that promise settles. */
+export function copyLiveAgentCommand(command: Promise<string>): Promise<void> {
+  const blob = command.then((text) => {
+    if (!text) throw new Error('no-command');
+    return new Blob([text], { type: 'text/plain' });
+  });
+  const write =
+    typeof ClipboardItem === 'undefined'
+      ? command.then((text) => (text ? navigator.clipboard.writeText(text) : undefined))
+      : navigator.clipboard.write([new ClipboardItem({ 'text/plain': blob })]);
+  return write.then(() => undefined).catch(() => undefined);
 }
 
 /** Messages that belong next to this form. Other studio status stays in the footer. */
@@ -70,6 +171,7 @@ export function liveImportFormNotice(status: string): string {
   if (
     status.startsWith('Reading the live database') ||
     status.startsWith('Import failed') ||
+    status.startsWith('Command copied') ||
     status.startsWith('On the computer with the database')
   ) {
     return status;
@@ -82,27 +184,63 @@ export function LiveMongoImportForm({ disabled, status = '', onImport }: LiveMon
   const [engine, setEngine] = useState<LiveConnectionEngine>('mongodb');
   const [uri, setUri] = useState('');
   const [database, setDatabase] = useState('');
+  const [platform, setPlatform] = useState<LiveAgentPlatform | ''>('');
   const [busy, setBusy] = useState(false);
+  const userPickedPlatform = useRef(false);
   const connection = liveConnectionHint(engine);
+  const selected = isLiveAgentPlatform(platform) ? liveAgentBuild(platform) : null;
 
-  const submit = (event: FormEvent) => {
+  useEffect(() => {
+    let cancelled = false;
+    void detectClientLiveAgentPlatform().then((detected) => {
+      if (!cancelled && detected && !userPickedPlatform.current) setPlatform(detected);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const runImport = (event: FormEvent, copy: boolean) => {
     event.preventDefault();
-    if (busy) return;
+    if (busy || !uri.trim()) return;
     setBusy(true);
-    void Promise.resolve(onImport(uri.trim(), database.trim())).finally(() => setBusy(false));
+    const pending = Promise.resolve(onImport(uri.trim(), database.trim(), platform)).then((command) => command ?? '');
+    const finished = copy ? copyLiveAgentCommand(pending) : pending.then(() => undefined);
+    void finished.finally(() => setBusy(false));
   };
 
   const notice = liveImportFormNotice(status) || (busy ? 'Reading the live database…' : '');
 
   return (
-    <form className="live-mongo-import" onSubmit={submit}>
+    <form className="live-mongo-import" onSubmit={(event) => runImport(event, true)}>
       <div className="live-mongo-import__agent">
         <p className="pipeline-hint">
-          hvymetl.studio cannot open a database on your computer. Download the agent, click Import live data, then run the command shown here on the computer that has the database.
+          hvymetl.studio cannot open a database on your computer. Download the agent, copy the command, and paste it in a terminal on the computer that has the database. On Windows, use PowerShell.
         </p>
-        <a className="live-mongo-import__download" href={LIVE_AGENT_DOWNLOAD_URL}>
-          Download macOS agent (Apple silicon)
-        </a>
+        <label className="schema-import-panel__label">
+          Agent for this computer
+          <select
+            value={platform}
+            onChange={(event) => {
+              userPickedPlatform.current = true;
+              const next = event.target.value;
+              setPlatform(isLiveAgentPlatform(next) ? next : '');
+            }}
+            className="schema-import-panel__select"
+          >
+            <option value="">Choose your computer…</option>
+            {LIVE_AGENT_BUILDS.map((build) => (
+              <option key={build.id} value={build.id}>
+                {build.label}
+              </option>
+            ))}
+          </select>
+        </label>
+        {selected ? (
+          <a className="live-mongo-import__download" href={liveAgentDownloadUrl(selected.id)}>
+            Download {selected.label}
+          </a>
+        ) : null}
       </div>
       <label className="schema-import-panel__label">
         Database type
@@ -144,8 +282,11 @@ export function LiveMongoImportForm({ disabled, status = '', onImport }: LiveMon
         </p>
       ) : null}
       <div className="button-row">
-        <button type="submit" className="primary" disabled={disabled || busy}>
-          {busy ? 'Reading…' : 'Import live data'}
+        <button type="submit" className="primary" disabled={disabled || busy || !selected}>
+          {busy ? 'Reading…' : 'Copy command'}
+        </button>
+        <button type="button" className="secondary" disabled={disabled || busy} onClick={(event) => runImport(event, Boolean(selected))}>
+          Import live data
         </button>
       </div>
     </form>

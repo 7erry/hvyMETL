@@ -49,7 +49,7 @@ type ManagerViewProps = {
   onDialectChange: (dialect: string) => void;
   onDdlChange: (ddl: string) => void;
   onImportQuery: () => void;
-  onImportLive: (uri: string, database: string) => void | Promise<void>;
+  onImportLive: (uri: string, database: string, platform: string) => void | Promise<string | void>;
   onSchemaFile: (file: File) => void;
   onImportBuiltinExample?: (exampleId: string) => void | Promise<void>;
   exporting: boolean;

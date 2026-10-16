@@ -1,3 +1,9 @@
+## hvyMETL 7.7.0
+
+**Agent downloads** — Connect Live Database picks the macOS, Windows, or Linux agent when the browser says which computer it is, and offers the other builds in a menu. Copy command puts the full command on the clipboard.
+
+---
+
 ## hvyMETL 7.6.0
 
 **Downloadable agent** — Connect Live Database on the hosted site offers a macOS Apple silicon download. Run that file with the command the form prints. The connection string stays on your computer. PostgreSQL and MySQL from the website still use a studio on that computer.
