@@ -28,8 +28,8 @@ Definitions: [`src/dialects.ts`](../src/dialects.ts) · UI/API: `GET /api/dialec
 | Dialect ID | Label | Schema import | Live adapter | Parser / notes |
 | --- | --- | --- | --- | --- |
 | `sqlite` | SQLite | File upload **or** DDL paste | **Yes** | `better-sqlite3` introspection |
-| `postgresql` | PostgreSQL | DDL paste | No | `CREATE TABLE`, inline and table-level FKs |
-| `mysql` | MySQL | DDL paste | No | Backtick-quoted identifiers |
+| `postgresql` | PostgreSQL | URI or DDL paste | Yes | Live `information_schema`, or `CREATE TABLE` |
+| `mysql` | MySQL | URI or DDL paste | Yes | Live `information_schema`, or backtick-quoted identifiers |
 | `mariadb` | MariaDB | DDL paste | No | MySQL-compatible; `AUTO_INCREMENT`, inline FKs |
 | `mssql` | Microsoft SQL Server | DDL paste | No | T-SQL `CREATE TABLE` |
 | `sybase` | SAP ASE (Sybase) | DDL paste | No | T-SQL-like DDL; `IDENTITY` columns, `dbo.` prefixes, `database..table` shorthand |

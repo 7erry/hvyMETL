@@ -105,9 +105,10 @@ describe('dialects', () => {
     expect(inferSchemaDialect({ source: '/data/app.db' }, '')).toBe('sqlite');
   });
 
-  it('marks only sqlite as a live source dialect', () => {
+  it('marks sqlite, postgresql, and mysql as live source dialects', () => {
     expect(isLiveSourceDialect('sqlite')).toBe(true);
-    expect(isLiveSourceDialect('postgresql')).toBe(false);
+    expect(isLiveSourceDialect('postgresql')).toBe(true);
+    expect(isLiveSourceDialect('mysql')).toBe(true);
     expect(isLiveSourceDialect('snowflake')).toBe(false);
     expect(isLiveSourceDialect('firebird')).toBe(false);
   });

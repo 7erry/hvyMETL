@@ -1,3 +1,9 @@
+## hvyMETL 7.1.0
+
+**PostgreSQL and MySQL live import** — The same Import live data form accepts a `postgresql://` or `mysql://` URI. The studio server reads `information_schema` into the existing structural model. Row counts are catalog estimates, and relationship sizes stay unknown until CSV or a later pipeline read. Other SQL dialects stay on DDL paste. SQLite stays a file upload.
+
+---
+
 ## hvyMETL 7.0.0
 
 **Import live data** — Next to Import schema, the studio can sample a MongoDB database and infer the same structural model as a MongoDB JSON paste. The studio server opens the connection. Up to 50 documents are read from each collection. The hosted website refuses the request, because it cannot reach a database on your computer. Paste, file upload, and SQLite file import are unchanged. Pipeline load still uses CSV or mongoimport.

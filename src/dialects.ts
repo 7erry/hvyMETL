@@ -1,6 +1,6 @@
 /**
  * Supported SQL dialects for DDL paste import in Migration Studio.
- * Only SQLite has a live file adapter; others use the shared DDL parser.
+ * SQLite is a file adapter. PostgreSQL and MySQL also accept a live URI. The rest use the shared DDL parser.
  */
 
 export type DialectDefinition = {
@@ -13,8 +13,8 @@ export type DialectDefinition = {
 
 const DIALECT_DEFINITIONS: DialectDefinition[] = [
   { id: 'sqlite', label: 'SQLite', live: true, parserFamily: 'sqlite' },
-  { id: 'postgresql', label: 'PostgreSQL', live: false, parserFamily: 'postgresql' },
-  { id: 'mysql', label: 'MySQL', live: false, parserFamily: 'mysql' },
+  { id: 'postgresql', label: 'PostgreSQL', live: true, parserFamily: 'postgresql' },
+  { id: 'mysql', label: 'MySQL', live: true, parserFamily: 'mysql' },
   { id: 'mariadb', label: 'MariaDB', live: false, parserFamily: 'mysql' },
   { id: 'mssql', label: 'Microsoft SQL Server', live: false, parserFamily: 'mssql' },
   { id: 'sybase', label: 'SAP ASE (Sybase)', live: false, parserFamily: 'sybase' },

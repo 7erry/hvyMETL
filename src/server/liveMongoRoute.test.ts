@@ -38,7 +38,7 @@ describe('POST /import-live', () => {
     expect(body.error).toMatch(/hosted studio/);
   });
 
-  it('rejects a non-MongoDB URI without connecting', async () => {
+  it('rejects a closed PostgreSQL port without returning the connection string', async () => {
     delete process.env.HVYMETL_HOSTED;
     delete process.env.HVYMETL_HOSTED_URL;
     const app = express();
@@ -50,10 +50,11 @@ describe('POST /import-live', () => {
     const res = await fetch(`http://127.0.0.1:${port}/import-live`, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ uri: 'postgres://localhost/shop', database: 'shop' }),
+      body: JSON.stringify({ uri: 'postgresql://user:secret@127.0.0.1:1/shop' }),
     });
     const body = (await res.json()) as { error?: string };
     expect(res.status).toBe(400);
-    expect(body.error).toMatch(/mongodb:\/\/ or mongodb\+srv:\/\//);
+    expect(body.error ?? '').not.toContain('secret');
+    expect(body.error).toMatch(/connect|ECONNREFUSED|database/i);
   });
 });

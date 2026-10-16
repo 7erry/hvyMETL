@@ -31,6 +31,7 @@ export function mongoDatabaseName(uri: string, explicit?: string): string {
 export function publicMongoError(error: unknown): string {
   const message = error instanceof Error ? error.message : String(error);
   if (/mongodb(?:\+srv)?:\/\/\S/i.test(message)) return 'Could not connect to MongoDB.';
+  if (/(?:postgres(?:ql)?|mysql):\/\/\S/i.test(message)) return 'Could not connect to the database.';
   return message;
 }
 

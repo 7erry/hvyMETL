@@ -27,10 +27,10 @@ export function LiveMongoImportForm({ disabled, onImport }: LiveMongoImportFormP
   return (
     <form className="live-mongo-import" onSubmit={submit}>
       <p className="pipeline-hint">
-        The studio server samples the database. The hosted website cannot reach a database on your computer.
+        MongoDB, PostgreSQL, or MySQL. The studio server connects. The hosted website cannot reach a database on your computer.
       </p>
       <label className="schema-import-panel__label">
-        MongoDB URI
+        Connection URI
         <input
           value={uri}
           onChange={(event) => setUri(event.target.value)}

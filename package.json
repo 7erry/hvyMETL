@@ -1,6 +1,6 @@
 {
   "name": "hvymetl",
-  "version": "7.0.0",
+  "version": "7.1.0",
   "description": "RAG-driven SQL-to-MongoDB migration toolkit: pattern knowledge base, workload profiles, parallel pattern-aware ETL, cvsToAtlas import integration, and repository layer generation.",
   "type": "module",
   "license": "BUSL-1.1",
@@ -50,7 +50,9 @@
     "express-oauth2-jwt-bearer": "^1.9.1",
     "mongodb": "^7.3.0",
     "multer": "^2.0.2",
+    "mysql2": "^3.24.6",
     "onnxruntime-node": "^1.26.0",
+    "pg": "^8.23.1",
     "swagger-ui-express": "^5.0.1",
     "yaml": "^2.9.0"
   },
@@ -61,6 +63,7 @@
     "@types/express": "^5.0.5",
     "@types/multer": "^2.0.0",
     "@types/node": "^25.9.3",
+    "@types/pg": "^8.23.1",
     "@types/swagger-ui-express": "^4.1.8",
     "concurrently": "^9.2.1",
     "cross-env": "^10.1.0",

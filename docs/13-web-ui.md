@@ -80,7 +80,7 @@ All six pipeline steps (Knowledge + RAG, profiles, design, ETL, import, codegen)
 | `GET` | `/api/schema/builtin-examples` | — | `{ examples, examplesDir, source }` |
 | `POST` | `/api/schema/import-builtin-example` | `{ exampleId }` | `{ model, ddl, dialect, suggestedProfileId, inferred }` |
 | `POST` | `/api/schema/import-sqlite` | `multipart database` | `{ model, ddl, sourcePath }` |
-| `POST` | `/api/schema/import-live` | `{ uri, database? }` | `{ model, ddl, dialect, inferred }` from a sampled MongoDB database. Refused on the hosted studio. |
+| `POST` | `/api/schema/import-live` | `{ uri, database? }` | `{ model, ddl, dialect, inferred }` from MongoDB, PostgreSQL, or MySQL. Refused on the hosted studio. |
 | `POST` | `/api/design` | `{ model, profileId, ddl, cardinalityOverrides?, forceEmbedOverrides? }` | `{ plan, designReport, retrievalStrategy }` |
 | `POST` | `/api/export/migration` | `{ model, profileId, ddl, cardinalityOverrides?, forceEmbedOverrides? }` | Downloads: plan JSON, design report, RAG prompts |
 | `POST` | `/api/export/prompts` | `{ ddl, profileId }` | RAG prompt bundle |
@@ -112,8 +112,8 @@ via **Import Query** (paste `CREATE TABLE` scripts).
 | Dialect ID | Label | Import mode | Notes |
 | --- | --- | --- | --- |
 | `sqlite` | SQLite | File upload **or** DDL paste | Live introspection via `better-sqlite3` |
-| `postgresql` | PostgreSQL | DDL paste | Standard `CREATE TABLE`, inline and table-level FKs |
-| `mysql` | MySQL | DDL paste | Backtick-quoted identifiers |
+| `postgresql` | PostgreSQL | URI **or** DDL paste | Live `information_schema` read, or standard `CREATE TABLE` |
+| `mysql` | MySQL | URI **or** DDL paste | Live `information_schema` read, or backtick-quoted identifiers |
 | `mssql` | Microsoft SQL Server | DDL paste | T-SQL `CREATE TABLE` |
 | `sybase` | SAP ASE (Sybase) | DDL paste | T-SQL-like DDL; `IDENTITY`, `dbo.` prefixes, `database..table` shorthand |
 | `clickhouse` | ClickHouse | DDL paste | Column-oriented DDL subset |

@@ -7,8 +7,8 @@ export function sortDialectsByLabel(dialects: readonly Dialect[]): Dialect[] {
 
 const UNSORTED_FALLBACK_DIALECTS: Dialect[] = [
   { id: 'sqlite', label: 'SQLite', live: true },
-  { id: 'postgresql', label: 'PostgreSQL', live: false },
-  { id: 'mysql', label: 'MySQL', live: false },
+  { id: 'postgresql', label: 'PostgreSQL', live: true },
+  { id: 'mysql', label: 'MySQL', live: true },
   { id: 'mariadb', label: 'MariaDB', live: false },
   { id: 'mssql', label: 'Microsoft SQL Server', live: false },
   { id: 'sybase', label: 'SAP ASE (Sybase)', live: false },
