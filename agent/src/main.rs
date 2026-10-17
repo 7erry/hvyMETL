@@ -35,9 +35,15 @@ fn database_name(uri: &str, explicit: Option<&str>) -> Result<String, String> {
     Ok(database.to_string())
 }
 
-/// Driver errors can echo the URI. The studio only needs a safe sentence.
+/// Driver and HTTP errors can echo a URI or the session token. The studio only needs a safe sentence.
 fn public_error(error: &impl ToString) -> String {
     let message = error.to_string();
+    if message.contains("UnknownIssuer") || message.contains("invalid peer certificate") {
+        return "Could not reach the studio because its TLS certificate is not trusted.".to_string();
+    }
+    if message.contains("/api/agent/") {
+        return "Could not reach the studio.".to_string();
+    }
     if message.contains("mongodb://") || message.contains("mongodb+srv://") {
         return "Could not connect to MongoDB.".to_string();
     }
@@ -124,10 +130,12 @@ fn main() {
         })
     });
     if let Err(error) = outcome {
-        let _ = post_json(
-            &format!("{server}/api/agent/result"),
-            serde_json::json!({ "token": token, "error": error }),
-        );
+        if !error.starts_with("Could not reach the studio") {
+            let _ = post_json(
+                &format!("{server}/api/agent/result"),
+                serde_json::json!({ "token": token, "error": error }),
+            );
+        }
         eprintln!("{error}");
         std::process::exit(1);
     }
