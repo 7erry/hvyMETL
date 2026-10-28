@@ -81,24 +81,8 @@ export function AgentCopilotSidebar() {
     });
   };
 
-  const handleOpen = () => {
-    copilot.setOpen(true);
-  };
-
   return (
     <>
-      {!copilot.open ? (
-        <button
-          type="button"
-          className="agent-copilot-launcher"
-          onClick={handleOpen}
-          aria-label="Open Copilot"
-          title="Copilot (⌘K)"
-        >
-          ◈ Copilot
-        </button>
-      ) : null}
-
       <aside
         className="agent-copilot-sidebar"
         style={{ width: copilot.width }}

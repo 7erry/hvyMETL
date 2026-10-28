@@ -1,3 +1,9 @@
+## hvyMETL 8.0.1
+
+**Studio chrome** — Developer/Manager, workload profile, and Copilot controls are only on the left nav rail. The header no longer repeats role or custom-workload UI, and the floating Copilot launcher is gone.
+
+---
+
 ## hvyMETL 8.0.0
 
 **MongoDB Shell in Studio** — A left-rail **Shell** view runs real `mongosh` against a URI saved in the browser. Connections stay local to the machine; the studio server spawns `mongosh --file` for each Run. The editor has JavaScript highlighting, context-aware autocomplete (collections and sample fields after **Refresh schema**, method signatures, find query operators, aggregation stages), and script library / history / save-load. Results open in closable tabs (named collection tabs for `find` / `getCollection` output, including empty `[]`), with a Key / Value / Type tree, pagination, resizable columns, and a default **50% / 50%** editor–results split.

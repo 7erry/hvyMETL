@@ -48,7 +48,6 @@ import { TimeSeriesOverridesPanel } from './components/TimeSeriesOverridesPanel'
 import { AuthGate } from './components/AuthGate';
 import { FALLBACK_DIALECTS } from './dialectConstants';
 import { getDialectLabel, inferSchemaDialect } from '../../src/dialects.ts';
-import { RoleToggle } from './components/RoleToggle';
 import { AppNavRail, type AppNavId } from './components/AppNavRail';
 import { MongoShellView } from './components/MongoShellView';
 import { useAccess } from './auth/HostedAuthProvider';
@@ -117,15 +116,6 @@ import type { PipelineExecutionDetail } from './transformationSummaryTypes';
 import { EMBED_OVERRIDES_PANEL_ID } from './transformationSummaryTypes';
 import type { Dialect, Profile, SqlStructuralModel } from './types';
 import { COPILOT_WIDTH_MAX, SIDEBAR_WIDTH_MAX, SIDEBAR_WIDTH_MIN } from './layoutConstants';
-
-function CopilotHeaderToggle() {
-  const copilot = useCopilot();
-  return (
-    <button type="button" className="tertiary" onClick={copilot.toggleOpen} title="Copilot (⌘K)">
-      ◈ Copilot
-    </button>
-  );
-}
 
 type StudioNavRailProps = {
   active: AppNavId;
@@ -1559,45 +1549,12 @@ export default function App() {
         onSelect={handleNavSelect}
         copilotAvailable={uiRole === 'developer'}
         shellAvailable={uiRole === 'developer'}
-        rolesAvailable
+        rolesAvailable={access.canSwitchUiRole}
       />
       <div className="app-shell">
       <header className="app-header">
         <MongoLogo />
         <div className="app-header__actions">
-          {access.canSwitchUiRole ? (
-            <RoleToggle role={uiRole} onChange={(role) => setSessionField('uiRole', role)} />
-          ) : (
-            <span className="role-toggle role-toggle--locked" aria-label="Assigned role">
-              {uiRole === 'manager' ? 'Manager' : 'Developer'}
-            </span>
-          )}
-          {uiRole === 'developer' ? (
-            <>
-              <select
-                value={profileId}
-                onChange={(e) => {
-                  const next = e.target.value;
-                  setSessionField('profileId', next);
-                  if (next === 'custom' && !customProfile) {
-                    setCustomTelemetryOpen(true);
-                  }
-                }}
-                aria-label="Workload profile"
-              >
-                {profiles.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.label}
-                  </option>
-                ))}
-                <option value="custom">Custom Workload</option>
-              </select>
-              <button type="button" className="tertiary" onClick={() => setCustomTelemetryOpen(true)}>
-                Custom workload
-              </button>
-            </>
-          ) : null}
-          {uiRole === 'developer' ? <CopilotHeaderToggle /> : null}
           {access.enabled ? (
             <div className="auth-user">
               <span>{access.userName}</span>
