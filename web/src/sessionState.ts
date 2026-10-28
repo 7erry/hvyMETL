@@ -74,7 +74,7 @@ export type MigrationArtifacts = {
   };
 };
 
-export type AppView = 'diagram' | 'migration';
+export type AppView = 'diagram' | 'migration' | 'shell';
 
 export type SchemaPhase = 'before' | 'after';
 
@@ -186,9 +186,14 @@ export function loadSessionState(userId?: string): SessionState {
     const rawDiagramViewMode =
       parseDiagramViewMode(rest.diagramViewMode) ?? diagramViewModeFromSchemaPhase(phase);
     const diagramViewMode = reconcileDiagramViewWithSchemaPhase(phase, rawDiagramViewMode);
+    const view: AppView =
+      rest.view === 'migration' || rest.view === 'shell' || rest.view === 'diagram'
+        ? rest.view
+        : 'diagram';
     return {
       ...defaultSessionState(),
       ...rest,
+      view,
       schemaPhase: phase,
       diagramViewMode,
       diagramDualSplitBottomHeight: clampPanelWidth(

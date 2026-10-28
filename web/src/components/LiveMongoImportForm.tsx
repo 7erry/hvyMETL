@@ -6,7 +6,7 @@ type LiveMongoImportFormProps = {
   disabled: boolean;
   /** Studio status line. The import dialog covers that line, so the form repeats live-import messages. */
   status?: string;
-  onImport: (uri: string, database: string, platform: string) => void | Promise<string | void>;
+  onImport: (uri: string, database: string, platform: string, copyOnly?: boolean) => void | Promise<string | void>;
 };
 
 type LiveConnectionHint = {
@@ -135,10 +135,17 @@ function shellQuote(value: string): string {
 }
 
 /** Full command for the downloaded file. Windows uses PowerShell quoting. */
-export function liveAgentRunCommand(platform: LiveAgentPlatform, token: string, uri: string, database: string): string {
+export function liveAgentRunCommand(
+  platform: LiveAgentPlatform,
+  token: string,
+  uri: string,
+  database: string,
+  server?: string,
+): string {
   const fileName = liveAgentBuild(platform).fileName;
   const databaseFlag = database ? ` --database ${shellQuote(database)}` : '';
-  const args = `--token ${token} --uri ${shellQuote(uri)}${databaseFlag}`;
+  const serverFlag = server ? ` --server ${shellQuote(server)}` : '';
+  const args = `--token ${token} --uri ${shellQuote(uri)}${databaseFlag}${serverFlag}`;
   switch (platform) {
     case 'windows-x64':
       return `.\\${fileName} ${args}`;
@@ -204,7 +211,7 @@ export function LiveMongoImportForm({ disabled, status = '', onImport }: LiveMon
     event.preventDefault();
     if (busy || !uri.trim()) return;
     setBusy(true);
-    const pending = Promise.resolve(onImport(uri.trim(), database.trim(), platform)).then((command) => command ?? '');
+    const pending = Promise.resolve(onImport(uri.trim(), database.trim(), platform, copy)).then((command) => command ?? '');
     const finished = copy ? copyLiveAgentCommand(pending) : pending.then(() => undefined);
     void finished.finally(() => setBusy(false));
   };
@@ -285,7 +292,7 @@ export function LiveMongoImportForm({ disabled, status = '', onImport }: LiveMon
         <button type="submit" className="primary" disabled={disabled || busy || !selected}>
           {busy ? 'Reading…' : 'Copy command'}
         </button>
-        <button type="button" className="secondary" disabled={disabled || busy} onClick={(event) => runImport(event, Boolean(selected))}>
+        <button type="button" className="secondary" disabled={disabled || busy} onClick={(event) => runImport(event, false)}>
           Import live data
         </button>
       </div>

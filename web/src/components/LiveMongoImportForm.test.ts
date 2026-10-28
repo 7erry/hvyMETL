@@ -28,6 +28,7 @@ describe('liveAgentRunCommand', () => {
     expect(liveAgentRunCommand('macos-x64', 'abc', 'mongodb://localhost:27017', '')).toContain('./hvymetl-agent-macos-x64');
     expect(liveAgentRunCommand('linux-x64', 'abc', 'mongodb://localhost:27017', '')).toContain('./hvymetl-agent-linux-x64');
     expect(liveAgentRunCommand('windows-x64', 'abc', 'mongodb://localhost:27017', 'shop')).toContain('.\\hvymetl-agent-windows-x64.exe');
+    expect(liveAgentRunCommand('macos-aarch64', 'abc', 'mongodb://localhost:27017', 'shop', 'http://localhost:3847')).toContain("--server 'http://localhost:3847'");
     expect(mac).not.toContain('npx');
   });
 });

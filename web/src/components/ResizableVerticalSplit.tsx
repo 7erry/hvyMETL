@@ -1,6 +1,7 @@
 import {
   useCallback,
   useEffect,
+  useLayoutEffect,
   useRef,
   useState,
   type PointerEvent as ReactPointerEvent,
@@ -12,6 +13,8 @@ type ResizableVerticalSplitProps = {
   onBottomHeightChange: (height: number) => void;
   minBottom?: number;
   minTop?: number;
+  /** When set, apply this fraction of container height once on first layout (e.g. 0.5). */
+  defaultBottomRatio?: number;
   top: ReactNode;
   bottom: ReactNode;
 };
@@ -22,11 +25,13 @@ export function ResizableVerticalSplit({
   onBottomHeightChange,
   minBottom = 160,
   minTop = 200,
+  defaultBottomRatio,
   top,
   bottom,
 }: ResizableVerticalSplitProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const dragging = useRef(false);
+  const didInitRatio = useRef(false);
   const [isDragging, setIsDragging] = useState(false);
 
   const clampBottom = useCallback(
@@ -72,6 +77,27 @@ export function ResizableVerticalSplit({
       window.removeEventListener('pointercancel', stopDrag);
     };
   }, [onPointerMove, stopDrag]);
+
+  useLayoutEffect(() => {
+    if (defaultBottomRatio == null) return;
+    const el = containerRef.current;
+    if (!el) return;
+
+    const applyOnce = () => {
+      if (didInitRatio.current) return;
+      if (el.clientHeight < minBottom + minTop) return;
+      didInitRatio.current = true;
+      onBottomHeightChange(
+        clampBottom(Math.round(el.clientHeight * defaultBottomRatio)),
+      );
+    };
+
+    applyOnce();
+    if (didInitRatio.current || typeof ResizeObserver === 'undefined') return;
+    const ro = new ResizeObserver(applyOnce);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [clampBottom, defaultBottomRatio, minBottom, minTop, onBottomHeightChange]);
 
   return (
     <div

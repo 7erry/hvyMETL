@@ -1,3 +1,15 @@
+## hvyMETL 8.0.0
+
+**MongoDB Shell in Studio** — A left-rail **Shell** view runs real `mongosh` against a URI saved in the browser. Connections stay local to the machine; the studio server spawns `mongosh --file` for each Run. The editor has JavaScript highlighting, context-aware autocomplete (collections and sample fields after **Refresh schema**, method signatures, find query operators, aggregation stages), and script library / history / save-load. Results open in closable tabs (named collection tabs for `find` / `getCollection` output, including empty `[]`), with a Key / Value / Type tree, pagination, resizable columns, and a default **50% / 50%** editor–results split.
+
+**Studio nav rail** — Schema, database import, sizing, shell, copilot, roles, and settings sit on a far-left icon rail instead of only in scattered chrome.
+
+**Agent TLS** — The downloadable agent uses the computer’s certificate store when it calls the studio, so hosted `hvymetl.studio` (Cloudflare Gateway) works without bundling extra public roots.
+
+**Live import copy command** — Copy command can include `--server` when needed; **Import live data** always runs the import path instead of only copying.
+
+---
+
 ## hvyMETL 7.7.0
 
 **Agent downloads** — Connect Live Database picks the macOS, Windows, or Linux agent when the browser says which computer it is, and offers the other builds in a menu. Copy command puts the full command on the clipboard.

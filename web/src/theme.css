@@ -2365,6 +2365,801 @@ textarea {
   min-height: 0;
 }
 
+.mongo-shell {
+  flex: 1;
+  display: flex;
+  min-width: 0;
+  min-height: 0;
+  background: var(--mdb-black);
+}
+
+.mongo-shell__connections {
+  flex: 0 0 17rem;
+  width: 17rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  padding: 0.75rem;
+  border-right: 1px solid var(--mdb-green-dark-2);
+  background: var(--mdb-gray-dark-4);
+  overflow: auto;
+}
+
+.mongo-shell__connections-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.mongo-shell__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.mongo-shell__empty {
+  font-size: 0.75rem;
+  opacity: 0.75;
+  padding: 0.35rem 0;
+}
+
+button.mongo-shell__conn {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.15rem;
+  width: 100%;
+  min-height: 0;
+  min-width: 0;
+  padding: 0.45rem 0.55rem;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  white-space: normal;
+  box-shadow: none;
+  transform: none;
+}
+
+button.mongo-shell__conn:hover:not(:disabled) {
+  background: rgba(0, 104, 74, 0.28);
+  box-shadow: none;
+  transform: none;
+}
+
+button.mongo-shell__conn.active {
+  background: rgba(0, 237, 100, 0.12);
+  border-color: rgba(0, 237, 100, 0.35);
+  color: var(--mdb-green-base);
+}
+
+.mongo-shell__conn-name {
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.mongo-shell__conn-uri {
+  font-size: 0.68rem;
+  opacity: 0.75;
+  word-break: break-all;
+}
+
+.mongo-shell__form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.mongo-shell__form label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.75rem;
+}
+
+.mongo-shell__hint {
+  margin: 0;
+  font-size: 0.72rem;
+  opacity: 0.8;
+  line-height: 1.35;
+}
+
+.mongo-shell__hint--warn {
+  color: #f5a8a8;
+  opacity: 1;
+}
+
+.mongo-shell__workspace {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.mongo-shell__workspace > .workspace-split-vertical {
+  flex: 1;
+  min-height: 0;
+}
+
+.mongo-shell__editor-pane,
+.mongo-shell__results-pane {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+  background: var(--mdb-black);
+}
+
+.mongo-shell__toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.4rem 0.65rem;
+  border-bottom: 1px solid var(--mdb-green-dark-2);
+  background: var(--mdb-gray-dark-4);
+}
+
+.mongo-shell__toolbar-title {
+  font-size: 0.75rem;
+  font-weight: 500;
+  opacity: 0.75;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mongo-shell__toolbar-actions,
+.mongo-shell__run-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+button.mongo-shell__run-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-height: 0;
+  padding: 0.35rem 0.75rem;
+  border: 1px solid var(--mdb-green-base);
+  border-radius: 999px;
+  background: var(--mdb-green-dark-2);
+  color: var(--mdb-spring-green);
+  font-size: 0.78rem;
+  font-weight: 600;
+  box-shadow: none;
+  transform: none;
+}
+
+button.mongo-shell__run-btn:hover:not(:disabled) {
+  background: rgba(0, 237, 100, 0.22);
+  box-shadow: none;
+  transform: none;
+}
+
+.mongo-shell__run-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.15rem;
+  height: 1.15rem;
+  border-radius: 50%;
+  background: var(--mdb-green-base);
+  color: #04220f;
+  font-size: 0.55rem;
+  line-height: 1;
+}
+
+button.mongo-shell__tool-btn,
+button.mongo-shell__save-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  min-height: 0;
+  min-width: 0;
+  padding: 0.35rem 0.65rem;
+  border: 1px solid var(--mdb-green-dark-2);
+  border-radius: 6px;
+  background: var(--mdb-black);
+  color: var(--mdb-spring-green);
+  font-size: 0.75rem;
+  font-weight: 500;
+  box-shadow: none;
+  transform: none;
+}
+
+button.mongo-shell__tool-btn:hover:not(:disabled),
+button.mongo-shell__save-btn:hover:not(:disabled) {
+  background: rgba(0, 104, 74, 0.28);
+  box-shadow: none;
+  transform: none;
+}
+
+button.mongo-shell__save-btn {
+  border-color: var(--mdb-green-base);
+  background: rgba(0, 237, 100, 0.16);
+  color: var(--mdb-green-base);
+}
+
+button.mongo-shell__history-btn {
+  padding-inline: 0.5rem;
+}
+
+.mongo-shell__history-wrap {
+  position: relative;
+}
+
+.mongo-shell__history {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  z-index: 8;
+  margin: 0;
+  padding: 0.25rem;
+  list-style: none;
+  min-width: 14rem;
+  max-width: 22rem;
+  max-height: 14rem;
+  overflow: auto;
+  border: 1px solid var(--mdb-green-dark-2);
+  border-radius: 8px;
+  background: var(--mdb-gray-dark-4);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+}
+
+.mongo-shell__history-empty {
+  padding: 0.45rem 0.55rem;
+  font-size: 0.72rem;
+  opacity: 0.7;
+}
+
+.mongo-shell__history button {
+  display: block;
+  width: 100%;
+  min-height: 0;
+  min-width: 0;
+  padding: 0.4rem 0.55rem;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--mdb-spring-green);
+  font-size: 0.72rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  box-shadow: none;
+  transform: none;
+}
+
+.mongo-shell__history button:hover {
+  background: rgba(0, 237, 100, 0.14);
+  box-shadow: none;
+  transform: none;
+}
+
+.mongo-shell__editor-wrap {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.mongo-shell__editor {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  overflow: auto !important;
+  background: transparent;
+  color: var(--mdb-spring-green);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.82rem;
+  line-height: 1.45;
+  tab-size: 2;
+}
+
+.mongo-shell__editor-wrap textarea,
+.mongo-shell__editor-wrap .npm__react-simple-code-editor__textarea,
+.mongo-shell__editor-textarea {
+  background: transparent !important;
+  border: none !important;
+  border-radius: 0 !important;
+  color: transparent !important;
+  -webkit-text-fill-color: transparent !important;
+  caret-color: var(--mdb-green-base) !important;
+  min-height: unset !important;
+  width: 100% !important;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
+  font-size: 0.82rem !important;
+  line-height: 1.45 !important;
+  letter-spacing: normal !important;
+  tab-size: 2 !important;
+  white-space: pre-wrap !important;
+  word-break: keep-all !important;
+  overflow-wrap: break-word !important;
+  outline: none !important;
+  box-shadow: none !important;
+  resize: none !important;
+}
+
+.mongo-shell__editor-wrap textarea::selection,
+.mongo-shell__editor-textarea::selection {
+  background: rgba(0, 237, 100, 0.35) !important;
+  color: transparent !important;
+  -webkit-text-fill-color: transparent !important;
+}
+
+.mongo-shell__editor-pre {
+  margin: 0 !important;
+  background: transparent !important;
+  color: var(--mdb-spring-green);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
+  font-size: 0.82rem !important;
+  line-height: 1.45 !important;
+  letter-spacing: normal !important;
+  tab-size: 2 !important;
+  white-space: pre-wrap !important;
+  word-break: keep-all !important;
+  overflow-wrap: break-word !important;
+  outline: none !important;
+}
+
+.mongo-shell__editor-wrap .token.comment,
+.mongo-shell__editor-wrap .token.prolog,
+.mongo-shell__editor-wrap .token.doctype,
+.mongo-shell__editor-wrap .token.cdata {
+  color: #6a737d;
+}
+
+.mongo-shell__editor-wrap .token.punctuation {
+  color: #c9d1d9;
+}
+
+.mongo-shell__editor-wrap .token.property,
+.mongo-shell__editor-wrap .token.tag,
+.mongo-shell__editor-wrap .token.boolean,
+.mongo-shell__editor-wrap .token.number,
+.mongo-shell__editor-wrap .token.constant,
+.mongo-shell__editor-wrap .token.symbol {
+  color: #79c0ff;
+}
+
+.mongo-shell__editor-wrap .token.selector,
+.mongo-shell__editor-wrap .token.attr-name,
+.mongo-shell__editor-wrap .token.string,
+.mongo-shell__editor-wrap .token.char,
+.mongo-shell__editor-wrap .token.builtin {
+  color: #a5d6ff;
+}
+
+.mongo-shell__editor-wrap .token.operator,
+.mongo-shell__editor-wrap .token.entity,
+.mongo-shell__editor-wrap .token.url {
+  color: #ff7b72;
+}
+
+.mongo-shell__editor-wrap .token.atrule,
+.mongo-shell__editor-wrap .token.attr-value,
+.mongo-shell__editor-wrap .token.keyword {
+  color: #ff7b72;
+}
+
+.mongo-shell__editor-wrap .token.function,
+.mongo-shell__editor-wrap .token.class-name {
+  color: #d2a8ff;
+}
+
+.mongo-shell__editor-wrap .token.regex,
+.mongo-shell__editor-wrap .token.important,
+.mongo-shell__editor-wrap .token.variable {
+  color: #ffa657;
+}
+
+.mongo-shell__output {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  margin: 0;
+  border: none;
+  border-radius: 0;
+  resize: none;
+  padding: 0.75rem;
+  background: transparent;
+  color: var(--mdb-spring-green);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
+.mongo-shell__completions {
+  position: absolute;
+  left: 0.75rem;
+  top: 2.5rem;
+  z-index: 6;
+  margin: 0;
+  padding: 0.25rem;
+  list-style: none;
+  min-width: 16rem;
+  max-width: min(28rem, calc(100% - 1.5rem));
+  max-height: 12rem;
+  overflow: auto;
+  border: 1px solid var(--mdb-green-dark-2);
+  border-radius: 8px;
+  background: var(--mdb-gray-dark-4);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+}
+
+button.mongo-shell__completion {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.1rem;
+  width: 100%;
+  min-height: 0;
+  min-width: 0;
+  padding: 0.35rem 0.5rem;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--mdb-spring-green);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.75rem;
+  text-align: left;
+  box-shadow: none;
+  transform: none;
+}
+
+.mongo-shell__completion-label {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mongo-shell__completion-detail {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.68rem;
+  opacity: 0.7;
+  color: var(--accent-secondary);
+}
+
+.mongo-shell__library {
+  margin-top: auto;
+  padding: 0.65rem 0.75rem 0.85rem;
+  border-top: 1px solid var(--mdb-green-dark-2);
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  max-height: 42%;
+}
+
+.mongo-shell__library-project {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  font-size: 0.72rem;
+}
+
+.mongo-shell__library-project select {
+  font-size: 0.75rem;
+}
+
+.mongo-shell__library-list {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  margin: 0;
+}
+
+.mongo-shell__library-list > li {
+  display: flex;
+  align-items: stretch;
+  gap: 0.15rem;
+}
+
+.mongo-shell__library-list .mongo-shell__conn {
+  flex: 1;
+  min-width: 0;
+}
+
+button.mongo-shell__library-delete {
+  min-height: 0;
+  min-width: 0;
+  padding: 0 0.4rem;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--accent-secondary);
+  box-shadow: none;
+  transform: none;
+}
+
+button.mongo-shell__library-delete:hover:not(:disabled) {
+  color: #ff7b72;
+  background: rgba(255, 123, 114, 0.12);
+  box-shadow: none;
+  transform: none;
+}
+
+.mongo-shell__library-actions {
+  margin-top: 0.15rem;
+}
+
+button.mongo-shell__completion:hover:not(:disabled),
+button.mongo-shell__completion.active {
+  background: rgba(0, 237, 100, 0.14);
+  color: var(--mdb-green-base);
+  box-shadow: none;
+  transform: none;
+}
+
+.mongo-shell__editor-hint {
+  padding: 0.35rem 0.75rem 0.5rem;
+  border-top: 1px solid var(--mdb-green-dark-2);
+}
+
+.mongo-shell__output {
+  overflow: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.mongo-shell__results-pane .mongo-shell__hint {
+  padding: 0.5rem 0.75rem 0;
+}
+
+.mongo-shell__result-tabs {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 0.15rem;
+  padding: 0.35rem 0.5rem 0;
+  border-bottom: 1px solid var(--mdb-green-dark-2);
+  background: var(--mdb-gray-dark-4);
+  overflow-x: auto;
+}
+
+.mongo-shell__result-tab-wrap {
+  display: inline-flex;
+  align-items: stretch;
+  max-width: 14rem;
+  border: 1px solid transparent;
+  border-bottom: none;
+  border-radius: 6px 6px 0 0;
+  background: transparent;
+}
+
+.mongo-shell__result-tab-wrap.active {
+  background: var(--mdb-black);
+  border-color: var(--mdb-green-dark-2);
+}
+
+button.mongo-shell__result-tab,
+.mongo-shell__result-tab--empty {
+  min-height: 0;
+  min-width: 0;
+  padding: 0.35rem 0.5rem;
+  border: none;
+  border-radius: 6px 0 0 0;
+  background: transparent;
+  color: var(--accent-secondary);
+  font-size: 0.75rem;
+  font-weight: 500;
+  box-shadow: none;
+  transform: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mongo-shell__result-tab--empty {
+  display: inline-block;
+  padding: 0.35rem 0.65rem;
+  opacity: 0.65;
+}
+
+button.mongo-shell__result-tab:hover:not(:disabled) {
+  background: rgba(0, 104, 74, 0.22);
+  color: var(--mdb-spring-green);
+  box-shadow: none;
+  transform: none;
+}
+
+button.mongo-shell__result-tab.active {
+  color: var(--mdb-green-base);
+}
+
+button.mongo-shell__result-tab-close {
+  min-height: 0;
+  min-width: 0;
+  padding: 0 0.4rem;
+  border: none;
+  border-radius: 0 6px 0 0;
+  background: transparent;
+  color: var(--accent-secondary);
+  font-size: 0.85rem;
+  line-height: 1;
+  box-shadow: none;
+  transform: none;
+}
+
+button.mongo-shell__result-tab-close:hover:not(:disabled) {
+  color: var(--mdb-green-base);
+  background: rgba(0, 104, 74, 0.22);
+  box-shadow: none;
+  transform: none;
+}
+
+.mongo-shell-tree {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+.mongo-shell-tree__toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.35rem 0.5rem;
+  border-bottom: 1px solid var(--mdb-green-dark-2);
+  background: var(--mdb-gray-dark-4);
+}
+
+.mongo-shell-tree__pager {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+button.mongo-shell-tree__nav {
+  min-height: 0;
+  min-width: 1.6rem;
+  padding: 0.15rem 0.35rem;
+  border: 1px solid var(--mdb-green-dark-2);
+  border-radius: 4px;
+  background: var(--mdb-black);
+  color: var(--mdb-spring-green);
+  font-size: 0.85rem;
+  line-height: 1;
+  box-shadow: none;
+  transform: none;
+}
+
+button.mongo-shell-tree__nav:hover:not(:disabled) {
+  background: rgba(0, 104, 74, 0.28);
+  box-shadow: none;
+  transform: none;
+}
+
+button.mongo-shell-tree__nav:disabled {
+  opacity: 0.35;
+}
+
+.mongo-shell-tree__limit input {
+  width: 3.25rem;
+  min-height: 0;
+  padding: 0.2rem 0.35rem;
+  border: 1px solid var(--mdb-green-dark-2);
+  border-radius: 4px;
+  background: var(--mdb-black);
+  color: var(--mdb-green-base);
+  font-size: 0.75rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+.mongo-shell-tree__meta {
+  padding: 0 0.35rem;
+  font-size: 0.72rem;
+  opacity: 0.85;
+  white-space: nowrap;
+}
+
+.mongo-shell-tree__scroll {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+}
+
+.mongo-shell-tree__table {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+  font-size: 0.78rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+.mongo-shell-tree__table th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  text-align: left;
+  font-weight: 600;
+  padding: 0.4rem 0.65rem;
+  background: var(--mdb-gray-dark-4);
+  border-bottom: 1px solid var(--mdb-green-dark-2);
+  color: var(--mdb-spring-green);
+  overflow: visible;
+}
+
+.mongo-shell-tree__col-resize {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 6px;
+  height: 100%;
+  cursor: col-resize;
+  user-select: none;
+}
+
+.mongo-shell-tree__table td {
+  padding: 0.28rem 0.65rem;
+  border-bottom: 1px solid rgba(0, 104, 74, 0.35);
+  vertical-align: top;
+  word-break: break-word;
+  overflow: hidden;
+}
+
+.mongo-shell-tree__key {
+  color: var(--mdb-spring-green);
+}
+
+.mongo-shell-tree__value {
+  color: var(--mdb-green-base);
+}
+
+.mongo-shell-tree__type {
+  color: var(--accent-secondary);
+  white-space: nowrap;
+}
+
+button.mongo-shell-tree__toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 0;
+  min-width: 1.1rem;
+  width: 1.1rem;
+  margin-right: 0.25rem;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--accent-secondary);
+  font-size: 0.7rem;
+  box-shadow: none;
+  transform: none;
+}
+
+button.mongo-shell-tree__toggle:hover:not(:disabled) {
+  color: var(--mdb-green-base);
+  background: transparent;
+  box-shadow: none;
+  transform: none;
+}
+
+.mongo-shell-tree__toggle-spacer {
+  display: inline-block;
+  width: 1.1rem;
+  margin-right: 0.25rem;
+}
+
 .migration-toolbar {
   display: flex;
   align-items: center;
@@ -5627,10 +6422,119 @@ textarea {
   white-space: nowrap;
 }
 
+.app-shell {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+
 .app-body {
   display: flex;
   flex: 1;
   min-height: 0;
+}
+
+.app-nav-rail {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  flex: 0 0 4.5rem;
+  width: 4.5rem;
+  height: 100%;
+  padding: 0.65rem 0.3rem 0.75rem;
+  border-right: 1px solid var(--mdb-green-dark-2);
+  background: var(--mdb-gray-dark-4);
+  overflow-y: auto;
+  overflow-x: hidden;
+  z-index: 5;
+}
+
+.app-nav-rail__group,
+.app-nav-rail__footer {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.15rem;
+}
+
+button.app-nav-rail__item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.2rem;
+  width: 100%;
+  min-height: 3.35rem;
+  min-width: 0;
+  padding: 0.4rem 0.15rem;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  color: #9aabb4;
+  font-size: 0.62rem;
+  font-weight: 500;
+  line-height: 1.15;
+  letter-spacing: 0.01em;
+  white-space: normal;
+  box-shadow: none;
+  transform: none;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease;
+}
+
+button.app-nav-rail__item:hover:not(:disabled) {
+  background: rgba(0, 104, 74, 0.22);
+  color: var(--mdb-spring-green);
+  box-shadow: none;
+  transform: none;
+}
+
+button.app-nav-rail__item:focus-visible {
+  outline: none;
+  box-shadow: var(--btn-focus-ring);
+}
+
+button.app-nav-rail__item.active {
+  background: rgba(0, 237, 100, 0.14);
+  color: var(--mdb-green-base);
+}
+
+button.app-nav-rail__item.active:hover:not(:disabled) {
+  background: rgba(0, 237, 100, 0.18);
+  color: var(--mdb-green-base);
+}
+
+button.app-nav-rail__item:active:not(:disabled) {
+  transform: none;
+}
+
+button.app-nav-rail__item:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.app-nav-rail__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.35rem;
+  height: 1.35rem;
+}
+
+.app-nav-rail__icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+.app-nav-rail__label {
+  max-width: 100%;
+  overflow: hidden;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .workspace-split--stacked {

@@ -1262,4 +1262,41 @@ export async function createArchitectureReviewExport(request: {
   return data as ArchitectureReviewExportResponse;
 }
 
+export type MongoshStatus = {
+  available: boolean;
+  version?: string;
+  path?: string;
+  error?: string;
+};
+
+export type MongoshRunResult = {
+  ok: boolean;
+  stdout: string;
+  stderr: string;
+  exitCode: number | null;
+  timedOut?: boolean;
+  truncated?: boolean;
+};
+
+export async function fetchMongoshStatus(): Promise<MongoshStatus> {
+  const res = await apiFetch(`${base}/api/mongosh/status`);
+  if (!res.ok) throw new Error(await readApiError(res));
+  return (await res.json()) as MongoshStatus;
+}
+
+export async function runMongoshScript(request: {
+  uri: string;
+  script: string;
+  dbName?: string;
+  findLimit?: number;
+}): Promise<MongoshRunResult> {
+  const res = await apiFetch(`${base}/api/mongosh/run`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(request),
+  });
+  if (!res.ok) throw new Error(await readApiError(res));
+  return (await res.json()) as MongoshRunResult;
+}
+
 export type { DiagramExport, MongoDiagramExport };

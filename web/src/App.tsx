@@ -49,6 +49,8 @@ import { AuthGate } from './components/AuthGate';
 import { FALLBACK_DIALECTS } from './dialectConstants';
 import { getDialectLabel, inferSchemaDialect } from '../../src/dialects.ts';
 import { RoleToggle } from './components/RoleToggle';
+import { AppNavRail, type AppNavId } from './components/AppNavRail';
+import { MongoShellView } from './components/MongoShellView';
 import { useAccess } from './auth/HostedAuthProvider';
 import { profileRequestBody, resolveCustomTelemetryInitial } from './customProfileShared';
 import { emptyModelTokenUsage, mergeModelTokenUsage } from './modelUsage';
@@ -122,6 +124,42 @@ function CopilotHeaderToggle() {
     <button type="button" className="tertiary" onClick={copilot.toggleOpen} title="Copilot (⌘K)">
       ◈ Copilot
     </button>
+  );
+}
+
+type StudioNavRailProps = {
+  active: AppNavId;
+  onSelect: (id: AppNavId) => void;
+  copilotAvailable: boolean;
+  shellAvailable: boolean;
+  rolesAvailable: boolean;
+};
+
+function StudioNavRail({
+  active,
+  onSelect,
+  copilotAvailable,
+  shellAvailable,
+  rolesAvailable,
+}: StudioNavRailProps) {
+  const copilot = useCopilot();
+  const resolvedActive = copilot.open && active === 'copilot' ? 'copilot' : active;
+  return (
+    <AppNavRail
+      active={resolvedActive}
+      copilotAvailable={copilotAvailable}
+      shellAvailable={shellAvailable}
+      rolesAvailable={rolesAvailable}
+      onSelect={(id) => {
+        if (id === 'copilot') {
+          copilot.toggleOpen();
+          onSelect(id);
+          return;
+        }
+        if (copilot.open) copilot.setOpen(false);
+        onSelect(id);
+      }}
+    />
   );
 }
 
@@ -248,6 +286,9 @@ export default function App() {
   const [schemaImportPanelOpen, setSchemaImportPanelOpen] = useState(() => !model);
   const [sizingCostPanelOpen, setSizingCostPanelOpen] = useState(() => Boolean(model));
   const [haPanelOpen, setHaPanelOpen] = useState(() => Boolean(model));
+  const [activeNav, setActiveNav] = useState<AppNavId>(() =>
+    loadSessionState().view === 'shell' ? 'shell' : 'schema',
+  );
 
   const profileFields = useMemo(
     () => profileRequestBody(profileId, customProfile),
@@ -288,6 +329,63 @@ export default function App() {
     setSchemaImportModalOpen(false);
     setSchemaImportUserOpened(false);
   }, []);
+
+  const handleNavSelect = useCallback(
+    (id: AppNavId) => {
+      setActiveNav(id);
+      switch (id) {
+        case 'schema':
+          setSessionField('view', 'diagram');
+          break;
+        case 'database':
+          setSessionField('view', 'diagram');
+          setSchemaImportPanelOpen(true);
+          openSchemaImportDialog();
+          break;
+        case 'sizing':
+          setSessionField('view', 'diagram');
+          setSizingCostPanelOpen(true);
+          requestAnimationFrame(() => {
+            document.getElementById('studio-sizing-panel')?.scrollIntoView({
+              behavior: 'smooth',
+              block: 'nearest',
+            });
+          });
+          break;
+        case 'shell':
+          setSessionField('view', 'shell');
+          break;
+        case 'copilot':
+          break;
+        case 'roles':
+          if (access.canSwitchUiRole) {
+            setSessionField('uiRole', uiRole === 'developer' ? 'manager' : 'developer');
+          }
+          break;
+        case 'settings':
+          setSessionField('view', 'diagram');
+          setSessionField('canvasPanelOpen', true);
+          setCustomTelemetryOpen(true);
+          break;
+        default: {
+          const _exhaustive: never = id;
+          return _exhaustive;
+        }
+      }
+    },
+    [access.canSwitchUiRole, openSchemaImportDialog, setSessionField, uiRole],
+  );
+
+  useEffect(() => {
+    if (view === 'shell') setActiveNav('shell');
+  }, [view]);
+
+  useEffect(() => {
+    if (uiRole === 'manager' && view === 'shell') {
+      setSessionField('view', 'diagram');
+      setActiveNav('schema');
+    }
+  }, [setSessionField, uiRole, view]);
 
   useEffect(() => {
     if (access.isLoading) return;
@@ -688,22 +786,28 @@ export default function App() {
     }
   };
 
-  const handleImportLive = async (uri: string, database: string, platform = ''): Promise<string> => {
+  const handleImportLive = async (uri: string, database: string, platform = '', copyOnly = false): Promise<string> => {
     try {
-      setStatus('Reading the live database…');
-      if (await studioIsHosted()) {
+      if (copyOnly || (await studioIsHosted())) {
         if (!isLiveAgentPlatform(platform)) {
           setStatus('Import failed: Choose your computer before copying the agent command.');
           return '';
         }
         const session = await createLiveAgentSession();
-        const command = liveAgentRunCommand(platform, session.token, uri.trim(), database.trim());
+        const command = liveAgentRunCommand(platform, session.token, uri.trim(), database.trim(), window.location.origin);
         setStatus(`Command copied. On the computer with the database, run: ${command}`);
-        const { model: m, ddl: importedDdl, inferred, dialect: resolvedDialect } = await waitForLiveAgentResult(session.token);
-        setSessionField('dialect', resolvedDialect);
-        await applySchema(importedDdl, m, inferred?.profileId);
+        const token = session.token;
+        void waitForLiveAgentResult(token)
+          .then(async ({ model: m, ddl: importedDdl, inferred, dialect: resolvedDialect }) => {
+            setSessionField('dialect', resolvedDialect);
+            await applySchema(importedDdl, m, inferred?.profileId);
+          })
+          .catch((error: unknown) => {
+            setStatus(`Import failed: ${describeApiError(error)}`);
+          });
         return command;
       }
+      setStatus('Reading the live database…');
       const { model: m, ddl: importedDdl, inferred, dialect: resolvedDialect } = await importLiveMongo(uri, database);
       setSessionField('dialect', resolvedDialect);
       await applySchema(importedDdl, m, inferred?.profileId);
@@ -1448,8 +1552,16 @@ export default function App() {
     <CopilotHotkeys />
     <div
       className={uiRole === 'manager' ? 'app-root app--manager' : 'app-root'}
-      style={{ display: 'flex', flexDirection: 'column', height: '100%' }}
+      style={{ display: 'flex', flexDirection: 'row', height: '100%' }}
     >
+      <StudioNavRail
+        active={activeNav}
+        onSelect={handleNavSelect}
+        copilotAvailable={uiRole === 'developer'}
+        shellAvailable={uiRole === 'developer'}
+        rolesAvailable
+      />
+      <div className="app-shell">
       <header className="app-header">
         <MongoLogo />
         <div className="app-header__actions">
@@ -1501,7 +1613,11 @@ export default function App() {
       </header>
 
       <div className="app-body">
-        {view === 'diagram' ? (
+        {view === 'shell' && uiRole === 'developer' ? (
+          <WorkspaceCanvasShell>
+            <MongoShellView />
+          </WorkspaceCanvasShell>
+        ) : view === 'diagram' ? (
           uiRole === 'manager' ? (
             <ManagerView
               model={model}
@@ -1653,15 +1769,17 @@ export default function App() {
                   </CollapsiblePanel>
                 )}
 
-                <ManagerCostPanel
-                  variant="developer"
-                  model={model}
-                  migrationPlan={migrationPlan}
-                  inputs={managerCostInputs}
-                  onChange={(inputs) => setSessionField('managerCostInputs', inputs)}
-                  sizingPanelOpen={sizingCostPanelOpen}
-                  onSizingPanelOpenChange={setSizingCostPanelOpen}
-                />
+                <div id="studio-sizing-panel">
+                  <ManagerCostPanel
+                    variant="developer"
+                    model={model}
+                    migrationPlan={migrationPlan}
+                    inputs={managerCostInputs}
+                    onChange={(inputs) => setSessionField('managerCostInputs', inputs)}
+                    sizingPanelOpen={sizingCostPanelOpen}
+                    onSizingPanelOpenChange={setSizingCostPanelOpen}
+                  />
+                </div>
                 <HighAvailabilityPanelConnected
                   inputs={haClusterInputsWithDefaults(haClusterInputs, recommendedAtlasTierId)}
                   onChange={(inputs) => setSessionField('haClusterInputs', inputs)}
@@ -2042,6 +2160,7 @@ export default function App() {
           );
         }}
       />
+      </div>
     </div>
     </SizingAssistantStudioBridge>
     </HaAssistantProvider>
