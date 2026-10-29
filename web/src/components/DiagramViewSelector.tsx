@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import type { DiagramViewMode } from '../diagramViewMode';
+import { useT } from '../i18n/LocaleContext';
 
 type DiagramViewSelectorProps = {
   mode: DiagramViewMode;
@@ -54,22 +55,23 @@ function Segment({ active, label, title, onClick, disabled, icon }: SegmentProps
 
 /** Segmented control: stacked split, side-by-side split, SQL-only, MongoDB-only. */
 export function DiagramViewSelector({ mode, onChange, disabled }: DiagramViewSelectorProps) {
+  const t = useT();
   return (
-    <div className="diagram-view-selector" role="group" aria-label="Diagram view">
-      <span className="diagram-view-selector__label">View</span>
+    <div className="diagram-view-selector" role="group" aria-label={t('view.aria')}>
+      <span className="diagram-view-selector__label">{t('view.label')}</span>
       <div className="diagram-view-selector__track">
         <Segment
           active={mode === 'split-horizontal'}
-          label="Stacked split"
-          title="SQL on top, MongoDB below"
+          label={t('view.stacked')}
+          title={t('view.stackedTitle')}
           onClick={() => onChange('split-horizontal')}
           disabled={disabled}
           icon={<SplitHorizontalIcon />}
         />
         <Segment
           active={mode === 'split-vertical'}
-          label="Side-by-side split"
-          title="SQL on the left, MongoDB on the right"
+          label={t('view.sideBySide')}
+          title={t('view.sideBySideTitle')}
           onClick={() => onChange('split-vertical')}
           disabled={disabled}
           icon={<SplitVerticalIcon />}
@@ -77,14 +79,14 @@ export function DiagramViewSelector({ mode, onChange, disabled }: DiagramViewSel
         <Segment
           active={mode === 'rel'}
           label="REL"
-          title="Before · SQL (relational source schema)"
+          title={t('view.relTitle')}
           onClick={() => onChange('rel')}
           disabled={disabled}
         />
         <Segment
           active={mode === 'mdb'}
           label="MDB"
-          title="After · MongoDB (migration plan)"
+          title={t('view.mdbTitle')}
           onClick={() => onChange('mdb')}
           disabled={disabled}
         />

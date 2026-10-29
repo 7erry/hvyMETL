@@ -1,4 +1,7 @@
 import type { ReactElement, ReactNode } from 'react';
+import { LanguageSelect } from '../i18n/LanguageSelect';
+import { useT } from '../i18n/LocaleContext';
+import type { MessageKey } from '../i18n/messages';
 
 export type AppNavId =
   | 'schema'
@@ -121,20 +124,14 @@ function IconSettings(): ReactElement {
   );
 }
 
-const PRIMARY_ITEMS: NavItem[] = [
-  { id: 'database', label: 'Database', icon: <IconDatabase /> },
-  { id: 'schema', label: 'Schema', icon: <IconSchema /> },
-  { id: 'sizing', label: 'Sizing', icon: <IconSizing /> },
-  { id: 'shell', label: 'Shell', icon: <IconShell /> },
-  { id: 'copilot', label: 'Copilot', icon: <IconCopilot /> },
-  { id: 'roles', label: 'Roles', icon: <IconRoles /> },
+const PRIMARY_ITEMS: { id: AppNavId; labelKey: MessageKey; icon: ReactNode }[] = [
+  { id: 'database', labelKey: 'nav.database', icon: <IconDatabase /> },
+  { id: 'schema', labelKey: 'nav.schema', icon: <IconSchema /> },
+  { id: 'sizing', labelKey: 'nav.sizing', icon: <IconSizing /> },
+  { id: 'shell', labelKey: 'nav.shell', icon: <IconShell /> },
+  { id: 'copilot', labelKey: 'nav.copilot', icon: <IconCopilot /> },
+  { id: 'roles', labelKey: 'nav.roles', icon: <IconRoles /> },
 ];
-
-const SETTINGS_ITEM: NavItem = {
-  id: 'settings',
-  label: 'Settings',
-  icon: <IconSettings />,
-};
 
 function NavButton({
   item,
@@ -169,13 +166,15 @@ export function AppNavRail({
   shellAvailable = true,
   rolesAvailable = true,
 }: AppNavRailProps): ReactElement {
+  const t = useT();
+  const settingsItem: NavItem = { id: 'settings', label: t('nav.settings'), icon: <IconSettings /> };
   return (
-    <nav className="app-nav-rail" aria-label="Primary">
+    <nav className="app-nav-rail" aria-label={t('nav.primary')}>
       <div className="app-nav-rail__group">
         {PRIMARY_ITEMS.map((item) => (
           <NavButton
             key={item.id}
-            item={item}
+            item={{ id: item.id, label: t(item.labelKey), icon: item.icon }}
             active={active === item.id}
             disabled={
               (item.id === 'copilot' && !copilotAvailable) ||
@@ -187,7 +186,8 @@ export function AppNavRail({
         ))}
       </div>
       <div className="app-nav-rail__footer">
-        <NavButton item={SETTINGS_ITEM} active={active === 'settings'} onSelect={onSelect} />
+        <LanguageSelect compact />
+        <NavButton item={settingsItem} active={active === 'settings'} onSelect={onSelect} />
       </div>
     </nav>
   );

@@ -1,3 +1,4 @@
+import { useT } from '../i18n/LocaleContext';
 import type { SchemaPhase } from './SchemaPhaseToggle';
 
 type MigrationWorkflowBarProps = {
@@ -63,34 +64,35 @@ export function MigrationWorkflowBar({
   onExportMigration,
   onRunPipeline,
 }: MigrationWorkflowBarProps) {
+  const t = useT();
   return (
-    <nav className="migration-workflow-bar" aria-label="Migration workflow">
-      <WorkflowStep label="Import DDL" onClick={onImportDdl} />
+    <nav className="migration-workflow-bar" aria-label={t('workflow.aria')}>
+      <WorkflowStep label={t('workflow.importDdl')} onClick={onImportDdl} />
       <WorkflowArrow />
       <WorkflowStep
-        label="Before · SQL"
+        label={t('workflow.beforeSql')}
         onClick={() => onPhaseChange('before')}
         active={!exportActive && hasModel && phase === 'before' && diagramViewMode === 'rel'}
         disabled={!hasModel}
       />
       <WorkflowArrow />
       <WorkflowStep
-        label="After · MongoDB"
+        label={t('workflow.afterMongo')}
         onClick={() => onPhaseChange('after')}
         active={!exportActive && hasModel && phase === 'after' && diagramViewMode === 'mdb'}
         disabled={!hasModel}
         loading={designingPlan}
-        title={hasAfter ? 'MongoDB collections from migration plan' : 'Generate a migration plan first'}
+        title={hasAfter ? t('workflow.afterTitleReady') : t('workflow.afterTitleNeedPlan')}
       />
       <WorkflowArrow />
       <WorkflowStep
-        label={exporting ? 'Exporting…' : 'Export migration'}
+        label={exporting ? t('workflow.exporting') : t('workflow.export')}
         onClick={onExportMigration}
         active={exportActive}
         disabled={!hasModel || exporting}
       />
       <WorkflowArrow />
-      <WorkflowStep label="Run pipeline" onClick={onRunPipeline} disabled={!hasModel} primary />
+      <WorkflowStep label={t('workflow.runPipeline')} onClick={onRunPipeline} disabled={!hasModel} primary />
     </nav>
   );
 }

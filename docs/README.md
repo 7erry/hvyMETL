@@ -50,6 +50,7 @@ merge-mode diagrams.
 | [examples/README.md](../examples/README.md) | Pattern → example → verify-command matrix for the knowledge base | `examples/` |
 | [11-run-all-examples.md](11-run-all-examples.md) | End-to-end Atlas run for all seven domains with automated validation | `scripts/run-all-examples.mjs` |
 | [26-effort-estimate.md](26-effort-estimate.md) | Person-hour estimate for hvyMETL 5.1.37 (planning, actual, traditional) | repository snapshot |
+| [27-agent-10.0-roadmap.md](27-agent-10.0-roadmap.md) | Release 10.0 multi-engine Rust agent — WSS, Wave A schema + full extract | `agent/`, `src/server/liveAgentWs.ts` |
 
 ## Architectural Role
 

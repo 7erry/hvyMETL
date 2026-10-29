@@ -2,6 +2,8 @@ import type { ReactNode } from 'react';
 import { SESSION_EXPIRED_DETAIL } from '../auth/authErrors';
 import { useAccess } from '../auth/HostedAuthProvider';
 import { PrivacyPreferencesLink } from '../consent/PrivacyPreferencesLink';
+import { LanguageSelect } from '../i18n/LanguageSelect';
+import { useT } from '../i18n/LocaleContext';
 
 type AuthGateProps = {
   children: ReactNode;
@@ -9,6 +11,7 @@ type AuthGateProps = {
 
 export function AuthGate({ children }: AuthGateProps) {
   const access = useAccess();
+  const t = useT();
 
   if (!access.enabled) return <>{children}</>;
 
@@ -16,8 +19,9 @@ export function AuthGate({ children }: AuthGateProps) {
     return (
       <main className="auth-gate">
         <section className="auth-gate__card">
-          <strong>Loading hvyMETL Studio…</strong>
-          <p>Checking your sign-in session.</p>
+          <strong>{t('auth.loadingTitle')}</strong>
+          <p>{t('auth.loadingBody')}</p>
+          <LanguageSelect />
         </section>
       </main>
     );
@@ -27,16 +31,17 @@ export function AuthGate({ children }: AuthGateProps) {
     return (
       <main className="auth-gate">
         <section className="auth-gate__card">
-          <strong>Session expired</strong>
+          <strong>{t('auth.expiredTitle')}</strong>
           <p>{SESSION_EXPIRED_DETAIL}</p>
           <button type="button" className="primary" onClick={() => void access.reauthenticate()}>
-            Sign in again
+            {t('common.signInAgain')}
           </button>
           <button type="button" className="secondary" onClick={access.logout}>
-            Sign out
+            {t('common.signOut')}
           </button>
-          <a href="/terms">Terms and Conditions</a>
+          <a href="/terms">{t('auth.terms')}</a>
           <PrivacyPreferencesLink />
+          <LanguageSelect />
         </section>
       </main>
     );
@@ -46,16 +51,17 @@ export function AuthGate({ children }: AuthGateProps) {
     return (
       <main className="auth-gate">
         <section className="auth-gate__card">
-          <strong>Welcome to hvyMETL Studio</strong>
+          <strong>{t('auth.welcomeTitle')}</strong>
           <p>
-            Sign in at <a href="https://hvymetl.studio">hvymetl.studio</a> with Google, Facebook, or your organization
-            account to access migration design, manager review, and pipeline tools.
+            {t('auth.welcomeBody')}{' '}
+            <a href="https://hvymetl.studio">hvymetl.studio</a>
           </p>
           <button type="button" className="primary" onClick={() => void access.login()}>
-            Sign in
+            {t('common.signIn')}
           </button>
-          <a href="/terms">Terms and Conditions</a>
+          <a href="/terms">{t('auth.terms')}</a>
           <PrivacyPreferencesLink />
+          <LanguageSelect />
           {access.error ? <p className="auth-gate__error">{access.error}</p> : null}
         </section>
       </main>
@@ -66,8 +72,8 @@ export function AuthGate({ children }: AuthGateProps) {
     return (
       <main className="auth-gate">
         <section className="auth-gate__card">
-          <strong>Access pending</strong>
-          <p>Your account is signed in, but it does not have the admin, developer, or manager role yet.</p>
+          <strong>{t('auth.pendingTitle')}</strong>
+          <p>{t('auth.pendingBody')}</p>
           <p>
             In Auth0: enable <strong>RBAC</strong> on the hvyMETL API, deploy the <strong>post-login</strong>{' '}
             Action, then sign out and sign in again. Clear site data if you changed the Action recently.
@@ -77,10 +83,11 @@ export function AuthGate({ children }: AuthGateProps) {
             <code>{'"roles":["developer"]'}</code> or similar. Empty <code>roles</code> means the Login Action
             did not add <code>https://hvymetl.studio/roles</code> to your access token.
           </p>
-          <a href="/terms">Terms and Conditions</a>
+          <a href="/terms">{t('auth.terms')}</a>
           <PrivacyPreferencesLink />
+          <LanguageSelect />
           <button type="button" className="secondary" onClick={access.logout}>
-            Sign out
+            {t('common.signOut')}
           </button>
         </section>
       </main>

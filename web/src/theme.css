@@ -6514,6 +6514,41 @@ button.mongo-shell-tree__toggle:hover:not(:disabled) {
   gap: 0.15rem;
 }
 
+.language-select {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.85rem;
+}
+
+.language-select select {
+  width: 100%;
+}
+
+.language-select--compact {
+  padding: 0.35rem 0.25rem 0.5rem;
+  gap: 0.15rem;
+}
+
+.language-select--compact .language-select__label {
+  font-size: 0.58rem;
+  color: #9aabb4;
+  text-align: center;
+}
+
+.language-select--compact select {
+  font-size: 0.62rem;
+  padding: 0.2rem 0.15rem;
+  border-radius: 6px;
+  border: 1px solid rgba(154, 171, 180, 0.35);
+  background: rgba(0, 30, 43, 0.55);
+  color: #e3fcf7;
+}
+
+.auth-gate__card .language-select {
+  margin-top: 0.75rem;
+}
+
 button.app-nav-rail__item {
   display: flex;
   flex-direction: column;

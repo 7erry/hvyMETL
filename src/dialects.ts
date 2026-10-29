@@ -1,6 +1,6 @@
 /**
  * Supported SQL dialects for DDL paste import in Migration Studio.
- * SQLite is a file adapter. PostgreSQL and MySQL also accept a live URI. The rest use the shared DDL parser.
+ * Wave A live engines (SQLite, PostgreSQL, MySQL/MariaDB, MSSQL, and postgres/mysql wire-compat) also work via the Rust agent.
  */
 
 export type DialectDefinition = {
@@ -15,17 +15,17 @@ const DIALECT_DEFINITIONS: DialectDefinition[] = [
   { id: 'sqlite', label: 'SQLite', live: true, parserFamily: 'sqlite' },
   { id: 'postgresql', label: 'PostgreSQL', live: true, parserFamily: 'postgresql' },
   { id: 'mysql', label: 'MySQL', live: true, parserFamily: 'mysql' },
-  { id: 'mariadb', label: 'MariaDB', live: false, parserFamily: 'mysql' },
-  { id: 'mssql', label: 'Microsoft SQL Server', live: false, parserFamily: 'mssql' },
+  { id: 'mariadb', label: 'MariaDB', live: true, parserFamily: 'mysql' },
+  { id: 'mssql', label: 'Microsoft SQL Server', live: true, parserFamily: 'mssql' },
   { id: 'sybase', label: 'SAP ASE (Sybase)', live: false, parserFamily: 'sybase' },
   { id: 'clickhouse', label: 'ClickHouse', live: false, parserFamily: 'clickhouse' },
   { id: 'oracle', label: 'Oracle', live: false, parserFamily: 'oracle' },
   { id: 'db2', label: 'IBM Db2', live: false, parserFamily: 'db2' },
-  { id: 'cockroachdb', label: 'CockroachDB', live: false, parserFamily: 'postgresql' },
-  { id: 'yugabyte', label: 'YugabyteDB', live: false, parserFamily: 'postgresql' },
-  { id: 'aurora-postgresql', label: 'Amazon Aurora (PostgreSQL)', live: false, parserFamily: 'postgresql' },
-  { id: 'aurora-mysql', label: 'Amazon Aurora (MySQL)', live: false, parserFamily: 'mysql' },
-  { id: 'redshift', label: 'Amazon Redshift', live: false, parserFamily: 'postgresql' },
+  { id: 'cockroachdb', label: 'CockroachDB', live: true, parserFamily: 'postgresql' },
+  { id: 'yugabyte', label: 'YugabyteDB', live: true, parserFamily: 'postgresql' },
+  { id: 'aurora-postgresql', label: 'Amazon Aurora (PostgreSQL)', live: true, parserFamily: 'postgresql' },
+  { id: 'aurora-mysql', label: 'Amazon Aurora (MySQL)', live: true, parserFamily: 'mysql' },
+  { id: 'redshift', label: 'Amazon Redshift', live: true, parserFamily: 'postgresql' },
   { id: 'snowflake', label: 'Snowflake', live: false, parserFamily: 'snowflake' },
   { id: 'bigquery', label: 'Google BigQuery', live: false, parserFamily: 'bigquery' },
   { id: 'spanner', label: 'Google Cloud Spanner', live: false, parserFamily: 'spanner' },

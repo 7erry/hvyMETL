@@ -1,5 +1,6 @@
 import { useMemo, useState, useEffect, useCallback } from 'react';
 import { ResizableSplit } from './ResizableSplit';
+import { useT } from '../i18n/LocaleContext';
 import { SchemaPhaseToggle } from './SchemaPhaseToggle';
 import type { SchemaPhase } from './SchemaPhaseToggle';
 import { ManagerSchemaCanvas } from './ManagerSchemaCanvas';
@@ -89,6 +90,7 @@ export function ManagerView({
   pipelineOpen,
   profileInfo,
 }: ManagerViewProps) {
+  const t = useT();
   const [reviewOpen, setReviewOpen] = useState(false);
   const [focusCollection, setFocusCollection] = useState<string | null>(null);
 
@@ -232,7 +234,7 @@ export function ManagerView({
                   onClick={onRunPipeline}
                   disabled={!model}
                 >
-                  Run pipeline
+                  {t('workflow.runPipeline')}
                 </button>
                 <button type="button" className="secondary" onClick={onGenerateReport} disabled={!model || exporting}>
                   {exporting ? 'Generating…' : 'Generate report'}

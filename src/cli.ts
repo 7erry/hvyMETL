@@ -282,7 +282,7 @@ program
   .command('agent')
   .description('Send a local database schema to a hosted studio session')
   .requiredOption('--token <token>', 'short-lived token shown by the hosted studio')
-  .requiredOption('--uri <uri>', 'MongoDB, PostgreSQL, or MySQL URI on this machine')
+  .requiredOption('--uri <uri>', 'MongoDB, PostgreSQL, MySQL, MSSQL, or SQLite URI on this machine (prefer the Rust agent WSS binary for hosted studio)')
   .option('--database <name>', 'database name when the URI has none')
   .option('--server <url>', 'studio origin', process.env.HVYMETL_HOSTED_URL || 'https://hvymetl.studio')
   .action(async (flags: { token: string; uri: string; database?: string; server: string }) => {

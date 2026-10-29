@@ -1,3 +1,5 @@
+import { useT } from '../i18n/LocaleContext';
+
 export type SchemaPhase = 'before' | 'after';
 
 type SchemaPhaseToggleProps = {
@@ -8,8 +10,9 @@ type SchemaPhaseToggleProps = {
 
 /** Switch between SQL source (before) and MongoDB target (after) diagram views. */
 export function SchemaPhaseToggle({ phase, onChange, hasAfter }: SchemaPhaseToggleProps) {
+  const t = useT();
   return (
-    <div className="schema-phase-toggle" role="tablist" aria-label="Schema phase">
+    <div className="schema-phase-toggle" role="tablist" aria-label={t('phase.aria')}>
       <button
         type="button"
         role="tab"
@@ -17,7 +20,7 @@ export function SchemaPhaseToggle({ phase, onChange, hasAfter }: SchemaPhaseTogg
         className={phase === 'before' ? 'active' : ''}
         onClick={() => onChange('before')}
       >
-        Before · SQL
+        {t('workflow.beforeSql')}
       </button>
       <button
         type="button"
@@ -25,9 +28,9 @@ export function SchemaPhaseToggle({ phase, onChange, hasAfter }: SchemaPhaseTogg
         aria-selected={phase === 'after'}
         className={phase === 'after' ? 'active' : ''}
         onClick={() => onChange('after')}
-        title={hasAfter ? 'MongoDB collections from migration plan' : 'Generate a migration plan first'}
+        title={hasAfter ? t('workflow.afterTitleReady') : t('workflow.afterTitleNeedPlan')}
       >
-        After · MongoDB
+        {t('workflow.afterMongo')}
       </button>
     </div>
   );

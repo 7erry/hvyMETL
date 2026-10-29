@@ -1,8 +1,6 @@
 import type { ReactNode } from 'react';
 import { PrivacyPreferencesLink } from '../consent/PrivacyPreferencesLink';
-
-const DEFAULT_STATUS =
-  'Ready — session persists on refresh. Broad database support via DDL import.';
+import { useT } from '../i18n/LocaleContext';
 
 type DiagramStatusFooterProps = {
   status?: string;
@@ -11,9 +9,10 @@ type DiagramStatusFooterProps = {
 
 /** App footer: status message on the left, optional diagram legend on the right. */
 export function DiagramStatusFooter({ status, legend }: DiagramStatusFooterProps) {
+  const t = useT();
   return (
     <footer className="diagram-status-footer">
-      <span className="diagram-status-footer__message">{status || DEFAULT_STATUS}</span>
+      <span className="diagram-status-footer__message">{status || t('status.ready')}</span>
       <PrivacyPreferencesLink className="diagram-status-footer__privacy" />
       {legend ? <div className="diagram-status-footer__legend">{legend}</div> : null}
     </footer>

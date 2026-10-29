@@ -1,7 +1,7 @@
 import type { SqlStructuralModel } from '../types.js';
 import { sqlTypeToBsonType } from './sqlTypeToBsonType.js';
 
-export type LiveSqlEngine = 'postgresql' | 'mysql';
+export type LiveSqlEngine = 'postgresql' | 'mysql' | 'mssql' | 'oracle';
 
 export type SqlCatalogColumn = {
   table: string;
@@ -24,6 +24,23 @@ export type SqlCatalogTableSize = {
   table: string;
   rowCount: number;
 };
+
+export function liveSqlEngineLabel(engine: LiveSqlEngine): string {
+  switch (engine) {
+    case 'postgresql':
+      return 'PostgreSQL';
+    case 'mysql':
+      return 'MySQL';
+    case 'mssql':
+      return 'Microsoft SQL Server';
+    case 'oracle':
+      return 'Oracle';
+    default: {
+      const unexpected: never = engine;
+      return unexpected;
+    }
+  }
+}
 
 /** Build the same structural model a DDL paste would, from catalog rows. */
 export function modelFromSqlCatalog(
@@ -75,7 +92,7 @@ export function modelFromSqlCatalog(
     });
 
   if (tables.length === 0) {
-    throw new Error(`${engine === 'postgresql' ? 'PostgreSQL' : 'MySQL'} database has no tables to import.`);
+    throw new Error(`${liveSqlEngineLabel(engine)} database has no tables to import.`);
   }
 
   return {

@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import type { DiagramViewMode } from '../diagramViewMode';
+import { useT } from '../i18n/LocaleContext';
 import { ResizableHorizontalSplit } from './ResizableHorizontalSplit';
 import { ResizableVerticalSplit } from './ResizableVerticalSplit';
 
@@ -34,8 +35,9 @@ export function DiagramDualCanvasLayout({
   dualSplitLeftWidth,
   onDualSplitLeftWidthChange,
 }: DiagramDualCanvasLayoutProps) {
-  const sql = <DiagramPane label="Before · SQL">{sqlPane}</DiagramPane>;
-  const mongo = <DiagramPane label="After · MongoDB">{mongoPane}</DiagramPane>;
+  const t = useT();
+  const sql = <DiagramPane label={t('workflow.beforeSql')}>{sqlPane}</DiagramPane>;
+  const mongo = <DiagramPane label={t('workflow.afterMongo')}>{mongoPane}</DiagramPane>;
 
   if (mode === 'split-vertical') {
     return (

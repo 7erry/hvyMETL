@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState, type DragEvent } from 'react';
 import { useAccess } from '../auth/HostedAuthProvider';
 import { fetchBuiltinExamples, type BuiltinExampleSummary } from '../api';
+import { useT } from '../i18n/LocaleContext';
 import { sidebarWidthForSchemaImportTextarea } from '../schemaImportSidebarSync';
 import { detectDialect, DIALECT_DETECT_MIN_CONFIDENCE } from '../schema/detectDialect';
 import { isSupportedDialect } from '../../../src/dialects.ts';
@@ -45,6 +46,7 @@ export function SchemaImportPanel({
   compact = false,
   framed = true,
 }: SchemaImportPanelProps) {
+  const t = useT();
   const access = useAccess();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -272,7 +274,7 @@ export function SchemaImportPanel({
               onClick={() => void handleLoadExample()}
               disabled={!apiConnected || !selectedExampleId || loadingExample}
             >
-              {loadingExample ? 'Loading…' : 'Load example'}
+              {loadingExample ? t('common.loading') : t('schema.loadExample')}
             </button>
           </div>
           {selectedExampleId ? (
@@ -294,7 +296,7 @@ export function SchemaImportPanel({
           className={importMode === 'schema' ? 'active' : ''}
           onClick={() => setImportMode('schema')}
         >
-          Import Schema (DDL/File)
+          {t('schema.title')}
         </button>
         <button
           type="button"
@@ -305,7 +307,7 @@ export function SchemaImportPanel({
           className={importMode === 'live' ? 'active' : ''}
           onClick={() => setImportMode('live')}
         >
-          Connect Live Database
+          {t('schema.liveTitle')}
         </button>
       </div>
 
@@ -343,10 +345,10 @@ export function SchemaImportPanel({
           </div>
           <p className="schema-import-panel__hint" aria-live="polite">
             {dragOver
-              ? 'Drop schema or CSV files to import…'
+              ? t('schema.dropHint')
               : autoDetectedLabel
-                ? `Auto-detected: ${autoDetectedLabel}.`
-                : 'Drop DDL, JSON, YAML, SQLite, or CSV files here (or use Upload). CSV headers become tables.'}
+                ? `${t('schema.detected')}: ${autoDetectedLabel}.`
+                : t('schema.pasteHint')}
           </p>
           <textarea
             ref={textareaRef}
@@ -365,7 +367,7 @@ export function SchemaImportPanel({
           {mongoJsonError ? <p className="schema-import-panel__warn">{mongoJsonError}</p> : null}
           <div className="button-row schema-import-panel__actions">
             <button type="button" className="primary" onClick={onImportQuery} disabled={!apiConnected}>
-              Import schema
+              {t('schema.import')}
             </button>
           </div>
         </div>
@@ -383,7 +385,7 @@ export function SchemaImportPanel({
 
   return (
     <div className={`panel schema-import-panel${compact ? ' schema-import-panel--compact' : ''}`}>
-      <h3>Instant Schema Import</h3>
+      <h3>{t('schema.title')}</h3>
       {content}
     </div>
   );

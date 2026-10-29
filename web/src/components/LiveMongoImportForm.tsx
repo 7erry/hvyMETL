@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
+import { useT } from '../i18n/LocaleContext';
+import type { MessageKey } from '../i18n/messages';
 
-type LiveConnectionEngine = 'mongodb' | 'postgresql' | 'mysql';
+type LiveConnectionEngine = 'mongodb' | 'postgresql' | 'mysql' | 'mssql' | 'sqlite';
 
 type LiveMongoImportFormProps = {
   disabled: boolean;
@@ -18,6 +20,8 @@ function liveEngineFromSelect(value: string): LiveConnectionEngine {
   switch (value) {
     case 'postgresql':
     case 'mysql':
+    case 'mssql':
+    case 'sqlite':
     case 'mongodb':
       return value;
     default:
@@ -43,6 +47,16 @@ export function liveConnectionHint(engine: LiveConnectionEngine): LiveConnection
         placeholder: 'mysql://localhost:3306/shop',
         hint: 'Use mysql://user:password@host:3306/database.',
       };
+    case 'mssql':
+      return {
+        placeholder: 'mssql://localhost:1433/shop',
+        hint: 'Use mssql:// or sqlserver://user:password@host:1433/database. Add ?schema=dbo when needed.',
+      };
+    case 'sqlite':
+      return {
+        placeholder: 'sqlite:///absolute/path/shop.db',
+        hint: 'Use sqlite:///path/to/file.db or a bare filesystem path on the agent host.',
+      };
     default: {
       const unexpected: never = engine;
       return unexpected;
@@ -52,7 +66,7 @@ export function liveConnectionHint(engine: LiveConnectionEngine): LiveConnection
 
 export type LiveAgentPlatform = 'macos-aarch64' | 'macos-x64' | 'windows-x64' | 'linux-x64';
 
-export const LIVE_AGENT_RELEASE = 'v7.7.0';
+export const LIVE_AGENT_RELEASE = 'v10.0.0';
 
 const LIVE_AGENT_BUILDS: { id: LiveAgentPlatform; label: string; fileName: string }[] = [
   { id: 'macos-aarch64', label: 'macOS Apple silicon', fileName: 'hvymetl-agent-macos-aarch64' },
@@ -186,8 +200,17 @@ export function liveImportFormNotice(status: string): string {
   return '';
 }
 
-/** URI form for sampling a MongoDB, PostgreSQL, or MySQL database from the studio server. */
+const ENGINE_LABEL_KEYS: Record<LiveConnectionEngine, MessageKey> = {
+  mongodb: 'live.engine.mongodb',
+  postgresql: 'live.engine.postgresql',
+  mysql: 'live.engine.mysql',
+  mssql: 'live.engine.mssql',
+  sqlite: 'live.engine.sqlite',
+};
+
+/** URI form for sampling a live database via the studio agent. */
 export function LiveMongoImportForm({ disabled, status = '', onImport }: LiveMongoImportFormProps) {
+  const t = useT();
   const [engine, setEngine] = useState<LiveConnectionEngine>('mongodb');
   const [uri, setUri] = useState('');
   const [database, setDatabase] = useState('');
@@ -216,16 +239,14 @@ export function LiveMongoImportForm({ disabled, status = '', onImport }: LiveMon
     void finished.finally(() => setBusy(false));
   };
 
-  const notice = liveImportFormNotice(status) || (busy ? 'Reading the live database…' : '');
+  const notice = liveImportFormNotice(status) || (busy ? t('live.reading') : '');
 
   return (
     <form className="live-mongo-import" onSubmit={(event) => runImport(event, true)}>
       <div className="live-mongo-import__agent">
-        <p className="pipeline-hint">
-          hvymetl.studio cannot open a database on your computer. Download the agent, copy the command, and paste it in a terminal on the computer that has the database. On Windows, use PowerShell.
-        </p>
+        <p className="pipeline-hint">{t('live.agentHint')}</p>
         <label className="schema-import-panel__label">
-          Agent for this computer
+          {t('live.agentPlatform')}
           <select
             value={platform}
             onChange={(event) => {
@@ -235,7 +256,7 @@ export function LiveMongoImportForm({ disabled, status = '', onImport }: LiveMon
             }}
             className="schema-import-panel__select"
           >
-            <option value="">Choose your computer…</option>
+            <option value="">{t('live.chooseComputer')}</option>
             {LIVE_AGENT_BUILDS.map((build) => (
               <option key={build.id} value={build.id}>
                 {build.label}
@@ -245,24 +266,26 @@ export function LiveMongoImportForm({ disabled, status = '', onImport }: LiveMon
         </label>
         {selected ? (
           <a className="live-mongo-import__download" href={liveAgentDownloadUrl(selected.id)}>
-            Download {selected.label}
+            {t('live.download')} {selected.label}
           </a>
         ) : null}
       </div>
       <label className="schema-import-panel__label">
-        Database type
+        {t('live.engine')}
         <select
           value={engine}
           onChange={(event) => setEngine(liveEngineFromSelect(event.target.value))}
           className="schema-import-panel__select"
         >
-          <option value="mongodb">MongoDB</option>
-          <option value="postgresql">PostgreSQL</option>
-          <option value="mysql">MySQL</option>
+          {(Object.keys(ENGINE_LABEL_KEYS) as LiveConnectionEngine[]).map((id) => (
+            <option key={id} value={id}>
+              {t(ENGINE_LABEL_KEYS[id])}
+            </option>
+          ))}
         </select>
       </label>
       <label className="schema-import-panel__label">
-        Connection URI
+        {t('live.uri')}
         <input
           value={uri}
           onChange={(event) => setUri(event.target.value)}
@@ -274,7 +297,7 @@ export function LiveMongoImportForm({ disabled, status = '', onImport }: LiveMon
       </label>
       <p className="schema-import-panel__hint">{connection.hint}</p>
       <label className="schema-import-panel__label">
-        Database
+        {t('live.database')}
         <input
           value={database}
           onChange={(event) => setDatabase(event.target.value)}
@@ -290,10 +313,10 @@ export function LiveMongoImportForm({ disabled, status = '', onImport }: LiveMon
       ) : null}
       <div className="button-row">
         <button type="submit" className="primary" disabled={disabled || busy || !selected}>
-          {busy ? 'Reading…' : 'Copy command'}
+          {busy ? t('live.reading') : t('live.copyCommand')}
         </button>
         <button type="button" className="secondary" disabled={disabled || busy} onClick={(event) => runImport(event, false)}>
-          Import live data
+          {t('live.importLive')}
         </button>
       </div>
     </form>

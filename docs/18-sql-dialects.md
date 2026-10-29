@@ -27,20 +27,20 @@ Definitions: [`src/dialects.ts`](../src/dialects.ts) · UI/API: `GET /api/dialec
 
 | Dialect ID | Label | Schema import | Live adapter | Parser / notes |
 | --- | --- | --- | --- | --- |
-| `sqlite` | SQLite | File upload **or** DDL paste | **Yes** | `better-sqlite3` introspection |
-| `postgresql` | PostgreSQL | URI or DDL paste | Yes | Live `information_schema`, or `CREATE TABLE` |
-| `mysql` | MySQL | URI or DDL paste | Yes | Live `information_schema`, or backtick-quoted identifiers |
-| `mariadb` | MariaDB | DDL paste | No | MySQL-compatible; `AUTO_INCREMENT`, inline FKs |
-| `mssql` | Microsoft SQL Server | DDL paste | No | T-SQL `CREATE TABLE` |
+| `sqlite` | SQLite | File upload, DDL paste, or Rust agent | **Yes** | Studio file upload or agent (`sqlite://` / path) |
+| `postgresql` | PostgreSQL | URI, DDL paste, or Rust agent | Yes | Live `information_schema`, agent WSS extract, or `CREATE TABLE` |
+| `mysql` | MySQL | URI, DDL paste, or Rust agent | Yes | Live `information_schema`, agent WSS extract, or backtick identifiers |
+| `mariadb` | MariaDB | DDL paste or Rust agent (MySQL URI) | Yes | MySQL wire via agent; `AUTO_INCREMENT`, inline FKs |
+| `mssql` | Microsoft SQL Server | DDL paste or Rust agent | Yes | Agent `mssql://` / `sqlserver://`; T-SQL DDL paste |
 | `sybase` | SAP ASE (Sybase) | DDL paste | No | T-SQL-like DDL; `IDENTITY` columns, `dbo.` prefixes, `database..table` shorthand |
 | `clickhouse` | ClickHouse | DDL paste | No | Column-oriented DDL subset |
-| `oracle` | Oracle | DDL paste | No | `VARCHAR2`, `NUMBER`, identity columns, `CONSTRAINT … FOREIGN KEY` |
+| `oracle` | Oracle | DDL paste | No | `VARCHAR2`, `NUMBER`, identity columns, `CONSTRAINT … FOREIGN KEY` (Wave B agent later) |
 | `db2` | IBM Db2 | DDL paste | No | Schema-qualified names (`"SALES"."ORDERS"`) |
-| `cockroachdb` | CockroachDB | DDL paste | No | PostgreSQL-compatible; `IF NOT EXISTS`, `INT8`, `UUID` |
-| `yugabyte` | YugabyteDB | DDL paste | No | PostgreSQL-compatible; `UUID`, inline `REFERENCES` |
-| `aurora-postgresql` | Amazon Aurora (PostgreSQL) | DDL paste | No | Same rules as PostgreSQL |
-| `aurora-mysql` | Amazon Aurora (MySQL) | DDL paste | No | Same rules as MySQL |
-| `redshift` | Amazon Redshift | DDL paste | No | PostgreSQL-compatible; `IDENTITY`, `BIGINT`, inline FKs |
+| `cockroachdb` | CockroachDB | DDL paste or Rust agent (postgres URI) | Yes | PostgreSQL wire via agent |
+| `yugabyte` | YugabyteDB | DDL paste or Rust agent (postgres URI) | Yes | PostgreSQL wire via agent |
+| `aurora-postgresql` | Amazon Aurora (PostgreSQL) | DDL paste or Rust agent | Yes | PostgreSQL wire via agent |
+| `aurora-mysql` | Amazon Aurora (MySQL) | DDL paste or Rust agent | Yes | MySQL wire via agent |
+| `redshift` | Amazon Redshift | DDL paste or Rust agent (postgres URI) | Yes | PostgreSQL-compatible wire via agent |
 | `snowflake` | Snowflake | DDL paste | No | `AUTOINCREMENT`, `VARIANT`, `NUMBER`, inline FKs |
 | `bigquery` | Google BigQuery | DDL paste | No | Backtick-qualified names, trailing `PRIMARY KEY`, `INT64` / `STRING` |
 | `spanner` | Google Cloud Spanner | DDL paste | No | Trailing `PRIMARY KEY (…)`, `INT64` / `STRING` / `BYTES` |

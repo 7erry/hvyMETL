@@ -9,7 +9,7 @@ import { importLiveSqlDatabase, liveSqlEngine, sqlDatabaseName } from '../utilit
 import { isHostedStudioRequest } from './hosted.js';
 
 const HOSTED_REFUSAL =
-  'Live import from the hosted studio cannot reach a private database. Run the studio on the same machine as the database.';
+  'Live import from the hosted studio cannot reach a private database. Download the Rust agent and use Copy command (WebSocket) instead.';
 
 /** Import a sampled MongoDB schema. Hosted requests are refused so the server is not an open proxy. */
 export function createLiveMongoImportRouter(): Router {

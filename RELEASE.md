@@ -1,3 +1,15 @@
+## hvyMETL 10.0.0
+
+**Multi-engine Rust agent** — Downloadable agent opens an outbound secured WebSocket (`/api/agent/v2`), introspects Wave A databases (MongoDB, PostgreSQL, MySQL/MariaDB, Microsoft SQL Server, SQLite), and streams restartable full-table extracts into studio staging for the pipeline. See [docs/27-agent-10.0-roadmap.md](docs/27-agent-10.0-roadmap.md).
+
+**Studio live import** — Engine picker includes MSSQL and SQLite; copy-command downloads point at `v10.0.0` agent builds. Completed extracts set the pipeline CSV path automatically.
+
+**HTTP poll agent** — `GET /api/agent/next` + `POST /api/agent/result` remain deprecated for transition (`--http` on the binary); prefer WSS.
+
+**Internationalization** — Studio UI language picker for English, Portuguese, Spanish, Simplified Chinese, and Hindi (`web/src/i18n/`). Nav, auth, consent, schema import, and live-agent chrome are translated; deeper panels can adopt `t()` keys next.
+
+---
+
 ## hvyMETL 8.0.6
 
 **Pipeline CSV drop** — **Use real CSV data** has a dedicated multi-file drop pad; drops are no longer swallowed by the path field.

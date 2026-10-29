@@ -1,12 +1,18 @@
+mod catalog;
+mod engine;
+mod extract;
 mod schema;
 
 use std::env;
 use std::time::Duration;
 
-use mongodb::bson::Document;
-use mongodb::sync::Client;
-use schema::{sample_limit, schema_payload, table_from_documents};
-use serde_json::Value;
+use futures_util::{SinkExt, StreamExt};
+use serde_json::{json, Value};
+use tokio_tungstenite::{connect_async, tungstenite::Message};
+
+use catalog::{introspect, public_error};
+use engine::{database_name, detect_engine, Engine, WAVE_A_ENGINES};
+use extract::{extract_next_chunk, ExtractTable};
 
 fn flag(name: &str) -> Option<String> {
     let mut args = env::args().skip(1);
@@ -22,86 +28,210 @@ fn flag(name: &str) -> Option<String> {
     None
 }
 
-fn database_name(uri: &str, explicit: Option<&str>) -> Result<String, String> {
-    if let Some(name) = explicit.map(str::trim).filter(|name| !name.is_empty()) {
-        return Ok(name.to_string());
-    }
-    let after_scheme = uri.split_once("://").ok_or("MongoDB URI is not valid.")?.1;
-    let path = after_scheme.split_once('/').map(|(_, path)| path).unwrap_or("");
-    let database = path.split('?').next().unwrap_or("").trim();
-    if database.is_empty() {
-        return Err("Database name is required.".to_string());
-    }
-    Ok(database.to_string())
+fn has_flag(name: &str) -> bool {
+    env::args().any(|arg| arg == format!("--{name}"))
 }
 
-/// Driver and HTTP errors can echo a URI or the session token. The studio only needs a safe sentence.
-fn public_error(error: &impl ToString) -> String {
-    let message = error.to_string();
-    if message.contains("UnknownIssuer") || message.contains("invalid peer certificate") {
-        return "Could not reach the studio because its TLS certificate is not trusted.".to_string();
-    }
-    if message.contains("/api/agent/") {
-        return "Could not reach the studio.".to_string();
-    }
-    if message.contains("mongodb://") || message.contains("mongodb+srv://") {
-        return "Could not connect to MongoDB.".to_string();
-    }
-    message
+fn studio_ws_url(server: &str, token: &str) -> Result<String, String> {
+    let trimmed = server.trim_end_matches('/');
+    let ws = if let Some(rest) = trimmed.strip_prefix("https://") {
+        format!("wss://{rest}")
+    } else if let Some(rest) = trimmed.strip_prefix("http://") {
+        format!("ws://{rest}")
+    } else if trimmed.starts_with("wss://") || trimmed.starts_with("ws://") {
+        trimmed.to_string()
+    } else {
+        return Err("Studio server must be an http(s) or ws(s) URL.".to_string());
+    };
+    Ok(format!("{ws}/api/agent/v2?token={token}"))
 }
 
-fn sample_database(uri: &str, database: &str) -> Result<Vec<Value>, String> {
-    if !uri.starts_with("mongodb://") && !uri.starts_with("mongodb+srv://") {
-        return Err("This download reads MongoDB. Use mongodb:// or mongodb+srv://.".to_string());
-    }
-    let client = Client::with_uri_str(uri).map_err(|error| public_error(&error))?;
-    let db = client.database(database);
-    let names = db.list_collection_names().run().map_err(|error| public_error(&error))?;
-    let mut tables = Vec::new();
-    for name in names {
-        if name.starts_with("system.") {
-            continue;
-        }
-        let collection = db.collection::<Document>(&name);
-        let cursor = collection
-            .find(Document::new())
-            .limit(sample_limit())
-            .run()
-            .map_err(|error| public_error(&error))?;
-        let mut documents = Vec::new();
-        for document in cursor {
-            documents.push(document.map_err(|error| public_error(&error))?);
-            if documents.len() as i64 >= sample_limit() {
-                break;
+async fn run_ws(token: &str, uri: &str, database: &str, server: &str) -> Result<(), String> {
+    let engine = detect_engine(uri)?;
+    let database = database_name(uri, Some(database).filter(|name| !name.is_empty()), engine)?;
+    let url = studio_ws_url(server, token)?;
+    let (socket, _) = connect_async(&url).await.map_err(public_error)?;
+    let (mut write, mut read) = socket.split();
+
+    write
+        .send(Message::Text(
+            json!({
+                "type": "hello",
+                "protocol": 1,
+                "agentVersion": env!("CARGO_PKG_VERSION"),
+                "engines": WAVE_A_ENGINES,
+            })
+            .to_string()
+            .into(),
+        ))
+        .await
+        .map_err(public_error)?;
+
+    let mut tables: Vec<ExtractTable> = Vec::new();
+    let mut schema_sent = false;
+
+    while let Some(frame) = read.next().await {
+        let message = frame.map_err(public_error)?;
+        let text = match message {
+            Message::Text(text) => text.to_string(),
+            Message::Ping(payload) => {
+                write.send(Message::Pong(payload)).await.map_err(public_error)?;
+                continue;
             }
+            Message::Close(_) => break,
+            _ => continue,
+        };
+        let payload: Value = serde_json::from_str(&text).map_err(|_| "Invalid studio message.".to_string())?;
+        let message_type = payload.get("type").and_then(Value::as_str).unwrap_or("");
+        match message_type {
+            "welcome" => {}
+            "ping" => {
+                write
+                    .send(Message::Text(json!({ "type": "pong" }).to_string().into()))
+                    .await
+                    .map_err(public_error)?;
+            }
+            "introspect" => {
+                let schema = introspect(uri, &database, engine).await?;
+                write
+                    .send(Message::Text(
+                        json!({
+                            "type": "schema",
+                            "model": schema["model"],
+                            "ddl": schema["ddl"],
+                            "dialect": schema["dialect"],
+                        })
+                        .to_string()
+                        .into(),
+                    ))
+                    .await
+                    .map_err(public_error)?;
+                schema_sent = true;
+            }
+            "schema_ok" => {}
+            "extract" => {
+                let job_id = payload
+                    .get("jobId")
+                    .and_then(Value::as_str)
+                    .unwrap_or_default()
+                    .to_string();
+                let chunk_rows = payload.get("chunkRows").and_then(Value::as_u64).unwrap_or(500) as usize;
+                tables = payload
+                    .get("tables")
+                    .and_then(Value::as_array)
+                    .cloned()
+                    .unwrap_or_default()
+                    .into_iter()
+                    .filter_map(|table| {
+                        let name = table.get("name")?.as_str()?.to_string();
+                        let columns = table
+                            .get("columns")?
+                            .as_array()?
+                            .iter()
+                            .filter_map(|column| column.as_str().map(str::to_string))
+                            .collect::<Vec<_>>();
+                        let checkpoint = table
+                            .get("checkpoint")
+                            .and_then(Value::as_str)
+                            .filter(|value| !value.is_empty())
+                            .map(str::to_string);
+                        Some(ExtractTable {
+                            name,
+                            columns,
+                            checkpoint,
+                        })
+                    })
+                    .collect();
+                for table in &mut tables {
+                    loop {
+                        let chunk = extract_next_chunk(uri, &database, engine, table, chunk_rows).await?;
+                        write
+                            .send(Message::Text(
+                                json!({
+                                    "type": "extract_chunk",
+                                    "jobId": job_id,
+                                    "table": table.name,
+                                    "checkpoint": chunk.checkpoint,
+                                    "columns": table.columns,
+                                    "rows": chunk.rows,
+                                    "eof": chunk.eof,
+                                })
+                                .to_string()
+                                .into(),
+                            ))
+                            .await
+                            .map_err(public_error)?;
+                        table.checkpoint = Some(chunk.checkpoint);
+                        if chunk.eof {
+                            break;
+                        }
+                    }
+                }
+                write
+                    .send(Message::Text(json!({ "type": "bye" }).to_string().into()))
+                    .await
+                    .map_err(public_error)?;
+                return Ok(());
+            }
+            "ack" | "extract_complete" | "cancel" => {}
+            "error" => {
+                let message = payload
+                    .get("message")
+                    .and_then(Value::as_str)
+                    .unwrap_or("Studio rejected the agent.")
+                    .to_string();
+                return Err(message);
+            }
+            _ => {}
         }
-        if documents.is_empty() {
-            continue;
+        if schema_sent && tables.is_empty() {
+            // Schema-only session: wait briefly for extract, then exit on idle.
+            tokio::time::sleep(Duration::from_millis(50)).await;
         }
-        tables.push(table_from_documents(&name, &documents));
     }
-    if tables.is_empty() {
-        return Err("MongoDB database has no documents to infer a schema from.".to_string());
+    if !schema_sent {
+        return Err("Studio closed before schema transfer finished.".to_string());
     }
-    Ok(tables)
+    Ok(())
 }
 
-fn post_json(url: &str, body: Value) -> Result<(), String> {
+fn run_http_legacy(token: &str, uri: &str, database_flag: Option<&str>, server: &str) -> Result<(), String> {
+    let engine = detect_engine(uri)?;
+    if engine != Engine::Mongodb {
+        return Err("HTTP poll mode only supports MongoDB. Omit --http to use WebSocket for Wave A engines.".to_string());
+    }
+    let database = database_name(uri, database_flag, engine)?;
+    let server = server.trim_end_matches('/');
+    let next = ureq::get(&format!("{server}/api/agent/next?token={token}")).call();
+    match next {
+        Ok(response) if response.status() == 401 => return Err("Agent session expired.".to_string()),
+        Ok(_) => {}
+        Err(ureq::Error::Status(401, _)) => return Err("Agent session expired.".to_string()),
+        Err(error) => return Err(public_error(error)),
+    }
+    let runtime = tokio::runtime::Runtime::new().map_err(|error| error.to_string())?;
+    let schema = runtime.block_on(introspect(uri, &database, engine))?;
+    let mut payload = schema;
+    payload["token"] = Value::String(token.to_string());
     let agent = ureq::AgentBuilder::new().timeout(Duration::from_secs(30)).build();
     let response = agent
-        .post(url)
+        .post(&format!("{server}/api/agent/result"))
         .set("content-type", "application/json")
-        .send_json(body)
-        .map_err(|error| public_error(&error))?;
+        .send_json(&payload)
+        .map_err(public_error)?;
     if response.status() >= 400 {
         return Err(format!("Studio rejected the schema (HTTP {}).", response.status()));
     }
     Ok(())
 }
 
-fn main() {
+#[tokio::main]
+async fn main() {
     if env::args().any(|arg| arg == "--help" || arg == "-h") {
-        println!("hvymetl-agent --token <token> --uri <mongodb-uri> [--database <name>] [--server <url>]");
+        println!(
+            "hvymetl-agent --token <token> --uri <uri> [--database <name>] [--server <url>] [--http]"
+        );
+        println!("Wave A engines: mongodb, postgresql, mysql, mssql/sqlserver, sqlite");
         return;
     }
     let token = flag("token").unwrap_or_default();
@@ -109,32 +239,21 @@ fn main() {
     let database_flag = flag("database");
     let server = flag("server").unwrap_or_else(|| "https://hvymetl.studio".to_string());
     if token.is_empty() || uri.is_empty() {
-        eprintln!("hvymetl-agent --token <token> --uri <mongodb-uri> [--database <name>] [--server <url>]");
+        eprintln!(
+            "hvymetl-agent --token <token> --uri <uri> [--database <name>] [--server <url>] [--http]"
+        );
         std::process::exit(2);
     }
-    let server = server.trim_end_matches('/').to_string();
-    let outcome = database_name(&uri, database_flag.as_deref()).and_then(|database| {
-        let next = ureq::get(&format!("{server}/api/agent/next?token={token}")).call();
-        match next {
-            Ok(response) if response.status() == 401 => Err("Agent session expired.".to_string()),
-            Ok(_) => Ok(database),
-            Err(ureq::Error::Status(401, _)) => Err("Agent session expired.".to_string()),
-            Err(error) => Err(public_error(&error)),
-        }
-        .and_then(|database| {
-            let tables = sample_database(&uri, &database)?;
-            let mut payload = schema_payload(&database, tables);
-            payload["token"] = serde_json::Value::String(token.clone());
-            post_json(&format!("{server}/api/agent/result"), payload)?;
-            Ok(())
-        })
-    });
+
+    let outcome = if has_flag("http") {
+        run_http_legacy(&token, &uri, database_flag.as_deref(), &server)
+    } else {
+        run_ws(&token, &uri, database_flag.as_deref().unwrap_or(""), &server).await
+    };
+
     if let Err(error) = outcome {
-        if !error.starts_with("Could not reach the studio") {
-            let _ = post_json(
-                &format!("{server}/api/agent/result"),
-                serde_json::json!({ "token": token, "error": error }),
-            );
+        if !error.starts_with("Could not reach the studio") && !has_flag("http") {
+            // Best-effort: HTTP error path for WSS failures before connect is skipped.
         }
         eprintln!("{error}");
         std::process::exit(1);

@@ -69,6 +69,7 @@ import {
 } from './csvUpload.js';
 import { hostedStudioUrl, isHostedStudioRequest } from './hosted.js';
 import { createLiveAgentPublicRouter, createLiveAgentStudioRouter } from './liveAgent.js';
+import { attachLiveAgentWebSocket } from './liveAgentWs.js';
 import { createLiveMongoImportRouter } from './liveMongoRoute.js';
 import {
   persistPipelineCredentialOverrides,
@@ -344,7 +345,7 @@ app.use('/api/profiles', ...requireRole(['admin', 'developer', 'manager']));
 app.use('/api/artifacts', ...requireRole(['admin', 'developer', 'manager']));
 app.use('/api/schema', ...requireRole(['admin', 'developer']));
 app.use('/api/schema', createLiveMongoImportRouter());
-app.use('/api/schema', createLiveAgentStudioRouter());
+app.use('/api/schema', createLiveAgentStudioRouter({ stagingRoot: ROOT }));
 app.use('/api/agent', createLiveAgentPublicRouter());
 app.use('/api/design', ...requireRole(['admin', 'developer']));
 app.use('/api/export', ...requireRole(['admin', 'developer']));
@@ -1244,10 +1245,12 @@ async function startServer(): Promise<void> {
   const server = app.listen(PORT);
   server.requestTimeout = 0;
   server.headersTimeout = 620_000;
+  attachLiveAgentWebSocket(server);
 
   server.on('listening', () => {
     console.log(`hvyMETL Migration Studio http://localhost:${PORT}`);
     console.log(`Swagger UI http://localhost:${PORT}/api/docs`);
+    console.log(`Agent WebSocket ws://localhost:${PORT}/api/agent/v2`);
     void reflectionJobScheduler.hydrateRunningJobs().catch((error) => {
       console.error(`[ml_engine/reflectionJobScheduler] Hydration failed: ${String(error)}`);
     });

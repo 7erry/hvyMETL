@@ -283,10 +283,23 @@ export async function createLiveAgentSession(): Promise<{ token: string; expires
   return res.json();
 }
 
-export async function waitForLiveAgentResult(
-  token: string,
-  timeoutMs = 180_000,
-): Promise<{ model: SqlStructuralModel; ddl: string; dialect: string; inferred?: ProfileInference }> {
+export type LiveAgentExtractStatus = {
+  id: string;
+  status: 'pending' | 'running' | 'complete' | 'cancelled' | 'error';
+  stagingDir: string;
+  tables: { name: string; rowsReceived: number; eof: boolean; checkpoint: string | null }[];
+  error: string | null;
+};
+
+export type LiveAgentResult = {
+  model: SqlStructuralModel;
+  ddl: string;
+  dialect: string;
+  inferred?: ProfileInference;
+  extract?: LiveAgentExtractStatus | null;
+};
+
+export async function waitForLiveAgentResult(token: string, timeoutMs = 180_000): Promise<LiveAgentResult> {
   const deadline = Date.now() + timeoutMs;
   while (Date.now() < deadline) {
     const res = await apiFetch(`${base}/api/schema/agent-result?token=${encodeURIComponent(token)}`);
@@ -298,6 +311,28 @@ export async function waitForLiveAgentResult(
     return res.json();
   }
   throw new Error('The local agent did not return a schema in time.');
+}
+
+/** Poll until the agent extract job finishes (or the session expires). */
+export async function waitForLiveAgentExtract(
+  token: string,
+  timeoutMs = 12 * 60 * 60 * 1000,
+): Promise<LiveAgentExtractStatus> {
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() < deadline) {
+    const res = await apiFetch(`${base}/api/schema/agent-extract?token=${encodeURIComponent(token)}`);
+    if (res.status === 204) {
+      await new Promise((resolve) => setTimeout(resolve, 1_000));
+      continue;
+    }
+    if (!res.ok) throw new Error(await readApiError(res));
+    const body = (await res.json()) as LiveAgentExtractStatus;
+    if (body.status === 'complete') return body;
+    if (body.status === 'error') throw new Error(body.error || 'Agent extract failed.');
+    if (body.status === 'cancelled') throw new Error('Agent extract was cancelled.');
+    await new Promise((resolve) => setTimeout(resolve, 1_000));
+  }
+  throw new Error('The local agent did not finish the extract in time.');
 }
 
 export async function importLiveMongo(

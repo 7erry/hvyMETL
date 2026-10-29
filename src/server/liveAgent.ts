@@ -2,8 +2,17 @@ import { randomBytes } from 'node:crypto';
 import { Router } from 'express';
 import { inferWorkloadProfile } from '../profiles/inferProfile.js';
 import type { SqlStructuralModel } from '../types.js';
+import {
+  cancelExtractJob,
+  createExtractJob,
+  createExtractStagingDir,
+  type ExtractJobState,
+} from './agentExtractStaging.js';
 
-const SESSION_TTL_MS = 15 * 60 * 1000;
+/** Base TTL; sliding touch extends during WSS extract. */
+export const SESSION_TTL_MS = 15 * 60 * 1000;
+/** Long extracts keep the session alive up to this absolute ceiling from create. */
+export const SESSION_MAX_TTL_MS = 12 * 60 * 60 * 1000;
 
 export type AgentImportPayload = {
   model: SqlStructuralModel;
@@ -13,16 +22,21 @@ export type AgentImportPayload = {
 
 type AgentCommand = { id: string; op: 'introspect' };
 
-type AgentSession = {
+export type AgentSession = {
+  createdAt: number;
   expiresAt: number;
   command: AgentCommand | null;
   result: AgentImportPayload | null;
   error: string | null;
+  /** When true, studio wants a full extract after schema. */
+  wantExtract: boolean;
+  extractJob: ExtractJobState | null;
+  stagingRoot: string;
 };
 
 const sessions = new Map<string, AgentSession>();
 
-function sessionFor(token: string): AgentSession | null {
+export function sessionFor(token: string): AgentSession | null {
   const session = sessions.get(token);
   if (!session || session.expiresAt < Date.now()) {
     sessions.delete(token);
@@ -31,17 +45,34 @@ function sessionFor(token: string): AgentSession | null {
   return session;
 }
 
+/** Slide expiry forward, capped by SESSION_MAX_TTL_MS from create. */
+export function touchLiveAgentSession(token: string): AgentSession | null {
+  const session = sessionFor(token);
+  if (!session) return null;
+  const ceiling = session.createdAt + SESSION_MAX_TTL_MS;
+  session.expiresAt = Math.min(Date.now() + SESSION_TTL_MS, ceiling);
+  return session;
+}
+
 /** One introspect request. The token is the only credential the agent needs. */
-export function createLiveAgentSession(): { token: string; expiresAt: string } {
+export function createLiveAgentSession(options?: {
+  wantExtract?: boolean;
+  stagingRoot?: string;
+}): { token: string; expiresAt: string } {
   const token = randomBytes(24).toString('hex');
-  const expiresAt = Date.now() + SESSION_TTL_MS;
+  const createdAt = Date.now();
+  const stagingRoot = options?.stagingRoot ?? process.cwd();
   sessions.set(token, {
-    expiresAt,
+    createdAt,
+    expiresAt: createdAt + SESSION_TTL_MS,
     command: { id: randomBytes(8).toString('hex'), op: 'introspect' },
     result: null,
     error: null,
+    wantExtract: options?.wantExtract !== false,
+    extractJob: null,
+    stagingRoot,
   });
-  return { token, expiresAt: new Date(expiresAt).toISOString() };
+  return { token, expiresAt: new Date(createdAt + SESSION_TTL_MS).toISOString() };
 }
 
 export function readLiveAgentCommand(token: string): AgentCommand | null {
@@ -59,6 +90,10 @@ export function saveLiveAgentResult(token: string, payload: AgentImportPayload):
   session.result = { model: payload.model, ddl: payload.ddl, dialect: payload.dialect };
   session.error = null;
   session.command = null;
+  touchLiveAgentSession(token);
+  if (session.wantExtract && !session.extractJob) {
+    beginExtractJob(token, payload.model);
+  }
 }
 
 export function saveLiveAgentError(token: string, error: string): void {
@@ -66,6 +101,10 @@ export function saveLiveAgentError(token: string, error: string): void {
   if (!session) throw new Error('Agent session expired.');
   session.error = error;
   session.command = null;
+  if (session.extractJob) {
+    session.extractJob.status = 'error';
+    session.extractJob.error = error;
+  }
 }
 
 export function readLiveAgentResult(token: string): { result: AgentImportPayload | null; error: string | null } | null {
@@ -74,13 +113,41 @@ export function readLiveAgentResult(token: string): { result: AgentImportPayload
   return { result: session.result, error: session.error };
 }
 
-function isStructuralModel(value: unknown): value is SqlStructuralModel {
+export function beginExtractJob(token: string, model: SqlStructuralModel): ExtractJobState {
+  const session = sessionFor(token);
+  if (!session) throw new Error('Agent session expired.');
+  const stagingDir = createExtractStagingDir(session.stagingRoot, token);
+  const job = createExtractJob(stagingDir);
+  job.tables = model.tables.map((table) => ({
+    name: table.name,
+    columns: table.columns.map((column) => column.name),
+    checkpoint: null,
+    rowsReceived: 0,
+    eof: false,
+  }));
+  job.status = 'pending';
+  session.extractJob = job;
+  touchLiveAgentSession(token);
+  return job;
+}
+
+export function readExtractJob(token: string): ExtractJobState | null {
+  return sessionFor(token)?.extractJob ?? null;
+}
+
+export function requestExtractCancel(token: string): void {
+  const session = sessionFor(token);
+  if (!session?.extractJob) return;
+  cancelExtractJob(session.extractJob);
+}
+
+function isStructuralModel(value: unknown): boolean {
   if (!value || typeof value !== 'object') return false;
   const model = value as SqlStructuralModel;
   return typeof model.source === 'string' && Array.isArray(model.tables) && Array.isArray(model.relationships);
 }
 
-/** Called by the agent. The token is the credential. */
+/** @deprecated Prefer WSS `/api/agent/v2`. Kept for Node `hvymetl agent` transition. */
 export function createLiveAgentPublicRouter(): Router {
   const router = Router();
 
@@ -121,11 +188,12 @@ export function createLiveAgentPublicRouter(): Router {
 }
 
 /** Called by the signed-in studio. */
-export function createLiveAgentStudioRouter(): Router {
+export function createLiveAgentStudioRouter(options?: { stagingRoot?: string }): Router {
   const router = Router();
 
-  router.post('/agent-session', (_req, res) => {
-    res.json(createLiveAgentSession());
+  router.post('/agent-session', (req, res) => {
+    const wantExtract = req.body?.extract !== false;
+    res.json(createLiveAgentSession({ wantExtract, stagingRoot: options?.stagingRoot }));
   });
 
   router.get('/agent-result', (req, res) => {
@@ -144,7 +212,50 @@ export function createLiveAgentStudioRouter(): Router {
       return;
     }
     const inferred = inferWorkloadProfile(pending.result.model);
-    res.json({ ...pending.result, inferred });
+    const extract = readExtractJob(token);
+    res.json({
+      ...pending.result,
+      inferred,
+      extract: extract
+        ? {
+            id: extract.id,
+            status: extract.status,
+            stagingDir: extract.stagingDir,
+            tables: extract.tables,
+            error: extract.error,
+          }
+        : null,
+    });
+  });
+
+  router.get('/agent-extract', (req, res) => {
+    const token = typeof req.query.token === 'string' ? req.query.token : '';
+    if (!sessionFor(token)) {
+      res.status(401).json({ error: 'Agent session expired.' });
+      return;
+    }
+    const extract = readExtractJob(token);
+    if (!extract) {
+      res.status(204).end();
+      return;
+    }
+    res.json({
+      id: extract.id,
+      status: extract.status,
+      stagingDir: extract.stagingDir,
+      tables: extract.tables,
+      error: extract.error,
+    });
+  });
+
+  router.post('/agent-extract/cancel', (req, res) => {
+    const token = typeof req.body?.token === 'string' ? req.body.token : '';
+    if (!sessionFor(token)) {
+      res.status(401).json({ error: 'Agent session expired.' });
+      return;
+    }
+    requestExtractCancel(token);
+    res.json({ ok: true });
   });
 
   return router;

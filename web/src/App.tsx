@@ -52,6 +52,7 @@ import { csvFilesToCreateTableDdl } from '../../src/utilities/csvToDdl.js';
 import { AppNavRail, type AppNavId } from './components/AppNavRail';
 import { MongoShellView } from './components/MongoShellView';
 import { useAccess } from './auth/HostedAuthProvider';
+import { useT } from './i18n/LocaleContext';
 import { profileRequestBody, resolveCustomTelemetryInitial } from './customProfileShared';
 import { emptyModelTokenUsage, mergeModelTokenUsage } from './modelUsage';
 import {
@@ -75,6 +76,7 @@ import {
   createLiveAgentSession,
   importLiveMongo,
   studioIsHosted,
+  waitForLiveAgentExtract,
   waitForLiveAgentResult,
   importSqlite,
   runDesign,
@@ -208,6 +210,7 @@ function PipelinePanelConnected(
 
 export default function App() {
   const access = useAccess();
+  const t = useT();
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [dialects, setDialects] = useState<Dialect[]>(FALLBACK_DIALECTS);
   const [apiConnected, setApiConnected] = useState(true);
@@ -789,9 +792,20 @@ export default function App() {
         setStatus(`Command copied. On the computer with the database, run: ${command}`);
         const token = session.token;
         void waitForLiveAgentResult(token)
-          .then(async ({ model: m, ddl: importedDdl, inferred, dialect: resolvedDialect }) => {
+          .then(async ({ model: m, ddl: importedDdl, inferred, dialect: resolvedDialect, extract }) => {
             setSessionField('dialect', resolvedDialect);
             await applySchema(importedDdl, m, inferred?.profileId);
+            if (extract?.status === 'complete' && extract.stagingDir) {
+              setSessionField('csvSourcePath', extract.stagingDir);
+              setStatus(`Schema imported. Full extract ready at ${extract.stagingDir}.`);
+              return;
+            }
+            if (extract) {
+              setStatus('Schema imported. Waiting for full extract from the agent…');
+              const done = await waitForLiveAgentExtract(token);
+              setSessionField('csvSourcePath', done.stagingDir);
+              setStatus(`Schema imported. Full extract ready at ${done.stagingDir}.`);
+            }
           })
           .catch((error: unknown) => {
             setStatus(`Import failed: ${describeApiError(error)}`);
@@ -1574,12 +1588,12 @@ export default function App() {
             <div className="auth-user">
               <span>{access.userName}</span>
               <button type="button" className="tertiary" onClick={access.logout}>
-                Sign out
+                {t('header.signOut')}
               </button>
             </div>
           ) : null}
           <a className="terms-link" href="/terms">
-            Terms
+            {t('header.terms')}
           </a>
         </div>
       </header>
@@ -1641,7 +1655,7 @@ export default function App() {
                 {schemaPhase === 'before' ? (
                   <>
                     <CollapsiblePanel
-                      title="Instant Schema Import"
+                      title={t('sidebar.schemaImport')}
                       open={schemaImportPanelOpen}
                       onOpenChange={setSchemaImportPanelOpen}
                     >
@@ -1665,7 +1679,7 @@ export default function App() {
                       <>
                         <CollapsiblePanel
                           id={EMBED_OVERRIDES_PANEL_ID}
-                          title="Embed Overrides"
+                          title={t('sidebar.embedOverrides')}
                           open={embedOverridesPanelOpen}
                           onOpenChange={setEmbedOverridesPanelOpen}
                         >
@@ -1678,7 +1692,7 @@ export default function App() {
                           />
                         </CollapsiblePanel>
                         <CollapsiblePanel
-                          title="Time Series Overrides"
+                          title={t('sidebar.timeSeries')}
                           open={timeSeriesOverridesPanelOpen}
                           onOpenChange={setTimeSeriesOverridesPanelOpen}
                         >
@@ -1693,7 +1707,7 @@ export default function App() {
                           open={canvasPanelOpen}
                           onToggle={(e) => setSessionField('canvasPanelOpen', e.currentTarget.open)}
                         >
-                          <summary className="panel-dropdown__summary">SQL tables</summary>
+                          <summary className="panel-dropdown__summary">{t('sidebar.sqlTables')}</summary>
                           <div className="panel-dropdown__body">
                             <label style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', fontSize: '0.85rem' }}>
                               <input
@@ -1701,7 +1715,7 @@ export default function App() {
                                 checked={snapToGrid}
                                 onChange={(e) => setSessionField('snapToGrid', e.target.checked)}
                               />
-                              Snap to grid (hold Shift for free move)
+                              {t('sidebar.snapToGrid')}
                             </label>
                             <ul className="canvas-table-list">
                               {model.tables.map((t) => (
@@ -1731,17 +1745,16 @@ export default function App() {
                   </>
                 ) : (
                   <>
-                    <CollapsiblePanel title="MongoDB Target Schema" defaultOpen>
+                    <CollapsiblePanel title={t('sidebar.mongoTarget')} defaultOpen>
                       <p style={{ margin: '0 0 0.5rem', fontSize: '0.75rem', opacity: 0.85 }}>
-                        AI/RAG migration plan — collections, embeds, indexes, and pattern decisions before Atlas import.
+                        {t('sidebar.mongoTargetHint')}
                       </p>
                       <p className="pipeline-hint" style={{ margin: '0 0 0.5rem' }}>
-                        Export SQL table data as CSV so row counts and relationship cardinality drive embed, subset, and
-                        bucket folding. SQLite .db imports include stats automatically.
+                        {t('sidebar.mongoCsvHint')}
                       </p>
                       <div className="button-row" style={{ marginBottom: '0.5rem' }}>
                         <button type="button" className="secondary" onClick={() => void handlePickDesignCsv()}>
-                          Choose CSVs
+                          {t('sidebar.chooseCsvs')}
                         </button>
                       </div>
                       {designCsvLabel && designCsvFiles.length > 0 ? (
@@ -1756,7 +1769,7 @@ export default function App() {
                       <textarea
                         value={migrationArtifacts?.planJson ?? ''}
                         onChange={(e) => handlePlanJsonChange(e.target.value)}
-                        placeholder="Run design to generate migration-plan.json…"
+                        placeholder={t('sidebar.planPlaceholder')}
                         rows={10}
                         spellCheck={false}
                       />
@@ -1767,7 +1780,7 @@ export default function App() {
                           onClick={() => void handleGeneratePlan()}
                           disabled={!model || designingPlan}
                         >
-                          {designingPlan ? 'Designing…' : 'Refresh design'}
+                          {designingPlan ? t('sidebar.designing') : t('sidebar.refreshDesign')}
                         </button>
                         {migrationPlan ? (
                           <button
@@ -1780,12 +1793,12 @@ export default function App() {
                               })
                             }
                           >
-                            Download plan
+                            {t('sidebar.downloadPlan')}
                           </button>
                         ) : null}
                       </div>
                     </CollapsiblePanel>
-                    <CollapsiblePanel title="Transformation Summary" defaultOpen>
+                    <CollapsiblePanel title={t('sidebar.transformation')} defaultOpen>
                       <TransformationSummaryPanel
                         summary={migrationArtifacts?.transformationSummary ?? null}
                         onRefresh={() => void handleRefreshExplanation()}
@@ -1799,7 +1812,7 @@ export default function App() {
                       open={canvasPanelOpen}
                       onToggle={(e) => setSessionField('canvasPanelOpen', e.currentTarget.open)}
                     >
-                      <summary className="panel-dropdown__summary">MongoDB collections</summary>
+                      <summary className="panel-dropdown__summary">{t('sidebar.mongoCollections')}</summary>
                       <div className="panel-dropdown__body">
                         <label style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', fontSize: '0.85rem' }}>
                           <input
@@ -1807,7 +1820,7 @@ export default function App() {
                             checked={snapToGrid}
                             onChange={(e) => setSessionField('snapToGrid', e.target.checked)}
                           />
-                          Snap to grid (hold Shift for free move)
+                          {t('sidebar.snapToGrid')}
                         </label>
                         {migrationPlan ? (
                           <ul className="canvas-table-list">
@@ -1863,16 +1876,16 @@ export default function App() {
                 />
 
                 {schemaPhase === 'before' ? (
-                  <CollapsiblePanel title="Share Diagram">
+                  <CollapsiblePanel title={t('sidebar.shareDiagram')}>
                     <p style={{ margin: '0 0 0.5rem', fontSize: '0.75rem', opacity: 0.85 }}>
-                      Export or import SQL table layout and positions.
+                      {t('sidebar.shareSqlHint')}
                     </p>
                     <div className="button-row column">
                       <button type="button" className="secondary block" onClick={handleExportDiagram} disabled={!model}>
-                        Export diagram
+                        {t('sidebar.exportDiagram')}
                       </button>
                       <button type="button" className="secondary block" onClick={() => diagramFileInputRef.current?.click()}>
-                        Import diagram
+                        {t('sidebar.importDiagram')}
                       </button>
                       <input
                         ref={diagramFileInputRef}
@@ -1889,9 +1902,9 @@ export default function App() {
                     </div>
                   </CollapsiblePanel>
                 ) : (
-                  <CollapsiblePanel title="Share Diagram">
+                  <CollapsiblePanel title={t('sidebar.shareDiagram')}>
                     <p style={{ margin: '0 0 0.5rem', fontSize: '0.75rem', opacity: 0.85 }}>
-                      Export or import MongoDB collection layout, migration plan, and canvas positions.
+                      {t('sidebar.shareMongoHint')}
                     </p>
                     <div className="button-row column">
                       <button
@@ -1900,14 +1913,14 @@ export default function App() {
                         onClick={handleExportMongoDiagram}
                         disabled={!migrationPlan}
                       >
-                        Export diagram
+                        {t('sidebar.exportDiagram')}
                       </button>
                       <button
                         type="button"
                         className="secondary block"
                         onClick={() => mongoDiagramFileInputRef.current?.click()}
                       >
-                        Import diagram
+                        {t('sidebar.importDiagram')}
                       </button>
                       <input
                         ref={mongoDiagramFileInputRef}
@@ -1925,16 +1938,16 @@ export default function App() {
                   </CollapsiblePanel>
                 )}
 
-                <CollapsiblePanel title="Pipeline History">
+                <CollapsiblePanel title={t('sidebar.pipelineHistory')}>
                   <PipelineHistoryPanel onLoadExecution={handleLoadPipelineExecution} framed={false} />
                 </CollapsiblePanel>
 
-                <CollapsiblePanel title="Session">
+                <CollapsiblePanel title={t('sidebar.session')}>
                   <p style={{ margin: '0 0 0.5rem', fontSize: '0.75rem', opacity: 0.8 }}>
-                    Your work is saved in this browser tab. Refreshing keeps schema, layout, and migration artifacts.
+                    {t('sidebar.sessionHint')}
                   </p>
                   <button type="button" className="danger secondary block" onClick={handleClearSession}>
-                    Clear session
+                    {t('sidebar.clearSession')}
                   </button>
                 </CollapsiblePanel>
               </div>

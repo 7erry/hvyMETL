@@ -1,33 +1,41 @@
 import { useEffect, useState } from 'react';
+import { useT } from '../i18n/LocaleContext';
+import type { MessageKey } from '../i18n/messages';
 import { useCookieConsent } from './CookieConsentContext';
 import { defaultChoices, type ConsentChoices } from './consentStorage';
 
-const CATEGORIES: { key: keyof ConsentChoices; title: string; detail: string; locked?: boolean }[] = [
+const CATEGORY_KEYS: {
+  key: keyof ConsentChoices;
+  titleKey: MessageKey;
+  detailKey: MessageKey;
+  locked?: boolean;
+}[] = [
   {
     key: 'necessary',
-    title: 'Strictly necessary',
-    detail: 'Keeps the studio session and this consent choice in local storage. Always on.',
+    titleKey: 'consent.necessaryTitle',
+    detailKey: 'consent.necessaryDetail',
     locked: true,
   },
   {
     key: 'functional',
-    title: 'Functional',
-    detail: 'Remembers studio preferences on this browser.',
+    titleKey: 'consent.functionalTitle',
+    detailKey: 'consent.functionalDetail',
   },
   {
     key: 'analytics',
-    title: 'Analytics',
-    detail: 'Platform telemetry about how the studio is used.',
+    titleKey: 'consent.analyticsTitle',
+    detailKey: 'consent.analyticsDetail',
   },
   {
     key: 'marketing',
-    title: 'Marketing',
-    detail: 'Measurement used to reach you about hvyMETL. Off when Global Privacy Control is on.',
+    titleKey: 'consent.marketingTitle',
+    detailKey: 'consent.marketingDetail',
   },
 ];
 
 export function CookieConsentBanner() {
   const consent = useCookieConsent();
+  const t = useT();
   const [draft, setDraft] = useState<ConsentChoices>(defaultChoices('opt-in', false));
 
   useEffect(() => {
@@ -46,32 +54,27 @@ export function CookieConsentBanner() {
 
   if (!consent.ready) return null;
 
-  const regimeCopy =
-    consent.regime === 'opt-in'
-      ? 'Your browser looks like a region that requires opt-in, so optional categories stay off until you accept.'
-      : 'Your browser looks like a US region. You can opt out of analytics and marketing at any time.';
+  const regimeCopy = consent.regime === 'opt-in' ? t('consent.regimeOptIn') : t('consent.regimeOptOut');
 
   return (
     <>
       {!consent.record && !consent.preferencesOpen ? (
         <aside className="cookie-banner" role="dialog" aria-labelledby="cookie-banner-title">
           <div>
-            <h2 id="cookie-banner-title">Cookies and local storage</h2>
+            <h2 id="cookie-banner-title">{t('consent.bannerTitle')}</h2>
             <p>
-              hvyMETL Studio stores strictly necessary preferences in this browser. Functional storage remembers studio
-              settings. Analytics and marketing run only after you allow them. {regimeCopy}
-              {consent.gpc ? ' Global Privacy Control is on, so analytics and marketing stay off.' : ''}
+              {t('consent.bannerBody')} {regimeCopy}
             </p>
           </div>
           <div className="cookie-banner__actions">
             <button type="button" className="tertiary" onClick={consent.openPreferences}>
-              Manage preferences
+              {t('consent.customize')}
             </button>
             <button type="button" className="secondary" onClick={consent.rejectAll}>
-              Reject all
+              {t('consent.rejectOptional')}
             </button>
             <button type="button" className="primary" onClick={consent.acceptAll}>
-              Accept all
+              {t('consent.acceptAll')}
             </button>
           </div>
         </aside>
@@ -81,23 +84,27 @@ export function CookieConsentBanner() {
         <div className="pipeline-overlay" role="dialog" aria-modal="true" aria-labelledby="cookie-preferences-title">
           <div className="pipeline-modal panel cookie-preferences">
             <header className="pipeline-modal__header">
-              <h2 id="cookie-preferences-title">Cookie preferences</h2>
-              <button type="button" className="btn-icon" onClick={consent.closePreferences} aria-label="Close cookie preferences">
+              <h2 id="cookie-preferences-title">{t('consent.prefsTitle')}</h2>
+              <button
+                type="button"
+                className="btn-icon"
+                onClick={consent.closePreferences}
+                aria-label={t('common.close')}
+              >
                 ✕
               </button>
             </header>
-            <p className="pipeline-hint">
-              {regimeCopy}
-              {consent.gpc ? ' Global Privacy Control is on, so analytics and marketing cannot be enabled.' : ''}
-            </p>
+            <p className="pipeline-hint">{regimeCopy}</p>
             <div className="cookie-preferences__list">
-              {CATEGORIES.map((category) => {
-                const locked = category.locked === true || (consent.gpc && (category.key === 'analytics' || category.key === 'marketing'));
+              {CATEGORY_KEYS.map((category) => {
+                const locked =
+                  category.locked === true ||
+                  (consent.gpc && (category.key === 'analytics' || category.key === 'marketing'));
                 return (
                   <label key={category.key} className="cookie-preferences__row">
                     <span>
-                      <strong>{category.title}</strong>
-                      <p>{category.detail}</p>
+                      <strong>{t(category.titleKey)}</strong>
+                      <p>{t(category.detailKey)}</p>
                     </span>
                     <input
                       type="checkbox"
@@ -115,10 +122,10 @@ export function CookieConsentBanner() {
             </div>
             <div className="cookie-banner__actions">
               <button type="button" className="secondary" onClick={consent.rejectAll}>
-                Reject all
+                {t('consent.rejectOptional')}
               </button>
               <button type="button" className="primary" onClick={() => consent.saveChoices(draft)}>
-                Save preferences
+                {t('consent.savePrefs')}
               </button>
             </div>
           </div>
