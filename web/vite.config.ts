@@ -35,6 +35,15 @@ export default defineConfig({
     reportCompressedSize: false,
     minify: 'esbuild',
     cssMinify: 'esbuild',
+    // Avoid preloading every heavy chunk (copilot/markdown/prism/xyflow) on first paint —
+    // parallel cold fetches from a small origin make hvymetl.studio feel stuck.
+    modulePreload: {
+      resolveDependencies(_filename, deps) {
+        return deps.filter(
+          (dep) => dep.includes('vendor-react') || dep.includes('auth0-'),
+        );
+      },
+    },
     rollupOptions: {
       maxParallelFileOps: 1,
       output: {

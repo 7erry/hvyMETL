@@ -81,10 +81,15 @@ function mountSpaFallback(
     express.static(webDist, {
       index: false,
       fallthrough: true,
+      // Hashed /assets/* can be cached hard at Cloudflare; index.html stays uncached.
       setHeaders(res, filePath) {
         if (filePath.endsWith('index.html')) {
           res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
           res.setHeader('Pragma', 'no-cache');
+          return;
+        }
+        if (/[/\\]assets[/\\]/.test(filePath)) {
+          res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
         }
       },
     }),
