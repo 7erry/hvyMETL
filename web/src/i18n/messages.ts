@@ -113,6 +113,71 @@ export type MessageKey =
   | 'sidebar.downloadPlan'
   | 'sidebar.planPlaceholder'
   | 'sidebar.transformation'
+  | 'sidebar.transformationEmpty'
+  | 'sidebar.transformationRefresh'
+  | 'sidebar.transformationUpdating'
+  | 'sidebar.transformationProfile'
+  | 'sidebar.yes'
+  | 'sidebar.no'
+  | 'sidebar.csvEnriched'
+  | 'sidebar.perCollection'
+  | 'sidebar.schemaVersioningOnly'
+  | 'sidebar.embedsPrefix'
+  | 'sidebar.embedOverridesLink'
+  | 'sidebar.sizingTitle'
+  | 'sidebar.sizingEmpty'
+  | 'sidebar.sizingIntro'
+  | 'sidebar.datasetScale'
+  | 'sidebar.workloadType'
+  | 'sidebar.workloadReadHeavy'
+  | 'sidebar.workloadReadHeavyHint'
+  | 'sidebar.workloadBalanced'
+  | 'sidebar.workloadBalancedHint'
+  | 'sidebar.workloadWriteHeavy'
+  | 'sidebar.workloadWriteHeavyHint'
+  | 'sidebar.dataGrowth'
+  | 'sidebar.yoy'
+  | 'sidebar.sliderNote'
+  | 'sidebar.schemaStatsNote'
+  | 'sidebar.rawRecommendedAria'
+  | 'sidebar.archiveByCollection'
+  | 'sidebar.eligibleCollections'
+  | 'sidebar.eligibleCollection'
+  | 'sidebar.archiveRetainHint'
+  | 'sidebar.recommended'
+  | 'sidebar.available'
+  | 'sidebar.dateField'
+  | 'sidebar.hotRetention'
+  | 'sidebar.years'
+  | 'sidebar.archivePartitionHint'
+  | 'sidebar.recommendedTier'
+  | 'sidebar.targetWorkloadProfile'
+  | 'sidebar.recommendedTierLabel'
+  | 'sidebar.maxConnections'
+  | 'sidebar.datasetSizeEst'
+  | 'sidebar.planningStorage'
+  | 'sidebar.exceedsReplicaSet'
+  | 'sidebar.inclGrowth'
+  | 'sidebar.targetRam'
+  | 'sidebar.avgDocSize'
+  | 'sidebar.workingSetFits'
+  | 'sidebar.atlasTierReference'
+  | 'sidebar.tierCol'
+  | 'sidebar.vcpuCol'
+  | 'sidebar.ramCol'
+  | 'sidebar.storageScaleCol'
+  | 'sidebar.maxConnCol'
+  | 'sidebar.shardingTitle'
+  | 'sidebar.shardingCollections'
+  | 'sidebar.shardingHeader'
+  | 'sidebar.shardingIntro'
+  | 'sidebar.shardingDocs'
+  | 'sidebar.shardingBestPractices'
+  | 'sidebar.collectionCol'
+  | 'sidebar.hotStorageCol'
+  | 'sidebar.shardKeyCol'
+  | 'sidebar.strategyCol'
+  | 'sidebar.supportingIndexCol'
   | 'sidebar.mongoCollections'
   | 'sidebar.shareDiagram'
   | 'sidebar.shareSqlHint'
@@ -249,6 +314,79 @@ const en: MessageCatalog = {
   'sidebar.downloadPlan': 'Download plan',
   'sidebar.planPlaceholder': 'Run design to generate migration-plan.json…',
   'sidebar.transformation': 'Transformation Summary',
+  'sidebar.transformationEmpty':
+    'Run design to see why patterns and embeds were or were not applied.',
+  'sidebar.transformationRefresh': 'Refresh summary',
+  'sidebar.transformationUpdating': 'Updating…',
+  'sidebar.transformationProfile': 'Profile {label} ({ratio}) · row stats: ',
+  'sidebar.yes': 'yes',
+  'sidebar.no': 'no',
+  'sidebar.csvEnriched': ' · CSV-enriched',
+  'sidebar.perCollection': 'Per collection ({count})',
+  'sidebar.schemaVersioningOnly': 'schema-versioning only',
+  'sidebar.embedsPrefix': 'embeds: ',
+  'sidebar.embedOverridesLink': 'Embed Overrides (Before SQL)',
+  'sidebar.sizingTitle': 'Sizing Cost Projection',
+  'sidebar.sizingEmpty': 'Import a source schema to estimate Atlas sizing and monthly run costs.',
+  'sidebar.sizingIntro':
+    'Heuristic sizing from your DDL and workload profile — not a formal Atlas quote.',
+  'sidebar.datasetScale': 'Dataset scale — raw data:',
+  'sidebar.workloadType': 'Workload type',
+  'sidebar.workloadReadHeavy': 'Read-heavy (80/20)',
+  'sidebar.workloadReadHeavyHint': 'Blogs, storefronts, analytics dashboards',
+  'sidebar.workloadBalanced': 'Balanced (50/50)',
+  'sidebar.workloadBalancedHint': 'Mixed transactional and reporting workloads',
+  'sidebar.workloadWriteHeavy': 'Write-heavy (20/80)',
+  'sidebar.workloadWriteHeavyHint': 'IoT logging, chat, financial ledgers',
+  'sidebar.dataGrowth': 'Expected data growth:',
+  'sidebar.yoy': 'YoY',
+  'sidebar.sliderNote':
+    'Slider is piecewise: 1 GB–{mid} uses the left half; larger sizes scale faster to {max} (4 TB at center).',
+  'sidebar.schemaStatsNote': 'Schema stats estimate shape; ~{rows} documents.',
+  'sidebar.rawRecommendedAria': '{size} raw data · recommended {tier}',
+  'sidebar.archiveByCollection': 'Archive pattern by collection',
+  'sidebar.eligibleCollections': '{count} eligible collections',
+  'sidebar.eligibleCollection': '{count} eligible collection',
+  'sidebar.archiveRetainHint':
+    'Retain recent data on the hot Atlas cluster, then route older dated documents to Online Archive.',
+  'sidebar.recommended': 'Recommended',
+  'sidebar.available': 'Available',
+  'sidebar.dateField': 'date field',
+  'sidebar.hotRetention': 'Hot retention',
+  'sidebar.years': 'years',
+  'sidebar.archivePartitionHint':
+    'Partition: {fields}. Use Atlas Data Federation\'s unified connection string for hot + archived queries.',
+  'sidebar.recommendedTier': 'Recommended Tier',
+  'sidebar.targetWorkloadProfile': 'Target workload profile',
+  'sidebar.recommendedTierLabel': 'Recommended tier',
+  'sidebar.maxConnections': 'Max connections',
+  'sidebar.datasetSizeEst': 'Dataset size (est.)',
+  'sidebar.planningStorage': 'Planning storage (12 mo)',
+  'sidebar.exceedsReplicaSet': ' · exceeds single replica set disk — sharding recommended',
+  'sidebar.inclGrowth': ' incl. {percent}% YoY growth',
+  'sidebar.targetRam': 'Target RAM (est.)',
+  'sidebar.avgDocSize': 'Avg document size',
+  'sidebar.workingSetFits':
+    '{percent}% of index + active working set fits in WiredTiger cache',
+  'sidebar.atlasTierReference':
+    'Atlas tier reference (vCPU, RAM, storage scale, max connections)',
+  'sidebar.tierCol': 'Tier',
+  'sidebar.vcpuCol': 'vCPU',
+  'sidebar.ramCol': 'RAM',
+  'sidebar.storageScaleCol': 'Standard storage scale',
+  'sidebar.maxConnCol': 'Max connections',
+  'sidebar.shardingTitle': 'Sharding Recommended',
+  'sidebar.shardingCollections': '{count} collections',
+  'sidebar.shardingHeader': 'Sharding recommended ({threshold}+ dataset)',
+  'sidebar.shardingIntro':
+    'At this scale, plan a sharded cluster with shard keys that distribute reads and writes uniformly.',
+  'sidebar.shardingDocs': 'Sharding documentation',
+  'sidebar.shardingBestPractices': 'Performance best practices',
+  'sidebar.collectionCol': 'Collection',
+  'sidebar.hotStorageCol': 'Hot storage',
+  'sidebar.shardKeyCol': 'Shard key',
+  'sidebar.strategyCol': 'Strategy',
+  'sidebar.supportingIndexCol': 'Supporting index',
   'sidebar.mongoCollections': 'MongoDB collections',
   'sidebar.shareDiagram': 'Share Diagram',
   'sidebar.shareSqlHint': 'Export or import SQL table layout and positions.',
@@ -381,6 +519,81 @@ const pt: MessageCatalog = {
   'sidebar.downloadPlan': 'Baixar plano',
   'sidebar.planPlaceholder': 'Execute o design para gerar migration-plan.json…',
   'sidebar.transformation': 'Resumo da transformação',
+  'sidebar.transformationEmpty':
+    'Execute o design para ver por que padrões e embeds foram ou não aplicados.',
+  'sidebar.transformationRefresh': 'Atualizar resumo',
+  'sidebar.transformationUpdating': 'Atualizando…',
+  'sidebar.transformationProfile': 'Perfil {label} ({ratio}) · estatísticas de linhas: ',
+  'sidebar.yes': 'sim',
+  'sidebar.no': 'não',
+  'sidebar.csvEnriched': ' · enriquecido com CSV',
+  'sidebar.perCollection': 'Por coleção ({count})',
+  'sidebar.schemaVersioningOnly': 'apenas versionamento de esquema',
+  'sidebar.embedsPrefix': 'embeds: ',
+  'sidebar.embedOverridesLink': 'Substituições de embed (Antes SQL)',
+  'sidebar.sizingTitle': 'Projeção de custo de dimensionamento',
+  'sidebar.sizingEmpty':
+    'Importe um esquema de origem para estimar o dimensionamento Atlas e os custos mensais.',
+  'sidebar.sizingIntro':
+    'Dimensionamento heurístico a partir do DDL e do perfil de carga — não é uma cotação formal da Atlas.',
+  'sidebar.datasetScale': 'Escala do dataset — dados brutos:',
+  'sidebar.workloadType': 'Tipo de carga',
+  'sidebar.workloadReadHeavy': 'Leitura intensa (80/20)',
+  'sidebar.workloadReadHeavyHint': 'Blogs, vitrines, painéis analíticos',
+  'sidebar.workloadBalanced': 'Equilibrado (50/50)',
+  'sidebar.workloadBalancedHint': 'Cargas transacionais e de relatórios mistas',
+  'sidebar.workloadWriteHeavy': 'Escrita intensa (20/80)',
+  'sidebar.workloadWriteHeavyHint': 'Logs IoT, chat, livros financeiros',
+  'sidebar.dataGrowth': 'Crescimento esperado de dados:',
+  'sidebar.yoy': 'a.a.',
+  'sidebar.sliderNote':
+    'O controle é por partes: 1 GB–{mid} usa a metade esquerda; tamanhos maiores sobem mais rápido até {max} (4 TB no centro).',
+  'sidebar.schemaStatsNote': 'Estatísticas do esquema estimam a forma; ~{rows} documentos.',
+  'sidebar.rawRecommendedAria': '{size} dados brutos · recomendado {tier}',
+  'sidebar.archiveByCollection': 'Padrão de arquivo por coleção',
+  'sidebar.eligibleCollections': '{count} coleções elegíveis',
+  'sidebar.eligibleCollection': '{count} coleção elegível',
+  'sidebar.archiveRetainHint':
+    'Mantenha dados recentes no cluster Atlas quente e envie documentos datados mais antigos para o Online Archive.',
+  'sidebar.recommended': 'Recomendado',
+  'sidebar.available': 'Disponível',
+  'sidebar.dateField': 'campo de data',
+  'sidebar.hotRetention': 'Retenção a quente',
+  'sidebar.years': 'anos',
+  'sidebar.archivePartitionHint':
+    'Partição: {fields}. Use a connection string unificada do Atlas Data Federation para consultas quentes + arquivadas.',
+  'sidebar.recommendedTier': 'Nível recomendado',
+  'sidebar.targetWorkloadProfile': 'Perfil de carga alvo',
+  'sidebar.recommendedTierLabel': 'Nível recomendado',
+  'sidebar.maxConnections': 'Máx. de conexões',
+  'sidebar.datasetSizeEst': 'Tamanho do dataset (est.)',
+  'sidebar.planningStorage': 'Armazenamento de planejamento (12 meses)',
+  'sidebar.exceedsReplicaSet':
+    ' · excede o disco de um único replica set — sharding recomendado',
+  'sidebar.inclGrowth': ' incl. {percent}% de crescimento a.a.',
+  'sidebar.targetRam': 'RAM alvo (est.)',
+  'sidebar.avgDocSize': 'Tamanho médio do documento',
+  'sidebar.workingSetFits':
+    '{percent}% do índice + working set ativo cabe no cache do WiredTiger',
+  'sidebar.atlasTierReference':
+    'Referência de níveis Atlas (vCPU, RAM, escala de armazenamento, máx. conexões)',
+  'sidebar.tierCol': 'Nível',
+  'sidebar.vcpuCol': 'vCPU',
+  'sidebar.ramCol': 'RAM',
+  'sidebar.storageScaleCol': 'Escala de armazenamento padrão',
+  'sidebar.maxConnCol': 'Máx. conexões',
+  'sidebar.shardingTitle': 'Sharding recomendado',
+  'sidebar.shardingCollections': '{count} coleções',
+  'sidebar.shardingHeader': 'Sharding recomendado (dataset {threshold}+)',
+  'sidebar.shardingIntro':
+    'Nesta escala, planeje um cluster fragmentado com shard keys que distribuam leituras e escritas de forma uniforme.',
+  'sidebar.shardingDocs': 'Documentação de sharding',
+  'sidebar.shardingBestPractices': 'Práticas recomendadas de desempenho',
+  'sidebar.collectionCol': 'Coleção',
+  'sidebar.hotStorageCol': 'Armazenamento quente',
+  'sidebar.shardKeyCol': 'Shard key',
+  'sidebar.strategyCol': 'Estratégia',
+  'sidebar.supportingIndexCol': 'Índice de suporte',
   'sidebar.mongoCollections': 'Coleções MongoDB',
   'sidebar.shareDiagram': 'Compartilhar diagrama',
   'sidebar.shareSqlHint': 'Exporte ou importe o layout e as posições das tabelas SQL.',
@@ -513,6 +726,81 @@ const es: MessageCatalog = {
   'sidebar.downloadPlan': 'Descargar plan',
   'sidebar.planPlaceholder': 'Ejecute el diseño para generar migration-plan.json…',
   'sidebar.transformation': 'Resumen de transformación',
+  'sidebar.transformationEmpty':
+    'Ejecute el diseño para ver por qué se aplicaron o no patrones y embeds.',
+  'sidebar.transformationRefresh': 'Actualizar resumen',
+  'sidebar.transformationUpdating': 'Actualizando…',
+  'sidebar.transformationProfile': 'Perfil {label} ({ratio}) · estadísticas de filas: ',
+  'sidebar.yes': 'sí',
+  'sidebar.no': 'no',
+  'sidebar.csvEnriched': ' · enriquecido con CSV',
+  'sidebar.perCollection': 'Por colección ({count})',
+  'sidebar.schemaVersioningOnly': 'solo versionado de esquema',
+  'sidebar.embedsPrefix': 'embeds: ',
+  'sidebar.embedOverridesLink': 'Anulaciones de embed (Antes SQL)',
+  'sidebar.sizingTitle': 'Proyección de coste de dimensionamiento',
+  'sidebar.sizingEmpty':
+    'Importe un esquema de origen para estimar el dimensionamiento de Atlas y los costes mensuales.',
+  'sidebar.sizingIntro':
+    'Dimensionamiento heurístico a partir del DDL y del perfil de carga — no es una cotización formal de Atlas.',
+  'sidebar.datasetScale': 'Escala del dataset — datos en bruto:',
+  'sidebar.workloadType': 'Tipo de carga',
+  'sidebar.workloadReadHeavy': 'Lectura intensiva (80/20)',
+  'sidebar.workloadReadHeavyHint': 'Blogs, tiendas, paneles analíticos',
+  'sidebar.workloadBalanced': 'Equilibrado (50/50)',
+  'sidebar.workloadBalancedHint': 'Cargas transaccionales e informes mixtas',
+  'sidebar.workloadWriteHeavy': 'Escritura intensiva (20/80)',
+  'sidebar.workloadWriteHeavyHint': 'Registros IoT, chat, libros financieros',
+  'sidebar.dataGrowth': 'Crecimiento esperado de datos:',
+  'sidebar.yoy': 'interanual',
+  'sidebar.sliderNote':
+    'El control es por tramos: 1 GB–{mid} usa la mitad izquierda; tamaños mayores escalan más rápido hasta {max} (4 TB en el centro).',
+  'sidebar.schemaStatsNote': 'Las estadísticas del esquema estiman la forma; ~{rows} documentos.',
+  'sidebar.rawRecommendedAria': '{size} datos en bruto · recomendado {tier}',
+  'sidebar.archiveByCollection': 'Patrón de archivo por colección',
+  'sidebar.eligibleCollections': '{count} colecciones elegibles',
+  'sidebar.eligibleCollection': '{count} colección elegible',
+  'sidebar.archiveRetainHint':
+    'Conserve datos recientes en el clúster Atlas en caliente y envíe documentos fechados más antiguos a Online Archive.',
+  'sidebar.recommended': 'Recomendado',
+  'sidebar.available': 'Disponible',
+  'sidebar.dateField': 'campo de fecha',
+  'sidebar.hotRetention': 'Retención en caliente',
+  'sidebar.years': 'años',
+  'sidebar.archivePartitionHint':
+    'Partición: {fields}. Use la connection string unificada de Atlas Data Federation para consultas en caliente + archivadas.',
+  'sidebar.recommendedTier': 'Nivel recomendado',
+  'sidebar.targetWorkloadProfile': 'Perfil de carga objetivo',
+  'sidebar.recommendedTierLabel': 'Nivel recomendado',
+  'sidebar.maxConnections': 'Máx. conexiones',
+  'sidebar.datasetSizeEst': 'Tamaño del dataset (est.)',
+  'sidebar.planningStorage': 'Almacenamiento de planificación (12 meses)',
+  'sidebar.exceedsReplicaSet':
+    ' · supera el disco de un único conjunto de réplicas — se recomienda sharding',
+  'sidebar.inclGrowth': ' incl. {percent}% de crecimiento interanual',
+  'sidebar.targetRam': 'RAM objetivo (est.)',
+  'sidebar.avgDocSize': 'Tamaño medio del documento',
+  'sidebar.workingSetFits':
+    '{percent}% del índice + working set activo cabe en la caché de WiredTiger',
+  'sidebar.atlasTierReference':
+    'Referencia de niveles Atlas (vCPU, RAM, escala de almacenamiento, máx. conexiones)',
+  'sidebar.tierCol': 'Nivel',
+  'sidebar.vcpuCol': 'vCPU',
+  'sidebar.ramCol': 'RAM',
+  'sidebar.storageScaleCol': 'Escala de almacenamiento estándar',
+  'sidebar.maxConnCol': 'Máx. conexiones',
+  'sidebar.shardingTitle': 'Sharding recomendado',
+  'sidebar.shardingCollections': '{count} colecciones',
+  'sidebar.shardingHeader': 'Sharding recomendado (dataset {threshold}+)',
+  'sidebar.shardingIntro':
+    'A esta escala, planifique un clúster fragmentado con shard keys que distribuyan lecturas y escrituras de forma uniforme.',
+  'sidebar.shardingDocs': 'Documentación de sharding',
+  'sidebar.shardingBestPractices': 'Prácticas recomendadas de rendimiento',
+  'sidebar.collectionCol': 'Colección',
+  'sidebar.hotStorageCol': 'Almacenamiento en caliente',
+  'sidebar.shardKeyCol': 'Shard key',
+  'sidebar.strategyCol': 'Estrategia',
+  'sidebar.supportingIndexCol': 'Índice de soporte',
   'sidebar.mongoCollections': 'Colecciones MongoDB',
   'sidebar.shareDiagram': 'Compartir diagrama',
   'sidebar.shareSqlHint': 'Exporte o importe el diseño y las posiciones de las tablas SQL.',
@@ -640,6 +928,73 @@ const zhCN: MessageCatalog = {
   'sidebar.downloadPlan': '下载计划',
   'sidebar.planPlaceholder': '运行设计以生成 migration-plan.json…',
   'sidebar.transformation': '转换摘要',
+  'sidebar.transformationEmpty': '运行设计以了解为何应用或未应用模式与嵌入。',
+  'sidebar.transformationRefresh': '刷新摘要',
+  'sidebar.transformationUpdating': '更新中…',
+  'sidebar.transformationProfile': '配置 {label} ({ratio}) · 行统计：',
+  'sidebar.yes': '是',
+  'sidebar.no': '否',
+  'sidebar.csvEnriched': ' · 已用 CSV 丰富',
+  'sidebar.perCollection': '按集合 ({count})',
+  'sidebar.schemaVersioningOnly': '仅架构版本控制',
+  'sidebar.embedsPrefix': '嵌入：',
+  'sidebar.embedOverridesLink': '嵌入覆盖（之前 · SQL）',
+  'sidebar.sizingTitle': '容量与成本估算',
+  'sidebar.sizingEmpty': '导入源架构以估算 Atlas 容量与月度运行成本。',
+  'sidebar.sizingIntro': '根据 DDL 与负载配置的启发式估算 — 非正式 Atlas 报价。',
+  'sidebar.datasetScale': '数据集规模 — 原始数据：',
+  'sidebar.workloadType': '负载类型',
+  'sidebar.workloadReadHeavy': '读多写少 (80/20)',
+  'sidebar.workloadReadHeavyHint': '博客、店面、分析仪表盘',
+  'sidebar.workloadBalanced': '均衡 (50/50)',
+  'sidebar.workloadBalancedHint': '事务与报表混合负载',
+  'sidebar.workloadWriteHeavy': '写多读少 (20/80)',
+  'sidebar.workloadWriteHeavyHint': '物联网日志、聊天、金融账本',
+  'sidebar.dataGrowth': '预期数据增长：',
+  'sidebar.yoy': '同比',
+  'sidebar.sliderNote':
+    '滑块分段：1 GB–{mid} 占用左半段；更大容量更快升到 {max}（中心为 4 TB）。',
+  'sidebar.schemaStatsNote': '架构统计用于估算形状；约 {rows} 个文档。',
+  'sidebar.rawRecommendedAria': '{size} 原始数据 · 推荐 {tier}',
+  'sidebar.archiveByCollection': '按集合的归档模式',
+  'sidebar.eligibleCollections': '{count} 个符合条件的集合',
+  'sidebar.eligibleCollection': '{count} 个符合条件的集合',
+  'sidebar.archiveRetainHint': '在热 Atlas 集群保留近期数据，将较旧的带日期文档路由到 Online Archive。',
+  'sidebar.recommended': '推荐',
+  'sidebar.available': '可用',
+  'sidebar.dateField': '日期字段',
+  'sidebar.hotRetention': '热数据保留',
+  'sidebar.years': '年',
+  'sidebar.archivePartitionHint':
+    '分区：{fields}。使用 Atlas Data Federation 统一连接字符串查询热数据与归档数据。',
+  'sidebar.recommendedTier': '推荐层级',
+  'sidebar.targetWorkloadProfile': '目标负载配置',
+  'sidebar.recommendedTierLabel': '推荐层级',
+  'sidebar.maxConnections': '最大连接数',
+  'sidebar.datasetSizeEst': '数据集大小（估）',
+  'sidebar.planningStorage': '规划存储（12 个月）',
+  'sidebar.exceedsReplicaSet': ' · 超过单副本集磁盘 — 建议分片',
+  'sidebar.inclGrowth': ' 含 {percent}% 同比增长',
+  'sidebar.targetRam': '目标 RAM（估）',
+  'sidebar.avgDocSize': '平均文档大小',
+  'sidebar.workingSetFits': '{percent}% 的索引 + 活动工作集可放入 WiredTiger 缓存',
+  'sidebar.atlasTierReference': 'Atlas 层级参考（vCPU、RAM、存储规模、最大连接数）',
+  'sidebar.tierCol': '层级',
+  'sidebar.vcpuCol': 'vCPU',
+  'sidebar.ramCol': 'RAM',
+  'sidebar.storageScaleCol': '标准存储规模',
+  'sidebar.maxConnCol': '最大连接数',
+  'sidebar.shardingTitle': '建议分片',
+  'sidebar.shardingCollections': '{count} 个集合',
+  'sidebar.shardingHeader': '建议分片（数据集 {threshold}+）',
+  'sidebar.shardingIntro': '在此规模下，请规划分片集群，并使用能均匀分布读写的分片键。',
+  'sidebar.shardingDocs': '分片文档',
+  'sidebar.shardingBestPractices': '性能最佳实践',
+  'sidebar.collectionCol': '集合',
+  'sidebar.hotStorageCol': '热存储',
+  'sidebar.shardKeyCol': '分片键',
+  'sidebar.strategyCol': '策略',
+  'sidebar.supportingIndexCol': '支撑索引',
   'sidebar.mongoCollections': 'MongoDB 集合',
   'sidebar.shareDiagram': '共享图',
   'sidebar.shareSqlHint': '导出或导入 SQL 表布局与位置。',
@@ -771,6 +1126,81 @@ const hi: MessageCatalog = {
   'sidebar.downloadPlan': 'प्लान डाउनलोड',
   'sidebar.planPlaceholder': 'migration-plan.json बनाने के लिए डिज़ाइन चलाएँ…',
   'sidebar.transformation': 'रूपांतरण सारांश',
+  'sidebar.transformationEmpty':
+    'पैटर्न और एम्बेड लागू हुए या नहीं, यह देखने के लिए डिज़ाइन चलाएँ।',
+  'sidebar.transformationRefresh': 'सारांश ताज़ा करें',
+  'sidebar.transformationUpdating': 'अपडेट हो रहा है…',
+  'sidebar.transformationProfile': 'प्रोफ़ाइल {label} ({ratio}) · पंक्ति आँकड़े: ',
+  'sidebar.yes': 'हाँ',
+  'sidebar.no': 'नहीं',
+  'sidebar.csvEnriched': ' · CSV-समृद्ध',
+  'sidebar.perCollection': 'प्रति संग्रह ({count})',
+  'sidebar.schemaVersioningOnly': 'केवल स्कीमा-संस्करण',
+  'sidebar.embedsPrefix': 'एम्बेड: ',
+  'sidebar.embedOverridesLink': 'एम्बेड ओवरराइड (पहले SQL)',
+  'sidebar.sizingTitle': 'साइज़िंग लागत अनुमान',
+  'sidebar.sizingEmpty':
+    'Atlas साइज़िंग और मासिक रन लागत का अनुमान लगाने के लिए स्रोत स्कीमा आयात करें।',
+  'sidebar.sizingIntro':
+    'आपके DDL और वर्कलोड प्रोफ़ाइल से अनुमानित साइज़िंग — औपचारिक Atlas कोट नहीं।',
+  'sidebar.datasetScale': 'डेटासेट स्केल — कच्चा डेटा:',
+  'sidebar.workloadType': 'वर्कलोड प्रकार',
+  'sidebar.workloadReadHeavy': 'पठन-प्रधान (80/20)',
+  'sidebar.workloadReadHeavyHint': 'ब्लॉग, स्टोरफ़्रंट, एनालिटिक्स डैशबोर्ड',
+  'sidebar.workloadBalanced': 'संतुलित (50/50)',
+  'sidebar.workloadBalancedHint': 'मिश्रित ट्रांज़ैक्शनल और रिपोर्टिंग वर्कलोड',
+  'sidebar.workloadWriteHeavy': 'लेखन-प्रधान (20/80)',
+  'sidebar.workloadWriteHeavyHint': 'IoT लॉगिंग, चैट, वित्तीय लेजर',
+  'sidebar.dataGrowth': 'अपेक्षित डेटा वृद्धि:',
+  'sidebar.yoy': 'वर्ष-दर-वर्ष',
+  'sidebar.sliderNote':
+    'स्लाइडर खंडित है: 1 GB–{mid} बाईं आधी हिस्से में; बड़े आकार तेज़ी से {max} तक (केंद्र पर 4 TB)।',
+  'sidebar.schemaStatsNote': 'स्कीमा आँकड़े आकार का अनुमान देते हैं; ~{rows} दस्तावेज़।',
+  'sidebar.rawRecommendedAria': '{size} कच्चा डेटा · अनुशंसित {tier}',
+  'sidebar.archiveByCollection': 'संग्रह के अनुसार आर्काइव पैटर्न',
+  'sidebar.eligibleCollections': '{count} पात्र संग्रह',
+  'sidebar.eligibleCollection': '{count} पात्र संग्रह',
+  'sidebar.archiveRetainHint':
+    'हॉट Atlas क्लस्टर पर हाल का डेटा रखें, फिर पुराने दिनांकित दस्तावेज़ Online Archive पर भेजें।',
+  'sidebar.recommended': 'अनुशंसित',
+  'sidebar.available': 'उपलब्ध',
+  'sidebar.dateField': 'दिनांक फ़ील्ड',
+  'sidebar.hotRetention': 'हॉट रिटेंशन',
+  'sidebar.years': 'वर्ष',
+  'sidebar.archivePartitionHint':
+    'पार्टीशन: {fields}। हॉट + आर्काइव क्वेरी के लिए Atlas Data Federation की एकीकृत connection string उपयोग करें।',
+  'sidebar.recommendedTier': 'अनुशंसित टियर',
+  'sidebar.targetWorkloadProfile': 'लक्ष्य वर्कलोड प्रोफ़ाइल',
+  'sidebar.recommendedTierLabel': 'अनुशंसित टियर',
+  'sidebar.maxConnections': 'अधिकतम कनेक्शन',
+  'sidebar.datasetSizeEst': 'डेटासेट आकार (अनु.)',
+  'sidebar.planningStorage': 'योजना स्टोरेज (12 माह)',
+  'sidebar.exceedsReplicaSet':
+    ' · एकल रेप्लिका सेट डिस्क से अधिक — शार्डिंग अनुशंसित',
+  'sidebar.inclGrowth': ' सहित {percent}% वर्ष-दर-वर्ष वृद्धि',
+  'sidebar.targetRam': 'लक्ष्य RAM (अनु.)',
+  'sidebar.avgDocSize': 'औसत दस्तावेज़ आकार',
+  'sidebar.workingSetFits':
+    'इंडेक्स + सक्रिय वर्किंग सेट का {percent}% WiredTiger कैश में समाता है',
+  'sidebar.atlasTierReference':
+    'Atlas टियर संदर्भ (vCPU, RAM, स्टोरेज स्केल, अधिकतम कनेक्शन)',
+  'sidebar.tierCol': 'टियर',
+  'sidebar.vcpuCol': 'vCPU',
+  'sidebar.ramCol': 'RAM',
+  'sidebar.storageScaleCol': 'मानक स्टोरेज स्केल',
+  'sidebar.maxConnCol': 'अधिकतम कनेक्शन',
+  'sidebar.shardingTitle': 'शार्डिंग अनुशंसित',
+  'sidebar.shardingCollections': '{count} संग्रह',
+  'sidebar.shardingHeader': 'शार्डिंग अनुशंसित ({threshold}+ डेटासेट)',
+  'sidebar.shardingIntro':
+    'इस पैमाने पर, समान रूप से रीड/राइट वितरित करने वाली shard keys के साथ शार्डिड क्लस्टर की योजना बनाएँ।',
+  'sidebar.shardingDocs': 'शार्डिंग दस्तावेज़ीकरण',
+  'sidebar.shardingBestPractices': 'प्रदर्शन सर्वोत्तम अभ्यास',
+  'sidebar.collectionCol': 'संग्रह',
+  'sidebar.hotStorageCol': 'हॉट स्टोरेज',
+  'sidebar.shardKeyCol': 'Shard key',
+  'sidebar.strategyCol': 'रणनीति',
+  'sidebar.supportingIndexCol': 'सहायक इंडेक्स',
   'sidebar.mongoCollections': 'MongoDB संग्रह',
   'sidebar.shareDiagram': 'आरेख साझा करें',
   'sidebar.shareSqlHint': 'SQL टेबल लेआउट और स्थितियाँ निर्यात या आयात करें।',

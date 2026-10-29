@@ -24,5 +24,9 @@ describe('i18n', () => {
     expect(translate('pt', 'common.save')).toBe('Salvar');
     expect(translate('zh-CN', 'nav.schema')).toBe('架构');
     expect(translate('hi', 'common.signIn')).toBe('साइन इन');
+    expect(translate('pt', 'sidebar.sizingTitle')).toBe('Projeção de custo de dimensionamento');
+    expect(translate('es', 'sidebar.recommendedTier')).toBe('Nivel recomendado');
+    expect(translate('zh-CN', 'sidebar.shardingTitle')).toBe('建议分片');
+    expect(translate('hi', 'sidebar.transformationRefresh')).toBe('सारांश ताज़ा करें');
   });
 });

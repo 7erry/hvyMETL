@@ -2,7 +2,6 @@ import { useMemo } from 'react';
 import {
   buildArchiveCollectionOptions,
   computeManagerCostProjection,
-  DEFAULT_MANAGER_COST_INPUTS,
   formatGb,
   formatIndexKeyDisplay,
   formatPersonWeeks,
@@ -27,10 +26,9 @@ import {
   rawDataGbFromSliderPosition,
   sliderPositionFromRawDataGb,
 } from '../datasetScaleSlider';
+import { useT } from '../i18n/LocaleContext';
+import type { MessageKey } from '../i18n/messages';
 import { CollapsiblePanel } from './CollapsiblePanel';
-
-/** Sidebar panel title for Atlas sizing and monthly cost heuristics. */
-export const SIZING_COST_PROJECTION_TITLE = 'Sizing Cost Projection';
 
 export type ManagerCostPanelVariant = 'developer' | 'manager';
 
@@ -46,21 +44,25 @@ type ManagerCostPanelProps = {
   onSizingPanelOpenChange?: (open: boolean) => void;
 };
 
-const WORKLOAD_OPTIONS: { id: ManagerWorkloadType; title: string; hint: string }[] = [
+const WORKLOAD_OPTION_KEYS: {
+  id: ManagerWorkloadType;
+  titleKey: MessageKey;
+  hintKey: MessageKey;
+}[] = [
   {
     id: 'read-heavy',
-    title: 'Read-heavy (80/20)',
-    hint: 'Blogs, storefronts, analytics dashboards',
+    titleKey: 'sidebar.workloadReadHeavy',
+    hintKey: 'sidebar.workloadReadHeavyHint',
   },
   {
     id: 'balanced',
-    title: 'Balanced (50/50)',
-    hint: 'Mixed transactional and reporting workloads',
+    titleKey: 'sidebar.workloadBalanced',
+    hintKey: 'sidebar.workloadBalancedHint',
   },
   {
     id: 'write-heavy',
-    title: 'Write-heavy (20/80)',
-    hint: 'IoT logging, chat, financial ledgers',
+    titleKey: 'sidebar.workloadWriteHeavy',
+    hintKey: 'sidebar.workloadWriteHeavyHint',
   },
 ];
 
@@ -82,6 +84,7 @@ export function ManagerCostPanel({
   sizingPanelOpen,
   onSizingPanelOpenChange,
 }: ManagerCostPanelProps) {
+  const t = useT();
   const projection = useMemo(
     () => computeManagerCostProjection(model, migrationPlan, inputs),
     [model, migrationPlan, inputs],
@@ -121,16 +124,16 @@ export function ManagerCostPanel({
     if (variant === 'manager') return null;
     return (
       <CollapsiblePanel
-        title={SIZING_COST_PROJECTION_TITLE}
+        title={t('sidebar.sizingTitle')}
         open={sizingPanelOpen}
         onOpenChange={onSizingPanelOpenChange}
       >
-        <p className="manager-hint">Import a source schema to estimate Atlas sizing and monthly run costs.</p>
+        <p className="manager-hint">{t('sidebar.sizingEmpty')}</p>
       </CollapsiblePanel>
     );
   }
 
-  const hasSchemaRowStats = model.tables.some((t) => t.rowCount > 0);
+  const hasSchemaRowStats = model.tables.some((table) => table.rowCount > 0);
   const datasetScaleGb = Math.max(
     DATASET_SLIDER_MIN_GB,
     Math.min(DATASET_SLIDER_MAX_GB, inputs.estimatedDataGb > 0 ? inputs.estimatedDataGb : projection.rawDataGb),
@@ -139,21 +142,19 @@ export function ManagerCostPanel({
 
   const sizingSection = (
     <CollapsiblePanel
-        title={SIZING_COST_PROJECTION_TITLE}
+        title={t('sidebar.sizingTitle')}
         open={sizingPanelOpen}
         onOpenChange={onSizingPanelOpenChange}
         defaultOpen={sizingPanelOpen === undefined}
         className="manager-cost-panel"
         collapsedHint={`${formatGb(datasetScaleGb)} · ${WORKLOAD_SHORT[inputs.workloadType]}`}
       >
-        <p className="manager-hint manager-cost-panel__intro">
-          Heuristic sizing from your DDL and workload profile — not a formal Atlas quote.
-        </p>
+        <p className="manager-hint manager-cost-panel__intro">{t('sidebar.sizingIntro')}</p>
 
         <div className="manager-cost-inputs">
           <label className="manager-cost-field">
             <span className="manager-cost-field__label">
-              Dataset scale — raw data: <strong>{formatGb(datasetScaleGb)}</strong>
+              {t('sidebar.datasetScale')} <strong>{formatGb(datasetScaleGb)}</strong>
             </span>
             <div className="manager-cost-dataset-scale">
               <input
@@ -163,7 +164,10 @@ export function ManagerCostPanel({
                 step={1}
                 value={datasetSliderPosition}
                 onChange={(e) => setDataSize(rawDataGbFromSliderPosition(Number(e.target.value)))}
-                aria-valuetext={`${formatGb(datasetScaleGb)} raw data · recommended ${projection.recommendedTier.label}`}
+                aria-valuetext={t('sidebar.rawRecommendedAria', {
+                  size: formatGb(datasetScaleGb),
+                  tier: projection.recommendedTier.label,
+                })}
               />
               <div className="manager-cost-tier-ruler" aria-hidden="true">
                 {DATASET_TIER_SLIDER_ANCHORS_GB.map(({ tierId, rawDataGb }) => (
@@ -183,21 +187,23 @@ export function ManagerCostPanel({
               </div>
             </div>
             <span className="manager-cost-field__note">
-              Slider is piecewise: 1 GB–{formatGb(4 * 1024)} uses the left half; larger sizes scale faster to{' '}
-              {formatGb(DATASET_SLIDER_MAX_GB)} (4 TB at center).
+              {t('sidebar.sliderNote', {
+                mid: formatGb(4 * 1024),
+                max: formatGb(DATASET_SLIDER_MAX_GB),
+              })}
               {hasSchemaRowStats ? (
                 <>
                   {' '}
-                  Schema stats estimate shape; ~{formatRowCount(projection.estimatedTotalRows)} documents.
+                  {t('sidebar.schemaStatsNote', { rows: formatRowCount(projection.estimatedTotalRows) })}
                 </>
               ) : null}
             </span>
           </label>
 
-          <div className="manager-cost-workload" role="group" aria-label="Workload type">
-            <span className="manager-cost-field__label">Workload type</span>
+          <div className="manager-cost-workload" role="group" aria-label={t('sidebar.workloadType')}>
+            <span className="manager-cost-field__label">{t('sidebar.workloadType')}</span>
             <div className="manager-cost-workload__grid">
-              {WORKLOAD_OPTIONS.map((option) => (
+              {WORKLOAD_OPTION_KEYS.map((option) => (
                 <button
                   key={option.id}
                   type="button"
@@ -205,8 +211,8 @@ export function ManagerCostPanel({
                   aria-pressed={inputs.workloadType === option.id}
                   onClick={() => setWorkload(option.id)}
                 >
-                  <strong>{option.title}</strong>
-                  <span>{option.hint}</span>
+                  <strong>{t(option.titleKey)}</strong>
+                  <span>{t(option.hintKey)}</span>
                 </button>
               ))}
             </div>
@@ -214,7 +220,7 @@ export function ManagerCostPanel({
 
           <label className="manager-cost-field">
             <span className="manager-cost-field__label">
-              Expected data growth: <strong>{inputs.growthRatePercent}%</strong> YoY
+              {t('sidebar.dataGrowth')} <strong>{inputs.growthRatePercent}%</strong> {t('sidebar.yoy')}
             </span>
             <input
               type="range"
@@ -230,18 +236,21 @@ export function ManagerCostPanel({
             <details className="manager-archive-controls">
               <summary className="manager-archive-controls__summary">
                 <span>
-                  <strong>Archive pattern by collection</strong>
+                  <strong>{t('sidebar.archiveByCollection')}</strong>
                   <small>
-                    {archiveOptions.length} eligible collection{archiveOptions.length === 1 ? '' : 's'}
+                    {t(
+                      archiveOptions.length === 1
+                        ? 'sidebar.eligibleCollection'
+                        : 'sidebar.eligibleCollections',
+                      { count: archiveOptions.length },
+                    )}
                     {projection.archiveStorageGb > 0
                       ? ` · ${formatGb(projection.archiveStorageGb)} archived for ${formatUsd(projection.monthlyArchiveUsd)} / mo`
                       : ''}
                   </small>
                 </span>
               </summary>
-              <p className="manager-cost-field__note">
-                Retain recent data on the hot Atlas cluster, then route older dated documents to Online Archive.
-              </p>
+              <p className="manager-cost-field__note">{t('sidebar.archiveRetainHint')}</p>
               <div className="manager-archive-controls__list">
                 {archiveOptions.map((option) => (
                   <div className="manager-archive-control" key={option.collectionName}>
@@ -256,12 +265,13 @@ export function ManagerCostPanel({
                       <span>
                         <strong>{option.collectionName}</strong>
                         <small>
-                          {option.isPlanned ? 'Recommended' : 'Available'} · date field {option.timeField}
+                          {option.isPlanned ? t('sidebar.recommended') : t('sidebar.available')} ·{' '}
+                          {t('sidebar.dateField')} {option.timeField}
                         </small>
                       </span>
                     </label>
                     <label className="manager-archive-control__years">
-                      <span>Hot retention</span>
+                      <span>{t('sidebar.hotRetention')}</span>
                       <input
                         type="number"
                         min={1}
@@ -271,11 +281,12 @@ export function ManagerCostPanel({
                         disabled={!option.isEnabled}
                         onChange={(e) => setArchiveRetention(option.collectionName, Number(e.target.value))}
                       />
-                      <span>years</span>
+                      <span>{t('sidebar.years')}</span>
                     </label>
                     <p className="manager-archive-control__hint">
-                      Partition: {option.partitionFields.join(' -> ')}. Use Atlas Data Federation's unified
-                      connection string for hot + archived queries.
+                      {t('sidebar.archivePartitionHint', {
+                        fields: option.partitionFields.join(' -> '),
+                      })}
                     </p>
                   </div>
                 ))}
@@ -318,11 +329,11 @@ export function ManagerCostPanel({
 
   const recommendedTierSection = (
       <CollapsiblePanel
-        title="Recommended Tier"
+        title={t('sidebar.recommendedTier')}
         collapsedHint={`${projection.recommendedTier.label} · ${projection.recommendedTier.ramGb} GB RAM`}
       >
         <label className="manager-cost-field manager-cost-field--tier-profile">
-          <span className="manager-cost-field__label">Target workload profile</span>
+          <span className="manager-cost-field__label">{t('sidebar.targetWorkloadProfile')}</span>
           <select
             className="manager-cost-profile-select"
             value={inputs.targetWorkloadProfile ?? 'auto'}
@@ -339,18 +350,18 @@ export function ManagerCostPanel({
 
         <dl className="manager-cost-card__metrics">
           <div>
-            <dt>Recommended tier</dt>
+            <dt>{t('sidebar.recommendedTierLabel')}</dt>
             <dd>
               {projection.recommendedTier.label} ({projection.recommendedTier.ramGb} GB RAM,{' '}
               {projection.recommendedTier.vcpu} vCPU, up to {formatGb(projection.recommendedTier.storageGb)} storage)
             </dd>
           </div>
           <div>
-            <dt>Max connections</dt>
+            <dt>{t('sidebar.maxConnections')}</dt>
             <dd>{projection.recommendedTier.maxConnections.toLocaleString()}</dd>
           </div>
           <div>
-            <dt>Dataset size (est.)</dt>
+            <dt>{t('sidebar.datasetSizeEst')}</dt>
             <dd>
               {formatGb(projection.rawDataGb)} raw · {formatGb(projection.activeStorageGb)} hot
               {projection.archiveStorageGb > 0 ? ` · ${formatGb(projection.archiveStorageGb)} archived` : ''} (
@@ -358,24 +369,24 @@ export function ManagerCostPanel({
             </dd>
           </div>
           <div>
-            <dt>Planning storage (12 mo)</dt>
+            <dt>{t('sidebar.planningStorage')}</dt>
             <dd>
               {formatGb(projection.planningStorageGb)}
-              {projection.growthRatePercent > 0 ? ` incl. ${projection.growthRatePercent}% YoY growth` : ''}
-              {projection.exceedsReplicaSetDiskCap
-                ? ' · exceeds single replica set disk — sharding recommended'
+              {projection.growthRatePercent > 0
+                ? t('sidebar.inclGrowth', { percent: projection.growthRatePercent })
                 : ''}
+              {projection.exceedsReplicaSetDiskCap ? t('sidebar.exceedsReplicaSet') : ''}
             </dd>
           </div>
           <div>
-            <dt>Target RAM (est.)</dt>
+            <dt>{t('sidebar.targetRam')}</dt>
             <dd>
               {formatGb(projection.requiredRamGb)} — 2× (indexes {formatGb(projection.indexSizeGb)} + active data{' '}
               {formatGb(projection.activeWorkingSetGb)})
             </dd>
           </div>
           <div>
-            <dt>Avg document size</dt>
+            <dt>{t('sidebar.avgDocSize')}</dt>
             <dd>{projection.averageDocumentBytes.toLocaleString()} bytes</dd>
           </div>
         </dl>
@@ -388,21 +399,21 @@ export function ManagerCostPanel({
             />
           </div>
           <span className="manager-cost-working-set__label">
-            {projection.workingSetPercent}% of index + active working set fits in WiredTiger cache
+            {t('sidebar.workingSetFits', { percent: projection.workingSetPercent })}
           </span>
         </div>
 
         <details className="manager-cost-tier-reference">
-          <summary>Atlas tier reference (vCPU, RAM, storage scale, max connections)</summary>
+          <summary>{t('sidebar.atlasTierReference')}</summary>
           <div className="manager-cost-tier-reference__wrap">
             <table className="manager-cost-tier-reference__table">
               <thead>
                 <tr>
-                  <th scope="col">Tier</th>
-                  <th scope="col">vCPU</th>
-                  <th scope="col">RAM</th>
-                  <th scope="col">Standard storage scale</th>
-                  <th scope="col">Max connections</th>
+                  <th scope="col">{t('sidebar.tierCol')}</th>
+                  <th scope="col">{t('sidebar.vcpuCol')}</th>
+                  <th scope="col">{t('sidebar.ramCol')}</th>
+                  <th scope="col">{t('sidebar.storageScaleCol')}</th>
+                  <th scope="col">{t('sidebar.maxConnCol')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -514,20 +525,24 @@ export function ManagerCostPanel({
   const shardingSection =
     projection.requiresSharding ? (
         <CollapsiblePanel
-          title="Sharding Recommended"
-          collapsedHint={`${projection.shardingRecommendations.length} collections`}
+          title={t('sidebar.shardingTitle')}
+          collapsedHint={t('sidebar.shardingCollections', {
+            count: projection.shardingRecommendations.length,
+          })}
         >
-          <div className="manager-cost-sharding" aria-label="Sharding recommendations">
+          <div className="manager-cost-sharding" aria-label={t('sidebar.shardingTitle')}>
             <div className="manager-cost-sharding__header">
-              <strong>Sharding recommended ({formatGb(SHARDING_THRESHOLD_GB)}+ dataset)</strong>
+              <strong>
+                {t('sidebar.shardingHeader', { threshold: formatGb(SHARDING_THRESHOLD_GB) })}
+              </strong>
               <p>
-                At this scale, plan a sharded cluster with shard keys that distribute reads and writes uniformly.{' '}
+                {t('sidebar.shardingIntro')}{' '}
                 <a
                   href="https://www.mongodb.com/docs/manual/sharding/"
                   target="_blank"
                   rel="noopener noreferrer"
                 >
-                  Sharding documentation
+                  {t('sidebar.shardingDocs')}
                 </a>
                 {' · '}
                 <a
@@ -535,7 +550,7 @@ export function ManagerCostPanel({
                   target="_blank"
                   rel="noopener noreferrer"
                 >
-                  Performance best practices
+                  {t('sidebar.shardingBestPractices')}
                 </a>
               </p>
             </div>
@@ -548,11 +563,11 @@ export function ManagerCostPanel({
               <table className="manager-cost-sharding__table">
                 <thead>
                   <tr>
-                    <th scope="col">Collection</th>
-                    <th scope="col">Hot storage</th>
-                    <th scope="col">Shard key</th>
-                    <th scope="col">Strategy</th>
-                    <th scope="col">Supporting index</th>
+                    <th scope="col">{t('sidebar.collectionCol')}</th>
+                    <th scope="col">{t('sidebar.hotStorageCol')}</th>
+                    <th scope="col">{t('sidebar.shardKeyCol')}</th>
+                    <th scope="col">{t('sidebar.strategyCol')}</th>
+                    <th scope="col">{t('sidebar.supportingIndexCol')}</th>
                   </tr>
                 </thead>
                 <tbody>
