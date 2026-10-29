@@ -5,7 +5,10 @@
 import { Router } from 'express';
 import { isHostedStudioRequest } from './hosted.js';
 import { assertRequestMongoUri } from './pipelineCredentials.js';
-import { getMongoshStatus, runMongoshScript } from './mongoShellRunner.js';
+import { getMongoshStatus, MONGOSH_TIMEOUT_MS, runMongoshScript } from './mongoShellRunner.js';
+
+/** Cap long jobs (collection replicate) so a stuck mongosh cannot run forever. */
+const MONGOSH_MAX_TIMEOUT_MS = 30 * 60 * 1000;
 
 export function createMongoShellRouter(): Router {
   const router = Router();
@@ -31,6 +34,17 @@ export function createMongoShellRouter(): Router {
           : typeof findLimitRaw === 'string' && findLimitRaw.trim()
             ? Number(findLimitRaw)
             : undefined;
+      const timeoutRaw = req.body?.timeoutMs;
+      const timeoutParsed =
+        typeof timeoutRaw === 'number'
+          ? timeoutRaw
+          : typeof timeoutRaw === 'string' && timeoutRaw.trim()
+            ? Number(timeoutRaw)
+            : undefined;
+      const timeoutMs =
+        timeoutParsed !== undefined && Number.isFinite(timeoutParsed) && timeoutParsed > 0
+          ? Math.min(Math.floor(timeoutParsed), MONGOSH_MAX_TIMEOUT_MS)
+          : MONGOSH_TIMEOUT_MS;
 
       if (!uri) {
         res.status(400).json({ error: 'MongoDB URI is required.' });
@@ -63,6 +77,7 @@ export function createMongoShellRouter(): Router {
         script,
         dbName: dbName || undefined,
         findLimit: Number.isFinite(findLimit) ? findLimit : undefined,
+        timeoutMs,
         binaryPath: status.path,
       });
       res.json(result);

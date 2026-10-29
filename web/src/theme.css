@@ -2513,6 +2513,40 @@ button.mongo-shell__conn.active {
   background: var(--mdb-gray-dark-4);
 }
 
+.mongo-shell__replicate {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  padding: 0.55rem 0.65rem 0.65rem;
+  border-bottom: 1px solid var(--mdb-green-dark-2);
+  background: var(--mdb-gray-dark-3);
+}
+
+.mongo-shell__replicate-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr));
+  gap: 0.45rem 0.65rem;
+}
+
+.mongo-shell__replicate-grid label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  font-size: 0.72rem;
+  opacity: 0.9;
+}
+
+.mongo-shell__replicate-grid input,
+.mongo-shell__replicate-grid select {
+  min-height: 1.85rem;
+  padding: 0.25rem 0.4rem;
+  border: 1px solid var(--mdb-green-dark-2);
+  border-radius: 4px;
+  background: var(--mdb-black);
+  color: inherit;
+  font-size: 0.78rem;
+}
+
 .mongo-shell__toolbar-title {
   font-size: 0.75rem;
   font-weight: 500;

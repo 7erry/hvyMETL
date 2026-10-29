@@ -1324,6 +1324,8 @@ export async function runMongoshScript(request: {
   script: string;
   dbName?: string;
   findLimit?: number;
+  /** Optional mongosh kill timeout (server clamps). */
+  timeoutMs?: number;
 }): Promise<MongoshRunResult> {
   const res = await apiFetch(`${base}/api/mongosh/run`, {
     method: 'POST',

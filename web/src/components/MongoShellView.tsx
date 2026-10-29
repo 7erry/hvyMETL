@@ -27,6 +27,10 @@ import {
   type MongoShellConnection,
 } from '../mongoShellConnections';
 import {
+  buildCollectionReplicateScript,
+  MONGO_SHELL_REPLICATE_TIMEOUT_MS,
+} from '../mongoShellReplicate';
+import {
   collectionNameFromScript,
   resolveShellResultDocuments,
   parseShellJsonOutput,
@@ -113,6 +117,16 @@ export function MongoShellView(): ReactElement {
   const [libraryProject, setLibraryProject] = useState('all');
   const [schema, setSchema] = useState<MongoShellSchemaContext | null>(null);
   const [schemaLoading, setSchemaLoading] = useState(false);
+  const [replicateOpen, setReplicateOpen] = useState(false);
+  const [replicateSourceId, setReplicateSourceId] = useState<string | null>(null);
+  const [replicateTargetId, setReplicateTargetId] = useState<string | null>(null);
+  const [replicateSourceDb, setReplicateSourceDb] = useState('');
+  const [replicateTargetDb, setReplicateTargetDb] = useState('');
+  const [replicateSourceColl, setReplicateSourceColl] = useState('');
+  const [replicateTargetColl, setReplicateTargetColl] = useState('');
+  const [replicateBatchSize, setReplicateBatchSize] = useState(1000);
+  const [replicateCollections, setReplicateCollections] = useState<string[]>([]);
+  const [replicateCollectionsLoading, setReplicateCollectionsLoading] = useState(false);
   const editorWrapRef = useRef<HTMLDivElement>(null);
   const editorRef = useRef<HTMLTextAreaElement>(null);
   const loadInputRef = useRef<HTMLInputElement>(null);
@@ -309,20 +323,23 @@ export function MongoShellView(): ReactElement {
     });
   };
 
-  const run = async (mode: 'all' | 'selection' | 'toLine') => {
-    if (!selected?.uri.trim()) {
+  const runBody = async (
+    body: string,
+    options?: {
+      uri?: string;
+      dbName?: string;
+      timeoutMs?: number;
+      historyScript?: string;
+      resultTitle?: string;
+    },
+  ) => {
+    const uri = (options?.uri ?? selected?.uri ?? '').trim();
+    if (!uri) {
       setRunError('Select or save a connection with a MongoDB URI first.');
       return;
     }
-    const body = scriptToRun(mode);
     if (!body.trim()) {
-      setRunError(
-        mode === 'selection'
-          ? 'Select script text to run, or use Run.'
-          : mode === 'toLine'
-            ? 'Nothing to run to the current line.'
-            : 'Script is empty.',
-      );
+      setRunError('Script is empty.');
       return;
     }
     setRunning(true);
@@ -331,19 +348,24 @@ export function MongoShellView(): ReactElement {
     setHistoryOpen(false);
     try {
       const next = await runMongoshScript({
-        uri: selected.uri,
+        uri,
         script: body,
-        dbName: dbName.trim() || undefined,
+        dbName: (options?.dbName ?? dbName).trim() || undefined,
         findLimit,
+        timeoutMs: options?.timeoutMs,
       });
-      pushMongoShellHistory(script);
+      pushMongoShellHistory(options?.historyScript ?? script);
       setHistory(listMongoShellHistory());
       const preferCollectionTab = scriptLooksLikeCollectionQuery(body);
       const docs = resolveShellResultDocuments(next.stdout, preferCollectionTab);
       const coll = collectionNameFromScript(body);
+      const timeoutLabel =
+        options?.timeoutMs && options.timeoutMs !== 30_000
+          ? `${Math.round(options.timeoutMs / 60000)}m`
+          : '30s';
       const err = !next.ok
         ? next.timedOut
-          ? 'mongosh timed out after 30s.'
+          ? `mongosh timed out after ${timeoutLabel}.`
           : next.stderr.trim() || `mongosh exited with code ${next.exitCode ?? '?'}`
         : next.truncated
           ? 'Output truncated — showing complete documents that fit.'
@@ -353,7 +375,7 @@ export function MongoShellView(): ReactElement {
       const tab: ShellResultTab = useDocsTab
         ? {
             id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-            title: `${coll} (${docs?.length ?? 0})`,
+            title: options?.resultTitle ?? `${coll} (${docs?.length ?? 0})`,
             kind: 'docs',
             documents: docs ?? [],
             result: next,
@@ -361,7 +383,7 @@ export function MongoShellView(): ReactElement {
           }
         : {
             id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-            title: 'Shell result',
+            title: options?.resultTitle ?? 'Shell result',
             kind: 'output',
             result: next,
             error: err,
@@ -375,6 +397,145 @@ export function MongoShellView(): ReactElement {
     } finally {
       setRunning(false);
     }
+  };
+
+  const run = async (mode: 'all' | 'selection' | 'toLine') => {
+    const body = scriptToRun(mode);
+    if (!body.trim()) {
+      setRunError(
+        mode === 'selection'
+          ? 'Select script text to run, or use Run.'
+          : mode === 'toLine'
+            ? 'Nothing to run to the current line.'
+            : 'Script is empty.',
+      );
+      return;
+    }
+    await runBody(body);
+  };
+
+  const openReplicatePanel = () => {
+    const source = selected ?? connections[0] ?? null;
+    const target =
+      connections.find((c) => c.id !== source?.id) ?? source ?? null;
+    setReplicateSourceId(source?.id ?? null);
+    setReplicateTargetId(target?.id ?? null);
+    setReplicateSourceDb(
+      (source && databaseFromMongoUri(source.uri)) || dbName || '',
+    );
+    setReplicateTargetDb(
+      (target && databaseFromMongoUri(target.uri)) ||
+        (source && databaseFromMongoUri(source.uri)) ||
+        dbName ||
+        '',
+    );
+    const names =
+      source && selected && source.id === selected.id
+        ? (schema?.collections.map((c) => c.name) ?? [])
+        : [];
+    setReplicateCollections(names);
+    setReplicateSourceColl(names[0] ?? '');
+    setReplicateTargetColl(names[0] ?? '');
+    setReplicateOpen(true);
+    setRunError('');
+  };
+
+  const loadReplicateCollections = async () => {
+    const source = connections.find((c) => c.id === replicateSourceId);
+    if (!source?.uri.trim()) {
+      setRunError('Pick a source connection with a MongoDB URI.');
+      return;
+    }
+    if (!replicateSourceDb.trim()) {
+      setRunError('Source database is required to list collections.');
+      return;
+    }
+    setReplicateCollectionsLoading(true);
+    setRunError('');
+    try {
+      const next = await runMongoshScript({
+        uri: source.uri,
+        script: MONGO_SHELL_INTROSPECT_SCRIPT,
+        dbName: replicateSourceDb.trim(),
+      });
+      if (!next.ok) {
+        setRunError(
+          next.stderr.trim() || 'Could not load collections from the source.',
+        );
+        return;
+      }
+      const names =
+        schemaContextFromIntrospect(parseShellJsonOutput(next.stdout)).collections.map(
+          (c) => c.name,
+        );
+      setReplicateCollections(names);
+      if (names.length === 0) {
+        setRunError('No collections found in the source database.');
+      } else if (!names.includes(replicateSourceColl)) {
+        setReplicateSourceColl(names[0] ?? '');
+        setReplicateTargetColl((prev) => prev || names[0] || '');
+      }
+    } catch (error) {
+      setRunError(describeApiError(error));
+    } finally {
+      setReplicateCollectionsLoading(false);
+    }
+  };
+
+  const buildReplicateScriptOrError = (): string | null => {
+    const source = connections.find((c) => c.id === replicateSourceId);
+    const target = connections.find((c) => c.id === replicateTargetId);
+    if (!source?.uri.trim() || !target?.uri.trim()) {
+      setRunError('Source and target connections are required.');
+      return null;
+    }
+    try {
+      return buildCollectionReplicateScript({
+        targetUri: target.uri,
+        sourceDb: replicateSourceDb,
+        targetDb: replicateTargetDb,
+        sourceCollection: replicateSourceColl,
+        targetCollection: replicateTargetColl || replicateSourceColl,
+        batchSize: replicateBatchSize,
+      });
+    } catch (error) {
+      setRunError(describeApiError(error));
+      return null;
+    }
+  };
+
+  const insertReplicateScript = () => {
+    const body = buildReplicateScriptOrError();
+    if (!body) return;
+    setScript(body);
+    setRunError('');
+  };
+
+  const runReplicate = async () => {
+    const source = connections.find((c) => c.id === replicateSourceId);
+    const target = connections.find((c) => c.id === replicateTargetId);
+    const body = buildReplicateScriptOrError();
+    if (!body || !source || !target) return;
+    const targetColl = replicateTargetColl.trim() || replicateSourceColl.trim();
+    if (
+      !window.confirm(
+        `Copy ${replicateSourceDb}.${replicateSourceColl} → ${replicateTargetDb}.${targetColl}?\n\nSource: ${source.name}\nTarget: ${target.name}`,
+      )
+    ) {
+      return;
+    }
+    setScript(body);
+    if (source.id !== selectedId) {
+      selectConnection(source.id);
+      setDbName(replicateSourceDb.trim());
+    }
+    await runBody(body, {
+      uri: source.uri,
+      dbName: replicateSourceDb.trim(),
+      timeoutMs: MONGO_SHELL_REPLICATE_TIMEOUT_MS,
+      historyScript: body,
+      resultTitle: `Replicate ${replicateSourceColl}`,
+    });
   };
 
   const saveScript = () => {
@@ -712,6 +873,19 @@ export function MongoShellView(): ReactElement {
                   </button>
                   <button
                     type="button"
+                    className="mongo-shell__tool-btn"
+                    disabled={running || connections.length === 0}
+                    aria-expanded={replicateOpen}
+                    onClick={() => {
+                      if (replicateOpen) setReplicateOpen(false);
+                      else openReplicatePanel();
+                    }}
+                    title="Copy a collection between two saved connections"
+                  >
+                    Replicate collection
+                  </button>
+                  <button
+                    type="button"
                     className="mongo-shell__save-btn"
                     disabled={!script.trim()}
                     onClick={saveScript}
@@ -788,6 +962,148 @@ export function MongoShellView(): ReactElement {
                   {selected ? selected.name : 'Shell'}
                 </span>
               </div>
+              {replicateOpen ? (
+                <div className="mongo-shell__replicate" aria-label="Replicate collection">
+                  <div className="mongo-shell__replicate-grid">
+                    <label>
+                      Source connection
+                      <select
+                        value={replicateSourceId ?? ''}
+                        onChange={(e) => {
+                          const id = e.target.value || null;
+                          setReplicateSourceId(id);
+                          const conn = connections.find((c) => c.id === id);
+                          const fromUri = conn ? databaseFromMongoUri(conn.uri) : undefined;
+                          if (fromUri) setReplicateSourceDb(fromUri);
+                          setReplicateCollections([]);
+                          setReplicateSourceColl('');
+                        }}
+                      >
+                        {connections.map((c) => (
+                          <option key={c.id} value={c.id}>
+                            {c.name}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    <label>
+                      Source database
+                      <input
+                        value={replicateSourceDb}
+                        onChange={(e) => {
+                          setReplicateSourceDb(e.target.value);
+                          setReplicateCollections([]);
+                        }}
+                        spellCheck={false}
+                      />
+                    </label>
+                    <label>
+                      Source collection
+                      <select
+                        value={replicateSourceColl}
+                        onChange={(e) => {
+                          const name = e.target.value;
+                          setReplicateSourceColl(name);
+                          setReplicateTargetColl((prev) => prev || name);
+                        }}
+                        disabled={replicateCollections.length === 0}
+                      >
+                        {replicateCollections.length === 0 ? (
+                          <option value="">Load collections…</option>
+                        ) : (
+                          replicateCollections.map((name) => (
+                            <option key={name} value={name}>
+                              {name}
+                            </option>
+                          ))
+                        )}
+                      </select>
+                    </label>
+                    <label>
+                      Target connection
+                      <select
+                        value={replicateTargetId ?? ''}
+                        onChange={(e) => {
+                          const id = e.target.value || null;
+                          setReplicateTargetId(id);
+                          const conn = connections.find((c) => c.id === id);
+                          const fromUri = conn ? databaseFromMongoUri(conn.uri) : undefined;
+                          if (fromUri) setReplicateTargetDb(fromUri);
+                        }}
+                      >
+                        {connections.map((c) => (
+                          <option key={c.id} value={c.id}>
+                            {c.name}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    <label>
+                      Target database
+                      <input
+                        value={replicateTargetDb}
+                        onChange={(e) => setReplicateTargetDb(e.target.value)}
+                        spellCheck={false}
+                      />
+                    </label>
+                    <label>
+                      Target collection
+                      <input
+                        value={replicateTargetColl}
+                        onChange={(e) => setReplicateTargetColl(e.target.value)}
+                        placeholder={replicateSourceColl || 'same as source'}
+                        spellCheck={false}
+                      />
+                    </label>
+                    <label>
+                      Batch size
+                      <input
+                        type="number"
+                        min={1}
+                        step={100}
+                        value={replicateBatchSize}
+                        onChange={(e) =>
+                          setReplicateBatchSize(Math.max(1, Number(e.target.value) || 1000))
+                        }
+                      />
+                    </label>
+                  </div>
+                  <p className="mongo-shell__hint">
+                    Save two connections first. Loads collection names from the source DB, then
+                    inserts a batched <code>find</code> → <code>insertMany</code> script (15m
+                    timeout when run from here).
+                  </p>
+                  <div className="button-row">
+                    <button
+                      type="button"
+                      className="secondary"
+                      disabled={running || replicateCollectionsLoading || !replicateSourceId}
+                      onClick={() => void loadReplicateCollections()}
+                    >
+                      {replicateCollectionsLoading ? 'Loading…' : 'Load collections'}
+                    </button>
+                    <button
+                      type="button"
+                      className="secondary"
+                      disabled={running || !replicateSourceColl}
+                      onClick={insertReplicateScript}
+                    >
+                      Insert script
+                    </button>
+                    <button
+                      type="button"
+                      className="primary"
+                      disabled={running || !replicateSourceColl || !replicateTargetId}
+                      onClick={() => void runReplicate()}
+                    >
+                      {running ? 'Replicating…' : 'Run replicate'}
+                    </button>
+                    <button type="button" className="tertiary" onClick={() => setReplicateOpen(false)}>
+                      Close
+                    </button>
+                  </div>
+                </div>
+              ) : null}
               <div className="mongo-shell__editor-wrap" ref={editorWrapRef}>
                 <Editor
                   value={script}

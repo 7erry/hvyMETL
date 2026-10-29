@@ -47,6 +47,7 @@ export type MessageKey =
   | 'consent.prefsLink'
   | 'schema.title'
   | 'schema.pasteHint'
+  | 'schema.pastePlaceholder'
   | 'schema.import'
   | 'schema.loadExample'
   | 'schema.dropHint'
@@ -178,6 +179,7 @@ const en: MessageCatalog = {
   'consent.prefsLink': 'Cookie Preferences',
   'schema.title': 'Schema import',
   'schema.pasteHint': 'Paste DDL, JSON Schema, DynamoDB, or MongoDB JSON. Drop CSV, SQLite, or schema files here.',
+  'schema.pastePlaceholder': 'Drop/Paste…',
   'schema.import': 'Import schema',
   'schema.loadExample': 'Load example',
   'schema.dropHint': 'Drop files to import',
@@ -314,6 +316,7 @@ const pt: MessageCatalog = {
   'consent.prefsLink': 'Preferências de cookies',
   'schema.title': 'Importar esquema',
   'schema.pasteHint': 'Cole DDL, JSON Schema, DynamoDB ou MongoDB JSON. Solte CSV, SQLite ou arquivos de esquema aqui.',
+  'schema.pastePlaceholder': 'Soltar/Colar…',
   'schema.import': 'Importar esquema',
   'schema.loadExample': 'Carregar exemplo',
   'schema.dropHint': 'Solte arquivos para importar',
@@ -445,6 +448,7 @@ const es: MessageCatalog = {
   'consent.prefsLink': 'Preferencias de cookies',
   'schema.title': 'Importar esquema',
   'schema.pasteHint': 'Pega DDL, JSON Schema, DynamoDB o MongoDB JSON. Suelta CSV, SQLite o archivos de esquema aquí.',
+  'schema.pastePlaceholder': 'Soltar/Pegar…',
   'schema.import': 'Importar esquema',
   'schema.loadExample': 'Cargar ejemplo',
   'schema.dropHint': 'Suelta archivos para importar',
@@ -572,6 +576,7 @@ const zhCN: MessageCatalog = {
   'consent.prefsLink': 'Cookie 偏好',
   'schema.title': '导入架构',
   'schema.pasteHint': '粘贴 DDL、JSON Schema、DynamoDB 或 MongoDB JSON。也可将 CSV、SQLite 或架构文件拖放到此处。',
+  'schema.pastePlaceholder': '拖放/粘贴…',
   'schema.import': '导入架构',
   'schema.loadExample': '加载示例',
   'schema.dropHint': '拖放文件以导入',
@@ -701,6 +706,7 @@ const hi: MessageCatalog = {
   'consent.prefsLink': 'कुकी प्राथमिकताएँ',
   'schema.title': 'स्कीमा आयात',
   'schema.pasteHint': 'DDL, JSON Schema, DynamoDB या MongoDB JSON चिपकाएँ। CSV, SQLite या स्कीमा फ़ाइलें यहाँ छोड़ें।',
+  'schema.pastePlaceholder': 'छोड़ें/चिपकाएँ…',
   'schema.import': 'स्कीमा आयात करें',
   'schema.loadExample': 'उदाहरण लोड करें',
   'schema.dropHint': 'आयात के लिए फ़ाइलें छोड़ें',

@@ -2,11 +2,15 @@
 
 **Multi-engine Rust agent** — Downloadable agent opens an outbound secured WebSocket (`/api/agent/v2`), introspects Wave A databases (MongoDB, PostgreSQL, MySQL/MariaDB, Microsoft SQL Server, SQLite), and streams restartable full-table extracts into studio staging for the pipeline. See [docs/27-agent-10.0-roadmap.md](docs/27-agent-10.0-roadmap.md).
 
-**Studio live import** — Engine picker includes MSSQL and SQLite; copy-command downloads point at `v10.0.0` agent builds. Completed extracts set the pipeline CSV path automatically.
+**Studio live import** — Engine picker includes MSSQL and SQLite; copy-command downloads point at `v10.0.0` agent builds. Completed extracts set the pipeline CSV path automatically. This GitHub release ships **`hvymetl-agent-macos-aarch64`**; rebuild/upload other OS binaries onto the same tag when cross toolchains are available.
 
 **HTTP poll agent** — `GET /api/agent/next` + `POST /api/agent/result` remain deprecated for transition (`--http` on the binary); prefer WSS.
 
-**Internationalization** — Studio UI language picker for English, Portuguese, Spanish, Simplified Chinese, and Hindi (`web/src/i18n/`). Nav, auth, consent, schema import, and live-agent chrome are translated; deeper panels can adopt `t()` keys next.
+**Internationalization** — Studio UI language picker for English, Portuguese, Spanish, Simplified Chinese, and Hindi (`web/src/i18n/`). Nav, auth, consent, schema import (including workflow bar and schema sidebar), and live-agent chrome are translated; Manager/Copilot/Pipeline/Shell deep copy can adopt `t()` keys next.
+
+**Schema import placeholder** — Instant Schema Import textarea uses **Drop/Paste…** (localized).
+
+**Shell collection replicate** — MongoDB Shell toolbar **Replicate collection** picks source/target saved connections, loads source collection names, and runs a batched `find` → `insertMany` script (15-minute mongosh timeout).
 
 ---
 

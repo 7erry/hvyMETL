@@ -360,7 +360,7 @@ export function SchemaImportPanel({
                 runDialectDetection(value);
               });
             }}
-            placeholder="Paste CREATE TABLE DDL, JSON Schema, MongoDB JSON, NDJSON, CloudFormation YAML — or drop CSV files…"
+            placeholder={t('schema.pastePlaceholder')}
             rows={compact ? 6 : 8}
             className={`schema-import-panel__textarea${dragOver ? ' schema-import-panel__textarea--drop' : ''}`}
           />
