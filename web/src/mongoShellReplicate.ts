@@ -129,6 +129,35 @@ export type CollectionReplicateOptions = {
   batchSize?: number;
 };
 
+export type SameReplicateDestinationInput = {
+  sourceConnectionId?: string | null;
+  targetConnectionId?: string | null;
+  sourceUri: string;
+  targetUri: string;
+  sourceDb: string;
+  targetDb: string;
+  sourceCollection: string;
+  targetCollection: string;
+};
+
+/** True when replicate would read and write the same collection (same conn/URI, db, name). */
+export function isSameReplicateDestination(input: SameReplicateDestinationInput): boolean {
+  const sourceUri = input.sourceUri.trim();
+  const targetUri = input.targetUri.trim();
+  const sourceDb = input.sourceDb.trim();
+  const targetDb = input.targetDb.trim();
+  const sourceCollection = input.sourceCollection.trim();
+  const targetCollection = input.targetCollection.trim() || sourceCollection;
+  if (!sourceDb || !targetDb || !sourceCollection) return false;
+
+  const sameConnection =
+    (Boolean(input.sourceConnectionId) &&
+      input.sourceConnectionId === input.targetConnectionId) ||
+    (Boolean(sourceUri) && sourceUri === targetUri);
+
+  return sameConnection && sourceDb === targetDb && sourceCollection === targetCollection;
+}
+
 /** mongosh --file script: primary URI is source; `Mongo(targetUri)` is destination. */
 export function buildCollectionReplicateScript(options: CollectionReplicateOptions): string {
   const targetUri = options.targetUri.trim();

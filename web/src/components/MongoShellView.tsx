@@ -32,6 +32,7 @@ import {
   buildCollectionReplicateScript,
   collectionNamesFromShellOutput,
   databaseNamesFromShellOutput,
+  isSameReplicateDestination,
   MONGO_SHELL_REPLICATE_TIMEOUT_MS,
 } from '../mongoShellReplicate';
 import {
@@ -554,11 +555,31 @@ export function MongoShellView(): ReactElement {
     }
   };
 
+  const replicateSourceConn = connections.find((c) => c.id === replicateSourceId);
+  const replicateTargetConn = connections.find((c) => c.id === replicateTargetId);
+  const replicateSameDestination =
+    !!replicateSourceConn &&
+    !!replicateTargetConn &&
+    isSameReplicateDestination({
+      sourceConnectionId: replicateSourceConn.id,
+      targetConnectionId: replicateTargetConn.id,
+      sourceUri: replicateSourceConn.uri,
+      targetUri: replicateTargetConn.uri,
+      sourceDb: replicateSourceDb,
+      targetDb: replicateTargetDb,
+      sourceCollection: replicateSourceColl,
+      targetCollection: replicateTargetColl,
+    });
+
   const buildReplicateScriptOrError = (): string | null => {
     const source = connections.find((c) => c.id === replicateSourceId);
     const target = connections.find((c) => c.id === replicateTargetId);
     if (!source?.uri.trim() || !target?.uri.trim()) {
       setRunError('Source and target connections are required.');
+      return null;
+    }
+    if (replicateSameDestination) {
+      setRunError('Source and destination are the same collection.');
       return null;
     }
     try {
@@ -1170,7 +1191,7 @@ export function MongoShellView(): ReactElement {
                     <button
                       type="button"
                       className="secondary"
-                      disabled={running || !replicateSourceColl}
+                      disabled={running || !replicateSourceColl || replicateSameDestination}
                       onClick={insertReplicateScript}
                     >
                       Insert script
@@ -1178,7 +1199,9 @@ export function MongoShellView(): ReactElement {
                     <button
                       type="button"
                       className="primary"
-                      disabled={running || !replicateSourceColl || !replicateTargetId}
+                      disabled={
+                        running || !replicateSourceColl || !replicateTargetId || replicateSameDestination
+                      }
                       onClick={() => void runReplicate()}
                     >
                       {running ? 'Replicating…' : 'Run replicate'}

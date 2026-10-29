@@ -4,7 +4,58 @@ import {
   buildCollectionReplicateScript,
   collectionNamesFromShellOutput,
   databaseNamesFromShellOutput,
+  isSameReplicateDestination,
 } from './mongoShellReplicate';
+
+describe('isSameReplicateDestination', () => {
+  const base = {
+    sourceConnectionId: 'a',
+    targetConnectionId: 'a',
+    sourceUri: 'mongodb://localhost:27017',
+    targetUri: 'mongodb://localhost:27017',
+    sourceDb: 'shop',
+    targetDb: 'shop',
+    sourceCollection: 'users',
+    targetCollection: 'users',
+  };
+
+  it('detects same connection id, db, and collection', () => {
+    expect(isSameReplicateDestination(base)).toBe(true);
+  });
+
+  it('treats empty target collection as the source collection', () => {
+    expect(isSameReplicateDestination({ ...base, targetCollection: '' })).toBe(true);
+  });
+
+  it('detects same URI even when connection ids differ', () => {
+    expect(
+      isSameReplicateDestination({
+        ...base,
+        sourceConnectionId: 'a',
+        targetConnectionId: 'b',
+      }),
+    ).toBe(true);
+  });
+
+  it('allows a different target collection on the same connection', () => {
+    expect(isSameReplicateDestination({ ...base, targetCollection: 'users_copy' })).toBe(false);
+  });
+
+  it('allows a different database on the same connection', () => {
+    expect(isSameReplicateDestination({ ...base, targetDb: 'archive' })).toBe(false);
+  });
+
+  it('allows a different URI even with matching db and collection names', () => {
+    expect(
+      isSameReplicateDestination({
+        ...base,
+        sourceConnectionId: 'a',
+        targetConnectionId: 'b',
+        targetUri: 'mongodb://other:27017',
+      }),
+    ).toBe(false);
+  });
+});
 
 describe('mongoShellListCollectionsScript', () => {
   it('targets the picked database via getSiblingDB and prints a string array', () => {
