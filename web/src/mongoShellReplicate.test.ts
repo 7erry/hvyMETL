@@ -1,9 +1,18 @@
 import { describe, expect, it } from 'vitest';
+import { mongoShellListCollectionsScript } from './mongoShellCompletions';
 import {
   buildCollectionReplicateScript,
   collectionNamesFromShellOutput,
   databaseNamesFromShellOutput,
 } from './mongoShellReplicate';
+
+describe('mongoShellListCollectionsScript', () => {
+  it('targets the picked database via getSiblingDB', () => {
+    const script = mongoShellListCollectionsScript('retail_banking');
+    expect(script).toContain('getSiblingDB("retail_banking")');
+    expect(script).toContain('getCollectionNames()');
+  });
+});
 
 describe('databaseNamesFromShellOutput', () => {
   it('reads databases and skips system DBs when others exist', () => {

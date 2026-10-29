@@ -13,9 +13,9 @@ import { describeApiError, fetchMongoshStatus, runMongoshScript, type MongoshRun
 import {
   applyMongoShellCompletion,
   MONGO_SHELL_INTROSPECT_SCRIPT,
-  MONGO_SHELL_LIST_COLLECTIONS_SCRIPT,
   MONGO_SHELL_LIST_DATABASES_SCRIPT,
   mongoShellCompletionsFor,
+  mongoShellListCollectionsScript,
   schemaContextFromIntrospect,
   type MongoShellCompletion,
   type MongoShellSchemaContext,
@@ -430,7 +430,7 @@ export function MongoShellView(): ReactElement {
     }
     const next = await runMongoshScript({
       uri: source.uri,
-      script: MONGO_SHELL_LIST_COLLECTIONS_SCRIPT,
+      script: mongoShellListCollectionsScript(sourceDbName),
       dbName: sourceDbName.trim(),
     });
     if (!next.ok) {
@@ -442,10 +442,16 @@ export function MongoShellView(): ReactElement {
     }
     const names = collectionNamesFromShellOutput(next.stdout);
     setReplicateCollections(names);
-    setReplicateSourceColl((prev) => (names.includes(prev) ? prev : (names[0] ?? '')));
+    setReplicateSourceColl(names[0] ?? '');
     setReplicateTargetColl((prev) => (prev.trim() ? prev : (names[0] ?? '')));
     if (names.length === 0) {
-      setRunError('No collections found in the selected source database.');
+      setRunError(
+        next.stdout.trim()
+          ? `Could not parse collections for database "${sourceDbName.trim()}".`
+          : `No collections found in database "${sourceDbName.trim()}".`,
+      );
+    } else {
+      setRunError('');
     }
     return names;
   };

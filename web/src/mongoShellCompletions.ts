@@ -166,7 +166,20 @@ function collectionRowsFromUnknownList(items: unknown[]): MongoShellSchemaCollec
   return collections;
 }
 
-/** Fast names-only list for Shell replicate (no findOne sampling / timeout risk). */
+/**
+ * Fast names-only list for Shell replicate.
+ * Uses getSiblingDB(name) so a database path on the URI cannot override the pick-list selection.
+ */
+export function mongoShellListCollectionsScript(database: string): string {
+  const dbName = database.trim();
+  if (!dbName) throw new Error('Database name is required to list collections.');
+  return `print(EJSON.stringify({
+  database: ${JSON.stringify(dbName)},
+  collections: db.getSiblingDB(${JSON.stringify(dbName)}).getCollectionNames().slice(0, 500).map((name) => ({ name: name, fields: [] })),
+}, null, 2));`;
+}
+
+/** @deprecated Prefer mongoShellListCollectionsScript(database) */
 export const MONGO_SHELL_LIST_COLLECTIONS_SCRIPT = `print(EJSON.stringify({
   database: db.getName(),
   collections: db.getCollectionNames().slice(0, 500).map((name) => ({ name: name, fields: [] })),
