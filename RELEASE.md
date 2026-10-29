@@ -1,3 +1,9 @@
+## hvyMETL 8.0.4
+
+**Full-width studio banner** — The header spans above the left nav rail so the hvyMETL logo sits top-left with Database directly under it.
+
+---
+
 ## hvyMETL 8.0.3
 
 **Studio sidebar inspectors** — Before SQL: **SQL tables** (and the selected table inspector) sit under **Time Series Overrides**. After MongoDB: the selected collection inspector sits under **MongoDB collections**.

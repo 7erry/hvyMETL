@@ -6429,10 +6429,17 @@ button.mongo-shell-tree__toggle:hover:not(:disabled) {
   white-space: nowrap;
 }
 
+.app-root {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
 .app-shell {
   display: flex;
   flex: 1;
-  flex-direction: column;
+  flex-direction: row;
   min-width: 0;
   min-height: 0;
 }
@@ -6440,6 +6447,8 @@ button.mongo-shell-tree__toggle:hover:not(:disabled) {
 .app-body {
   display: flex;
   flex: 1;
+  flex-direction: column;
+  min-width: 0;
   min-height: 0;
 }
 
@@ -6449,7 +6458,7 @@ button.mongo-shell-tree__toggle:hover:not(:disabled) {
   justify-content: space-between;
   flex: 0 0 4.5rem;
   width: 4.5rem;
-  height: 100%;
+  align-self: stretch;
   padding: 0.65rem 0.3rem 0.75rem;
   border-right: 1px solid var(--mdb-green-dark-2);
   background: var(--mdb-gray-dark-4);

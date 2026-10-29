@@ -1542,16 +1542,7 @@ export default function App() {
     <CopilotHotkeys />
     <div
       className={uiRole === 'manager' ? 'app-root app--manager' : 'app-root'}
-      style={{ display: 'flex', flexDirection: 'row', height: '100%' }}
     >
-      <StudioNavRail
-        active={activeNav}
-        onSelect={handleNavSelect}
-        copilotAvailable={uiRole === 'developer'}
-        shellAvailable={uiRole === 'developer'}
-        rolesAvailable={access.canSwitchUiRole}
-      />
-      <div className="app-shell">
       <header className="app-header">
         <MongoLogo />
         <div className="app-header__actions">
@@ -1568,7 +1559,14 @@ export default function App() {
           </a>
         </div>
       </header>
-
+      <div className="app-shell">
+      <StudioNavRail
+        active={activeNav}
+        onSelect={handleNavSelect}
+        copilotAvailable={uiRole === 'developer'}
+        shellAvailable={uiRole === 'developer'}
+        rolesAvailable={access.canSwitchUiRole}
+      />
       <div className="app-body">
         {view === 'shell' && uiRole === 'developer' ? (
           <WorkspaceCanvasShell>
