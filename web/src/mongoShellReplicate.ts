@@ -173,37 +173,78 @@ export function buildCollectionReplicateScript(options: CollectionReplicateOptio
   if (!sourceCollection) throw new Error('Source collection is required.');
 
   // Upsert by _id so re-runs do not fail with E11000 duplicate key.
-  return `// Replicate ${sourceCollection} → ${targetCollection} (${sourceDb} → ${targetDb})
+  return `// --- Configuration & Connections ---
+const BATCH_SIZE = ${batchSize}; // Tunable via UI; balance BSON payload size and throughput
+const MAX_RETRIES = 3;
+
 const sourceDB = db.getSiblingDB(${JSON.stringify(sourceDb)});
-const targetDB = new Mongo(${JSON.stringify(targetUri)}).getDB(${JSON.stringify(targetDb)});
+const targetConn = new Mongo(${JSON.stringify(targetUri)});
+const targetDB = targetConn.getDB(${JSON.stringify(targetDb)});
+
 const sourceColl = sourceDB.getCollection(${JSON.stringify(sourceCollection)});
 const targetColl = targetDB.getCollection(${JSON.stringify(targetCollection)});
 
-function flushBatch(batch) {
+// --- Retry-Aware Bulk Writer ---
+function flushBatchWithRetry(batch, attempt = 1) {
   if (batch.length === 0) return 0;
+
   const ops = batch.map((doc) =>
     doc._id != null
       ? { replaceOne: { filter: { _id: doc._id }, replacement: doc, upsert: true } }
-      : { insertOne: { document: doc } },
+      : { insertOne: { document: doc } }
   );
-  targetColl.bulkWrite(ops, { ordered: false });
-  return batch.length;
-}
 
-const cursor = sourceColl.find({});
-let batch = [];
-const BATCH_SIZE = ${batchSize};
-let copied = 0;
-
-while (cursor.hasNext()) {
-  batch.push(cursor.next());
-  if (batch.length === BATCH_SIZE) {
-    copied += flushBatch(batch);
-    batch = [];
+  try {
+    targetColl.bulkWrite(ops, { ordered: false });
+    return batch.length;
+  } catch (err) {
+    if (attempt <= MAX_RETRIES) {
+      const backoffMs = attempt * 1500;
+      print(\`[Warning] bulkWrite failed (attempt \${attempt}/\${MAX_RETRIES}). Retrying in \${backoffMs}ms... Error: \${err.message}\`);
+      sleep(backoffMs);
+      return flushBatchWithRetry(batch, attempt + 1);
+    }
+    print(\`[Error] Unrecoverable error writing batch: \${err.message}\`);
+    throw err;
   }
 }
 
-copied += flushBatch(batch);
-print("Transfer complete. Upserted/wrote " + copied + " documents.");
+// --- Execution & Streaming ---
+const totalDocs = sourceColl.estimatedDocumentCount();
+print(\`Starting migration of ~\${totalDocs} documents...\`);
+
+const startTime = Date.now();
+let copied = 0;
+let batch = [];
+
+const cursor = sourceColl.find({})
+  .batchSize(BATCH_SIZE)
+  .addOption(16); // noTimeout
+
+try {
+  while (cursor.hasNext()) {
+    batch.push(cursor.next());
+
+    if (batch.length >= BATCH_SIZE) {
+      copied += flushBatchWithRetry(batch);
+      batch = [];
+
+      const elapsedSec = (Date.now() - startTime) / 1000;
+      const rate = Math.round(copied / (elapsedSec || 1));
+      const pct = totalDocs > 0 ? ((copied / totalDocs) * 100).toFixed(1) : "?";
+      print(\`[Progress] \${copied}/\${totalDocs} (\${pct}%) — \${rate} docs/sec\`);
+    }
+  }
+
+  if (batch.length > 0) {
+    copied += flushBatchWithRetry(batch);
+  }
+
+  const duration = ((Date.now() - startTime) / 1000).toFixed(1);
+  print(\`\\nTransfer complete! Upserted \${copied} documents in \${duration}s.\`);
+
+} finally {
+  cursor.close();
+}
 `;
 }

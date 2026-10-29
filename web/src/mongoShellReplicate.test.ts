@@ -109,7 +109,7 @@ describe('collectionNamesFromShellOutput', () => {
 });
 
 describe('buildCollectionReplicateScript', () => {
-  it('emits Mongo target + batched upsert bulkWrite with escaped URIs and names', () => {
+  it('emits Mongo target + retrying upsert bulkWrite with escaped URIs and names', () => {
     const script = buildCollectionReplicateScript({
       targetUri: 'mongodb://user:p@ss@target-host:27017',
       sourceDb: 'source_db',
@@ -118,14 +118,22 @@ describe('buildCollectionReplicateScript', () => {
       targetCollection: 'users_copy',
       batchSize: 500,
     });
-    expect(script).toContain('new Mongo("mongodb://user:p@ss@target-host:27017").getDB("target_db")');
+    expect(script).toContain('new Mongo("mongodb://user:p@ss@target-host:27017")');
+    expect(script).toContain('targetConn.getDB("target_db")');
     expect(script).toContain('getSiblingDB("source_db")');
     expect(script).toContain('getCollection("users")');
     expect(script).toContain('getCollection("users_copy")');
     expect(script).toContain('const BATCH_SIZE = 500;');
+    expect(script).toContain('const MAX_RETRIES = 3;');
+    expect(script).toContain('flushBatchWithRetry');
     expect(script).toContain('bulkWrite(ops, { ordered: false })');
     expect(script).toContain('replaceOne:');
     expect(script).toContain('upsert: true');
+    expect(script).toContain('estimatedDocumentCount()');
+    expect(script).toContain('.batchSize(BATCH_SIZE)');
+    expect(script).toContain('.addOption(16)');
+    expect(script).toContain('[Progress]');
+    expect(script).toContain('cursor.close()');
   });
 
   it('defaults target collection name and batch size', () => {
