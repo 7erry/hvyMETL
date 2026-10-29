@@ -26,14 +26,16 @@ export function WorkspaceCanvasShell({ children }: WorkspaceCanvasShellProps) {
     >
       <div className="workspace-canvas-shell__main">{children}</div>
       {copilot.open ? (
-        <CopilotResizeDivider
-          shellRef={shellRef}
-          width={copilot.width}
-          onWidthChange={copilot.setWidth}
-          onDraggingChange={setIsDragging}
-        />
+        <>
+          <CopilotResizeDivider
+            shellRef={shellRef}
+            width={copilot.width}
+            onWidthChange={copilot.setWidth}
+            onDraggingChange={setIsDragging}
+          />
+          <AgentCopilotSidebar />
+        </>
       ) : null}
-      <AgentCopilotSidebar />
     </div>
   );
 }

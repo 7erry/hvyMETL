@@ -1607,9 +1607,7 @@ export default function App() {
       />
       <div className="app-body">
         {view === 'shell' && uiRole === 'developer' ? (
-          <WorkspaceCanvasShell>
-            <MongoShellView />
-          </WorkspaceCanvasShell>
+          <MongoShellView />
         ) : view === 'diagram' ? (
           uiRole === 'manager' ? (
             <ManagerView
