@@ -57,9 +57,8 @@ describe('buildCollectionReplicateScript', () => {
       targetCollection: 'users_copy',
       batchSize: 500,
     });
-    expect(script).toContain('connect("mongodb://user:p@ss@target-host:27017")');
+    expect(script).toContain('new Mongo("mongodb://user:p@ss@target-host:27017").getDB("target_db")');
     expect(script).toContain('getSiblingDB("source_db")');
-    expect(script).toContain('getDB("target_db")');
     expect(script).toContain('getCollection("users")');
     expect(script).toContain('getCollection("users_copy")');
     expect(script).toContain('const BATCH_SIZE = 500;');

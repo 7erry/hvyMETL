@@ -55,7 +55,7 @@ export type CollectionReplicateOptions = {
   batchSize?: number;
 };
 
-/** mongosh --file script: primary URI is source; `connect(targetUri)` is destination. */
+/** mongosh --file script: primary URI is source; `Mongo(targetUri)` is destination. */
 export function buildCollectionReplicateScript(options: CollectionReplicateOptions): string {
   const targetUri = options.targetUri.trim();
   const sourceDb = options.sourceDb.trim();
@@ -69,10 +69,10 @@ export function buildCollectionReplicateScript(options: CollectionReplicateOptio
   if (!targetDb) throw new Error('Target database is required.');
   if (!sourceCollection) throw new Error('Source collection is required.');
 
+  // mongosh `connect()` returns a DB handle (no getDB). Use Mongo(...).getDB(...) for a second cluster.
   return `// Replicate ${sourceCollection} → ${targetCollection} (${sourceDb} → ${targetDb})
-const targetConn = connect(${JSON.stringify(targetUri)});
 const sourceDB = db.getSiblingDB(${JSON.stringify(sourceDb)});
-const targetDB = targetConn.getDB(${JSON.stringify(targetDb)});
+const targetDB = new Mongo(${JSON.stringify(targetUri)}).getDB(${JSON.stringify(targetDb)});
 const sourceColl = sourceDB.getCollection(${JSON.stringify(sourceCollection)});
 const targetColl = targetDB.getCollection(${JSON.stringify(targetCollection)});
 
