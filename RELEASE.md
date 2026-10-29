@@ -1,3 +1,9 @@
+## hvyMETL 8.0.2
+
+**Studio layout** — Left nav puts **Database** above **Schema**. On the After (MongoDB) sidebar, **Transformation Summary** sits under **MongoDB Target Schema**, and the canvas list is titled **MongoDB collections** directly under that summary.
+
+---
+
 ## hvyMETL 8.0.1
 
 **Studio chrome** — Developer/Manager, workload profile, and Copilot controls are only on the left nav rail. The header no longer repeats role or custom-workload UI, and the floating Copilot launcher is gone.

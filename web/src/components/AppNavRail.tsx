@@ -122,8 +122,8 @@ function IconSettings(): ReactElement {
 }
 
 const PRIMARY_ITEMS: NavItem[] = [
-  { id: 'schema', label: 'Schema', icon: <IconSchema /> },
   { id: 'database', label: 'Database', icon: <IconDatabase /> },
+  { id: 'schema', label: 'Schema', icon: <IconSchema /> },
   { id: 'sizing', label: 'Sizing', icon: <IconSizing /> },
   { id: 'shell', label: 'Shell', icon: <IconShell /> },
   { id: 'copilot', label: 'Copilot', icon: <IconCopilot /> },

@@ -1670,60 +1670,104 @@ export default function App() {
                     ) : null}
                   </>
                 ) : (
-                  <CollapsiblePanel title="MongoDB Target Schema" defaultOpen>
-                    <p style={{ margin: '0 0 0.5rem', fontSize: '0.75rem', opacity: 0.85 }}>
-                      AI/RAG migration plan — collections, embeds, indexes, and pattern decisions before Atlas import.
-                    </p>
-                    <p className="pipeline-hint" style={{ margin: '0 0 0.5rem' }}>
-                      Export SQL table data as CSV so row counts and relationship cardinality drive embed, subset, and
-                      bucket folding. SQLite .db imports include stats automatically.
-                    </p>
-                    <div className="button-row" style={{ marginBottom: '0.5rem' }}>
-                      <button type="button" className="secondary" onClick={() => void handlePickDesignCsv()}>
-                        Choose CSVs
-                      </button>
-                    </div>
-                    {designCsvLabel && designCsvFiles.length > 0 ? (
-                      <p style={{ margin: '0 0 0.5rem', fontSize: '0.72rem', opacity: 0.85 }}>
-                        {designCsvLabel} · {designCsvFiles.length} file(s)
+                  <>
+                    <CollapsiblePanel title="MongoDB Target Schema" defaultOpen>
+                      <p style={{ margin: '0 0 0.5rem', fontSize: '0.75rem', opacity: 0.85 }}>
+                        AI/RAG migration plan — collections, embeds, indexes, and pattern decisions before Atlas import.
                       </p>
-                    ) : csvSourcePath ? (
-                      <p style={{ margin: '0 0 0.5rem', fontSize: '0.72rem', opacity: 0.85 }}>
-                        Server CSV path: {csvSourcePath}
+                      <p className="pipeline-hint" style={{ margin: '0 0 0.5rem' }}>
+                        Export SQL table data as CSV so row counts and relationship cardinality drive embed, subset, and
+                        bucket folding. SQLite .db imports include stats automatically.
                       </p>
-                    ) : null}
-                    <textarea
-                      value={migrationArtifacts?.planJson ?? ''}
-                      onChange={(e) => handlePlanJsonChange(e.target.value)}
-                      placeholder="Run design to generate migration-plan.json…"
-                      rows={10}
-                      spellCheck={false}
-                    />
-                    <div className="button-row">
-                      <button
-                        type="button"
-                        className="primary"
-                        onClick={() => void handleGeneratePlan()}
-                        disabled={!model || designingPlan}
-                      >
-                        {designingPlan ? 'Designing…' : 'Refresh design'}
-                      </button>
-                      {migrationPlan ? (
+                      <div className="button-row" style={{ marginBottom: '0.5rem' }}>
+                        <button type="button" className="secondary" onClick={() => void handlePickDesignCsv()}>
+                          Choose CSVs
+                        </button>
+                      </div>
+                      {designCsvLabel && designCsvFiles.length > 0 ? (
+                        <p style={{ margin: '0 0 0.5rem', fontSize: '0.72rem', opacity: 0.85 }}>
+                          {designCsvLabel} · {designCsvFiles.length} file(s)
+                        </p>
+                      ) : csvSourcePath ? (
+                        <p style={{ margin: '0 0 0.5rem', fontSize: '0.72rem', opacity: 0.85 }}>
+                          Server CSV path: {csvSourcePath}
+                        </p>
+                      ) : null}
+                      <textarea
+                        value={migrationArtifacts?.planJson ?? ''}
+                        onChange={(e) => handlePlanJsonChange(e.target.value)}
+                        placeholder="Run design to generate migration-plan.json…"
+                        rows={10}
+                        spellCheck={false}
+                      />
+                      <div className="button-row">
                         <button
                           type="button"
-                          className="secondary"
-                          onClick={() =>
-                            downloadJson('migration-plan.json', {
-                              ...(migrationPlan ?? JSON.parse(migrationArtifacts!.planJson)),
-                              managerReview: managerReviewAcceptances ?? undefined,
-                            })
-                          }
+                          className="primary"
+                          onClick={() => void handleGeneratePlan()}
+                          disabled={!model || designingPlan}
                         >
-                          Download plan
+                          {designingPlan ? 'Designing…' : 'Refresh design'}
                         </button>
-                      ) : null}
-                    </div>
-                  </CollapsiblePanel>
+                        {migrationPlan ? (
+                          <button
+                            type="button"
+                            className="secondary"
+                            onClick={() =>
+                              downloadJson('migration-plan.json', {
+                                ...(migrationPlan ?? JSON.parse(migrationArtifacts!.planJson)),
+                                managerReview: managerReviewAcceptances ?? undefined,
+                              })
+                            }
+                          >
+                            Download plan
+                          </button>
+                        ) : null}
+                      </div>
+                    </CollapsiblePanel>
+                    <CollapsiblePanel title="Transformation Summary" defaultOpen>
+                      <TransformationSummaryPanel
+                        summary={migrationArtifacts?.transformationSummary ?? null}
+                        onRefresh={() => void handleRefreshExplanation()}
+                        refreshing={explainingSummary}
+                        framed={false}
+                        onGoToEmbedOverrides={model ? handleGoToEmbedOverrides : undefined}
+                      />
+                    </CollapsiblePanel>
+                    <details
+                      className="panel panel-dropdown"
+                      open={canvasPanelOpen}
+                      onToggle={(e) => setSessionField('canvasPanelOpen', e.currentTarget.open)}
+                    >
+                      <summary className="panel-dropdown__summary">MongoDB collections</summary>
+                      <div className="panel-dropdown__body">
+                        <label style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', fontSize: '0.85rem' }}>
+                          <input
+                            type="checkbox"
+                            checked={snapToGrid}
+                            onChange={(e) => setSessionField('snapToGrid', e.target.checked)}
+                          />
+                          Snap to grid (hold Shift for free move)
+                        </label>
+                        {migrationPlan ? (
+                          <ul className="canvas-table-list">
+                            {migrationPlan.collections.map((c) => (
+                              <li
+                                key={c.name}
+                                className={selectedCollection === c.name ? 'selected' : ''}
+                                title="Double-click for collection plan graph"
+                                onClick={() => setSessionField('selectedCollection', c.name)}
+                                onDoubleClick={() => setJsonCrackCollection(c)}
+                              >
+                                <span>{c.name}</span>
+                                <span style={{ opacity: 0.6, fontSize: '0.7rem' }}>{c.sourceTable}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        ) : null}
+                      </div>
+                    </details>
+                  </>
                 )}
 
                 <div id="studio-sizing-panel">
@@ -1744,18 +1788,6 @@ export default function App() {
                   open={haPanelOpen}
                   onOpenChange={setHaPanelOpen}
                 />
-
-                {schemaPhase === 'after' ? (
-                  <CollapsiblePanel title="Transformation Summary" defaultOpen>
-                    <TransformationSummaryPanel
-                      summary={migrationArtifacts?.transformationSummary ?? null}
-                      onRefresh={() => void handleRefreshExplanation()}
-                      refreshing={explainingSummary}
-                      framed={false}
-                      onGoToEmbedOverrides={model ? handleGoToEmbedOverrides : undefined}
-                    />
-                  </CollapsiblePanel>
-                ) : null}
 
                 {schemaPhase === 'before' && selectedTableModel && (
                   <div style={{ marginBottom: '0.75rem' }}>
@@ -1782,54 +1814,38 @@ export default function App() {
                   </div>
                 )}
 
-                <details
-                  className="panel panel-dropdown"
-                  open={canvasPanelOpen}
-                  onToggle={(e) => setSessionField('canvasPanelOpen', e.currentTarget.open)}
-                >
-                  <summary className="panel-dropdown__summary">
-                    Canvas · {schemaPhase === 'before' ? 'SQL tables' : 'MongoDB collections'}
-                  </summary>
-                  <div className="panel-dropdown__body">
-                    <label style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', fontSize: '0.85rem' }}>
-                      <input
-                        type="checkbox"
-                        checked={snapToGrid}
-                        onChange={(e) => setSessionField('snapToGrid', e.target.checked)}
-                      />
-                      Snap to grid (hold Shift for free move)
-                    </label>
-                    {schemaPhase === 'before' && model && (
-                      <ul className="canvas-table-list">
-                        {model.tables.map((t) => (
-                          <li
-                            key={t.name}
-                            className={selectedTable === t.name ? 'selected' : ''}
-                            onClick={() => handleSelectSqlTable(t.name)}
-                          >
-                            <span>{t.name}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                    {schemaPhase === 'after' && migrationPlan && (
-                      <ul className="canvas-table-list">
-                        {migrationPlan.collections.map((c) => (
-                          <li
-                            key={c.name}
-                            className={selectedCollection === c.name ? 'selected' : ''}
-                            title="Double-click for collection plan graph"
-                            onClick={() => setSessionField('selectedCollection', c.name)}
-                            onDoubleClick={() => setJsonCrackCollection(c)}
-                          >
-                            <span>{c.name}</span>
-                            <span style={{ opacity: 0.6, fontSize: '0.7rem' }}>{c.sourceTable}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                  </div>
-                </details>
+                {schemaPhase === 'before' ? (
+                  <details
+                    className="panel panel-dropdown"
+                    open={canvasPanelOpen}
+                    onToggle={(e) => setSessionField('canvasPanelOpen', e.currentTarget.open)}
+                  >
+                    <summary className="panel-dropdown__summary">SQL tables</summary>
+                    <div className="panel-dropdown__body">
+                      <label style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', fontSize: '0.85rem' }}>
+                        <input
+                          type="checkbox"
+                          checked={snapToGrid}
+                          onChange={(e) => setSessionField('snapToGrid', e.target.checked)}
+                        />
+                        Snap to grid (hold Shift for free move)
+                      </label>
+                      {model ? (
+                        <ul className="canvas-table-list">
+                          {model.tables.map((t) => (
+                            <li
+                              key={t.name}
+                              className={selectedTable === t.name ? 'selected' : ''}
+                              onClick={() => handleSelectSqlTable(t.name)}
+                            >
+                              <span>{t.name}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      ) : null}
+                    </div>
+                  </details>
+                ) : null}
 
                 {schemaPhase === 'before' ? (
                   <CollapsiblePanel title="Share Diagram">
