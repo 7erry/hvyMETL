@@ -143,12 +143,23 @@ export function buildCollectionReplicateScript(options: CollectionReplicateOptio
   if (!targetDb) throw new Error('Target database is required.');
   if (!sourceCollection) throw new Error('Source collection is required.');
 
-  // mongosh `connect()` returns a DB handle (no getDB). Use Mongo(...).getDB(...) for a second cluster.
+  // Upsert by _id so re-runs do not fail with E11000 duplicate key.
   return `// Replicate ${sourceCollection} → ${targetCollection} (${sourceDb} → ${targetDb})
 const sourceDB = db.getSiblingDB(${JSON.stringify(sourceDb)});
 const targetDB = new Mongo(${JSON.stringify(targetUri)}).getDB(${JSON.stringify(targetDb)});
 const sourceColl = sourceDB.getCollection(${JSON.stringify(sourceCollection)});
 const targetColl = targetDB.getCollection(${JSON.stringify(targetCollection)});
+
+function flushBatch(batch) {
+  if (batch.length === 0) return 0;
+  const ops = batch.map((doc) =>
+    doc._id != null
+      ? { replaceOne: { filter: { _id: doc._id }, replacement: doc, upsert: true } }
+      : { insertOne: { document: doc } },
+  );
+  targetColl.bulkWrite(ops, { ordered: false });
+  return batch.length;
+}
 
 const cursor = sourceColl.find({});
 let batch = [];
@@ -158,17 +169,12 @@ let copied = 0;
 while (cursor.hasNext()) {
   batch.push(cursor.next());
   if (batch.length === BATCH_SIZE) {
-    targetColl.insertMany(batch, { ordered: false });
-    copied += batch.length;
+    copied += flushBatch(batch);
     batch = [];
   }
 }
 
-if (batch.length > 0) {
-  targetColl.insertMany(batch, { ordered: false });
-  copied += batch.length;
-}
-
-print("Transfer complete. Copied " + copied + " documents.");
+copied += flushBatch(batch);
+print("Transfer complete. Upserted/wrote " + copied + " documents.");
 `;
 }

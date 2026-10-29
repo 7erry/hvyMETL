@@ -58,7 +58,7 @@ describe('collectionNamesFromShellOutput', () => {
 });
 
 describe('buildCollectionReplicateScript', () => {
-  it('emits connect + batched insertMany with escaped URIs and names', () => {
+  it('emits Mongo target + batched upsert bulkWrite with escaped URIs and names', () => {
     const script = buildCollectionReplicateScript({
       targetUri: 'mongodb://user:p@ss@target-host:27017',
       sourceDb: 'source_db',
@@ -72,7 +72,9 @@ describe('buildCollectionReplicateScript', () => {
     expect(script).toContain('getCollection("users")');
     expect(script).toContain('getCollection("users_copy")');
     expect(script).toContain('const BATCH_SIZE = 500;');
-    expect(script).toContain('insertMany(batch, { ordered: false })');
+    expect(script).toContain('bulkWrite(ops, { ordered: false })');
+    expect(script).toContain('replaceOne:');
+    expect(script).toContain('upsert: true');
   });
 
   it('defaults target collection name and batch size', () => {
