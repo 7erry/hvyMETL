@@ -1,18 +1,92 @@
 /** Build a mongosh script that copies one collection between two deployments. */
 
-import { schemaContextFromIntrospect } from './mongoShellCompletions';
 import { parseShellJsonOutput } from './mongoShellResultModel';
 
 export const MONGO_SHELL_REPLICATE_TIMEOUT_MS = 15 * 60 * 1000;
 
-/** Collection names from mongosh list/introspect stdout (tolerant of warnings + array preference). */
-export function collectionNamesFromShellOutput(stdout: string): string[] {
-  const parsed = parseShellJsonOutput(stdout);
-  const fromObject = schemaContextFromIntrospect(parsed);
-  if (fromObject && fromObject.collections.length > 0) {
-    return fromObject.collections.map((c) => c.name);
+function namesFromUnknownList(items: unknown[]): string[] {
+  const names: string[] = [];
+  for (const item of items) {
+    if (typeof item === 'string' && item.trim()) {
+      names.push(item.trim());
+      continue;
+    }
+    if (item && typeof item === 'object' && !Array.isArray(item)) {
+      const name = (item as { name?: unknown }).name;
+      if (typeof name === 'string' && name.trim()) names.push(name.trim());
+    }
+  }
+  return names;
+}
+
+function namesFromParsedValue(parsed: unknown): string[] {
+  if (Array.isArray(parsed)) {
+    const names = namesFromUnknownList(parsed);
+    // Ignore empty arrays — parseShellJsonOutput prefers the last array and can latch onto fields: []
+    return names;
+  }
+  if (parsed && typeof parsed === 'object') {
+    const collections = (parsed as { collections?: unknown }).collections;
+    if (Array.isArray(collections)) return namesFromUnknownList(collections);
   }
   return [];
+}
+
+/** Collection names from mongosh list/introspect stdout. */
+export function collectionNamesFromShellOutput(stdout: string): string[] {
+  const text = stdout.trim();
+  if (!text) return [];
+
+  try {
+    const direct = namesFromParsedValue(JSON.parse(text) as unknown);
+    if (direct.length > 0) return direct;
+  } catch {
+    // mongosh may prefix warnings — fall through
+  }
+
+  // Prefer an object with collections[], then the longest non-empty name list (never empty []).
+  let best: string[] = [];
+  for (let i = 0; i < text.length; i += 1) {
+    if (text[i] !== '{' && text[i] !== '[') continue;
+    let depth = 0;
+    let inString = false;
+    let escape = false;
+    let end = -1;
+    for (let j = i; j < text.length; j += 1) {
+      const ch = text[j]!;
+      if (inString) {
+        if (escape) escape = false;
+        else if (ch === '\\') escape = true;
+        else if (ch === '"') inString = false;
+        continue;
+      }
+      if (ch === '"') {
+        inString = true;
+        continue;
+      }
+      if (ch === '{' || ch === '[') depth += 1;
+      else if (ch === '}' || ch === ']') {
+        depth -= 1;
+        if (depth === 0) {
+          end = j;
+          break;
+        }
+      }
+    }
+    if (end < 0) continue;
+    const slice = text.slice(i, end + 1);
+    try {
+      const names = namesFromParsedValue(JSON.parse(slice) as unknown);
+      if (names.length > best.length) best = names;
+    } catch {
+      // keep scanning
+    }
+    i = end;
+  }
+  if (best.length > 0) return best;
+
+  const fallback = namesFromParsedValue(parseShellJsonOutput(stdout));
+  return fallback;
 }
 
 const SYSTEM_DB_NAMES = new Set(['admin', 'local', 'config']);

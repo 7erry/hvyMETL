@@ -168,22 +168,17 @@ function collectionRowsFromUnknownList(items: unknown[]): MongoShellSchemaCollec
 
 /**
  * Fast names-only list for Shell replicate.
- * Uses getSiblingDB(name) so a database path on the URI cannot override the pick-list selection.
+ * Prints a plain string array via getSiblingDB so URI database paths cannot override the pick list,
+ * and so parsers cannot latch onto nested empty `fields: []` arrays.
  */
 export function mongoShellListCollectionsScript(database: string): string {
   const dbName = database.trim();
   if (!dbName) throw new Error('Database name is required to list collections.');
-  return `print(EJSON.stringify({
-  database: ${JSON.stringify(dbName)},
-  collections: db.getSiblingDB(${JSON.stringify(dbName)}).getCollectionNames().slice(0, 500).map((name) => ({ name: name, fields: [] })),
-}, null, 2));`;
+  return `print(EJSON.stringify(db.getSiblingDB(${JSON.stringify(dbName)}).getCollectionNames().slice(0, 500)));`;
 }
 
 /** @deprecated Prefer mongoShellListCollectionsScript(database) */
-export const MONGO_SHELL_LIST_COLLECTIONS_SCRIPT = `print(EJSON.stringify({
-  database: db.getName(),
-  collections: db.getCollectionNames().slice(0, 500).map((name) => ({ name: name, fields: [] })),
-}, null, 2));`;
+export const MONGO_SHELL_LIST_COLLECTIONS_SCRIPT = `print(EJSON.stringify(db.getCollectionNames().slice(0, 500)));`;
 
 /** listDatabases for Shell replicate source DB pick list. */
 export const MONGO_SHELL_LIST_DATABASES_SCRIPT = `print(EJSON.stringify({

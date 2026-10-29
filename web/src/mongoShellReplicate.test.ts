@@ -7,10 +7,11 @@ import {
 } from './mongoShellReplicate';
 
 describe('mongoShellListCollectionsScript', () => {
-  it('targets the picked database via getSiblingDB', () => {
+  it('targets the picked database via getSiblingDB and prints a string array', () => {
     const script = mongoShellListCollectionsScript('retail_banking');
     expect(script).toContain('getSiblingDB("retail_banking")');
     expect(script).toContain('getCollectionNames()');
+    expect(script).not.toContain('fields:');
   });
 });
 
@@ -43,12 +44,12 @@ describe('collectionNamesFromShellOutput', () => {
     ).toEqual(['users', 'orders']);
   });
 
-  it('reads names when stdout prefers a nested collections array', () => {
+  it('does not treat nested empty fields arrays as the collection list', () => {
     expect(
       collectionNamesFromShellOutput(
-        'warn\n[{"name":"a","fields":[]},{"name":"b","fields":[]}]',
+        'DeprecationWarning: x\n{"database":"shop","collections":[{"name":"users","fields":[]},{"name":"orders","fields":[]}]}',
       ),
-    ).toEqual(['a', 'b']);
+    ).toEqual(['users', 'orders']);
   });
 
   it('reads plain string collection lists', () => {

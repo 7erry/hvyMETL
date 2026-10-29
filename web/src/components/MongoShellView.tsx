@@ -445,9 +445,10 @@ export function MongoShellView(): ReactElement {
     setReplicateSourceColl(names[0] ?? '');
     setReplicateTargetColl((prev) => (prev.trim() ? prev : (names[0] ?? '')));
     if (names.length === 0) {
+      const preview = next.stdout.trim().slice(0, 240);
       setRunError(
-        next.stdout.trim()
-          ? `Could not parse collections for database "${sourceDbName.trim()}".`
+        preview
+          ? `No collections parsed for "${sourceDbName.trim()}". mongosh said: ${preview}`
           : `No collections found in database "${sourceDbName.trim()}".`,
       );
     } else {
