@@ -1,10 +1,9 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, type DragEvent } from 'react';
 import { useAccess } from '../auth/HostedAuthProvider';
 import { fetchBuiltinExamples, type BuiltinExampleSummary } from '../api';
-import { sortDialectsByLabel } from '../dialectConstants';
 import { sidebarWidthForSchemaImportTextarea } from '../schemaImportSidebarSync';
 import { detectDialect, DIALECT_DETECT_MIN_CONFIDENCE } from '../schema/detectDialect';
-import { getDialectLabel, isSupportedDialect } from '../../../src/dialects.ts';
+import { isSupportedDialect } from '../../../src/dialects.ts';
 import { validateMongoJsonPaste } from '../../../src/utilities/mongoJsonValidate.ts';
 import type { Dialect } from '../types';
 import { LiveMongoImportForm } from './LiveMongoImportForm';
@@ -22,7 +21,7 @@ type SchemaImportPanelProps = {
   onImportLive: (uri: string, database: string, platform: string) => void | Promise<string | void>;
   /** Repeated inside the live-import form because a modal covers the page status line. */
   status?: string;
-  onSchemaFile: (file: File) => void;
+  onSchemaFiles: (files: File[]) => void;
   onImportBuiltinExample?: (exampleId: string) => void | Promise<void>;
   /** When the DDL textarea is resized wider than the sidebar, expand the split pane. */
   onRequestSidebarWidth?: (widthPx: number) => void;
@@ -31,7 +30,7 @@ type SchemaImportPanelProps = {
 };
 
 export function SchemaImportPanel({
-  dialects,
+  dialects: _dialects,
   dialect,
   ddl,
   apiConnected,
@@ -40,7 +39,7 @@ export function SchemaImportPanel({
   onImportQuery,
   onImportLive,
   status,
-  onSchemaFile,
+  onSchemaFiles,
   onImportBuiltinExample,
   onRequestSidebarWidth,
   compact = false,
@@ -50,10 +49,7 @@ export function SchemaImportPanel({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const sidebarSyncRafRef = useRef<number | null>(null);
-  const supportedDialects = useMemo(
-    () => sortDialectsByLabel(dialects).filter((entry) => isSupportedDialect(entry.id)),
-    [dialects],
-  );
+  const dragDepthRef = useRef(0);
   const [autoDetectedLabel, setAutoDetectedLabel] = useState<string | null>(null);
   const detectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -115,6 +111,46 @@ export function SchemaImportPanel({
   const [loadingExample, setLoadingExample] = useState(false);
   const [importMode, setImportMode] = useState<'schema' | 'live'>('schema');
   const [dragOver, setDragOver] = useState(false);
+
+  const takeDroppedFiles = useCallback(
+    (list: FileList | null | undefined) => {
+      const files = list ? Array.from(list) : [];
+      if (files.length === 0) return;
+      onSchemaFiles(files);
+    },
+    [onSchemaFiles],
+  );
+
+  const onSchemaDragEnter = useCallback((event: DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+    dragDepthRef.current += 1;
+    setDragOver(true);
+  }, []);
+
+  const onSchemaDragOver = useCallback((event: DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+    event.dataTransfer.dropEffect = 'copy';
+  }, []);
+
+  const onSchemaDragLeave = useCallback((event: DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+    dragDepthRef.current = Math.max(0, dragDepthRef.current - 1);
+    if (dragDepthRef.current === 0) setDragOver(false);
+  }, []);
+
+  const onSchemaDrop = useCallback(
+    (event: DragEvent<HTMLDivElement>) => {
+      event.preventDefault();
+      event.stopPropagation();
+      dragDepthRef.current = 0;
+      setDragOver(false);
+      takeDroppedFiles(event.dataTransfer.files);
+    },
+    [takeDroppedFiles],
+  );
 
   useEffect(() => {
     if (!apiConnected || !onImportBuiltinExample) {
@@ -182,11 +218,6 @@ export function SchemaImportPanel({
     }
   };
 
-  const importDialectLabel = getDialectLabel(dialect);
-  const dialectChoices = useMemo(() => {
-    if (supportedDialects.some((entry) => entry.id === dialect)) return supportedDialects;
-    return [{ id: dialect, label: importDialectLabel, live: false }, ...supportedDialects];
-  }, [supportedDialects, dialect, importDialectLabel]);
   const mongoJsonError = dialect === 'mongodb-json' ? validateMongoJsonPaste(ddl) : null;
 
   const content = (
@@ -279,24 +310,17 @@ export function SchemaImportPanel({
       </div>
 
       {importMode === 'schema' ? (
-        <div id="schema-import-panel-schema" role="tabpanel" aria-labelledby="schema-import-tab-schema">
+        <div
+          id="schema-import-panel-schema"
+          role="tabpanel"
+          aria-labelledby="schema-import-tab-schema"
+          className={`schema-import-panel__dropzone${dragOver ? ' schema-import-panel__dropzone--active' : ''}`}
+          onDragEnter={onSchemaDragEnter}
+          onDragOver={onSchemaDragOver}
+          onDragLeave={onSchemaDragLeave}
+          onDrop={onSchemaDrop}
+        >
           <div className="schema-import-panel__editor-bar">
-            <label className="schema-import-panel__label" htmlFor="schema-import-dialect">
-              Import dialect
-              <select
-                id="schema-import-dialect"
-                className="schema-import-panel__select"
-                value={dialect}
-                onChange={(event) => onDialectChange(event.target.value)}
-                disabled={!apiConnected}
-              >
-                {dialectChoices.map((entry) => (
-                  <option key={entry.id} value={entry.id}>
-                    {entry.label}
-                  </option>
-                ))}
-              </select>
-            </label>
             <button
               type="button"
               className="secondary"
@@ -308,19 +332,21 @@ export function SchemaImportPanel({
             <input
               ref={fileInputRef}
               type="file"
-              accept=".sql,.ddl,.txt,.json,.ndjson,.yaml,.yml,.db,.sqlite,.sqlite3"
+              multiple
+              accept=".sql,.ddl,.txt,.json,.ndjson,.yaml,.yml,.csv,.db,.sqlite,.sqlite3"
               className="schema-import-panel__file-input"
               onChange={(e) => {
-                const file = e.target.files?.[0];
-                if (file) onSchemaFile(file);
+                takeDroppedFiles(e.target.files);
                 e.target.value = '';
               }}
             />
           </div>
           <p className="schema-import-panel__hint" aria-live="polite">
-            {autoDetectedLabel
-              ? `Auto-detected: ${autoDetectedLabel}. Change the dialect if that is wrong.`
-              : 'Dialect is detected from the paste. Drop a schema file on the box, or use Upload file.'}
+            {dragOver
+              ? 'Drop schema or CSV files to import…'
+              : autoDetectedLabel
+                ? `Auto-detected: ${autoDetectedLabel}.`
+                : 'Drop DDL, JSON, YAML, SQLite, or CSV files here (or use Upload). CSV headers become tables.'}
           </p>
           <textarea
             ref={textareaRef}
@@ -332,18 +358,7 @@ export function SchemaImportPanel({
                 runDialectDetection(value);
               });
             }}
-            onDragOver={(event) => {
-              event.preventDefault();
-              setDragOver(true);
-            }}
-            onDragLeave={() => setDragOver(false)}
-            onDrop={(event) => {
-              event.preventDefault();
-              setDragOver(false);
-              const file = event.dataTransfer.files[0];
-              if (file) onSchemaFile(file);
-            }}
-            placeholder="Paste CREATE TABLE DDL, JSON Schema, MongoDB JSON, NDJSON, or CloudFormation YAML…"
+            placeholder="Paste CREATE TABLE DDL, JSON Schema, MongoDB JSON, NDJSON, CloudFormation YAML — or drop CSV files…"
             rows={compact ? 6 : 8}
             className={`schema-import-panel__textarea${dragOver ? ' schema-import-panel__textarea--drop' : ''}`}
           />

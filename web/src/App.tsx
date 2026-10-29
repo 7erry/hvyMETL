@@ -48,6 +48,7 @@ import { TimeSeriesOverridesPanel } from './components/TimeSeriesOverridesPanel'
 import { AuthGate } from './components/AuthGate';
 import { FALLBACK_DIALECTS } from './dialectConstants';
 import { getDialectLabel, inferSchemaDialect } from '../../src/dialects.ts';
+import { csvFilesToCreateTableDdl } from '../../src/utilities/csvToDdl.js';
 import { AppNavRail, type AppNavId } from './components/AppNavRail';
 import { MongoShellView } from './components/MongoShellView';
 import { useAccess } from './auth/HostedAuthProvider';
@@ -819,13 +820,36 @@ export default function App() {
     }
   };
 
-  /** Route uploaded schema files to SQLite introspection or DDL parse by extension. */
-  const handleSchemaFileUpload = async (file: File) => {
-    if (/\.(db|sqlite|sqlite3)$/i.test(file.name)) {
-      await handleSqliteUpload(file);
+  /** Route uploaded/dropped schema files: SQLite, CSV→DDL, or text schema by extension. */
+  const handleSchemaFilesUpload = async (files: File[]) => {
+    if (files.length === 0) return;
+    const sqlite = files.find((file) => /\.(db|sqlite|sqlite3)$/i.test(file.name));
+    if (sqlite) {
+      await handleSqliteUpload(sqlite);
       return;
     }
-    await handleDdlFileUpload(file);
+    const csvs = files.filter((file) => /\.csv$/i.test(file.name));
+    if (csvs.length > 0) {
+      try {
+        setStatus(`Reading ${csvs.length} CSV file(s)…`);
+        const texts = await Promise.all(
+          csvs.map(async (file) => ({ name: file.name, text: await file.text() })),
+        );
+        const inferredDdl = csvFilesToCreateTableDdl(texts);
+        setDesignCsvFiles(csvs);
+        setDesignCsvLabel(csvs.length === 1 ? csvs[0]!.name : `${csvs.length} CSV files`);
+        setSessionField('dialect', 'sqlite');
+        setSessionField('ddl', inferredDdl);
+        await handleImportQuery(inferredDdl, 'csv-schema');
+        setStatus(
+          `Imported schema from ${csvs.length} CSV file(s); kept them for design enrichment.`,
+        );
+      } catch (e) {
+        setStatus(`CSV schema import failed: ${describeApiError(e)}`);
+      }
+      return;
+    }
+    await handleDdlFileUpload(files[0]!);
   };
 
   const profileInfo = useMemo(() => {
@@ -1604,7 +1628,7 @@ export default function App() {
               onDdlChange={(value) => setSessionField('ddl', value)}
               onImportQuery={() => void handleImportQuery()}
               onImportLive={handleImportLive}
-              onSchemaFile={(file) => void handleSchemaFileUpload(file)}
+              onSchemaFiles={(files) => void handleSchemaFilesUpload(files)}
               onImportBuiltinExample={(id) => void handleImportBuiltinExample(id)}
             />
           ) : (
@@ -1631,7 +1655,7 @@ export default function App() {
                         onImportQuery={() => void handleImportQuery()}
                         onImportLive={handleImportLive}
                         status={status}
-                        onSchemaFile={(file) => void handleSchemaFileUpload(file)}
+                        onSchemaFiles={(files) => void handleSchemaFilesUpload(files)}
                         onImportBuiltinExample={(id) => void handleImportBuiltinExample(id)}
                         onRequestSidebarWidth={handleSchemaImportSidebarWidth}
                         framed={false}
@@ -2073,6 +2097,8 @@ export default function App() {
           dialectLabel={dialectLabel}
           csvSourcePath={csvSourcePath}
           onCsvSourcePathChange={(path) => setSessionField('csvSourcePath', path)}
+          initialCsvFiles={designCsvFiles}
+          initialCsvLabel={designCsvLabel}
           onComplete={handlePipelineComplete}
         />
       ) : null}
@@ -2088,7 +2114,7 @@ export default function App() {
         onImportQuery={() => void handleImportQuery()}
         onImportLive={handleImportLive}
         status={status}
-        onSchemaFile={(file) => void handleSchemaFileUpload(file)}
+        onSchemaFiles={(files) => void handleSchemaFilesUpload(files)}
         onImportBuiltinExample={(id) => void handleImportBuiltinExample(id)}
         onClose={closeSchemaImportDialog}
       />

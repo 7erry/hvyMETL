@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type DragEvent } from 'react';
 import { fatalCsvSchemaMismatch } from '../csvSchemaValidation';
 import {
   downloadPipelineResults,
@@ -50,6 +50,9 @@ type PipelinePanelProps = {
   dialectLabel: string;
   csvSourcePath: string | null;
   onCsvSourcePathChange: (path: string) => void;
+  /** CSV files already chosen at schema import — preselect for full pipeline. */
+  initialCsvFiles?: File[];
+  initialCsvLabel?: string | null;
   onComplete: (result: PipelineRunResult) => void;
   onPipelineFailure?: (errors: string[]) => void;
 };
@@ -86,6 +89,8 @@ export function PipelinePanel({
   dialectLabel,
   csvSourcePath,
   onCsvSourcePathChange,
+  initialCsvFiles = [],
+  initialCsvLabel = null,
   onComplete,
   onPipelineFailure,
 }: PipelinePanelProps) {
@@ -100,6 +105,8 @@ export function PipelinePanel({
   const [csvDirectoryLabel, setCsvDirectoryLabel] = useState<string | null>(null);
   const [csvUploading, setCsvUploading] = useState(false);
   const [uploadedCsvCount, setUploadedCsvCount] = useState(0);
+  const [csvDragOver, setCsvDragOver] = useState(false);
+  const csvDragDepthRef = useRef(0);
   const [showEnvDetails, setShowEnvDetails] = useState(false);
   const [form, setForm] = useState<PipelineForm>({
     mongoUri: '',
@@ -174,23 +181,40 @@ export function PipelinePanel({
     const justOpened = !wasOpenRef.current;
     wasOpenRef.current = true;
 
+    const hasImportedCsv = initialCsvFiles.length > 0;
+
     if (justOpened) {
       setError('');
       setResult(null);
       setProgress(null);
-      setCsvFiles([]);
-      setCsvDirectoryLabel(null);
       setUploadedCsvCount(0);
       setShowEnvDetails(false);
+      setCsvDragOver(false);
+      csvDragDepthRef.current = 0;
+      if (hasImportedCsv) {
+        setCsvFiles(initialCsvFiles);
+        setCsvDirectoryLabel(
+          initialCsvLabel?.trim() ||
+            `${initialCsvFiles.length} CSV file${initialCsvFiles.length === 1 ? '' : 's'} from schema import`,
+        );
+      } else {
+        setCsvFiles([]);
+        setCsvDirectoryLabel(null);
+      }
     }
 
     const savedCsvPath = resolveHostedCsvSourcePath(csvSourcePath, false);
     const savedCsvIsGeneratedMock = /(?:^|[/\\])mock-csv(?:[/\\])?$/i.test(savedCsvPath);
-    const noCsv = !savedCsvPath || savedCsvIsGeneratedMock;
+    const noCsv = (!savedCsvPath || savedCsvIsGeneratedMock) && !hasImportedCsv;
     setForm((prev) => ({
       ...prev,
-      csvSourcePath: savedCsvIsGeneratedMock ? '' : prev.csvSourcePath || savedCsvPath,
-      generateMockCsv: noCsv ? true : prev.generateMockCsv,
+      csvSourcePath: hasImportedCsv
+        ? ''
+        : savedCsvIsGeneratedMock
+          ? ''
+          : prev.csvSourcePath || savedCsvPath,
+      generateMockCsv: hasImportedCsv ? false : noCsv ? true : prev.generateMockCsv,
+      liveEnabled: hasImportedCsv ? false : prev.liveEnabled,
     }));
 
     void (async () => {
@@ -217,7 +241,7 @@ export function PipelinePanel({
         if (justOpened) setLoadingConfig(false);
       }
     })();
-  }, [open, csvSourcePath, dialect, model.tables]);
+  }, [open, csvSourcePath, dialect, model.tables, initialCsvFiles, initialCsvLabel]);
 
   useEffect(() => {
     if (!open) return;
@@ -343,6 +367,24 @@ export function PipelinePanel({
     setForm((prev) => (prev.csvSourcePath ? prev : { ...prev, csvSourcePath }));
   }, [csvSourcePath, open, requiresCsvUpload]);
 
+  const applySelectedCsvFiles = async (files: File[], label: string) => {
+    const csvOnly = files.filter((file) => /\.csv$/i.test(file.name));
+    if (csvOnly.length === 0) {
+      setError('Drop or choose one or more .csv files.');
+      return;
+    }
+    setError('');
+    if (requiresCsvUpload) {
+      await uploadCsvFilesToServer(csvOnly, label);
+      return;
+    }
+    if (rejectCsvIfSchemaMismatch(csvOnly.map((file) => file.name))) return;
+    setCsvFiles(csvOnly);
+    setCsvDirectoryLabel(label);
+    setUploadedCsvCount(0);
+    setForm((prev) => ({ ...prev, csvSourcePath: '', generateMockCsv: false, liveEnabled: false }));
+  };
+
   const handlePickCsvDirectory = async () => {
     try {
       const picked = await pickCsvDirectory();
@@ -353,18 +395,7 @@ export function PipelinePanel({
         return;
       }
 
-      setError('');
-      if (requiresCsvUpload) {
-        await uploadCsvFilesToServer(picked.files, picked.label);
-        return;
-      }
-
-      if (rejectCsvIfSchemaMismatch(picked.files.map((file) => file.name))) return;
-
-      setCsvFiles(picked.files);
-      setCsvDirectoryLabel(picked.label);
-      setUploadedCsvCount(0);
-      setForm((prev) => ({ ...prev, csvSourcePath: '', generateMockCsv: false }));
+      await applySelectedCsvFiles(picked.files, picked.label);
     } catch (e) {
       if (e instanceof DOMException && e.name === 'AbortError') return;
       setError(String(e));
@@ -375,19 +406,46 @@ export function PipelinePanel({
     try {
       const files = await pickCsvFiles();
       if (!files?.length) return;
-      setError('');
-      if (requiresCsvUpload) {
-        await uploadCsvFilesToServer(files, `${files.length} selected file${files.length === 1 ? '' : 's'}`);
-        return;
-      }
-      if (rejectCsvIfSchemaMismatch(files.map((file) => file.name))) return;
-      setCsvFiles(files);
-      setCsvDirectoryLabel(`${files.length} selected file${files.length === 1 ? '' : 's'}`);
-      setUploadedCsvCount(0);
-      setForm((prev) => ({ ...prev, csvSourcePath: '', generateMockCsv: false }));
+      await applySelectedCsvFiles(
+        files,
+        `${files.length} selected file${files.length === 1 ? '' : 's'}`,
+      );
     } catch (e) {
       setError(String(e));
     }
+  };
+
+  const onCsvDragEnter = (event: DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+    csvDragDepthRef.current += 1;
+    setCsvDragOver(true);
+  };
+
+  const onCsvDragOver = (event: DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+    event.dataTransfer.dropEffect = 'copy';
+  };
+
+  const onCsvDragLeave = (event: DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+    csvDragDepthRef.current = Math.max(0, csvDragDepthRef.current - 1);
+    if (csvDragDepthRef.current === 0) setCsvDragOver(false);
+  };
+
+  const onCsvDrop = (event: DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+    csvDragDepthRef.current = 0;
+    setCsvDragOver(false);
+    if (running || csvUploading) return;
+    const files = Array.from(event.dataTransfer.files ?? []);
+    void applySelectedCsvFiles(
+      files,
+      `${files.filter((file) => /\.csv$/i.test(file.name)).length} dropped file(s)`,
+    );
   };
 
   const handleCsvSourcePathChange = (value: string) => {
@@ -817,7 +875,13 @@ export function PipelinePanel({
           ) : null}
 
           {dataSourceMode === 'real' ? (
-            <div className="pipeline-card">
+            <div
+              className={`pipeline-card pipeline-card--dropzone${csvDragOver ? ' pipeline-card--dropzone-active' : ''}`}
+              onDragEnter={onCsvDragEnter}
+              onDragOver={onCsvDragOver}
+              onDragLeave={onCsvDragLeave}
+              onDrop={onCsvDrop}
+            >
               <p className="pipeline-hint">{csvSourceHint}</p>
               {requiresCsvUpload ? (
                 <p className="pipeline-hint">
@@ -859,6 +923,8 @@ export function PipelinePanel({
                 </div>
                 {csvUploading ? (
                   <span className="pipeline-hint">Uploading CSV files to the studio server…</span>
+                ) : csvDragOver ? (
+                  <span className="pipeline-hint">Drop CSV files to use for the pipeline…</span>
                 ) : csvDirectoryLabel && (csvFiles.length > 0 || uploadedCsvCount > 0) ? (
                   <span className="pipeline-hint">
                     {uploadedCsvCount > 0
@@ -868,8 +934,8 @@ export function PipelinePanel({
                 ) : (
                   <span className="pipeline-hint">
                     {requiresCsvUpload
-                      ? 'Pick a folder or individual .csv files from your machine. They will be uploaded before import.'
-                      : 'Upload from this browser, or type a path on the machine running the API server.'}
+                      ? 'Drop, pick a folder, or choose .csv files from your machine. They will be uploaded before import.'
+                      : 'Drop CSV files here, choose a folder/files, or type a path on the machine running the API server.'}
                   </span>
                 )}
               </label>

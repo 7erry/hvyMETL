@@ -5,6 +5,8 @@ import {
   collectionNameFromScript,
   documentsFromParsedOutput,
   parseShellJsonOutput,
+  resolveShellResultDocuments,
+  salvageDocumentsFromShellOutput,
   scriptLooksLikeCollectionQuery,
 } from './mongoShellResultModel';
 
@@ -42,5 +44,25 @@ describe('mongoShellResultModel', () => {
   it('reads collection name from script', () => {
     expect(collectionNameFromScript('db.accounts.find()')).toBe('accounts');
     expect(collectionNameFromScript('db.getCollection("orders").find({})')).toBe('orders');
+    expect(
+      collectionNameFromScript("db.getCollection('listingsAndReviews').find()"),
+    ).toBe('listingsAndReviews');
+    expect(scriptLooksLikeCollectionQuery("db.getCollection('listingsAndReviews').find()")).toBe(
+      true,
+    );
+  });
+
+  it('salvages complete docs from truncated find() EJSON arrays', () => {
+    const truncated = '[\n  {"_id":1,"name":"a"},\n  {"_id":2,"name":"b"},\n  {"_id":3,"na…[truncated]';
+    expect(salvageDocumentsFromShellOutput(truncated)).toEqual([
+      { _id: 1, name: 'a' },
+      { _id: 2, name: 'b' },
+    ]);
+    expect(resolveShellResultDocuments(truncated, true)).toEqual([
+      { _id: 1, name: 'a' },
+      { _id: 2, name: 'b' },
+    ]);
+    // Without a collection-query hint, truncated arrays degrade to the last complete object
+    expect(resolveShellResultDocuments(truncated, false)).toEqual([{ _id: 2, name: 'b' }]);
   });
 });

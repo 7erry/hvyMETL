@@ -28,7 +28,7 @@ import {
 } from '../mongoShellConnections';
 import {
   collectionNameFromScript,
-  documentsFromParsedOutput,
+  resolveShellResultDocuments,
   parseShellJsonOutput,
   scriptLooksLikeCollectionQuery,
 } from '../mongoShellResultModel';
@@ -338,23 +338,24 @@ export function MongoShellView(): ReactElement {
       });
       pushMongoShellHistory(script);
       setHistory(listMongoShellHistory());
-      const parsed = parseShellJsonOutput(next.stdout);
-      const docs = documentsFromParsedOutput(parsed);
+      const preferCollectionTab = scriptLooksLikeCollectionQuery(body);
+      const docs = resolveShellResultDocuments(next.stdout, preferCollectionTab);
       const coll = collectionNameFromScript(body);
       const err = !next.ok
         ? next.timedOut
           ? 'mongosh timed out after 30s.'
           : next.stderr.trim() || `mongosh exited with code ${next.exitCode ?? '?'}`
-        : undefined;
-      // Collection finds (including empty []) get a named docs tab, not "Shell result"
-      const useDocsTab =
-        docs !== null && (scriptLooksLikeCollectionQuery(body) || docs.length > 0);
+        : next.truncated
+          ? 'Output truncated — showing complete documents that fit.'
+          : undefined;
+      // Collection finds (including empty / truncated) get a named docs tab, not "Shell result"
+      const useDocsTab = preferCollectionTab || (docs !== null && docs.length > 0);
       const tab: ShellResultTab = useDocsTab
         ? {
             id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-            title: `${coll} (${docs.length})`,
+            title: `${coll} (${docs?.length ?? 0})`,
             kind: 'docs',
-            documents: docs,
+            documents: docs ?? [],
             result: next,
             error: err,
           }

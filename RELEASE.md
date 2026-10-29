@@ -1,3 +1,13 @@
+## hvyMETL 8.0.5
+
+**CSV schema import** — Drop or upload one or more `.csv` files on Instant Schema Import; headers become `CREATE TABLE` schemas. Those CSVs prefill **Use real CSV data** for Full Pipeline, and that panel accepts multi-file drag-and-drop.
+
+**Schema import UX** — Import dialect is auto-detected only (dropdown removed). The schema tab is a full drop zone for DDL/JSON/YAML/SQLite/CSV.
+
+**Shell result tabs** — Large `getCollection(…).find()` runs that hit the output cap still open a named collection tab, salvaging complete documents from truncated EJSON.
+
+---
+
 ## hvyMETL 8.0.4
 
 **Full-width studio banner** — The header spans above the left nav rail so the hvyMETL logo sits top-left with Database directly under it.

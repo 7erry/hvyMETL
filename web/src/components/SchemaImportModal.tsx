@@ -12,7 +12,7 @@ type SchemaImportModalProps = {
   onImportQuery: () => void;
   onImportLive: (uri: string, database: string, platform: string) => void | Promise<string | void>;
   status?: string;
-  onSchemaFile: (file: File) => void;
+  onSchemaFiles: (files: File[]) => void;
   onImportBuiltinExample?: (exampleId: string) => void | Promise<void>;
   onClose: () => void;
 };
@@ -29,7 +29,7 @@ export function SchemaImportModal({
   onImportQuery,
   onImportLive,
   status,
-  onSchemaFile,
+  onSchemaFiles,
   onImportBuiltinExample,
   onClose,
 }: SchemaImportModalProps) {
@@ -60,7 +60,7 @@ export function SchemaImportModal({
           onImportQuery={onImportQuery}
           onImportLive={onImportLive}
           status={status}
-          onSchemaFile={onSchemaFile}
+          onSchemaFiles={onSchemaFiles}
           onImportBuiltinExample={onImportBuiltinExample}
           framed={false}
         />

@@ -39,7 +39,7 @@ type ManagerSidebarProps = {
   onImportQuery: () => void;
   onImportLive: (uri: string, database: string, platform: string) => void | Promise<string | void>;
   statusMessage?: string;
-  onSchemaFile: (file: File) => void;
+  onSchemaFiles: (files: File[]) => void;
   onImportBuiltinExample?: (exampleId: string) => void | Promise<void>;
   onRequestSidebarWidth?: (widthPx: number) => void;
   onOpenReview: () => void;
@@ -104,7 +104,7 @@ export function ManagerSidebar({
   onImportQuery,
   onImportLive,
   statusMessage,
-  onSchemaFile,
+  onSchemaFiles,
   onImportBuiltinExample,
   onRequestSidebarWidth,
   onOpenReview,
@@ -167,7 +167,7 @@ export function ManagerSidebar({
           onImportQuery={onImportQuery}
             onImportLive={onImportLive}
             status={statusMessage}
-            onSchemaFile={onSchemaFile}
+            onSchemaFiles={onSchemaFiles}
           onImportBuiltinExample={onImportBuiltinExample}
           onRequestSidebarWidth={onRequestSidebarWidth}
           compact

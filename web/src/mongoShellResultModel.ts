@@ -200,3 +200,49 @@ export function documentsFromParsedOutput(parsed: unknown): Record<string, unkno
   }
   return null;
 }
+
+/**
+ * Recover complete top-level documents from truncated mongosh EJSON
+ * (e.g. find() arrays cut at MONGOSH_MAX_OUTPUT_BYTES).
+ */
+export function salvageDocumentsFromShellOutput(stdout: string): Record<string, unknown>[] {
+  const text = stdout.trim();
+  if (!text) return [];
+  const docs: Record<string, unknown>[] = [];
+  for (let i = 0; i < text.length; i += 1) {
+    if (text[i] !== '{') continue;
+    const slice = extractBalancedJson(text, i);
+    if (!slice) continue;
+    try {
+      const value = JSON.parse(slice) as unknown;
+      if (value && typeof value === 'object' && !Array.isArray(value)) {
+        const rec = value as Record<string, unknown>;
+        // skip wrapper shapes from show collections / listDatabases
+        if (Array.isArray(rec.collections) || Array.isArray(rec.databases)) continue;
+        docs.push(rec);
+        i += slice.length - 1;
+      }
+    } catch {
+      // keep scanning
+    }
+  }
+  return docs;
+}
+
+/** Docs for a result tab: full array parse first; salvage objects when output was truncated mid-array. */
+export function resolveShellResultDocuments(
+  stdout: string,
+  preferCollectionTab: boolean,
+): Record<string, unknown>[] | null {
+  const parsed = parseShellJsonOutput(stdout);
+  const docs = documentsFromParsedOutput(parsed);
+  // Complete find() arrays (including []) — use as-is
+  if (docs !== null && Array.isArray(parsed)) return docs;
+  if (preferCollectionTab) {
+    const salvaged = salvageDocumentsFromShellOutput(stdout);
+    // Truncated EJSON often parses as the last complete object only; prefer all salvaged docs
+    if (salvaged.length > 0) return salvaged;
+    return docs ?? [];
+  }
+  return docs;
+}
