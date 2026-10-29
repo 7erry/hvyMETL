@@ -70,4 +70,13 @@ describe('csvSource', () => {
     expect(warnings[0]).toMatch(/No CSV files match/);
     expect(warnings[0]).toMatch(/clusters\.csv/);
   });
+
+  it('matches hyphenated CSV names to underscored table names', () => {
+    const files = ['/data/customers-100.csv', '/data/people-100.csv'];
+    expect(resolveCsvFilesForTable(files, 'customers_100')).toEqual(['/data/customers-100.csv']);
+    expect(csvTableMatchWarnings(
+      ['customers-100.csv', 'people-100.csv'],
+      ['customers_100', 'people_100'],
+    )).toEqual([]);
+  });
 });

@@ -106,7 +106,6 @@ export function PipelinePanel({
   const [csvUploading, setCsvUploading] = useState(false);
   const [uploadedCsvCount, setUploadedCsvCount] = useState(0);
   const [csvDragOver, setCsvDragOver] = useState(false);
-  const csvDragDepthRef = useRef(0);
   const [showEnvDetails, setShowEnvDetails] = useState(false);
   const [form, setForm] = useState<PipelineForm>({
     mongoUri: '',
@@ -190,7 +189,6 @@ export function PipelinePanel({
       setUploadedCsvCount(0);
       setShowEnvDetails(false);
       setCsvDragOver(false);
-      csvDragDepthRef.current = 0;
       if (hasImportedCsv) {
         setCsvFiles(initialCsvFiles);
         setCsvDirectoryLabel(
@@ -415,37 +413,33 @@ export function PipelinePanel({
     }
   };
 
-  const onCsvDragEnter = (event: DragEvent<HTMLDivElement>) => {
+  const onCsvDragOver = (event: DragEvent<HTMLElement>) => {
     event.preventDefault();
     event.stopPropagation();
-    csvDragDepthRef.current += 1;
+    if (running || csvUploading) {
+      event.dataTransfer.dropEffect = 'none';
+      return;
+    }
+    event.dataTransfer.dropEffect = 'copy';
     setCsvDragOver(true);
   };
 
-  const onCsvDragOver = (event: DragEvent<HTMLDivElement>) => {
+  const onCsvDragLeave = (event: DragEvent<HTMLElement>) => {
     event.preventDefault();
     event.stopPropagation();
-    event.dataTransfer.dropEffect = 'copy';
+    const next = event.relatedTarget;
+    if (next instanceof Node && event.currentTarget.contains(next)) return;
+    setCsvDragOver(false);
   };
 
-  const onCsvDragLeave = (event: DragEvent<HTMLDivElement>) => {
+  const onCsvDrop = (event: DragEvent<HTMLElement>) => {
     event.preventDefault();
     event.stopPropagation();
-    csvDragDepthRef.current = Math.max(0, csvDragDepthRef.current - 1);
-    if (csvDragDepthRef.current === 0) setCsvDragOver(false);
-  };
-
-  const onCsvDrop = (event: DragEvent<HTMLDivElement>) => {
-    event.preventDefault();
-    event.stopPropagation();
-    csvDragDepthRef.current = 0;
     setCsvDragOver(false);
     if (running || csvUploading) return;
     const files = Array.from(event.dataTransfer.files ?? []);
-    void applySelectedCsvFiles(
-      files,
-      `${files.filter((file) => /\.csv$/i.test(file.name)).length} dropped file(s)`,
-    );
+    const csvCount = files.filter((file) => /\.csv$/i.test(file.name)).length;
+    void applySelectedCsvFiles(files, `${csvCount} dropped file${csvCount === 1 ? '' : 's'}`);
   };
 
   const handleCsvSourcePathChange = (value: string) => {
@@ -877,7 +871,7 @@ export function PipelinePanel({
           {dataSourceMode === 'real' ? (
             <div
               className={`pipeline-card pipeline-card--dropzone${csvDragOver ? ' pipeline-card--dropzone-active' : ''}`}
-              onDragEnter={onCsvDragEnter}
+              onDragEnter={onCsvDragOver}
               onDragOver={onCsvDragOver}
               onDragLeave={onCsvDragLeave}
               onDrop={onCsvDrop}
@@ -889,8 +883,22 @@ export function PipelinePanel({
                   uploaded to the studio server before csvToAtlas import runs.
                 </p>
               ) : null}
-              <label>
-                {requiresCsvUpload ? 'CSV exports' : 'CSV folder'}
+              <div
+                className={`pipeline-csv-drop${csvDragOver ? ' pipeline-csv-drop--active' : ''}`}
+                onDragEnter={onCsvDragOver}
+                onDragOver={onCsvDragOver}
+                onDragLeave={onCsvDragLeave}
+                onDrop={onCsvDrop}
+                aria-label="Drop CSV files"
+              >
+                {csvDragOver
+                  ? 'Drop to add CSV files…'
+                  : 'Drop .csv files here (multiple allowed)'}
+              </div>
+              <div>
+                <span className="pipeline-field-label">
+                  {requiresCsvUpload ? 'CSV exports' : 'CSV folder'}
+                </span>
                 <div className="pipeline-path-row">
                   <input
                     type="text"
@@ -901,6 +909,8 @@ export function PipelinePanel({
                         : 'Choose folder… or enter server path'
                     }
                     onChange={(e) => handleCsvSourcePathChange(e.target.value)}
+                    onDragOver={onCsvDragOver}
+                    onDrop={onCsvDrop}
                     disabled={running || csvUploading || requiresCsvUpload}
                     readOnly={requiresCsvUpload}
                   />
@@ -923,8 +933,6 @@ export function PipelinePanel({
                 </div>
                 {csvUploading ? (
                   <span className="pipeline-hint">Uploading CSV files to the studio server…</span>
-                ) : csvDragOver ? (
-                  <span className="pipeline-hint">Drop CSV files to use for the pipeline…</span>
                 ) : csvDirectoryLabel && (csvFiles.length > 0 || uploadedCsvCount > 0) ? (
                   <span className="pipeline-hint">
                     {uploadedCsvCount > 0
@@ -934,11 +942,11 @@ export function PipelinePanel({
                 ) : (
                   <span className="pipeline-hint">
                     {requiresCsvUpload
-                      ? 'Drop, pick a folder, or choose .csv files from your machine. They will be uploaded before import.'
-                      : 'Drop CSV files here, choose a folder/files, or type a path on the machine running the API server.'}
+                      ? 'Drop files above, or pick a folder / .csv files from your machine. They will be uploaded before import.'
+                      : 'Drop files above, choose a folder/files, or type a path on the machine running the API server.'}
                   </span>
                 )}
-              </label>
+              </div>
             </div>
           ) : config?.mockCsvGenerator?.ok ? (
             <div className="pipeline-card pipeline-mock-ready">

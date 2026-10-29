@@ -1,3 +1,11 @@
+## hvyMETL 8.0.6
+
+**Pipeline CSV drop** — **Use real CSV data** has a dedicated multi-file drop pad; drops are no longer swallowed by the path field.
+
+**CSV name matching** — Hyphenated exports such as `customers-100.csv` match underscored tables from CSV schema import (`customers_100`).
+
+---
+
 ## hvyMETL 8.0.5
 
 **CSV schema import** — Drop or upload one or more `.csv` files on Instant Schema Import; headers become `CREATE TABLE` schemas. Those CSVs prefill **Use real CSV data** for Full Pipeline, and that panel accepts multi-file drag-and-drop.

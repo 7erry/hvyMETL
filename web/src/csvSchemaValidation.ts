@@ -1,7 +1,9 @@
-/** Normalize a CSV basename for table matching (strips .chunkN suffix). */
+/** Normalize a CSV basename for table matching (strips .chunkN; hyphens→underscores like CSV schema import). */
 export function csvBaseName(fileName: string): string {
   const withoutExt = fileName.replace(/\.csv$/i, '');
-  return withoutExt.replace(/\.chunk\d+$/i, '').toLowerCase();
+  const withoutChunk = withoutExt.replace(/\.chunk\d+$/i, '');
+  const cleaned = withoutChunk.replace(/[^A-Za-z0-9_]+/g, '_').replace(/^_+|_+$/g, '');
+  return (cleaned || 'csv_table').toLowerCase();
 }
 
 /** Warnings when picked CSV names do not align with SQL table names from the DDL model. */

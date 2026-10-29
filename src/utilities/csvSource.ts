@@ -67,6 +67,15 @@ export function listCsvFiles(root: string): string[] {
   return files.sort();
 }
 
+/** Collapse punctuation the same way CSV→DDL table naming does (customers-100 → customers_100). */
+export function normalizeCsvMatchToken(value: string): string {
+  return value
+    .toLowerCase()
+    .replace(/\.chunk\d+$/i, '')
+    .replace(/[^a-z0-9_]+/g, '_')
+    .replace(/^_+|_+$/g, '');
+}
+
 /** Normalize a CSV basename for collection/table matching (strips .chunkN suffix). */
 export function csvBaseName(filePath: string): string {
   const withoutExt = basename(filePath, extname(filePath));
@@ -112,7 +121,13 @@ export function csvMatchKeysForCollection(collection: CollectionPlan): string[] 
 
 /** True when a CSV basename matches any of the given table/collection keys. */
 export function csvBaseNameMatchesKeys(filePath: string, keys: ReadonlySet<string>): boolean {
-  return keys.has(csvBaseName(filePath));
+  const base = csvBaseName(filePath);
+  if (keys.has(base)) return true;
+  const normalizedBase = normalizeCsvMatchToken(base);
+  for (const key of keys) {
+    if (normalizeCsvMatchToken(key) === normalizedBase) return true;
+  }
+  return false;
 }
 
 /** All CSV paths (including chunk exports) that share one logical table basename. */

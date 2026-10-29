@@ -12,6 +12,15 @@ describe('csvSchemaValidation', () => {
     expect(csvTableMatchWarnings(['orders.csv', 'customers.csv'], ['orders', 'customers'])).toEqual([]);
   });
 
+  it('matches hyphenated CSV names to underscored table names from schema import', () => {
+    expect(
+      fatalCsvSchemaMismatch(
+        ['customers-100.csv', 'people-100.csv'],
+        ['customers_100', 'people_100'],
+      ),
+    ).toBeNull();
+  });
+
   it('returns fatal mismatch for unrelated CSV picks', () => {
     expect(fatalCsvSchemaMismatch(['clusters.csv'], ['orders'])).toMatch(/No CSV files match/);
     expect(fatalCsvSchemaMismatch(['orders.csv'], ['orders'])).toBeNull();
