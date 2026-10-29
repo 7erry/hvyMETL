@@ -128,11 +128,12 @@ describe('buildCollectionReplicateScript', () => {
     expect(script).toContain('flushBatchWithRetry');
     expect(script).toContain('bulkWrite(ops, { ordered: false })');
     expect(script).toContain('replaceOne:');
+    expect(script).toContain('replacement: doc');
     expect(script).toContain('upsert: true');
     expect(script).toContain('estimatedDocumentCount()');
-    expect(script).toContain(
-      'sourceColl.find({}, { batchSize: BATCH_SIZE, noCursorTimeout: true })',
-    );
+    // mongosh find(filter, projection): cursor options must be chained, not a 2nd-arg projection
+    expect(script).toContain('sourceColl.find({}).batchSize(BATCH_SIZE).noCursorTimeout()');
+    expect(script).not.toMatch(/sourceColl\.find\(\{\},\s*\{/);
     expect(script).toContain('[Progress]');
     expect(script).toContain('cursor.close()');
   });
