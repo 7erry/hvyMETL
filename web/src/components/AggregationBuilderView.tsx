@@ -64,6 +64,48 @@ const EDITOR_STYLE = {
   outline: 0,
 } as const;
 
+/** Compact glyph for palette / visual-map rows (no icon pack in app). */
+function stageGlyph(kind: StageKind): string {
+  switch (kind) {
+    case 'match':
+      return '⌕';
+    case 'limit':
+      return '↧';
+    case 'skip':
+      return '↥';
+    case 'sample':
+      return '⌁';
+    case 'count':
+      return '#';
+    case 'project':
+      return '▭';
+    case 'addFields':
+      return '+';
+    case 'set':
+      return '=';
+    case 'unset':
+      return '×';
+    case 'sort':
+      return '⇅';
+    case 'unwind':
+      return '⟲';
+    case 'group':
+      return 'Σ';
+    case 'lookup':
+      return '⤴';
+    case 'unionWith':
+      return '⋃';
+    case 'out':
+      return '⇩';
+    case 'merge':
+      return ' intern';
+    default: {
+      const _exhaustive: never = kind;
+      return _exhaustive;
+    }
+  }
+}
+
 function highlightJson(code: string): string {
   return highlightPrismCode(code, 'json');
 }
@@ -675,15 +717,15 @@ export function AggregationBuilderView(): ReactElement {
               {CATEGORY_ORDER.map((category) => {
                 const items = filteredPalette.filter((p) => p.category === category);
                 if (items.length === 0) return null;
+                const title =
+                  category === 'filter'
+                    ? t('aggregation.catFilter')
+                    : category === 'transformation'
+                      ? t('aggregation.catTransform')
+                      : t('aggregation.catJoins');
                 return (
-                  <div key={category} className="agg-palette__section">
-                    <h3>
-                      {category === 'filter'
-                        ? t('aggregation.catFilter')
-                        : category === 'transformation'
-                          ? t('aggregation.catTransform')
-                          : t('aggregation.catJoins')}
-                    </h3>
+                  <details key={category} className="agg-palette__section" open>
+                    <summary className="agg-palette__section-summary">{title}</summary>
                     <ul>
                       {items.map((item) => (
                         <li key={item.kind}>
@@ -692,16 +734,21 @@ export function AggregationBuilderView(): ReactElement {
                             className="agg-palette__item"
                             draggable
                             onDragStart={(e) => onPaletteDragStart(e, item.kind)}
-                            onDoubleClick={() => addStage(item.kind)}
                             onClick={() => addStage(item.kind)}
+                            aria-label={`Add ${item.kind}`}
                           >
-                            <span className="agg-palette__op">{item.mongoOp}</span>
-                            <span>{stageKindLabel(item.kind)}</span>
+                            <span className="agg-palette__icon" aria-hidden="true">
+                              {stageGlyph(item.kind)}
+                            </span>
+                            <span className="agg-palette__name">{item.kind}</span>
+                            <span className="agg-palette__add" aria-hidden="true">
+                              →
+                            </span>
                           </button>
                         </li>
                       ))}
                     </ul>
-                  </div>
+                  </details>
                 );
               })}
             </aside>
@@ -866,50 +913,58 @@ export function AggregationBuilderView(): ReactElement {
         }
         bottom={
           <div className="agg-bottom">
-            <div className="agg-bottom__tabs" role="tablist">
-              {(
-                [
-                  ['results', t('aggregation.tabResults')],
-                  ['preview', t('aggregation.tabPreview')],
-                  ['code', t('aggregation.tabCode')],
-                ] as const
-              ).map(([id, label]) => (
-                <button
-                  key={id}
-                  type="button"
-                  role="tab"
-                  className={bottomTab === id ? 'active' : ''}
-                  onClick={() => setBottomTab(id)}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
-
-            {bottomTab !== 'code' ? (
+            <div className="agg-bottom__tabs">
+              <div className="agg-bottom__tablist" role="tablist">
+                {(
+                  [
+                    ['results', t('aggregation.tabResults')],
+                    ['preview', t('aggregation.tabPreview')],
+                    ['code', t('aggregation.tabCode')],
+                  ] as const
+                ).map(([id, label]) => (
+                  <button
+                    key={id}
+                    type="button"
+                    role="tab"
+                    className={bottomTab === id ? 'active' : ''}
+                    onClick={() => setBottomTab(id)}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
               <div className="agg-stepper" role="navigation" aria-label="Pipeline stages">
                 {stages
                   .filter((s) => s.enabled)
-                  .map((stage) => (
-                    <button
-                      key={stage.id}
-                      type="button"
-                      className={
-                        (previewStageId ?? selectedId) === stage.id
-                          ? 'agg-stepper__item active'
-                          : 'agg-stepper__item'
-                      }
-                      onClick={() => {
-                        setPreviewStageId(stage.id);
-                        setSelectedId(stage.id);
-                        setBottomTab('preview');
-                      }}
-                    >
-                      ${stage.kind}
-                    </button>
+                  .map((stage, index) => (
+                    <span key={stage.id} className="agg-stepper__pair">
+                      {index > 0 ? (
+                        <span className="agg-stepper__sep" aria-hidden="true">
+                          ›
+                        </span>
+                      ) : null}
+                      <button
+                        type="button"
+                        className={
+                          (previewStageId ?? selectedId) === stage.id
+                            ? 'agg-stepper__item active'
+                            : 'agg-stepper__item'
+                        }
+                        onClick={() => {
+                          setPreviewStageId(stage.id);
+                          setSelectedId(stage.id);
+                          setBottomTab('preview');
+                        }}
+                      >
+                        <span className="agg-stepper__icon" aria-hidden="true">
+                          {stageGlyph(stage.kind)}
+                        </span>
+                        ${stage.kind}
+                      </button>
+                    </span>
                   ))}
               </div>
-            ) : null}
+            </div>
 
             <div className="agg-bottom__body">
               {bottomTab === 'code' ? (
