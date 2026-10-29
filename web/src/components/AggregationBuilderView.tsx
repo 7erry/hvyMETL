@@ -382,9 +382,53 @@ export function AggregationBuilderView(): ReactElement {
     refreshConnections();
   }, [refreshConnections]);
 
+  const databaseRef = useRef(database);
+  databaseRef.current = database;
+
+  /** Fetch collection names via the same mongosh helpers Shell replicate uses. */
+  const fetchCollectionNames = useCallback(
+    async (uri: string, sourceDbName: string): Promise<{ names: string[]; stdout: string }> => {
+      const dbName = sourceDbName.trim();
+      if (!dbName) return { names: [], stdout: '' };
+      const next = await runMongoshScript({
+        uri,
+        script: mongoShellListCollectionsScript(dbName),
+        dbName,
+      });
+      if (!next.ok) {
+        throw new Error(
+          next.stderr.trim() ||
+            next.stdout.trim() ||
+            `Could not list collections in "${dbName}".`,
+        );
+      }
+      return {
+        names: collectionNamesFromShellOutput(next.stdout),
+        stdout: next.stdout,
+      };
+    },
+    [],
+  );
+
+  const applyCollectionNames = useCallback((dbName: string, names: string[], stdout: string): void => {
+    setCollections(names);
+    setCollection((prev) => (prev && names.includes(prev) ? prev : (names[0] ?? '')));
+    if (names.length === 0) {
+      const preview = stdout.trim().slice(0, 240);
+      setRunError(
+        preview
+          ? `No collections parsed for "${dbName}". mongosh said: ${preview}`
+          : `No collections found in database "${dbName}".`,
+      );
+      return;
+    }
+    setRunError(null);
+  }, []);
+
+  const selectedUri = selectedConnection?.uri.trim() ?? '';
+
   useEffect(() => {
-    const conn = connections.find((c) => c.id === connectionId);
-    if (!conn?.uri.trim()) {
+    if (!selectedUri) {
       setDatabases([]);
       setCollections([]);
       setDatabase('');
@@ -396,7 +440,7 @@ export function AggregationBuilderView(): ReactElement {
     void (async () => {
       try {
         const dbResult = await runMongoshScript({
-          uri: conn.uri,
+          uri: selectedUri,
           script: MONGO_SHELL_LIST_DATABASES_SCRIPT,
         });
         if (cancelled) return;
@@ -407,61 +451,41 @@ export function AggregationBuilderView(): ReactElement {
               'Could not list databases from this connection.',
           );
           setDatabases([]);
-          return;
-        }
-        const names = databaseNamesFromShellOutput(dbResult.stdout);
-        setDatabases(names);
-        const preferred =
-          databaseFromMongoUri(conn.uri) ||
-          names[0] ||
-          '';
-        setDatabase((prev) => (prev && names.includes(prev) ? prev : preferred));
-        setRunError(null);
-      } catch (err) {
-        if (!cancelled) setRunError(describeApiError(err));
-      } finally {
-        if (!cancelled) setCatalogLoading(false);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [connectionId, connections]);
-
-  useEffect(() => {
-    const conn = connections.find((c) => c.id === connectionId);
-    const dbName = database.trim();
-    if (!conn?.uri.trim() || !dbName) {
-      setCollections([]);
-      setCollection('');
-      return;
-    }
-    let cancelled = false;
-    setCatalogLoading(true);
-    void (async () => {
-      try {
-        const next = await runMongoshScript({
-          uri: conn.uri,
-          script: mongoShellListCollectionsScript(dbName),
-          dbName,
-        });
-        if (cancelled) return;
-        if (!next.ok) {
-          setRunError(
-            next.stderr.trim() ||
-              next.stdout.trim() ||
-              `Could not list collections in "${dbName}".`,
-          );
           setCollections([]);
           setCollection('');
           return;
         }
-        const names = collectionNamesFromShellOutput(next.stdout);
-        setCollections(names);
-        setCollection((prev) => (prev && names.includes(prev) ? prev : (names[0] ?? '')));
-        setRunError(null);
+        const dbNames = databaseNamesFromShellOutput(dbResult.stdout);
+        setDatabases(dbNames);
+        if (dbNames.length === 0) {
+          setCollections([]);
+          setCollection('');
+          setDatabase('');
+          setRunError(
+            dbResult.stdout.trim()
+              ? 'Could not parse database names from mongosh output.'
+              : 'No databases found on this connection.',
+          );
+          return;
+        }
+        const uriDb = databaseFromMongoUri(selectedUri) || '';
+        const prev = databaseRef.current.trim();
+        const nextDb =
+          prev && dbNames.includes(prev)
+            ? prev
+            : uriDb && dbNames.includes(uriDb)
+              ? uriDb
+              : dbNames[0]!;
+        setDatabase(nextDb);
+        const { names, stdout } = await fetchCollectionNames(selectedUri, nextDb);
+        if (cancelled) return;
+        applyCollectionNames(nextDb, names, stdout);
       } catch (err) {
-        if (!cancelled) setRunError(describeApiError(err));
+        if (!cancelled) {
+          setRunError(describeApiError(err));
+          setCollections([]);
+          setCollection('');
+        }
       } finally {
         if (!cancelled) setCatalogLoading(false);
       }
@@ -469,7 +493,31 @@ export function AggregationBuilderView(): ReactElement {
     return () => {
       cancelled = true;
     };
-  }, [connectionId, connections, database]);
+  }, [applyCollectionNames, connectionId, fetchCollectionNames, selectedUri]);
+
+  const onDatabaseChange = useCallback(
+    (nextDb: string): void => {
+      setDatabase(nextDb);
+      setCollections([]);
+      setCollection('');
+      if (!selectedUri || !nextDb.trim()) return;
+      setCatalogLoading(true);
+      setRunError(null);
+      void (async () => {
+        try {
+          const { names, stdout } = await fetchCollectionNames(selectedUri, nextDb);
+          applyCollectionNames(nextDb, names, stdout);
+        } catch (err) {
+          setRunError(describeApiError(err));
+          setCollections([]);
+          setCollection('');
+        } finally {
+          setCatalogLoading(false);
+        }
+      })();
+    },
+    [applyCollectionNames, fetchCollectionNames, selectedUri],
+  );
 
   const addStage = useCallback(
     (kind: StageKind) => {
@@ -654,7 +702,7 @@ export function AggregationBuilderView(): ReactElement {
               value={database}
               aria-label={t('aggregation.database')}
               disabled={!selectedConnection || catalogLoading || databases.length === 0}
-              onChange={(e) => setDatabase(e.target.value)}
+              onChange={(e) => onDatabaseChange(e.target.value)}
             >
               {databases.length === 0 ? (
                 <option value="">{catalogLoading ? '…' : t('aggregation.noDatabases')}</option>
