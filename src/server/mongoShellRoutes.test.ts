@@ -1,4 +1,5 @@
 import { EventEmitter } from 'node:events';
+import { readFileSync } from 'node:fs';
 import express from 'express';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createMongoShellRouter } from './mongoShellRoutes.js';
@@ -146,5 +147,32 @@ describe('mongoShellRoutes', () => {
     });
     expect(result.ok).toBe(true);
     expect(result.stdout).toContain('hi');
+  });
+
+  it('switches database via getSiblingDB instead of a mongosh positional filename', async () => {
+    let capturedArgs: readonly string[] = [];
+    let scriptBody = '';
+    const result = await runner.runMongoshScript({
+      uri: 'mongodb://localhost:27017',
+      dbName: 'farmengage_poc',
+      script: 'print("hi")',
+      binaryPath: 'mongosh',
+      spawnFn: ((command, args, options) => {
+        capturedArgs = args;
+        const fileFlag = args.indexOf('--file');
+        scriptBody = readFileSync(String(args[fileFlag + 1]), 'utf8');
+        return fakeSpawnSuccess('hi\n')(command, args, options);
+      }) satisfies MongoshSpawnFn,
+    });
+    expect(result.ok).toBe(true);
+    expect(capturedArgs).toEqual([
+      'mongodb://localhost:27017',
+      '--quiet',
+      '--file',
+      expect.stringMatching(/hvymetl-mongosh-.*\.js$/),
+    ]);
+    expect(capturedArgs).not.toContain('farmengage_poc');
+    expect(scriptBody).toContain('getSiblingDB("farmengage_poc")');
+    expect(scriptBody).toContain('print("hi")');
   });
 });

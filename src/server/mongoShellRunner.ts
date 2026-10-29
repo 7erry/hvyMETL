@@ -158,13 +158,17 @@ export async function runMongoshScript(input: MongoshRunInput): Promise<MongoshR
   }
 
   const filePath = join(tmpdir(), `hvymetl-mongosh-${randomUUID()}.js`);
-  // --file is JS-only; expand `show collections` / `use db` etc. first
-  await writeFile(filePath, expandMongoshShellHelpers(script, input.findLimit), 'utf8');
-
-  const args = [uri];
+  // --file is JS-only; expand `show collections` / `use db` etc. first.
+  // Never pass dbName as a mongosh positional — mongosh treats bare positionals as
+  // filenames (ENOENT under the server cwd, e.g. .../hvymetl/<dbname>).
   const dbName = input.dbName?.trim();
-  if (dbName) args.push(dbName);
-  args.push('--quiet', '--file', filePath);
+  const expanded = expandMongoshShellHelpers(script, input.findLimit);
+  const scriptBody = dbName
+    ? `db = db.getSiblingDB(${JSON.stringify(dbName)});\n${expanded}`
+    : expanded;
+  await writeFile(filePath, scriptBody, 'utf8');
+
+  const args = [uri, '--quiet', '--file', filePath];
 
   try {
     return await new Promise<MongoshRunResult>((resolve) => {
