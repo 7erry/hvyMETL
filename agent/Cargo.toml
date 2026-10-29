@@ -14,14 +14,15 @@ path = "src/main.rs"
 chrono = { version = "0.4", default-features = false, features = ["clock", "std"] }
 futures-util = "0.3"
 mongodb = { version = "3.9.1", features = ["sync"] }
-mysql_async = "0.34"
+# rustls (not OpenSSL) so Linux/Windows agents can zig-cross-compile from macOS
+mysql_async = { version = "0.34", default-features = false, features = ["default-rustls"] }
 rusqlite = { version = "0.32", features = ["bundled"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 tiberius = { version = "0.12", default-features = false, features = ["chrono", "rustls", "tds73"] }
 tokio = { version = "1", features = ["rt-multi-thread", "macros", "net", "time", "sync"] }
 tokio-postgres = "0.7"
-tokio-tungstenite = { version = "0.26", features = ["native-tls"] }
+tokio-tungstenite = { version = "0.26", features = ["rustls-tls-native-roots"] }
 tokio-util = { version = "0.7", features = ["compat"] }
 url = "2"
 ureq = { version = "2.12.1", features = ["json", "native-certs"] }
