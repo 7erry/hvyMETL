@@ -7,6 +7,7 @@ export type MessageKey =
   | 'nav.schema'
   | 'nav.sizing'
   | 'nav.shell'
+  | 'nav.aggregation'
   | 'nav.copilot'
   | 'nav.roles'
   | 'nav.settings'
@@ -76,6 +77,26 @@ export type MessageKey =
   | 'pipeline.csv'
   | 'manager.title'
   | 'shell.title'
+  | 'aggregation.title'
+  | 'aggregation.stages'
+  | 'aggregation.pipeline'
+  | 'aggregation.stageCount'
+  | 'aggregation.searchStages'
+  | 'aggregation.catFilter'
+  | 'aggregation.catTransform'
+  | 'aggregation.catJoins'
+  | 'aggregation.addHint'
+  | 'aggregation.form'
+  | 'aggregation.json'
+  | 'aggregation.jsonOnlyHint'
+  | 'aggregation.selectStage'
+  | 'aggregation.tabResults'
+  | 'aggregation.tabPreview'
+  | 'aggregation.tabCode'
+  | 'aggregation.input'
+  | 'aggregation.output'
+  | 'aggregation.run'
+  | 'aggregation.runHint'
   | 'copilot.title'
   | 'copilot.open'
   | 'status.ready'
@@ -199,6 +220,7 @@ const en: MessageCatalog = {
   'nav.schema': 'Schema',
   'nav.sizing': 'Sizing',
   'nav.shell': 'Shell',
+  'nav.aggregation': 'Aggregate',
   'nav.copilot': 'Copilot',
   'nav.roles': 'Roles',
   'nav.settings': 'Settings',
@@ -275,6 +297,26 @@ const en: MessageCatalog = {
   'pipeline.csv': 'CSV source',
   'manager.title': 'Manager',
   'shell.title': 'MongoDB Shell',
+  'aggregation.title': 'Aggregation',
+  'aggregation.stages': 'Pipeline Stages',
+  'aggregation.pipeline': 'Aggregation Pipeline',
+  'aggregation.stageCount': 'stages',
+  'aggregation.searchStages': 'Search stages…',
+  'aggregation.catFilter': 'Filter',
+  'aggregation.catTransform': 'Transformation',
+  'aggregation.catJoins': 'Joins',
+  'aggregation.addHint': '+ Click, dbl-click, or drop additional stages.',
+  'aggregation.form': 'Form',
+  'aggregation.json': 'Json',
+  'aggregation.jsonOnlyHint': 'This stage is edited as JSON.',
+  'aggregation.selectStage': 'Select a stage to inspect.',
+  'aggregation.tabResults': 'Aggregation Results',
+  'aggregation.tabPreview': 'Aggregation Preview',
+  'aggregation.tabCode': 'Query Code',
+  'aggregation.input': 'Input',
+  'aggregation.output': 'Output',
+  'aggregation.run': 'Run',
+  'aggregation.runHint': 'Run to compile the pipeline against sample documents.',
   'copilot.title': 'Copilot',
   'copilot.open': 'Open Copilot',
   'status.ready': 'Ready',
@@ -409,9 +451,30 @@ const pt: MessageCatalog = {
   'nav.schema': 'Esquema',
   'nav.sizing': 'Dimensionamento',
   'nav.shell': 'Shell',
+  'nav.aggregation': 'Agregar',
   'nav.copilot': 'Copiloto',
   'nav.roles': 'Funções',
   'nav.settings': 'Configurações',
+  'aggregation.title': 'Agregação',
+  'aggregation.stages': 'Estágios do pipeline',
+  'aggregation.pipeline': 'Pipeline de agregação',
+  'aggregation.stageCount': 'estágios',
+  'aggregation.searchStages': 'Buscar estágios…',
+  'aggregation.catFilter': 'Filtro',
+  'aggregation.catTransform': 'Transformação',
+  'aggregation.catJoins': 'Joins',
+  'aggregation.addHint': '+ Clique, dê duplo clique ou solte estágios.',
+  'aggregation.form': 'Formulário',
+  'aggregation.json': 'Json',
+  'aggregation.jsonOnlyHint': 'Este estágio é editado como JSON.',
+  'aggregation.selectStage': 'Selecione um estágio para inspecionar.',
+  'aggregation.tabResults': 'Resultados da agregação',
+  'aggregation.tabPreview': 'Prévia da agregação',
+  'aggregation.tabCode': 'Código da consulta',
+  'aggregation.input': 'Entrada',
+  'aggregation.output': 'Saída',
+  'aggregation.run': 'Executar',
+  'aggregation.runHint': 'Execute para compilar o pipeline nos documentos de exemplo.',
   'language.label': 'Idioma',
   'common.cancel': 'Cancelar',
   'common.close': 'Fechar',
@@ -616,9 +679,30 @@ const es: MessageCatalog = {
   'nav.schema': 'Esquema',
   'nav.sizing': 'Dimensionamiento',
   'nav.shell': 'Shell',
+  'nav.aggregation': 'Agregar',
   'nav.copilot': 'Copiloto',
   'nav.roles': 'Roles',
   'nav.settings': 'Configuración',
+  'aggregation.title': 'Agregación',
+  'aggregation.stages': 'Etapas del pipeline',
+  'aggregation.pipeline': 'Pipeline de agregación',
+  'aggregation.stageCount': 'etapas',
+  'aggregation.searchStages': 'Buscar etapas…',
+  'aggregation.catFilter': 'Filtro',
+  'aggregation.catTransform': 'Transformación',
+  'aggregation.catJoins': 'Joins',
+  'aggregation.addHint': '+ Clic, doble clic o suelte etapas.',
+  'aggregation.form': 'Formulario',
+  'aggregation.json': 'Json',
+  'aggregation.jsonOnlyHint': 'Esta etapa se edita como JSON.',
+  'aggregation.selectStage': 'Seleccione una etapa para inspeccionar.',
+  'aggregation.tabResults': 'Resultados de agregación',
+  'aggregation.tabPreview': 'Vista previa de agregación',
+  'aggregation.tabCode': 'Código de consulta',
+  'aggregation.input': 'Entrada',
+  'aggregation.output': 'Salida',
+  'aggregation.run': 'Ejecutar',
+  'aggregation.runHint': 'Ejecute para compilar el pipeline con documentos de ejemplo.',
   'language.label': 'Idioma',
   'common.cancel': 'Cancelar',
   'common.close': 'Cerrar',
@@ -823,9 +907,30 @@ const zhCN: MessageCatalog = {
   'nav.schema': '架构',
   'nav.sizing': '容量规划',
   'nav.shell': 'Shell',
+  'nav.aggregation': '聚合',
   'nav.copilot': '助手',
   'nav.roles': '角色',
   'nav.settings': '设置',
+  'aggregation.title': '聚合',
+  'aggregation.stages': '管道阶段',
+  'aggregation.pipeline': '聚合管道',
+  'aggregation.stageCount': '阶段',
+  'aggregation.searchStages': '搜索阶段…',
+  'aggregation.catFilter': '筛选',
+  'aggregation.catTransform': '转换',
+  'aggregation.catJoins': '连接',
+  'aggregation.addHint': '+ 单击、双击或拖放阶段。',
+  'aggregation.form': '表单',
+  'aggregation.json': 'Json',
+  'aggregation.jsonOnlyHint': '此阶段以 JSON 编辑。',
+  'aggregation.selectStage': '选择要检查的阶段。',
+  'aggregation.tabResults': '聚合结果',
+  'aggregation.tabPreview': '聚合预览',
+  'aggregation.tabCode': '查询代码',
+  'aggregation.input': '输入',
+  'aggregation.output': '输出',
+  'aggregation.run': '运行',
+  'aggregation.runHint': '运行以在示例文档上编译管道。',
   'language.label': '语言',
   'common.cancel': '取消',
   'common.close': '关闭',
@@ -1016,9 +1121,30 @@ const hi: MessageCatalog = {
   'nav.schema': 'स्कीमा',
   'nav.sizing': 'साइज़िंग',
   'nav.shell': 'शेल',
+  'nav.aggregation': 'एग्रीगेट',
   'nav.copilot': 'कोपायलट',
   'nav.roles': 'भूमिकाएँ',
   'nav.settings': 'सेटिंग्स',
+  'aggregation.title': 'एग्रीगेशन',
+  'aggregation.stages': 'पाइपलाइन स्टेज',
+  'aggregation.pipeline': 'एग्रीगेशन पाइपलाइन',
+  'aggregation.stageCount': 'स्टेज',
+  'aggregation.searchStages': 'स्टेज खोजें…',
+  'aggregation.catFilter': 'फ़िल्टर',
+  'aggregation.catTransform': 'रूपांतरण',
+  'aggregation.catJoins': 'जॉइन',
+  'aggregation.addHint': '+ क्लिक, डबल-क्लिक, या स्टेज छोड़ें।',
+  'aggregation.form': 'फ़ॉर्म',
+  'aggregation.json': 'Json',
+  'aggregation.jsonOnlyHint': 'यह स्टेज JSON के रूप में संपादित होता है।',
+  'aggregation.selectStage': 'निरीक्षण के लिए एक स्टेज चुनें।',
+  'aggregation.tabResults': 'एग्रीगेशन परिणाम',
+  'aggregation.tabPreview': 'एग्रीगेशन पूर्वावलोकन',
+  'aggregation.tabCode': 'क्वेरी कोड',
+  'aggregation.input': 'इनपुट',
+  'aggregation.output': 'आउटपुट',
+  'aggregation.run': 'चलाएँ',
+  'aggregation.runHint': 'नमूना दस्तावेज़ों पर पाइपलाइन संकलित करने के लिए चलाएँ।',
   'language.label': 'भाषा',
   'common.cancel': 'रद्द करें',
   'common.close': 'बंद करें',

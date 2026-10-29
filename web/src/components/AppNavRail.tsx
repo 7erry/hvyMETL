@@ -8,6 +8,7 @@ export type AppNavId =
   | 'database'
   | 'sizing'
   | 'shell'
+  | 'aggregation'
   | 'copilot'
   | 'roles'
   | 'settings';
@@ -17,6 +18,7 @@ type AppNavRailProps = {
   onSelect: (id: AppNavId) => void;
   copilotAvailable?: boolean;
   shellAvailable?: boolean;
+  aggregationAvailable?: boolean;
   rolesAvailable?: boolean;
 };
 
@@ -68,6 +70,23 @@ function IconShell(): ReactElement {
         strokeWidth="1.5"
         strokeLinecap="round"
         strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function IconAggregation(): ReactElement {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <rect x="4" y="4" width="16" height="3.5" rx="1" fill="none" stroke="currentColor" strokeWidth="1.5" />
+      <rect x="4" y="10.25" width="16" height="3.5" rx="1" fill="none" stroke="currentColor" strokeWidth="1.5" />
+      <rect x="4" y="16.5" width="16" height="3.5" rx="1" fill="none" stroke="currentColor" strokeWidth="1.5" />
+      <path
+        d="M8 7.5v2.75M12 13.75v2.75"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
       />
     </svg>
   );
@@ -129,6 +148,7 @@ const PRIMARY_ITEMS: { id: AppNavId; labelKey: MessageKey; icon: ReactNode }[] =
   { id: 'schema', labelKey: 'nav.schema', icon: <IconSchema /> },
   { id: 'sizing', labelKey: 'nav.sizing', icon: <IconSizing /> },
   { id: 'shell', labelKey: 'nav.shell', icon: <IconShell /> },
+  { id: 'aggregation', labelKey: 'nav.aggregation', icon: <IconAggregation /> },
   { id: 'copilot', labelKey: 'nav.copilot', icon: <IconCopilot /> },
   { id: 'roles', labelKey: 'nav.roles', icon: <IconRoles /> },
 ];
@@ -164,6 +184,7 @@ export function AppNavRail({
   onSelect,
   copilotAvailable = true,
   shellAvailable = true,
+  aggregationAvailable = true,
   rolesAvailable = true,
 }: AppNavRailProps): ReactElement {
   const t = useT();
@@ -179,6 +200,7 @@ export function AppNavRail({
             disabled={
               (item.id === 'copilot' && !copilotAvailable) ||
               (item.id === 'shell' && !shellAvailable) ||
+              (item.id === 'aggregation' && !aggregationAvailable) ||
               (item.id === 'roles' && !rolesAvailable)
             }
             onSelect={onSelect}

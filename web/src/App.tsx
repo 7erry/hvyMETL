@@ -50,6 +50,7 @@ import { FALLBACK_DIALECTS } from './dialectConstants';
 import { getDialectLabel, inferSchemaDialect } from '../../src/dialects.ts';
 import { csvFilesToCreateTableDdl } from '../../src/utilities/csvToDdl.js';
 import { AppNavRail, type AppNavId } from './components/AppNavRail';
+import { AggregationBuilderView } from './components/AggregationBuilderView';
 import { MongoShellView } from './components/MongoShellView';
 import { useAccess } from './auth/HostedAuthProvider';
 import { useT } from './i18n/LocaleContext';
@@ -125,6 +126,7 @@ type StudioNavRailProps = {
   onSelect: (id: AppNavId) => void;
   copilotAvailable: boolean;
   shellAvailable: boolean;
+  aggregationAvailable: boolean;
   rolesAvailable: boolean;
 };
 
@@ -133,6 +135,7 @@ function StudioNavRail({
   onSelect,
   copilotAvailable,
   shellAvailable,
+  aggregationAvailable,
   rolesAvailable,
 }: StudioNavRailProps) {
   const copilot = useCopilot();
@@ -142,6 +145,7 @@ function StudioNavRail({
       active={resolvedActive}
       copilotAvailable={copilotAvailable}
       shellAvailable={shellAvailable}
+      aggregationAvailable={aggregationAvailable}
       rolesAvailable={rolesAvailable}
       onSelect={(id) => {
         if (id === 'copilot') {
@@ -280,9 +284,12 @@ export default function App() {
   const [schemaImportPanelOpen, setSchemaImportPanelOpen] = useState(() => !model);
   const [sizingCostPanelOpen, setSizingCostPanelOpen] = useState(() => Boolean(model));
   const [haPanelOpen, setHaPanelOpen] = useState(() => Boolean(model));
-  const [activeNav, setActiveNav] = useState<AppNavId>(() =>
-    loadSessionState().view === 'shell' ? 'shell' : 'schema',
-  );
+  const [activeNav, setActiveNav] = useState<AppNavId>(() => {
+    const initial = loadSessionState().view;
+    if (initial === 'shell') return 'shell';
+    if (initial === 'aggregation') return 'aggregation';
+    return 'schema';
+  });
 
   const profileFields = useMemo(
     () => profileRequestBody(profileId, customProfile),
@@ -349,6 +356,9 @@ export default function App() {
         case 'shell':
           setSessionField('view', 'shell');
           break;
+        case 'aggregation':
+          setSessionField('view', 'aggregation');
+          break;
         case 'copilot':
           break;
         case 'roles':
@@ -372,10 +382,11 @@ export default function App() {
 
   useEffect(() => {
     if (view === 'shell') setActiveNav('shell');
+    if (view === 'aggregation') setActiveNav('aggregation');
   }, [view]);
 
   useEffect(() => {
-    if (uiRole === 'manager' && view === 'shell') {
+    if (uiRole === 'manager' && (view === 'shell' || view === 'aggregation')) {
       setSessionField('view', 'diagram');
       setActiveNav('schema');
     }
@@ -1603,11 +1614,14 @@ export default function App() {
         onSelect={handleNavSelect}
         copilotAvailable={uiRole === 'developer'}
         shellAvailable={uiRole === 'developer'}
+        aggregationAvailable={uiRole === 'developer'}
         rolesAvailable={access.canSwitchUiRole}
       />
       <div className="app-body">
         {view === 'shell' && uiRole === 'developer' ? (
           <MongoShellView />
+        ) : view === 'aggregation' && uiRole === 'developer' ? (
+          <AggregationBuilderView />
         ) : view === 'diagram' ? (
           uiRole === 'manager' ? (
             <ManagerView

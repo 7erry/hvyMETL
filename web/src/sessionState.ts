@@ -74,7 +74,7 @@ export type MigrationArtifacts = {
   };
 };
 
-export type AppView = 'diagram' | 'migration' | 'shell';
+export type AppView = 'diagram' | 'migration' | 'shell' | 'aggregation';
 
 export type SchemaPhase = 'before' | 'after';
 
@@ -187,7 +187,10 @@ export function loadSessionState(userId?: string): SessionState {
       parseDiagramViewMode(rest.diagramViewMode) ?? diagramViewModeFromSchemaPhase(phase);
     const diagramViewMode = reconcileDiagramViewWithSchemaPhase(phase, rawDiagramViewMode);
     const view: AppView =
-      rest.view === 'migration' || rest.view === 'shell' || rest.view === 'diagram'
+      rest.view === 'migration' ||
+      rest.view === 'shell' ||
+      rest.view === 'aggregation' ||
+      rest.view === 'diagram'
         ? rest.view
         : 'diagram';
     return {
