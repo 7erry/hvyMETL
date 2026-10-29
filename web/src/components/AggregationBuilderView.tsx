@@ -2,6 +2,7 @@ import {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type DragEvent as ReactDragEvent,
   type ReactElement,
@@ -12,8 +13,11 @@ import {
   formatPipelineAsCode,
   stageKindLabel,
 } from '../aggregation/compilePipeline';
-import { previewPipeline } from '../aggregation/mockPreview';
-import { SAMPLE_COLLECTION, SAMPLE_DOCS } from '../aggregation/seedDocs';
+import {
+  buildAggregateScript,
+  stagesBefore,
+  stagesThrough,
+} from '../aggregation/liveAggregate';
 import {
   createStage,
   newId,
@@ -25,7 +29,22 @@ import {
   type StageCategory,
   type StageKind,
 } from '../aggregation/types';
+import { describeApiError, runMongoshScript } from '../api';
 import { useT } from '../i18n/LocaleContext';
+import {
+  MONGO_SHELL_LIST_DATABASES_SCRIPT,
+  mongoShellListCollectionsScript,
+} from '../mongoShellCompletions';
+import {
+  databaseFromMongoUri,
+  listMongoShellConnections,
+  type MongoShellConnection,
+} from '../mongoShellConnections';
+import {
+  collectionNamesFromShellOutput,
+  databaseNamesFromShellOutput,
+} from '../mongoShellReplicate';
+import { resolveShellResultDocuments } from '../mongoShellResultModel';
 import { highlightPrismCode } from '../prismHighlight';
 import { MongoShellResultTree } from './MongoShellResultTree';
 import { ResizableVerticalSplit } from './ResizableVerticalSplit';
@@ -242,34 +261,173 @@ function DocsTable({ docs }: { docs: Record<string, unknown>[] }): ReactElement 
   );
 }
 
+async function runAggregateDocs(input: {
+  uri: string;
+  database: string;
+  collection: string;
+  stages: PipelineStage[];
+}): Promise<{ ok: true; docs: Record<string, unknown>[] } | { ok: false; error: string }> {
+  const compiled = compilePipeline(input.stages);
+  if (!compiled.ok) return { ok: false, error: compiled.error };
+  let script: string;
+  try {
+    script = buildAggregateScript(input.database, input.collection, compiled.pipeline);
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : String(err) };
+  }
+  try {
+    const next = await runMongoshScript({
+      uri: input.uri,
+      script,
+      dbName: input.database.trim(),
+    });
+    if (!next.ok) {
+      return {
+        ok: false,
+        error: next.timedOut
+          ? 'mongosh timed out after 30s.'
+          : next.stderr.trim() || next.stdout.trim() || `mongosh exited with code ${next.exitCode ?? '?'}`,
+      };
+    }
+    const docs = resolveShellResultDocuments(next.stdout, true) ?? [];
+    return { ok: true, docs };
+  } catch (err) {
+    return { ok: false, error: describeApiError(err) };
+  }
+}
+
 export function AggregationBuilderView(): ReactElement {
   const t = useT();
+  const [connections, setConnections] = useState<MongoShellConnection[]>(() =>
+    listMongoShellConnections(),
+  );
+  const [connectionId, setConnectionId] = useState(() => listMongoShellConnections()[0]?.id ?? '');
+  const [databases, setDatabases] = useState<string[]>([]);
+  const [collections, setCollections] = useState<string[]>([]);
+  const [database, setDatabase] = useState('');
+  const [collection, setCollection] = useState('');
+  const [catalogLoading, setCatalogLoading] = useState(false);
   const [stages, setStages] = useState<PipelineStage[]>(() => [createStage('match')]);
   const [selectedId, setSelectedId] = useState<string | null>(() => stages[0]?.id ?? null);
   const [paletteQuery, setPaletteQuery] = useState('');
-  const [bottomTab, setBottomTab] = useState<BottomTab>('preview');
+  const [bottomTab, setBottomTab] = useState<BottomTab>('results');
   const [bottomHeight, setBottomHeight] = useState(280);
   const [previewStageId, setPreviewStageId] = useState<string | null>(null);
   const [runDocs, setRunDocs] = useState<Record<string, unknown>[] | null>(null);
   const [runError, setRunError] = useState<string | null>(null);
+  const [running, setRunning] = useState(false);
+  const [previewInput, setPreviewInput] = useState<Record<string, unknown>[]>([]);
+  const [previewOutput, setPreviewOutput] = useState<Record<string, unknown>[]>([]);
+  const [previewError, setPreviewError] = useState<string | null>(null);
+  const [previewLoading, setPreviewLoading] = useState(false);
+  const previewGen = useRef(0);
 
   const selected = stages.find((s) => s.id === selectedId) ?? null;
+  const selectedConnection = connections.find((c) => c.id === connectionId) ?? null;
+  const canRun = Boolean(
+    selectedConnection?.uri.trim() && database.trim() && collection.trim(),
+  );
 
   const compiled = useMemo(() => compilePipeline(stages), [stages]);
-  const preview = useMemo(() => {
-    const through = previewStageId ?? selectedId;
-    return previewPipeline(stages, SAMPLE_DOCS, through);
-  }, [stages, previewStageId, selectedId]);
 
-  const activePreviewStep = useMemo(() => {
-    if (!preview.ok || preview.steps.length === 0) {
-      return { input: SAMPLE_DOCS, output: SAMPLE_DOCS, op: '(seed)' };
+  const refreshConnections = useCallback(() => {
+    const next = listMongoShellConnections();
+    setConnections(next);
+    setConnectionId((prev) => (next.some((c) => c.id === prev) ? prev : (next[0]?.id ?? '')));
+  }, []);
+
+  useEffect(() => {
+    refreshConnections();
+  }, [refreshConnections]);
+
+  useEffect(() => {
+    const conn = connections.find((c) => c.id === connectionId);
+    if (!conn?.uri.trim()) {
+      setDatabases([]);
+      setCollections([]);
+      setDatabase('');
+      setCollection('');
+      return;
     }
-    const through = previewStageId ?? selectedId;
-    const step =
-      preview.steps.find((s) => s.stageId === through) ?? preview.steps[preview.steps.length - 1];
-    return step;
-  }, [preview, previewStageId, selectedId]);
+    let cancelled = false;
+    setCatalogLoading(true);
+    void (async () => {
+      try {
+        const dbResult = await runMongoshScript({
+          uri: conn.uri,
+          script: MONGO_SHELL_LIST_DATABASES_SCRIPT,
+        });
+        if (cancelled) return;
+        if (!dbResult.ok) {
+          setRunError(
+            dbResult.stderr.trim() ||
+              dbResult.stdout.trim() ||
+              'Could not list databases from this connection.',
+          );
+          setDatabases([]);
+          return;
+        }
+        const names = databaseNamesFromShellOutput(dbResult.stdout);
+        setDatabases(names);
+        const preferred =
+          databaseFromMongoUri(conn.uri) ||
+          names[0] ||
+          '';
+        setDatabase((prev) => (prev && names.includes(prev) ? prev : preferred));
+        setRunError(null);
+      } catch (err) {
+        if (!cancelled) setRunError(describeApiError(err));
+      } finally {
+        if (!cancelled) setCatalogLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [connectionId, connections]);
+
+  useEffect(() => {
+    const conn = connections.find((c) => c.id === connectionId);
+    const dbName = database.trim();
+    if (!conn?.uri.trim() || !dbName) {
+      setCollections([]);
+      setCollection('');
+      return;
+    }
+    let cancelled = false;
+    setCatalogLoading(true);
+    void (async () => {
+      try {
+        const next = await runMongoshScript({
+          uri: conn.uri,
+          script: mongoShellListCollectionsScript(dbName),
+          dbName,
+        });
+        if (cancelled) return;
+        if (!next.ok) {
+          setRunError(
+            next.stderr.trim() ||
+              next.stdout.trim() ||
+              `Could not list collections in "${dbName}".`,
+          );
+          setCollections([]);
+          setCollection('');
+          return;
+        }
+        const names = collectionNamesFromShellOutput(next.stdout);
+        setCollections(names);
+        setCollection((prev) => (prev && names.includes(prev) ? prev : (names[0] ?? '')));
+        setRunError(null);
+      } catch (err) {
+        if (!cancelled) setRunError(describeApiError(err));
+      } finally {
+        if (!cancelled) setCatalogLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [connectionId, connections, database]);
 
   const addStage = useCallback(
     (kind: StageKind) => {
@@ -317,29 +475,99 @@ export function AggregationBuilderView(): ReactElement {
     if (kind) addStage(kind);
   };
 
-  const runMock = useCallback(() => {
-    const result = previewPipeline(stages, SAMPLE_DOCS, null);
-    if (!result.ok) {
-      setRunError(result.error);
+  const runLive = useCallback(async () => {
+    if (!selectedConnection?.uri.trim() || !database.trim() || !collection.trim()) {
+      setRunError(t('aggregation.selectTarget'));
       setRunDocs(null);
       setBottomTab('results');
       return;
     }
+    setRunning(true);
     setRunError(null);
-    setRunDocs(result.final);
+    const result = await runAggregateDocs({
+      uri: selectedConnection.uri,
+      database,
+      collection,
+      stages,
+    });
+    setRunning(false);
     setBottomTab('results');
-  }, [stages]);
+    if (!result.ok) {
+      setRunError(result.error);
+      setRunDocs(null);
+      return;
+    }
+    setRunDocs(result.docs);
+  }, [collection, database, selectedConnection, stages, t]);
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
       if (event.key === 'F5') {
         event.preventDefault();
-        runMock();
+        void runLive();
       }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [runMock]);
+  }, [runLive]);
+
+  // Live stage preview: aggregate through N−1 (input) and through N (output).
+  useEffect(() => {
+    if (bottomTab !== 'preview') return;
+    if (!selectedConnection?.uri.trim() || !database.trim() || !collection.trim()) {
+      setPreviewInput([]);
+      setPreviewOutput([]);
+      setPreviewError(t('aggregation.selectTarget'));
+      setPreviewLoading(false);
+      return;
+    }
+    const through = previewStageId ?? selectedId;
+    const gen = ++previewGen.current;
+    setPreviewLoading(true);
+    setPreviewError(null);
+    void (async () => {
+      const inputResult = await runAggregateDocs({
+        uri: selectedConnection.uri,
+        database,
+        collection,
+        stages: stagesBefore(stages, through),
+      });
+      if (gen !== previewGen.current) return;
+      if (!inputResult.ok) {
+        setPreviewError(inputResult.error);
+        setPreviewInput([]);
+        setPreviewOutput([]);
+        setPreviewLoading(false);
+        return;
+      }
+      const outputResult = await runAggregateDocs({
+        uri: selectedConnection.uri,
+        database,
+        collection,
+        stages: stagesThrough(stages, through),
+      });
+      if (gen !== previewGen.current) return;
+      if (!outputResult.ok) {
+        setPreviewError(outputResult.error);
+        setPreviewInput(inputResult.docs);
+        setPreviewOutput([]);
+        setPreviewLoading(false);
+        return;
+      }
+      setPreviewInput(inputResult.docs);
+      setPreviewOutput(outputResult.docs);
+      setPreviewLoading(false);
+    })();
+  }, [
+    bottomTab,
+    collection,
+    database,
+    previewStageId,
+    selectedConnection,
+    selectedId,
+    stages,
+    t,
+  ]);
 
   const filteredPalette = useMemo(() => {
     const q = paletteQuery.trim().toLowerCase();
@@ -351,21 +579,80 @@ export function AggregationBuilderView(): ReactElement {
 
   const queryCode = useMemo(() => {
     if (!compiled.ok) return `// ${compiled.error}`;
-    return formatPipelineAsCode(SAMPLE_COLLECTION, compiled.pipeline);
-  }, [compiled]);
+    const coll = collection.trim() || 'collection';
+    return formatPipelineAsCode(coll, compiled.pipeline);
+  }, [collection, compiled]);
 
   return (
     <div className="agg-builder">
       <div className="agg-builder__topbar">
-        <div className="agg-builder__breadcrumb">
-          <span>learningPlatform</span>
-          <span>/</span>
-          <span>{SAMPLE_COLLECTION}</span>
-          <span>/</span>
-          <strong>{t('aggregation.title')}</strong>
+        <div className="agg-builder__target">
+          <label className="agg-builder__field">
+            <span>{t('aggregation.connection')}</span>
+            <select
+              value={connectionId}
+              aria-label={t('aggregation.connection')}
+              onChange={(e) => setConnectionId(e.target.value)}
+              onFocus={refreshConnections}
+            >
+              {connections.length === 0 ? (
+                <option value="">{t('aggregation.noConnections')}</option>
+              ) : (
+                connections.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
+                ))
+              )}
+            </select>
+          </label>
+          <label className="agg-builder__field">
+            <span>{t('aggregation.database')}</span>
+            <select
+              value={database}
+              aria-label={t('aggregation.database')}
+              disabled={!selectedConnection || catalogLoading || databases.length === 0}
+              onChange={(e) => setDatabase(e.target.value)}
+            >
+              {databases.length === 0 ? (
+                <option value="">{catalogLoading ? '…' : t('aggregation.noDatabases')}</option>
+              ) : (
+                databases.map((name) => (
+                  <option key={name} value={name}>
+                    {name}
+                  </option>
+                ))
+              )}
+            </select>
+          </label>
+          <label className="agg-builder__field">
+            <span>{t('aggregation.collection')}</span>
+            <select
+              value={collection}
+              aria-label={t('aggregation.collection')}
+              disabled={!database.trim() || catalogLoading || collections.length === 0}
+              onChange={(e) => setCollection(e.target.value)}
+            >
+              {collections.length === 0 ? (
+                <option value="">{catalogLoading ? '…' : t('aggregation.noCollections')}</option>
+              ) : (
+                collections.map((name) => (
+                  <option key={name} value={name}>
+                    {name}
+                  </option>
+                ))
+              )}
+            </select>
+          </label>
+          <strong className="agg-builder__title">{t('aggregation.title')}</strong>
         </div>
-        <button type="button" className="primary agg-builder__run" onClick={runMock}>
-          {t('aggregation.run')} (F5)
+        <button
+          type="button"
+          className="primary agg-builder__run"
+          disabled={running || !canRun}
+          onClick={() => void runLive()}
+        >
+          {running ? '…' : `${t('aggregation.run')} (F5)`}
         </button>
       </div>
 
@@ -632,23 +919,27 @@ export function AggregationBuilderView(): ReactElement {
                 runError ? (
                   <p className="agg-error">{runError}</p>
                 ) : runDocs ? (
-                  <DocsTable docs={runDocs} />
+                  <MongoShellResultTree documents={runDocs} />
                 ) : (
-                  <p className="agg-empty">{t('aggregation.runHint')}</p>
+                  <p className="agg-empty">
+                    {canRun ? t('aggregation.runHint') : t('aggregation.selectTarget')}
+                  </p>
                 )
               ) : null}
               {bottomTab === 'preview' ? (
-                !preview.ok ? (
-                  <p className="agg-error">{preview.error}</p>
+                previewError ? (
+                  <p className="agg-error">{previewError}</p>
+                ) : previewLoading ? (
+                  <p className="agg-empty">…</p>
                 ) : (
                   <div className="agg-preview-split">
                     <div className="agg-preview-pane">
                       <h3>{t('aggregation.input')}</h3>
-                      <MongoShellResultTree documents={activePreviewStep.input} />
+                      <MongoShellResultTree documents={previewInput} />
                     </div>
                     <div className="agg-preview-pane">
                       <h3>{t('aggregation.output')}</h3>
-                      <DocsTable docs={activePreviewStep.output} />
+                      <DocsTable docs={previewOutput} />
                     </div>
                   </div>
                 )

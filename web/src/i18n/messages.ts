@@ -97,6 +97,13 @@ export type MessageKey =
   | 'aggregation.output'
   | 'aggregation.run'
   | 'aggregation.runHint'
+  | 'aggregation.connection'
+  | 'aggregation.database'
+  | 'aggregation.collection'
+  | 'aggregation.selectTarget'
+  | 'aggregation.noConnections'
+  | 'aggregation.noDatabases'
+  | 'aggregation.noCollections'
   | 'copilot.title'
   | 'copilot.open'
   | 'status.ready'
@@ -316,7 +323,14 @@ const en: MessageCatalog = {
   'aggregation.input': 'Input',
   'aggregation.output': 'Output',
   'aggregation.run': 'Run',
-  'aggregation.runHint': 'Run to compile the pipeline against sample documents.',
+  'aggregation.runHint': 'Run to execute the pipeline against the selected collection.',
+  'aggregation.connection': 'Connection',
+  'aggregation.database': 'Database',
+  'aggregation.collection': 'Collection',
+  'aggregation.selectTarget': 'Select a connection, database, and collection (saved in Shell).',
+  'aggregation.noConnections': 'No saved connections — add one in Shell',
+  'aggregation.noDatabases': 'No databases',
+  'aggregation.noCollections': 'No collections',
   'copilot.title': 'Copilot',
   'copilot.open': 'Open Copilot',
   'status.ready': 'Ready',
@@ -474,7 +488,14 @@ const pt: MessageCatalog = {
   'aggregation.input': 'Entrada',
   'aggregation.output': 'Saída',
   'aggregation.run': 'Executar',
-  'aggregation.runHint': 'Execute para compilar o pipeline nos documentos de exemplo.',
+  'aggregation.runHint': 'Execute para rodar o pipeline na coleção selecionada.',
+  'aggregation.connection': 'Conexão',
+  'aggregation.database': 'Banco de dados',
+  'aggregation.collection': 'Coleção',
+  'aggregation.selectTarget': 'Selecione conexão, banco e coleção (salvos no Shell).',
+  'aggregation.noConnections': 'Sem conexões — adicione uma no Shell',
+  'aggregation.noDatabases': 'Sem bancos',
+  'aggregation.noCollections': 'Sem coleções',
   'language.label': 'Idioma',
   'common.cancel': 'Cancelar',
   'common.close': 'Fechar',
@@ -702,7 +723,14 @@ const es: MessageCatalog = {
   'aggregation.input': 'Entrada',
   'aggregation.output': 'Salida',
   'aggregation.run': 'Ejecutar',
-  'aggregation.runHint': 'Ejecute para compilar el pipeline con documentos de ejemplo.',
+  'aggregation.runHint': 'Ejecute para correr el pipeline en la colección seleccionada.',
+  'aggregation.connection': 'Conexión',
+  'aggregation.database': 'Base de datos',
+  'aggregation.collection': 'Colección',
+  'aggregation.selectTarget': 'Seleccione conexión, base y colección (guardadas en Shell).',
+  'aggregation.noConnections': 'Sin conexiones — añada una en Shell',
+  'aggregation.noDatabases': 'Sin bases',
+  'aggregation.noCollections': 'Sin colecciones',
   'language.label': 'Idioma',
   'common.cancel': 'Cancelar',
   'common.close': 'Cerrar',
@@ -930,7 +958,14 @@ const zhCN: MessageCatalog = {
   'aggregation.input': '输入',
   'aggregation.output': '输出',
   'aggregation.run': '运行',
-  'aggregation.runHint': '运行以在示例文档上编译管道。',
+  'aggregation.runHint': '运行以在所选集合上执行管道。',
+  'aggregation.connection': '连接',
+  'aggregation.database': '数据库',
+  'aggregation.collection': '集合',
+  'aggregation.selectTarget': '请选择连接、数据库和集合（在 Shell 中保存）。',
+  'aggregation.noConnections': '无已保存连接 — 请在 Shell 中添加',
+  'aggregation.noDatabases': '无数据库',
+  'aggregation.noCollections': '无集合',
   'language.label': '语言',
   'common.cancel': '取消',
   'common.close': '关闭',
@@ -1144,7 +1179,14 @@ const hi: MessageCatalog = {
   'aggregation.input': 'इनपुट',
   'aggregation.output': 'आउटपुट',
   'aggregation.run': 'चलाएँ',
-  'aggregation.runHint': 'नमूना दस्तावेज़ों पर पाइपलाइन संकलित करने के लिए चलाएँ।',
+  'aggregation.runHint': 'चयनित संग्रह पर पाइपलाइन चलाने के लिए चलाएँ।',
+  'aggregation.connection': 'कनेक्शन',
+  'aggregation.database': 'डेटाबेस',
+  'aggregation.collection': 'संग्रह',
+  'aggregation.selectTarget': 'कनेक्शन, डेटाबेस और संग्रह चुनें (Shell में सहेजे गए)।',
+  'aggregation.noConnections': 'कोई कनेक्शन नहीं — Shell में जोड़ें',
+  'aggregation.noDatabases': 'कोई डेटाबेस नहीं',
+  'aggregation.noCollections': 'कोई संग्रह नहीं',
   'language.label': 'भाषा',
   'common.cancel': 'रद्द करें',
   'common.close': 'बंद करें',

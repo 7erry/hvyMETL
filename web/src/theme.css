@@ -8477,17 +8477,42 @@ button.diagram-status-footer__privacy:hover {
   background: var(--mdb-gray-dark-4);
 }
 
-.agg-builder__breadcrumb {
+.agg-builder__target {
   display: flex;
-  align-items: center;
-  gap: 0.35rem;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.75rem;
+  min-width: 0;
   font-size: 0.78rem;
-  opacity: 0.9;
 }
 
-.agg-builder__breadcrumb strong {
+.agg-builder__field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 8rem;
+}
+
+.agg-builder__field span {
+  opacity: 0.75;
+  font-size: 0.7rem;
+}
+
+.agg-builder__field select {
+  min-height: 2rem;
+  max-width: 14rem;
+  padding: 0.2rem 0.4rem;
+  border: 1px solid var(--mdb-green-dark-2);
+  border-radius: 4px;
+  background: var(--mdb-black);
+  color: inherit;
+}
+
+.agg-builder__title {
   color: var(--mdb-green-base);
   font-weight: 600;
+  align-self: center;
+  margin-left: 0.25rem;
 }
 
 .agg-builder__run {
