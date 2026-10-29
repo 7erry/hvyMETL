@@ -15,6 +15,37 @@ export function collectionNamesFromShellOutput(stdout: string): string[] {
   return [];
 }
 
+const SYSTEM_DB_NAMES = new Set(['admin', 'local', 'config']);
+
+/** Database names from listDatabases mongosh stdout. */
+export function databaseNamesFromShellOutput(stdout: string): string[] {
+  const parsed = parseShellJsonOutput(stdout);
+  const raw: string[] = [];
+  if (Array.isArray(parsed)) {
+    for (const item of parsed) {
+      if (typeof item === 'string' && item.trim()) raw.push(item.trim());
+      else if (item && typeof item === 'object' && typeof (item as { name?: unknown }).name === 'string') {
+        const name = (item as { name: string }).name.trim();
+        if (name) raw.push(name);
+      }
+    }
+  } else if (parsed && typeof parsed === 'object') {
+    const databases = (parsed as { databases?: unknown }).databases;
+    if (Array.isArray(databases)) {
+      for (const item of databases) {
+        if (typeof item === 'string' && item.trim()) raw.push(item.trim());
+        else if (item && typeof item === 'object' && typeof (item as { name?: unknown }).name === 'string') {
+          const name = (item as { name: string }).name.trim();
+          if (name) raw.push(name);
+        }
+      }
+    }
+  }
+  const unique = [...new Set(raw)];
+  const preferred = unique.filter((name) => !SYSTEM_DB_NAMES.has(name));
+  return (preferred.length > 0 ? preferred : unique).sort((a, b) => a.localeCompare(b));
+}
+
 export type CollectionReplicateOptions = {
   targetUri: string;
   sourceDb: string;

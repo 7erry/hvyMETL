@@ -172,6 +172,11 @@ export const MONGO_SHELL_LIST_COLLECTIONS_SCRIPT = `print(EJSON.stringify({
   collections: db.getCollectionNames().slice(0, 500).map((name) => ({ name: name, fields: [] })),
 }, null, 2));`;
 
+/** listDatabases for Shell replicate source DB pick list. */
+export const MONGO_SHELL_LIST_DATABASES_SCRIPT = `print(EJSON.stringify({
+  databases: db.adminCommand({ listDatabases: 1, nameOnly: true }).databases.map((d) => d.name),
+}, null, 2));`;
+
 /** Script mongosh can run to sample collection names + top-level fields. */
 export const MONGO_SHELL_INTROSPECT_SCRIPT = `(() => {
   const names = db.getCollectionNames().slice(0, 80);

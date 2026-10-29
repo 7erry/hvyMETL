@@ -2,7 +2,25 @@ import { describe, expect, it } from 'vitest';
 import {
   buildCollectionReplicateScript,
   collectionNamesFromShellOutput,
+  databaseNamesFromShellOutput,
 } from './mongoShellReplicate';
+
+describe('databaseNamesFromShellOutput', () => {
+  it('reads databases and skips system DBs when others exist', () => {
+    expect(
+      databaseNamesFromShellOutput(
+        JSON.stringify({ databases: ['admin', 'local', 'shop', 'config', 'analytics'] }),
+      ),
+    ).toEqual(['analytics', 'shop']);
+  });
+
+  it('keeps system DBs when they are the only names', () => {
+    expect(databaseNamesFromShellOutput(JSON.stringify({ databases: ['admin', 'local'] }))).toEqual([
+      'admin',
+      'local',
+    ]);
+  });
+});
 
 describe('collectionNamesFromShellOutput', () => {
   it('reads names from introspect object JSON', () => {
