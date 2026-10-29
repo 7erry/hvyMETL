@@ -130,8 +130,9 @@ describe('buildCollectionReplicateScript', () => {
     expect(script).toContain('replaceOne:');
     expect(script).toContain('upsert: true');
     expect(script).toContain('estimatedDocumentCount()');
-    expect(script).toContain('.batchSize(BATCH_SIZE)');
-    expect(script).toContain('.addOption(16)');
+    expect(script).toContain(
+      'sourceColl.find({}, { batchSize: BATCH_SIZE, noCursorTimeout: true })',
+    );
     expect(script).toContain('[Progress]');
     expect(script).toContain('cursor.close()');
   });

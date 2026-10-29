@@ -217,9 +217,7 @@ const startTime = Date.now();
 let copied = 0;
 let batch = [];
 
-const cursor = sourceColl.find({})
-  .batchSize(BATCH_SIZE)
-  .addOption(16); // noTimeout
+const cursor = sourceColl.find({}, { batchSize: BATCH_SIZE, noCursorTimeout: true });
 
 try {
   while (cursor.hasNext()) {
