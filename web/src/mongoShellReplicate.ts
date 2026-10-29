@@ -1,6 +1,19 @@
 /** Build a mongosh script that copies one collection between two deployments. */
 
+import { schemaContextFromIntrospect } from './mongoShellCompletions';
+import { parseShellJsonOutput } from './mongoShellResultModel';
+
 export const MONGO_SHELL_REPLICATE_TIMEOUT_MS = 15 * 60 * 1000;
+
+/** Collection names from mongosh list/introspect stdout (tolerant of warnings + array preference). */
+export function collectionNamesFromShellOutput(stdout: string): string[] {
+  const parsed = parseShellJsonOutput(stdout);
+  const fromObject = schemaContextFromIntrospect(parsed);
+  if (fromObject && fromObject.collections.length > 0) {
+    return fromObject.collections.map((c) => c.name);
+  }
+  return [];
+}
 
 export type CollectionReplicateOptions = {
   targetUri: string;

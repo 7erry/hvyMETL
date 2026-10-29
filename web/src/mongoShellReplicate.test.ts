@@ -1,5 +1,33 @@
 import { describe, expect, it } from 'vitest';
-import { buildCollectionReplicateScript } from './mongoShellReplicate';
+import {
+  buildCollectionReplicateScript,
+  collectionNamesFromShellOutput,
+} from './mongoShellReplicate';
+
+describe('collectionNamesFromShellOutput', () => {
+  it('reads names from introspect object JSON', () => {
+    expect(
+      collectionNamesFromShellOutput(
+        JSON.stringify({
+          database: 'shop',
+          collections: [{ name: 'users', fields: [] }, { name: 'orders', fields: ['a'] }],
+        }),
+      ),
+    ).toEqual(['users', 'orders']);
+  });
+
+  it('reads names when stdout prefers a nested collections array', () => {
+    expect(
+      collectionNamesFromShellOutput(
+        'warn\n[{"name":"a","fields":[]},{"name":"b","fields":[]}]',
+      ),
+    ).toEqual(['a', 'b']);
+  });
+
+  it('reads plain string collection lists', () => {
+    expect(collectionNamesFromShellOutput('["users","orders"]')).toEqual(['users', 'orders']);
+  });
+});
 
 describe('buildCollectionReplicateScript', () => {
   it('emits connect + batched insertMany with escaped URIs and names', () => {

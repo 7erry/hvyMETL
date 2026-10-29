@@ -13,6 +13,7 @@ import { describeApiError, fetchMongoshStatus, runMongoshScript, type MongoshRun
 import {
   applyMongoShellCompletion,
   MONGO_SHELL_INTROSPECT_SCRIPT,
+  MONGO_SHELL_LIST_COLLECTIONS_SCRIPT,
   mongoShellCompletionsFor,
   schemaContextFromIntrospect,
   type MongoShellCompletion,
@@ -28,6 +29,7 @@ import {
 } from '../mongoShellConnections';
 import {
   buildCollectionReplicateScript,
+  collectionNamesFromShellOutput,
   MONGO_SHELL_REPLICATE_TIMEOUT_MS,
 } from '../mongoShellReplicate';
 import {
@@ -414,15 +416,67 @@ export function MongoShellView(): ReactElement {
     await runBody(body);
   };
 
+  const loadReplicateCollectionsFor = async (
+    sourceId: string | null,
+    sourceDbName: string,
+  ): Promise<void> => {
+    const source = connections.find((c) => c.id === sourceId);
+    if (!source?.uri.trim()) {
+      setRunError('Pick a source connection with a MongoDB URI.');
+      return;
+    }
+    if (!sourceDbName.trim()) {
+      setRunError('Source database is required to list collections.');
+      return;
+    }
+    setReplicateCollectionsLoading(true);
+    setRunError('');
+    try {
+      const next = await runMongoshScript({
+        uri: source.uri,
+        script: MONGO_SHELL_LIST_COLLECTIONS_SCRIPT,
+        dbName: sourceDbName.trim(),
+      });
+      if (!next.ok) {
+        setRunError(
+          next.stderr.trim() ||
+            next.stdout.trim() ||
+            'Could not load collections from the source.',
+        );
+        return;
+      }
+      const names = collectionNamesFromShellOutput(next.stdout);
+      setReplicateCollections(names);
+      if (names.length === 0) {
+        setRunError(
+          next.stdout.trim()
+            ? 'Could not parse collection names from mongosh output.'
+            : 'No collections found in the source database.',
+        );
+        return;
+      }
+      setReplicateSourceColl((prev) => (names.includes(prev) ? prev : (names[0] ?? '')));
+      setReplicateTargetColl((prev) => prev || names[0] || '');
+    } catch (error) {
+      setRunError(describeApiError(error));
+    } finally {
+      setReplicateCollectionsLoading(false);
+    }
+  };
+
+  const loadReplicateCollections = async (): Promise<void> => {
+    await loadReplicateCollectionsFor(replicateSourceId, replicateSourceDb);
+  };
+
   const openReplicatePanel = () => {
     const source = selected ?? connections[0] ?? null;
     const target =
       connections.find((c) => c.id !== source?.id) ?? source ?? null;
+    const sourceDb =
+      (source && databaseFromMongoUri(source.uri)) || dbName || '';
     setReplicateSourceId(source?.id ?? null);
     setReplicateTargetId(target?.id ?? null);
-    setReplicateSourceDb(
-      (source && databaseFromMongoUri(source.uri)) || dbName || '',
-    );
+    setReplicateSourceDb(sourceDb);
     setReplicateTargetDb(
       (target && databaseFromMongoUri(target.uri)) ||
         (source && databaseFromMongoUri(source.uri)) ||
@@ -438,47 +492,8 @@ export function MongoShellView(): ReactElement {
     setReplicateTargetColl(names[0] ?? '');
     setReplicateOpen(true);
     setRunError('');
-  };
-
-  const loadReplicateCollections = async () => {
-    const source = connections.find((c) => c.id === replicateSourceId);
-    if (!source?.uri.trim()) {
-      setRunError('Pick a source connection with a MongoDB URI.');
-      return;
-    }
-    if (!replicateSourceDb.trim()) {
-      setRunError('Source database is required to list collections.');
-      return;
-    }
-    setReplicateCollectionsLoading(true);
-    setRunError('');
-    try {
-      const next = await runMongoshScript({
-        uri: source.uri,
-        script: MONGO_SHELL_INTROSPECT_SCRIPT,
-        dbName: replicateSourceDb.trim(),
-      });
-      if (!next.ok) {
-        setRunError(
-          next.stderr.trim() || 'Could not load collections from the source.',
-        );
-        return;
-      }
-      const names =
-        schemaContextFromIntrospect(parseShellJsonOutput(next.stdout)).collections.map(
-          (c) => c.name,
-        );
-      setReplicateCollections(names);
-      if (names.length === 0) {
-        setRunError('No collections found in the source database.');
-      } else if (!names.includes(replicateSourceColl)) {
-        setReplicateSourceColl(names[0] ?? '');
-        setReplicateTargetColl((prev) => prev || names[0] || '');
-      }
-    } catch (error) {
-      setRunError(describeApiError(error));
-    } finally {
-      setReplicateCollectionsLoading(false);
+    if (source && sourceDb.trim() && names.length === 0) {
+      void loadReplicateCollectionsFor(source.id, sourceDb);
     }
   };
 
@@ -999,25 +1014,30 @@ export function MongoShellView(): ReactElement {
                     </label>
                     <label>
                       Source collection
-                      <select
+                      <input
+                        list="mongo-shell-replicate-collections"
                         value={replicateSourceColl}
                         onChange={(e) => {
                           const name = e.target.value;
                           setReplicateSourceColl(name);
-                          setReplicateTargetColl((prev) => prev || name);
+                          setReplicateTargetColl((prev) =>
+                            !prev || prev === replicateSourceColl ? name : prev,
+                          );
                         }}
-                        disabled={replicateCollections.length === 0}
-                      >
-                        {replicateCollections.length === 0 ? (
-                          <option value="">Load collections…</option>
-                        ) : (
-                          replicateCollections.map((name) => (
-                            <option key={name} value={name}>
-                              {name}
-                            </option>
-                          ))
-                        )}
-                      </select>
+                        placeholder={
+                          replicateCollectionsLoading
+                            ? 'Loading…'
+                            : replicateCollections.length > 0
+                              ? 'Pick or type a collection'
+                              : 'Load collections or type a name'
+                        }
+                        spellCheck={false}
+                      />
+                      <datalist id="mongo-shell-replicate-collections">
+                        {replicateCollections.map((name) => (
+                          <option key={name} value={name} />
+                        ))}
+                      </datalist>
                     </label>
                     <label>
                       Target connection
@@ -1069,9 +1089,9 @@ export function MongoShellView(): ReactElement {
                     </label>
                   </div>
                   <p className="mongo-shell__hint">
-                    Save two connections first. Loads collection names from the source DB, then
-                    inserts a batched <code>find</code> → <code>insertMany</code> script (15m
-                    timeout when run from here).
+                    Save two connections and set the source database, then <strong>Load collections</strong>
+                    (or type a name). Inserts a batched <code>find</code> → <code>insertMany</code>{' '}
+                    script (15m timeout when run from here).
                   </p>
                   <div className="button-row">
                     <button

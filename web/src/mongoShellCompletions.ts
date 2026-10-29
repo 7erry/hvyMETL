@@ -134,11 +134,27 @@ export const MONGO_SHELL_COMPLETIONS: MongoShellCompletion[] = [
 
 /** Parse introspect JSON into a schema context for autocomplete. */
 export function schemaContextFromIntrospect(parsed: unknown): MongoShellSchemaContext | null {
-  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return null;
+  if (Array.isArray(parsed)) {
+    const collections = collectionRowsFromUnknownList(parsed);
+    return collections.length > 0 ? { collections } : null;
+  }
+  if (!parsed || typeof parsed !== 'object') return null;
   const rec = parsed as { database?: unknown; collections?: unknown };
   if (!Array.isArray(rec.collections)) return null;
+  const collections = collectionRowsFromUnknownList(rec.collections);
+  return {
+    database: typeof rec.database === 'string' ? rec.database : undefined,
+    collections,
+  };
+}
+
+function collectionRowsFromUnknownList(items: unknown[]): MongoShellSchemaCollection[] {
   const collections: MongoShellSchemaCollection[] = [];
-  for (const item of rec.collections) {
+  for (const item of items) {
+    if (typeof item === 'string' && item.trim()) {
+      collections.push({ name: item.trim(), fields: [] });
+      continue;
+    }
     if (!item || typeof item !== 'object' || Array.isArray(item)) continue;
     const row = item as { name?: unknown; fields?: unknown };
     if (typeof row.name !== 'string' || !row.name.trim()) continue;
@@ -147,11 +163,14 @@ export function schemaContextFromIntrospect(parsed: unknown): MongoShellSchemaCo
       : [];
     collections.push({ name: row.name, fields });
   }
-  return {
-    database: typeof rec.database === 'string' ? rec.database : undefined,
-    collections,
-  };
+  return collections;
 }
+
+/** Fast names-only list for Shell replicate (no findOne sampling / timeout risk). */
+export const MONGO_SHELL_LIST_COLLECTIONS_SCRIPT = `print(EJSON.stringify({
+  database: db.getName(),
+  collections: db.getCollectionNames().slice(0, 500).map((name) => ({ name: name, fields: [] })),
+}, null, 2));`;
 
 /** Script mongosh can run to sample collection names + top-level fields. */
 export const MONGO_SHELL_INTROSPECT_SCRIPT = `(() => {
