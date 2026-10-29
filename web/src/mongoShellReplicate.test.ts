@@ -132,7 +132,8 @@ describe('buildCollectionReplicateScript', () => {
     expect(script).toContain('upsert: true');
     expect(script).toContain('estimatedDocumentCount()');
     // mongosh find(filter, projection): cursor options must be chained, not a 2nd-arg projection
-    expect(script).toContain('sourceColl.find({}).batchSize(BATCH_SIZE).noCursorTimeout()');
+    expect(script).toContain('sourceColl.find({}).batchSize(BATCH_SIZE)');
+    expect(script).not.toContain('noCursorTimeout');
     expect(script).not.toMatch(/sourceColl\.find\(\{\},\s*\{/);
     expect(script).toContain('[Progress]');
     expect(script).toContain('cursor.close()');

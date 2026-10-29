@@ -218,7 +218,7 @@ let copied = 0;
 let batch = [];
 
 // mongosh find(filter, projection) — never pass driver options as the 2nd arg
-const cursor = sourceColl.find({}).batchSize(BATCH_SIZE).noCursorTimeout();
+const cursor = sourceColl.find({}).batchSize(BATCH_SIZE);
 
 try {
   while (cursor.hasNext()) {
