@@ -676,10 +676,16 @@ textarea {
   border-radius: 8px;
   min-width: 260px;
   max-width: 380px;
+  width: max-content;
   font-size: 0.875rem;
   box-shadow: 0 2px 8px rgba(0, 30, 43, 0.35);
   transition: opacity 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
   overflow: visible;
+}
+
+/* Nested field rows need more horizontal room than the collapsed card. */
+.collection-node--fields-expanded {
+  max-width: none;
 }
 
 .collection-node.dimmed {
@@ -781,10 +787,11 @@ textarea {
 }
 
 .collection-node .column-name {
-  min-width: 0;
-  overflow-wrap: break-word;
-  word-break: break-word;
-  hyphens: manual;
+  min-width: max-content;
+  white-space: nowrap;
+  overflow-wrap: normal;
+  word-break: keep-all;
+  hyphens: none;
 }
 
 .collection-node .column-type {
@@ -792,10 +799,10 @@ textarea {
   font-size: 0.75rem;
   line-height: 1.2;
   flex-shrink: 0;
-  max-width: 58%;
+  max-width: none;
   text-align: right;
-  white-space: normal;
-  overflow-wrap: anywhere;
+  white-space: nowrap;
+  overflow-wrap: normal;
 }
 
 .collection-node li.pk {
@@ -869,7 +876,7 @@ textarea {
 
 .collection-node .schema-field-tree__row {
   display: grid;
-  grid-template-columns: 1.15rem minmax(0, 1fr) auto auto;
+  grid-template-columns: 1.15rem max-content max-content auto;
   column-gap: 0.35rem;
   align-items: baseline;
   padding: 0.08rem 0.75rem;

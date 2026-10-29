@@ -30,9 +30,14 @@ describe('disk guardrails', () => {
     expect(maxAllocatableDiskGb(m40)).toBe(960);
   });
 
-  it('allows M50 up to 2 TB extended storage cap', () => {
+  it('allows M50 up to 4 TB extended storage cap', () => {
     const m50 = ATLAS_PRODUCTION_TIER_MATRIX.find((t) => t.id === 'M50')!;
-    expect(maxAllocatableDiskGb(m50)).toBe(2048);
+    expect(maxAllocatableDiskGb(m50)).toBe(4096);
+  });
+
+  it('caps M700 at 4 TB*', () => {
+    const m700 = ATLAS_PRODUCTION_TIER_MATRIX.find((t) => t.id === 'M700')!;
+    expect(maxAllocatableDiskGb(m700)).toBe(4096);
   });
 });
 
@@ -56,7 +61,7 @@ describe('selectAtlasTierForRequirements', () => {
     ).toBe('M50');
   });
 
-  it('can reach M700 when storage exceeds M300 extended limits', () => {
+  it('falls back to M700 when no tier fits planning storage', () => {
     const tier = selectAtlasTierForRequirements({
       requiredRamGb: 400,
       planningStorageGb: 50_000,

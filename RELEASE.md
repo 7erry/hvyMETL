@@ -1,3 +1,13 @@
+## hvyMETL 8.0.3
+
+**Studio sidebar inspectors** — Before SQL: **SQL tables** (and the selected table inspector) sit under **Time Series Overrides**. After MongoDB: the selected collection inspector sits under **MongoDB collections**.
+
+**Schema node field names** — Expanding nested fields widens the collection card so names and types stay on one line instead of wrapping letter-by-letter.
+
+**Atlas max disk chart** — Recommended tier storage caps match Atlas: M50 up to 4 TB; M50–M300 and M400/M600/M700 at 4 TB (starred for M400+).
+
+---
+
 ## hvyMETL 8.0.2
 
 **Studio layout** — Left nav puts **Database** above **Schema**. On the After (MongoDB) sidebar, **Transformation Summary** sits under **MongoDB Target Schema**, and the canvas list is titled **MongoDB collections** directly under that summary.

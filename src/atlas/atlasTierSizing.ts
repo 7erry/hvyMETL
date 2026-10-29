@@ -12,7 +12,7 @@ export type AtlasProductionTierSpec = {
   maxConnections: number;
   /** Standard / extended storage ceiling (GB). */
   extendedStorageMaxGb: number;
-  /** Max disk:RAM ratio (60 for M10–M40, 120 for M50+). */
+  /** Max disk:RAM ratio (60 for M10–M40; M50 uses 128 to reach 4 TB chart max; 120 for M60+). */
   diskToRamRatioMax: number;
 };
 
@@ -48,7 +48,7 @@ export const ATLAS_PRODUCTION_TIER_MATRIX: AtlasProductionTierSpec[] = [
   { id: 'M20', ramGb: 4, vcpu: 2, maxConnections: 3000, extendedStorageMaxGb: 256, diskToRamRatioMax: 60 },
   { id: 'M30', ramGb: 8, vcpu: 2, maxConnections: 3000, extendedStorageMaxGb: 512, diskToRamRatioMax: 60 },
   { id: 'M40', ramGb: 16, vcpu: 4, maxConnections: 6000, extendedStorageMaxGb: 1024, diskToRamRatioMax: 60 },
-  { id: 'M50', ramGb: 32, vcpu: 8, maxConnections: 16000, extendedStorageMaxGb: 2048, diskToRamRatioMax: 120 },
+  { id: 'M50', ramGb: 32, vcpu: 8, maxConnections: 16000, extendedStorageMaxGb: 4096, diskToRamRatioMax: 128 },
   { id: 'M60', ramGb: 64, vcpu: 16, maxConnections: 32000, extendedStorageMaxGb: 4096, diskToRamRatioMax: 120 },
   { id: 'M80', ramGb: 128, vcpu: 32, maxConnections: 96000, extendedStorageMaxGb: 4096, diskToRamRatioMax: 120 },
   { id: 'M140', ramGb: 192, vcpu: 48, maxConnections: 96000, extendedStorageMaxGb: 4096, diskToRamRatioMax: 120 },
@@ -56,7 +56,8 @@ export const ATLAS_PRODUCTION_TIER_MATRIX: AtlasProductionTierSpec[] = [
   { id: 'M300', ramGb: 384, vcpu: 96, maxConnections: 128000, extendedStorageMaxGb: 4096, diskToRamRatioMax: 120 },
   { id: 'M400', ramGb: 488, vcpu: 96, maxConnections: 128000, extendedStorageMaxGb: 4096, diskToRamRatioMax: 120 },
   { id: 'M600', ramGb: 640, vcpu: 96, maxConnections: 128000, extendedStorageMaxGb: 4096, diskToRamRatioMax: 120 },
-  { id: 'M700', ramGb: 768, vcpu: 96, maxConnections: 128000, extendedStorageMaxGb: 49152, diskToRamRatioMax: 120 },
+  // shortcut: Atlas marks M400/M600/M700 max disk as 4 TB*; confirm * when product docs change
+  { id: 'M700', ramGb: 768, vcpu: 96, maxConnections: 128000, extendedStorageMaxGb: 4096, diskToRamRatioMax: 120 },
 ];
 
 /** Atlas tier reference (UI / docs) — storage scale labels match Atlas product chart. */
@@ -72,17 +73,17 @@ export const ATLAS_TIER_REFERENCE_ROWS: ReadonlyArray<{
   { tierLabel: 'M20', vcpuLabel: '2 vCPU', ramGb: 4, storageScaleLabel: '20 GB – 256 GB', maxConnections: 3000, maxConnectionsLabel: '3,000' },
   { tierLabel: 'M30', vcpuLabel: '2 vCPU', ramGb: 8, storageScaleLabel: '40 GB – 512 GB', maxConnections: 3000, maxConnectionsLabel: '3,000' },
   { tierLabel: 'M40', vcpuLabel: '4 vCPU', ramGb: 16, storageScaleLabel: '80 GB – 1 TB', maxConnections: 6000, maxConnectionsLabel: '6,000' },
-  { tierLabel: 'M50', vcpuLabel: '8 vCPU', ramGb: 32, storageScaleLabel: '160 GB – 2 TB', maxConnections: 16000, maxConnectionsLabel: '16,000' },
+  { tierLabel: 'M50', vcpuLabel: '8 vCPU', ramGb: 32, storageScaleLabel: '160 GB – 4 TB', maxConnections: 16000, maxConnectionsLabel: '16,000' },
   { tierLabel: 'M60', vcpuLabel: '16 vCPU', ramGb: 64, storageScaleLabel: '320 GB – 4 TB', maxConnections: 32000, maxConnectionsLabel: '32,000' },
   { tierLabel: 'M80', vcpuLabel: '32 vCPU', ramGb: 128, storageScaleLabel: 'Up to 4 TB', maxConnections: 96000, maxConnectionsLabel: '96,000' },
   { tierLabel: 'M140', vcpuLabel: '48 vCPU', ramGb: 192, storageScaleLabel: 'Up to 4 TB', maxConnections: 96000, maxConnectionsLabel: '96,000' },
   { tierLabel: 'M200', vcpuLabel: '64 vCPU', ramGb: 256, storageScaleLabel: 'Up to 4 TB', maxConnections: 128000, maxConnectionsLabel: '128,000' },
   { tierLabel: 'M300', vcpuLabel: '96 vCPU', ramGb: 384, storageScaleLabel: 'Up to 4 TB', maxConnections: 128000, maxConnectionsLabel: '128,000' },
   {
-    tierLabel: 'M400 / M600',
+    tierLabel: 'M400 / M600 / M700',
     vcpuLabel: 'Up to 96+ vCPU',
     ramGb: 768,
-    storageScaleLabel: 'Up to 4 TB (per node)',
+    storageScaleLabel: 'Up to 4 TB*',
     maxConnections: 128000,
     maxConnectionsLabel: '128,000+',
   },

@@ -1666,6 +1666,44 @@ export default function App() {
                             onChange={handleTimeSeriesOverridesChange}
                           />
                         </CollapsiblePanel>
+                        <details
+                          className="panel panel-dropdown"
+                          open={canvasPanelOpen}
+                          onToggle={(e) => setSessionField('canvasPanelOpen', e.currentTarget.open)}
+                        >
+                          <summary className="panel-dropdown__summary">SQL tables</summary>
+                          <div className="panel-dropdown__body">
+                            <label style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', fontSize: '0.85rem' }}>
+                              <input
+                                type="checkbox"
+                                checked={snapToGrid}
+                                onChange={(e) => setSessionField('snapToGrid', e.target.checked)}
+                              />
+                              Snap to grid (hold Shift for free move)
+                            </label>
+                            <ul className="canvas-table-list">
+                              {model.tables.map((t) => (
+                                <li
+                                  key={t.name}
+                                  className={selectedTable === t.name ? 'selected' : ''}
+                                  onClick={() => handleSelectSqlTable(t.name)}
+                                >
+                                  <span>{t.name}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        </details>
+                        {selectedTableModel ? (
+                          <div style={{ marginBottom: '0.75rem' }}>
+                            <TableDetails
+                              table={selectedTableModel}
+                              incoming={incomingReferences}
+                              onClose={() => setSessionField('selectedTable', null)}
+                              onDelete={handleDelete}
+                            />
+                          </div>
+                        ) : null}
                       </>
                     ) : null}
                   </>
@@ -1767,6 +1805,19 @@ export default function App() {
                         ) : null}
                       </div>
                     </details>
+                    {selectedCollectionPlan ? (
+                      <div style={{ marginBottom: '0.75rem' }}>
+                        <StudioErrorBoundary label="Collection inspector">
+                          <CollectionDetails
+                            collection={selectedCollectionPlan}
+                            schemaFields={selectedCollectionSchemaFields}
+                            viewMode={collectionInspectorView}
+                            onViewModeChange={(mode) => setSessionField('collectionInspectorView', mode)}
+                            onClose={() => setSessionField('selectedCollection', null)}
+                          />
+                        </StudioErrorBoundary>
+                      </div>
+                    ) : null}
                   </>
                 )}
 
@@ -1788,64 +1839,6 @@ export default function App() {
                   open={haPanelOpen}
                   onOpenChange={setHaPanelOpen}
                 />
-
-                {schemaPhase === 'before' && selectedTableModel && (
-                  <div style={{ marginBottom: '0.75rem' }}>
-                    <TableDetails
-                      table={selectedTableModel}
-                      incoming={incomingReferences}
-                      onClose={() => setSessionField('selectedTable', null)}
-                      onDelete={handleDelete}
-                    />
-                  </div>
-                )}
-
-                {schemaPhase === 'after' && selectedCollectionPlan && (
-                  <div style={{ marginBottom: '0.75rem' }}>
-                    <StudioErrorBoundary label="Collection inspector">
-                      <CollectionDetails
-                        collection={selectedCollectionPlan}
-                        schemaFields={selectedCollectionSchemaFields}
-                        viewMode={collectionInspectorView}
-                        onViewModeChange={(mode) => setSessionField('collectionInspectorView', mode)}
-                        onClose={() => setSessionField('selectedCollection', null)}
-                      />
-                    </StudioErrorBoundary>
-                  </div>
-                )}
-
-                {schemaPhase === 'before' ? (
-                  <details
-                    className="panel panel-dropdown"
-                    open={canvasPanelOpen}
-                    onToggle={(e) => setSessionField('canvasPanelOpen', e.currentTarget.open)}
-                  >
-                    <summary className="panel-dropdown__summary">SQL tables</summary>
-                    <div className="panel-dropdown__body">
-                      <label style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', fontSize: '0.85rem' }}>
-                        <input
-                          type="checkbox"
-                          checked={snapToGrid}
-                          onChange={(e) => setSessionField('snapToGrid', e.target.checked)}
-                        />
-                        Snap to grid (hold Shift for free move)
-                      </label>
-                      {model ? (
-                        <ul className="canvas-table-list">
-                          {model.tables.map((t) => (
-                            <li
-                              key={t.name}
-                              className={selectedTable === t.name ? 'selected' : ''}
-                              onClick={() => handleSelectSqlTable(t.name)}
-                            >
-                              <span>{t.name}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      ) : null}
-                    </div>
-                  </details>
-                ) : null}
 
                 {schemaPhase === 'before' ? (
                   <CollapsiblePanel title="Share Diagram">

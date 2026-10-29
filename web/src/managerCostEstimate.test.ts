@@ -82,7 +82,7 @@ describe('managerCostEstimate', () => {
   it('selects atlas tier by RAM, disk ratio, and working-set guardrails', () => {
     expect(selectAtlasTier(8, 400, 0.5, 1.5).id).toBe('M30');
     expect(selectAtlasTier(16, 900, 2, 6).id).toBe('M40');
-    expect(selectAtlasTier(32, 2500, 4, 12).id).toBe('M60');
+    expect(selectAtlasTier(32, 2500, 4, 12).id).toBe('M50');
     expect(selectAtlasTier(256, 12_000, 20, 108).id).toBe('M300');
   });
 
