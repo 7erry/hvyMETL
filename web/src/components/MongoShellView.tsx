@@ -336,6 +336,8 @@ export function MongoShellView(): ReactElement {
       timeoutMs?: number;
       historyScript?: string;
       resultTitle?: string;
+      /** Replicate prints a status line, not a document array. */
+      forceOutputTab?: boolean;
     },
   ) => {
     const uri = (options?.uri ?? selected?.uri ?? '').trim();
@@ -361,7 +363,8 @@ export function MongoShellView(): ReactElement {
       });
       pushMongoShellHistory(options?.historyScript ?? script);
       setHistory(listMongoShellHistory());
-      const preferCollectionTab = scriptLooksLikeCollectionQuery(body);
+      const preferCollectionTab =
+        !options?.forceOutputTab && scriptLooksLikeCollectionQuery(body);
       const docs = resolveShellResultDocuments(next.stdout, preferCollectionTab);
       const coll = collectionNameFromScript(body);
       const timeoutLabel =
@@ -376,7 +379,9 @@ export function MongoShellView(): ReactElement {
           ? 'Output truncated — showing complete documents that fit.'
           : undefined;
       // Collection finds (including empty / truncated) get a named docs tab, not "Shell result"
-      const useDocsTab = preferCollectionTab || (docs !== null && docs.length > 0);
+      const useDocsTab =
+        !options?.forceOutputTab &&
+        (preferCollectionTab || (docs !== null && docs.length > 0));
       const tab: ShellResultTab = useDocsTab
         ? {
             id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
@@ -602,6 +607,7 @@ export function MongoShellView(): ReactElement {
       timeoutMs: MONGO_SHELL_REPLICATE_TIMEOUT_MS,
       historyScript: body,
       resultTitle: `Replicate ${replicateSourceColl}`,
+      forceOutputTab: true,
     });
   };
 
@@ -1152,11 +1158,6 @@ export function MongoShellView(): ReactElement {
                       />
                     </label>
                   </div>
-                  <p className="mongo-shell__hint">
-                    Source database and collection lists come from the source MongoDB (
-                    <code>listDatabases</code> + <code>getCollectionNames</code>). Inserts a batched{' '}
-                    <code>find</code> → <code>insertMany</code> script (15m timeout when run from here).
-                  </p>
                   <div className="button-row">
                     <button
                       type="button"
