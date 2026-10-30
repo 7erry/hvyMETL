@@ -42,6 +42,6 @@ describe('detectLiveAgentPlatform', () => {
     expect(detectLiveAgentPlatform({ userAgent: 'Mozilla/5.0 (Macintosh)', platform: 'macOS', architecture: 'arm' })).toBe('macos-aarch64');
     expect(detectLiveAgentPlatform({ userAgent: 'Mozilla/5.0 (Macintosh)', platform: 'macOS', architecture: 'x86' })).toBe('macos-x64');
     expect(detectLiveAgentPlatform({ userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)', platform: 'MacIntel' })).toBeNull();
-    expect(liveAgentDownloadUrl('linux-x64')).toBe('https://github.com/7erry/hvyMETL/releases/download/v10.0.0/hvymetl-agent-linux-x64');
+    expect(liveAgentDownloadUrl('linux-x64')).toBe('https://github.com/7erry/hvyMETL/releases/download/v10.1.0/hvymetl-agent-linux-x64');
   });
 });

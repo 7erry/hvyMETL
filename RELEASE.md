@@ -1,3 +1,15 @@
+## hvyMETL 10.1.0
+
+**Aggregation Builder** — Shell-style workspace builds and runs aggregations against live saved Shell connections (Compass-style stage palette and visual map).
+
+**Shell collection replicate** — Atlas-safe replicate between saved connections: upsert by `_id`, progress/retry, no free-tier `noTimeout` cursors, same-collection blocked, DB/collection pick lists from the source URI.
+
+**Schema i18n** — Left-pane sizing and transformation chrome follow the studio language picker.
+
+**Studio live import** — Copy-command downloads point at `v10.1.0` agent builds. Release assets: **`hvymetl-agent-macos-aarch64`**, **`hvymetl-agent-macos-x64`**, **`hvymetl-agent-linux-x64`**, **`hvymetl-agent-windows-x64.exe`** (rustls TLS — no OpenSSL dependency for cross builds).
+
+---
+
 ## hvyMETL 10.0.0
 
 **Multi-engine Rust agent** — Downloadable agent opens an outbound secured WebSocket (`/api/agent/v2`), introspects Wave A databases (MongoDB, PostgreSQL, MySQL/MariaDB, Microsoft SQL Server, SQLite), and streams restartable full-table extracts into studio staging for the pipeline. See [docs/27-agent-10.0-roadmap.md](docs/27-agent-10.0-roadmap.md).
