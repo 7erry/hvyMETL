@@ -12,7 +12,7 @@
 
 ## hvyMETL 10.0.0
 
-**Multi-engine Rust agent** — Downloadable agent opens an outbound secured WebSocket (`/api/agent/v2`), introspects Wave A databases (MongoDB, PostgreSQL, MySQL/MariaDB, Microsoft SQL Server, SQLite), and streams restartable full-table extracts into studio staging for the pipeline. See [docs/27-agent-10.0-roadmap.md](docs/27-agent-10.0-roadmap.md).
+**Multi-engine Rust agent** — Downloadable agent opens an outbound secured WebSocket (`/api/agent/v2`), introspects Wave A databases (MongoDB, PostgreSQL, MySQL/MariaDB, Microsoft SQL Server, SQLite), and streams restartable full-table extracts into studio staging for the pipeline. Driver-published server version ranges (MongoDB 4.4–9.0; PostgreSQL not pinned) live under **Server versions** in [docs/27-agent-10.0-roadmap.md](docs/27-agent-10.0-roadmap.md).
 
 **Studio live import** — Engine picker includes MSSQL and SQLite; copy-command downloads point at `v10.0.0` agent builds. Completed extracts set the pipeline CSV path automatically. Release assets: **`hvymetl-agent-macos-aarch64`**, **`hvymetl-agent-macos-x64`**, **`hvymetl-agent-linux-x64`**, **`hvymetl-agent-windows-x64.exe`** (rustls TLS — no OpenSSL dependency for cross builds).
 

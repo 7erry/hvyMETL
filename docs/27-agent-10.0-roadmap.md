@@ -40,6 +40,18 @@ sequenceDiagram
 | Microsoft SQL Server | `mssql://` / `sqlserver://` | `tiberius` | Encrypt/TLS defaults for Azure SQL |
 | SQLite | file path or `sqlite://` | `rusqlite` | Local file on the agent host |
 
+### Server versions (driver-published)
+
+hvyMETL does not pin or CI-test these server majors. Ranges below come from the crates pinned in [`agent/Cargo.toml`](../agent/Cargo.toml) (resolved in `agent/Cargo.lock`). They are not "tested on" claims for this repo.
+
+| Engine | Crate (locked) | Server versions | Source |
+| --- | --- | --- | --- |
+| MongoDB | `mongodb` 3.9.1 | MongoDB Server **4.4–9.0** (full ✓). Driver 3.9 raises the minimum to 4.4 (drops 4.2). | [MongoDB Rust driver compatibility](https://www.mongodb.com/docs/drivers/compatibility/?driver-language=rust); [3.9 breaking changes](https://www.mongodb.com/docs/drivers/rust/current/reference/upgrade/) |
+| PostgreSQL | `tokio-postgres` 0.7.18 | **Not pinned.** No published server matrix. Wire-protocol client. Upstream `rust-postgres` CI uses `postgres:18`. `sslnegotiation=direct` needs PostgreSQL 17+. Wire siblings (Cockroach, Yugabyte, Aurora PG, Redshift) inherit the same lack of a matrix. | [tokio-postgres docs](https://docs.rs/tokio-postgres/0.7.18/tokio_postgres/); [rust-postgres `docker-compose.yml`](https://github.com/rust-postgres/rust-postgres/blob/master/docker-compose.yml) |
+| MySQL / MariaDB | `mysql_async` 0.34.2 | **Not pinned.** No full server matrix. Feature notes only (for example `COM_RESET_CONNECTION` needs MySQL >5.7.2 or MariaDB >10.2.3). | [mysql_async `Conn::reset`](https://docs.rs/mysql_async/0.34.2/mysql_async/struct.Conn.html) |
+| Microsoft SQL Server | `tiberius` 0.12.3 | SQL Server **2008–2022** with agent `tds73` enabled (CI-tested 2017/2019/2022 per tiberius; 2012–2016 "should work"). SQL Server 2005 needs `tds73` off (agent does not disable it). | [tiberius 0.12 README](https://github.com/prisma/tiberius/blob/v0.12.3/README.md) |
+| SQLite | `rusqlite` 0.32.1 (`bundled`) | Bundled SQLite **3.46.0** (`libsqlite3-sys` 0.30.x). Base `rusqlite` supports SQLite ≥3.14.0 when not bundled. | [rusqlite 0.32 docs](https://docs.rs/crate/rusqlite/0.32.1) |
+
 **Out of 10.0 (Wave B+):** Oracle, Db2, SAP ASE, ClickHouse, Snowflake, BigQuery, Spanner, Databricks, DynamoDB, HANA, Teradata, Firebird — DDL paste until a later major.
 
 ## Security model
