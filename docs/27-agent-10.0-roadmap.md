@@ -40,17 +40,17 @@ sequenceDiagram
 | Microsoft SQL Server | `mssql://` / `sqlserver://` | `tiberius` | Encrypt/TLS defaults for Azure SQL |
 | SQLite | file path or `sqlite://` | `rusqlite` | Local file on the agent host |
 
-### Server versions (driver-published)
+### Driver crates and server versions
 
-hvyMETL does not pin or CI-test these server majors. Ranges below come from the crates pinned in [`agent/Cargo.toml`](../agent/Cargo.toml) (resolved in `agent/Cargo.lock`). They are not "tested on" claims for this repo.
+hvyMETL does not pin or CI-test these server majors. Driver crate versions and features come from [`agent/Cargo.toml`](../agent/Cargo.toml) (locked in `agent/Cargo.lock`). Server ranges below are driver-published, not "tested on" claims for this repo.
 
-| Engine | Crate (locked) | Server versions | Source |
+| Engine | Driver crate + version | Link | Server versions |
 | --- | --- | --- | --- |
-| MongoDB | `mongodb` 3.9.1 | MongoDB Server **4.4–9.0** (full ✓). Driver 3.9 raises the minimum to 4.4 (drops 4.2). | [MongoDB Rust driver compatibility](https://www.mongodb.com/docs/drivers/compatibility/?driver-language=rust); [3.9 breaking changes](https://www.mongodb.com/docs/drivers/rust/current/reference/upgrade/) |
-| PostgreSQL | `tokio-postgres` 0.7.18 | **Not pinned.** No published server matrix. Wire-protocol client. Upstream `rust-postgres` CI uses `postgres:18`. `sslnegotiation=direct` needs PostgreSQL 17+. Wire siblings (Cockroach, Yugabyte, Aurora PG, Redshift) inherit the same lack of a matrix. | [tokio-postgres docs](https://docs.rs/tokio-postgres/0.7.18/tokio_postgres/); [rust-postgres `docker-compose.yml`](https://github.com/rust-postgres/rust-postgres/blob/master/docker-compose.yml) |
-| MySQL / MariaDB | `mysql_async` 0.34.2 | **Not pinned.** No full server matrix. Feature notes only (for example `COM_RESET_CONNECTION` needs MySQL >5.7.2 or MariaDB >10.2.3). | [mysql_async `Conn::reset`](https://docs.rs/mysql_async/0.34.2/mysql_async/struct.Conn.html) |
-| Microsoft SQL Server | `tiberius` 0.12.3 | SQL Server **2008–2022** with agent `tds73` enabled (CI-tested 2017/2019/2022 per tiberius; 2012–2016 "should work"). SQL Server 2005 needs `tds73` off (agent does not disable it). | [tiberius 0.12 README](https://github.com/prisma/tiberius/blob/v0.12.3/README.md) |
-| SQLite | `rusqlite` 0.32.1 (`bundled`) | Bundled SQLite **3.46.0** (`libsqlite3-sys` 0.30.x). Base `rusqlite` supports SQLite ≥3.14.0 when not bundled. | [rusqlite 0.32 docs](https://docs.rs/crate/rusqlite/0.32.1) |
+| MongoDB | `mongodb` 3.9.1 (`sync`) | [Official docs](https://www.mongodb.com/docs/drivers/rust/current/) · [crates.io](https://crates.io/crates/mongodb/3.9.1) · [GitHub](https://github.com/mongodb/mongo-rust-driver) | MongoDB Server **4.4–9.0** (full ✓). Driver 3.9 raises the minimum to 4.4 (drops 4.2). [Compatibility](https://www.mongodb.com/docs/drivers/compatibility/?driver-language=rust); [3.9 upgrade](https://www.mongodb.com/docs/drivers/rust/current/reference/upgrade/) |
+| PostgreSQL | `tokio-postgres` 0.7.18 | [crates.io](https://crates.io/crates/tokio-postgres/0.7.18) · [docs.rs](https://docs.rs/tokio-postgres/0.7.18/tokio_postgres/) · [GitHub](https://github.com/rust-postgres/rust-postgres) | **Not pinned.** No published server matrix. Wire-protocol client. Upstream CI uses `postgres:18`. `sslnegotiation=direct` needs PostgreSQL 17+. Wire siblings (Cockroach, Yugabyte, Aurora PG, Redshift) inherit the same lack of a matrix. |
+| MySQL / MariaDB | `mysql_async` 0.34.2 (`default-rustls`) | [crates.io](https://crates.io/crates/mysql_async/0.34.2) · [docs.rs](https://docs.rs/mysql_async/0.34.2/mysql_async/) · [GitHub](https://github.com/blackbeam/mysql_async) | **Not pinned.** No full server matrix. Feature notes only (for example `COM_RESET_CONNECTION` needs MySQL >5.7.2 or MariaDB >10.2.3). |
+| Microsoft SQL Server | `tiberius` 0.12.3 (`chrono`, `rustls`, `tds73`) | [crates.io](https://crates.io/crates/tiberius/0.12.3) · [docs.rs](https://docs.rs/tiberius/0.12.3/tiberius/) · [GitHub](https://github.com/prisma/tiberius) | SQL Server **2008–2022** with agent `tds73` enabled (CI-tested 2017/2019/2022 per tiberius; 2012–2016 "should work"). SQL Server 2005 needs `tds73` off (agent does not disable it). |
+| SQLite | `rusqlite` 0.32.1 (`bundled`) | [crates.io](https://crates.io/crates/rusqlite/0.32.1) · [docs.rs](https://docs.rs/rusqlite/0.32.1/rusqlite/) · [GitHub](https://github.com/rusqlite/rusqlite) | Bundled SQLite **3.46.0** (`libsqlite3-sys` 0.30.1). Base `rusqlite` supports SQLite ≥3.14.0 when not bundled. |
 
 **Out of 10.0 (Wave B+):** Oracle, Db2, SAP ASE, ClickHouse, Snowflake, BigQuery, Spanner, Databricks, DynamoDB, HANA, Teradata, Firebird — DDL paste until a later major.
 
