@@ -74,7 +74,7 @@ export type MigrationArtifacts = {
   };
 };
 
-export type AppView = 'diagram' | 'migration' | 'shell' | 'aggregation';
+export type AppView = 'diagram' | 'migration' | 'shell' | 'aggregation' | 'query';
 
 export type SchemaPhase = 'before' | 'after';
 
@@ -190,6 +190,7 @@ export function loadSessionState(userId?: string): SessionState {
       rest.view === 'migration' ||
       rest.view === 'shell' ||
       rest.view === 'aggregation' ||
+      rest.view === 'query' ||
       rest.view === 'diagram'
         ? rest.view
         : 'diagram';

@@ -9,6 +9,7 @@ export type AppNavId =
   | 'sizing'
   | 'shell'
   | 'aggregation'
+  | 'query'
   | 'copilot'
   | 'roles'
   | 'settings';
@@ -19,6 +20,7 @@ type AppNavRailProps = {
   copilotAvailable?: boolean;
   shellAvailable?: boolean;
   aggregationAvailable?: boolean;
+  queryAvailable?: boolean;
   rolesAvailable?: boolean;
 };
 
@@ -92,6 +94,28 @@ function IconAggregation(): ReactElement {
   );
 }
 
+function IconQuery(): ReactElement {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <circle cx="10.5" cy="10.5" r="5.25" fill="none" stroke="currentColor" strokeWidth="1.5" />
+      <path
+        d="M14.5 14.5L19 19"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+      />
+      <path
+        d="M8.25 10.5h4.5M10.5 8.25v4.5"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
 function IconCopilot(): ReactElement {
   return (
     <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
@@ -149,6 +173,7 @@ const PRIMARY_ITEMS: { id: AppNavId; labelKey: MessageKey; icon: ReactNode }[] =
   { id: 'sizing', labelKey: 'nav.sizing', icon: <IconSizing /> },
   { id: 'shell', labelKey: 'nav.shell', icon: <IconShell /> },
   { id: 'aggregation', labelKey: 'nav.aggregation', icon: <IconAggregation /> },
+  { id: 'query', labelKey: 'nav.query', icon: <IconQuery /> },
   { id: 'copilot', labelKey: 'nav.copilot', icon: <IconCopilot /> },
   { id: 'roles', labelKey: 'nav.roles', icon: <IconRoles /> },
 ];
@@ -185,6 +210,7 @@ export function AppNavRail({
   copilotAvailable = true,
   shellAvailable = true,
   aggregationAvailable = true,
+  queryAvailable = true,
   rolesAvailable = true,
 }: AppNavRailProps): ReactElement {
   const t = useT();
@@ -201,6 +227,7 @@ export function AppNavRail({
               (item.id === 'copilot' && !copilotAvailable) ||
               (item.id === 'shell' && !shellAvailable) ||
               (item.id === 'aggregation' && !aggregationAvailable) ||
+              (item.id === 'query' && !queryAvailable) ||
               (item.id === 'roles' && !rolesAvailable)
             }
             onSelect={onSelect}

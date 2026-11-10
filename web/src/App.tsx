@@ -51,6 +51,7 @@ import { getDialectLabel, inferSchemaDialect } from '../../src/dialects.ts';
 import { csvFilesToCreateTableDdl } from '../../src/utilities/csvToDdl.js';
 import { AppNavRail, type AppNavId } from './components/AppNavRail';
 import { AggregationBuilderView } from './components/AggregationBuilderView';
+import { VisualQueryView } from './components/VisualQueryView';
 import { MongoShellView } from './components/MongoShellView';
 import { useAccess } from './auth/HostedAuthProvider';
 import { useT } from './i18n/LocaleContext';
@@ -127,6 +128,7 @@ type StudioNavRailProps = {
   copilotAvailable: boolean;
   shellAvailable: boolean;
   aggregationAvailable: boolean;
+  queryAvailable: boolean;
   rolesAvailable: boolean;
 };
 
@@ -136,6 +138,7 @@ function StudioNavRail({
   copilotAvailable,
   shellAvailable,
   aggregationAvailable,
+  queryAvailable,
   rolesAvailable,
 }: StudioNavRailProps) {
   const copilot = useCopilot();
@@ -146,6 +149,7 @@ function StudioNavRail({
       copilotAvailable={copilotAvailable}
       shellAvailable={shellAvailable}
       aggregationAvailable={aggregationAvailable}
+      queryAvailable={queryAvailable}
       rolesAvailable={rolesAvailable}
       onSelect={(id) => {
         if (id === 'copilot') {
@@ -288,6 +292,7 @@ export default function App() {
     const initial = loadSessionState().view;
     if (initial === 'shell') return 'shell';
     if (initial === 'aggregation') return 'aggregation';
+    if (initial === 'query') return 'query';
     return 'schema';
   });
 
@@ -359,6 +364,9 @@ export default function App() {
         case 'aggregation':
           setSessionField('view', 'aggregation');
           break;
+        case 'query':
+          setSessionField('view', 'query');
+          break;
         case 'copilot':
           break;
         case 'roles':
@@ -383,10 +391,14 @@ export default function App() {
   useEffect(() => {
     if (view === 'shell') setActiveNav('shell');
     if (view === 'aggregation') setActiveNav('aggregation');
+    if (view === 'query') setActiveNav('query');
   }, [view]);
 
   useEffect(() => {
-    if (uiRole === 'manager' && (view === 'shell' || view === 'aggregation')) {
+    if (
+      uiRole === 'manager' &&
+      (view === 'shell' || view === 'aggregation' || view === 'query')
+    ) {
       setSessionField('view', 'diagram');
       setActiveNav('schema');
     }
@@ -1615,6 +1627,7 @@ export default function App() {
         copilotAvailable={uiRole === 'developer'}
         shellAvailable={uiRole === 'developer'}
         aggregationAvailable={uiRole === 'developer'}
+        queryAvailable={uiRole === 'developer'}
         rolesAvailable={access.canSwitchUiRole}
       />
       <div className="app-body">
@@ -1622,6 +1635,8 @@ export default function App() {
           <MongoShellView />
         ) : view === 'aggregation' && uiRole === 'developer' ? (
           <AggregationBuilderView />
+        ) : view === 'query' && uiRole === 'developer' ? (
+          <VisualQueryView />
         ) : view === 'diagram' ? (
           uiRole === 'manager' ? (
             <ManagerView

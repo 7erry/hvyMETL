@@ -8,6 +8,7 @@ export type MessageKey =
   | 'nav.sizing'
   | 'nav.shell'
   | 'nav.aggregation'
+  | 'nav.query'
   | 'nav.copilot'
   | 'nav.roles'
   | 'nav.settings'
@@ -104,6 +105,32 @@ export type MessageKey =
   | 'aggregation.noConnections'
   | 'aggregation.noDatabases'
   | 'aggregation.noCollections'
+  | 'query.title'
+  | 'query.builder'
+  | 'query.form'
+  | 'query.json'
+  | 'query.filter'
+  | 'query.projection'
+  | 'query.include'
+  | 'query.exclude'
+  | 'query.sort'
+  | 'query.asc'
+  | 'query.desc'
+  | 'query.skip'
+  | 'query.limit'
+  | 'query.generated'
+  | 'query.results'
+  | 'query.docCount'
+  | 'query.run'
+  | 'query.reset'
+  | 'query.runHint'
+  | 'query.connection'
+  | 'query.database'
+  | 'query.collection'
+  | 'query.selectTarget'
+  | 'query.noConnections'
+  | 'query.noDatabases'
+  | 'query.noCollections'
   | 'copilot.title'
   | 'copilot.open'
   | 'status.ready'
@@ -228,6 +255,7 @@ const en: MessageCatalog = {
   'nav.sizing': 'Sizing',
   'nav.shell': 'Shell',
   'nav.aggregation': 'Aggregate',
+  'nav.query': 'Query',
   'nav.copilot': 'Copilot',
   'nav.roles': 'Roles',
   'nav.settings': 'Settings',
@@ -331,6 +359,32 @@ const en: MessageCatalog = {
   'aggregation.noConnections': 'No saved connections — add one in Shell',
   'aggregation.noDatabases': 'No databases',
   'aggregation.noCollections': 'No collections',
+  'query.title': 'Visual Query',
+  'query.builder': 'Query Builder',
+  'query.form': 'Form',
+  'query.json': 'Json',
+  'query.filter': 'Filter',
+  'query.projection': 'Projection',
+  'query.include': 'Include',
+  'query.exclude': 'Exclude',
+  'query.sort': 'Sort',
+  'query.asc': 'Ascending',
+  'query.desc': 'Descending',
+  'query.skip': 'Skip',
+  'query.limit': 'Limit',
+  'query.generated': 'Generated Query',
+  'query.results': 'Results',
+  'query.docCount': 'docs',
+  'query.run': 'Run Query',
+  'query.reset': 'Reset Query',
+  'query.runHint': 'Run to execute the find against the selected collection.',
+  'query.connection': 'Connection',
+  'query.database': 'Database',
+  'query.collection': 'Collection',
+  'query.selectTarget': 'Select a connection, database, and collection (saved in Shell).',
+  'query.noConnections': 'No saved connections — add one in Shell',
+  'query.noDatabases': 'No databases',
+  'query.noCollections': 'No collections',
   'copilot.title': 'Copilot',
   'copilot.open': 'Open Copilot',
   'status.ready': 'Ready',
@@ -466,6 +520,7 @@ const pt: MessageCatalog = {
   'nav.sizing': 'Dimensionamento',
   'nav.shell': 'Shell',
   'nav.aggregation': 'Agregar',
+  'nav.query': 'Consulta',
   'nav.copilot': 'Copiloto',
   'nav.roles': 'Funções',
   'nav.settings': 'Configurações',
@@ -496,6 +551,32 @@ const pt: MessageCatalog = {
   'aggregation.noConnections': 'Sem conexões — adicione uma no Shell',
   'aggregation.noDatabases': 'Sem bancos',
   'aggregation.noCollections': 'Sem coleções',
+  'query.title': 'Consulta visual',
+  'query.builder': 'Construtor de consulta',
+  'query.form': 'Formulário',
+  'query.json': 'Json',
+  'query.filter': 'Filtro',
+  'query.projection': 'Projeção',
+  'query.include': 'Incluir',
+  'query.exclude': 'Excluir',
+  'query.sort': 'Ordenar',
+  'query.asc': 'Crescente',
+  'query.desc': 'Decrescente',
+  'query.skip': 'Pular',
+  'query.limit': 'Limite',
+  'query.generated': 'Consulta gerada',
+  'query.results': 'Resultados',
+  'query.docCount': 'docs',
+  'query.run': 'Executar consulta',
+  'query.reset': 'Redefinir consulta',
+  'query.runHint': 'Execute para rodar o find na coleção selecionada.',
+  'query.connection': 'Conexão',
+  'query.database': 'Banco de dados',
+  'query.collection': 'Coleção',
+  'query.selectTarget': 'Selecione conexão, banco e coleção (salvos no Shell).',
+  'query.noConnections': 'Sem conexões — adicione uma no Shell',
+  'query.noDatabases': 'Sem bancos',
+  'query.noCollections': 'Sem coleções',
   'language.label': 'Idioma',
   'common.cancel': 'Cancelar',
   'common.close': 'Fechar',
@@ -701,6 +782,7 @@ const es: MessageCatalog = {
   'nav.sizing': 'Dimensionamiento',
   'nav.shell': 'Shell',
   'nav.aggregation': 'Agregar',
+  'nav.query': 'Consulta',
   'nav.copilot': 'Copiloto',
   'nav.roles': 'Roles',
   'nav.settings': 'Configuración',
@@ -731,6 +813,32 @@ const es: MessageCatalog = {
   'aggregation.noConnections': 'Sin conexiones — añada una en Shell',
   'aggregation.noDatabases': 'Sin bases',
   'aggregation.noCollections': 'Sin colecciones',
+  'query.title': 'Consulta visual',
+  'query.builder': 'Constructor de consulta',
+  'query.form': 'Formulario',
+  'query.json': 'Json',
+  'query.filter': 'Filtro',
+  'query.projection': 'Proyección',
+  'query.include': 'Incluir',
+  'query.exclude': 'Excluir',
+  'query.sort': 'Ordenar',
+  'query.asc': 'Ascendente',
+  'query.desc': 'Descendente',
+  'query.skip': 'Omitir',
+  'query.limit': 'Límite',
+  'query.generated': 'Consulta generada',
+  'query.results': 'Resultados',
+  'query.docCount': 'docs',
+  'query.run': 'Ejecutar consulta',
+  'query.reset': 'Restablecer consulta',
+  'query.runHint': 'Ejecute para correr el find en la colección seleccionada.',
+  'query.connection': 'Conexión',
+  'query.database': 'Base de datos',
+  'query.collection': 'Colección',
+  'query.selectTarget': 'Seleccione conexión, base y colección (guardadas en Shell).',
+  'query.noConnections': 'Sin conexiones — añada una en Shell',
+  'query.noDatabases': 'Sin bases',
+  'query.noCollections': 'Sin colecciones',
   'language.label': 'Idioma',
   'common.cancel': 'Cancelar',
   'common.close': 'Cerrar',
@@ -936,6 +1044,7 @@ const zhCN: MessageCatalog = {
   'nav.sizing': '容量规划',
   'nav.shell': 'Shell',
   'nav.aggregation': '聚合',
+  'nav.query': '查询',
   'nav.copilot': '助手',
   'nav.roles': '角色',
   'nav.settings': '设置',
@@ -966,6 +1075,32 @@ const zhCN: MessageCatalog = {
   'aggregation.noConnections': '无已保存连接 — 请在 Shell 中添加',
   'aggregation.noDatabases': '无数据库',
   'aggregation.noCollections': '无集合',
+  'query.title': '可视化查询',
+  'query.builder': '查询构建器',
+  'query.form': '表单',
+  'query.json': 'Json',
+  'query.filter': '筛选',
+  'query.projection': '投影',
+  'query.include': '包含',
+  'query.exclude': '排除',
+  'query.sort': '排序',
+  'query.asc': '升序',
+  'query.desc': '降序',
+  'query.skip': '跳过',
+  'query.limit': '限制',
+  'query.generated': '生成的查询',
+  'query.results': '结果',
+  'query.docCount': '文档',
+  'query.run': '运行查询',
+  'query.reset': '重置查询',
+  'query.runHint': '运行以在所选集合上执行 find。',
+  'query.connection': '连接',
+  'query.database': '数据库',
+  'query.collection': '集合',
+  'query.selectTarget': '请选择连接、数据库和集合（在 Shell 中保存）。',
+  'query.noConnections': '无已保存连接 — 请在 Shell 中添加',
+  'query.noDatabases': '无数据库',
+  'query.noCollections': '无集合',
   'language.label': '语言',
   'common.cancel': '取消',
   'common.close': '关闭',
@@ -1157,6 +1292,7 @@ const hi: MessageCatalog = {
   'nav.sizing': 'साइज़िंग',
   'nav.shell': 'शेल',
   'nav.aggregation': 'एग्रीगेट',
+  'nav.query': 'क्वेरी',
   'nav.copilot': 'कोपायलट',
   'nav.roles': 'भूमिकाएँ',
   'nav.settings': 'सेटिंग्स',
@@ -1187,6 +1323,32 @@ const hi: MessageCatalog = {
   'aggregation.noConnections': 'कोई कनेक्शन नहीं — Shell में जोड़ें',
   'aggregation.noDatabases': 'कोई डेटाबेस नहीं',
   'aggregation.noCollections': 'कोई संग्रह नहीं',
+  'query.title': 'विज़ुअल क्वेरी',
+  'query.builder': 'क्वेरी बिल्डर',
+  'query.form': 'फ़ॉर्म',
+  'query.json': 'Json',
+  'query.filter': 'फ़िल्टर',
+  'query.projection': 'प्रोजेक्शन',
+  'query.include': 'शामिल',
+  'query.exclude': 'बाहर',
+  'query.sort': 'सॉर्ट',
+  'query.asc': 'आरोही',
+  'query.desc': 'अवरोही',
+  'query.skip': 'छोड़ें',
+  'query.limit': 'सीमा',
+  'query.generated': 'जनरेटेड क्वेरी',
+  'query.results': 'परिणाम',
+  'query.docCount': 'डॉक्स',
+  'query.run': 'क्वेरी चलाएँ',
+  'query.reset': 'क्वेरी रीसेट',
+  'query.runHint': 'चयनित संग्रह पर find चलाने के लिए चलाएँ।',
+  'query.connection': 'कनेक्शन',
+  'query.database': 'डेटाबेस',
+  'query.collection': 'संग्रह',
+  'query.selectTarget': 'कनेक्शन, डेटाबेस और संग्रह चुनें (Shell में सहेजे गए)।',
+  'query.noConnections': 'कोई कनेक्शन नहीं — Shell में जोड़ें',
+  'query.noDatabases': 'कोई डेटाबेस नहीं',
+  'query.noCollections': 'कोई संग्रह नहीं',
   'language.label': 'भाषा',
   'common.cancel': 'रद्द करें',
   'common.close': 'बंद करें',
