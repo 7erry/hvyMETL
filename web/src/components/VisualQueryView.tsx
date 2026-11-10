@@ -121,9 +121,11 @@ function addMatchChild(root: MatchNode, groupId: string, child: MatchNode): Matc
 
 function MatchTreeEditor({
   node,
+  fields,
   onChange,
 }: {
   node: MatchNode;
+  fields: string[];
   onChange: (next: MatchNode) => void;
 }): ReactElement {
   if (node.kind === 'group') {
@@ -150,6 +152,7 @@ function MatchTreeEditor({
             <div key={child.id} className="agg-match-row-wrap">
               <MatchTreeEditor
                 node={child}
+                fields={fields}
                 onChange={(nextChild) => {
                   onChange({
                     ...node,
@@ -209,11 +212,11 @@ function MatchTreeEditor({
 
   return (
     <div className="agg-match-expr">
-      <input
+      <FieldSelect
         value={node.field}
-        placeholder="field"
-        aria-label="Field"
-        onChange={(e) => onChange({ ...node, field: e.target.value })}
+        fields={fields}
+        ariaLabel="Field"
+        onChange={(field) => onChange({ ...node, field })}
       />
       <select
         value={node.op}
@@ -652,6 +655,7 @@ export function VisualQueryView(): ReactElement {
                 <h3>{t('query.filter')}</h3>
                 <MatchTreeEditor
                   node={query.filter}
+                  fields={fieldNames}
                   onChange={(filter) => patchQuery({ filter })}
                 />
               </section>
