@@ -3,6 +3,30 @@ import type { FindQueryState, ProjectionRow, SortRow } from './types';
 
 export const FIND_RESULT_LIMIT = 200;
 
+/** Top-level field names from one sample doc (for projection/sort dropdowns). */
+export function buildSampleFieldsScript(database: string, collection: string): string {
+  const dbName = database.trim();
+  const coll = collection.trim();
+  if (!dbName) throw new Error('Database name is required.');
+  if (!coll) throw new Error('Collection name is required.');
+  return `print(EJSON.stringify(Object.keys(db.getSiblingDB(${JSON.stringify(dbName)}).getCollection(${JSON.stringify(coll)}).findOne() || {}).filter((k) => k !== '__v').slice(0, 80)));`;
+}
+
+export function fieldNamesFromShellOutput(stdout: string): string[] {
+  const trimmed = stdout.trim();
+  if (!trimmed) return [];
+  try {
+    const start = trimmed.indexOf('[');
+    const end = trimmed.lastIndexOf(']');
+    if (start < 0 || end < start) return [];
+    const parsed = JSON.parse(trimmed.slice(start, end + 1)) as unknown;
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter((v): v is string => typeof v === 'string' && v.trim() !== '');
+  } catch {
+    return [];
+  }
+}
+
 export type CompiledFind = {
   filter: Record<string, unknown>;
   projection: Record<string, number> | null;

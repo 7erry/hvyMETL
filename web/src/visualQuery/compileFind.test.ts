@@ -2,7 +2,9 @@ import { describe, expect, it } from 'vitest';
 import { newId, type MatchNode } from '../aggregation/types';
 import {
   buildFindScript,
+  buildSampleFieldsScript,
   compileFindQuery,
+  fieldNamesFromShellOutput,
   FIND_RESULT_LIMIT,
   formatFindAsShell,
 } from './compileFind';
@@ -75,6 +77,19 @@ describe('compileFindQuery', () => {
     expect(script).toContain('getCollection("payments")');
     expect(script).toContain(`limit(${Math.min(10, FIND_RESULT_LIMIT)})`);
     expect(script).toContain('EJSON.stringify');
+  });
+
+  it('samples field names via getSiblingDB findOne script', () => {
+    const script = buildSampleFieldsScript('learningPlatform', 'payments');
+    expect(script).toContain('getSiblingDB("learningPlatform")');
+    expect(script).toContain('getCollection("payments")');
+    expect(script).toContain('findOne()');
+    expect(fieldNamesFromShellOutput('[" _id ","amount","status"]'.replace(/ /g, ''))).toEqual([
+      '_id',
+      'amount',
+      'status',
+    ]);
+    expect(fieldNamesFromShellOutput('noise\n["_id","currency"]\nok')).toEqual(['_id', 'currency']);
   });
 
   it('parses JSON edit mode', () => {

@@ -32,7 +32,9 @@ import { resolveShellResultDocuments } from '../mongoShellResultModel';
 import { highlightPrismCode } from '../prismHighlight';
 import {
   buildFindScript,
+  buildSampleFieldsScript,
   compileFindQuery,
+  fieldNamesFromShellOutput,
   findStateToJsonText,
   formatFindAsShell,
 } from '../visualQuery/compileFind';
@@ -59,6 +61,30 @@ const EDITOR_STYLE = {
 
 function highlightJson(code: string): string {
   return highlightPrismCode(code, 'json');
+}
+
+function FieldSelect({
+  value,
+  fields,
+  ariaLabel,
+  onChange,
+}: {
+  value: string;
+  fields: string[];
+  ariaLabel: string;
+  onChange: (next: string) => void;
+}): ReactElement {
+  const options = value && !fields.includes(value) ? [value, ...fields] : fields;
+  return (
+    <select value={value} aria-label={ariaLabel} onChange={(e) => onChange(e.target.value)}>
+      <option value="">{fields.length === 0 ? '…' : 'field'}</option>
+      {options.map((name) => (
+        <option key={name} value={name}>
+          {name}
+        </option>
+      ))}
+    </select>
+  );
 }
 
 function updateMatchNode(root: MatchNode, id: string, patch: Partial<MatchNode>): MatchNode {
@@ -225,6 +251,7 @@ export function VisualQueryView(): ReactElement {
   const [runDocs, setRunDocs] = useState<Record<string, unknown>[] | null>(null);
   const [runError, setRunError] = useState<string | null>(null);
   const [running, setRunning] = useState(false);
+  const [fieldNames, setFieldNames] = useState<string[]>([]);
 
   const selectedConnection = connections.find((c) => c.id === connectionId) ?? null;
   const canRun = Boolean(
@@ -364,6 +391,7 @@ export function VisualQueryView(): ReactElement {
       setDatabase(nextDb);
       setCollections([]);
       setCollection('');
+      setFieldNames([]);
       if (!selectedUri || !nextDb.trim()) return;
       setCatalogLoading(true);
       setRunError(null);
@@ -382,6 +410,35 @@ export function VisualQueryView(): ReactElement {
     },
     [applyCollectionNames, fetchCollectionNames, selectedUri],
   );
+
+  useEffect(() => {
+    if (!selectedUri || !database.trim() || !collection.trim()) {
+      setFieldNames([]);
+      return;
+    }
+    let cancelled = false;
+    void (async () => {
+      try {
+        const script = buildSampleFieldsScript(database, collection);
+        const next = await runMongoshScript({
+          uri: selectedUri,
+          script,
+          dbName: database.trim(),
+        });
+        if (cancelled) return;
+        if (!next.ok) {
+          setFieldNames([]);
+          return;
+        }
+        setFieldNames(fieldNamesFromShellOutput(next.stdout));
+      } catch {
+        if (!cancelled) setFieldNames([]);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [collection, database, selectedUri]);
 
   const patchQuery = useCallback((patch: Partial<FindQueryState>) => {
     setQuery((prev) => ({ ...prev, ...patch }));
@@ -612,11 +669,11 @@ export function VisualQueryView(): ReactElement {
                   <div className="vq-rows">
                     {query.projection.map((row) => (
                       <div key={row.id} className="vq-row">
-                        <input
+                        <FieldSelect
                           value={row.field}
-                          placeholder="field"
-                          aria-label="Projection field"
-                          onChange={(e) => updateProjection(row.id, { field: e.target.value })}
+                          fields={fieldNames}
+                          ariaLabel="Projection field"
+                          onChange={(field) => updateProjection(row.id, { field })}
                         />
                         <select
                           value={row.include ? 'include' : 'exclude'}
@@ -664,11 +721,11 @@ export function VisualQueryView(): ReactElement {
                 <div className="vq-rows">
                   {query.sort.map((row) => (
                     <div key={row.id} className="vq-row">
-                      <input
+                      <FieldSelect
                         value={row.field}
-                        placeholder="field"
-                        aria-label="Sort field"
-                        onChange={(e) => updateSort(row.id, { field: e.target.value })}
+                        fields={fieldNames}
+                        ariaLabel="Sort field"
+                        onChange={(field) => updateSort(row.id, { field })}
                       />
                       <select
                         value={row.direction}
