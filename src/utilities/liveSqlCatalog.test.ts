@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { modelFromSqlCatalog } from './liveSqlCatalog.js';
-import { liveSqlEngine, sqlDatabaseName } from './liveSqlImport.js';
+import { liveSqlEngine, POSTGRES_FOREIGN_KEYS_SQL, sqlDatabaseName } from './liveSqlImport.js';
 
 describe('live SQL catalog', () => {
   it('builds tables, primary keys, and foreign keys without scanning rows', () => {
@@ -34,6 +34,12 @@ describe('live SQL catalog', () => {
 
   it('rejects an empty catalog', () => {
     expect(() => modelFromSqlCatalog('mysql', [], [], [])).toThrow(/no tables/);
+  });
+
+  it('reads Postgres foreign keys from pg_constraint, not privilege-filtered information_schema', () => {
+    expect(POSTGRES_FOREIGN_KEYS_SQL).toContain('pg_constraint');
+    expect(POSTGRES_FOREIGN_KEYS_SQL).toContain('unnest(con.conkey, con.confkey)');
+    expect(POSTGRES_FOREIGN_KEYS_SQL).not.toContain('constraint_column_usage');
   });
 
   it('reads the engine, database, and schema from the URI', () => {

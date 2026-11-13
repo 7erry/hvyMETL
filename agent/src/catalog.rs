@@ -84,15 +84,28 @@ async fn introspect_postgres(uri: &str, database: &str) -> Result<Value, String>
         )
         .await
         .map_err(public_error)?;
+    // information_schema.constraint_column_usage hides FKs the role does not own;
+    // pg_constraint/pg_attribute still returns them for SELECT-capable catalog users.
     let foreign_keys = client
         .query(
-            "SELECT kcu.table_name, kcu.column_name, ccu.table_name AS foreign_table, ccu.column_name AS foreign_column
-             FROM information_schema.table_constraints tc
-             JOIN information_schema.key_column_usage kcu
-               ON tc.constraint_name = kcu.constraint_name AND tc.table_schema = kcu.table_schema
-             JOIN information_schema.constraint_column_usage ccu
-               ON ccu.constraint_name = tc.constraint_name AND ccu.table_schema = tc.table_schema
-             WHERE tc.constraint_type = 'FOREIGN KEY' AND tc.table_schema = $1",
+            "SELECT src.relname AS table_name,
+                    src_att.attname AS column_name,
+                    tgt.relname AS foreign_table,
+                    tgt_att.attname AS foreign_column
+             FROM pg_constraint con
+             JOIN pg_class src ON src.oid = con.conrelid
+             JOIN pg_namespace nsp ON nsp.oid = src.relnamespace
+             JOIN pg_class tgt ON tgt.oid = con.confrelid
+             JOIN LATERAL unnest(con.conkey, con.confkey) AS cols(src_attnum, tgt_attnum) ON true
+             JOIN pg_attribute src_att
+               ON src_att.attrelid = con.conrelid
+              AND src_att.attnum = cols.src_attnum
+              AND NOT src_att.attisdropped
+             JOIN pg_attribute tgt_att
+               ON tgt_att.attrelid = con.confrelid
+              AND tgt_att.attnum = cols.tgt_attnum
+              AND NOT tgt_att.attisdropped
+             WHERE con.contype = 'f' AND nsp.nspname = $1",
             &[&schema],
         )
         .await

@@ -43,7 +43,30 @@ export function sqlConnectionUri(uri: string, database: string): string {
   return url.toString();
 }
 
-/** Read information_schema. shortcut: row counts are catalog estimates, upgrade when the pipeline counts rows. */
+/**
+ * Postgres FK catalog via pg_constraint.
+ * information_schema.constraint_column_usage returns 0 rows for roles that do not own the referenced tables.
+ */
+export const POSTGRES_FOREIGN_KEYS_SQL = `SELECT src.relname AS table_name,
+       src_att.attname AS column_name,
+       tgt.relname AS foreign_table,
+       tgt_att.attname AS foreign_column
+FROM pg_constraint con
+JOIN pg_class src ON src.oid = con.conrelid
+JOIN pg_namespace nsp ON nsp.oid = src.relnamespace
+JOIN pg_class tgt ON tgt.oid = con.confrelid
+JOIN LATERAL unnest(con.conkey, con.confkey) AS cols(src_attnum, tgt_attnum) ON true
+JOIN pg_attribute src_att
+  ON src_att.attrelid = con.conrelid
+ AND src_att.attnum = cols.src_attnum
+ AND NOT src_att.attisdropped
+JOIN pg_attribute tgt_att
+  ON tgt_att.attrelid = con.confrelid
+ AND tgt_att.attnum = cols.tgt_attnum
+ AND NOT tgt_att.attisdropped
+WHERE con.contype = 'f' AND nsp.nspname = $1`;
+
+/** Read catalog metadata. shortcut: row counts are catalog estimates, upgrade when the pipeline counts rows. */
 export async function importLiveSqlDatabase(
   uri: string,
   database: string,
@@ -93,16 +116,7 @@ async function readPostgresCatalog(
       column_name: string;
       foreign_table: string;
       foreign_column: string;
-    }>(
-      `SELECT kcu.table_name, kcu.column_name, ccu.table_name AS foreign_table, ccu.column_name AS foreign_column
-       FROM information_schema.table_constraints tc
-       JOIN information_schema.key_column_usage kcu
-         ON tc.constraint_name = kcu.constraint_name AND tc.table_schema = kcu.table_schema
-       JOIN information_schema.constraint_column_usage ccu
-         ON ccu.constraint_name = tc.constraint_name AND ccu.table_schema = tc.table_schema
-       WHERE tc.constraint_type = 'FOREIGN KEY' AND tc.table_schema = $1`,
-      [schema],
-    );
+    }>(POSTGRES_FOREIGN_KEYS_SQL, [schema]);
     const sizes = await client.query<{ table_name: string; row_count: string }>(
       `SELECT c.relname AS table_name, GREATEST(c.reltuples, 0)::bigint AS row_count
        FROM pg_class c
