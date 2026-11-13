@@ -6265,15 +6265,16 @@ button.mongo-shell-tree__toggle:hover:not(:disabled) {
 
 .live-mongo-import__badge {
   font-size: 0.85rem;
-  color: var(--mdb-gray-light-1);
+  /* Not connected: idle, waiting, or error — red status dot (● in i18n). */
+  color: var(--mdb-red, #c7384f);
 }
 
 .live-mongo-import__badge--waiting {
-  color: var(--mdb-spring-green);
+  color: var(--mdb-red, #c7384f);
 }
 
 .live-mongo-import__badge--ready {
-  color: var(--mdb-spring-green);
+  color: var(--mdb-green-base);
   font-weight: 600;
 }
 
