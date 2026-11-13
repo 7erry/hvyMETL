@@ -6,11 +6,12 @@ use rusqlite::Connection as SqliteConnection;
 use serde_json::{json, Value};
 use tiberius::{AuthMethod, Client as MssqlClient, Config as MssqlConfig};
 use tokio::net::TcpStream;
-use tokio_postgres::{types::ToSql, NoTls};
+use tokio_postgres::types::ToSql;
 use tokio_util::compat::TokioAsyncWriteCompatExt;
 
 use crate::catalog::public_error;
 use crate::engine::{schema_name, sqlite_path, Engine};
+use crate::pg;
 
 #[derive(Debug, Clone)]
 pub struct ExtractTable {
@@ -50,12 +51,7 @@ async fn extract_postgres(
 ) -> Result<ExtractChunk, String> {
     let schema = schema_name(uri, Engine::Postgresql);
     let connection_uri = rewrite_database(uri, database)?;
-    let (client, connection) = tokio_postgres::connect(&connection_uri, NoTls)
-        .await
-        .map_err(public_error)?;
-    tokio::spawn(async move {
-        let _ = connection.await;
-    });
+    let client = pg::connect(&connection_uri).await.map_err(public_error)?;
 
     let pk = primary_key_postgres(&client, &schema, &table.name).await?;
     if pk.is_empty() {

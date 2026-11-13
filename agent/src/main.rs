@@ -1,6 +1,7 @@
 mod catalog;
 mod engine;
 mod extract;
+mod pg;
 mod schema;
 
 use std::env;

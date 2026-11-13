@@ -6,8 +6,9 @@ use rusqlite::Connection as SqliteConnection;
 use serde_json::{json, Value};
 use tiberius::{AuthMethod, Client as MssqlClient, Config as MssqlConfig};
 use tokio::net::TcpStream;
-use tokio_postgres::NoTls;
 use tokio_util::compat::TokioAsyncWriteCompatExt;
+
+use crate::pg;
 
 use crate::engine::{database_name, schema_name, sqlite_path, Engine};
 use crate::schema::{sample_limit, schema_payload, table_from_documents};
@@ -58,12 +59,7 @@ fn introspect_mongo(uri: &str, database: &str) -> Result<Value, String> {
 async fn introspect_postgres(uri: &str, database: &str) -> Result<Value, String> {
     let schema = schema_name(uri, Engine::Postgresql);
     let connection_uri = rewrite_database(uri, database)?;
-    let (client, connection) = tokio_postgres::connect(&connection_uri, NoTls)
-        .await
-        .map_err(public_error)?;
-    tokio::spawn(async move {
-        let _ = connection.await;
-    });
+    let client = pg::connect(&connection_uri).await.map_err(public_error)?;
 
     let columns = client
         .query(
