@@ -1,3 +1,18 @@
+## hvyMETL 10.1.6
+
+**Postgres agent over Kind port-forward** — TLS handshake `eof` (port-forward dying mid-handshake) retries a few times, maps to `database connection dropped (is kubectl port-forward still running?)`, and adds `sslmode=require` when missing. Keep a Terminal A loop so the forward stays up:
+
+```bash
+while true; do
+  kubectl port-forward -n postgres-operator --address 127.0.0.1 pod/hippo-instance1-9bc4-0 5432:5432
+  sleep 1
+done
+```
+
+Then run the agent in Terminal B. Studio live-import one-liner points at `v10.1.6`. Download assets: **`hvymetl-agent-macos-aarch64`**, **`hvymetl-agent-macos-x64`**, **`hvymetl-agent-linux-x64`**, **`hvymetl-agent-windows-x64.exe`**.
+
+---
+
 ## hvyMETL 10.1.5
 
 **Agent connection errors** — When Postgres refuses TCP (e.g. Kind `kubectl port-forward` down), the agent no longer prints opaque `error connecting to server`. It maps connection refused, studio TLS trust failures, and WSS HTTP errors to distinct messages. Studio live-import one-liner points at `v10.1.5`. Download assets: **`hvymetl-agent-macos-aarch64`**, **`hvymetl-agent-macos-x64`**, **`hvymetl-agent-linux-x64`**, **`hvymetl-agent-windows-x64.exe`**.

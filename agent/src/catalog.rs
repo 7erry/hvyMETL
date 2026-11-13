@@ -561,10 +561,18 @@ fn quote_ident(name: &str) -> String {
     format!("\"{}\"", name.replace('"', "\"\""))
 }
 
-pub fn public_error(error: impl ToString) -> String {
+pub fn public_error(error: impl ToString + std::fmt::Debug) -> String {
     let message = error.to_string();
+    let debug = format!("{error:?}");
     if message.contains("UnknownIssuer") || message.contains("invalid peer certificate") {
         return "Could not reach the studio because its TLS certificate is not trusted.".to_string();
+    }
+    // Kind PF often resets mid-TLS; Display is opaque "error performing TLS handshake".
+    if message.contains("TLS handshake")
+        || debug.contains("tls handshake eof")
+        || debug.contains("UnexpectedEof")
+    {
+        return "database connection dropped (is kubectl port-forward still running?)".to_string();
     }
     // tokio-postgres Connect: Display is just "error connecting to server" (Debug has ConnectionRefused).
     if message.contains("error connecting to server")
@@ -592,6 +600,12 @@ mod public_error_tests {
     #[test]
     fn maps_postgres_connect_refused() {
         assert!(public_error("error connecting to server").contains("connection refused"));
+    }
+
+    #[test]
+    fn maps_tls_handshake_eof() {
+        let msg = public_error("error performing TLS handshake");
+        assert!(msg.contains("port-forward"), "{msg}");
     }
 
     #[test]

@@ -59,7 +59,7 @@ describe('liveAgentRunCommand', () => {
 describe('liveAgentOneLiner', () => {
   it('downloads the release asset then runs it, preferring env URI when blank', () => {
     const mac = liveAgentOneLiner('macos-aarch64', 'abc', '', '', 'https://hvymetl.studio');
-    expect(mac).toContain("curl -fsSL 'https://github.com/7erry/hvyMETL/releases/download/v10.1.5/hvymetl-agent-macos-aarch64'");
+    expect(mac).toContain("curl -fsSL 'https://github.com/7erry/hvyMETL/releases/download/v10.1.6/hvymetl-agent-macos-aarch64'");
     expect(mac).toContain('--uri "$DATABASE_URL"');
     expect(mac).toContain("--server 'https://hvymetl.studio'");
     expect(mac).not.toContain('npx');
@@ -87,7 +87,7 @@ describe('detectLiveAgentPlatform', () => {
     );
     expect(detectLiveAgentPlatform({ userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)', platform: 'MacIntel' })).toBeNull();
     expect(liveAgentDownloadUrl('linux-x64')).toBe(
-      'https://github.com/7erry/hvyMETL/releases/download/v10.1.5/hvymetl-agent-linux-x64',
+      'https://github.com/7erry/hvyMETL/releases/download/v10.1.6/hvymetl-agent-linux-x64',
     );
   });
 });
