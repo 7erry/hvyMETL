@@ -227,6 +227,9 @@ fn run_http_legacy(token: &str, uri: &str, database_flag: Option<&str>, server: 
 
 #[tokio::main]
 async fn main() {
+    // Dep tree enables both rustls ring + aws-lc-rs; pick one before any TLS (WSS to studio).
+    let _ = rustls::crypto::ring::default_provider().install_default();
+
     if env::args().any(|arg| arg == "--help" || arg == "-h") {
         println!(
             "hvymetl-agent --token <token> --uri <uri> [--database <name>] [--server <url>] [--http]"

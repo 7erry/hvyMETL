@@ -17,6 +17,8 @@ mongodb = { version = "3.9.1", features = ["sync"] }
 # rustls (not OpenSSL) so Linux/Windows agents can zig-cross-compile from macOS
 mysql_async = { version = "0.34", default-features = false, features = ["default-rustls"] }
 rusqlite = { version = "0.32", features = ["bundled"] }
+# Both ring and aws-lc-rs end up in the tree via deps; pick ring explicitly for zig cross-builds.
+rustls = { version = "0.23", default-features = false, features = ["ring", "std", "tls12"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 tiberius = { version = "0.12", default-features = false, features = ["chrono", "rustls", "tds73"] }
