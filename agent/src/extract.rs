@@ -55,10 +55,12 @@ async fn extract_postgres(
 
     let pk = primary_key_postgres(&client, &schema, &table.name).await?;
     if pk.is_empty() {
-        return Err(format!(
-            "Table {} has no primary key; restartable extract requires a primary key.",
-            table.name
-        ));
+        // Views / heap tables without a real PK: skip instead of aborting the whole extract.
+        return Ok(ExtractChunk {
+            checkpoint: table.checkpoint.clone().unwrap_or_else(|| "0".to_string()),
+            rows: Vec::new(),
+            eof: true,
+        });
     }
     let select_cols = table
         .columns

@@ -10,7 +10,12 @@ export function resolveDesignModel(input: {
   const ddl = input.ddl?.trim();
   if (ddl) {
     const dialect = resolveSchemaImportDialect(ddl, input.dialect ?? 'import');
-    return parseSchemaImport(ddl, dialect, `ddl:${dialect}`);
+    const fromDdl = parseSchemaImport(ddl, dialect, `ddl:${dialect}`);
+    // Live-agent DDL is a comment stub ("// Live PostgreSQL…"); keep the introspected model.
+    if (fromDdl.tables.length === 0 && input.model?.tables?.length) {
+      return input.model;
+    }
+    return fromDdl;
   }
 
   if (input.model?.tables?.length) {
