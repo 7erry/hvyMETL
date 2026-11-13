@@ -42,6 +42,18 @@ export function emptyLiveConnectionFields(engine: LiveImportEngine): LiveConnect
   };
 }
 
+/** Guess engine from a connection URI scheme. */
+export function liveImportEngineFromUri(uri: string): LiveImportEngine | null {
+  const trimmed = uri.trim().toLowerCase();
+  if (!trimmed) return null;
+  if (trimmed.startsWith('mongodb')) return 'mongodb';
+  if (trimmed.startsWith('postgres')) return 'postgresql';
+  if (trimmed.startsWith('mysql') || trimmed.startsWith('mariadb')) return 'mysql';
+  if (trimmed.startsWith('mssql') || trimmed.startsWith('sqlserver')) return 'mssql';
+  if (trimmed.startsWith('sqlite:')) return 'sqlite';
+  return null;
+}
+
 /** Host shown in saved-connection labels (`name (host)`). */
 export function liveConnectionDisplayHost(uri: string, engine: LiveImportEngine): string {
   if (engine === 'sqlite') {

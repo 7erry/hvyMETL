@@ -1,21 +1,18 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
-import { describeApiError } from '../api';
 import { useT } from '../i18n/LocaleContext';
 import type { MessageKey } from '../i18n/messages';
 import {
-  deleteLiveImportConnection,
   listLiveImportConnections,
-  upsertLiveImportConnection,
   type LiveImportConnection,
   type LiveImportEngine,
 } from '../liveImportConnections';
 import {
   buildLiveConnectionUri,
   emptyLiveConnectionFields,
-  liveConnectionDisplayHost,
   parseLiveConnectionUri,
   type LiveConnectionFields,
 } from '../liveConnectionUri';
+import { SavedLiveImportConnectionField } from './SavedLiveImportConnectionField';
 
 type LiveConnectionEngine = LiveImportEngine;
 type InputMode = 'fields' | 'uri';
@@ -287,13 +284,6 @@ const ENGINE_LABEL_KEYS: Record<LiveConnectionEngine, MessageKey> = {
   sqlite: 'live.engine.sqlite',
 };
 
-type ConnFormState = { id?: string; name: string; uri: string; database: string };
-
-function connectionLabel(c: LiveImportConnection): string {
-  const host = liveConnectionDisplayHost(c.uri, c.engine);
-  return `${c.name || c.id} (${host})`;
-}
-
 /** Live database connection + local-agent bridge for schema import. */
 export function LiveMongoImportForm({
   disabled,
@@ -315,10 +305,6 @@ export function LiveMongoImportForm({
   const [commandPreview, setCommandPreview] = useState('');
   const [connections, setConnections] = useState<LiveImportConnection[]>(() => listLiveImportConnections());
   const [connectionId, setConnectionId] = useState(() => listLiveImportConnections()[0]?.id ?? '');
-  const [editingConn, setEditingConn] = useState(false);
-  const [manageOpen, setManageOpen] = useState(false);
-  const [connForm, setConnForm] = useState<ConnFormState>({ name: '', uri: '', database: '' });
-  const [connError, setConnError] = useState('');
   const userPickedPlatform = useRef(false);
   const connection = liveConnectionHint(engine);
   const selected = isLiveAgentPlatform(platform) ? liveAgentBuild(platform) : null;
@@ -346,6 +332,15 @@ export function LiveMongoImportForm({
     };
   }, []);
 
+  const applySavedConnection = (saved: LiveImportConnection): void => {
+    setEngine(saved.engine);
+    setUri(saved.uri);
+    setFields(parseLiveConnectionUri(saved.engine, saved.uri));
+    if (saved.database) {
+      setFields((prev) => ({ ...prev, database: saved.database || prev.database }));
+    }
+  };
+
   useEffect(() => {
     if (!connectionId) return;
     const saved = connections.find((c) => c.id === connectionId);
@@ -370,15 +365,6 @@ export function LiveMongoImportForm({
   }, [platform, effectiveUri, effectiveDatabase]);
 
   const shownCommand = commandPreview || previewTemplate;
-
-  const refreshConnections = (): LiveImportConnection[] => {
-    const next = listLiveImportConnections();
-    setConnections(next);
-    if (connectionId && !next.some((c) => c.id === connectionId)) {
-      setConnectionId(next[0]?.id ?? '');
-    }
-    return next;
-  };
 
   const patchFields = (patch: Partial<LiveConnectionFields>) => {
     setFields((prev) => ({ ...prev, ...patch }));
@@ -462,163 +448,22 @@ export function LiveMongoImportForm({
           {t('live.sectionConnection')}
         </h4>
 
-        <div className="live-mongo-import__saved-row">
-          <span className="live-mongo-import__saved-label">{t('live.savedLabel')}</span>
-          <select
-            className="live-mongo-import__saved-select"
-            value={connectionId}
-            aria-label={t('live.savedConnections')}
-            onChange={(e) => setConnectionId(e.target.value)}
-            onFocus={refreshConnections}
-          >
-            {connections.length === 0 ? (
-              <option value="">{t('live.noSavedConnections')}</option>
-            ) : (
-              <>
-                <option value="">{t('live.manualConnection')}</option>
-                {connections.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {connectionLabel(c)}
-                  </option>
-                ))}
-              </>
-            )}
-          </select>
-          <button
-            type="button"
-            className="live-mongo-import__new-btn"
-            onClick={() => {
-              setConnForm({ name: '', uri: effectiveUri, database: effectiveDatabase });
-              setConnError('');
-              setEditingConn(true);
-              setManageOpen(false);
-            }}
-          >
-            {t('live.newConnection')}
-          </button>
-          <div className="live-mongo-import__manage">
-            <button
-              type="button"
-              className="live-mongo-import__manage-btn"
-              aria-label={t('live.manageMenu')}
-              aria-expanded={manageOpen}
-              onClick={() => setManageOpen((v) => !v)}
-            >
-              …
-            </button>
-            {manageOpen ? (
-              <div className="live-mongo-import__manage-menu" role="menu">
-                <button
-                  type="button"
-                  role="menuitem"
-                  disabled={!connectionId}
-                  onClick={() => {
-                    const selectedConn = connections.find((c) => c.id === connectionId);
-                    if (!selectedConn) return;
-                    setConnForm({
-                      id: selectedConn.id,
-                      name: selectedConn.name,
-                      uri: selectedConn.uri,
-                      database: selectedConn.database,
-                    });
-                    setConnError('');
-                    setEditingConn(true);
-                    setManageOpen(false);
-                  }}
-                >
-                  {t('connections.edit')}
-                </button>
-                <button
-                  type="button"
-                  role="menuitem"
-                  disabled={!connectionId}
-                  onClick={() => {
-                    const selectedConn = connections.find((c) => c.id === connectionId);
-                    if (!selectedConn) return;
-                    if (!window.confirm(t('connections.deleteConfirm', { name: selectedConn.name }))) return;
-                    deleteLiveImportConnection(selectedConn.id);
-                    const next = refreshConnections();
-                    setConnectionId(next[0]?.id ?? '');
-                    setEditingConn(false);
-                    setManageOpen(false);
-                  }}
-                >
-                  {t('connections.delete')}
-                </button>
-              </div>
-            ) : null}
-          </div>
-        </div>
-
-        {editingConn ? (
-          <div className="saved-mongo-conn__form">
-            <label>
-              {t('connections.name')}
-              <input
-                value={connForm.name}
-                onChange={(e) => setConnForm((prev) => ({ ...prev, name: e.target.value }))}
-                placeholder={t('connections.namePlaceholder')}
-              />
-            </label>
-            <label>
-              {t('live.uri')}
-              <input
-                value={connForm.uri}
-                onChange={(e) => setConnForm((prev) => ({ ...prev, uri: e.target.value }))}
-                placeholder={connection.placeholder}
-                spellCheck={false}
-              />
-            </label>
-            <label>
-              {t('live.database')}
-              <input
-                value={connForm.database}
-                onChange={(e) => setConnForm((prev) => ({ ...prev, database: e.target.value }))}
-                placeholder={t('live.databasePlaceholder')}
-                spellCheck={false}
-              />
-            </label>
-            {connError ? <p className="saved-mongo-conn__error">{connError}</p> : null}
-            <div className="button-row">
-              <button
-                type="button"
-                className="primary"
-                onClick={() => {
-                  try {
-                    const saved = upsertLiveImportConnection({
-                      id: connForm.id,
-                      name: connForm.name,
-                      engine,
-                      uri: connForm.uri,
-                      database: connForm.database,
-                    });
-                    const next = refreshConnections();
-                    setConnectionId(next.some((c) => c.id === saved.id) ? saved.id : (next[0]?.id ?? ''));
-                    setUri(saved.uri);
-                    setFields(parseLiveConnectionUri(engine, saved.uri));
-                    setEditingConn(false);
-                    setConnError('');
-                  } catch (error) {
-                    setConnError(describeApiError(error));
-                  }
-                }}
-              >
-                {t('common.save')}
-              </button>
-              <button
-                type="button"
-                className="secondary"
-                onClick={() => {
-                  setEditingConn(false);
-                  setConnError('');
-                }}
-              >
-                {t('common.cancel')}
-              </button>
-            </div>
-            <p className="saved-mongo-conn__hint">{t('live.storageHint')}</p>
-          </div>
-        ) : null}
+        <SavedLiveImportConnectionField
+          connections={connections}
+          connectionId={connectionId}
+          onConnectionIdChange={setConnectionId}
+          onConnectionsChange={(next) => {
+            setConnections(next);
+            if (connectionId && !next.some((c) => c.id === connectionId)) {
+              setConnectionId(next[0]?.id ?? '');
+            }
+          }}
+          draftUri={effectiveUri}
+          draftDatabase={effectiveDatabase}
+          draftEngine={engine}
+          onApplyConnection={applySavedConnection}
+          disabled={disabled || busy}
+        />
 
         <div className="live-mongo-import__mode-tabs" role="tablist" aria-label={t('live.uri')}>
           <button

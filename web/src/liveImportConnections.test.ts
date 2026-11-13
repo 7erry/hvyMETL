@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { liveImportEngineFromUri } from './liveConnectionUri';
 import {
   deleteLiveImportConnection,
   listLiveImportConnections,
@@ -54,5 +55,14 @@ describe('liveImportConnections', () => {
 
     deleteLiveImportConnection(created.id);
     expect(listLiveImportConnections()).toHaveLength(0);
+  });
+
+  it('guesses engine from URI schemes used by the pipeline picker', () => {
+    expect(liveImportEngineFromUri('postgresql://localhost/shop')).toBe('postgresql');
+    expect(liveImportEngineFromUri('mongodb+srv://a.mongodb.net')).toBe('mongodb');
+    expect(liveImportEngineFromUri('mysql://localhost/db')).toBe('mysql');
+    expect(liveImportEngineFromUri('mssql://localhost/db')).toBe('mssql');
+    expect(liveImportEngineFromUri('sqlite:///tmp/x.db')).toBe('sqlite');
+    expect(liveImportEngineFromUri('')).toBeNull();
   });
 });

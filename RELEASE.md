@@ -1,3 +1,9 @@
+## hvyMETL 10.1.9
+
+**Run pipeline saved connections** — Read live data in the Run pipeline dialog uses the same browser-saved Live Import connections (`hvymetl.liveimport.connections`): pick, add, edit, or delete URI + engine + optional database without retyping.
+
+---
+
 ## hvyMETL 10.1.8
 
 **Live Import mock CSV** — Run pipeline no longer fails when live-agent DDL is a comment stub (`// Live PostgreSQL…`). Mock CSV generation falls back to the introspected structural model (same idea as design’s `resolveDesignModel`). Re-run the pipeline; no re-import needed if the model is already on the canvas.
