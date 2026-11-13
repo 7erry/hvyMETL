@@ -65,14 +65,14 @@ export const MONGO_GRAPH_LAYOUT_OPTIONS: GraphLayoutOptions = {
   maxRowWidth: 1600,
 };
 
-/** Default Before · SQL spacing — two grid dots between tables vertically. */
+/** Default Before · SQL spacing — tight cluster gaps (match Mongo horizontally). */
 export const SQL_GRAPH_LAYOUT_OPTIONS: GraphLayoutOptions = {
   nodeWidth: 260,
   nodeHeight: 200,
-  gapX: 160,
+  gapX: 40,
   gapY: DIAGRAM_TWO_DOT_GAP,
   padding: 48,
-  componentGapX: 200,
+  componentGapX: 40,
   componentGapY: DIAGRAM_TWO_DOT_GAP,
   grid: DIAGRAM_GRID_UNIT,
   maxRowWidth: 2600,
