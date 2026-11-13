@@ -1,3 +1,9 @@
+## hvyMETL 10.1.8
+
+**Live Import mock CSV** — Run pipeline no longer fails when live-agent DDL is a comment stub (`// Live PostgreSQL…`). Mock CSV generation falls back to the introspected structural model (same idea as design’s `resolveDesignModel`). Re-run the pipeline; no re-import needed if the model is already on the canvas.
+
+---
+
 ## hvyMETL 10.1.7
 
 **Live Import redesign** — Add data source modal matches the polished Live Database layout: segmented Upload/Paste vs Live tabs, Saved + New connections, Form fields / Connection URI toggle, 2-column Engine/Host/Database/Port/User/Password grid, SSL & schema options, local-agent section with OS picker, amber/green/red status dots, and auto-import on agent connect. Agent download URLs use published `v10.1.6` binaries.

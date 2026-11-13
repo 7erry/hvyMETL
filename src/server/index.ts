@@ -1215,14 +1215,15 @@ app.post('/api/mock-csv/generate', (req, res) => {
   try {
     const { tenantId } = tenantContextFromRequest(req);
     const ddl = String(req.body?.ddl ?? '');
-    if (!ddl.trim()) {
+    const model = req.body?.model as import('../types.js').SqlStructuralModel | undefined;
+    if (!ddl.trim() && !model?.tables?.length) {
       res.status(400).json({ error: 'ddl is required' });
       return;
     }
     const outDir = tenantCsvBatchDir(ROOT, tenantId, 'mock-csv');
     const mockCsvOptions = req.body?.mockCsvOptions as import('../utilities/mockCsvFromDdl.js').MockCsvOptions | undefined;
     const dialect = typeof req.body?.dialect === 'string' ? req.body.dialect : undefined;
-    const result = generateMockCsvFromDdl(ddl, outDir, ROOT, { ...mockCsvOptions, dialect });
+    const result = generateMockCsvFromDdl(ddl, outDir, ROOT, { ...mockCsvOptions, dialect, model });
     res.json({
       ok: true,
       outputDir: result.outputDir,

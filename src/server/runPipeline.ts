@@ -187,7 +187,7 @@ function resolvePipelineCsvRoot(
     return resolveCsvSourcePath(request.csvSourcePath, importEnv, request.csvAllowedRoots);
   }
 
-  if (!request.ddl?.trim()) {
+  if (!request.ddl?.trim() && !request.model?.tables?.length) {
     throw new Error('DDL is required to generate mock CSV data when no CSV export directory is provided.');
   }
 
@@ -196,9 +196,10 @@ function resolvePipelineCsvRoot(
     stage: 'generating',
     message: 'Generating mock CSV files from DDL (one file per table)…',
   });
-  const generated = generateMockCsvFromDdl(request.ddl, mockDir, request.rootDir, {
+  const generated = generateMockCsvFromDdl(request.ddl ?? '', mockDir, request.rootDir, {
     ...request.mockCsvOptions,
     dialect: request.dialect,
+    model: request.model,
   });
   reportProgress(request, {
     stage: 'generating',

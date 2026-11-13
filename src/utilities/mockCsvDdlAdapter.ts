@@ -85,24 +85,35 @@ export function structuralModelToMockDdl(model: SqlStructuralModel): string {
 /**
  * Normalize schema import content for mock CSV generation.
  * SQL dialects pass through unchanged; CloudFormation templates become CREATE TABLE DDL.
+ * Live-agent DDL is often a comment stub with tables only on the introspected model.
  */
-export function prepareMockCsvDdl(content: string, dialect?: string): string {
+export function prepareMockCsvDdl(
+  content: string,
+  dialect?: string,
+  model?: SqlStructuralModel,
+): string {
   const trimmed = content.trim();
   if (!trimmed) {
+    if (model?.tables?.length) return structuralModelToMockDdl(model);
     throw new Error('DDL is required to generate mock CSV data.');
   }
 
   const useJsonSchema = dialect === 'json-schema' || isJsonSchemaBundleImport(trimmed);
   if (useJsonSchema) {
-    const model = parseSchemaImport(trimmed, 'json-schema', 'mock-csv:json-schema');
-    return structuralModelToMockDdl(model);
+    const parsed = parseSchemaImport(trimmed, 'json-schema', 'mock-csv:json-schema');
+    return structuralModelToMockDdl(parsed);
   }
 
   const useCloudFormation = dialect === 'dynamodb' || isCloudFormationImport(trimmed);
-  if (!useCloudFormation) {
-    return trimmed;
+  if (useCloudFormation) {
+    const parsed = parseSchemaImport(trimmed, 'dynamodb', 'mock-csv:dynamodb');
+    return structuralModelToMockDdl(parsed);
   }
 
-  const model = parseSchemaImport(trimmed, 'dynamodb', 'mock-csv:dynamodb');
-  return structuralModelToMockDdl(model);
+  // Live-agent DDL is a comment stub ("// Live PostgreSQL…"); synthesize from model.
+  if (!/\bCREATE\s+TABLE\b/i.test(trimmed) && model?.tables?.length) {
+    return structuralModelToMockDdl(model);
+  }
+
+  return trimmed;
 }

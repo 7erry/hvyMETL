@@ -2,6 +2,7 @@ import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
+import type { SqlStructuralModel } from '../types.js';
 import {
   isCloudFormationImport,
   prepareMockCsvDdl,
@@ -12,6 +13,25 @@ import { generateMockCsvFromDdl, verifyMockCsvGenerator } from './mockCsvFromDdl
 
 const ROOT = join(import.meta.dirname, '..', '..');
 const DYNAMODB_EXAMPLE = readFileSync(join(ROOT, 'examples', 'dialects', 'dynamodb.yaml'), 'utf8');
+
+const livePostgresModel: SqlStructuralModel = {
+  source: 'ddl:postgresql',
+  tables: [
+    {
+      name: 'film',
+      columns: [
+        { name: 'film_id', sqlType: 'integer', bsonType: 'int', nullable: false, isPrimaryKey: true },
+        { name: 'title', sqlType: 'varchar(255)', bsonType: 'string', nullable: false, isPrimaryKey: false },
+      ],
+      primaryKey: ['film_id'],
+      foreignKeys: [],
+      rowCount: 1000,
+    },
+  ],
+  relationships: [],
+};
+
+const LIVE_PG_STUB = '// Live PostgreSQL database dvdrental. Schema read from the catalog.\n';
 
 describe('mockCsvDdlAdapter', () => {
   it('detects CloudFormation templates', () => {
@@ -39,6 +59,18 @@ describe('mockCsvDdlAdapter', () => {
     expect(prepareMockCsvDdl(sql, 'postgresql')).toBe(sql);
   });
 
+  it('synthesizes CREATE TABLE from model when DDL is a live-agent stub', () => {
+    const ddl = prepareMockCsvDdl(LIVE_PG_STUB, 'postgresql', livePostgresModel);
+    expect(ddl).toMatch(/CREATE TABLE film/i);
+    expect(ddl).toMatch(/film_id/i);
+    expect(ddl).toMatch(/title/i);
+  });
+
+  it('prefers real CREATE TABLE DDL over the model', () => {
+    const sql = 'CREATE TABLE actors (id INT PRIMARY KEY, name TEXT);';
+    expect(prepareMockCsvDdl(sql, 'postgresql', livePostgresModel)).toBe(sql);
+  });
+
   it('renders hyphenated DynamoDB table names with quoted identifiers', () => {
     const model = parseSchemaImport(
       readFileSync(join(ROOT, 'examples', 'dynamodb', 'orders-table.yaml'), 'utf8'),
@@ -61,6 +93,32 @@ describe('generateMockCsvFromDdl dynamodb', () => {
       const model = parseSchemaImport(DYNAMODB_EXAMPLE, 'dynamodb');
       const result = generateMockCsvFromDdl(DYNAMODB_EXAMPLE, outDir, ROOT, { dialect: 'dynamodb' });
       expect(result.tables.sort()).toEqual(model.tables.map((table) => table.name).sort());
+    } finally {
+      rmSync(outDir, { recursive: true, force: true });
+    }
+  });
+});
+
+describe('generateMockCsvFromDdl live-agent stub', () => {
+  it('generates CSV from introspected model when DDL is a comment stub', () => {
+    const status = verifyMockCsvGenerator(ROOT);
+    if (!status.ok) {
+      expect.fail(`expected mock generator ready: ${status.message}`);
+    }
+
+    const outDir = mkdtempSync(join(tmpdir(), 'hvymetl-mock-csv-live-stub-'));
+    try {
+      const result = generateMockCsvFromDdl(LIVE_PG_STUB, outDir, ROOT, {
+        dialect: 'postgresql',
+        model: livePostgresModel,
+        baseRowsPerTable: 5,
+        minRows: 5,
+        maxRows: 5,
+      });
+      expect(result.tables).toEqual(['film']);
+      const header = readFileSync(join(outDir, 'film.csv'), 'utf8').split('\n')[0];
+      expect(header).toContain('film_id');
+      expect(header).toContain('title');
     } finally {
       rmSync(outDir, { recursive: true, force: true });
     }
