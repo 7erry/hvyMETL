@@ -1,3 +1,9 @@
+## hvyMETL 10.1.5
+
+**Agent connection errors** — When Postgres refuses TCP (e.g. Kind `kubectl port-forward` down), the agent no longer prints opaque `error connecting to server`. It maps connection refused, studio TLS trust failures, and WSS HTTP errors to distinct messages. Studio live-import one-liner points at `v10.1.5`. Download assets: **`hvymetl-agent-macos-aarch64`**, **`hvymetl-agent-macos-x64`**, **`hvymetl-agent-linux-x64`**, **`hvymetl-agent-windows-x64.exe`**.
+
+---
+
 ## hvyMETL 10.1.4
 
 **Postgres live FK introspect** — Agent and studio SQL catalog read foreign keys from `pg_constraint` / `pg_attribute` instead of `information_schema.constraint_column_usage`, which returns zero rows for non-owner roles (e.g. dvdrental as hippo). Studio live-import one-liner points at `v10.1.4`. Download assets: **`hvymetl-agent-macos-aarch64`**, **`hvymetl-agent-macos-x64`**, **`hvymetl-agent-linux-x64`**, **`hvymetl-agent-windows-x64.exe`**.
