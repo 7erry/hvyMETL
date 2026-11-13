@@ -1,3 +1,11 @@
+## hvyMETL 10.1.1
+
+**Agent TLS** — Install rustls `ring` CryptoProvider at startup so WSS to the studio no longer panics when both `ring` and `aws-lc-rs` are in the dependency tree. Download assets: **`hvymetl-agent-macos-aarch64`**, **`hvymetl-agent-macos-x64`**, **`hvymetl-agent-linux-x64`**, **`hvymetl-agent-windows-x64.exe`**.
+
+**Visual Query** — Mongo find builder on the left rail (filter / projection / sort / skip / limit) with live Shell connections and collection field dropdowns.
+
+---
+
 ## hvyMETL 10.1.0
 
 **Aggregation Builder** — Shell-style workspace builds and runs aggregations against live saved Shell connections (Compass-style stage palette and visual map).
