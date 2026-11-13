@@ -857,11 +857,18 @@ export default function App() {
         liveAgentPendingRef.current = { token: session.token, result: null };
         const token = session.token;
         void waitForLiveAgentResult(token)
-          .then((result) => {
+          .then(async (result) => {
             liveAgentPendingRef.current = { token, result };
             setLiveAgentWaiting(false);
             setLiveAgentReady(true);
-            setStatus('Agent ready. Click Import schema.');
+            setStatus('Agent ready. Importing schema…');
+            try {
+              await applyLiveAgentResult(token, result);
+              liveAgentPendingRef.current = null;
+              setLiveAgentReady(false);
+            } catch (error: unknown) {
+              setStatus(`Import failed: ${describeApiError(error)}`);
+            }
           })
           .catch((error: unknown) => {
             setLiveAgentWaiting(false);

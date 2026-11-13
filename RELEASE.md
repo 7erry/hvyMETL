@@ -1,3 +1,9 @@
+## hvyMETL 10.1.7
+
+**Live Import redesign** — Add data source modal matches the polished Live Database layout: segmented Upload/Paste vs Live tabs, Saved + New connections, Form fields / Connection URI toggle, 2-column Engine/Host/Database/Port/User/Password grid, SSL & schema options, local-agent section with OS picker, amber/green/red status dots, and auto-import on agent connect. Agent download URLs use published `v10.1.6` binaries.
+
+---
+
 ## hvyMETL 10.1.6
 
 **Postgres agent over Kind port-forward** — TLS handshake `eof` (port-forward dying mid-handshake) retries a few times, maps to `database connection dropped (is kubectl port-forward still running?)`, and adds `sslmode=require` when missing. Keep a Terminal A loop so the forward stays up:

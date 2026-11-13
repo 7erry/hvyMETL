@@ -258,6 +258,9 @@ export function SchemaImportPanel({
           className={importMode === 'schema' ? 'active' : ''}
           onClick={() => setImportMode('schema')}
         >
+          <span className="schema-import-tabs__icon" aria-hidden>
+            ☁
+          </span>
           {t('schema.title')}
         </button>
         <button
@@ -269,6 +272,9 @@ export function SchemaImportPanel({
           className={importMode === 'live' ? 'active' : ''}
           onClick={() => setImportMode('live')}
         >
+          <span className="schema-import-tabs__icon" aria-hidden>
+            ⌁
+          </span>
           {t('schema.liveTitle')}
         </button>
       </div>
