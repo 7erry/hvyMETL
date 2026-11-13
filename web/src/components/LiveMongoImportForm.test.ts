@@ -1,11 +1,22 @@
 import { describe, expect, it } from 'vitest';
-import { detectLiveAgentPlatform, liveAgentDownloadUrl, liveAgentRunCommand, liveConnectionHint, liveImportFormNotice } from './LiveMongoImportForm';
+import {
+  detectLiveAgentPlatform,
+  liveAgentDownloadUrl,
+  liveAgentOneLiner,
+  liveAgentRunCommand,
+  liveAgentUriFlag,
+  liveConnectionHint,
+  liveImportFormNotice,
+} from './LiveMongoImportForm';
 
 describe('liveImportFormNotice', () => {
   it('repeats live-import status and ignores unrelated studio messages', () => {
     expect(liveImportFormNotice('Reading the live database…')).toBe('Reading the live database…');
     expect(liveImportFormNotice('Import failed: Could not connect to MongoDB.')).toMatch(/Could not connect/);
-    expect(liveImportFormNotice('Command copied. On the computer with the database, run: ./hvymetl-agent-macos-aarch64')).toMatch(/hvymetl-agent/);
+    expect(liveImportFormNotice('Command copied. On the computer with the database, run: ./hvymetl-agent-macos-aarch64')).toMatch(
+      /hvymetl-agent/,
+    );
+    expect(liveImportFormNotice('Agent ready. Click Import schema.')).toMatch(/Agent ready/);
     expect(liveImportFormNotice('Loaded example "Catalog" (4 tables).')).toBe('');
   });
 });
@@ -17,7 +28,15 @@ describe('liveConnectionHint', () => {
     expect(liveConnectionHint('mysql').placeholder).toMatch(/^mysql:\/\//);
     expect(liveConnectionHint('mssql').placeholder).toMatch(/^mssql:\/\//);
     expect(liveConnectionHint('sqlite').placeholder).toMatch(/^sqlite:/);
-    expect(liveConnectionHint('postgresql').hint).toMatch(/schema=/);
+    expect(liveConnectionHint('postgresql').hint).toMatch(/DATABASE_URL|schema=/);
+  });
+});
+
+describe('liveAgentUriFlag', () => {
+  it('uses shell env when URI is blank so credentials stay off the browser', () => {
+    expect(liveAgentUriFlag('macos-aarch64', '')).toBe('--uri "$DATABASE_URL"');
+    expect(liveAgentUriFlag('windows-x64', '')).toBe('--uri $env:DATABASE_URL');
+    expect(liveAgentUriFlag('linux-x64', 'postgresql://localhost/shop')).toContain("--uri 'postgresql://localhost/shop'");
   });
 });
 
@@ -30,18 +49,45 @@ describe('liveAgentRunCommand', () => {
     expect(liveAgentRunCommand('macos-x64', 'abc', 'mongodb://localhost:27017', '')).toContain('./hvymetl-agent-macos-x64');
     expect(liveAgentRunCommand('linux-x64', 'abc', 'mongodb://localhost:27017', '')).toContain('./hvymetl-agent-linux-x64');
     expect(liveAgentRunCommand('windows-x64', 'abc', 'mongodb://localhost:27017', 'shop')).toContain('.\\hvymetl-agent-windows-x64.exe');
-    expect(liveAgentRunCommand('macos-aarch64', 'abc', 'mongodb://localhost:27017', 'shop', 'http://localhost:3847')).toContain("--server 'http://localhost:3847'");
+    expect(liveAgentRunCommand('macos-aarch64', 'abc', 'mongodb://localhost:27017', 'shop', 'http://localhost:3847')).toContain(
+      "--server 'http://localhost:3847'",
+    );
     expect(mac).not.toContain('npx');
+  });
+});
+
+describe('liveAgentOneLiner', () => {
+  it('downloads the release asset then runs it, preferring env URI when blank', () => {
+    const mac = liveAgentOneLiner('macos-aarch64', 'abc', '', '', 'https://hvymetl.studio');
+    expect(mac).toContain("curl -fsSL 'https://github.com/7erry/hvyMETL/releases/download/v10.1.3/hvymetl-agent-macos-aarch64'");
+    expect(mac).toContain('--uri "$DATABASE_URL"');
+    expect(mac).toContain("--server 'https://hvymetl.studio'");
+    expect(mac).not.toContain('npx');
+
+    const win = liveAgentOneLiner('windows-x64', 'tok', 'mssql://localhost/shop', 'dbo');
+    expect(win).toContain('Invoke-WebRequest');
+    expect(win).toContain('--uri');
+    expect(win).toContain("--database 'dbo'");
   });
 });
 
 describe('detectLiveAgentPlatform', () => {
   it('selects Windows, Linux, and a known Mac, and leaves an ambiguous Mac unset', () => {
-    expect(detectLiveAgentPlatform({ userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)', platform: 'Win32' })).toBe('windows-x64');
-    expect(detectLiveAgentPlatform({ userAgent: 'Mozilla/5.0 (X11; Linux x86_64)', platform: 'Linux x86_64' })).toBe('linux-x64');
-    expect(detectLiveAgentPlatform({ userAgent: 'Mozilla/5.0 (Macintosh)', platform: 'macOS', architecture: 'arm' })).toBe('macos-aarch64');
-    expect(detectLiveAgentPlatform({ userAgent: 'Mozilla/5.0 (Macintosh)', platform: 'macOS', architecture: 'x86' })).toBe('macos-x64');
+    expect(detectLiveAgentPlatform({ userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)', platform: 'Win32' })).toBe(
+      'windows-x64',
+    );
+    expect(detectLiveAgentPlatform({ userAgent: 'Mozilla/5.0 (X11; Linux x86_64)', platform: 'Linux x86_64' })).toBe(
+      'linux-x64',
+    );
+    expect(detectLiveAgentPlatform({ userAgent: 'Mozilla/5.0 (Macintosh)', platform: 'macOS', architecture: 'arm' })).toBe(
+      'macos-aarch64',
+    );
+    expect(detectLiveAgentPlatform({ userAgent: 'Mozilla/5.0 (Macintosh)', platform: 'macOS', architecture: 'x86' })).toBe(
+      'macos-x64',
+    );
     expect(detectLiveAgentPlatform({ userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)', platform: 'MacIntel' })).toBeNull();
-    expect(liveAgentDownloadUrl('linux-x64')).toBe('https://github.com/7erry/hvyMETL/releases/download/v10.1.2/hvymetl-agent-linux-x64');
+    expect(liveAgentDownloadUrl('linux-x64')).toBe(
+      'https://github.com/7erry/hvyMETL/releases/download/v10.1.3/hvymetl-agent-linux-x64',
+    );
   });
 });

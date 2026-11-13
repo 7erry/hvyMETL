@@ -13,6 +13,9 @@ type SchemaImportModalProps = {
   onImportQuery: () => void;
   onImportLive: (uri: string, database: string, platform: string) => void | Promise<string | void>;
   status?: string;
+  agentReady?: boolean;
+  agentWaiting?: boolean;
+  requireAgent?: boolean;
   onSchemaFiles: (files: File[]) => void;
   onImportBuiltinExample?: (exampleId: string) => void | Promise<void>;
   onClose: () => void;
@@ -30,6 +33,9 @@ export function SchemaImportModal({
   onImportQuery,
   onImportLive,
   status,
+  agentReady,
+  agentWaiting,
+  requireAgent,
   onSchemaFiles,
   onImportBuiltinExample,
   onClose,
@@ -60,6 +66,9 @@ export function SchemaImportModal({
           onImportQuery={onImportQuery}
           onImportLive={onImportLive}
           status={status}
+          agentReady={agentReady}
+          agentWaiting={agentWaiting}
+          requireAgent={requireAgent}
           onSchemaFiles={onSchemaFiles}
           onImportBuiltinExample={onImportBuiltinExample}
           framed={false}

@@ -29,7 +29,7 @@ import { PipelinePanel } from './components/PipelinePanel';
 import { CustomTelemetryModal } from './components/CustomTelemetryModal';
 import { ManagerView } from './components/ManagerView';
 import { SchemaImportPanel } from './components/SchemaImportPanel';
-import { isLiveAgentPlatform, liveAgentRunCommand } from './components/LiveMongoImportForm';
+import { isLiveAgentPlatform, liveAgentOneLiner } from './components/LiveMongoImportForm';
 import { SchemaImportModal } from './components/SchemaImportModal';
 import { DiagramStatusFooter } from './components/DiagramStatusFooter';
 import { FooterDiagramLegend } from './components/FooterDiagramLegend';
@@ -80,6 +80,7 @@ import {
   studioIsHosted,
   waitForLiveAgentExtract,
   waitForLiveAgentResult,
+  type LiveAgentResult,
   importSqlite,
   runDesign,
   runDesignWithCsv,
@@ -233,6 +234,10 @@ export default function App() {
   const [customTelemetryOpen, setCustomTelemetryOpen] = useState(false);
   const [schemaImportModalOpen, setSchemaImportModalOpen] = useState(false);
   const [schemaImportUserOpened, setSchemaImportUserOpened] = useState(false);
+  const [studioHosted, setStudioHosted] = useState(false);
+  const [liveAgentWaiting, setLiveAgentWaiting] = useState(false);
+  const [liveAgentReady, setLiveAgentReady] = useState(false);
+  const liveAgentPendingRef = useRef<{ token: string; result: LiveAgentResult | null } | null>(null);
   const [embedOverridesPanelOpen, setEmbedOverridesPanelOpen] = useState(false);
   const [timeSeriesOverridesPanelOpen, setTimeSeriesOverridesPanelOpen] = useState(false);
   const diagramFileInputRef = useRef<HTMLInputElement>(null);
@@ -614,6 +619,7 @@ export default function App() {
         );
         return;
       }
+      void studioIsHosted().then(setStudioHosted).catch(() => setStudioHosted(false));
       try {
         const [p, d] = await Promise.all([fetchProfiles(), fetchDialects()]);
         setProfiles(p);
@@ -803,37 +809,72 @@ export default function App() {
     }
   };
 
+  const applyLiveAgentResult = async (token: string, result: LiveAgentResult): Promise<void> => {
+    const { model: m, ddl: importedDdl, inferred, dialect: resolvedDialect, extract } = result;
+    setSessionField('dialect', resolvedDialect);
+    await applySchema(importedDdl, m, inferred?.profileId);
+    if (extract?.status === 'complete' && extract.stagingDir) {
+      setSessionField('csvSourcePath', extract.stagingDir);
+      setStatus(`Schema imported. Full extract ready at ${extract.stagingDir}.`);
+      return;
+    }
+    if (extract) {
+      setStatus('Schema imported. Waiting for full extract from the agent…');
+      const done = await waitForLiveAgentExtract(token);
+      setSessionField('csvSourcePath', done.stagingDir);
+      setStatus(`Schema imported. Full extract ready at ${done.stagingDir}.`);
+    }
+  };
+
   const handleImportLive = async (uri: string, database: string, platform = '', copyOnly = false): Promise<string> => {
     try {
-      if (copyOnly || (await studioIsHosted())) {
+      const hosted = studioHosted || (await studioIsHosted());
+      setStudioHosted(hosted);
+
+      if (copyOnly || hosted) {
+        if (!copyOnly) {
+          const pending = liveAgentPendingRef.current;
+          if (pending?.result) {
+            setLiveAgentReady(false);
+            setLiveAgentWaiting(false);
+            await applyLiveAgentResult(pending.token, pending.result);
+            liveAgentPendingRef.current = null;
+            return '';
+          }
+          setStatus('Import failed: Copy the command and run the local agent first.');
+          return '';
+        }
+
         if (!isLiveAgentPlatform(platform)) {
           setStatus('Import failed: Choose your computer before copying the agent command.');
           return '';
         }
         const session = await createLiveAgentSession();
-        const command = liveAgentRunCommand(platform, session.token, uri.trim(), database.trim(), window.location.origin);
-        setStatus(`Command copied. On the computer with the database, run: ${command}`);
+        const command = liveAgentOneLiner(platform, session.token, uri.trim(), database.trim(), window.location.origin);
+        setStatus('Waiting for agent… Paste the command in a terminal on the database host.');
+        setLiveAgentWaiting(true);
+        setLiveAgentReady(false);
+        liveAgentPendingRef.current = { token: session.token, result: null };
         const token = session.token;
         void waitForLiveAgentResult(token)
-          .then(async ({ model: m, ddl: importedDdl, inferred, dialect: resolvedDialect, extract }) => {
-            setSessionField('dialect', resolvedDialect);
-            await applySchema(importedDdl, m, inferred?.profileId);
-            if (extract?.status === 'complete' && extract.stagingDir) {
-              setSessionField('csvSourcePath', extract.stagingDir);
-              setStatus(`Schema imported. Full extract ready at ${extract.stagingDir}.`);
-              return;
-            }
-            if (extract) {
-              setStatus('Schema imported. Waiting for full extract from the agent…');
-              const done = await waitForLiveAgentExtract(token);
-              setSessionField('csvSourcePath', done.stagingDir);
-              setStatus(`Schema imported. Full extract ready at ${done.stagingDir}.`);
-            }
+          .then((result) => {
+            liveAgentPendingRef.current = { token, result };
+            setLiveAgentWaiting(false);
+            setLiveAgentReady(true);
+            setStatus('Agent ready. Click Import schema.');
           })
           .catch((error: unknown) => {
+            setLiveAgentWaiting(false);
+            setLiveAgentReady(false);
+            liveAgentPendingRef.current = null;
             setStatus(`Import failed: ${describeApiError(error)}`);
           });
         return command;
+      }
+
+      if (!uri.trim()) {
+        setStatus('Import failed: Enter a connection URI, or use the agent with $DATABASE_URL on a hosted studio.');
+        return '';
       }
       setStatus('Reading the live database…');
       const { model: m, ddl: importedDdl, inferred, dialect: resolvedDialect } = await importLiveMongo(uri, database);
@@ -1669,6 +1710,10 @@ export default function App() {
               onDdlChange={(value) => setSessionField('ddl', value)}
               onImportQuery={() => void handleImportQuery()}
               onImportLive={handleImportLive}
+              status={status}
+              agentReady={liveAgentReady}
+              agentWaiting={liveAgentWaiting}
+              requireAgent={studioHosted}
               onSchemaFiles={(files) => void handleSchemaFilesUpload(files)}
               onImportBuiltinExample={(id) => void handleImportBuiltinExample(id)}
             />
@@ -1696,6 +1741,9 @@ export default function App() {
                         onImportQuery={() => void handleImportQuery()}
                         onImportLive={handleImportLive}
                         status={status}
+                        agentReady={liveAgentReady}
+                        agentWaiting={liveAgentWaiting}
+                        requireAgent={studioHosted}
                         onSchemaFiles={(files) => void handleSchemaFilesUpload(files)}
                         onImportBuiltinExample={(id) => void handleImportBuiltinExample(id)}
                         onRequestSidebarWidth={handleSchemaImportSidebarWidth}
@@ -2154,6 +2202,9 @@ export default function App() {
         onImportQuery={() => void handleImportQuery()}
         onImportLive={handleImportLive}
         status={status}
+        agentReady={liveAgentReady}
+        agentWaiting={liveAgentWaiting}
+        requireAgent={studioHosted}
         onSchemaFiles={(files) => void handleSchemaFilesUpload(files)}
         onImportBuiltinExample={(id) => void handleImportBuiltinExample(id)}
         onClose={closeSchemaImportDialog}

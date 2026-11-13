@@ -22,6 +22,9 @@ type SchemaImportPanelProps = {
   onImportLive: (uri: string, database: string, platform: string) => void | Promise<string | void>;
   /** Repeated inside the live-import form because a modal covers the page status line. */
   status?: string;
+  agentReady?: boolean;
+  agentWaiting?: boolean;
+  requireAgent?: boolean;
   onSchemaFiles: (files: File[]) => void;
   onImportBuiltinExample?: (exampleId: string) => void | Promise<void>;
   /** When the DDL textarea is resized wider than the sidebar, expand the split pane. */
@@ -40,6 +43,9 @@ export function SchemaImportPanel({
   onImportQuery,
   onImportLive,
   status,
+  agentReady = false,
+  agentWaiting = false,
+  requireAgent = true,
   onSchemaFiles,
   onImportBuiltinExample,
   onRequestSidebarWidth,
@@ -242,50 +248,6 @@ export function SchemaImportPanel({
         </p>
       ) : null}
 
-      {onImportBuiltinExample ? (
-        <div className="schema-import-panel__examples">
-          <label className="schema-import-panel__label" htmlFor="builtin-example-select">
-            Try with a sample schema
-          </label>
-          <div className="schema-import-panel__example-row">
-            <select
-              id="builtin-example-select"
-              value={selectedExampleId}
-              onChange={(e) => setSelectedExampleId(e.target.value)}
-              className="schema-import-panel__select"
-              disabled={!apiConnected || loadingExamples || builtinExamples.length === 0}
-            >
-              <option value="">
-                {loadingExamples
-                  ? 'Loading examples…'
-                  : builtinExamples.length === 0
-                    ? 'No examples on server'
-                    : 'Choose an example…'}
-              </option>
-              {builtinExamples.map((example) => (
-                <option key={example.id} value={example.id}>
-                  {example.label}
-                </option>
-              ))}
-            </select>
-            <button
-              type="button"
-              className="secondary"
-              onClick={() => void handleLoadExample()}
-              disabled={!apiConnected || !selectedExampleId || loadingExample}
-            >
-              {loadingExample ? t('common.loading') : t('schema.loadExample')}
-            </button>
-          </div>
-          {selectedExampleId ? (
-            <p className="schema-import-panel__hint">
-              {builtinExamples.find((example) => example.id === selectedExampleId)?.description ??
-                'Loads DDL from the server examples folder.'}
-            </p>
-          ) : null}
-        </div>
-      ) : null}
-
       <div className="schema-import-tabs" role="tablist" aria-label="Schema source">
         <button
           type="button"
@@ -373,9 +335,69 @@ export function SchemaImportPanel({
         </div>
       ) : (
         <div id="schema-import-panel-live" role="tabpanel" aria-labelledby="schema-import-tab-live">
-          <LiveMongoImportForm disabled={!apiConnected} status={status} onImport={onImportLive} />
+          <LiveMongoImportForm
+            disabled={!apiConnected}
+            status={status}
+            agentReady={agentReady}
+            agentWaiting={agentWaiting}
+            requireAgent={requireAgent}
+            onImport={onImportLive}
+          />
         </div>
       )}
+
+      {onImportBuiltinExample ? (
+        <div className="schema-import-panel__examples schema-import-panel__examples--footer">
+          {importMode === 'live' ? (
+            <button
+              type="button"
+              className="tertiary schema-import-panel__sample-link"
+              onClick={() => setImportMode('schema')}
+            >
+              {t('schema.sampleFooterLive')}
+            </button>
+          ) : null}
+          <label className="schema-import-panel__label" htmlFor="builtin-example-select">
+            {t('schema.sampleFooter')}
+          </label>
+          <div className="schema-import-panel__example-row">
+            <select
+              id="builtin-example-select"
+              value={selectedExampleId}
+              onChange={(e) => setSelectedExampleId(e.target.value)}
+              className="schema-import-panel__select"
+              disabled={!apiConnected || loadingExamples || builtinExamples.length === 0}
+            >
+              <option value="">
+                {loadingExamples
+                  ? t('common.loading')
+                  : builtinExamples.length === 0
+                    ? t('schema.noExamples')
+                    : t('schema.chooseExample')}
+              </option>
+              {builtinExamples.map((example) => (
+                <option key={example.id} value={example.id}>
+                  {example.label}
+                </option>
+              ))}
+            </select>
+            <button
+              type="button"
+              className="secondary"
+              onClick={() => void handleLoadExample()}
+              disabled={!apiConnected || !selectedExampleId || loadingExample}
+            >
+              {loadingExample ? t('common.loading') : t('schema.loadExample')}
+            </button>
+          </div>
+          {selectedExampleId ? (
+            <p className="schema-import-panel__hint">
+              {builtinExamples.find((example) => example.id === selectedExampleId)?.description ??
+                t('schema.exampleHint')}
+            </p>
+          ) : null}
+        </div>
+      ) : null}
     </>
   );
 

@@ -1,3 +1,9 @@
+## hvyMETL 10.1.3
+
+**Live database import UX** — Streamlined Live tab: saved multi-engine connections, 1–2–3 checklist, curl|sh (PowerShell) one-liner with live command preview, `$DATABASE_URL` so credentials stay off the browser, Advanced database override, sample-schema footer, and Waiting for agent → Import schema. Binary download is secondary. Download assets (same Wave A agent builds): **`hvymetl-agent-macos-aarch64`**, **`hvymetl-agent-macos-x64`**, **`hvymetl-agent-linux-x64`**, **`hvymetl-agent-windows-x64.exe`**. Studio live-import one-liner points at `v10.1.3`.
+
+---
+
 ## hvyMETL 10.1.2
 
 **Postgres agent TLS** — Connect PostgreSQL with rustls (trust-any-cert, same idea as MSSQL) so Crunchy/PGO and other SSL-required clusters work; `NoTls` failed `pg_hba` with no encryption. Download assets: **`hvymetl-agent-macos-aarch64`**, **`hvymetl-agent-macos-x64`**, **`hvymetl-agent-linux-x64`**, **`hvymetl-agent-windows-x64.exe`**. Studio live-import copy-command points at `v10.1.2`.

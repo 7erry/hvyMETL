@@ -67,6 +67,11 @@ export type MessageKey =
   | 'schema.modalTitle'
   | 'schema.modalSubtitle'
   | 'schema.modalClose'
+  | 'schema.sampleFooter'
+  | 'schema.sampleFooterLive'
+  | 'schema.noExamples'
+  | 'schema.chooseExample'
+  | 'schema.exampleHint'
   | 'live.agentHint'
   | 'live.agentPlatform'
   | 'live.chooseComputer'
@@ -77,6 +82,24 @@ export type MessageKey =
   | 'live.copyCommand'
   | 'live.importLive'
   | 'live.reading'
+  | 'live.step1'
+  | 'live.step2'
+  | 'live.step3'
+  | 'live.advanced'
+  | 'live.advancedSkipHint'
+  | 'live.orDownloadBinary'
+  | 'live.changeOs'
+  | 'live.windowsTip'
+  | 'live.waitingAgent'
+  | 'live.agentReady'
+  | 'live.waitingIdle'
+  | 'live.savedConnections'
+  | 'live.noSavedConnections'
+  | 'live.manualConnection'
+  | 'live.uriEnvPlaceholder'
+  | 'live.databasePlaceholder'
+  | 'live.storageHint'
+  | 'live.oneLinerNote'
   | 'live.engine.mongodb'
   | 'live.engine.postgresql'
   | 'live.engine.mysql'
@@ -329,8 +352,13 @@ const en: MessageCatalog = {
   'schema.modalSubtitle':
     'Paste a schema, upload a file, or connect to a live database. hvyMETL builds the source model before design, cost, or ETL.',
   'schema.modalClose': 'Close schema import dialog',
+  'schema.sampleFooter': 'Just exploring? Load a sample schema',
+  'schema.sampleFooterLive': "Don't have a database ready? Try a sample schema →",
+  'schema.noExamples': 'No examples on server',
+  'schema.chooseExample': 'Choose an example…',
+  'schema.exampleHint': 'Loads DDL from the server examples folder.',
   'live.agentHint':
-    'hvymetl.studio cannot open a database on your computer. Download the agent, copy the command, and paste it in a terminal on the computer that has the database. The agent opens an outbound WebSocket, reads schema, and can stream a full extract. On Windows, use PowerShell.',
+    'hvymetl.studio cannot open a database on your computer. Copy the one-liner, run it on the database host, then import when the agent connects.',
   'live.agentPlatform': 'Agent for this computer',
   'live.chooseComputer': 'Choose your computer…',
   'live.download': 'Download',
@@ -340,6 +368,25 @@ const en: MessageCatalog = {
   'live.copyCommand': 'Copy command',
   'live.importLive': 'Import live data',
   'live.reading': 'Reading…',
+  'live.step1': '1. Connection details',
+  'live.step2': '2. Run the local agent',
+  'live.step3': '3. Import',
+  'live.advanced': 'Advanced',
+  'live.advancedSkipHint': 'Optional database/schema override. Individual host/port/user fields stay out of this form.',
+  'live.orDownloadBinary': 'Or download standalone binary',
+  'live.changeOs': 'Change',
+  'live.windowsTip': 'On Windows, paste into PowerShell.',
+  'live.waitingAgent': '● Waiting for agent…',
+  'live.agentReady': '● Agent ready',
+  'live.waitingIdle': '● Waiting for agent…',
+  'live.savedConnections': 'Saved connections',
+  'live.noSavedConnections': 'No saved connections',
+  'live.manualConnection': 'Manual / not saved',
+  'live.uriEnvPlaceholder': 'Leave blank to use $DATABASE_URL on the agent host',
+  'live.databasePlaceholder': 'Uses the database in the URI when empty',
+  'live.storageHint': 'Stored only in this browser. Credentials in a saved URI stay local until you copy a command that includes them.',
+  'live.oneLinerNote':
+    'One-liner uses curl|sh (PowerShell on Windows) to fetch the GitHub release binary — no npm publish required.',
   'live.engine.mongodb': 'MongoDB',
   'live.engine.postgresql': 'PostgreSQL',
   'live.engine.mysql': 'MySQL',
@@ -656,8 +703,13 @@ const pt: MessageCatalog = {
   'schema.modalSubtitle':
     'Cole um esquema, envie um arquivo ou conecte a um banco ao vivo. O hvyMETL monta o modelo de origem antes do design, custo ou ETL.',
   'schema.modalClose': 'Fechar diálogo de importação de esquema',
+  'schema.sampleFooter': 'Só explorando? Carregue um esquema de exemplo',
+  'schema.sampleFooterLive': 'Sem banco pronto? Experimente um esquema de exemplo →',
+  'schema.noExamples': 'Nenhum exemplo no servidor',
+  'schema.chooseExample': 'Escolha um exemplo…',
+  'schema.exampleHint': 'Carrega DDL da pasta de exemplos do servidor.',
   'live.agentHint':
-    'O hvymetl.studio não abre um banco no seu computador. Baixe o agente, copie o comando e execute-o no terminal da máquina com o banco. O agente abre um WebSocket de saída, lê o esquema e pode transmitir uma extração completa. No Windows, use o PowerShell.',
+    'O hvymetl.studio não abre um banco no seu computador. Copie o one-liner, execute no host do banco e importe quando o agente conectar.',
   'live.agentPlatform': 'Agente para este computador',
   'live.chooseComputer': 'Escolha seu computador…',
   'live.download': 'Baixar',
@@ -667,6 +719,30 @@ const pt: MessageCatalog = {
   'live.copyCommand': 'Copiar comando',
   'live.importLive': 'Importar dados ao vivo',
   'live.reading': 'Lendo…',
+  'live.step1': '1. Detalhes da conexão',
+  'live.step2': '2. Execute o agente local',
+  'live.step3': '3. Importar',
+  'live.advanced': 'Avançado',
+  'live.advancedSkipHint': 'Substituição opcional de banco/esquema. Campos host/porta/usuário ficam de fora.',
+  'live.orDownloadBinary': 'Ou baixe o binário autônomo',
+  'live.changeOs': 'Alterar',
+  'live.windowsTip': 'No Windows, cole no PowerShell.',
+  'live.waitingAgent': '● Aguardando o agente…',
+  'live.agentReady': '● Agente pronto',
+  'live.waitingIdle': '● Aguardando o agente…',
+  'live.savedConnections': 'Conexões salvas',
+  'live.noSavedConnections': 'Nenhuma conexão salva',
+  'live.manualConnection': 'Manual / não salva',
+  'live.uriEnvPlaceholder': 'Deixe em branco para usar $DATABASE_URL no host do agente',
+  'live.databasePlaceholder': 'Usa o banco da URI quando vazio',
+  'live.storageHint': 'Só neste navegador. Credenciais em URI salva ficam locais até você copiar um comando que as inclua.',
+  'live.oneLinerNote':
+    'O one-liner usa curl|sh (PowerShell no Windows) para baixar o binário do GitHub — sem publicar npm.',
+  'live.engine.mongodb': 'MongoDB',
+  'live.engine.postgresql': 'PostgreSQL',
+  'live.engine.mysql': 'MySQL',
+  'live.engine.mssql': 'Microsoft SQL Server',
+  'live.engine.sqlite': 'SQLite',
   'pipeline.title': 'Pipeline',
   'pipeline.run': 'Executar pipeline',
   'pipeline.csv': 'Fonte CSV',
@@ -927,8 +1003,13 @@ const es: MessageCatalog = {
   'schema.modalSubtitle':
     'Pegue un esquema, suba un archivo o conéctese a una base en vivo. hvyMETL construye el modelo de origen antes del diseño, coste o ETL.',
   'schema.modalClose': 'Cerrar el diálogo de importación de esquema',
+  'schema.sampleFooter': '¿Solo explorando? Carga un esquema de ejemplo',
+  'schema.sampleFooterLive': '¿Sin base lista? Prueba un esquema de ejemplo →',
+  'schema.noExamples': 'No hay ejemplos en el servidor',
+  'schema.chooseExample': 'Elige un ejemplo…',
+  'schema.exampleHint': 'Carga DDL de la carpeta de ejemplos del servidor.',
   'live.agentHint':
-    'hvymetl.studio no puede abrir una base en tu equipo. Descarga el agente, copia el comando y pégalo en una terminal del equipo con la base. El agente abre un WebSocket de salida, lee el esquema y puede transmitir una extracción completa. En Windows, usa PowerShell.',
+    'hvymetl.studio no puede abrir una base en tu equipo. Copia el one-liner, ejecútalo en el host de la base e importa cuando el agente se conecte.',
   'live.agentPlatform': 'Agente para este equipo',
   'live.chooseComputer': 'Elige tu equipo…',
   'live.download': 'Descargar',
@@ -938,6 +1019,30 @@ const es: MessageCatalog = {
   'live.copyCommand': 'Copiar comando',
   'live.importLive': 'Importar datos en vivo',
   'live.reading': 'Leyendo…',
+  'live.step1': '1. Detalles de conexión',
+  'live.step2': '2. Ejecuta el agente local',
+  'live.step3': '3. Importar',
+  'live.advanced': 'Avanzado',
+  'live.advancedSkipHint': 'Sustitución opcional de base/esquema. Campos host/puerto/usuario quedan fuera.',
+  'live.orDownloadBinary': 'O descarga el binario independiente',
+  'live.changeOs': 'Cambiar',
+  'live.windowsTip': 'En Windows, pégalo en PowerShell.',
+  'live.waitingAgent': '● Esperando al agente…',
+  'live.agentReady': '● Agente listo',
+  'live.waitingIdle': '● Esperando al agente…',
+  'live.savedConnections': 'Conexiones guardadas',
+  'live.noSavedConnections': 'Sin conexiones guardadas',
+  'live.manualConnection': 'Manual / no guardada',
+  'live.uriEnvPlaceholder': 'Déjalo vacío para usar $DATABASE_URL en el host del agente',
+  'live.databasePlaceholder': 'Usa la base de la URI cuando está vacío',
+  'live.storageHint': 'Solo en este navegador. Las credenciales en una URI guardada siguen locales hasta que copies un comando que las incluya.',
+  'live.oneLinerNote':
+    'El one-liner usa curl|sh (PowerShell en Windows) para bajar el binario de GitHub — sin publicar npm.',
+  'live.engine.mongodb': 'MongoDB',
+  'live.engine.postgresql': 'PostgreSQL',
+  'live.engine.mysql': 'MySQL',
+  'live.engine.mssql': 'Microsoft SQL Server',
+  'live.engine.sqlite': 'SQLite',
   'pipeline.title': 'Pipeline',
   'pipeline.run': 'Ejecutar pipeline',
   'pipeline.csv': 'Origen CSV',
@@ -1194,8 +1299,13 @@ const zhCN: MessageCatalog = {
   'schema.modalSubtitle':
     '粘贴架构、上传文件或连接实时数据库。hvyMETL 会在设计、成本或 ETL 之前构建源模型。',
   'schema.modalClose': '关闭架构导入对话框',
+  'schema.sampleFooter': '只是探索？加载示例架构',
+  'schema.sampleFooterLive': '还没有数据库？试试示例架构 →',
+  'schema.noExamples': '服务器上没有示例',
+  'schema.chooseExample': '选择示例…',
+  'schema.exampleHint': '从服务器 examples 文件夹加载 DDL。',
   'live.agentHint':
-    'hvymetl.studio 无法打开您计算机上的数据库。请下载代理，复制命令，并在存有数据库的计算机终端中粘贴运行。代理会建立出站 WebSocket，读取架构，并可流式传输完整抽取。Windows 请使用 PowerShell。',
+    'hvymetl.studio 无法打开您计算机上的数据库。请复制一行命令，在数据库主机上运行，代理连接后导入。',
   'live.agentPlatform': '此计算机的代理',
   'live.chooseComputer': '选择您的计算机…',
   'live.download': '下载',
@@ -1205,6 +1315,29 @@ const zhCN: MessageCatalog = {
   'live.copyCommand': '复制命令',
   'live.importLive': '导入实时数据',
   'live.reading': '读取中…',
+  'live.step1': '1. 连接详情',
+  'live.step2': '2. 运行本地代理',
+  'live.step3': '3. 导入',
+  'live.advanced': '高级',
+  'live.advancedSkipHint': '可选数据库/模式覆盖。主机/端口/用户字段不在此表单中。',
+  'live.orDownloadBinary': '或下载独立二进制文件',
+  'live.changeOs': '更改',
+  'live.windowsTip': '在 Windows 上请粘贴到 PowerShell。',
+  'live.waitingAgent': '● 正在等待代理…',
+  'live.agentReady': '● 代理已就绪',
+  'live.waitingIdle': '● 正在等待代理…',
+  'live.savedConnections': '已保存的连接',
+  'live.noSavedConnections': '没有已保存的连接',
+  'live.manualConnection': '手动 / 未保存',
+  'live.uriEnvPlaceholder': '留空以在代理主机上使用 $DATABASE_URL',
+  'live.databasePlaceholder': '为空时使用 URI 中的数据库',
+  'live.storageHint': '仅保存在此浏览器。已保存 URI 中的凭据在本地，直到您复制包含它们的命令。',
+  'live.oneLinerNote': '一行命令使用 curl|sh（Windows 为 PowerShell）从 GitHub 下载二进制文件 — 无需发布 npm。',
+  'live.engine.mongodb': 'MongoDB',
+  'live.engine.postgresql': 'PostgreSQL',
+  'live.engine.mysql': 'MySQL',
+  'live.engine.mssql': 'Microsoft SQL Server',
+  'live.engine.sqlite': 'SQLite',
   'pipeline.title': '流水线',
   'pipeline.run': '运行流水线',
   'pipeline.csv': 'CSV 来源',
@@ -1455,8 +1588,13 @@ const hi: MessageCatalog = {
   'schema.modalSubtitle':
     'स्कीमा चिपकाएँ, फ़ाइल अपलोड करें, या लाइव डेटाबेस से कनेक्ट करें। hvyMETL डिज़ाइन, लागत या ETL से पहले स्रोत मॉडल बनाता है।',
   'schema.modalClose': 'स्कीमा आयात संवाद बंद करें',
+  'schema.sampleFooter': 'केवल देख रहे हैं? नमूना स्कीमा लोड करें',
+  'schema.sampleFooterLive': 'डेटाबेस तैयार नहीं? नमूना स्कीमा आज़माएँ →',
+  'schema.noExamples': 'सर्वर पर कोई उदाहरण नहीं',
+  'schema.chooseExample': 'एक उदाहरण चुनें…',
+  'schema.exampleHint': 'सर्वर examples फ़ोल्डर से DDL लोड करता है।',
   'live.agentHint':
-    'hvymetl.studio आपके कंप्यूटर पर डेटाबेस नहीं खोल सकता। एजेंट डाउनलोड करें, कमांड कॉपी करें, और डेटाबेस वाले कंप्यूटर के टर्मिनल में चिपकाएँ। एजेंट आउटबाउंड WebSocket खोलता है, स्कीमा पढ़ता है, और पूर्ण निष्कर्षण स्ट्रीम कर सकता है। Windows पर PowerShell उपयोग करें।',
+    'hvymetl.studio आपके कंप्यूटर पर डेटाबेस नहीं खोल सकता। वन-लाइनर कॉपी करें, डेटाबेस होस्ट पर चलाएँ, फिर एजेंट कनेक्ट होने पर आयात करें।',
   'live.agentPlatform': 'इस कंप्यूटर के लिए एजेंट',
   'live.chooseComputer': 'अपना कंप्यूटर चुनें…',
   'live.download': 'डाउनलोड',
@@ -1466,6 +1604,30 @@ const hi: MessageCatalog = {
   'live.copyCommand': 'कमांड कॉपी करें',
   'live.importLive': 'लाइव डेटा आयात करें',
   'live.reading': 'पढ़ रहा है…',
+  'live.step1': '1. कनेक्शन विवरण',
+  'live.step2': '2. स्थानीय एजेंट चलाएँ',
+  'live.step3': '3. आयात',
+  'live.advanced': 'उन्नत',
+  'live.advancedSkipHint': 'वैकल्पिक डेटाबेस/स्कीमा ओवरराइड। होस्ट/पोर्ट/उपयोगकर्ता फ़ील्ड यहाँ नहीं।',
+  'live.orDownloadBinary': 'या स्टैंडअलोन बाइनरी डाउनलोड करें',
+  'live.changeOs': 'बदलें',
+  'live.windowsTip': 'Windows पर PowerShell में चिपकाएँ।',
+  'live.waitingAgent': '● एजेंट की प्रतीक्षा…',
+  'live.agentReady': '● एजेंट तैयार',
+  'live.waitingIdle': '● एजेंट की प्रतीक्षा…',
+  'live.savedConnections': 'सहेजे गए कनेक्शन',
+  'live.noSavedConnections': 'कोई सहेजा कनेक्शन नहीं',
+  'live.manualConnection': 'मैनुअल / सहेजा नहीं',
+  'live.uriEnvPlaceholder': 'एजेंट होस्ट पर $DATABASE_URL के लिए खाली छोड़ें',
+  'live.databasePlaceholder': 'खाली होने पर URI का डेटाबेस उपयोग होता है',
+  'live.storageHint': 'केवल इस ब्राउज़र में। सहेजे URI के क्रेडेंशियल स्थानीय रहते हैं जब तक आप उन्हें कमांड में कॉपी न करें।',
+  'live.oneLinerNote':
+    'वन-लाइनर curl|sh (Windows पर PowerShell) से GitHub रिलीज़ बाइनरी लाता है — npm प्रकाशित करने की ज़रूरत नहीं।',
+  'live.engine.mongodb': 'MongoDB',
+  'live.engine.postgresql': 'PostgreSQL',
+  'live.engine.mysql': 'MySQL',
+  'live.engine.mssql': 'Microsoft SQL Server',
+  'live.engine.sqlite': 'SQLite',
   'pipeline.title': 'पाइपलाइन',
   'pipeline.run': 'पाइपलाइन चलाएँ',
   'pipeline.csv': 'CSV स्रोत',
