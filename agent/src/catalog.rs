@@ -566,8 +566,16 @@ pub fn public_error(error: impl ToString) -> String {
     if message.contains("UnknownIssuer") || message.contains("invalid peer certificate") {
         return "Could not reach the studio because its TLS certificate is not trusted.".to_string();
     }
-    if message.contains("/api/agent/") {
-        return "Could not reach the studio.".to_string();
+    // tokio-postgres Connect: Display is just "error connecting to server" (Debug has ConnectionRefused).
+    if message.contains("error connecting to server")
+        || message.contains("Connection refused")
+        || message.contains("os error 61")
+        || message.contains("os error 111")
+    {
+        return "Could not connect to the database (connection refused). Nothing is listening on the URI host:port — start kubectl port-forward to 127.0.0.1:5432, then re-run.".to_string();
+    }
+    if message.contains("/api/agent/") || message.contains("HTTP error:") {
+        return "Could not reach the studio over WebSocket.".to_string();
     }
     for scheme in ["mongodb://", "mongodb+srv://", "postgres://", "postgresql://", "mysql://", "mssql://", "sqlserver://"] {
         if message.contains(scheme) {
@@ -575,4 +583,24 @@ pub fn public_error(error: impl ToString) -> String {
         }
     }
     message
+}
+
+#[cfg(test)]
+mod public_error_tests {
+    use super::public_error;
+
+    #[test]
+    fn maps_postgres_connect_refused() {
+        assert!(public_error("error connecting to server").contains("connection refused"));
+    }
+
+    #[test]
+    fn maps_studio_tls() {
+        assert!(public_error("invalid peer certificate: UnknownIssuer").contains("TLS"));
+    }
+
+    #[test]
+    fn maps_wss_http_error() {
+        assert!(public_error("HTTP error: 401 Unauthorized").contains("WebSocket"));
+    }
 }
