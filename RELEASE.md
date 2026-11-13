@@ -1,3 +1,9 @@
+## hvyMETL 10.1.2
+
+**Postgres agent TLS** — Connect PostgreSQL with rustls (trust-any-cert, same idea as MSSQL) so Crunchy/PGO and other SSL-required clusters work; `NoTls` failed `pg_hba` with no encryption. Download assets: **`hvymetl-agent-macos-aarch64`**, **`hvymetl-agent-macos-x64`**, **`hvymetl-agent-linux-x64`**, **`hvymetl-agent-windows-x64.exe`**. Studio live-import copy-command points at `v10.1.2`.
+
+---
+
 ## hvyMETL 10.1.1
 
 **Agent TLS** — Install rustls `ring` CryptoProvider at startup so WSS to the studio no longer panics when both `ring` and `aws-lc-rs` are in the dependency tree. Download assets: **`hvymetl-agent-macos-aarch64`**, **`hvymetl-agent-macos-x64`**, **`hvymetl-agent-linux-x64`**, **`hvymetl-agent-windows-x64.exe`**.
