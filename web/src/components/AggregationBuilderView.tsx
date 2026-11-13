@@ -48,6 +48,7 @@ import { resolveShellResultDocuments } from '../mongoShellResultModel';
 import { highlightPrismCode } from '../prismHighlight';
 import { MongoShellResultTree } from './MongoShellResultTree';
 import { ResizableVerticalSplit } from './ResizableVerticalSplit';
+import { SavedMongoConnectionField } from './SavedMongoConnectionField';
 
 type BottomTab = 'results' | 'preview' | 'code';
 
@@ -677,25 +678,15 @@ export function AggregationBuilderView(): ReactElement {
     <div className="agg-builder">
       <div className="agg-builder__topbar">
         <div className="agg-builder__target">
-          <label className="agg-builder__field">
-            <span>{t('aggregation.connection')}</span>
-            <select
-              value={connectionId}
-              aria-label={t('aggregation.connection')}
-              onChange={(e) => setConnectionId(e.target.value)}
-              onFocus={refreshConnections}
-            >
-              {connections.length === 0 ? (
-                <option value="">{t('aggregation.noConnections')}</option>
-              ) : (
-                connections.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name}
-                  </option>
-                ))
-              )}
-            </select>
-          </label>
+          <SavedMongoConnectionField
+            connections={connections}
+            connectionId={connectionId}
+            onConnectionIdChange={setConnectionId}
+            onConnectionsChange={setConnections}
+            fieldClassName="agg-builder__field"
+            label={t('aggregation.connection')}
+            emptyLabel={t('aggregation.noConnections')}
+          />
           <label className="agg-builder__field">
             <span>{t('aggregation.database')}</span>
             <select

@@ -47,6 +47,7 @@ import {
   type SortRow,
 } from '../visualQuery/types';
 import { MongoShellResultTree } from './MongoShellResultTree';
+import { SavedMongoConnectionField } from './SavedMongoConnectionField';
 
 const COMPARE_OPS: MatchCompareOp[] = ['eq', 'ne', 'gt', 'gte', 'lt', 'lte', 'in', 'nin'];
 const LOGICS: MatchLogic[] = ['and', 'or', 'nor'];
@@ -532,24 +533,15 @@ export function VisualQueryView(): ReactElement {
     <div className="vq-builder">
       <div className="vq-builder__topbar">
         <div className="vq-builder__target">
-          <label className="vq-builder__field">
-            <span>{t('query.connection')}</span>
-            <select
-              value={connectionId}
-              aria-label={t('query.connection')}
-              onChange={(e) => setConnectionId(e.target.value)}
-            >
-              {connections.length === 0 ? (
-                <option value="">{t('query.noConnections')}</option>
-              ) : (
-                connections.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name || c.id}
-                  </option>
-                ))
-              )}
-            </select>
-          </label>
+          <SavedMongoConnectionField
+            connections={connections}
+            connectionId={connectionId}
+            onConnectionIdChange={setConnectionId}
+            onConnectionsChange={setConnections}
+            fieldClassName="vq-builder__field"
+            label={t('query.connection')}
+            emptyLabel={t('query.noConnections')}
+          />
           <label className="vq-builder__field">
             <span>{t('query.database')}</span>
             <select

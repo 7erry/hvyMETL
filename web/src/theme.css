@@ -9093,6 +9093,74 @@ button.agg-stepper__item.active {
   font-size: 0.78rem;
 }
 
+.saved-mongo-conn {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-width: 12rem;
+}
+
+.saved-mongo-conn--editing {
+  flex-basis: 100%;
+}
+
+.saved-mongo-conn__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.saved-mongo-conn__row select {
+  flex: 1 1 8rem;
+  min-height: 2rem;
+  max-width: 14rem;
+  padding: 0.2rem 0.4rem;
+  border: 1px solid var(--mdb-green-dark-2);
+  border-radius: 4px;
+  background: var(--mdb-black);
+  color: inherit;
+}
+
+.saved-mongo-conn__form {
+  display: grid;
+  gap: 0.35rem;
+  max-width: 36rem;
+  padding: 0.5rem 0.6rem;
+  border: 1px solid var(--mdb-green-dark-2);
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--mdb-black) 88%, var(--mdb-green-dark-2));
+}
+
+.saved-mongo-conn__form label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  font-size: 0.7rem;
+  opacity: 0.95;
+}
+
+.saved-mongo-conn__form input {
+  min-height: 2rem;
+  padding: 0.2rem 0.4rem;
+  border: 1px solid var(--mdb-green-dark-2);
+  border-radius: 4px;
+  background: var(--mdb-black);
+  color: inherit;
+}
+
+.saved-mongo-conn__hint {
+  margin: 0;
+  font-size: 0.68rem;
+  opacity: 0.7;
+}
+
+.saved-mongo-conn__error {
+  margin: 0;
+  font-size: 0.72rem;
+  color: var(--mdb-coral, #e05c5c);
+}
+
 .vq-builder__field {
   display: flex;
   flex-direction: column;
