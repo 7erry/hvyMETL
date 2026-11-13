@@ -65,14 +65,14 @@ export const MONGO_GRAPH_LAYOUT_OPTIONS: GraphLayoutOptions = {
   maxRowWidth: 1600,
 };
 
-/** Default Before · SQL spacing — tight cluster gaps (match Mongo horizontally). */
+/** Default Before · SQL spacing — aggressive horizontal cluster (edges still clear). */
 export const SQL_GRAPH_LAYOUT_OPTIONS: GraphLayoutOptions = {
-  nodeWidth: 260,
+  nodeWidth: 280,
   nodeHeight: 200,
-  gapX: 40,
+  gapX: 16,
   gapY: DIAGRAM_TWO_DOT_GAP,
-  padding: 48,
-  componentGapX: 40,
+  padding: 20,
+  componentGapX: 16,
   componentGapY: DIAGRAM_TWO_DOT_GAP,
   grid: DIAGRAM_GRID_UNIT,
   maxRowWidth: 2600,
@@ -84,6 +84,11 @@ function sqlVerticalGap(options: Required<GraphLayoutOptions>): number {
 
 function snap(value: number, grid: number): number {
   return Math.round(value / grid) * grid;
+}
+
+/** Snap upward so stacked nodes keep at least the intended gap after grid align. */
+function snapCeil(value: number, grid: number): number {
+  return Math.ceil(value / grid) * grid;
 }
 
 function connectedComponents(nodeIds: string[], edges: GraphLayoutEdge[]): string[][] {
@@ -337,7 +342,7 @@ function layoutSqlTablesByReferenceRole(
   sizes: Map<string, GraphLayoutNodeSize>,
   options: Required<GraphLayoutOptions>,
 ): Record<string, { x: number; y: number }> {
-  const { nodeWidth, nodeHeight, gapX, gapY, padding, grid } = options;
+  const { nodeWidth, nodeHeight, gapX, grid } = options;
   const verticalGap = sqlVerticalGap(options);
   const tableNames = new Set(nodeIds);
   const tablesByName = new Map(model.tables.map((table) => [table.name, table]));
@@ -363,16 +368,20 @@ function layoutSqlTablesByReferenceRole(
   }
   for (const column of columns) column.sort();
 
+  // Local origin is 0; packing applies canvas padding. Skip empty role columns so
+  // missing middle/side ranks do not reserve a full nodeWidth of dead space.
   const positions: Record<string, { x: number; y: number }> = {};
-  let x = padding;
+  let x = 0;
   for (const column of columns) {
+    if (column.length === 0) continue;
     let maxWidth = nodeWidth;
-    let y = padding;
+    let y = 0;
     for (const id of column) {
       const size = sizes.get(id) ?? { width: nodeWidth, height: nodeHeight };
       maxWidth = Math.max(maxWidth, size.width);
-      positions[id] = { x: snap(x, grid), y: snap(y, grid) };
-      y += size.height + verticalGap;
+      const placedY = snapCeil(y, grid);
+      positions[id] = { x: snap(x, grid), y: placedY };
+      y = placedY + size.height + verticalGap;
     }
     x += maxWidth + gapX;
   }
@@ -418,8 +427,8 @@ export function layoutSqlModel(model: SqlStructuralModel, opts?: GraphLayoutOpti
       const point = local[id];
       if (!point) continue;
       allPositions[id] = {
-        x: snap(cursorX + point.x - options.padding, options.grid),
-        y: snap(cursorY + point.y - options.padding, options.grid),
+        x: snap(cursorX + point.x, options.grid),
+        y: snap(cursorY + point.y, options.grid),
       };
     }
 

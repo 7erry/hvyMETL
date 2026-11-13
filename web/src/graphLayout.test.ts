@@ -99,6 +99,40 @@ describe('graphLayout', () => {
     expect(positions.child_a.x).toBe(positions.child_b.x);
   });
 
+  it('does not reserve space for empty SQL role columns', () => {
+    const model: SqlStructuralModel = {
+      source: 'test',
+      tables: [
+        {
+          name: 'users',
+          columns: [{ name: 'id', sqlType: 'INT', nullable: false, isPrimaryKey: true }],
+          primaryKey: ['id'],
+          foreignKeys: [],
+          rowCount: 0,
+        },
+        {
+          name: 'posts',
+          columns: [
+            { name: 'id', sqlType: 'INT', nullable: false, isPrimaryKey: true },
+            { name: 'user_id', sqlType: 'INT', nullable: false, isPrimaryKey: false },
+          ],
+          primaryKey: ['id'],
+          foreignKeys: [
+            { column: 'user_id', referencesTable: 'users', referencesColumn: 'id' },
+          ],
+          rowCount: 0,
+        },
+      ],
+    };
+
+    const positions = layoutSqlModel(model);
+    const postsWidth = estimateTableNodeSize(model.tables[1]!).width;
+    const columnStep = positions.users.x - positions.posts.x;
+    // One role gap only — not an empty middle column of ~nodeWidth.
+    expect(columnStep).toBeGreaterThanOrEqual(postsWidth);
+    expect(columnStep).toBeLessThan(postsWidth + 40);
+  });
+
   it('places hub tables between outgoing-only and incoming-only tables', () => {
     const model: SqlStructuralModel = {
       source: 'test',

@@ -269,7 +269,7 @@ export function SchemaCanvas({
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}
         fitView
-        fitViewOptions={{ padding: compactLayout ? 0.1 : 0.2 }}
+        fitViewOptions={{ padding: 0.08 }}
         snapToGrid={snapToGrid}
         snapGrid={[GRID, GRID]}
         minZoom={0.15}
@@ -279,7 +279,7 @@ export function SchemaCanvas({
       >
         <DiagramCanvasFitView
           fitKey={`${tableCount}-${compactLayout ? 'compact' : 'wide'}`}
-          padding={compactLayout ? 0.1 : 0.15}
+          padding={0.08}
           containerRef={wrapRef}
         />
         <Background variant={BackgroundVariant.Dots} gap={GRID} size={1} color="#00684A" />
