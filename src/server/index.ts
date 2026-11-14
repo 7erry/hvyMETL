@@ -345,7 +345,18 @@ app.use('/api/profiles', ...requireRole(['admin', 'developer', 'manager']));
 app.use('/api/artifacts', ...requireRole(['admin', 'developer', 'manager']));
 app.use('/api/schema', ...requireRole(['admin', 'developer']));
 app.use('/api/schema', createLiveMongoImportRouter());
-app.use('/api/schema', createLiveAgentStudioRouter({ stagingRoot: ROOT }));
+app.use(
+  '/api/schema',
+  createLiveAgentStudioRouter({
+    stagingRoot: ROOT,
+    resolveStagingRoot: (req) => {
+      if (!isAuthConfigured()) return ROOT;
+      const tenantId = getRequestTenantId(req);
+      ensureTenantDirs(ROOT, tenantId);
+      return tenantUploadRoot(ROOT, tenantId);
+    },
+  }),
+);
 app.use('/api/agent', createLiveAgentPublicRouter());
 app.use('/api/design', ...requireRole(['admin', 'developer']));
 app.use('/api/export', ...requireRole(['admin', 'developer']));

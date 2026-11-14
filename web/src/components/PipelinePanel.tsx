@@ -34,6 +34,7 @@ import {
 import type { ProfileRequestFields } from '../customProfileShared';
 import type { SqlStructuralModel } from '../types';
 import { LivePipelineFields } from './LivePipelineFields';
+import { resolvePipelineLiveRunSource } from '../pipelineLiveSource';
 import { pipelineImportsWithMongoTools } from '../../../src/dialects.ts';
 
 type PipelinePanelProps = {
@@ -107,6 +108,7 @@ export function PipelinePanel({
   const [uploadedCsvCount, setUploadedCsvCount] = useState(0);
   const [csvDragOver, setCsvDragOver] = useState(false);
   const [showEnvDetails, setShowEnvDetails] = useState(false);
+  const [agentStagingDir, setAgentStagingDir] = useState<string | null>(null);
   const [form, setForm] = useState<PipelineForm>({
     mongoUri: '',
     mongodbModelKey: '',
@@ -259,6 +261,9 @@ export function PipelinePanel({
 
   const dataSourceMode: DataSourceMode = form.liveEnabled ? 'live' : form.generateMockCsv ? 'mock' : 'real';
   const requiresCsvUpload = Boolean(config?.requiresCsvUpload);
+  const hostedStudio = Boolean(config?.hostedUrl || config?.requiresCsvUpload);
+  /** Hosted SQL: live rows come from the Rust agent extract stream (not server-side DB open). */
+  const liveRequiresAgent = hostedStudio && !pipelineImportsWithMongoTools(dialect);
   const serverManagedCsvToAtlas = Boolean(config?.serverManagedCsvToAtlas);
   const csvToAtlasOverridePath = csvToAtlasUserOverridePath(form.csvToAtlasPath, config);
   const serverConfiguredCsvToAtlas = isCsvToAtlasServerConfigured(config, csvToAtlasOverridePath);
@@ -305,6 +310,7 @@ export function PipelinePanel({
   }, [open, serverManagedCsvToAtlas, form.mongoUri, form.mongodbModelKey, persistTenantSecrets]);
 
   const setDataSourceMode = (mode: DataSourceMode) => {
+    if (mode !== 'live') setAgentStagingDir(null);
     setForm((prev) => ({
       ...prev,
       generateMockCsv: mode === 'mock',
@@ -523,9 +529,16 @@ export function PipelinePanel({
     if (!hasMongoUri) return false;
     if (mongoTools && !hasMongoImport) return false;
     if (jsonDocuments && !form.liveEnabled) return true;
-    if (jsonDocuments && form.liveEnabled) return Boolean(form.liveUri.trim());
+    if (jsonDocuments && form.liveEnabled) {
+      if (hostedStudio) return false;
+      return Boolean(form.liveUri.trim());
+    }
     if (dataSourceMode === 'live') {
-      if (!form.liveUri.trim()) return false;
+      if (liveRequiresAgent) {
+        if (!agentStagingDir?.trim()) return false;
+      } else if (!form.liveUri.trim()) {
+        return false;
+      }
       if (mongoTools && !hasMongoImport) return false;
       if (!mongoTools && !hasCsvToAtlas) return false;
       return true;
@@ -534,7 +547,7 @@ export function PipelinePanel({
     if (useMockCsv && !mockGeneratorReady) return false;
     if (!hasCsvSource && !useMockCsv) return false;
     return true;
-  }, [running, csvUploading, model, hasMongoUri, hasCsvToAtlas, hasMongoImport, hasCsvSource, useMockCsv, mockGeneratorReady, jsonDocuments, mongoTools, dataSourceMode, form.liveEnabled, form.liveUri]);
+  }, [running, csvUploading, model, hasMongoUri, hasCsvToAtlas, hasMongoImport, hasCsvSource, useMockCsv, mockGeneratorReady, jsonDocuments, mongoTools, dataSourceMode, form.liveEnabled, form.liveUri, liveRequiresAgent, agentStagingDir, hostedStudio]);
 
   const handleRun = async () => {
     setRunning(true);
@@ -542,6 +555,16 @@ export function PipelinePanel({
     setResult(null);
     setProgress({ stage: 'validating', message: 'Starting pipeline…' });
     try {
+      const liveSource =
+        dataSourceMode === 'live' || form.liveEnabled
+          ? resolvePipelineLiveRunSource({
+              requireAgent: liveRequiresAgent,
+              liveUri: form.liveUri,
+              liveDatabase: form.liveDatabase,
+              agentStagingDir,
+            })
+          : null;
+
       const overrides = {
         ...profileFields,
         model,
@@ -557,11 +580,15 @@ export function PipelinePanel({
         mongoUri: resolveMongoUriOverride(),
         mongodbModelKey: resolveModelKeyOverride(),
         csvToAtlasPath: serverConfiguredCsvToAtlas ? undefined : form.csvToAtlasPath.trim() || undefined,
-        csvSourcePath: useMockCsv || dataSourceMode === 'live' || csvFiles.length > 0 ? undefined : effectiveCsvPath || undefined,
-        generateMockCsv: dataSourceMode === 'live' ? false : useMockCsv,
-        liveUri: dataSourceMode === 'live' || form.liveEnabled ? form.liveUri.trim() : undefined,
-        liveDatabase: dataSourceMode === 'live' || form.liveEnabled ? form.liveDatabase.trim() || undefined : undefined,
-        mockCsvOptions: useMockCsv
+        csvSourcePath: liveSource
+          ? liveSource.csvSourcePath
+          : useMockCsv || csvFiles.length > 0
+            ? undefined
+            : effectiveCsvPath || undefined,
+        generateMockCsv: liveSource ? false : useMockCsv,
+        liveUri: liveSource?.liveUri,
+        liveDatabase: liveSource?.liveDatabase,
+        mockCsvOptions: useMockCsv && !liveSource
           ? {
               baseRowsPerTable: form.mockBaseRows,
               childMultiplier: form.mockChildMultiplier,
@@ -810,17 +837,29 @@ export function PipelinePanel({
               <input
                 type="checkbox"
                 checked={form.liveEnabled}
-                disabled={running}
+                disabled={running || hostedStudio}
                 onChange={(event) => setForm((prev) => ({ ...prev, liveEnabled: event.target.checked }))}
               />
               Read from the live connection
             </label>
-            {form.liveEnabled ? (
+            {hostedStudio ? (
+              <p className="pipeline-hint">
+                Hosted studio cannot open your MongoDB URI. Import documents with the agent on Live
+                Import, or run a local studio for live pipeline reads.
+              </p>
+            ) : null}
+            {form.liveEnabled && !hostedStudio ? (
               <LivePipelineFields
                 uri={form.liveUri}
                 database={form.liveDatabase}
                 disabled={running}
-                onChange={(next) => setForm((prev) => ({ ...prev, ...next }))}
+                onChange={(next) =>
+                  setForm((prev) => ({
+                    ...prev,
+                    liveUri: next.uri,
+                    liveDatabase: next.database,
+                  }))
+                }
               />
             ) : null}
           </section>
@@ -864,7 +903,19 @@ export function PipelinePanel({
               uri={form.liveUri}
               database={form.liveDatabase}
               disabled={running}
-              onChange={(next) => setForm((prev) => ({ ...prev, ...next }))}
+              requireAgent={liveRequiresAgent}
+              agentStagingDir={agentStagingDir}
+              onAgentStagingChange={(dir) => {
+                setAgentStagingDir(dir);
+                if (dir) onCsvSourcePathChange(dir);
+              }}
+              onChange={(next) =>
+                setForm((prev) => ({
+                  ...prev,
+                  liveUri: next.uri,
+                  liveDatabase: next.database,
+                }))
+              }
             />
           ) : null}
 
@@ -948,7 +999,7 @@ export function PipelinePanel({
                 )}
               </div>
             </div>
-          ) : config?.mockCsvGenerator?.ok ? (
+          ) : dataSourceMode === 'mock' && config?.mockCsvGenerator?.ok ? (
             <div className="pipeline-card pipeline-mock-ready">
               <p className="pipeline-hint">
                 Mock CSVs will be generated from your DDL using{' '}
@@ -956,7 +1007,7 @@ export function PipelinePanel({
                 {config.mockCsvGenerator.version ? ` (${config.mockCsvGenerator.version})` : ''}.
               </p>
             </div>
-          ) : (
+          ) : dataSourceMode === 'mock' ? (
             <div className="pipeline-prereq-banner">
               <strong>Server prerequisite</strong>
               <p>
@@ -971,7 +1022,7 @@ export function PipelinePanel({
                 </p>
               )}
             </div>
-          )}
+          ) : null}
 
           {dataSourceMode === 'mock' ? (
               <div className="pipeline-card">

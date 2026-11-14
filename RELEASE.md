@@ -1,3 +1,9 @@
+## hvyMETL 10.1.10
+
+**Read live data via agent** — On the hosted studio, Run pipeline → Read live data starts the same Rust agent WSS extract used by Live Import (start agent → waiting → streaming → ready), then loads staging CSVs into the pipeline. No mock CSV / CREATE TABLE path. Agent extract staging is under the tenant upload tree so path checks pass. Local studio still supports capped direct URI reads.
+
+---
+
 ## hvyMETL 10.1.9
 
 **Run pipeline saved connections** — Read live data in the Run pipeline dialog uses the same browser-saved Live Import connections (`hvymetl.liveimport.connections`): pick, add, edit, or delete URI + engine + optional database without retyping.

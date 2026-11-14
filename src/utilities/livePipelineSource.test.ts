@@ -9,7 +9,7 @@ describe('live pipeline source', () => {
   });
 
   it('refuses a hosted studio before opening a connection', () => {
-    expect(() => assertLivePipelineAllowed(true)).toThrow(/hosted studio/);
+    expect(() => assertLivePipelineAllowed(true)).toThrow(/local agent/);
     expect(() => assertLivePipelineAllowed(false)).not.toThrow();
   });
 });

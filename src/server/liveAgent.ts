@@ -1,5 +1,5 @@
 import { randomBytes } from 'node:crypto';
-import { Router } from 'express';
+import { Router, type Request } from 'express';
 import { inferWorkloadProfile } from '../profiles/inferProfile.js';
 import type { SqlStructuralModel } from '../types.js';
 import {
@@ -188,12 +188,17 @@ export function createLiveAgentPublicRouter(): Router {
 }
 
 /** Called by the signed-in studio. */
-export function createLiveAgentStudioRouter(options?: { stagingRoot?: string }): Router {
+export function createLiveAgentStudioRouter(options?: {
+  stagingRoot?: string;
+  /** Prefer tenant upload root on hosted so extract CSVs pass pipeline path checks. */
+  resolveStagingRoot?: (req: Request) => string;
+}): Router {
   const router = Router();
 
   router.post('/agent-session', (req, res) => {
     const wantExtract = req.body?.extract !== false;
-    res.json(createLiveAgentSession({ wantExtract, stagingRoot: options?.stagingRoot }));
+    const stagingRoot = options?.resolveStagingRoot?.(req) ?? options?.stagingRoot ?? process.cwd();
+    res.json(createLiveAgentSession({ wantExtract, stagingRoot }));
   });
 
   router.get('/agent-result', (req, res) => {

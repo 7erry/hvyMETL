@@ -16,7 +16,9 @@ export type LiveDocumentGroup = { name: string; documents: Record<string, unknow
 
 export function assertLivePipelineAllowed(hosted: boolean): void {
   if (hosted) {
-    throw new Error('Live pipeline reads are refused on the hosted studio. Use CSV or mock data there.');
+    throw new Error(
+      'Direct live URI reads are refused on the hosted studio. Choose Read live data, start the local agent, wait for the extract, then run — or use CSV.',
+    );
   }
 }
 

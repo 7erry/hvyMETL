@@ -9,7 +9,7 @@ every schema decision in a retrievable knowledge base of MongoDB design patterns
 your workload telemetry (read:write ratio, peak RPM, data growth), then runs a
 parallel, pattern-aware ETL into MongoDB Atlas.
 
-**Release:** [`10.1.9`](RELEASE.md#hvymetl-1019) — see [RELEASE.md](RELEASE.md) for full release history.
+**Release:** [`10.1.10`](RELEASE.md#hvymetl-10110) — see [RELEASE.md](RELEASE.md) for full release history.
 
 An optional **ML engine** (`src/ml_engine/`) adds telemetry-aware reranking
 ([Voyage rerank-2.5](https://docs.voyageai.com/reference/reranker-api) when
@@ -282,7 +282,7 @@ command per collection.
 Schema import recognizes the dialects below. **SQLite** has a live file adapter (CLI + file upload).
 **MongoDB**, **PostgreSQL**, and **MySQL** can be read from a connection URI when the studio server runs on a machine that can
 reach that database. On the hosted website, Connect Live Database downloads the agent for that computer and copies a command you paste in a terminal. Other dialects use **DDL paste**. Row data
-in the web pipeline still comes from **CSV exports** per table, unless you choose **Read live data** for a PostgreSQL, MySQL, or MongoDB JSON schema. That read is capped and still loads through csvToAtlas or mongoimport.
+in the web pipeline still comes from **CSV exports** per table, unless you choose **Read live data**. On the hosted studio that path uses the local Rust agent extract over WSS (same as Live Import); a local studio can also open PostgreSQL/MySQL/MongoDB directly for a capped sample. Rows still load through csvToAtlas or mongoimport.
 
 | Tier | Dialects |
 | --- | --- |
