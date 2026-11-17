@@ -1,3 +1,9 @@
+## hvyMETL 11.0.1
+
+**Quoted foreign keys** — `ALTER TABLE "videos" ADD FOREIGN KEY("channel_id") REFERENCES "channels"("id")` is now a relationship. drawDB examples such as YouTube no longer report that no foreign keys were found. Reload the example after this deploy.
+
+---
+
 ## hvyMETL 11.0.0
 
 **Add data source** — The dialog is one segmented control: Example, Upload, and Live. Upload is a single drop target (file button, DDL / JSON / CSV / SQLite labels, a muted placeholder, and Import schema at the bottom right). Example cards show a close cluster of tables with column names, including Studio schemas, and the dialect dot is that database's mark. Category filters sit on one scrolling row, and the SaaS category is labeled SaaS.

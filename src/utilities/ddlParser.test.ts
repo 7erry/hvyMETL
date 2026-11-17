@@ -519,6 +519,37 @@ describe('parseDdlToModel — MSSQL / SSMS bracket identifiers', () => {
     expect(customer?.columns.some((column) => column.name === 'LineTotal')).toBe(false);
   });
 
+  it('parses quoted ALTER TABLE ADD FOREIGN KEY statements', () => {
+    const model = parseDdlToModel(`
+      CREATE TABLE "users" ("id" BIGINT PRIMARY KEY);
+      CREATE TABLE "videos" (
+        "id" BIGINT PRIMARY KEY,
+        "channel_id" BIGINT NOT NULL
+      );
+      CREATE TABLE "reactions" (
+        "video_id" BIGINT NOT NULL,
+        "user_id" BIGINT NOT NULL,
+        PRIMARY KEY("video_id", "user_id")
+      );
+      ALTER TABLE "videos"
+      ADD FOREIGN KEY("channel_id") REFERENCES "channels"("id")
+      ON UPDATE CASCADE ON DELETE CASCADE;
+      ALTER TABLE "reactions"
+      ADD FOREIGN KEY("video_id") REFERENCES "videos"("id")
+      ON UPDATE CASCADE ON DELETE CASCADE;
+      ALTER TABLE "reactions"
+      ADD FOREIGN KEY("user_id") REFERENCES "users"("id")
+      ON UPDATE CASCADE ON DELETE CASCADE;
+    `);
+    expect(model.tables.find((table) => table.name === 'videos')?.foreignKeys).toEqual([
+      { column: 'channel_id', referencesTable: 'channels', referencesColumn: 'id' },
+    ]);
+    expect(model.tables.find((table) => table.name === 'reactions')?.foreignKeys).toEqual([
+      { column: 'video_id', referencesTable: 'videos', referencesColumn: 'id' },
+      { column: 'user_id', referencesTable: 'users', referencesColumn: 'id' },
+    ]);
+  });
+
   it('parses ALTER TABLE ADD CONSTRAINT FOREIGN KEY from SSMS scripts', () => {
     const model = parseDdlToModel(MSSQL_ADVENTUREWORKS_DDL, 'ddl:mssql');
     const product = model.tables.find((table) => table.name === 'dbo.Product');

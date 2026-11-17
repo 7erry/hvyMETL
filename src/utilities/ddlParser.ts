@@ -291,8 +291,12 @@ function findAlterTableForeignKeys(ddl: string): Map<string, ForeignKeyModel[]> 
     if (!tableRef) continue;
 
     const slice = ddl.slice(tableRef.next);
+    const ident = String.raw`(?:\[[^\]]+\]|"[^"]+"|` + '`[^`]+`' + String.raw`|[\w$#@]+)`;
     const fkMatch = slice.match(
-      /(?:WITH\s+(?:NOCHECK|CHECK)\s+)?ADD\s+(?:CONSTRAINT\s+(?:\[[^\]]+\]|\w+)\s+)?FOREIGN\s+KEY\s*\(([^)]+)\)\s*REFERENCES\s+((?:\[[^\]]+\]|[\w$#@]+)(?:\s*\.\s*(?:\[[^\]]+\]|[\w$#@]+))*)\s*\(([^)]+)\)/i,
+      new RegExp(
+        String.raw`(?:WITH\s+(?:NOCHECK|CHECK)\s+)?ADD\s+(?:CONSTRAINT\s+${ident}\s+)?FOREIGN\s+KEY\s*\(([^)]+)\)\s*REFERENCES\s+((?:${ident})(?:\s*\.\s*(?:${ident}))*)\s*\(([^)]+)\)`,
+        'i',
+      ),
     );
     if (!fkMatch) continue;
 
