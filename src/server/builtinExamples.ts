@@ -9,6 +9,7 @@ import { dirname, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { dialectExampleFor, dialectExamplePickerLabel } from '../examples/dialectPatternManifest.js';
 import { getDialectLabel } from '../dialects.js';
+import { readPackageVersion } from '../utilities/version.js';
 
 const REPO_ROOT = join(dirname(fileURLToPath(import.meta.url)), '../..');
 
@@ -293,10 +294,17 @@ export function listBuiltinExamples(examplesDir: string): BuiltinExampleSummary[
     }));
 }
 
-/** Public thumbnail path. Slug must match scripts/sync-drawdb-examples.mjs --previews. */
+/**
+ * Public thumbnail path. Slug must match scripts/sync-drawdb-examples.mjs --previews.
+ * The query string drops the browser cache of the old full-diagram SVGs at the same path.
+ */
 function studioPreviewUrl(exampleId: string): string {
   const slug = exampleId.replace(/\.(sql|ddl|ya?ml|json|template)$/i, '').replace(/\//g, '-');
-  return `/example-previews/studio/${slug}.svg`;
+  return previewUrl(`/example-previews/studio/${slug}.svg`);
+}
+
+function previewUrl(path: string): string {
+  return path.includes('?') ? path : `${path}?v=${readPackageVersion()}`;
 }
 
 type DrawdbManifestEntry = {
@@ -334,7 +342,7 @@ function listDrawdbExamples(drawdbDir: string): BuiltinExampleSummary[] {
         category: entry.category ?? 'general',
         tags: entry.tags,
         tableCount: entry.tableCount,
-        previewUrl: entry.previewUrl ?? `/example-previews/drawdb/${entry.slug}.svg`,
+        previewUrl: previewUrl(entry.previewUrl ?? `/example-previews/drawdb/${entry.slug}.svg`),
         source: 'drawdb' as const,
       }));
   } catch {

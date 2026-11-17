@@ -1,3 +1,9 @@
+## hvyMETL 11.0.2
+
+**Example previews** — drawDB gallery cards load the close table cluster instead of a cached copy of the old zoomed-out diagram. Reload the Add data source dialog.
+
+---
+
 ## hvyMETL 11.0.1
 
 **Quoted foreign keys** — `ALTER TABLE "videos" ADD FOREIGN KEY("channel_id") REFERENCES "channels"("id")` is now a relationship. drawDB examples such as YouTube no longer report that no foreign keys were found. Reload the example after this deploy.

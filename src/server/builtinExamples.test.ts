@@ -13,6 +13,7 @@ import {
   resolveBuiltinExamplePath,
   resolveBuiltinExamplesDir,
 } from './builtinExamples.js';
+import { readPackageVersion } from '../utilities/version.js';
 
 describe('resolveBuiltinExamplesDir', () => {
   it('prefers HVYMETL_EXAMPLES_DIR when set', () => {
@@ -157,7 +158,7 @@ describe('repo bundled examples', () => {
     const drawdb = listBuiltinExamples(path).filter((item) => item.source === 'drawdb');
     expect(drawdb).toHaveLength(100);
     const github = drawdb.find((item) => item.id === 'drawdb/github/schema.sql');
-    expect(github?.previewUrl).toMatch(/\/example-previews\/drawdb\/github\.svg$/);
+    expect(github?.previewUrl).toBe(`/example-previews/drawdb/github.svg?v=${readPackageVersion()}`);
     expect(github?.dialect).toBe('postgresql');
     const githubSvg = readFileSync(
       join(import.meta.dirname, '../../web/public/example-previews/drawdb/github.svg'),
@@ -169,7 +170,7 @@ describe('repo bundled examples', () => {
     expect(githubSvg.match(/<text /g)?.length ?? 0).toBeGreaterThan(8);
 
     const catalog = listBuiltinExamples(path).find((item) => item.id === 'catalog');
-    expect(catalog?.previewUrl).toBe('/example-previews/studio/catalog.svg');
+    expect(catalog?.previewUrl).toBe(`/example-previews/studio/catalog.svg?v=${readPackageVersion()}`);
     const catalogSvg = readFileSync(
       join(import.meta.dirname, '../../web/public/example-previews/studio/catalog.svg'),
       'utf8',
@@ -177,7 +178,7 @@ describe('repo bundled examples', () => {
     expect(catalogSvg).toContain('sku');
 
     const orders = listBuiltinExamples(path).find((item) => item.id === 'dynamodb/orders-table.yaml');
-    expect(orders?.previewUrl).toBe('/example-previews/studio/dynamodb-orders-table.svg');
+    expect(orders?.previewUrl).toBe(`/example-previews/studio/dynamodb-orders-table.svg?v=${readPackageVersion()}`);
     expect(
       readFileSync(
         join(import.meta.dirname, '../../web/public/example-previews/studio/dynamodb-orders-table.svg'),
