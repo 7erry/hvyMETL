@@ -10,6 +10,7 @@ import {
   buildResultTree,
   type ResultTreeNode,
 } from '../mongoShellResultModel';
+import { columnTypeClass } from '../typeHighlight';
 
 type MongoShellResultTreeProps = {
   documents: Record<string, unknown>[];
@@ -33,6 +34,7 @@ function TreeRows({
   const hasChildren = Boolean(node.children?.length);
   // Keep docs collapsed so one document ≈ one row for paging density
   const [open, setOpen] = useState(false);
+  const typeClass = columnTypeClass(node.type);
 
   return (
     <>
@@ -50,10 +52,14 @@ function TreeRows({
           ) : (
             <span className="mongo-shell-tree__toggle-spacer" />
           )}
-          <span>{node.key}</span>
+          <span className={typeClass}>{node.key}</span>
         </td>
-        <td className="mongo-shell-tree__value">{node.value}</td>
-        <td className="mongo-shell-tree__type">{node.type}</td>
+        <td className="mongo-shell-tree__value">
+          <span className={typeClass}>{node.value}</span>
+        </td>
+        <td className="mongo-shell-tree__type">
+          <span className={typeClass}>{node.type}</span>
+        </td>
       </tr>
       {open && hasChildren
         ? node.children!.map((child) => (

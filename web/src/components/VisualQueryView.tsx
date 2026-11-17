@@ -30,13 +30,18 @@ import {
 } from '../mongoShellReplicate';
 import { resolveShellResultDocuments } from '../mongoShellResultModel';
 import { highlightPrismCode } from '../prismHighlight';
+import { columnTypeClass } from '../typeHighlight';
 import {
   buildFindScript,
   buildSampleFieldsScript,
-  compileFindQuery,
   fieldNamesFromShellOutput,
-  findStateToJsonText,
+  filterJsonText,
   formatFindAsShell,
+  projectionJsonText,
+  projectionStateFromJson,
+  resolveCompiledFind,
+  sortJsonText,
+  sortRowsFromJson,
 } from '../visualQuery/compileFind';
 import {
   createProjectionRow,
@@ -44,7 +49,6 @@ import {
   defaultFindQueryState,
   type FindQueryState,
   type ProjectionRow,
-  type SortRow,
 } from '../visualQuery/types';
 import { MongoShellResultTree } from './MongoShellResultTree';
 import { SavedMongoConnectionField } from './SavedMongoConnectionField';
@@ -52,16 +56,96 @@ import { SavedMongoConnectionField } from './SavedMongoConnectionField';
 const COMPARE_OPS: MatchCompareOp[] = ['eq', 'ne', 'gt', 'gte', 'lt', 'lte', 'in', 'nin'];
 const LOGICS: MatchLogic[] = ['and', 'or', 'nor'];
 
-const EDITOR_STYLE = {
+const LINE_EDITOR_STYLE = {
   fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
-  fontSize: '0.82rem',
-  lineHeight: '1.45',
-  minHeight: '12rem',
+  fontSize: '0.78rem',
+  lineHeight: '1.4',
+  minHeight: '1.6rem',
   outline: 0,
 } as const;
 
+type QueryTab = {
+  id: string;
+  collection: string;
+  query: FindQueryState;
+  filterOverride: string | null;
+};
+
+function makeTab(collection = ''): QueryTab {
+  return { id: newId(), collection, query: defaultFindQueryState(), filterOverride: null };
+}
+
 function highlightJson(code: string): string {
   return highlightPrismCode(code, 'json');
+}
+
+function logicLabel(logic: MatchLogic): string {
+  switch (logic) {
+    case 'and':
+      return 'And';
+    case 'or':
+      return 'Or';
+    case 'nor':
+      return 'Nor';
+    default: {
+      const _exhaustive: never = logic;
+      return _exhaustive;
+    }
+  }
+}
+
+function valueTypeLabel(raw: string): string {
+  const trimmed = raw.trim();
+  if (trimmed === 'true' || trimmed === 'false') return 'Bool';
+  if (trimmed === 'null') return 'Null';
+  if (trimmed !== '' && Number.isFinite(Number(trimmed))) return 'Double';
+  return 'String';
+}
+
+function JsonLine({
+  value,
+  ariaLabel,
+  onDraft,
+}: {
+  value: string;
+  ariaLabel: string;
+  onDraft: (text: string) => void;
+}): ReactElement {
+  const [draft, setDraft] = useState(value);
+  const focused = useRef(false);
+  const rootRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (rootRef.current?.contains(document.activeElement)) return;
+    focused.current = false;
+    setDraft(value);
+  }, [value]);
+
+  return (
+    <div
+      ref={rootRef}
+      className="vq-line__editor"
+      onFocus={() => {
+        focused.current = true;
+      }}
+      onBlur={() => {
+        focused.current = false;
+        setDraft(value);
+      }}
+    >
+      <Editor
+        value={draft}
+        onValueChange={(next) => {
+          setDraft(next);
+          if (focused.current) onDraft(next);
+        }}
+        highlight={highlightJson}
+        padding={6}
+        style={LINE_EDITOR_STYLE}
+        aria-label={ariaLabel}
+      />
+    </div>
+  );
 }
 
 function FieldSelect({
@@ -124,10 +208,12 @@ function MatchTreeEditor({
   node,
   fields,
   onChange,
+  onRemove,
 }: {
   node: MatchNode;
   fields: string[];
   onChange: (next: MatchNode) => void;
+  onRemove?: () => void;
 }): ReactElement {
   if (node.kind === 'group') {
     return (
@@ -143,33 +229,30 @@ function MatchTreeEditor({
           >
             {LOGICS.map((logic) => (
               <option key={logic} value={logic}>
-                {logic.toUpperCase()}
+                {logicLabel(logic)}
               </option>
             ))}
           </select>
+          {onRemove ? (
+            <button type="button" className="agg-icon-btn" aria-label="Remove group" onClick={onRemove}>
+              ×
+            </button>
+          ) : null}
         </div>
         <div className="agg-match-group__body">
           {node.children.map((child) => (
-            <div key={child.id} className="agg-match-row-wrap">
-              <MatchTreeEditor
-                node={child}
-                fields={fields}
-                onChange={(nextChild) => {
-                  onChange({
-                    ...node,
-                    children: node.children.map((c) => (c.id === nextChild.id ? nextChild : c)),
-                  });
-                }}
-              />
-              <button
-                type="button"
-                className="agg-icon-btn"
-                aria-label="Remove expression"
-                onClick={() => onChange(removeMatchNode(node, child.id))}
-              >
-                ×
-              </button>
-            </div>
+            <MatchTreeEditor
+              key={child.id}
+              node={child}
+              fields={fields}
+              onRemove={() => onChange(removeMatchNode(node, child.id))}
+              onChange={(nextChild) => {
+                onChange({
+                  ...node,
+                  children: node.children.map((c) => (c.id === nextChild.id ? nextChild : c)),
+                });
+              }}
+            />
           ))}
         </div>
         <div className="agg-match-group__actions">
@@ -211,8 +294,9 @@ function MatchTreeEditor({
     );
   }
 
+  const typeLabel = valueTypeLabel(node.value);
   return (
-    <div className="agg-match-expr">
+    <div className="vq-match-expr">
       <FieldSelect
         value={node.field}
         fields={fields}
@@ -230,6 +314,10 @@ function MatchTreeEditor({
           </option>
         ))}
       </select>
+      <button type="button" className="agg-icon-btn" aria-label="Remove expression" onClick={onRemove}>
+        ×
+      </button>
+      <span className={`vq-type ${columnTypeClass(typeLabel)}`}>{typeLabel}</span>
       <input
         value={node.value}
         placeholder="value"
@@ -249,20 +337,37 @@ export function VisualQueryView(): ReactElement {
   const [databases, setDatabases] = useState<string[]>([]);
   const [collections, setCollections] = useState<string[]>([]);
   const [database, setDatabase] = useState('');
-  const [collection, setCollection] = useState('');
+  const [tabs, setTabs] = useState<QueryTab[]>(() => [makeTab()]);
+  const [activeTabId, setActiveTabId] = useState<string | null>(null);
   const [catalogLoading, setCatalogLoading] = useState(false);
-  const [query, setQuery] = useState<FindQueryState>(() => defaultFindQueryState());
   const [runDocs, setRunDocs] = useState<Record<string, unknown>[] | null>(null);
   const [runError, setRunError] = useState<string | null>(null);
   const [running, setRunning] = useState(false);
   const [fieldNames, setFieldNames] = useState<string[]>([]);
+
+  const activeTab = tabs.find((tab) => tab.id === activeTabId) ?? tabs[0]!;
+  const activeTabIdRef = useRef(activeTab.id);
+  activeTabIdRef.current = activeTab.id;
+  const collection = activeTab.collection;
+  const query = activeTab.query;
+
+  const setActiveCollection = useCallback((nextCollection: string): void => {
+    setTabs((prev) =>
+      prev.map((tab) =>
+        tab.id === activeTabIdRef.current ? { ...tab, collection: nextCollection } : tab,
+      ),
+    );
+  }, []);
 
   const selectedConnection = connections.find((c) => c.id === connectionId) ?? null;
   const canRun = Boolean(
     selectedConnection?.uri.trim() && database.trim() && collection.trim(),
   );
 
-  const compiled = useMemo(() => compileFindQuery(query), [query]);
+  const compiled = useMemo(
+    () => resolveCompiledFind(query, activeTab.filterOverride),
+    [activeTab.filterOverride, query],
+  );
   const generatedShell = useMemo(() => {
     if (!compiled.ok) return compiled.error;
     return formatFindAsShell(collection || 'collection', compiled.compiled);
@@ -307,7 +412,14 @@ export function VisualQueryView(): ReactElement {
 
   const applyCollectionNames = useCallback((dbName: string, names: string[], stdout: string): void => {
     setCollections(names);
-    setCollection((prev) => (prev && names.includes(prev) ? prev : (names[0] ?? '')));
+    setTabs((prev) =>
+      prev.map((tab) => {
+        if (tab.id !== activeTabIdRef.current) return tab;
+        const nextCollection =
+          tab.collection && names.includes(tab.collection) ? tab.collection : (names[0] ?? '');
+        return { ...tab, collection: nextCollection };
+      }),
+    );
     if (names.length === 0) {
       const preview = stdout.trim().slice(0, 240);
       setRunError(
@@ -327,7 +439,7 @@ export function VisualQueryView(): ReactElement {
       setDatabases([]);
       setCollections([]);
       setDatabase('');
-      setCollection('');
+      setActiveCollection('');
       return;
     }
     let cancelled = false;
@@ -347,14 +459,14 @@ export function VisualQueryView(): ReactElement {
           );
           setDatabases([]);
           setCollections([]);
-          setCollection('');
+          setActiveCollection('');
           return;
         }
         const dbNames = databaseNamesFromShellOutput(dbResult.stdout);
         setDatabases(dbNames);
         if (dbNames.length === 0) {
           setCollections([]);
-          setCollection('');
+          setActiveCollection('');
           setDatabase('');
           setRunError(
             dbResult.stdout.trim()
@@ -379,7 +491,7 @@ export function VisualQueryView(): ReactElement {
         if (!cancelled) {
           setRunError(describeApiError(err));
           setCollections([]);
-          setCollection('');
+          setActiveCollection('');
         }
       } finally {
         if (!cancelled) setCatalogLoading(false);
@@ -388,13 +500,13 @@ export function VisualQueryView(): ReactElement {
     return () => {
       cancelled = true;
     };
-  }, [applyCollectionNames, connectionId, fetchCollectionNames, selectedUri]);
+  }, [applyCollectionNames, connectionId, fetchCollectionNames, selectedUri, setActiveCollection]);
 
   const onDatabaseChange = useCallback(
     (nextDb: string): void => {
       setDatabase(nextDb);
       setCollections([]);
-      setCollection('');
+      setActiveCollection('');
       setFieldNames([]);
       if (!selectedUri || !nextDb.trim()) return;
       setCatalogLoading(true);
@@ -406,13 +518,13 @@ export function VisualQueryView(): ReactElement {
         } catch (err) {
           setRunError(describeApiError(err));
           setCollections([]);
-          setCollection('');
+          setActiveCollection('');
         } finally {
           setCatalogLoading(false);
         }
       })();
     },
-    [applyCollectionNames, fetchCollectionNames, selectedUri],
+    [applyCollectionNames, fetchCollectionNames, selectedUri, setActiveCollection],
   );
 
   useEffect(() => {
@@ -444,38 +556,60 @@ export function VisualQueryView(): ReactElement {
     };
   }, [collection, database, selectedUri]);
 
-  const patchQuery = useCallback((patch: Partial<FindQueryState>) => {
-    setQuery((prev) => ({ ...prev, ...patch }));
+  const patchActiveTab = useCallback((patch: Partial<QueryTab>): void => {
+    setTabs((prev) =>
+      prev.map((tab) => (tab.id === activeTabIdRef.current ? { ...tab, ...patch } : tab)),
+    );
   }, []);
 
-  const setEditMode = useCallback((mode: FindQueryState['editMode']) => {
-    setQuery((prev) => {
-      if (mode === 'json' && prev.editMode === 'form') {
-        return { ...prev, editMode: 'json', jsonText: findStateToJsonText(prev) };
-      }
-      return { ...prev, editMode: mode };
-    });
+  const patchQuery = useCallback((patch: Partial<FindQueryState>): void => {
+    setTabs((prev) =>
+      prev.map((tab) => {
+        if (tab.id !== activeTabIdRef.current) return tab;
+        return {
+          ...tab,
+          query: { ...tab.query, ...patch },
+          filterOverride: 'filter' in patch ? null : tab.filterOverride,
+        };
+      }),
+    );
   }, []);
 
-  const updateProjection = useCallback((id: string, patch: Partial<ProjectionRow>) => {
-    setQuery((prev) => ({
-      ...prev,
-      projection: prev.projection.map((row) => (row.id === id ? { ...row, ...patch } : row)),
-    }));
+  const updateProjection = useCallback((id: string, patch: Partial<ProjectionRow>): void => {
+    setTabs((prev) =>
+      prev.map((tab) => {
+        if (tab.id !== activeTabIdRef.current) return tab;
+        return {
+          ...tab,
+          query: {
+            ...tab.query,
+            projection: tab.query.projection.map((row) => (row.id === id ? { ...row, ...patch } : row)),
+          },
+        };
+      }),
+    );
   }, []);
 
-  const updateSort = useCallback((id: string, patch: Partial<SortRow>) => {
-    setQuery((prev) => ({
-      ...prev,
-      sort: prev.sort.map((row) => (row.id === id ? { ...row, ...patch } : row)),
-    }));
+  const setFirstSort = useCallback((direction: 1 | -1): void => {
+    setTabs((prev) =>
+      prev.map((tab) => {
+        if (tab.id !== activeTabIdRef.current) return tab;
+        const sort =
+          tab.query.sort.length === 0
+            ? [createSortRow('_id', direction)]
+            : tab.query.sort.map((row, index) =>
+                index === 0 ? { ...row, direction, enabled: true } : row,
+              );
+        return { ...tab, query: { ...tab.query, sort } };
+      }),
+    );
   }, []);
 
   const resetQuery = useCallback(() => {
-    setQuery(defaultFindQueryState());
+    patchActiveTab({ query: defaultFindQueryState(), filterOverride: null });
     setRunDocs(null);
     setRunError(null);
-  }, []);
+  }, [patchActiveTab]);
 
   const runLive = useCallback(async () => {
     if (!selectedConnection?.uri.trim() || !database.trim() || !collection.trim()) {
@@ -483,7 +617,7 @@ export function VisualQueryView(): ReactElement {
       setRunDocs(null);
       return;
     }
-    const next = compileFindQuery(query);
+    const next = resolveCompiledFind(query, activeTab.filterOverride);
     if (!next.ok) {
       setRunError(next.error);
       setRunDocs(null);
@@ -516,7 +650,7 @@ export function VisualQueryView(): ReactElement {
     } finally {
       setRunning(false);
     }
-  }, [collection, database, query, selectedConnection, t]);
+  }, [activeTab.filterOverride, collection, database, query, selectedConnection, t]);
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
@@ -529,282 +663,303 @@ export function VisualQueryView(): ReactElement {
     return () => window.removeEventListener('keydown', onKey);
   }, [runLive]);
 
+  const formFilterJson = filterJsonText(query.filter);
+  const sortJson = sortJsonText(query.sort);
+  const projectionJson = projectionJsonText(query.projection, query.projectionEnabled);
+  const queryJson = activeTab.filterOverride ?? formFilterJson;
+  const firstSortDir = query.sort.find((row) => row.enabled)?.direction;
+  const collectionChoices =
+    collection && !collections.includes(collection) ? [collection, ...collections] : collections;
+
+  const addTab = (): void => {
+    const tab = makeTab(collection);
+    setTabs((prev) => [...prev, tab]);
+    setActiveTabId(tab.id);
+  };
+
+  const closeTab = (id: string): void => {
+    setTabs((prev) => (prev.length < 2 ? prev : prev.filter((tab) => tab.id !== id)));
+    setActiveTabId((current) => (current === id ? null : current));
+    setRunDocs(null);
+  };
+
   return (
     <div className="vq-builder">
-      <div className="vq-builder__topbar">
-        <div className="vq-builder__target">
-          <SavedMongoConnectionField
-            connections={connections}
-            connectionId={connectionId}
-            onConnectionIdChange={setConnectionId}
-            onConnectionsChange={setConnections}
-            fieldClassName="vq-builder__field"
-            label={t('query.connection')}
-            emptyLabel={t('query.noConnections')}
-          />
-          <label className="vq-builder__field">
-            <span>{t('query.database')}</span>
-            <select
-              value={database}
-              aria-label={t('query.database')}
-              disabled={!selectedUri || catalogLoading}
-              onChange={(e) => onDatabaseChange(e.target.value)}
-            >
-              {databases.length === 0 ? (
-                <option value="">{catalogLoading ? '…' : t('query.noDatabases')}</option>
-              ) : (
-                databases.map((name) => (
-                  <option key={name} value={name}>
-                    {name}
-                  </option>
-                ))
-              )}
-            </select>
-          </label>
-          <label className="vq-builder__field">
-            <span>{t('query.collection')}</span>
-            <select
-              value={collection}
-              aria-label={t('query.collection')}
-              disabled={!database || catalogLoading}
-              onChange={(e) => setCollection(e.target.value)}
-            >
-              {collections.length === 0 ? (
-                <option value="">{catalogLoading ? '…' : t('query.noCollections')}</option>
-              ) : (
-                collections.map((name) => (
-                  <option key={name} value={name}>
-                    {name}
-                  </option>
-                ))
-              )}
-            </select>
-          </label>
-        </div>
-        <strong className="vq-builder__title">{t('query.title')}</strong>
-        <button
-          type="button"
-          className="primary vq-builder__run"
-          disabled={running || !canRun}
-          onClick={() => void runLive()}
-        >
-          {running ? '…' : `${t('query.run')} (F5)`}
-        </button>
-      </div>
-
       <div className="vq-builder__main">
         <section className="vq-builder__results" aria-label={t('query.results')}>
-          <div className="vq-builder__results-head">
-            <h2>{t('query.results')}</h2>
+          <div className="vq-tabs" role="tablist">
+            {tabs.map((tab) => {
+              const selected = tab.id === activeTab.id;
+              return (
+                <div
+                  key={tab.id}
+                  className={selected ? 'vq-tab vq-tab--active' : 'vq-tab'}
+                  role="tab"
+                  aria-selected={selected}
+                >
+                  <button
+                    type="button"
+                    className="vq-tab__name"
+                    onClick={() => {
+                      if (tab.id === activeTab.id) return;
+                      setActiveTabId(tab.id);
+                      setRunDocs(null);
+                    }}
+                  >
+                    {tab.collection || '…'}
+                  </button>
+                  {tabs.length > 1 ? (
+                    <button
+                      type="button"
+                      className="vq-tab__close"
+                      aria-label="Close tab"
+                      onClick={() => closeTab(tab.id)}
+                    >
+                      ×
+                    </button>
+                  ) : null}
+                </div>
+              );
+            })}
+            <button type="button" className="vq-tab__add" aria-label="New query tab" onClick={addTab}>
+              +
+            </button>
+          </div>
+
+          <div className="vq-crumb">
+            <SavedMongoConnectionField
+              connections={connections}
+              connectionId={connectionId}
+              onConnectionIdChange={setConnectionId}
+              onConnectionsChange={setConnections}
+              fieldClassName="vq-builder__field"
+              label={t('query.connection')}
+              emptyLabel={t('query.noConnections')}
+            />
+            <span className="vq-crumb__sep" aria-hidden="true">
+              &gt;
+            </span>
+            <label className="vq-builder__field">
+              <span>{t('query.database')}</span>
+              <select
+                value={database}
+                aria-label={t('query.database')}
+                disabled={!selectedUri || catalogLoading}
+                onChange={(e) => onDatabaseChange(e.target.value)}
+              >
+                {databases.length === 0 ? (
+                  <option value="">{catalogLoading ? '…' : t('query.noDatabases')}</option>
+                ) : (
+                  databases.map((name) => (
+                    <option key={name} value={name}>
+                      {name}
+                    </option>
+                  ))
+                )}
+              </select>
+            </label>
+            <span className="vq-crumb__sep" aria-hidden="true">
+              &gt;
+            </span>
+            <label className="vq-builder__field">
+              <span>{t('query.collection')}</span>
+              <select
+                value={collection}
+                aria-label={t('query.collection')}
+                disabled={!database || catalogLoading}
+                onChange={(e) => setActiveCollection(e.target.value)}
+              >
+                {collectionChoices.length === 0 ? (
+                  <option value="">{catalogLoading ? '…' : t('query.noCollections')}</option>
+                ) : (
+                  collectionChoices.map((name) => (
+                    <option key={name} value={name}>
+                      {name}
+                    </option>
+                  ))
+                )}
+              </select>
+            </label>
+          </div>
+
+          <div className="vq-query-row">
+            <label className="vq-line">
+              <span className="vq-line__label">{t('query.json')}</span>
+              <JsonLine
+                key={`${activeTab.id}-query`}
+                value={queryJson}
+                ariaLabel={t('query.json')}
+                onDraft={(text) => patchActiveTab({ filterOverride: text === formFilterJson ? null : text })}
+              />
+            </label>
+            <button
+              type="button"
+              className="primary vq-builder__run"
+              disabled={running || !canRun}
+              onClick={() => void runLive()}
+            >
+              {running ? '…' : `${t('query.run')} (F5)`}
+            </button>
+          </div>
+
+          <div className="vq-line">
+            <span className="vq-line__label">{t('query.sort')}</span>
+            <div className="vq-sort-dir" role="group" aria-label={t('query.sort')}>
+              <button
+                type="button"
+                className={firstSortDir === 1 ? 'active' : undefined}
+                aria-label={t('query.asc')}
+                onClick={() => setFirstSort(1)}
+              >
+                ↑
+              </button>
+              <button
+                type="button"
+                className={firstSortDir === -1 ? 'active' : undefined}
+                aria-label={t('query.desc')}
+                onClick={() => setFirstSort(-1)}
+              >
+                ↓
+              </button>
+            </div>
+            <JsonLine
+              key={`${activeTab.id}-sort`}
+              value={sortJson}
+              ariaLabel={t('query.sort')}
+              onDraft={(text) => {
+                const rows = sortRowsFromJson(text);
+                if (rows) patchQuery({ sort: rows });
+              }}
+            />
+          </div>
+
+          <label className="vq-line">
+            <span className="vq-line__label">{t('query.projection')}</span>
+            <JsonLine
+              key={`${activeTab.id}-projection`}
+              value={projectionJson}
+              ariaLabel={t('query.projection')}
+              onDraft={(text) => {
+                const next = projectionStateFromJson(text);
+                if (next) patchQuery(next);
+              }}
+            />
+          </label>
+
+          <div className="vq-line vq-line--limits">
+            <label className="vq-builder__field vq-builder__field--inline">
+              <span>{t('query.limit')}</span>
+              <input
+                type="number"
+                min={1}
+                value={query.limit}
+                aria-label={t('query.limit')}
+                onChange={(e) => patchQuery({ limit: Number(e.target.value) || 1 })}
+              />
+            </label>
+            <label className="vq-builder__field vq-builder__field--inline">
+              <span>{t('query.skip')}</span>
+              <input
+                type="number"
+                min={0}
+                value={query.skip}
+                aria-label={t('query.skip')}
+                onChange={(e) => patchQuery({ skip: Number(e.target.value) || 0 })}
+              />
+            </label>
             {runDocs ? (
               <span className="vq-builder__count">
                 {runDocs.length} {t('query.docCount')}
               </span>
             ) : null}
           </div>
+
           {runError ? <p className="vq-builder__error">{runError}</p> : null}
-          {runDocs ? (
-            <MongoShellResultTree documents={runDocs} />
-          ) : (
-            <p className="agg-empty">
-              {canRun ? t('query.runHint') : t('query.selectTarget')}
-            </p>
-          )}
+          <div className="vq-builder__result-body">
+            {runDocs ? (
+              <MongoShellResultTree documents={runDocs} />
+            ) : (
+              <p className="agg-empty">{canRun ? t('query.runHint') : t('query.selectTarget')}</p>
+            )}
+          </div>
         </section>
 
         <aside className="vq-builder__sidebar" aria-label={t('query.builder')}>
-          <div className="vq-builder__mode">
-            <button
-              type="button"
-              className={query.editMode === 'form' ? 'active' : undefined}
-              onClick={() => setEditMode('form')}
-            >
-              {t('query.form')}
-            </button>
-            <button
-              type="button"
-              className={query.editMode === 'json' ? 'active' : undefined}
-              onClick={() => setEditMode('json')}
-            >
-              {t('query.json')}
-            </button>
-          </div>
-
-          {query.editMode === 'json' ? (
-            <div className="vq-builder__json">
-              <Editor
-                value={query.jsonText}
-                onValueChange={(jsonText) => patchQuery({ jsonText })}
-                highlight={highlightJson}
-                padding={10}
-                style={EDITOR_STYLE}
-                aria-label={t('query.json')}
+          <div className="vq-builder__sidebar-inner">
+            <h2 className="vq-builder__title">{t('query.builder')}</h2>
+            <section className="vq-panel">
+              <h3>{t('query.filter')}</h3>
+              <MatchTreeEditor
+                node={query.filter}
+                fields={fieldNames}
+                onChange={(filter) => patchQuery({ filter })}
               />
-            </div>
-          ) : (
-            <>
-              <section className="vq-panel">
-                <h3>{t('query.filter')}</h3>
-                <MatchTreeEditor
-                  node={query.filter}
-                  fields={fieldNames}
-                  onChange={(filter) => patchQuery({ filter })}
-                />
-              </section>
+            </section>
 
-              <section className="vq-panel">
-                <label className="vq-panel__toggle">
-                  <input
-                    type="checkbox"
-                    checked={query.projectionEnabled}
-                    onChange={(e) => patchQuery({ projectionEnabled: e.target.checked })}
-                  />
-                  {t('query.projection')}
-                </label>
-                {query.projectionEnabled ? (
-                  <div className="vq-rows">
-                    {query.projection.map((row) => (
-                      <div key={row.id} className="vq-row">
-                        <FieldSelect
-                          value={row.field}
-                          fields={fieldNames}
-                          ariaLabel="Projection field"
-                          onChange={(field) => updateProjection(row.id, { field })}
-                        />
-                        <select
-                          value={row.include ? 'include' : 'exclude'}
-                          aria-label="Include or exclude"
-                          onChange={(e) =>
-                            updateProjection(row.id, { include: e.target.value === 'include' })
-                          }
-                        >
-                          <option value="include">{t('query.include')}</option>
-                          <option value="exclude">{t('query.exclude')}</option>
-                        </select>
-                        <button
-                          type="button"
-                          className="agg-icon-btn"
-                          aria-label="Remove projection"
-                          onClick={() =>
-                            setQuery((prev) => ({
-                              ...prev,
-                              projection: prev.projection.filter((r) => r.id !== row.id),
-                            }))
-                          }
-                        >
-                          ×
-                        </button>
-                      </div>
-                    ))}
+            <section className="vq-panel">
+              <label className="vq-panel__toggle">
+                <input
+                  type="checkbox"
+                  checked={query.projectionEnabled}
+                  onChange={(e) => patchQuery({ projectionEnabled: e.target.checked })}
+                />
+                {t('query.projection')}
+              </label>
+              <div className="vq-rows">
+                {query.projection.map((row) => (
+                  <div key={row.id} className="vq-row vq-row--projection">
+                    <FieldSelect
+                      value={row.field}
+                      fields={fieldNames}
+                      ariaLabel="Projection field"
+                      onChange={(field) => updateProjection(row.id, { field })}
+                    />
+                    <select
+                      value={row.include ? 'include' : 'exclude'}
+                      aria-label="Include or exclude"
+                      onChange={(e) => updateProjection(row.id, { include: e.target.value === 'include' })}
+                    >
+                      <option value="include">{t('query.include')}</option>
+                      <option value="exclude">{t('query.exclude')}</option>
+                    </select>
                     <button
                       type="button"
-                      className="tertiary"
+                      className="agg-icon-btn"
+                      aria-label="Remove projection"
                       onClick={() =>
-                        setQuery((prev) => ({
-                          ...prev,
-                          projection: [...prev.projection, createProjectionRow()],
-                        }))
+                        patchQuery({ projection: query.projection.filter((item) => item.id !== row.id) })
                       }
                     >
-                      + {t('query.projection')}
+                      ×
                     </button>
+                    <input
+                      type="checkbox"
+                      checked={row.enabled}
+                      aria-label="Enable projection field"
+                      onChange={(e) => updateProjection(row.id, { enabled: e.target.checked })}
+                    />
                   </div>
-                ) : null}
-              </section>
+                ))}
+                <button
+                  type="button"
+                  className="tertiary"
+                  onClick={() => patchQuery({ projection: [...query.projection, createProjectionRow()] })}
+                >
+                  + {t('query.projection')}
+                </button>
+              </div>
+            </section>
 
-              <section className="vq-panel">
-                <h3>{t('query.sort')}</h3>
-                <div className="vq-rows">
-                  {query.sort.map((row) => (
-                    <div key={row.id} className="vq-row">
-                      <FieldSelect
-                        value={row.field}
-                        fields={fieldNames}
-                        ariaLabel="Sort field"
-                        onChange={(field) => updateSort(row.id, { field })}
-                      />
-                      <select
-                        value={row.direction}
-                        aria-label="Sort direction"
-                        onChange={(e) =>
-                          updateSort(row.id, {
-                            direction: Number(e.target.value) === -1 ? -1 : 1,
-                          })
-                        }
-                      >
-                        <option value={1}>{t('query.asc')}</option>
-                        <option value={-1}>{t('query.desc')}</option>
-                      </select>
-                      <button
-                        type="button"
-                        className="agg-icon-btn"
-                        aria-label="Remove sort"
-                        onClick={() =>
-                          setQuery((prev) => ({
-                            ...prev,
-                            sort: prev.sort.filter((r) => r.id !== row.id),
-                          }))
-                        }
-                      >
-                        ×
-                      </button>
-                    </div>
-                  ))}
-                  <button
-                    type="button"
-                    className="tertiary"
-                    onClick={() =>
-                      setQuery((prev) => ({
-                        ...prev,
-                        sort: [...prev.sort, createSortRow()],
-                      }))
-                    }
-                  >
-                    + {t('query.sort')}
-                  </button>
-                </div>
-              </section>
+            <section className="vq-panel vq-panel--generated">
+              <h3>{t('query.generated')}</h3>
+              <pre className="vq-generated">{generatedShell}</pre>
+            </section>
 
-              <section className="vq-panel vq-panel--inline">
-                <label className="vq-builder__field">
-                  <span>{t('query.skip')}</span>
-                  <input
-                    type="number"
-                    min={0}
-                    value={query.skip}
-                    onChange={(e) => patchQuery({ skip: Number(e.target.value) || 0 })}
-                  />
-                </label>
-                <label className="vq-builder__field">
-                  <span>{t('query.limit')}</span>
-                  <input
-                    type="number"
-                    min={1}
-                    value={query.limit}
-                    onChange={(e) => patchQuery({ limit: Number(e.target.value) || 1 })}
-                  />
-                </label>
-              </section>
-            </>
-          )}
-
-          <section className="vq-panel vq-panel--generated">
-            <h3>{t('query.generated')}</h3>
-            <pre className="vq-generated">{generatedShell}</pre>
-          </section>
-
-          <div className="vq-builder__actions">
-            <button
-              type="button"
-              className="primary"
-              disabled={running || !canRun}
-              onClick={() => void runLive()}
-            >
-              {running ? '…' : `${t('query.run')} (F5)`}
-            </button>
-            <button type="button" className="tertiary" onClick={resetQuery}>
-              {t('query.reset')}
-            </button>
+            <div className="vq-builder__actions">
+              <button type="button" className="tertiary" onClick={resetQuery}>
+                {t('query.reset')}
+              </button>
+            </div>
           </div>
         </aside>
       </div>

@@ -1,3 +1,9 @@
+## hvyMETL 11.1.1
+
+**Visual Query** — The Query screen follows the Compass layout: collection tabs, a connection / database / collection breadcrumb, and syntax-highlighted Query, Sort, Projection, Limit, and Skip lines. The Query Builder sits on the right and can be dragged wider. Filter rows are field, operator, type, and value. Result Key, Value, and Type cells use the same type colors as the ER cards. Reload Query after this deploy.
+
+---
+
 ## hvyMETL 11.1.0
 
 **Oracle agent** — The Rust agent connects to Oracle 12.1 or later with `oracle://user:password@host:1521/SERVICE` (`?sid=` or `?schema=`). It copies that account's tables and rows and refuses Oracle-maintained accounts (SYS, SYSTEM, and the other built-in schemas). No Oracle Instant Client. Download assets: **`hvymetl-agent-macos-aarch64`**, **`hvymetl-agent-macos-x64`**, **`hvymetl-agent-linux-x64`**, **`hvymetl-agent-windows-x64.exe`**. Studio live-import one-liner points at `v11.1.0`.

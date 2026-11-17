@@ -1,5 +1,5 @@
 import { compileMatchNode } from '../aggregation/compilePipeline';
-import type { FindQueryState, ProjectionRow, SortRow } from './types';
+import { createProjectionRow, createSortRow, type FindQueryState, type ProjectionRow, type SortRow } from './types';
 
 export const FIND_RESULT_LIMIT = 200;
 
@@ -62,6 +62,64 @@ function compileSort(rows: SortRow[]): Record<string, 1 | -1> | null {
   return Object.keys(out).length > 0 ? out : null;
 }
 
+export function filterJsonText(filter: FindQueryState['filter']): string {
+  return JSON.stringify(compileMatchNode(filter));
+}
+
+export function sortJsonText(rows: SortRow[]): string {
+  return JSON.stringify(compileSort(rows) ?? {});
+}
+
+export function projectionJsonText(rows: ProjectionRow[], enabled: boolean): string {
+  return JSON.stringify(compileProjection(rows, enabled) ?? {});
+}
+
+function plainObject(text: string): Record<string, unknown> | null {
+  try {
+    const parsed = JSON.parse(text.trim() || '{}') as unknown;
+    if (parsed === null) return {};
+    if (typeof parsed !== 'object' || Array.isArray(parsed)) return null;
+    return parsed as Record<string, unknown>;
+  } catch {
+    return null;
+  }
+}
+
+/** Flat `{ field: 1 | -1 }`. Null when the text is not that shape. */
+export function sortRowsFromJson(text: string): SortRow[] | null {
+  const parsed = plainObject(text);
+  if (!parsed) return null;
+  const rows: SortRow[] = [];
+  for (const [field, dir] of Object.entries(parsed)) {
+    const direction = Number(dir);
+    if (direction !== 1 && direction !== -1) return null;
+    rows.push(createSortRow(field, direction));
+  }
+  return rows;
+}
+
+/** Flat `{ field: 0 | 1 }`. Null when the text is not that shape. `{}` turns projection off. */
+export function projectionStateFromJson(
+  text: string,
+): { projectionEnabled: boolean; projection: ProjectionRow[] } | null {
+  const parsed = plainObject(text);
+  if (!parsed) return null;
+  const projection: ProjectionRow[] = [];
+  for (const [field, flag] of Object.entries(parsed)) {
+    const include = Number(flag);
+    if (include !== 0 && include !== 1) return null;
+    projection.push(createProjectionRow(field, include === 1));
+  }
+  if (projection.length === 0) {
+    return { projectionEnabled: false, projection: [createProjectionRow('_id', true)] };
+  }
+  return { projectionEnabled: true, projection };
+}
+
+export function filterFromJsonText(text: string): Record<string, unknown> | null {
+  return plainObject(text);
+}
+
 function compileFromForm(state: FindQueryState): CompiledFind {
   return {
     filter: compileMatchNode(state.filter),
@@ -108,6 +166,21 @@ export function compileFindQuery(state: FindQueryState): CompileFindResult {
   } catch (err) {
     return { ok: false, error: err instanceof Error ? err.message : String(err) };
   }
+}
+
+/**
+ * Form state, with an optional filter JSON overlay.
+ * shortcut: free-form filter JSON is not parsed back into the match tree; the next builder edit replaces it.
+ */
+export function resolveCompiledFind(
+  state: FindQueryState,
+  filterOverride: string | null,
+): CompileFindResult {
+  const base = compileFindQuery({ ...state, editMode: 'form' });
+  if (!base.ok || filterOverride == null) return base;
+  const filter = filterFromJsonText(filterOverride);
+  if (!filter) return { ok: false, error: 'Query JSON must be an object' };
+  return { ok: true, compiled: { ...base.compiled, filter } };
 }
 
 export function formatFindAsShell(collection: string, compiled: CompiledFind): string {

@@ -7,6 +7,11 @@ import {
   fieldNamesFromShellOutput,
   FIND_RESULT_LIMIT,
   formatFindAsShell,
+  projectionJsonText,
+  projectionStateFromJson,
+  resolveCompiledFind,
+  sortJsonText,
+  sortRowsFromJson,
 } from './compileFind';
 import {
   createProjectionRow,
@@ -111,5 +116,41 @@ describe('compileFindQuery', () => {
     expect(result.compiled.projection).toEqual({ amount: 1 });
     expect(result.compiled.skip).toBe(1);
     expect(result.compiled.limit).toBe(3);
+  });
+
+  it('round-trips flat sort and projection JSON', () => {
+    const sort = sortRowsFromJson('{"paidAt":-1,"amount":1}');
+    expect(sort).toEqual([
+      expect.objectContaining({ field: 'paidAt', direction: -1, enabled: true }),
+      expect.objectContaining({ field: 'amount', direction: 1, enabled: true }),
+    ]);
+    expect(sortJsonText(sort ?? [])).toBe('{"paidAt":-1,"amount":1}');
+
+    const projection = projectionStateFromJson('{"_id":1,"secret":0}');
+    expect(projection?.projectionEnabled).toBe(true);
+    expect(projection?.projection.map((row) => [row.field, row.include, row.enabled])).toEqual([
+      ['_id', true, true],
+      ['secret', false, true],
+    ]);
+    expect(projectionJsonText(projection?.projection ?? [], true)).toBe('{"_id":1,"secret":0}');
+
+    expect(sortRowsFromJson('{')).toBeNull();
+    expect(sortRowsFromJson('{}')).toEqual([]);
+    expect(projectionStateFromJson('{"a":2}')).toBeNull();
+    expect(projectionStateFromJson('{}')?.projectionEnabled).toBe(false);
+  });
+
+  it('uses typed filter JSON until the builder replaces it', () => {
+    const state = defaultFindQueryState();
+    const overridden = resolveCompiledFind(state, '{"status":"paid"}');
+    expect(overridden.ok).toBe(true);
+    if (!overridden.ok) return;
+    expect(overridden.compiled.filter).toEqual({ status: 'paid' });
+    expect(resolveCompiledFind(state, '{').ok).toBe(false);
+    const form = resolveCompiledFind(state, null);
+    const fromForm = compileFindQuery(state);
+    expect(form.ok && fromForm.ok).toBe(true);
+    if (!form.ok || !fromForm.ok) return;
+    expect(form.compiled.filter).toEqual(fromForm.compiled.filter);
   });
 });
