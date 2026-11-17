@@ -53,6 +53,7 @@ import { AppNavRail, type AppNavId } from './components/AppNavRail';
 import { AggregationBuilderView } from './components/AggregationBuilderView';
 import { VisualQueryView } from './components/VisualQueryView';
 import { MongoShellView } from './components/MongoShellView';
+import { SchemaCreatorView } from './components/SchemaCreatorView';
 import { useAccess } from './auth/HostedAuthProvider';
 import { useT } from './i18n/LocaleContext';
 import { profileRequestBody, resolveCustomTelemetryInitial } from './customProfileShared';
@@ -130,6 +131,7 @@ type StudioNavRailProps = {
   shellAvailable: boolean;
   aggregationAvailable: boolean;
   queryAvailable: boolean;
+  schemaCreatorAvailable: boolean;
   rolesAvailable: boolean;
 };
 
@@ -140,6 +142,7 @@ function StudioNavRail({
   shellAvailable,
   aggregationAvailable,
   queryAvailable,
+  schemaCreatorAvailable,
   rolesAvailable,
 }: StudioNavRailProps) {
   const copilot = useCopilot();
@@ -151,6 +154,7 @@ function StudioNavRail({
       shellAvailable={shellAvailable}
       aggregationAvailable={aggregationAvailable}
       queryAvailable={queryAvailable}
+      schemaCreatorAvailable={schemaCreatorAvailable}
       rolesAvailable={rolesAvailable}
       onSelect={(id) => {
         if (id === 'copilot') {
@@ -298,6 +302,7 @@ export default function App() {
     if (initial === 'shell') return 'shell';
     if (initial === 'aggregation') return 'aggregation';
     if (initial === 'query') return 'query';
+    if (initial === 'schemaCreator') return 'schemaCreator';
     return 'schema';
   });
 
@@ -348,6 +353,9 @@ export default function App() {
         case 'schema':
           setSessionField('view', 'diagram');
           break;
+        case 'schemaCreator':
+          setSessionField('view', 'schemaCreator');
+          break;
         case 'database':
           setSessionField('view', 'diagram');
           setSchemaImportPanelOpen(true);
@@ -397,12 +405,13 @@ export default function App() {
     if (view === 'shell') setActiveNav('shell');
     if (view === 'aggregation') setActiveNav('aggregation');
     if (view === 'query') setActiveNav('query');
+    if (view === 'schemaCreator') setActiveNav('schemaCreator');
   }, [view]);
 
   useEffect(() => {
     if (
       uiRole === 'manager' &&
-      (view === 'shell' || view === 'aggregation' || view === 'query')
+      (view === 'shell' || view === 'aggregation' || view === 'query' || view === 'schemaCreator')
     ) {
       setSessionField('view', 'diagram');
       setActiveNav('schema');
@@ -1676,6 +1685,7 @@ export default function App() {
         shellAvailable={uiRole === 'developer'}
         aggregationAvailable={uiRole === 'developer'}
         queryAvailable={uiRole === 'developer'}
+        schemaCreatorAvailable={uiRole === 'developer'}
         rolesAvailable={access.canSwitchUiRole}
       />
       <div className="app-body">
@@ -1685,6 +1695,15 @@ export default function App() {
           <AggregationBuilderView />
         ) : view === 'query' && uiRole === 'developer' ? (
           <VisualQueryView />
+        ) : view === 'schemaCreator' && uiRole === 'developer' ? (
+          <SchemaCreatorView
+            initialModel={model}
+            onApplyAsBeforeSql={async (nextDdl, nextModel) => {
+              await applySchema(nextDdl, nextModel);
+              setActiveNav('schema');
+              setStatus(`Schema Creator applied ${nextModel.tables.length} tables as Before · SQL.`);
+            }}
+          />
         ) : view === 'diagram' ? (
           uiRole === 'manager' ? (
             <ManagerView

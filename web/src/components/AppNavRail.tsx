@@ -5,6 +5,7 @@ import type { MessageKey } from '../i18n/messages';
 
 export type AppNavId =
   | 'schema'
+  | 'schemaCreator'
   | 'database'
   | 'sizing'
   | 'shell'
@@ -21,6 +22,7 @@ type AppNavRailProps = {
   shellAvailable?: boolean;
   aggregationAvailable?: boolean;
   queryAvailable?: boolean;
+  schemaCreatorAvailable?: boolean;
   rolesAvailable?: boolean;
 };
 
@@ -37,6 +39,25 @@ function IconSchema(): ReactElement {
       <rect x="13.5" y="3.5" width="7" height="5" rx="1.25" fill="none" stroke="currentColor" strokeWidth="1.5" />
       <rect x="13.5" y="11.5" width="7" height="9" rx="1.25" fill="none" stroke="currentColor" strokeWidth="1.5" />
       <path d="M10.5 7h3M10.5 16h3" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+/** Pencil over ER blocks — distinct from IconSchema for Schema Creator. */
+function IconSchemaCreator(): ReactElement {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <rect x="3" y="4" width="6.5" height="5.5" rx="1" fill="none" stroke="currentColor" strokeWidth="1.5" />
+      <rect x="3" y="12" width="6.5" height="8" rx="1" fill="none" stroke="currentColor" strokeWidth="1.5" />
+      <path d="M9.5 7h2.25M9.5 16h2" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      <path
+        d="M14.2 16.8l5.1-5.1a1.35 1.35 0 0 0 0-1.9l-1.1-1.1a1.35 1.35 0 0 0-1.9 0l-5.1 5.1v3.05h3z"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinejoin="round"
+      />
+      <path d="M13.6 14.2l1.95 1.95" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
     </svg>
   );
 }
@@ -170,6 +191,7 @@ function IconSettings(): ReactElement {
 const PRIMARY_ITEMS: { id: AppNavId; labelKey: MessageKey; icon: ReactNode }[] = [
   { id: 'database', labelKey: 'nav.database', icon: <IconDatabase /> },
   { id: 'schema', labelKey: 'nav.schema', icon: <IconSchema /> },
+  { id: 'schemaCreator', labelKey: 'nav.schemaCreator', icon: <IconSchemaCreator /> },
   { id: 'sizing', labelKey: 'nav.sizing', icon: <IconSizing /> },
   { id: 'shell', labelKey: 'nav.shell', icon: <IconShell /> },
   { id: 'aggregation', labelKey: 'nav.aggregation', icon: <IconAggregation /> },
@@ -211,6 +233,7 @@ export function AppNavRail({
   shellAvailable = true,
   aggregationAvailable = true,
   queryAvailable = true,
+  schemaCreatorAvailable = true,
   rolesAvailable = true,
 }: AppNavRailProps): ReactElement {
   const t = useT();
@@ -228,6 +251,7 @@ export function AppNavRail({
               (item.id === 'shell' && !shellAvailable) ||
               (item.id === 'aggregation' && !aggregationAvailable) ||
               (item.id === 'query' && !queryAvailable) ||
+              (item.id === 'schemaCreator' && !schemaCreatorAvailable) ||
               (item.id === 'roles' && !rolesAvailable)
             }
             onSelect={onSelect}

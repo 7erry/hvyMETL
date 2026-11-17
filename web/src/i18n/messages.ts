@@ -5,6 +5,7 @@ export type MessageKey =
   | 'nav.primary'
   | 'nav.database'
   | 'nav.schema'
+  | 'nav.schemaCreator'
   | 'nav.sizing'
   | 'nav.shell'
   | 'nav.aggregation'
@@ -295,7 +296,26 @@ export type MessageKey =
   | 'sidebar.sessionHint'
   | 'sidebar.clearSession'
   | 'header.signOut'
-  | 'header.terms';
+  | 'header.terms'
+  | 'schemaCreator.title'
+  | 'schemaCreator.subtitle'
+  | 'schemaCreator.tables'
+  | 'schemaCreator.addTable'
+  | 'schemaCreator.empty'
+  | 'schemaCreator.fkHint'
+  | 'schemaCreator.useAsBeforeSql'
+  | 'schemaCreator.reset'
+  | 'schemaCreator.applied'
+  | 'schemaCreator.tableName'
+  | 'schemaCreator.deleteTable'
+  | 'schemaCreator.addColumn'
+  | 'schemaCreator.columnName'
+  | 'schemaCreator.columnType'
+  | 'schemaCreator.primaryKey'
+  | 'schemaCreator.deleteColumn'
+  | 'schemaCreator.connectFkSource'
+  | 'schemaCreator.connectFkTarget'
+  | 'schemaCreator.selfFkBlocked';
 
 export type MessageCatalog = Record<MessageKey, string>;
 
@@ -303,6 +323,7 @@ const en: MessageCatalog = {
   'nav.primary': 'Primary',
   'nav.database': 'Database',
   'nav.schema': 'Schema',
+  'nav.schemaCreator': 'Creator',
   'nav.sizing': 'Sizing',
   'nav.shell': 'Shell',
   'nav.aggregation': 'Aggregate',
@@ -612,6 +633,25 @@ const en: MessageCatalog = {
   'sidebar.clearSession': 'Clear session',
   'header.signOut': 'Sign out',
   'header.terms': 'Terms',
+  'schemaCreator.title': 'Schema Creator',
+  'schemaCreator.subtitle': 'Design tables and foreign keys on a canvas, then use them as Before · SQL.',
+  'schemaCreator.tables': 'Tables',
+  'schemaCreator.addTable': '+ Add table',
+  'schemaCreator.empty': 'No tables yet. Add one to start designing.',
+  'schemaCreator.fkHint': 'Drag from a column handle to another table’s column to create a foreign key.',
+  'schemaCreator.useAsBeforeSql': 'Use as Before SQL',
+  'schemaCreator.reset': 'Reset',
+  'schemaCreator.applied': 'Applied as Before · SQL.',
+  'schemaCreator.tableName': 'Table name',
+  'schemaCreator.deleteTable': 'Delete table',
+  'schemaCreator.addColumn': '+ Add column',
+  'schemaCreator.columnName': 'Column name',
+  'schemaCreator.columnType': 'Column type',
+  'schemaCreator.primaryKey': 'Primary key',
+  'schemaCreator.deleteColumn': 'Delete column',
+  'schemaCreator.connectFkSource': 'Drag to create a foreign key from this column',
+  'schemaCreator.connectFkTarget': 'Drop here to reference this column',
+  'schemaCreator.selfFkBlocked': 'Self-referencing foreign keys are not supported in v1.',
 };
 
 const pt: MessageCatalog = {
@@ -619,6 +659,7 @@ const pt: MessageCatalog = {
   'nav.primary': 'Principal',
   'nav.database': 'Banco de dados',
   'nav.schema': 'Esquema',
+  'nav.schemaCreator': 'Criador',
   'nav.sizing': 'Dimensionamento',
   'nav.shell': 'Shell',
   'nav.aggregation': 'Agregar',
@@ -930,6 +971,25 @@ const pt: MessageCatalog = {
   'sidebar.clearSession': 'Limpar sessão',
   'header.signOut': 'Sair',
   'header.terms': 'Termos',
+  'schemaCreator.title': 'Criador de esquema',
+  'schemaCreator.subtitle': 'Desenhe tabelas e chaves estrangeiras no canvas e use como Before · SQL.',
+  'schemaCreator.tables': 'Tabelas',
+  'schemaCreator.addTable': '+ Adicionar tabela',
+  'schemaCreator.empty': 'Nenhuma tabela ainda. Adicione uma para começar.',
+  'schemaCreator.fkHint': 'Arraste do handle de uma coluna até a coluna de outra tabela para criar uma FK.',
+  'schemaCreator.useAsBeforeSql': 'Usar como Before SQL',
+  'schemaCreator.reset': 'Redefinir',
+  'schemaCreator.applied': 'Aplicado como Before · SQL.',
+  'schemaCreator.tableName': 'Nome da tabela',
+  'schemaCreator.deleteTable': 'Excluir tabela',
+  'schemaCreator.addColumn': '+ Adicionar coluna',
+  'schemaCreator.columnName': 'Nome da coluna',
+  'schemaCreator.columnType': 'Tipo da coluna',
+  'schemaCreator.primaryKey': 'Chave primária',
+  'schemaCreator.deleteColumn': 'Excluir coluna',
+  'schemaCreator.connectFkSource': 'Arraste para criar uma FK a partir desta coluna',
+  'schemaCreator.connectFkTarget': 'Solte aqui para referenciar esta coluna',
+  'schemaCreator.selfFkBlocked': 'FKs autorreferenciais não são suportadas na v1.',
 };
 
 const es: MessageCatalog = {
@@ -937,6 +997,7 @@ const es: MessageCatalog = {
   'nav.primary': 'Principal',
   'nav.database': 'Base de datos',
   'nav.schema': 'Esquema',
+  'nav.schemaCreator': 'Creador',
   'nav.sizing': 'Dimensionamiento',
   'nav.shell': 'Shell',
   'nav.aggregation': 'Agregar',
@@ -1248,6 +1309,25 @@ const es: MessageCatalog = {
   'sidebar.clearSession': 'Borrar sesión',
   'header.signOut': 'Cerrar sesión',
   'header.terms': 'Términos',
+  'schemaCreator.title': 'Creador de esquema',
+  'schemaCreator.subtitle': 'Diseñe tablas y claves foráneas en el lienzo y úselas como Before · SQL.',
+  'schemaCreator.tables': 'Tablas',
+  'schemaCreator.addTable': '+ Añadir tabla',
+  'schemaCreator.empty': 'Aún no hay tablas. Añada una para empezar.',
+  'schemaCreator.fkHint': 'Arrastre desde el asa de una columna hasta la columna de otra tabla para crear una FK.',
+  'schemaCreator.useAsBeforeSql': 'Usar como Before SQL',
+  'schemaCreator.reset': 'Restablecer',
+  'schemaCreator.applied': 'Aplicado como Before · SQL.',
+  'schemaCreator.tableName': 'Nombre de tabla',
+  'schemaCreator.deleteTable': 'Eliminar tabla',
+  'schemaCreator.addColumn': '+ Añadir columna',
+  'schemaCreator.columnName': 'Nombre de columna',
+  'schemaCreator.columnType': 'Tipo de columna',
+  'schemaCreator.primaryKey': 'Clave primaria',
+  'schemaCreator.deleteColumn': 'Eliminar columna',
+  'schemaCreator.connectFkSource': 'Arrastre para crear una FK desde esta columna',
+  'schemaCreator.connectFkTarget': 'Suelte aquí para referenciar esta columna',
+  'schemaCreator.selfFkBlocked': 'Las FK autorreferenciales no se admiten en v1.',
 };
 
 const zhCN: MessageCatalog = {
@@ -1255,6 +1335,7 @@ const zhCN: MessageCatalog = {
   'nav.primary': '主导航',
   'nav.database': '数据库',
   'nav.schema': '架构',
+  'nav.schemaCreator': '设计器',
   'nav.sizing': '容量规划',
   'nav.shell': 'Shell',
   'nav.aggregation': '聚合',
@@ -1551,6 +1632,25 @@ const zhCN: MessageCatalog = {
   'sidebar.clearSession': '清除会话',
   'header.signOut': '退出',
   'header.terms': '条款',
+  'schemaCreator.title': '架构设计器',
+  'schemaCreator.subtitle': '在画布上设计表与外键，然后用作 Before · SQL。',
+  'schemaCreator.tables': '表',
+  'schemaCreator.addTable': '+ 添加表',
+  'schemaCreator.empty': '还没有表。添加一张表开始设计。',
+  'schemaCreator.fkHint': '从列手柄拖到另一张表的列上以创建外键。',
+  'schemaCreator.useAsBeforeSql': '用作 Before SQL',
+  'schemaCreator.reset': '重置',
+  'schemaCreator.applied': '已应用为 Before · SQL。',
+  'schemaCreator.tableName': '表名',
+  'schemaCreator.deleteTable': '删除表',
+  'schemaCreator.addColumn': '+ 添加列',
+  'schemaCreator.columnName': '列名',
+  'schemaCreator.columnType': '列类型',
+  'schemaCreator.primaryKey': '主键',
+  'schemaCreator.deleteColumn': '删除列',
+  'schemaCreator.connectFkSource': '拖动以从此列创建外键',
+  'schemaCreator.connectFkTarget': '拖放到此处以引用此列',
+  'schemaCreator.selfFkBlocked': 'v1 不支持自引用外键。',
 };
 
 const hi: MessageCatalog = {
@@ -1558,6 +1658,7 @@ const hi: MessageCatalog = {
   'nav.primary': 'मुख्य',
   'nav.database': 'डेटाबेस',
   'nav.schema': 'स्कीमा',
+  'nav.schemaCreator': 'क्रिएटर',
   'nav.sizing': 'साइज़िंग',
   'nav.shell': 'शेल',
   'nav.aggregation': 'एग्रीगेट',
@@ -1869,6 +1970,25 @@ const hi: MessageCatalog = {
   'sidebar.clearSession': 'सत्र साफ़ करें',
   'header.signOut': 'साइन आउट',
   'header.terms': 'नियम',
+  'schemaCreator.title': 'स्कीमा क्रिएटर',
+  'schemaCreator.subtitle': 'कैनवास पर टेबल और विदेशी कुंजियाँ डिज़ाइन करें, फिर Before · SQL के रूप में उपयोग करें।',
+  'schemaCreator.tables': 'टेबल',
+  'schemaCreator.addTable': '+ टेबल जोड़ें',
+  'schemaCreator.empty': 'अभी कोई टेबल नहीं। डिज़ाइन शुरू करने के लिए एक जोड़ें।',
+  'schemaCreator.fkHint': 'FK बनाने के लिए किसी कॉलम हैंडल से दूसरी टेबल के कॉलम तक खींचें।',
+  'schemaCreator.useAsBeforeSql': 'Before SQL के रूप में उपयोग करें',
+  'schemaCreator.reset': 'रीसेट',
+  'schemaCreator.applied': 'Before · SQL के रूप में लागू किया गया।',
+  'schemaCreator.tableName': 'टेबल नाम',
+  'schemaCreator.deleteTable': 'टेबल हटाएँ',
+  'schemaCreator.addColumn': '+ कॉलम जोड़ें',
+  'schemaCreator.columnName': 'कॉलम नाम',
+  'schemaCreator.columnType': 'कॉलम प्रकार',
+  'schemaCreator.primaryKey': 'प्राथमिक कुंजी',
+  'schemaCreator.deleteColumn': 'कॉलम हटाएँ',
+  'schemaCreator.connectFkSource': 'इस कॉलम से FK बनाने के लिए खींचें',
+  'schemaCreator.connectFkTarget': 'इस कॉलम को संदर्भित करने के लिए यहाँ छोड़ें',
+  'schemaCreator.selfFkBlocked': 'v1 में स्व-संदर्भित FK समर्थित नहीं हैं।',
 };
 
 export const CATALOGS: Record<LocaleId, MessageCatalog> = {
