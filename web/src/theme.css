@@ -1315,13 +1315,15 @@ textarea {
   margin: 0.5rem;
 }
 
-.schema-canvas-wrap .react-flow__controls {
+.schema-canvas-wrap .react-flow__controls,
+.schema-creator__flow .react-flow__controls {
   margin: 0 0 0.75rem 0.75rem;
   z-index: 10;
   box-shadow: 0 2px 8px rgba(0, 30, 43, 0.35);
 }
 
-.schema-canvas-wrap .react-flow__controls-button {
+.schema-canvas-wrap .react-flow__controls-button,
+.schema-creator__flow .react-flow__controls-button {
   min-width: var(--btn-min-height);
   min-height: var(--btn-min-height);
   background: var(--mdb-gray-dark-4);
@@ -1330,12 +1332,14 @@ textarea {
   color: var(--mdb-spring-green);
 }
 
-.schema-canvas-wrap .react-flow__controls-button:hover {
+.schema-canvas-wrap .react-flow__controls-button:hover,
+.schema-creator__flow .react-flow__controls-button:hover {
   background: var(--mdb-green-dark-3);
   border-color: var(--mdb-green-base);
 }
 
-.schema-canvas-wrap .react-flow__controls-button:focus-visible {
+.schema-canvas-wrap .react-flow__controls-button:focus-visible,
+.schema-creator__flow .react-flow__controls-button:focus-visible {
   box-shadow: var(--btn-focus-ring);
 }
 
@@ -7171,7 +7175,8 @@ button.app-nav-rail__item:disabled {
     font-size: 0.74rem;
   }
 
-  .schema-canvas-wrap .react-flow__controls {
+  .schema-canvas-wrap .react-flow__controls,
+  .schema-creator__flow .react-flow__controls {
     margin: 0 0 0.45rem 0.45rem;
   }
 

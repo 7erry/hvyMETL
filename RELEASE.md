@@ -1,3 +1,15 @@
+## hvyMETL 10.1.12
+
+**Schema Creator dark chrome** — React Flow zoom/fit/lock controls and MiniMap use the same dark backgrounds and light icons as SchemaCanvas (no more white panels on the dark theme).
+
+---
+
+## hvyMETL 10.1.11
+
+**Schema Creator** — Developer canvas that designs tables/FKs and applies them as Before SQL.
+
+---
+
 ## hvyMETL 10.1.10
 
 **Read live data via agent** — On the hosted studio, Run pipeline → Read live data starts the same Rust agent WSS extract used by Live Import (start agent → waiting → streaming → ready), then loads staging CSVs into the pipeline. No mock CSV / CREATE TABLE path. Agent extract staging is under the tenant upload tree so path checks pass. Local studio still supports capped direct URI reads.

@@ -380,9 +380,15 @@ export function SchemaCreatorView({
             fitView
             proOptions={{ hideAttribution: true }}
           >
-            <Background variant={BackgroundVariant.Dots} gap={16} size={1} />
+            <Background variant={BackgroundVariant.Dots} gap={16} size={1} color="#00684A" />
             <Controls />
-            <MiniMap pannable zoomable />
+            <MiniMap
+              pannable
+              zoomable
+              nodeColor="#023430"
+              maskColor="rgba(0, 30, 43, 0.8)"
+              style={{ background: '#112733' }}
+            />
           </ReactFlow>
         </div>
       </section>
