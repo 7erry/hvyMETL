@@ -39,6 +39,7 @@ sequenceDiagram
 | MySQL | `mysql://` | `mysql_async` | Also MariaDB / Aurora MySQL / SingleStore when protocol works |
 | Microsoft SQL Server | `mssql://` / `sqlserver://` | `tiberius` | Encrypt/TLS defaults for Azure SQL |
 | SQLite | file path or `sqlite://` | `rusqlite` | Local file on the agent host |
+| Oracle | `oracle://` | `oracle-rs` | 12.1+. User tables and rows only; Oracle-maintained accounts are refused |
 
 ### Driver crates and server versions
 
@@ -51,8 +52,9 @@ hvyMETL does not pin or CI-test these server majors. Driver crate versions and f
 | MySQL / MariaDB | `mysql_async` 0.34.2 (`default-rustls`) | [crates.io](https://crates.io/crates/mysql_async/0.34.2) · [docs.rs](https://docs.rs/mysql_async/0.34.2/mysql_async/) · [GitHub](https://github.com/blackbeam/mysql_async) | **Not pinned.** No full server matrix. Feature notes only (for example `COM_RESET_CONNECTION` needs MySQL >5.7.2 or MariaDB >10.2.3). |
 | Microsoft SQL Server | `tiberius` 0.12.3 (`chrono`, `rustls`, `tds73`) | [crates.io](https://crates.io/crates/tiberius/0.12.3) · [docs.rs](https://docs.rs/tiberius/0.12.3/tiberius/) · [GitHub](https://github.com/prisma/tiberius) | SQL Server **2008–2022** with agent `tds73` enabled (CI-tested 2017/2019/2022 per tiberius; 2012–2016 "should work"). SQL Server 2005 needs `tds73` off (agent does not disable it). |
 | SQLite | `rusqlite` 0.32.1 (`bundled`) | [crates.io](https://crates.io/crates/rusqlite/0.32.1) · [docs.rs](https://docs.rs/rusqlite/0.32.1/rusqlite/) · [GitHub](https://github.com/rusqlite/rusqlite) | Bundled SQLite **3.46.0** (`libsqlite3-sys` 0.30.1). Base `rusqlite` supports SQLite ≥3.14.0 when not bundled. |
+| Oracle | `oracle-rs` 0.1.7 | [crates.io](https://crates.io/crates/oracle-rs/0.1.7) · [docs.rs](https://docs.rs/oracle-rs/0.1.7/oracle_rs/) · [GitHub](https://github.com/stiang/oracle-rs) | Oracle Database **12.1+**. Pure Rust TNS client. No Instant Client. |
 
-**Out of 10.0 (Wave B+):** Oracle, Db2, SAP ASE, ClickHouse, Snowflake, BigQuery, Spanner, Databricks, DynamoDB, HANA, Teradata, Firebird — DDL paste until a later major.
+**Out of 10.0 (Wave B+):** Db2, SAP ASE, ClickHouse, Snowflake, BigQuery, Spanner, Databricks, DynamoDB, HANA, Teradata, Firebird — DDL paste until a later major. Oracle 12.1+ is a pure-Rust wire client (`oracle-rs`); it copies the connected account's tables and rows, not Oracle-maintained schemas.
 
 ## Security model
 
@@ -98,10 +100,11 @@ Tables without a usable primary key fail extract with a clear error (no silent `
 - **Azure SQL:** prefer `mssql://…?encrypt=true` (agent enables encryption by default for `mssql`/`sqlserver` URIs).
 - **SQLite:** quote paths with spaces; `sqlite:///absolute/path.db` or a bare file path.
 - Firewall must allow the agent host → database host (not studio → database).
+- **Oracle:** connect as the schema owner with `oracle://user:password@host:1521/SERVICE` (Oracle 12.1+). `?sid=ORCL` for a SID. `?schema=HR` reads that account. SYS/SYSTEM and other Oracle-maintained accounts are refused. The agent reads `USER_*` or that one owner in `ALL_*`. It does not copy Oracle system packages or PL/SQL source.
 
 ## Non-goals
 
-- Oracle / cloud warehouse drivers in the binary
+- Cloud warehouse drivers in the binary (Snowflake, BigQuery, and the other Wave B engines)
 - Bidirectional sync or CDC
 - Agent listening for inbound studio connections
 - Changing `SqlStructuralModel` IR shape

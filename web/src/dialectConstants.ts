@@ -13,7 +13,7 @@ const UNSORTED_FALLBACK_DIALECTS: Dialect[] = [
   { id: 'mssql', label: 'Microsoft SQL Server', live: true },
   { id: 'sybase', label: 'SAP ASE (Sybase)', live: false },
   { id: 'clickhouse', label: 'ClickHouse', live: false },
-  { id: 'oracle', label: 'Oracle', live: false },
+  { id: 'oracle', label: 'Oracle', live: true },
   { id: 'db2', label: 'IBM Db2', live: false },
   { id: 'cockroachdb', label: 'CockroachDB', live: true },
   { id: 'yugabyte', label: 'YugabyteDB', live: true },

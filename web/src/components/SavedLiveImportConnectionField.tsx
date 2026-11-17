@@ -17,9 +17,10 @@ const ENGINE_LABEL_KEYS: Record<LiveImportEngine, MessageKey> = {
   mysql: 'live.engine.mysql',
   mssql: 'live.engine.mssql',
   sqlite: 'live.engine.sqlite',
+  oracle: 'live.engine.oracle',
 };
 
-const ENGINES: LiveImportEngine[] = ['postgresql', 'mysql', 'mssql', 'mongodb', 'sqlite'];
+const ENGINES: LiveImportEngine[] = ['postgresql', 'mysql', 'mssql', 'oracle', 'mongodb', 'sqlite'];
 
 type ConnFormState = {
   id?: string;
@@ -54,6 +55,7 @@ function engineFromSelect(value: string): LiveImportEngine {
     case 'mssql':
     case 'sqlite':
     case 'mongodb':
+    case 'oracle':
       return value;
     default:
       return 'postgresql';

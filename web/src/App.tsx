@@ -904,6 +904,10 @@ export default function App() {
         return command;
       }
 
+      if (uri.trim().toLowerCase().startsWith('oracle://')) {
+        setStatus('Import failed: Oracle uses the local agent. Copy the command and run it on the database host.');
+        return '';
+      }
       if (!uri.trim()) {
         setStatus('Import failed: Enter a connection URI, or use the agent with $DATABASE_URL on a hosted studio.');
         return '';

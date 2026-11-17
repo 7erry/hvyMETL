@@ -3,6 +3,7 @@ import { Handle, Position, type NodeProps } from '@xyflow/react';
 import { SCHEMA_CREATOR_SQL_TYPES } from '../schemaCreator/schemaCreatorModel';
 import type { ColumnModel, TableModel } from '../types';
 import { useT } from '../i18n/LocaleContext';
+import { columnTypeClass } from '../typeHighlight';
 
 export type SchemaCreatorTableNodeData = {
   table: TableModel;
@@ -79,7 +80,7 @@ function SchemaCreatorTableNodeComponent({
                 onMouseDown={(e) => e.stopPropagation()}
               />
               <select
-                className="column-type schema-creator-node__field"
+                className={`${columnTypeClass(col.sqlType)} schema-creator-node__field`}
                 value={col.sqlType}
                 aria-label={t('schemaCreator.columnType')}
                 onChange={(e) => data.onChangeColumnType(table.name, col.name, e.target.value)}

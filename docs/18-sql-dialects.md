@@ -10,8 +10,9 @@ Sources: [`src/dialects.ts`](../src/dialects.ts),
 hvyMETL supports **twenty-five schema import dialects** (twenty-two SQL DDL dialects plus
 **Amazon DynamoDB CloudFormation**, **JSON Schema**, and **MongoDB JSON**). They fall into two capability tiers:
 
-1. **Live database** — **SQLite only** (`better-sqlite3` adapter): real row counts,
+1. **Studio file adapter** — **SQLite** (`better-sqlite3`): real row counts,
    FK cardinality, range splits, and direct CLI ETL from the `.db` file.
+   The Rust agent is a separate live path for MongoDB, PostgreSQL, MySQL, SQL Server, SQLite, and Oracle 12.1+ (`oracle://user:password@host:1521/SERVICE`). The hosted studio does not open Oracle; the local agent does. A local studio's direct import is still PostgreSQL, MySQL, and MongoDB.
 2. **DDL / template paste** — **all twenty-five dialects**: paste `CREATE TABLE` scripts,
    DynamoDB CloudFormation templates, JSON Schema bundles, or MongoDB JSON / NDJSON; parsers build the same
    `SqlStructuralModel` the design engine consumes. Row counts default to zero; relationship
@@ -34,7 +35,7 @@ Definitions: [`src/dialects.ts`](../src/dialects.ts) · UI/API: `GET /api/dialec
 | `mssql` | Microsoft SQL Server | DDL paste or Rust agent | Yes | Agent `mssql://` / `sqlserver://`; T-SQL DDL paste |
 | `sybase` | SAP ASE (Sybase) | DDL paste | No | T-SQL-like DDL; `IDENTITY` columns, `dbo.` prefixes, `database..table` shorthand |
 | `clickhouse` | ClickHouse | DDL paste | No | Column-oriented DDL subset |
-| `oracle` | Oracle | DDL paste | No | `VARCHAR2`, `NUMBER`, identity columns, `CONSTRAINT … FOREIGN KEY` (Wave B agent later) |
+| `oracle` | Oracle | DDL paste or Rust agent | Yes | Agent `oracle://` on Oracle 12.1+ (service name, or `?sid=`). Reads the connected account's tables only |
 | `db2` | IBM Db2 | DDL paste | No | Schema-qualified names (`"SALES"."ORDERS"`) |
 | `cockroachdb` | CockroachDB | DDL paste or Rust agent (postgres URI) | Yes | PostgreSQL wire via agent |
 | `yugabyte` | YugabyteDB | DDL paste or Rust agent (postgres URI) | Yes | PostgreSQL wire via agent |
@@ -61,7 +62,7 @@ primary keys, Teradata `MULTISET TABLE`, and warehouse-specific column types.
 ```mermaid
 %%{init:{"theme":"base","themeVariables":{"darkMode":true,"background":"#001E2B","mainBkg":"#023430","primaryTextColor":"#E3FCF7","lineColor":"#00ED64","textColor":"#E3FCF7"}}}%%
 flowchart TB
-    subgraph live [Live path — SQLite only]
+    subgraph live [Studio file adapter — SQLite]
         FILE[(.db file)] --> ADAPTER[sqlite adapter]
         ADAPTER --> MODEL[SqlStructuralModel<br/>row counts + FK stats]
     end
@@ -76,20 +77,22 @@ flowchart TB
     CSV --> PIPELINE[Web pipeline / csvToAtlas]
 ```
 
+Oracle 12.1+ and the other agent engines are read by the local Rust binary, outside this diagram. The hosted studio does not open Oracle itself.
+
 ## 3. Technical Details
 
 ### `DIALECTS`, validation, and `isLiveSourceDialect(dialectId)`
 
 | Export | Description |
 | --- | --- |
-| `DIALECTS` | Array of `{ id, label, live, parserFamily }` — `live: true` only for SQLite |
+| `DIALECTS` | Array of `{ id, label, live, parserFamily }` — `live: true` for SQLite and for engines the Rust agent or local studio can read (including Oracle 12.1+) |
 | `SUPPORTED_DIALECT_IDS` | Canonical id list used by tests and API validation |
 | `normalizeDialectId(id)` | Lowercases and resolves aliases (`spark-sql` → `databricks`, `memsql` → `singlestore`) |
 | `isSupportedDialect(id)` | `true` when the id (or alias) is registered |
 | `resolveImportDialect(id)` | Returns canonical id; throws on unknown ids; defaults to `postgresql` when omitted |
 | `getDialectLabel(id)` | Display name for UI and pipeline hints |
 | `getDialectParserFamily(id)` | Parser compatibility family (`postgresql`, `mysql`, `snowflake`, …) |
-| `isLiveSourceDialect(id)` | `true` only when a database file can be uploaded |
+| `isLiveSourceDialect(id)` | `true` when that dialect is marked live (studio file, local URI, or Rust agent), including Oracle |
 | `inferSchemaDialect(model, sessionDialect)` | Resolves dialect from `model.source` (`ddl:…`, `example:…`) then UI session |
 | `getCsvSourceHint(dialect)` | User-facing CSV export instructions per dialect |
 

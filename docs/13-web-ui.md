@@ -34,7 +34,7 @@ refresh-token rotation, and troubleshooting.
 
 ![Start with schema import modal](../web/docs/screenshots/schema-import-modal.png)
 
-The dialog has two paths: **Import Schema (DDL/File)** and **Connect Live Database**. Try with a sample schema sits above those tabs. The dialect is a dropdown on the file path, and a schema file can be dropped on the text box. The live path asks for MongoDB, PostgreSQL, or MySQL and shows a connection-string example for that engine. On the hosted site that path downloads the agent for the computer the browser reports, or the computer chosen in the menu, and copies the command to the clipboard.
+The dialog has two paths: **Import Schema (DDL/File)** and **Connect Live Database**. Try with a sample schema sits above those tabs. The dialect is a dropdown on the file path, and a schema file can be dropped on the text box. The live path asks for MongoDB, PostgreSQL, MySQL, SQL Server, SQLite, or Oracle and shows a connection-string example for that engine. Oracle 12.1+ is read by the local Rust agent (`oracle://`); the hosted studio does not open Oracle itself. A local studio's direct import is still PostgreSQL, MySQL, and MongoDB. On the hosted site that path downloads the agent for the computer the browser reports, or the computer chosen in the menu, and copies the command to the clipboard.
 
 ![Before SQL ER diagram with collapsible developer sidebar](../web/docs/screenshots/before-sql-diagram.png)
 
@@ -82,7 +82,7 @@ All six pipeline steps (Knowledge + RAG, profiles, design, ETL, import, codegen)
 | `GET` | `/api/schema/builtin-examples` | — | `{ examples, examplesDir, source }` |
 | `POST` | `/api/schema/import-builtin-example` | `{ exampleId }` | `{ model, ddl, dialect, suggestedProfileId, inferred }` |
 | `POST` | `/api/schema/import-sqlite` | `multipart database` | `{ model, ddl, sourcePath }` |
-| `POST` | `/api/schema/import-live` | `{ uri, database? }` | `{ model, ddl, dialect, inferred }` from MongoDB, PostgreSQL, or MySQL. Refused on the hosted studio. |
+| `POST` | `/api/schema/import-live` | `{ uri, database? }` | `{ model, ddl, dialect, inferred }` from MongoDB, PostgreSQL, or MySQL. Refused on the hosted studio. Oracle is agent-only. |
 | `POST` | `/api/schema/agent-session` | — | `{ token, expiresAt }` for a 15-minute agent session |
 | `GET` | `/api/schema/agent-result` | `token` | `204` until the agent posts, then the same body as import-live |
 | `GET` | `/api/agent/next` | `token` | `{ id, op: "introspect" }` for `hvymetl agent` |
@@ -111,9 +111,12 @@ Full reference: **[18-sql-dialects.md](18-sql-dialects.md)** (live vs DDL paste,
 paths, limitations, Oracle examples).
 
 Dialect definitions live in [`src/dialects.ts`](../src/dialects.ts). The UI loads them
-from `GET /api/dialects`. Only **SQLite** has a live file adapter; every other dialect
-uses the shared DDL parser ([`src/utilities/ddlParser.ts`](../src/utilities/ddlParser.ts))
-via **Import Query** (paste `CREATE TABLE` scripts).
+from `GET /api/dialects`. Only **SQLite** has a live file adapter on the studio process.
+The Rust agent also reads PostgreSQL, MySQL, SQL Server, SQLite, MongoDB, and Oracle 12.1+.
+The hosted studio does not open Oracle; the local agent does. Local studio direct import
+is still PostgreSQL, MySQL, and MongoDB. Every dialect can still use the shared DDL parser
+([`src/utilities/ddlParser.ts`](../src/utilities/ddlParser.ts)) via **Import Query**
+(paste `CREATE TABLE` scripts).
 
 | Dialect ID | Label | Import mode | Notes |
 | --- | --- | --- | --- |
@@ -123,7 +126,7 @@ via **Import Query** (paste `CREATE TABLE` scripts).
 | `mssql` | Microsoft SQL Server | DDL paste | T-SQL `CREATE TABLE` |
 | `sybase` | SAP ASE (Sybase) | DDL paste | T-SQL-like DDL; `IDENTITY`, `dbo.` prefixes, `database..table` shorthand |
 | `clickhouse` | ClickHouse | DDL paste | Column-oriented DDL subset |
-| `oracle` | Oracle | DDL paste | `CONSTRAINT … FOREIGN KEY`, `VARCHAR2`, `NUMBER`, identity columns |
+| `oracle` | Oracle | URI **or** DDL paste | Rust agent `oracle://` (12.1+). DDL paste still accepts `VARCHAR2`, `NUMBER`, identity columns |
 | `db2` | IBM Db2 | DDL paste | Schema-qualified names (`"SALES"."ORDERS"`), quoted FK references |
 | `cockroachdb` | CockroachDB | DDL paste | PostgreSQL-compatible; `IF NOT EXISTS`, `INT8`, `UUID` |
 | `aurora-postgresql` | Amazon Aurora (PostgreSQL) | DDL paste | Same parser rules as PostgreSQL |

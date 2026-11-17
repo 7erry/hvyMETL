@@ -11,6 +11,7 @@ use tokio_util::compat::TokioAsyncWriteCompatExt;
 
 use crate::catalog::public_error;
 use crate::engine::{schema_name, sqlite_path, Engine};
+use crate::oracle;
 use crate::pg;
 
 #[derive(Debug, Clone)]
@@ -40,6 +41,7 @@ pub async fn extract_next_chunk(
         Engine::Mssql => extract_mssql(uri, database, table, chunk_rows).await,
         Engine::Sqlite => extract_sqlite(uri, table, chunk_rows).await,
         Engine::Mongodb => extract_mongo(uri, database, table, chunk_rows),
+        Engine::Oracle => oracle::extract_next(uri, table, chunk_rows).await,
     }
 }
 

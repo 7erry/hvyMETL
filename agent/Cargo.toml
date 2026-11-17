@@ -1,6 +1,6 @@
 [package]
 name = "hvymetl-agent"
-version = "10.1.6"
+version = "11.1.0"
 description = "Send a local database schema and extract to an hvyMETL studio session over WebSocket"
 edition = "2021"
 license = "BUSL-1.1"
@@ -29,3 +29,4 @@ tokio-tungstenite = { version = "0.26", features = ["rustls-tls-native-roots"] }
 tokio-util = { version = "0.7", features = ["compat"] }
 url = "2"
 ureq = { version = "2.12.1", features = ["json", "native-certs"] }
+oracle-rs = { version = "0.1.7", default-features = false }

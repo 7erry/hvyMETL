@@ -42,6 +42,7 @@ function liveEngineFromSelect(value: string): LiveConnectionEngine {
     case 'mssql':
     case 'sqlite':
     case 'mongodb':
+    case 'oracle':
       return value;
     default:
       return 'mongodb';
@@ -76,6 +77,11 @@ export function liveConnectionHint(engine: LiveConnectionEngine): LiveConnection
         placeholder: 'sqlite:///absolute/path/shop.db',
         hint: 'Use sqlite:///path/to/file.db or a bare path. Leave blank for $DATABASE_URL.',
       };
+    case 'oracle':
+      return {
+        placeholder: 'oracle://localhost:1521/FREEPDB1',
+        hint: 'Use oracle://user:password@host:1521/service. Oracle 12.1 or later. Add ?sid=ORCL for a SID, or ?schema=HR to read that account. Connect as the schema owner.',
+      };
     default: {
       const unexpected: never = engine;
       return unexpected;
@@ -86,7 +92,7 @@ export function liveConnectionHint(engine: LiveConnectionEngine): LiveConnection
 export type LiveAgentPlatform = 'macos-aarch64' | 'macos-x64' | 'windows-x64' | 'linux-x64';
 
 /** Studio pins download assets to this GitHub release tag (last published agent builds). */
-export const LIVE_AGENT_RELEASE = 'v10.1.6';
+export const LIVE_AGENT_RELEASE = 'v11.1.0';
 
 const LIVE_AGENT_BUILDS: { id: LiveAgentPlatform; label: string; fileName: string }[] = [
   { id: 'macos-aarch64', label: 'macOS Apple Silicon', fileName: 'hvymetl-agent-macos-aarch64' },
@@ -282,6 +288,7 @@ const ENGINE_LABEL_KEYS: Record<LiveConnectionEngine, MessageKey> = {
   mysql: 'live.engine.mysql',
   mssql: 'live.engine.mssql',
   sqlite: 'live.engine.sqlite',
+  oracle: 'live.engine.oracle',
 };
 
 /** Live database connection + local-agent bridge for schema import. */
@@ -435,8 +442,9 @@ export function LiveMongoImportForm({
     .filter(Boolean)
     .join(' ');
 
+  const agentRequired = requireAgent || engine === 'oracle';
   const importDisabled =
-    disabled || busy || (requireAgent ? !agentReady : !effectiveUri);
+    disabled || busy || (agentRequired ? !agentReady : !effectiveUri);
 
   return (
     <form className="live-mongo-import" onSubmit={runCopy}>

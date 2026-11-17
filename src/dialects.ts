@@ -1,6 +1,6 @@
 /**
  * Supported SQL dialects for DDL paste import in Migration Studio.
- * Wave A live engines (SQLite, PostgreSQL, MySQL/MariaDB, MSSQL, and postgres/mysql wire-compat) also work via the Rust agent.
+ * Wave A live engines (SQLite, PostgreSQL, MySQL/MariaDB, MSSQL, Oracle 12.1+, and postgres/mysql wire-compat) also work via the Rust agent.
  */
 
 export type DialectDefinition = {
@@ -19,7 +19,7 @@ const DIALECT_DEFINITIONS: DialectDefinition[] = [
   { id: 'mssql', label: 'Microsoft SQL Server', live: true, parserFamily: 'mssql' },
   { id: 'sybase', label: 'SAP ASE (Sybase)', live: false, parserFamily: 'sybase' },
   { id: 'clickhouse', label: 'ClickHouse', live: false, parserFamily: 'clickhouse' },
-  { id: 'oracle', label: 'Oracle', live: false, parserFamily: 'oracle' },
+  { id: 'oracle', label: 'Oracle', live: true, parserFamily: 'oracle' },
   { id: 'db2', label: 'IBM Db2', live: false, parserFamily: 'db2' },
   { id: 'cockroachdb', label: 'CockroachDB', live: true, parserFamily: 'postgresql' },
   { id: 'yugabyte', label: 'YugabyteDB', live: true, parserFamily: 'postgresql' },

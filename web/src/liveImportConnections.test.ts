@@ -63,6 +63,7 @@ describe('liveImportConnections', () => {
     expect(liveImportEngineFromUri('mysql://localhost/db')).toBe('mysql');
     expect(liveImportEngineFromUri('mssql://localhost/db')).toBe('mssql');
     expect(liveImportEngineFromUri('sqlite:///tmp/x.db')).toBe('sqlite');
+    expect(liveImportEngineFromUri('oracle://hr@db.example:1521/FREEPDB1')).toBe('oracle');
     expect(liveImportEngineFromUri('')).toBeNull();
   });
 });

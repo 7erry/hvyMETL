@@ -1,6 +1,7 @@
 mod catalog;
 mod engine;
 mod extract;
+mod oracle;
 mod pg;
 mod schema;
 
@@ -235,7 +236,7 @@ async fn main() {
         println!(
             "hvymetl-agent --token <token> --uri <uri> [--database <name>] [--server <url>] [--http]"
         );
-        println!("Wave A engines: mongodb, postgresql, mysql, mssql/sqlserver, sqlite");
+        println!("Engines: mongodb, postgresql, mysql, mssql/sqlserver, sqlite, oracle (12.1+)");
         return;
     }
     let token = flag("token").unwrap_or_default();

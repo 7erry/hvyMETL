@@ -7,6 +7,7 @@ pub enum Engine {
     Mysql,
     Mssql,
     Sqlite,
+    Oracle,
 }
 
 impl Engine {
@@ -17,6 +18,7 @@ impl Engine {
             Engine::Mysql => "mysql",
             Engine::Mssql => "mssql",
             Engine::Sqlite => "sqlite",
+            Engine::Oracle => "oracle",
         }
     }
 
@@ -27,6 +29,7 @@ impl Engine {
             Engine::Mysql => "MySQL",
             Engine::Mssql => "Microsoft SQL Server",
             Engine::Sqlite => "SQLite",
+            Engine::Oracle => "Oracle",
         }
     }
 }
@@ -42,6 +45,9 @@ pub fn detect_engine(uri: &str) -> Result<Engine, String> {
     if trimmed.starts_with("mysql://") {
         return Ok(Engine::Mysql);
     }
+    if trimmed.starts_with("oracle://") {
+        return Ok(Engine::Oracle);
+    }
     if trimmed.starts_with("mssql://") || trimmed.starts_with("sqlserver://") {
         return Ok(Engine::Mssql);
     }
@@ -52,7 +58,7 @@ pub fn detect_engine(uri: &str) -> Result<Engine, String> {
     if !trimmed.contains("://") && (trimmed.starts_with('/') || trimmed.starts_with('.')) {
         return Ok(Engine::Sqlite);
     }
-    Err("Unsupported URI. Use mongodb, postgresql, mysql, mssql/sqlserver, or sqlite.".to_string())
+    Err("Unsupported URI. Use mongodb, postgresql, mysql, mssql/sqlserver, sqlite, or oracle.".to_string())
 }
 
 pub fn database_name(uri: &str, explicit: Option<&str>, engine: Engine) -> Result<String, String> {
@@ -61,6 +67,7 @@ pub fn database_name(uri: &str, explicit: Option<&str>, engine: Engine) -> Resul
     }
     match engine {
         Engine::Sqlite => Ok(sqlite_path(uri)?),
+        Engine::Oracle => oracle_service_name(uri),
         Engine::Mongodb => {
             let after_scheme = uri.split_once("://").ok_or("MongoDB URI is not valid.")?.1;
             let path = after_scheme.split_once('/').map(|(_, path)| path).unwrap_or("");
@@ -88,18 +95,45 @@ pub fn schema_name(uri: &str, engine: Engine) -> String {
     };
     if let Some(schema) = url.query_pairs().find(|(key, _)| key == "schema").map(|(_, value)| value.into_owned()) {
         if !schema.trim().is_empty() {
-            return schema;
+            return if engine == Engine::Oracle {
+                schema.trim().to_ascii_uppercase()
+            } else {
+                schema
+            };
         }
     }
     default_schema(engine, url.username())
 }
 
-fn default_schema(engine: Engine, _username: &str) -> String {
+fn default_schema(engine: Engine, username: &str) -> String {
     match engine {
         Engine::Postgresql => "public".to_string(),
         Engine::Mssql => "dbo".to_string(),
         Engine::Mysql | Engine::Sqlite | Engine::Mongodb => "public".to_string(),
+        Engine::Oracle => {
+            let name = username.trim();
+            if name.is_empty() {
+                "USER".to_string()
+            } else {
+                name.to_ascii_uppercase()
+            }
+        }
     }
+}
+
+fn oracle_service_name(uri: &str) -> Result<String, String> {
+    let url = Url::parse(uri).map_err(|_| "Database URI is not valid.".to_string())?;
+    let service = percent_decode(url.path().trim_start_matches('/'));
+    if !service.is_empty() {
+        return Ok(service);
+    }
+    if let Some((_, sid)) = url.query_pairs().find(|(key, _)| key == "sid") {
+        let sid = sid.trim();
+        if !sid.is_empty() {
+            return Ok(sid.to_string());
+        }
+    }
+    Err("Oracle service name or SID is required.".to_string())
 }
 
 pub fn sqlite_path(uri: &str) -> Result<String, String> {
@@ -124,7 +158,7 @@ fn percent_decode(value: &str) -> String {
         .unwrap_or_else(|| value.to_string())
 }
 
-pub const WAVE_A_ENGINES: &[&str] = &["mongodb", "postgresql", "mysql", "mssql", "sqlite"];
+pub const WAVE_A_ENGINES: &[&str] = &["mongodb", "postgresql", "mysql", "mssql", "sqlite", "oracle"];
 
 #[cfg(test)]
 mod tests {
@@ -139,6 +173,19 @@ mod tests {
         assert_eq!(detect_engine("sqlserver://localhost/shop").unwrap(), Engine::Mssql);
         assert_eq!(detect_engine("sqlite:///tmp/shop.db").unwrap(), Engine::Sqlite);
         assert_eq!(detect_engine("/tmp/shop.db").unwrap(), Engine::Sqlite);
-        assert!(detect_engine("oracle://localhost/ORCL").is_err());
+        assert_eq!(detect_engine("oracle://hr:secret@db.example:1521/FREEPDB1").unwrap(), Engine::Oracle);
+        assert_eq!(
+            database_name("oracle://hr:secret@db.example:1521/FREEPDB1", None, Engine::Oracle).unwrap(),
+            "FREEPDB1"
+        );
+        assert_eq!(
+            database_name("oracle://hr:secret@db.example:1521/?sid=ORCL", None, Engine::Oracle).unwrap(),
+            "ORCL"
+        );
+        assert_eq!(schema_name("oracle://hr:secret@db.example:1521/FREEPDB1", Engine::Oracle), "HR");
+        assert_eq!(
+            schema_name("oracle://hr:secret@db.example:1521/FREEPDB1?schema=sales", Engine::Oracle),
+            "SALES"
+        );
     }
 }

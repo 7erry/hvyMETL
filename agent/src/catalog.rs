@@ -8,9 +8,9 @@ use tiberius::{AuthMethod, Client as MssqlClient, Config as MssqlConfig};
 use tokio::net::TcpStream;
 use tokio_util::compat::TokioAsyncWriteCompatExt;
 
-use crate::pg;
-
 use crate::engine::{database_name, schema_name, sqlite_path, Engine};
+use crate::oracle;
+use crate::pg;
 use crate::schema::{sample_limit, schema_payload, table_from_documents};
 
 pub async fn introspect(uri: &str, database: &str, engine: Engine) -> Result<Value, String> {
@@ -20,7 +20,14 @@ pub async fn introspect(uri: &str, database: &str, engine: Engine) -> Result<Val
         Engine::Mysql => introspect_mysql(uri, database).await,
         Engine::Mssql => introspect_mssql(uri, database).await,
         Engine::Sqlite => introspect_sqlite(uri).await,
+        Engine::Oracle => introspect_oracle(uri).await,
     }
+}
+
+async fn introspect_oracle(uri: &str) -> Result<Value, String> {
+    let database = database_name(uri, None, Engine::Oracle)?;
+    let catalog = oracle::read_catalog(uri).await?;
+    model_payload(Engine::Oracle, &database, catalog.columns, catalog.foreign_keys, catalog.sizes)
 }
 
 fn introspect_mongo(uri: &str, database: &str) -> Result<Value, String> {
@@ -536,7 +543,7 @@ fn mssql_config(uri: &str, database: &str) -> Result<(MssqlConfig, String, u16),
     Ok((config, host, port))
 }
 
-fn sql_to_bson(sql_type: &str) -> &'static str {
+pub(crate) fn sql_to_bson(sql_type: &str) -> &'static str {
     let lower = sql_type.to_ascii_lowercase();
     if lower.contains("int") || lower.contains("serial") {
         "int"
@@ -550,7 +557,9 @@ fn sql_to_bson(sql_type: &str) -> &'static str {
         "date"
     } else if lower.contains("json") || lower.contains("xml") {
         "object"
-    } else if lower.contains("blob") || lower.contains("binary") || lower.contains("bytea") {
+    } else if lower.contains("number") {
+        "decimal"
+    } else if lower.contains("blob") || lower.contains("binary") || lower.contains("bytea") || lower.contains("raw") {
         "binData"
     } else {
         "string"
@@ -585,7 +594,7 @@ pub fn public_error(error: impl ToString + std::fmt::Debug) -> String {
     if message.contains("/api/agent/") || message.contains("HTTP error:") {
         return "Could not reach the studio over WebSocket.".to_string();
     }
-    for scheme in ["mongodb://", "mongodb+srv://", "postgres://", "postgresql://", "mysql://", "mssql://", "sqlserver://"] {
+    for scheme in ["mongodb://", "mongodb+srv://", "postgres://", "postgresql://", "mysql://", "mssql://", "sqlserver://", "oracle://"] {
         if message.contains(scheme) {
             return "Could not connect to the database.".to_string();
         }

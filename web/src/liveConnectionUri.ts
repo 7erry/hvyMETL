@@ -16,6 +16,7 @@ const DEFAULT_PORTS: Record<LiveImportEngine, string> = {
   mysql: '3306',
   mssql: '1433',
   sqlite: '',
+  oracle: '1521',
 };
 
 const SCHEME: Record<LiveImportEngine, string> = {
@@ -24,6 +25,7 @@ const SCHEME: Record<LiveImportEngine, string> = {
   mysql: 'mysql',
   mssql: 'mssql',
   sqlite: 'sqlite',
+  oracle: 'oracle',
 };
 
 export function defaultPortForEngine(engine: LiveImportEngine): string {
@@ -51,6 +53,7 @@ export function liveImportEngineFromUri(uri: string): LiveImportEngine | null {
   if (trimmed.startsWith('mysql') || trimmed.startsWith('mariadb')) return 'mysql';
   if (trimmed.startsWith('mssql') || trimmed.startsWith('sqlserver')) return 'mssql';
   if (trimmed.startsWith('sqlite:')) return 'sqlite';
+  if (trimmed.startsWith('oracle:')) return 'oracle';
   return null;
 }
 

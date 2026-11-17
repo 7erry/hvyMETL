@@ -9,6 +9,7 @@ import {
 } from '../dynamoTableDisplay';
 
 import type { GuardrailIssue } from '../copilot/types';
+import { TypeLabel } from '../TypeLabel';
 
 export type TableNodeData = {
   table: TableModel;
@@ -47,7 +48,7 @@ function DynamoDbTableBody({ table }: { table: TableModel }) {
             {section.columns.map((col) => (
               <li key={`${section.id}-${col.name}`} className="dynamo-key-row">
                 <span className="column-name">{col.name}</span>
-                <span className="column-type">{col.sqlType}</span>
+                <TypeLabel type={col.sqlType} />
                 <span className="dynamo-role">{formatDynamoKeyRole(col)}</span>
               </li>
             ))}
@@ -131,7 +132,7 @@ function TableNodeComponent({ data }: NodeProps & { data: TableNodeData }) {
                   {isPk ? `${SQL_COLUMN_GLYPH.pk} ` : isFk ? `${SQL_COLUMN_GLYPH.fk} ` : ''}
                   {col.name}
                 </span>
-                <span className="column-type">{col.sqlType}</span>
+                <TypeLabel type={col.sqlType} />
                 {isFk ? (
                   <Handle
                     type="source"

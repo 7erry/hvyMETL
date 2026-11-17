@@ -3,6 +3,7 @@ import { useCallback, useMemo, useState } from 'react';
 import type { CollectionPlan } from '../migrationPlanTypes';
 import type { SchemaField } from '../schema/schemaFields';
 import { mongoFieldTagPrefix } from '../fieldTagIcons';
+import { TypeLabel } from '../TypeLabel';
 
 type SchemaFieldTreeProps = {
   fields: SchemaField[];
@@ -91,9 +92,7 @@ function SchemaFieldTreeRow({
         {mongoFieldTagPrefix(field.tags ?? [])}
         {field.name}
       </span>
-      <span className="column-type" title={field.type}>
-        {field.type}
-      </span>
+      <TypeLabel type={field.type} />
       {isLink ? (
         <Handle
           type="source"

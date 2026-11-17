@@ -640,6 +640,61 @@ textarea {
   opacity: 0.72;
 }
 
+/* Same token colors as the collection JSON highlighter. */
+.table-node .column-type.column-type--string,
+.collection-node .column-type.column-type--string {
+  color: #7ee787;
+  opacity: 1;
+}
+
+.table-node .column-type.column-type--number,
+.collection-node .column-type.column-type--number {
+  color: #f2cc60;
+  opacity: 1;
+}
+
+.table-node .column-type.column-type--date,
+.collection-node .column-type.column-type--date {
+  color: #79c0ff;
+  opacity: 1;
+}
+
+.table-node .column-type.column-type--bool,
+.collection-node .column-type.column-type--bool {
+  color: #ffa657;
+  opacity: 1;
+}
+
+.table-node .column-type.column-type--null,
+.collection-node .column-type.column-type--null {
+  color: #ff7b72;
+  font-style: italic;
+  opacity: 1;
+}
+
+.table-node .column-type.column-type--binary,
+.collection-node .column-type.column-type--binary,
+.table-node .column-type.column-type--id,
+.collection-node .column-type.column-type--id {
+  color: #d2a8ff;
+  opacity: 1;
+}
+
+.table-node .column-type.column-type--object,
+.collection-node .column-type.column-type--object {
+  color: #a5d6ff;
+  opacity: 1;
+}
+
+.table-node .column-type.column-type--mixed,
+.collection-node .column-type.column-type--mixed {
+  opacity: 1;
+}
+
+.column-type__sep {
+  color: #8b949e;
+}
+
 .table-node--dynamodb .dynamo-role {
   justify-self: end;
   min-width: 3.2rem;

@@ -9,7 +9,7 @@ every schema decision in a retrievable knowledge base of MongoDB design patterns
 your workload telemetry (read:write ratio, peak RPM, data growth), then runs a
 parallel, pattern-aware ETL into MongoDB Atlas.
 
-**Release:** [`11.0.2`](RELEASE.md#hvymetl-1102) — see [RELEASE.md](RELEASE.md) for full release history.
+**Release:** [`11.1.0`](RELEASE.md#hvymetl-1110) — see [RELEASE.md](RELEASE.md) for full release history.
 
 An optional **ML engine** (`src/ml_engine/`) adds telemetry-aware reranking
 ([Voyage rerank-2.5](https://docs.voyageai.com/reference/reranker-api) when
@@ -281,13 +281,14 @@ command per collection.
 
 Schema import recognizes the dialects below. **SQLite** has a live file adapter (CLI + file upload).
 **MongoDB**, **PostgreSQL**, and **MySQL** can be read from a connection URI when the studio server runs on a machine that can
-reach that database. On the hosted website, Connect Live Database downloads the agent for that computer and copies a command you paste in a terminal. Other dialects use **DDL paste**. Row data
+reach that database. **Oracle** (12.1+) is a Rust-agent live source: `oracle://user:password@host:1521/SERVICE` (`?sid=` or `?schema=`). The hosted studio does not open Oracle itself; the local agent does. A local studio's direct import is still PostgreSQL, MySQL, and MongoDB. On the hosted website, Connect Live Database downloads the agent for that computer and copies a command you paste in a terminal. Other dialects use **DDL paste**. Row data
 in the web pipeline still comes from **CSV exports** per table, unless you choose **Read live data**. On the hosted studio that path uses the local Rust agent extract over WSS (same as Live Import); a local studio can also open PostgreSQL/MySQL/MongoDB directly for a capped sample. Rows still load through csvToAtlas or mongoimport.
 
 | Tier | Dialects |
 | --- | --- |
 | Live file | SQLite |
-| DDL paste | PostgreSQL, MySQL, SQL Server, ClickHouse, Oracle, Db2, CockroachDB, Aurora (PG/MySQL), Spanner |
+| Rust agent | Oracle 12.1+ (`oracle://`); also MongoDB, PostgreSQL, MySQL, SQL Server, SQLite |
+| DDL paste | PostgreSQL, MySQL, SQL Server, ClickHouse, Oracle (DDL paste and the Rust agent), Db2, CockroachDB, Aurora (PG/MySQL), Spanner |
 
 Full matrix, parser limits, and examples: **[docs/18-sql-dialects.md](docs/18-sql-dialects.md)**.
 

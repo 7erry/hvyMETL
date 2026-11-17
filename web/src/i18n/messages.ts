@@ -134,6 +134,7 @@ export type MessageKey =
   | 'live.engine.mysql'
   | 'live.engine.mssql'
   | 'live.engine.sqlite'
+  | 'live.engine.oracle'
   | 'pipeline.title'
   | 'pipeline.run'
   | 'pipeline.csv'
@@ -468,6 +469,7 @@ const en: MessageCatalog = {
   'live.engine.mysql': 'MySQL',
   'live.engine.mssql': 'Microsoft SQL Server',
   'live.engine.sqlite': 'SQLite',
+  'live.engine.oracle': 'Oracle',
   'pipeline.title': 'Pipeline',
   'pipeline.run': 'Run pipeline',
   'pipeline.csv': 'CSV source',
@@ -866,6 +868,7 @@ const pt: MessageCatalog = {
   'live.engine.mysql': 'MySQL',
   'live.engine.mssql': 'Microsoft SQL Server',
   'live.engine.sqlite': 'SQLite',
+  'live.engine.oracle': 'Oracle',
   'pipeline.title': 'Pipeline',
   'pipeline.run': 'Executar pipeline',
   'pipeline.csv': 'Fonte CSV',
@@ -1213,6 +1216,7 @@ const es: MessageCatalog = {
   'live.engine.mysql': 'MySQL',
   'live.engine.mssql': 'Microsoft SQL Server',
   'live.engine.sqlite': 'SQLite',
+  'live.engine.oracle': 'Oracle',
   'pipeline.title': 'Pipeline',
   'pipeline.run': 'Ejecutar pipeline',
   'pipeline.csv': 'Origen CSV',
@@ -1555,6 +1559,7 @@ const zhCN: MessageCatalog = {
   'live.engine.mysql': 'MySQL',
   'live.engine.mssql': 'Microsoft SQL Server',
   'live.engine.sqlite': 'SQLite',
+  'live.engine.oracle': 'Oracle',
   'pipeline.title': '流水线',
   'pipeline.run': '运行流水线',
   'pipeline.csv': 'CSV 来源',
@@ -1892,6 +1897,7 @@ const hi: MessageCatalog = {
   'live.engine.mysql': 'MySQL',
   'live.engine.mssql': 'Microsoft SQL Server',
   'live.engine.sqlite': 'SQLite',
+  'live.engine.oracle': 'Oracle',
   'pipeline.title': 'पाइपलाइन',
   'pipeline.run': 'पाइपलाइन चलाएँ',
   'pipeline.csv': 'CSV स्रोत',

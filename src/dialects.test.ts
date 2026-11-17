@@ -109,6 +109,7 @@ describe('dialects', () => {
     expect(isLiveSourceDialect('sqlite')).toBe(true);
     expect(isLiveSourceDialect('postgresql')).toBe(true);
     expect(isLiveSourceDialect('mysql')).toBe(true);
+    expect(isLiveSourceDialect('oracle')).toBe(true);
     expect(isLiveSourceDialect('snowflake')).toBe(false);
     expect(isLiveSourceDialect('firebird')).toBe(false);
   });

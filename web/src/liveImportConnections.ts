@@ -1,6 +1,6 @@
 /** Browser-only saved live-import connections (never synced to the server). */
 
-export type LiveImportEngine = 'mongodb' | 'postgresql' | 'mysql' | 'mssql' | 'sqlite';
+export type LiveImportEngine = 'mongodb' | 'postgresql' | 'mysql' | 'mssql' | 'sqlite' | 'oracle';
 
 export type LiveImportConnection = {
   id: string;
@@ -13,7 +13,7 @@ export type LiveImportConnection = {
 
 export const LIVE_IMPORT_CONNECTIONS_KEY = 'hvymetl.liveimport.connections';
 
-const ENGINES: ReadonlySet<string> = new Set(['mongodb', 'postgresql', 'mysql', 'mssql', 'sqlite']);
+const ENGINES: ReadonlySet<string> = new Set(['mongodb', 'postgresql', 'mysql', 'mssql', 'sqlite', 'oracle']);
 
 function isEngine(value: unknown): value is LiveImportEngine {
   return typeof value === 'string' && ENGINES.has(value);

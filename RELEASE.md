@@ -1,3 +1,11 @@
+## hvyMETL 11.1.0
+
+**Oracle agent** — The Rust agent connects to Oracle 12.1 or later with `oracle://user:password@host:1521/SERVICE` (`?sid=` or `?schema=`). It copies that account's tables and rows and refuses Oracle-maintained accounts (SYS, SYSTEM, and the other built-in schemas). No Oracle Instant Client. Download assets: **`hvymetl-agent-macos-aarch64`**, **`hvymetl-agent-macos-x64`**, **`hvymetl-agent-linux-x64`**, **`hvymetl-agent-windows-x64.exe`**. Studio live-import one-liner points at `v11.1.0`.
+
+**ER type colors** — SQL and MongoDB type names on diagram cards use the JSON highlighter colors (string, number, date, bool, null, objectId/binary, object). A union such as `long | null` colors each side.
+
+---
+
 ## hvyMETL 11.0.2
 
 **Example previews** — drawDB gallery cards load the close table cluster instead of a cached copy of the old zoomed-out diagram. Reload the Add data source dialog.
