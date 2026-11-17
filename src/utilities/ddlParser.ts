@@ -12,6 +12,47 @@
 import type { ForeignKeyModel, SqlStructuralModel, TableModel } from '../types.js';
 import { sqlTypeToBsonType } from './sqlTypeToBsonType.js';
 
+/** Remove `--` line comments and block comments. Text inside quotes is left intact. */
+function stripSqlComments(ddl: string): string {
+  let out = '';
+  let index = 0;
+  while (index < ddl.length) {
+    const char = ddl[index]!;
+    const next = ddl[index + 1];
+    if (char === '-' && next === '-') {
+      const newline = ddl.indexOf('\n', index);
+      index = newline < 0 ? ddl.length : newline;
+      continue;
+    }
+    if (char === '/' && next === '*') {
+      const end = ddl.indexOf('*/', index + 2);
+      index = end < 0 ? ddl.length : end + 2;
+      continue;
+    }
+    if (char === "'" || char === '"' || char === '`') {
+      out += char;
+      index += 1;
+      while (index < ddl.length) {
+        out += ddl[index]!;
+        if (ddl[index] === char) {
+          if (ddl[index + 1] === char) {
+            out += ddl[index + 1]!;
+            index += 2;
+            continue;
+          }
+          index += 1;
+          break;
+        }
+        index += 1;
+      }
+      continue;
+    }
+    out += char;
+    index += 1;
+  }
+  return out;
+}
+
 /** Words that begin table/column constraint clauses (not part of the SQL type). */
 const CONSTRAINT_KEYWORD =
   /\s+(?:GENERATED|IDENTITY|AUTOINCREMENT|AUTO_INCREMENT|SERIAL|BIGSERIAL|SMALLSERIAL|DEFAULT|NOT\s+NULL|NULL|PRIMARY\s+KEY|UNIQUE|CHECK|CONSTRAINT|REFERENCES|OPTIONS|COMMENT|FOR\s+REPLICATION|ROWGUIDCOL|SPARSE|PERSISTED|CLUSTERED|NONCLUSTERED)\b/i;
@@ -400,10 +441,11 @@ function ensureReferencedTables(tables: TableModel[]): TableModel[] {
  * the pattern selector (relationship stats use safe defaults when unknown).
  */
 export function parseDdlToModel(ddl: string, sourceLabel = 'ddl:import'): SqlStructuralModel {
+  const source = stripSqlComments(ddl);
   const tables: TableModel[] = [];
-  const alterTableForeignKeys = findAlterTableForeignKeys(ddl);
+  const alterTableForeignKeys = findAlterTableForeignKeys(source);
 
-  for (const block of findCreateTableBlocks(ddl)) {
+  for (const block of findCreateTableBlocks(source)) {
     const lines = splitColumnDefinitions(block.body);
     const columns: TableModel['columns'] = [];
     const foreignKeys: ForeignKeyModel[] = [];

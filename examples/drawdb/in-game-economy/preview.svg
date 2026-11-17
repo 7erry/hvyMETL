@@ -1,41 +1,54 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1870 2622" width="1870" height="2622">
-  <rect width="1870" height="2622" fill="#0b1616"/>
-  <line x1="770.0" y1="40.0" x2="1100.0" y2="1454.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
-  <line x1="770.0" y1="40.0" x2="1760.0" y2="1009.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
-  <line x1="1100.0" y1="836.0" x2="1760.0" y2="1009.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
-  <line x1="1100.0" y1="836.0" x2="1100.0" y2="836.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
-  <line x1="440.0" y1="150.0" x2="1100.0" y2="836.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
-  <line x1="440.0" y1="150.0" x2="770.0" y2="40.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
-  <line x1="1430.0" y1="2087.0" x2="1760.0" y2="1009.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
-  <line x1="1100.0" y1="1830.0" x2="1430.0" y2="2087.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
-  <line x1="770.0" y1="1646.0" x2="1100.0" y2="1454.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
-  <line x1="770.0" y1="1646.0" x2="1430.0" y2="2087.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
-  <line x1="770.0" y1="1646.0" x2="1100.0" y2="1830.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
-  <line x1="770.0" y1="1646.0" x2="1760.0" y2="1009.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
-  <line x1="770.0" y1="1646.0" x2="1100.0" y2="836.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
-  <line x1="770.0" y1="1646.0" x2="1100.0" y2="836.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
-  <line x1="440.0" y1="489.0" x2="1100.0" y2="1454.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
-  <line x1="440.0" y1="489.0" x2="770.0" y2="1646.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
-  <line x1="770.0" y1="2463.0" x2="1430.0" y2="2087.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
-  <line x1="440.0" y1="1207.0" x2="770.0" y2="2463.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
-  <line x1="440.0" y1="2498.0" x2="1100.0" y2="1454.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
-  <line x1="440.0" y1="2498.0" x2="770.0" y2="2463.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
-  <line x1="440.0" y1="2498.0" x2="770.0" y2="1646.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
-  <line x1="110.0" y1="1733.0" x2="440.0" y2="2498.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
-  <line x1="110.0" y1="1733.0" x2="440.0" y2="1207.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
-  <line x1="110.0" y1="1733.0" x2="1100.0" y2="836.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
-  <rect x="1010.0" y="1434.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1010.0" y="1434.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1016.0" y="1446.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">players</text>
-  <rect x="1670.0" y="989.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1670.0" y="989.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1676.0" y="1001.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">currencies</text>
-  <rect x="680.0" y="20.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="680.0" y="20.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="686.0" y="32.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">wallets</text>
-  <rect x="1010.0" y="816.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1010.0" y="816.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1016.0" y="828.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">ledger_transactions</text>
-  <rect x="350.0" y="130.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="350.0" y="130.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="356.0" y="142.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">ledger_entries</text>
-  <rect x="1340.0" y="2067.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1340.0" y="2067.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1346.0" y="2079.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">shop_offers</text>
-  <rect x="1010.0" y="1810.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1010.0" y="1810.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1016.0" y="1822.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">offer_prices</text>
-  <rect x="680.0" y="1626.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="680.0" y="1626.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="686.0" y="1638.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">purchases</text>
-  <rect x="350.0" y="469.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="350.0" y="469.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="356.0" y="481.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">iap_receipts</text>
-  <rect x="680.0" y="2443.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="680.0" y="2443.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="686.0" y="2455.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">battle_passes</text>
-  <rect x="350.0" y="1187.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="350.0" y="1187.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="356.0" y="1199.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">battle_pass_tiers</text>
-  <rect x="350.0" y="2478.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="350.0" y="2478.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="356.0" y="2490.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">battle_pass_progress</text>
-  <rect x="20.0" y="1713.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="20.0" y="1713.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="26.0" y="1725.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">battle_pass_claims</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 416.0 260.0" width="416.0" height="260.0">
+  <defs>
+    <pattern id="dots" width="14" height="14" patternUnits="userSpaceOnUse">
+      <circle cx="1.2" cy="1.2" r="0.8" fill="#1c3a44"/>
+    </pattern>
+  </defs>
+  <rect width="416.0" height="260.0" fill="#0d1b20"/>
+  <rect width="416.0" height="260.0" fill="url(#dots)"/>
+  <line x1="199.0" y1="193.5" x2="217.0" y2="193.5" stroke="#5dbea4" stroke-width="1.6"/>
+  <line x1="199.0" y1="66.5" x2="217.0" y2="66.5" stroke="#5dbea4" stroke-width="1.6"/>
+  <line x1="120.0" y1="123.0" x2="120.0" y2="137.0" stroke="#5dbea4" stroke-width="1.6"/>
+  <line x1="199.0" y1="66.5" x2="217.0" y2="193.5" stroke="#5dbea4" stroke-width="1.6"/>
+  <g>
+    <clipPath id="t0"><rect x="41.0" y="10.0" width="158" height="113.0" rx="4"/></clipPath>
+    <g clip-path="url(#t0)">
+      <rect x="41.0" y="10.0" width="158" height="113.0" fill="#163038"/>
+      <rect x="41.0" y="10.0" width="158" height="18" fill="#1a6ca3"/>
+      <text x="49.0" y="38.0" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">id</text><line x1="42.0" y1="41.0" x2="198.0" y2="41.0" stroke="#24515c" stroke-width="1"/><text x="49.0" y="51.0" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">player_id</text><line x1="42.0" y1="54.0" x2="198.0" y2="54.0" stroke="#24515c" stroke-width="1"/><text x="49.0" y="64.0" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">offer_id</text><line x1="42.0" y1="67.0" x2="198.0" y2="67.0" stroke="#24515c" stroke-width="1"/><text x="49.0" y="77.0" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">offer_price_id</text><line x1="42.0" y1="80.0" x2="198.0" y2="80.0" stroke="#24515c" stroke-width="1"/><text x="49.0" y="90.0" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">quantity</text><line x1="42.0" y1="93.0" x2="198.0" y2="93.0" stroke="#24515c" stroke-width="1"/><text x="49.0" y="103.0" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">price_minor</text><line x1="42.0" y1="106.0" x2="198.0" y2="106.0" stroke="#24515c" stroke-width="1"/><text x="49.0" y="116.0" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">currency_id</text>
+    </g>
+    <rect x="41.0" y="10.0" width="158" height="113.0" rx="4" fill="none" stroke="#3d9a84" stroke-width="1.25"/>
+    <text x="49.0" y="23.0" fill="#f3fbff" font-size="12" font-weight="650" font-family="ui-sans-serif,system-ui,sans-serif">purchases</text>
+  </g>
+  <g>
+    <clipPath id="t1"><rect x="217.0" y="10.0" width="158" height="113.0" rx="4"/></clipPath>
+    <g clip-path="url(#t1)">
+      <rect x="217.0" y="10.0" width="158" height="113.0" fill="#163038"/>
+      <rect x="217.0" y="10.0" width="158" height="18" fill="#1a6ca3"/>
+      <text x="225.0" y="38.0" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">id</text><line x1="218.0" y1="41.0" x2="374.0" y2="41.0" stroke="#24515c" stroke-width="1"/><text x="225.0" y="51.0" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">external_id</text><line x1="218.0" y1="54.0" x2="374.0" y2="54.0" stroke="#24515c" stroke-width="1"/><text x="225.0" y="64.0" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">display_name</text><line x1="218.0" y1="67.0" x2="374.0" y2="67.0" stroke="#24515c" stroke-width="1"/><text x="225.0" y="77.0" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">country_code</text><line x1="218.0" y1="80.0" x2="374.0" y2="80.0" stroke="#24515c" stroke-width="1"/><text x="225.0" y="90.0" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">segment_code</text><line x1="218.0" y1="93.0" x2="374.0" y2="93.0" stroke="#24515c" stroke-width="1"/><text x="225.0" y="103.0" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">is_payment_blocked</text><line x1="218.0" y1="106.0" x2="374.0" y2="106.0" stroke="#24515c" stroke-width="1"/><text x="225.0" y="116.0" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">created_at</text>
+    </g>
+    <rect x="217.0" y="10.0" width="158" height="113.0" rx="4" fill="none" stroke="#3d9a84" stroke-width="1.25"/>
+    <text x="225.0" y="23.0" fill="#f3fbff" font-size="12" font-weight="650" font-family="ui-sans-serif,system-ui,sans-serif">players</text>
+  </g>
+  <g>
+    <clipPath id="t2"><rect x="41.0" y="137.0" width="158" height="113.0" rx="4"/></clipPath>
+    <g clip-path="url(#t2)">
+      <rect x="41.0" y="137.0" width="158" height="113.0" fill="#163038"/>
+      <rect x="41.0" y="137.0" width="158" height="18" fill="#1a6ca3"/>
+      <text x="49.0" y="165.0" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">id</text><line x1="42.0" y1="168.0" x2="198.0" y2="168.0" stroke="#24515c" stroke-width="1"/><text x="49.0" y="178.0" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">code</text><line x1="42.0" y1="181.0" x2="198.0" y2="181.0" stroke="#24515c" stroke-width="1"/><text x="49.0" y="191.0" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">name</text><line x1="42.0" y1="194.0" x2="198.0" y2="194.0" stroke="#24515c" stroke-width="1"/><text x="49.0" y="204.0" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">item_ref</text><line x1="42.0" y1="207.0" x2="198.0" y2="207.0" stroke="#24515c" stroke-width="1"/><text x="49.0" y="217.0" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">item_quantity</text><line x1="42.0" y1="220.0" x2="198.0" y2="220.0" stroke="#24515c" stroke-width="1"/><text x="49.0" y="230.0" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">currency_id</text><line x1="42.0" y1="233.0" x2="198.0" y2="233.0" stroke="#24515c" stroke-width="1"/><text x="49.0" y="243.0" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">base_price_minor</text>
+    </g>
+    <rect x="41.0" y="137.0" width="158" height="113.0" rx="4" fill="none" stroke="#3d9a84" stroke-width="1.25"/>
+    <text x="49.0" y="150.0" fill="#f3fbff" font-size="12" font-weight="650" font-family="ui-sans-serif,system-ui,sans-serif">shop_offers</text>
+  </g>
+  <g>
+    <clipPath id="t3"><rect x="217.0" y="137.0" width="158" height="113.0" rx="4"/></clipPath>
+    <g clip-path="url(#t3)">
+      <rect x="217.0" y="137.0" width="158" height="113.0" fill="#163038"/>
+      <rect x="217.0" y="137.0" width="158" height="18" fill="#1a6ca3"/>
+      <text x="225.0" y="165.0" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">id</text><line x1="218.0" y1="168.0" x2="374.0" y2="168.0" stroke="#24515c" stroke-width="1"/><text x="225.0" y="178.0" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">code</text><line x1="218.0" y1="181.0" x2="374.0" y2="181.0" stroke="#24515c" stroke-width="1"/><text x="225.0" y="191.0" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">name</text><line x1="218.0" y1="194.0" x2="374.0" y2="194.0" stroke="#24515c" stroke-width="1"/><text x="225.0" y="204.0" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">kind</text><line x1="218.0" y1="207.0" x2="374.0" y2="207.0" stroke="#24515c" stroke-width="1"/><text x="225.0" y="217.0" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">is_purchasable</text><line x1="218.0" y1="220.0" x2="374.0" y2="220.0" stroke="#24515c" stroke-width="1"/><text x="225.0" y="230.0" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">is_tradable</text><line x1="218.0" y1="233.0" x2="374.0" y2="233.0" stroke="#24515c" stroke-width="1"/><text x="225.0" y="243.0" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">expires_after_days</text>
+    </g>
+    <rect x="217.0" y="137.0" width="158" height="113.0" rx="4" fill="none" stroke="#3d9a84" stroke-width="1.25"/>
+    <text x="225.0" y="150.0" fill="#f3fbff" font-size="12" font-weight="650" font-family="ui-sans-serif,system-ui,sans-serif">currencies</text>
+  </g>
 </svg>

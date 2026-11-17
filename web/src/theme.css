@@ -2339,6 +2339,8 @@ textarea {
 
 .schema-import-modal {
   width: min(720px, calc(100vw - 2rem));
+  background: #163240;
+  border: 1px solid rgba(227, 252, 247, 0.14);
 }
 
 .canvas-table-list {
@@ -6648,46 +6650,75 @@ button.mongo-shell-tree__toggle:hover:not(:disabled) {
 }
 
 .schema-import-tabs {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.55rem;
+  display: flex;
+  gap: 0.2rem;
   margin: 0.85rem 0 0.9rem;
+  padding: 0.2rem;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(227, 252, 247, 0.1);
 }
 
 .schema-import-tabs button {
-  display: flex;
+  flex: 1;
   align-items: center;
   justify-content: center;
-  gap: 0.45rem;
-  min-height: 3.1rem;
-  padding: 0.65rem 0.75rem;
-  white-space: normal;
-  border: 1px solid rgba(0, 104, 74, 0.45);
-  border-radius: 10px;
-  background: rgba(0, 0, 0, 0.28);
+  min-height: 2.25rem;
+  min-width: 0;
+  padding: 0.35rem 0.5rem;
+  white-space: nowrap;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
   color: var(--mdb-gray-light-1, #b8c4c0);
+  font-size: 0.8rem;
   font-weight: 600;
+  box-shadow: none;
 }
 
-.schema-import-tabs button.active {
-  background: rgba(0, 104, 74, 0.28);
-  border-color: var(--mdb-green-base);
+.schema-import-tabs button:hover:not(:disabled),
+.schema-import-tabs button:active:not(:disabled) {
+  background: transparent;
+  box-shadow: none;
+  transform: none;
+}
+
+.schema-import-tabs button.active,
+.schema-import-tabs button.active:hover:not(:disabled) {
+  background: rgba(0, 104, 74, 0.55);
   color: var(--mdb-spring-green);
-  box-shadow: inset 0 0 0 1px rgba(0, 237, 100, 0.25);
-}
-
-.schema-import-tabs__icon {
-  font-size: 1rem;
-  line-height: 1;
-  color: var(--mdb-green-base);
+  box-shadow: none;
 }
 
 .schema-import-panel__editor-bar {
   position: relative;
   display: flex;
-  align-items: flex-end;
-  gap: 0.65rem;
-  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.5rem;
+  border-bottom: 1px solid var(--mdb-green-dark-2);
+}
+
+.schema-import-panel__editor-bar button {
+  min-height: 2rem;
+  min-width: 0;
+  padding: 0.25rem 0.7rem;
+  font-size: 0.75rem;
+}
+
+.schema-import-panel__formats {
+  display: flex;
+  gap: 0.3rem;
+  margin-left: auto;
+}
+
+.schema-import-panel__formats span {
+  padding: 0.1rem 0.45rem;
+  border-radius: 999px;
+  border: 1px solid var(--mdb-green-dark-2);
+  color: var(--accent-secondary);
+  font-size: 0.68rem;
+  font-weight: 600;
 }
 
 .schema-import-panel__editor-bar .schema-import-panel__label {
@@ -6696,7 +6727,9 @@ button.mongo-shell-tree__toggle:hover:not(:disabled) {
 }
 
 .schema-import-panel__dropzone {
+  border: 1px solid var(--mdb-green-dark-2);
   border-radius: 8px;
+  background: rgba(0, 0, 0, 0.28);
   transition: box-shadow 0.15s ease, background-color 0.15s ease;
 }
 
@@ -6705,11 +6738,24 @@ button.mongo-shell-tree__toggle:hover:not(:disabled) {
   box-shadow: inset 0 0 0 2px rgba(0, 237, 100, 0.45);
 }
 
+.schema-import-panel__dropzone .schema-import-panel__hint {
+  margin: 0;
+  padding: 0.35rem 0.65rem 0;
+}
+
 .schema-import-panel__textarea {
   width: 100%;
   max-width: 100%;
-  margin-bottom: 0.5rem;
-  resize: both;
+  margin-bottom: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  resize: vertical;
+}
+
+.schema-import-panel__textarea::placeholder {
+  color: var(--accent-secondary);
+  opacity: 1;
 }
 
 .schema-import-panel__textarea--drop {
@@ -6738,6 +6784,25 @@ button.mongo-shell-tree__toggle:hover:not(:disabled) {
 
 .schema-import-panel__actions {
   position: relative;
+  justify-content: flex-end;
+  margin: 0;
+  padding: 0.45rem 0.5rem 0.55rem;
+  border-top: 1px solid var(--mdb-green-dark-2);
+}
+
+.schema-import-panel__actions .primary {
+  background: color-mix(in srgb, var(--mdb-green-base) 78%, var(--mdb-green-dark-2));
+  border-color: color-mix(in srgb, var(--mdb-green-base) 78%, var(--mdb-green-dark-2));
+}
+
+.schema-import-panel__actions .primary:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--btn-primary-bg-hover) 78%, var(--mdb-green-dark-2));
+  border-color: color-mix(in srgb, var(--btn-primary-bg-hover) 78%, var(--mdb-green-dark-2));
+}
+
+.schema-import-panel__actions .primary:active:not(:disabled) {
+  background: color-mix(in srgb, var(--btn-primary-bg-active) 78%, var(--mdb-green-dark-2));
+  border-color: color-mix(in srgb, var(--btn-primary-bg-active) 78%, var(--mdb-green-dark-2));
 }
 
 .schema-import-panel__file-input {
@@ -6813,11 +6878,14 @@ button.mongo-shell-tree__toggle:hover:not(:disabled) {
 
 .example-gallery__chips {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 0.35rem;
+  overflow-x: auto;
+  padding-bottom: 0.15rem;
 }
 
 .example-gallery__chip {
+  flex: 0 0 auto;
   min-height: 1.85rem;
   padding: 0.2rem 0.65rem;
   border: 1px solid var(--mdb-green-dark-2);
@@ -6853,7 +6921,7 @@ button.mongo-shell-tree__toggle:hover:not(:disabled) {
 
 .example-gallery__grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(11.5rem, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
   gap: 0.65rem;
 }
 
@@ -6957,35 +7025,10 @@ button.mongo-shell-tree__toggle:hover:not(:disabled) {
 }
 
 .example-gallery__dialect-glyph {
-  width: 0.55rem;
-  height: 0.55rem;
-  border-radius: 50%;
-  background: var(--accent-secondary);
+  width: 0.8rem;
+  height: 0.8rem;
   flex: 0 0 auto;
-}
-
-.example-gallery__dialect--pg .example-gallery__dialect-glyph {
-  background: #336791;
-}
-
-.example-gallery__dialect--mysql .example-gallery__dialect-glyph {
-  background: #00758f;
-}
-
-.example-gallery__dialect--sqlite .example-gallery__dialect-glyph {
-  background: #0f80cc;
-}
-
-.example-gallery__dialect--mssql .example-gallery__dialect-glyph {
-  background: #cc2927;
-}
-
-.example-gallery__dialect--oracle .example-gallery__dialect-glyph {
-  background: #f80000;
-}
-
-.example-gallery__dialect--generic .example-gallery__dialect-glyph {
-  background: var(--mdb-green-base);
+  display: block;
 }
 
 .example-gallery__category {
@@ -7027,7 +7070,7 @@ button.mongo-shell-tree__toggle:hover:not(:disabled) {
 
 @media (max-width: 520px) {
   .example-gallery__grid {
-    grid-template-columns: repeat(auto-fill, minmax(9.5rem, 1fr));
+    grid-template-columns: 1fr;
   }
 }
 

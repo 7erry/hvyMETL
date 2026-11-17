@@ -1,37 +1,54 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1210 2829" width="1210" height="2829">
-  <rect width="1210" height="2829" fill="#0b1616"/>
-  <line x1="440.0" y1="1923.0" x2="1100.0" y2="717.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
-  <line x1="440.0" y1="1923.0" x2="770.0" y2="1617.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
-  <line x1="110.0" y1="40.0" x2="440.0" y2="1923.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
-  <line x1="770.0" y1="1093.0" x2="1100.0" y2="1742.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
-  <line x1="770.0" y1="1093.0" x2="1100.0" y2="717.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
-  <line x1="440.0" y1="455.0" x2="770.0" y2="1093.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
-  <line x1="440.0" y1="455.0" x2="1100.0" y2="717.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
-  <line x1="440.0" y1="455.0" x2="1100.0" y2="717.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
-  <line x1="440.0" y1="988.0" x2="770.0" y2="1093.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
-  <line x1="440.0" y1="988.0" x2="770.0" y2="1617.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
-  <line x1="440.0" y1="1392.0" x2="770.0" y2="1093.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
-  <line x1="440.0" y1="1392.0" x2="770.0" y2="1617.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
-  <line x1="440.0" y1="2547.0" x2="1100.0" y2="1742.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
-  <line x1="440.0" y1="2547.0" x2="770.0" y2="1093.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
-  <line x1="110.0" y1="2006.0" x2="440.0" y2="2547.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
-  <line x1="110.0" y1="2006.0" x2="440.0" y2="1923.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
-  <line x1="110.0" y1="2006.0" x2="770.0" y2="1617.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
-  <line x1="110.0" y1="2006.0" x2="770.0" y2="220.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
-  <line x1="770.0" y1="220.0" x2="1100.0" y2="1742.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
-  <line x1="110.0" y1="2705.0" x2="440.0" y2="2547.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
-  <rect x="1010.0" y="1722.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1010.0" y="1722.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1016.0" y="1734.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">customers</text>
-  <rect x="680.0" y="1597.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="680.0" y="1597.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="686.0" y="1609.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">meters</text>
-  <rect x="1010.0" y="697.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1010.0" y="697.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1016.0" y="709.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">price_plans</text>
-  <rect x="350.0" y="1903.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="350.0" y="1903.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="356.0" y="1915.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">plan_components</text>
-  <rect x="20.0" y="20.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="20.0" y="20.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="26.0" y="32.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">plan_tiers</text>
-  <rect x="680.0" y="1073.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="680.0" y="1073.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="686.0" y="1085.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">subscriptions</text>
-  <rect x="350.0" y="435.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="350.0" y="435.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="356.0" y="447.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">subscription_changes</text>
-  <rect x="350.0" y="968.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="350.0" y="968.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="356.0" y="980.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">usage_records</text>
-  <rect x="350.0" y="1372.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="350.0" y="1372.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="356.0" y="1384.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">usage_aggregates</text>
-  <rect x="350.0" y="2527.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="350.0" y="2527.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="356.0" y="2539.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">invoices</text>
-  <rect x="20.0" y="1986.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="20.0" y="1986.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="26.0" y="1998.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">invoice_line_items</text>
-  <rect x="680.0" y="200.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="680.0" y="200.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="686.0" y="212.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">credit_grants</text>
-  <rect x="20.0" y="2685.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="20.0" y="2685.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="26.0" y="2697.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">dunning_attempts</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 416.0 260.0" width="416.0" height="260.0">
+  <defs>
+    <pattern id="dots" width="14" height="14" patternUnits="userSpaceOnUse">
+      <circle cx="1.2" cy="1.2" r="0.8" fill="#1c3a44"/>
+    </pattern>
+  </defs>
+  <rect width="416.0" height="260.0" fill="#0d1b20"/>
+  <rect width="416.0" height="260.0" fill="url(#dots)"/>
+  <line x1="120.0" y1="123.0" x2="120.0" y2="137.0" stroke="#5dbea4" stroke-width="1.6"/>
+  <line x1="199.0" y1="66.5" x2="217.0" y2="193.5" stroke="#5dbea4" stroke-width="1.6"/>
+  <line x1="217.0" y1="66.5" x2="199.0" y2="193.5" stroke="#5dbea4" stroke-width="1.6"/>
+  <line x1="217.0" y1="66.5" x2="199.0" y2="66.5" stroke="#5dbea4" stroke-width="1.6"/>
+  <g>
+    <clipPath id="t0"><rect x="41.0" y="10.0" width="158" height="113.0" rx="4"/></clipPath>
+    <g clip-path="url(#t0)">
+      <rect x="41.0" y="10.0" width="158" height="113.0" fill="#163038"/>
+      <rect x="41.0" y="10.0" width="158" height="18" fill="#1a6ca3"/>
+      <text x="49.0" y="38.0" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">id</text><line x1="42.0" y1="41.0" x2="198.0" y2="41.0" stroke="#24515c" stroke-width="1"/><text x="49.0" y="51.0" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">customer_id</text><line x1="42.0" y1="54.0" x2="198.0" y2="54.0" stroke="#24515c" stroke-width="1"/><text x="49.0" y="64.0" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">plan_id</text><line x1="42.0" y1="67.0" x2="198.0" y2="67.0" stroke="#24515c" stroke-width="1"/><text x="49.0" y="77.0" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">status</text><line x1="42.0" y1="80.0" x2="198.0" y2="80.0" stroke="#24515c" stroke-width="1"/><text x="49.0" y="90.0" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">quantity</text><line x1="42.0" y1="93.0" x2="198.0" y2="93.0" stroke="#24515c" stroke-width="1"/><text x="49.0" y="103.0" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">billing_anchor_day</text><line x1="42.0" y1="106.0" x2="198.0" y2="106.0" stroke="#24515c" stroke-width="1"/><text x="49.0" y="116.0" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">current_period_start</text>
+    </g>
+    <rect x="41.0" y="10.0" width="158" height="113.0" rx="4" fill="none" stroke="#3d9a84" stroke-width="1.25"/>
+    <text x="49.0" y="23.0" fill="#f3fbff" font-size="12" font-weight="650" font-family="ui-sans-serif,system-ui,sans-serif">subscriptions</text>
+  </g>
+  <g>
+    <clipPath id="t1"><rect x="217.0" y="10.0" width="158" height="113.0" rx="4"/></clipPath>
+    <g clip-path="url(#t1)">
+      <rect x="217.0" y="10.0" width="158" height="113.0" fill="#163038"/>
+      <rect x="217.0" y="10.0" width="158" height="18" fill="#1a6ca3"/>
+      <text x="225.0" y="38.0" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">id</text><line x1="218.0" y1="41.0" x2="374.0" y2="41.0" stroke="#24515c" stroke-width="1"/><text x="225.0" y="51.0" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">customer_id</text><line x1="218.0" y1="54.0" x2="374.0" y2="54.0" stroke="#24515c" stroke-width="1"/><text x="225.0" y="64.0" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">subscription_id</text><line x1="218.0" y1="67.0" x2="374.0" y2="67.0" stroke="#24515c" stroke-width="1"/><text x="225.0" y="77.0" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">number</text><line x1="218.0" y1="80.0" x2="374.0" y2="80.0" stroke="#24515c" stroke-width="1"/><text x="225.0" y="90.0" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">status</text><line x1="218.0" y1="93.0" x2="374.0" y2="93.0" stroke="#24515c" stroke-width="1"/><text x="225.0" y="103.0" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">currency_code</text><line x1="218.0" y1="106.0" x2="374.0" y2="106.0" stroke="#24515c" stroke-width="1"/><text x="225.0" y="116.0" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">period_start</text>
+    </g>
+    <rect x="217.0" y="10.0" width="158" height="113.0" rx="4" fill="none" stroke="#3d9a84" stroke-width="1.25"/>
+    <text x="225.0" y="23.0" fill="#f3fbff" font-size="12" font-weight="650" font-family="ui-sans-serif,system-ui,sans-serif">invoices</text>
+  </g>
+  <g>
+    <clipPath id="t2"><rect x="41.0" y="137.0" width="158" height="113.0" rx="4"/></clipPath>
+    <g clip-path="url(#t2)">
+      <rect x="41.0" y="137.0" width="158" height="113.0" fill="#163038"/>
+      <rect x="41.0" y="137.0" width="158" height="18" fill="#1a6ca3"/>
+      <text x="49.0" y="165.0" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">id</text><line x1="42.0" y1="168.0" x2="198.0" y2="168.0" stroke="#24515c" stroke-width="1"/><text x="49.0" y="178.0" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">external_ref</text><line x1="42.0" y1="181.0" x2="198.0" y2="181.0" stroke="#24515c" stroke-width="1"/><text x="49.0" y="191.0" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">name</text><line x1="42.0" y1="194.0" x2="198.0" y2="194.0" stroke="#24515c" stroke-width="1"/><text x="49.0" y="204.0" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">email</text><line x1="42.0" y1="207.0" x2="198.0" y2="207.0" stroke="#24515c" stroke-width="1"/><text x="49.0" y="217.0" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">currency_code</text><line x1="42.0" y1="220.0" x2="198.0" y2="220.0" stroke="#24515c" stroke-width="1"/><text x="49.0" y="230.0" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">tax_id</text><line x1="42.0" y1="233.0" x2="198.0" y2="233.0" stroke="#24515c" stroke-width="1"/><text x="49.0" y="243.0" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">balance_minor</text>
+    </g>
+    <rect x="41.0" y="137.0" width="158" height="113.0" rx="4" fill="none" stroke="#3d9a84" stroke-width="1.25"/>
+    <text x="49.0" y="150.0" fill="#f3fbff" font-size="12" font-weight="650" font-family="ui-sans-serif,system-ui,sans-serif">customers</text>
+  </g>
+  <g>
+    <clipPath id="t3"><rect x="217.0" y="137.0" width="158" height="113.0" rx="4"/></clipPath>
+    <g clip-path="url(#t3)">
+      <rect x="217.0" y="137.0" width="158" height="113.0" fill="#163038"/>
+      <rect x="217.0" y="137.0" width="158" height="18" fill="#1a6ca3"/>
+      <text x="225.0" y="165.0" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">id</text><line x1="218.0" y1="168.0" x2="374.0" y2="168.0" stroke="#24515c" stroke-width="1"/><text x="225.0" y="178.0" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">code</text><line x1="218.0" y1="181.0" x2="374.0" y2="181.0" stroke="#24515c" stroke-width="1"/><text x="225.0" y="191.0" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">name</text><line x1="218.0" y1="194.0" x2="374.0" y2="194.0" stroke="#24515c" stroke-width="1"/><text x="225.0" y="204.0" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">currency_code</text><line x1="218.0" y1="207.0" x2="374.0" y2="207.0" stroke="#24515c" stroke-width="1"/><text x="225.0" y="217.0" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">billing_interval</text><line x1="218.0" y1="220.0" x2="374.0" y2="220.0" stroke="#24515c" stroke-width="1"/><text x="225.0" y="230.0" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">version</text><line x1="218.0" y1="233.0" x2="374.0" y2="233.0" stroke="#24515c" stroke-width="1"/><text x="225.0" y="243.0" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">is_public</text>
+    </g>
+    <rect x="217.0" y="137.0" width="158" height="113.0" rx="4" fill="none" stroke="#3d9a84" stroke-width="1.25"/>
+    <text x="225.0" y="150.0" fill="#f3fbff" font-size="12" font-weight="650" font-family="ui-sans-serif,system-ui,sans-serif">price_plans</text>
+  </g>
 </svg>

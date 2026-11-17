@@ -1,38 +1,54 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2530 1768" width="2530" height="1768">
-  <rect width="2530" height="1768" fill="#0b1616"/>
-  <line x1="2090.0" y1="40.0" x2="2420.0" y2="185.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
-  <line x1="2090.0" y1="786.0" x2="2420.0" y2="185.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
-  <line x1="2090.0" y1="786.0" x2="1760.0" y2="828.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
-  <line x1="1760.0" y1="828.0" x2="2090.0" y2="786.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
-  <line x1="1760.0" y1="405.0" x2="2090.0" y2="1310.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
-  <line x1="1760.0" y1="405.0" x2="2420.0" y2="185.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
-  <line x1="1430.0" y1="1234.0" x2="1760.0" y2="828.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
-  <line x1="1430.0" y1="1234.0" x2="2090.0" y2="786.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
-  <line x1="1430.0" y1="1234.0" x2="2090.0" y2="1310.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
-  <line x1="1430.0" y1="1234.0" x2="2090.0" y2="1310.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
-  <line x1="1430.0" y1="1234.0" x2="1430.0" y2="1234.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
-  <line x1="1430.0" y1="1234.0" x2="1760.0" y2="1644.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
-  <line x1="1100.0" y1="1305.0" x2="1430.0" y2="1234.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
-  <line x1="770.0" y1="420.0" x2="1100.0" y2="1305.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
-  <line x1="770.0" y1="420.0" x2="2090.0" y2="40.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
-  <line x1="440.0" y1="512.0" x2="770.0" y2="420.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
-  <line x1="110.0" y1="648.0" x2="1430.0" y2="1234.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
-  <line x1="110.0" y1="648.0" x2="440.0" y2="512.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
-  <line x1="1100.0" y1="556.0" x2="1430.0" y2="1234.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
-  <line x1="1100.0" y1="556.0" x2="1760.0" y2="828.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
-  <line x1="1760.0" y1="1644.0" x2="2090.0" y2="1310.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
-  <rect x="2330.0" y="165.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="2330.0" y="165.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="2336.0" y="177.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">plans</text>
-  <rect x="2000.0" y="20.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="2000.0" y="20.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="2006.0" y="32.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">benefit_rules</text>
-  <rect x="2000.0" y="766.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="2000.0" y="766.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="2006.0" y="778.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">policies</text>
-  <rect x="1670.0" y="808.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1670.0" y="808.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1676.0" y="820.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">members</text>
-  <rect x="2000.0" y="1290.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="2000.0" y="1290.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="2006.0" y="1302.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">providers</text>
-  <rect x="1670.0" y="385.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1670.0" y="385.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1676.0" y="397.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">provider_network_statu</text>
-  <rect x="1340.0" y="1214.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1340.0" y="1214.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1346.0" y="1226.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">claims</text>
-  <rect x="1010.0" y="1285.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1010.0" y="1285.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1016.0" y="1297.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">claim_lines</text>
-  <rect x="680.0" y="400.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="680.0" y="400.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="686.0" y="412.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">adjudications</text>
-  <rect x="350.0" y="492.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="350.0" y="492.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="356.0" y="504.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">denials</text>
-  <rect x="20.0" y="628.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="20.0" y="628.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="26.0" y="640.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">appeals</text>
-  <rect x="1010.0" y="536.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1010.0" y="536.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1016.0" y="548.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">explanations_of_benefi</text>
-  <rect x="1670.0" y="1624.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1670.0" y="1624.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1676.0" y="1636.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">provider_payments</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 416.0 260.0" width="416.0" height="260.0">
+  <defs>
+    <pattern id="dots" width="14" height="14" patternUnits="userSpaceOnUse">
+      <circle cx="1.2" cy="1.2" r="0.8" fill="#1c3a44"/>
+    </pattern>
+  </defs>
+  <rect width="416.0" height="260.0" fill="#0d1b20"/>
+  <rect width="416.0" height="260.0" fill="url(#dots)"/>
+  <line x1="199.0" y1="193.5" x2="217.0" y2="66.5" stroke="#5dbea4" stroke-width="1.6"/>
+  <line x1="199.0" y1="66.5" x2="217.0" y2="66.5" stroke="#5dbea4" stroke-width="1.6"/>
+  <line x1="120.0" y1="123.0" x2="120.0" y2="137.0" stroke="#5dbea4" stroke-width="1.6"/>
+  <line x1="199.0" y1="66.5" x2="217.0" y2="193.5" stroke="#5dbea4" stroke-width="1.6"/>
+  <g>
+    <clipPath id="t0"><rect x="41.0" y="10.0" width="158" height="113.0" rx="4"/></clipPath>
+    <g clip-path="url(#t0)">
+      <rect x="41.0" y="10.0" width="158" height="113.0" fill="#163038"/>
+      <rect x="41.0" y="10.0" width="158" height="18" fill="#1a6ca3"/>
+      <text x="49.0" y="38.0" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">claim_id</text><line x1="42.0" y1="41.0" x2="198.0" y2="41.0" stroke="#24515c" stroke-width="1"/><text x="49.0" y="51.0" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">claim_number</text><line x1="42.0" y1="54.0" x2="198.0" y2="54.0" stroke="#24515c" stroke-width="1"/><text x="49.0" y="64.0" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">member_id</text><line x1="42.0" y1="67.0" x2="198.0" y2="67.0" stroke="#24515c" stroke-width="1"/><text x="49.0" y="77.0" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">policy_id</text><line x1="42.0" y1="80.0" x2="198.0" y2="80.0" stroke="#24515c" stroke-width="1"/><text x="49.0" y="90.0" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">billing_provider_id</text><line x1="42.0" y1="93.0" x2="198.0" y2="93.0" stroke="#24515c" stroke-width="1"/><text x="49.0" y="103.0" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">rendering_provider_…</text><line x1="42.0" y1="106.0" x2="198.0" y2="106.0" stroke="#24515c" stroke-width="1"/><text x="49.0" y="116.0" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">claim_type</text>
+    </g>
+    <rect x="41.0" y="10.0" width="158" height="113.0" rx="4" fill="none" stroke="#3d9a84" stroke-width="1.25"/>
+    <text x="49.0" y="23.0" fill="#f3fbff" font-size="12" font-weight="650" font-family="ui-sans-serif,system-ui,sans-serif">claims</text>
+  </g>
+  <g>
+    <clipPath id="t1"><rect x="217.0" y="10.0" width="158" height="113.0" rx="4"/></clipPath>
+    <g clip-path="url(#t1)">
+      <rect x="217.0" y="10.0" width="158" height="113.0" fill="#163038"/>
+      <rect x="217.0" y="10.0" width="158" height="18" fill="#1a6ca3"/>
+      <text x="225.0" y="38.0" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">member_id</text><line x1="218.0" y1="41.0" x2="374.0" y2="41.0" stroke="#24515c" stroke-width="1"/><text x="225.0" y="51.0" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">policy_id</text><line x1="218.0" y1="54.0" x2="374.0" y2="54.0" stroke="#24515c" stroke-width="1"/><text x="225.0" y="64.0" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">member_number</text><line x1="218.0" y1="67.0" x2="374.0" y2="67.0" stroke="#24515c" stroke-width="1"/><text x="225.0" y="77.0" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">relationship</text><line x1="218.0" y1="80.0" x2="374.0" y2="80.0" stroke="#24515c" stroke-width="1"/><text x="225.0" y="90.0" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">given_name</text><line x1="218.0" y1="93.0" x2="374.0" y2="93.0" stroke="#24515c" stroke-width="1"/><text x="225.0" y="103.0" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">family_name</text><line x1="218.0" y1="106.0" x2="374.0" y2="106.0" stroke="#24515c" stroke-width="1"/><text x="225.0" y="116.0" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">date_of_birth</text>
+    </g>
+    <rect x="217.0" y="10.0" width="158" height="113.0" rx="4" fill="none" stroke="#3d9a84" stroke-width="1.25"/>
+    <text x="225.0" y="23.0" fill="#f3fbff" font-size="12" font-weight="650" font-family="ui-sans-serif,system-ui,sans-serif">members</text>
+  </g>
+  <g>
+    <clipPath id="t2"><rect x="41.0" y="137.0" width="158" height="113.0" rx="4"/></clipPath>
+    <g clip-path="url(#t2)">
+      <rect x="41.0" y="137.0" width="158" height="113.0" fill="#163038"/>
+      <rect x="41.0" y="137.0" width="158" height="18" fill="#1a6ca3"/>
+      <text x="49.0" y="165.0" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">policy_id</text><line x1="42.0" y1="168.0" x2="198.0" y2="168.0" stroke="#24515c" stroke-width="1"/><text x="49.0" y="178.0" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">plan_id</text><line x1="42.0" y1="181.0" x2="198.0" y2="181.0" stroke="#24515c" stroke-width="1"/><text x="49.0" y="191.0" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">policy_number</text><line x1="42.0" y1="194.0" x2="198.0" y2="194.0" stroke="#24515c" stroke-width="1"/><text x="49.0" y="204.0" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">group_number</text><line x1="42.0" y1="207.0" x2="198.0" y2="207.0" stroke="#24515c" stroke-width="1"/><text x="49.0" y="217.0" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">group_name</text><line x1="42.0" y1="220.0" x2="198.0" y2="220.0" stroke="#24515c" stroke-width="1"/><text x="49.0" y="230.0" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">subscriber_member_id</text><line x1="42.0" y1="233.0" x2="198.0" y2="233.0" stroke="#24515c" stroke-width="1"/><text x="49.0" y="243.0" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">effective_from</text>
+    </g>
+    <rect x="41.0" y="137.0" width="158" height="113.0" rx="4" fill="none" stroke="#3d9a84" stroke-width="1.25"/>
+    <text x="49.0" y="150.0" fill="#f3fbff" font-size="12" font-weight="650" font-family="ui-sans-serif,system-ui,sans-serif">policies</text>
+  </g>
+  <g>
+    <clipPath id="t3"><rect x="217.0" y="137.0" width="158" height="113.0" rx="4"/></clipPath>
+    <g clip-path="url(#t3)">
+      <rect x="217.0" y="137.0" width="158" height="113.0" fill="#163038"/>
+      <rect x="217.0" y="137.0" width="158" height="18" fill="#1a6ca3"/>
+      <text x="225.0" y="165.0" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">provider_id</text><line x1="218.0" y1="168.0" x2="374.0" y2="168.0" stroke="#24515c" stroke-width="1"/><text x="225.0" y="178.0" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">npi</text><line x1="218.0" y1="181.0" x2="374.0" y2="181.0" stroke="#24515c" stroke-width="1"/><text x="225.0" y="191.0" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">provider_name</text><line x1="218.0" y1="194.0" x2="374.0" y2="194.0" stroke="#24515c" stroke-width="1"/><text x="225.0" y="204.0" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">provider_type</text><line x1="218.0" y1="207.0" x2="374.0" y2="207.0" stroke="#24515c" stroke-width="1"/><text x="225.0" y="217.0" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">tax_id</text><line x1="218.0" y1="220.0" x2="374.0" y2="220.0" stroke="#24515c" stroke-width="1"/><text x="225.0" y="230.0" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">specialty</text><line x1="218.0" y1="233.0" x2="374.0" y2="233.0" stroke="#24515c" stroke-width="1"/><text x="225.0" y="243.0" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">address_line</text>
+    </g>
+    <rect x="217.0" y="137.0" width="158" height="113.0" rx="4" fill="none" stroke="#3d9a84" stroke-width="1.25"/>
+    <text x="225.0" y="150.0" fill="#f3fbff" font-size="12" font-weight="650" font-family="ui-sans-serif,system-ui,sans-serif">providers</text>
+  </g>
 </svg>

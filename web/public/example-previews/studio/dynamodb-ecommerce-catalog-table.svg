@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 354.0 221.3" width="354.0" height="221.3">
+  <defs>
+    <pattern id="dots" width="14" height="14" patternUnits="userSpaceOnUse">
+      <circle cx="1.2" cy="1.2" r="0.8" fill="#1c3a44"/>
+    </pattern>
+  </defs>
+  <rect width="354.0" height="221.3" fill="#0d1b20"/>
+  <rect width="354.0" height="221.3" fill="url(#dots)"/>
+  <line x1="186.0" y1="47.1" x2="168.0" y2="79.6" stroke="#5dbea4" stroke-width="1.6"/>
+  <line x1="89.0" y1="150.1" x2="89.0" y2="136.1" stroke="#5dbea4" stroke-width="1.6"/>
+  <line x1="186.0" y1="174.1" x2="168.0" y2="79.6" stroke="#5dbea4" stroke-width="1.6"/>
+  <g>
+    <clipPath id="t0"><rect x="10.0" y="23.1" width="158" height="113.0" rx="4"/></clipPath>
+    <g clip-path="url(#t0)">
+      <rect x="10.0" y="23.1" width="158" height="113.0" fill="#163038"/>
+      <rect x="10.0" y="23.1" width="158" height="18" fill="#1a6ca3"/>
+      <text x="18.0" y="51.1" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">PK</text><line x1="11.0" y1="54.1" x2="167.0" y2="54.1" stroke="#24515c" stroke-width="1"/><text x="18.0" y="64.1" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">SK</text><line x1="11.0" y1="67.1" x2="167.0" y2="67.1" stroke="#24515c" stroke-width="1"/><text x="18.0" y="77.1" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">GSI1PK</text><line x1="11.0" y1="80.1" x2="167.0" y2="80.1" stroke="#24515c" stroke-width="1"/><text x="18.0" y="90.1" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">GSI1SK</text><line x1="11.0" y1="93.1" x2="167.0" y2="93.1" stroke="#24515c" stroke-width="1"/><text x="18.0" y="103.1" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">GSI2PK</text><line x1="11.0" y1="106.1" x2="167.0" y2="106.1" stroke="#24515c" stroke-width="1"/><text x="18.0" y="116.1" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">GSI2SK</text><line x1="11.0" y1="119.1" x2="167.0" y2="119.1" stroke="#24515c" stroke-width="1"/><text x="18.0" y="129.1" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">GSI3PK</text>
+    </g>
+    <rect x="10.0" y="23.1" width="158" height="113.0" rx="4" fill="none" stroke="#3d9a84" stroke-width="1.25"/>
+    <text x="18.0" y="36.1" fill="#f3fbff" font-size="12" font-weight="650" font-family="ui-sans-serif,system-ui,sans-serif">ecommerce-catalog…</text>
+  </g>
+  <g>
+    <clipPath id="t1"><rect x="186.0" y="23.1" width="158" height="48.0" rx="4"/></clipPath>
+    <g clip-path="url(#t1)">
+      <rect x="186.0" y="23.1" width="158" height="48.0" fill="#163038"/>
+      <rect x="186.0" y="23.1" width="158" height="18" fill="#1a6ca3"/>
+      <text x="194.0" y="51.1" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">GSI1PK</text><line x1="187.0" y1="54.1" x2="343.0" y2="54.1" stroke="#24515c" stroke-width="1"/><text x="194.0" y="64.1" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">GSI1SK</text>
+    </g>
+    <rect x="186.0" y="23.1" width="158" height="48.0" rx="4" fill="none" stroke="#3d9a84" stroke-width="1.25"/>
+    <text x="194.0" y="36.1" fill="#f3fbff" font-size="12" font-weight="650" font-family="ui-sans-serif,system-ui,sans-serif">GSI1-Category-Pri…</text>
+  </g>
+  <g>
+    <clipPath id="t2"><rect x="10.0" y="150.1" width="158" height="48.0" rx="4"/></clipPath>
+    <g clip-path="url(#t2)">
+      <rect x="10.0" y="150.1" width="158" height="48.0" fill="#163038"/>
+      <rect x="10.0" y="150.1" width="158" height="18" fill="#1a6ca3"/>
+      <text x="18.0" y="178.1" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">GSI2PK</text><line x1="11.0" y1="181.1" x2="167.0" y2="181.1" stroke="#24515c" stroke-width="1"/><text x="18.0" y="191.1" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">GSI2SK</text>
+    </g>
+    <rect x="10.0" y="150.1" width="158" height="48.0" rx="4" fill="none" stroke="#3d9a84" stroke-width="1.25"/>
+    <text x="18.0" y="163.1" fill="#f3fbff" font-size="12" font-weight="650" font-family="ui-sans-serif,system-ui,sans-serif">GSI2-SKU-Brand-In…</text>
+  </g>
+  <g>
+    <clipPath id="t3"><rect x="186.0" y="150.1" width="158" height="48.0" rx="4"/></clipPath>
+    <g clip-path="url(#t3)">
+      <rect x="186.0" y="150.1" width="158" height="48.0" fill="#163038"/>
+      <rect x="186.0" y="150.1" width="158" height="18" fill="#1a6ca3"/>
+      <text x="194.0" y="178.1" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">GSI3PK</text><line x1="187.0" y1="181.1" x2="343.0" y2="181.1" stroke="#24515c" stroke-width="1"/><text x="194.0" y="191.1" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">GSI3SK</text>
+    </g>
+    <rect x="186.0" y="150.1" width="158" height="48.0" rx="4" fill="none" stroke="#3d9a84" stroke-width="1.25"/>
+    <text x="194.0" y="163.1" fill="#f3fbff" font-size="12" font-weight="650" font-family="ui-sans-serif,system-ui,sans-serif">GSI3-Seller-Statu…</text>
+  </g>
+</svg>

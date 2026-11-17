@@ -1,32 +1,53 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1540 2580" width="1540" height="2580">
-  <rect width="1540" height="2580" fill="#0b1616"/>
-  <line x1="1100.0" y1="1852.0" x2="1430.0" y2="1908.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
-  <line x1="770.0" y1="247.0" x2="1100.0" y2="1852.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
-  <line x1="770.0" y1="247.0" x2="1100.0" y2="1068.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
-  <line x1="770.0" y1="247.0" x2="1100.0" y2="1068.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
-  <line x1="770.0" y1="660.0" x2="1100.0" y2="1852.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
-  <line x1="770.0" y1="660.0" x2="1100.0" y2="40.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
-  <line x1="770.0" y1="1110.0" x2="1100.0" y2="1852.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
-  <line x1="440.0" y1="1490.0" x2="1100.0" y2="1852.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
-  <line x1="440.0" y1="1490.0" x2="770.0" y2="1110.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
-  <line x1="770.0" y1="1560.0" x2="1100.0" y2="1852.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
-  <line x1="770.0" y1="2220.0" x2="1100.0" y2="1852.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
-  <line x1="770.0" y1="2220.0" x2="1100.0" y2="2456.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
-  <line x1="770.0" y1="2220.0" x2="1100.0" y2="1068.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
-  <line x1="440.0" y1="2239.0" x2="770.0" y2="2220.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
-  <line x1="110.0" y1="2202.0" x2="440.0" y2="2239.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
-  <rect x="1340.0" y="1888.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1340.0" y="1888.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1346.0" y="1900.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">merchants</text>
-  <rect x="1010.0" y="1832.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1010.0" y="1832.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1016.0" y="1844.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">shops</text>
-  <rect x="1010.0" y="1048.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1010.0" y="1048.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1016.0" y="1060.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">staff_accounts</text>
-  <rect x="680.0" y="227.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="680.0" y="227.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="686.0" y="239.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">shop_staff</text>
-  <rect x="1010.0" y="20.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1010.0" y="20.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1016.0" y="32.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">platform_plans</text>
-  <rect x="680.0" y="640.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="680.0" y="640.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="686.0" y="652.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">shop_subscriptions</text>
-  <rect x="680.0" y="1090.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="680.0" y="1090.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="686.0" y="1102.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">products</text>
-  <rect x="350.0" y="1470.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="350.0" y="1470.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="356.0" y="1482.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">product_variants</text>
-  <rect x="680.0" y="1540.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="680.0" y="1540.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="686.0" y="1552.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">orders</text>
-  <rect x="1010.0" y="2436.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1010.0" y="2436.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1016.0" y="2448.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">apps</text>
-  <rect x="680.0" y="2200.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="680.0" y="2200.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="686.0" y="2212.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">app_installations</text>
-  <rect x="350.0" y="2219.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="350.0" y="2219.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="356.0" y="2231.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">webhook_subscriptions</text>
-  <rect x="20.0" y="2182.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="20.0" y="2182.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="26.0" y="2194.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">webhook_deliveries</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 416.0 260.0" width="416.0" height="260.0">
+  <defs>
+    <pattern id="dots" width="14" height="14" patternUnits="userSpaceOnUse">
+      <circle cx="1.2" cy="1.2" r="0.8" fill="#1c3a44"/>
+    </pattern>
+  </defs>
+  <rect width="416.0" height="260.0" fill="#0d1b20"/>
+  <rect width="416.0" height="260.0" fill="url(#dots)"/>
+  <line x1="120.0" y1="137.0" x2="120.0" y2="123.0" stroke="#5dbea4" stroke-width="1.6"/>
+  <line x1="217.0" y1="193.5" x2="199.0" y2="66.5" stroke="#5dbea4" stroke-width="1.6"/>
+  <line x1="217.0" y1="66.5" x2="199.0" y2="66.5" stroke="#5dbea4" stroke-width="1.6"/>
+  <g>
+    <clipPath id="t0"><rect x="41.0" y="10.0" width="158" height="113.0" rx="4"/></clipPath>
+    <g clip-path="url(#t0)">
+      <rect x="41.0" y="10.0" width="158" height="113.0" fill="#163038"/>
+      <rect x="41.0" y="10.0" width="158" height="18" fill="#1a6ca3"/>
+      <text x="49.0" y="38.0" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">id</text><line x1="42.0" y1="41.0" x2="198.0" y2="41.0" stroke="#24515c" stroke-width="1"/><text x="49.0" y="51.0" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">merchant_id</text><line x1="42.0" y1="54.0" x2="198.0" y2="54.0" stroke="#24515c" stroke-width="1"/><text x="49.0" y="64.0" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">handle</text><line x1="42.0" y1="67.0" x2="198.0" y2="67.0" stroke="#24515c" stroke-width="1"/><text x="49.0" y="77.0" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">custom_domain</text><line x1="42.0" y1="80.0" x2="198.0" y2="80.0" stroke="#24515c" stroke-width="1"/><text x="49.0" y="90.0" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">display_name</text><line x1="42.0" y1="93.0" x2="198.0" y2="93.0" stroke="#24515c" stroke-width="1"/><text x="49.0" y="103.0" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">currency_code</text><line x1="42.0" y1="106.0" x2="198.0" y2="106.0" stroke="#24515c" stroke-width="1"/><text x="49.0" y="116.0" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">timezone</text>
+    </g>
+    <rect x="41.0" y="10.0" width="158" height="113.0" rx="4" fill="none" stroke="#3d9a84" stroke-width="1.25"/>
+    <text x="49.0" y="23.0" fill="#f3fbff" font-size="12" font-weight="650" font-family="ui-sans-serif,system-ui,sans-serif">shops</text>
+  </g>
+  <g>
+    <clipPath id="t1"><rect x="217.0" y="10.0" width="158" height="113.0" rx="4"/></clipPath>
+    <g clip-path="url(#t1)">
+      <rect x="217.0" y="10.0" width="158" height="113.0" fill="#163038"/>
+      <rect x="217.0" y="10.0" width="158" height="18" fill="#1a6ca3"/>
+      <text x="225.0" y="38.0" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">id</text><line x1="218.0" y1="41.0" x2="374.0" y2="41.0" stroke="#24515c" stroke-width="1"/><text x="225.0" y="51.0" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">shop_id</text><line x1="218.0" y1="54.0" x2="374.0" y2="54.0" stroke="#24515c" stroke-width="1"/><text x="225.0" y="64.0" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">app_id</text><line x1="218.0" y1="67.0" x2="374.0" y2="67.0" stroke="#24515c" stroke-width="1"/><text x="225.0" y="77.0" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">access_token_hash</text><line x1="218.0" y1="80.0" x2="374.0" y2="80.0" stroke="#24515c" stroke-width="1"/><text x="225.0" y="90.0" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">granted_scopes</text><line x1="218.0" y1="93.0" x2="374.0" y2="93.0" stroke="#24515c" stroke-width="1"/><text x="225.0" y="103.0" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">installed_by</text><line x1="218.0" y1="106.0" x2="374.0" y2="106.0" stroke="#24515c" stroke-width="1"/><text x="225.0" y="116.0" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">status</text>
+    </g>
+    <rect x="217.0" y="10.0" width="158" height="113.0" rx="4" fill="none" stroke="#3d9a84" stroke-width="1.25"/>
+    <text x="225.0" y="23.0" fill="#f3fbff" font-size="12" font-weight="650" font-family="ui-sans-serif,system-ui,sans-serif">app_installations</text>
+  </g>
+  <g>
+    <clipPath id="t2"><rect x="41.0" y="137.0" width="158" height="113.0" rx="4"/></clipPath>
+    <g clip-path="url(#t2)">
+      <rect x="41.0" y="137.0" width="158" height="113.0" fill="#163038"/>
+      <rect x="41.0" y="137.0" width="158" height="18" fill="#1a6ca3"/>
+      <text x="49.0" y="165.0" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">shop_id</text><line x1="42.0" y1="168.0" x2="198.0" y2="168.0" stroke="#24515c" stroke-width="1"/><text x="49.0" y="178.0" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">staff_account_id</text><line x1="42.0" y1="181.0" x2="198.0" y2="181.0" stroke="#24515c" stroke-width="1"/><text x="49.0" y="191.0" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">role</text><line x1="42.0" y1="194.0" x2="198.0" y2="194.0" stroke="#24515c" stroke-width="1"/><text x="49.0" y="204.0" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">permissions</text><line x1="42.0" y1="207.0" x2="198.0" y2="207.0" stroke="#24515c" stroke-width="1"/><text x="49.0" y="217.0" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">invited_by</text><line x1="42.0" y1="220.0" x2="198.0" y2="220.0" stroke="#24515c" stroke-width="1"/><text x="49.0" y="230.0" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">status</text><line x1="42.0" y1="233.0" x2="198.0" y2="233.0" stroke="#24515c" stroke-width="1"/><text x="49.0" y="243.0" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">accepted_at</text>
+    </g>
+    <rect x="41.0" y="137.0" width="158" height="113.0" rx="4" fill="none" stroke="#3d9a84" stroke-width="1.25"/>
+    <text x="49.0" y="150.0" fill="#f3fbff" font-size="12" font-weight="650" font-family="ui-sans-serif,system-ui,sans-serif">shop_staff</text>
+  </g>
+  <g>
+    <clipPath id="t3"><rect x="217.0" y="137.0" width="158" height="113.0" rx="4"/></clipPath>
+    <g clip-path="url(#t3)">
+      <rect x="217.0" y="137.0" width="158" height="113.0" fill="#163038"/>
+      <rect x="217.0" y="137.0" width="158" height="18" fill="#1a6ca3"/>
+      <text x="225.0" y="165.0" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">id</text><line x1="218.0" y1="168.0" x2="374.0" y2="168.0" stroke="#24515c" stroke-width="1"/><text x="225.0" y="178.0" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">shop_id</text><line x1="218.0" y1="181.0" x2="374.0" y2="181.0" stroke="#24515c" stroke-width="1"/><text x="225.0" y="191.0" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">plan_id</text><line x1="218.0" y1="194.0" x2="374.0" y2="194.0" stroke="#24515c" stroke-width="1"/><text x="225.0" y="204.0" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">status</text><line x1="218.0" y1="207.0" x2="374.0" y2="207.0" stroke="#24515c" stroke-width="1"/><text x="225.0" y="217.0" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">provider_reference</text><line x1="218.0" y1="220.0" x2="374.0" y2="220.0" stroke="#24515c" stroke-width="1"/><text x="225.0" y="230.0" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">trial_ends_at</text><line x1="218.0" y1="233.0" x2="374.0" y2="233.0" stroke="#24515c" stroke-width="1"/><text x="225.0" y="243.0" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">current_period_start</text>
+    </g>
+    <rect x="217.0" y="137.0" width="158" height="113.0" rx="4" fill="none" stroke="#3d9a84" stroke-width="1.25"/>
+    <text x="225.0" y="150.0" fill="#f3fbff" font-size="12" font-weight="650" font-family="ui-sans-serif,system-ui,sans-serif">shop_subscriptions</text>
+  </g>
 </svg>

@@ -285,7 +285,18 @@ export function listBuiltinExamples(examplesDir: string): BuiltinExampleSummary[
     });
   }
 
-  return summaries.sort((a, b) => a.label.localeCompare(b.label));
+  return summaries
+    .sort((a, b) => a.label.localeCompare(b.label))
+    .map((example) => ({
+      ...example,
+      previewUrl: example.previewUrl ?? studioPreviewUrl(example.id),
+    }));
+}
+
+/** Public thumbnail path. Slug must match scripts/sync-drawdb-examples.mjs --previews. */
+function studioPreviewUrl(exampleId: string): string {
+  const slug = exampleId.replace(/\.(sql|ddl|ya?ml|json|template)$/i, '').replace(/\//g, '-');
+  return `/example-previews/studio/${slug}.svg`;
 }
 
 type DrawdbManifestEntry = {

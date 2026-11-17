@@ -1,33 +1,53 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1870 924" width="1870" height="924">
-  <rect width="1870" height="924" fill="#0b1616"/>
-  <line x1="440.0" y1="40.0" x2="440.0" y2="40.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
-  <line x1="770.0" y1="614.0" x2="440.0" y2="40.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
-  <line x1="770.0" y1="614.0" x2="110.0" y2="40.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
-  <line x1="440.0" y1="614.0" x2="110.0" y2="40.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
-  <line x1="440.0" y1="614.0" x2="440.0" y2="40.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
-  <line x1="1430.0" y1="842.0" x2="1100.0" y2="40.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
-  <line x1="1430.0" y1="842.0" x2="440.0" y2="40.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
-  <line x1="1100.0" y1="614.0" x2="110.0" y2="40.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
-  <line x1="1100.0" y1="614.0" x2="1100.0" y2="40.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
-  <line x1="1430.0" y1="40.0" x2="110.0" y2="40.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
-  <line x1="1430.0" y1="614.0" x2="770.0" y2="40.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
-  <line x1="1430.0" y1="614.0" x2="440.0" y2="40.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
-  <line x1="1760.0" y1="614.0" x2="1100.0" y2="614.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
-  <line x1="1760.0" y1="614.0" x2="770.0" y2="40.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
-  <line x1="110.0" y1="614.0" x2="440.0" y2="40.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
-  <line x1="1760.0" y1="40.0" x2="440.0" y2="40.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
-  <rect x="350.0" y="20.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="350.0" y="20.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="356.0" y="32.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">components</text>
-  <rect x="680.0" y="594.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="680.0" y="594.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="686.0" y="606.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">component_status_histo</text>
-  <rect x="20.0" y="20.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="20.0" y="20.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="26.0" y="32.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">incidents</text>
-  <rect x="350.0" y="594.0" width="160" height="66" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="350.0" y="594.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="356.0" y="606.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">incident_components</text>
-  <rect x="1010.0" y="20.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1010.0" y="20.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1016.0" y="32.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">scheduled_maintenances</text>
-  <rect x="1340.0" y="822.0" width="160" height="55" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1340.0" y="822.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1346.0" y="834.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">maintenance_components</text>
-  <rect x="1010.0" y="594.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1010.0" y="594.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1016.0" y="606.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">status_updates</text>
-  <rect x="1340.0" y="20.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1340.0" y="20.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1346.0" y="32.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">postmortems</text>
-  <rect x="680.0" y="20.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="680.0" y="20.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="686.0" y="32.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">subscribers</text>
-  <rect x="1340.0" y="594.0" width="160" height="55" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1340.0" y="594.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1346.0" y="606.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">subscriber_components</text>
-  <rect x="1670.0" y="594.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1670.0" y="594.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1676.0" y="606.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">notification_deliverie</text>
-  <rect x="20.0" y="594.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="20.0" y="594.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="26.0" y="606.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">uptime_samples</text>
-  <rect x="1670.0" y="20.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1670.0" y="20.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1676.0" y="32.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">uptime_daily</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 354.0 221.3" width="354.0" height="221.3">
+  <defs>
+    <pattern id="dots" width="14" height="14" patternUnits="userSpaceOnUse">
+      <circle cx="1.2" cy="1.2" r="0.8" fill="#1c3a44"/>
+    </pattern>
+  </defs>
+  <rect width="354.0" height="221.3" fill="#0d1b20"/>
+  <rect width="354.0" height="221.3" fill="url(#dots)"/>
+  <line x1="186.0" y1="66.6" x2="168.0" y2="66.6" stroke="#5dbea4" stroke-width="1.6"/>
+  <line x1="89.0" y1="137.1" x2="89.0" y2="123.1" stroke="#5dbea4" stroke-width="1.6"/>
+  <line x1="186.0" y1="167.6" x2="168.0" y2="66.6" stroke="#5dbea4" stroke-width="1.6"/>
+  <g>
+    <clipPath id="t0"><rect x="10.0" y="10.1" width="158" height="113.0" rx="4"/></clipPath>
+    <g clip-path="url(#t0)">
+      <rect x="10.0" y="10.1" width="158" height="113.0" fill="#163038"/>
+      <rect x="10.0" y="10.1" width="158" height="18" fill="#1a6ca3"/>
+      <text x="18.0" y="38.1" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">id</text><line x1="11.0" y1="41.1" x2="167.0" y2="41.1" stroke="#24515c" stroke-width="1"/><text x="18.0" y="51.1" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">parent_id</text><line x1="11.0" y1="54.1" x2="167.0" y2="54.1" stroke="#24515c" stroke-width="1"/><text x="18.0" y="64.1" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">slug</text><line x1="11.0" y1="67.1" x2="167.0" y2="67.1" stroke="#24515c" stroke-width="1"/><text x="18.0" y="77.1" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">name</text><line x1="11.0" y1="80.1" x2="167.0" y2="80.1" stroke="#24515c" stroke-width="1"/><text x="18.0" y="90.1" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">description</text><line x1="11.0" y1="93.1" x2="167.0" y2="93.1" stroke="#24515c" stroke-width="1"/><text x="18.0" y="103.1" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">is_group</text><line x1="11.0" y1="106.1" x2="167.0" y2="106.1" stroke="#24515c" stroke-width="1"/><text x="18.0" y="116.1" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">display_order</text>
+    </g>
+    <rect x="10.0" y="10.1" width="158" height="113.0" rx="4" fill="none" stroke="#3d9a84" stroke-width="1.25"/>
+    <text x="18.0" y="23.1" fill="#f3fbff" font-size="12" font-weight="650" font-family="ui-sans-serif,system-ui,sans-serif">components</text>
+  </g>
+  <g>
+    <clipPath id="t1"><rect x="186.0" y="10.1" width="158" height="113.0" rx="4"/></clipPath>
+    <g clip-path="url(#t1)">
+      <rect x="186.0" y="10.1" width="158" height="113.0" fill="#163038"/>
+      <rect x="186.0" y="10.1" width="158" height="18" fill="#1a6ca3"/>
+      <text x="194.0" y="38.1" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">id</text><line x1="187.0" y1="41.1" x2="343.0" y2="41.1" stroke="#24515c" stroke-width="1"/><text x="194.0" y="51.1" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">component_id</text><line x1="187.0" y1="54.1" x2="343.0" y2="54.1" stroke="#24515c" stroke-width="1"/><text x="194.0" y="64.1" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">status</text><line x1="187.0" y1="67.1" x2="343.0" y2="67.1" stroke="#24515c" stroke-width="1"/><text x="194.0" y="77.1" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">started_at</text><line x1="187.0" y1="80.1" x2="343.0" y2="80.1" stroke="#24515c" stroke-width="1"/><text x="194.0" y="90.1" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">ended_at</text><line x1="187.0" y1="93.1" x2="343.0" y2="93.1" stroke="#24515c" stroke-width="1"/><text x="194.0" y="103.1" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">cause</text><line x1="187.0" y1="106.1" x2="343.0" y2="106.1" stroke="#24515c" stroke-width="1"/><text x="194.0" y="116.1" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">incident_id</text>
+    </g>
+    <rect x="186.0" y="10.1" width="158" height="113.0" rx="4" fill="none" stroke="#3d9a84" stroke-width="1.25"/>
+    <text x="194.0" y="23.1" fill="#f3fbff" font-size="12" font-weight="650" font-family="ui-sans-serif,system-ui,sans-serif">component_status_…</text>
+  </g>
+  <g>
+    <clipPath id="t2"><rect x="10.0" y="137.1" width="158" height="74.0" rx="4"/></clipPath>
+    <g clip-path="url(#t2)">
+      <rect x="10.0" y="137.1" width="158" height="74.0" fill="#163038"/>
+      <rect x="10.0" y="137.1" width="158" height="18" fill="#1a6ca3"/>
+      <text x="18.0" y="165.1" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">incident_id</text><line x1="11.0" y1="168.1" x2="167.0" y2="168.1" stroke="#24515c" stroke-width="1"/><text x="18.0" y="178.1" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">component_id</text><line x1="11.0" y1="181.1" x2="167.0" y2="181.1" stroke="#24515c" stroke-width="1"/><text x="18.0" y="191.1" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">impact_status</text><line x1="11.0" y1="194.1" x2="167.0" y2="194.1" stroke="#24515c" stroke-width="1"/><text x="18.0" y="204.1" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">added_at</text>
+    </g>
+    <rect x="10.0" y="137.1" width="158" height="74.0" rx="4" fill="none" stroke="#3d9a84" stroke-width="1.25"/>
+    <text x="18.0" y="150.1" fill="#f3fbff" font-size="12" font-weight="650" font-family="ui-sans-serif,system-ui,sans-serif">incident_componen…</text>
+  </g>
+  <g>
+    <clipPath id="t3"><rect x="186.0" y="137.1" width="158" height="61.0" rx="4"/></clipPath>
+    <g clip-path="url(#t3)">
+      <rect x="186.0" y="137.1" width="158" height="61.0" fill="#163038"/>
+      <rect x="186.0" y="137.1" width="158" height="18" fill="#1a6ca3"/>
+      <text x="194.0" y="165.1" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">maintenance_id</text><line x1="187.0" y1="168.1" x2="343.0" y2="168.1" stroke="#24515c" stroke-width="1"/><text x="194.0" y="178.1" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">component_id</text><line x1="187.0" y1="181.1" x2="343.0" y2="181.1" stroke="#24515c" stroke-width="1"/><text x="194.0" y="191.1" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">expected_impact</text>
+    </g>
+    <rect x="186.0" y="137.1" width="158" height="61.0" rx="4" fill="none" stroke="#3d9a84" stroke-width="1.25"/>
+    <text x="194.0" y="150.1" fill="#f3fbff" font-size="12" font-weight="650" font-family="ui-sans-serif,system-ui,sans-serif">maintenance_compo…</text>
+  </g>
 </svg>

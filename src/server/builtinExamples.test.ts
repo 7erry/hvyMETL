@@ -1,4 +1,4 @@
-import { mkdtempSync, mkdirSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
@@ -159,6 +159,31 @@ describe('repo bundled examples', () => {
     const github = drawdb.find((item) => item.id === 'drawdb/github/schema.sql');
     expect(github?.previewUrl).toMatch(/\/example-previews\/drawdb\/github\.svg$/);
     expect(github?.dialect).toBe('postgresql');
+    const githubSvg = readFileSync(
+      join(import.meta.dirname, '../../web/public/example-previews/drawdb/github.svg'),
+      'utf8',
+    );
+    const githubBox = githubSvg.match(/viewBox="0 0 ([\d.]+) ([\d.]+)"/);
+    expect(githubBox).not.toBeNull();
+    expect(Number(githubBox?.[1])).toBeLessThan(560);
+    expect(githubSvg.match(/<text /g)?.length ?? 0).toBeGreaterThan(8);
+
+    const catalog = listBuiltinExamples(path).find((item) => item.id === 'catalog');
+    expect(catalog?.previewUrl).toBe('/example-previews/studio/catalog.svg');
+    const catalogSvg = readFileSync(
+      join(import.meta.dirname, '../../web/public/example-previews/studio/catalog.svg'),
+      'utf8',
+    );
+    expect(catalogSvg).toContain('sku');
+
+    const orders = listBuiltinExamples(path).find((item) => item.id === 'dynamodb/orders-table.yaml');
+    expect(orders?.previewUrl).toBe('/example-previews/studio/dynamodb-orders-table.svg');
+    expect(
+      readFileSync(
+        join(import.meta.dirname, '../../web/public/example-previews/studio/dynamodb-orders-table.svg'),
+        'utf8',
+      ),
+    ).toContain('CustomerId');
     const { ddl } = readBuiltinExample(path, 'drawdb/github/schema.sql');
     expect(ddl).toMatch(/CREATE TABLE/i);
   });

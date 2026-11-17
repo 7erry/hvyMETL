@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 354.0 221.3" width="354.0" height="221.3">
+  <defs>
+    <pattern id="dots" width="14" height="14" patternUnits="userSpaceOnUse">
+      <circle cx="1.2" cy="1.2" r="0.8" fill="#1c3a44"/>
+    </pattern>
+  </defs>
+  <rect width="354.0" height="221.3" fill="#0d1b20"/>
+  <rect width="354.0" height="221.3" fill="url(#dots)"/>
+  <line x1="186.0" y1="47.1" x2="168.0" y2="47.1" stroke="#5dbea4" stroke-width="1.6"/>
+  <line x1="186.0" y1="141.6" x2="168.0" y2="154.6" stroke="#5dbea4" stroke-width="1.6"/>
+  <g>
+    <clipPath id="t0"><rect x="10.0" y="10.1" width="158" height="74.0" rx="4"/></clipPath>
+    <g clip-path="url(#t0)">
+      <rect x="10.0" y="10.1" width="158" height="74.0" fill="#163038"/>
+      <rect x="10.0" y="10.1" width="158" height="18" fill="#1a6ca3"/>
+      <text x="18.0" y="38.1" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">program_id</text><line x1="11.0" y1="41.1" x2="167.0" y2="41.1" stroke="#24515c" stroke-width="1"/><text x="18.0" y="51.1" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">tier_name</text><line x1="11.0" y1="54.1" x2="167.0" y2="54.1" stroke="#24515c" stroke-width="1"/><text x="18.0" y="64.1" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">points_multiplier</text><line x1="11.0" y1="67.1" x2="167.0" y2="67.1" stroke="#24515c" stroke-width="1"/><text x="18.0" y="77.1" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">min_points_required</text>
+    </g>
+    <rect x="10.0" y="10.1" width="158" height="74.0" rx="4" fill="none" stroke="#3d9a84" stroke-width="1.25"/>
+    <text x="18.0" y="23.1" fill="#f3fbff" font-size="12" font-weight="650" font-family="ui-sans-serif,system-ui,sans-serif">loyalty_programs</text>
+  </g>
+  <g>
+    <clipPath id="t1"><rect x="186.0" y="10.1" width="158" height="74.0" rx="4"/></clipPath>
+    <g clip-path="url(#t1)">
+      <rect x="186.0" y="10.1" width="158" height="74.0" fill="#163038"/>
+      <rect x="186.0" y="10.1" width="158" height="18" fill="#1a6ca3"/>
+      <text x="194.0" y="38.1" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">customer_id</text><line x1="187.0" y1="41.1" x2="343.0" y2="41.1" stroke="#24515c" stroke-width="1"/><text x="194.0" y="51.1" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">program_id</text><line x1="187.0" y1="54.1" x2="343.0" y2="54.1" stroke="#24515c" stroke-width="1"/><text x="194.0" y="64.1" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">current_points</text><line x1="187.0" y1="67.1" x2="343.0" y2="67.1" stroke="#24515c" stroke-width="1"/><text x="194.0" y="77.1" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">lifetime_points</text>
+    </g>
+    <rect x="186.0" y="10.1" width="158" height="74.0" rx="4" fill="none" stroke="#3d9a84" stroke-width="1.25"/>
+    <text x="194.0" y="23.1" fill="#f3fbff" font-size="12" font-weight="650" font-family="ui-sans-serif,system-ui,sans-serif">customer_loyalty</text>
+  </g>
+  <g>
+    <clipPath id="t2"><rect x="10.0" y="98.1" width="158" height="113.0" rx="4"/></clipPath>
+    <g clip-path="url(#t2)">
+      <rect x="10.0" y="98.1" width="158" height="113.0" fill="#163038"/>
+      <rect x="10.0" y="98.1" width="158" height="18" fill="#1a6ca3"/>
+      <text x="18.0" y="126.1" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">ticket_id</text><line x1="11.0" y1="129.1" x2="167.0" y2="129.1" stroke="#24515c" stroke-width="1"/><text x="18.0" y="139.1" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">customer_id</text><line x1="11.0" y1="142.1" x2="167.0" y2="142.1" stroke="#24515c" stroke-width="1"/><text x="18.0" y="152.1" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">assigned_employee_id</text><line x1="11.0" y1="155.1" x2="167.0" y2="155.1" stroke="#24515c" stroke-width="1"/><text x="18.0" y="165.1" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">subject</text><line x1="11.0" y1="168.1" x2="167.0" y2="168.1" stroke="#24515c" stroke-width="1"/><text x="18.0" y="178.1" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">status</text><line x1="11.0" y1="181.1" x2="167.0" y2="181.1" stroke="#24515c" stroke-width="1"/><text x="18.0" y="191.1" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">priority</text><line x1="11.0" y1="194.1" x2="167.0" y2="194.1" stroke="#24515c" stroke-width="1"/><text x="18.0" y="204.1" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">created_at</text>
+    </g>
+    <rect x="10.0" y="98.1" width="158" height="113.0" rx="4" fill="none" stroke="#3d9a84" stroke-width="1.25"/>
+    <text x="18.0" y="111.1" fill="#f3fbff" font-size="12" font-weight="650" font-family="ui-sans-serif,system-ui,sans-serif">support_tickets</text>
+  </g>
+  <g>
+    <clipPath id="t3"><rect x="186.0" y="98.1" width="158" height="87.0" rx="4"/></clipPath>
+    <g clip-path="url(#t3)">
+      <rect x="186.0" y="98.1" width="158" height="87.0" fill="#163038"/>
+      <rect x="186.0" y="98.1" width="158" height="18" fill="#1a6ca3"/>
+      <text x="194.0" y="126.1" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">comment_id</text><line x1="187.0" y1="129.1" x2="343.0" y2="129.1" stroke="#24515c" stroke-width="1"/><text x="194.0" y="139.1" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">ticket_id</text><line x1="187.0" y1="142.1" x2="343.0" y2="142.1" stroke="#24515c" stroke-width="1"/><text x="194.0" y="152.1" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">author_type</text><line x1="187.0" y1="155.1" x2="343.0" y2="155.1" stroke="#24515c" stroke-width="1"/><text x="194.0" y="165.1" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">comment_text</text><line x1="187.0" y1="168.1" x2="343.0" y2="168.1" stroke="#24515c" stroke-width="1"/><text x="194.0" y="178.1" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">created_at</text>
+    </g>
+    <rect x="186.0" y="98.1" width="158" height="87.0" rx="4" fill="none" stroke="#3d9a84" stroke-width="1.25"/>
+    <text x="194.0" y="111.1" fill="#f3fbff" font-size="12" font-weight="650" font-family="ui-sans-serif,system-ui,sans-serif">ticket_comments</text>
+  </g>
+</svg>

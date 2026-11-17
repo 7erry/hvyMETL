@@ -1,34 +1,55 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1540 2329" width="1540" height="2329">
-  <rect width="1540" height="2329" fill="#0b1616"/>
-  <line x1="1100.0" y1="2205.0" x2="1430.0" y2="2017.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
-  <line x1="770.0" y1="1886.0" x2="1100.0" y2="753.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
-  <line x1="770.0" y1="1886.0" x2="1100.0" y2="2205.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
-  <line x1="770.0" y1="1886.0" x2="1430.0" y2="2017.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
-  <line x1="440.0" y1="1758.0" x2="1100.0" y2="753.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
-  <line x1="440.0" y1="1758.0" x2="770.0" y2="1886.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
-  <line x1="440.0" y1="1758.0" x2="1100.0" y2="2205.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
-  <line x1="440.0" y1="1758.0" x2="1430.0" y2="2017.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
-  <line x1="110.0" y1="1541.0" x2="1100.0" y2="753.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
-  <line x1="110.0" y1="1541.0" x2="440.0" y2="1758.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
-  <line x1="110.0" y1="943.0" x2="1100.0" y2="753.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
-  <line x1="110.0" y1="943.0" x2="440.0" y2="1758.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
-  <line x1="110.0" y1="943.0" x2="440.0" y2="583.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
-  <line x1="110.0" y1="943.0" x2="1100.0" y2="2205.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
-  <line x1="110.0" y1="339.0" x2="1100.0" y2="753.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
-  <line x1="110.0" y1="339.0" x2="440.0" y2="1758.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
-  <line x1="770.0" y1="1214.0" x2="1100.0" y2="753.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
-  <line x1="770.0" y1="1214.0" x2="1100.0" y2="2205.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
-  <line x1="770.0" y1="40.0" x2="1100.0" y2="753.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
-  <rect x="1010.0" y="733.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1010.0" y="733.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1016.0" y="745.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">patients</text>
-  <rect x="1340.0" y="1997.0" width="160" height="66" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1340.0" y="1997.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1346.0" y="2009.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">departments</text>
-  <rect x="1010.0" y="2185.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1010.0" y="2185.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1016.0" y="2197.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">providers</text>
-  <rect x="680.0" y="1866.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="680.0" y="1866.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="686.0" y="1878.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">appointments</text>
-  <rect x="350.0" y="1738.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="350.0" y="1738.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="356.0" y="1750.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">encounters</text>
-  <rect x="20.0" y="1521.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="20.0" y="1521.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="26.0" y="1533.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">conditions</text>
-  <rect x="350.0" y="563.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="350.0" y="563.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="356.0" y="575.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">medications</text>
-  <rect x="20.0" y="923.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="20.0" y="923.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="26.0" y="935.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">prescriptions</text>
-  <rect x="20.0" y="319.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="20.0" y="319.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="26.0" y="331.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">observations</text>
-  <rect x="680.0" y="1194.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="680.0" y="1194.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="686.0" y="1206.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">allergies</text>
-  <rect x="680.0" y="20.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="680.0" y="20.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="686.0" y="32.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">insurance_policies</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 416.0 260.0" width="416.0" height="260.0">
+  <defs>
+    <pattern id="dots" width="14" height="14" patternUnits="userSpaceOnUse">
+      <circle cx="1.2" cy="1.2" r="0.8" fill="#1c3a44"/>
+    </pattern>
+  </defs>
+  <rect width="416.0" height="260.0" fill="#0d1b20"/>
+  <rect width="416.0" height="260.0" fill="url(#dots)"/>
+  <line x1="120.0" y1="137.0" x2="120.0" y2="123.0" stroke="#5dbea4" stroke-width="1.6"/>
+  <line x1="217.0" y1="66.5" x2="199.0" y2="66.5" stroke="#5dbea4" stroke-width="1.6"/>
+  <line x1="217.0" y1="66.5" x2="199.0" y2="193.5" stroke="#5dbea4" stroke-width="1.6"/>
+  <line x1="217.0" y1="193.5" x2="199.0" y2="66.5" stroke="#5dbea4" stroke-width="1.6"/>
+  <line x1="296.0" y1="137.0" x2="296.0" y2="123.0" stroke="#5dbea4" stroke-width="1.6"/>
+  <g>
+    <clipPath id="t0"><rect x="41.0" y="10.0" width="158" height="113.0" rx="4"/></clipPath>
+    <g clip-path="url(#t0)">
+      <rect x="41.0" y="10.0" width="158" height="113.0" fill="#163038"/>
+      <rect x="41.0" y="10.0" width="158" height="18" fill="#1a6ca3"/>
+      <text x="49.0" y="38.0" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">id</text><line x1="42.0" y1="41.0" x2="198.0" y2="41.0" stroke="#24515c" stroke-width="1"/><text x="49.0" y="51.0" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">medical_record_numb…</text><line x1="42.0" y1="54.0" x2="198.0" y2="54.0" stroke="#24515c" stroke-width="1"/><text x="49.0" y="64.0" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">given_name</text><line x1="42.0" y1="67.0" x2="198.0" y2="67.0" stroke="#24515c" stroke-width="1"/><text x="49.0" y="77.0" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">family_name</text><line x1="42.0" y1="80.0" x2="198.0" y2="80.0" stroke="#24515c" stroke-width="1"/><text x="49.0" y="90.0" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">date_of_birth</text><line x1="42.0" y1="93.0" x2="198.0" y2="93.0" stroke="#24515c" stroke-width="1"/><text x="49.0" y="103.0" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">sex_at_birth</text><line x1="42.0" y1="106.0" x2="198.0" y2="106.0" stroke="#24515c" stroke-width="1"/><text x="49.0" y="116.0" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">gender_identity</text>
+    </g>
+    <rect x="41.0" y="10.0" width="158" height="113.0" rx="4" fill="none" stroke="#3d9a84" stroke-width="1.25"/>
+    <text x="49.0" y="23.0" fill="#f3fbff" font-size="12" font-weight="650" font-family="ui-sans-serif,system-ui,sans-serif">patients</text>
+  </g>
+  <g>
+    <clipPath id="t1"><rect x="217.0" y="10.0" width="158" height="113.0" rx="4"/></clipPath>
+    <g clip-path="url(#t1)">
+      <rect x="217.0" y="10.0" width="158" height="113.0" fill="#163038"/>
+      <rect x="217.0" y="10.0" width="158" height="18" fill="#1a6ca3"/>
+      <text x="225.0" y="38.0" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">id</text><line x1="218.0" y1="41.0" x2="374.0" y2="41.0" stroke="#24515c" stroke-width="1"/><text x="225.0" y="51.0" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">patient_id</text><line x1="218.0" y1="54.0" x2="374.0" y2="54.0" stroke="#24515c" stroke-width="1"/><text x="225.0" y="64.0" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">appointment_id</text><line x1="218.0" y1="67.0" x2="374.0" y2="67.0" stroke="#24515c" stroke-width="1"/><text x="225.0" y="77.0" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">attending_provider_…</text><line x1="218.0" y1="80.0" x2="374.0" y2="80.0" stroke="#24515c" stroke-width="1"/><text x="225.0" y="90.0" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">department_id</text><line x1="218.0" y1="93.0" x2="374.0" y2="93.0" stroke="#24515c" stroke-width="1"/><text x="225.0" y="103.0" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">encounter_class</text><line x1="218.0" y1="106.0" x2="374.0" y2="106.0" stroke="#24515c" stroke-width="1"/><text x="225.0" y="116.0" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">admitted_at</text>
+    </g>
+    <rect x="217.0" y="10.0" width="158" height="113.0" rx="4" fill="none" stroke="#3d9a84" stroke-width="1.25"/>
+    <text x="225.0" y="23.0" fill="#f3fbff" font-size="12" font-weight="650" font-family="ui-sans-serif,system-ui,sans-serif">encounters</text>
+  </g>
+  <g>
+    <clipPath id="t2"><rect x="41.0" y="137.0" width="158" height="113.0" rx="4"/></clipPath>
+    <g clip-path="url(#t2)">
+      <rect x="41.0" y="137.0" width="158" height="113.0" fill="#163038"/>
+      <rect x="41.0" y="137.0" width="158" height="18" fill="#1a6ca3"/>
+      <text x="49.0" y="165.0" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">id</text><line x1="42.0" y1="168.0" x2="198.0" y2="168.0" stroke="#24515c" stroke-width="1"/><text x="49.0" y="178.0" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">patient_id</text><line x1="42.0" y1="181.0" x2="198.0" y2="181.0" stroke="#24515c" stroke-width="1"/><text x="49.0" y="191.0" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">provider_id</text><line x1="42.0" y1="194.0" x2="198.0" y2="194.0" stroke="#24515c" stroke-width="1"/><text x="49.0" y="204.0" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">department_id</text><line x1="42.0" y1="207.0" x2="198.0" y2="207.0" stroke="#24515c" stroke-width="1"/><text x="49.0" y="217.0" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">scheduled_start</text><line x1="42.0" y1="220.0" x2="198.0" y2="220.0" stroke="#24515c" stroke-width="1"/><text x="49.0" y="230.0" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">duration_minutes</text><line x1="42.0" y1="233.0" x2="198.0" y2="233.0" stroke="#24515c" stroke-width="1"/><text x="49.0" y="243.0" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">appointment_type</text>
+    </g>
+    <rect x="41.0" y="137.0" width="158" height="113.0" rx="4" fill="none" stroke="#3d9a84" stroke-width="1.25"/>
+    <text x="49.0" y="150.0" fill="#f3fbff" font-size="12" font-weight="650" font-family="ui-sans-serif,system-ui,sans-serif">appointments</text>
+  </g>
+  <g>
+    <clipPath id="t3"><rect x="217.0" y="137.0" width="158" height="113.0" rx="4"/></clipPath>
+    <g clip-path="url(#t3)">
+      <rect x="217.0" y="137.0" width="158" height="113.0" fill="#163038"/>
+      <rect x="217.0" y="137.0" width="158" height="18" fill="#1a6ca3"/>
+      <text x="225.0" y="165.0" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">id</text><line x1="218.0" y1="168.0" x2="374.0" y2="168.0" stroke="#24515c" stroke-width="1"/><text x="225.0" y="178.0" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">patient_id</text><line x1="218.0" y1="181.0" x2="374.0" y2="181.0" stroke="#24515c" stroke-width="1"/><text x="225.0" y="191.0" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">encounter_id</text><line x1="218.0" y1="194.0" x2="374.0" y2="194.0" stroke="#24515c" stroke-width="1"/><text x="225.0" y="204.0" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">medication_id</text><line x1="218.0" y1="207.0" x2="374.0" y2="207.0" stroke="#24515c" stroke-width="1"/><text x="225.0" y="217.0" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">prescriber_id</text><line x1="218.0" y1="220.0" x2="374.0" y2="220.0" stroke="#24515c" stroke-width="1"/><text x="225.0" y="230.0" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">dose</text><line x1="218.0" y1="233.0" x2="374.0" y2="233.0" stroke="#24515c" stroke-width="1"/><text x="225.0" y="243.0" fill="#e7f6f1" font-size="11" font-family="ui-sans-serif,system-ui,sans-serif">frequency</text>
+    </g>
+    <rect x="217.0" y="137.0" width="158" height="113.0" rx="4" fill="none" stroke="#3d9a84" stroke-width="1.25"/>
+    <text x="225.0" y="150.0" fill="#f3fbff" font-size="12" font-weight="650" font-family="ui-sans-serif,system-ui,sans-serif">prescriptions</text>
+  </g>
 </svg>

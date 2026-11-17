@@ -1,3 +1,11 @@
+## hvyMETL 11.0.0
+
+**Add data source** — The dialog is one segmented control: Example, Upload, and Live. Upload is a single drop target (file button, DDL / JSON / CSV / SQLite labels, a muted placeholder, and Import schema at the bottom right). Example cards show a close cluster of tables with column names, including Studio schemas, and the dialect dot is that database's mark. Category filters sit on one scrolling row, and the SaaS category is labeled SaaS.
+
+**Example import** — DDL import strips line and block comments before it splits columns, so a comment that contains a comma no longer becomes the column name. Selecting a drawDB example such as A/B testing loads `key` and `subject_type` instead of the comment sentence.
+
+---
+
 ## hvyMETL 10.1.15
 
 **Schema Creator = TableNode density** — Creator cards reuse SchemaCanvas `.table-node` classes (node `0.8rem`, header pad `0.5rem 0.75rem`, column `0.75rem`/`line-height 1.35`/`pad 0.2rem 1.1rem`, type `0.68rem`) so editable fields no longer shrink below canvas table text. Keeps hairline row dividers.

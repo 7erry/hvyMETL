@@ -118,7 +118,7 @@ export function SchemaImportPanel({
   const [selectedExampleId, setSelectedExampleId] = useState('');
   const [loadingExamples, setLoadingExamples] = useState(false);
   const [loadingExample, setLoadingExample] = useState(false);
-  const [importMode, setImportMode] = useState<'schema' | 'live'>('schema');
+  const [importMode, setImportMode] = useState<'example' | 'schema' | 'live'>('schema');
   const [dragOver, setDragOver] = useState(false);
 
   const takeDroppedFiles = useCallback(
@@ -244,16 +244,24 @@ export function SchemaImportPanel({
         <button
           type="button"
           role="tab"
+          id="schema-import-tab-example"
+          aria-selected={importMode === 'example'}
+          aria-controls="schema-import-panel-example"
+          className={importMode === 'example' ? 'active' : ''}
+          onClick={() => setImportMode('example')}
+        >
+          {t('schema.tabExample')}
+        </button>
+        <button
+          type="button"
+          role="tab"
           id="schema-import-tab-schema"
           aria-selected={importMode === 'schema'}
           aria-controls="schema-import-panel-schema"
           className={importMode === 'schema' ? 'active' : ''}
           onClick={() => setImportMode('schema')}
         >
-          <span className="schema-import-tabs__icon" aria-hidden>
-            ☁
-          </span>
-          {t('schema.title')}
+          {t('schema.tabUpload')}
         </button>
         <button
           type="button"
@@ -264,12 +272,39 @@ export function SchemaImportPanel({
           className={importMode === 'live' ? 'active' : ''}
           onClick={() => setImportMode('live')}
         >
-          <span className="schema-import-tabs__icon" aria-hidden>
-            ⌁
-          </span>
-          {t('schema.liveTitle')}
+          {t('schema.tabLive')}
         </button>
       </div>
+
+      {importMode === 'example' ? (
+        <div
+          id="schema-import-panel-example"
+          role="tabpanel"
+          aria-labelledby="schema-import-tab-example"
+          className="schema-import-panel__examples"
+        >
+          {onImportBuiltinExample ? (
+            <>
+              <p className="schema-import-panel__label">{t('schema.sampleFooter')}</p>
+              <ExampleGallery
+                examples={builtinExamples}
+                loading={loadingExamples}
+                loadingExample={loadingExample}
+                disabled={!apiConnected}
+                onSelect={async (exampleId) => {
+                  setSelectedExampleId(exampleId);
+                  setLoadingExample(true);
+                  try {
+                    await onImportBuiltinExample(exampleId);
+                  } finally {
+                    setLoadingExample(false);
+                  }
+                }}
+              />
+            </>
+          ) : null}
+        </div>
+      ) : null}
 
       {importMode === 'schema' ? (
         <div
@@ -302,14 +337,18 @@ export function SchemaImportPanel({
                 e.target.value = '';
               }}
             />
+            <span className="schema-import-panel__formats" aria-hidden="true">
+              <span>DDL</span>
+              <span>JSON</span>
+              <span>CSV</span>
+              <span>SQLite</span>
+            </span>
           </div>
-          <p className="schema-import-panel__hint" aria-live="polite">
-            {dragOver
-              ? t('schema.dropHint')
-              : autoDetectedLabel
-                ? `${t('schema.detected')}: ${autoDetectedLabel}.`
-                : t('schema.pasteHint')}
-          </p>
+          {dragOver || autoDetectedLabel ? (
+            <p className="schema-import-panel__hint" aria-live="polite">
+              {dragOver ? t('schema.dropHint') : `${t('schema.detected')}: ${autoDetectedLabel}.`}
+            </p>
+          ) : null}
           <textarea
             ref={textareaRef}
             value={ddl}
@@ -331,7 +370,9 @@ export function SchemaImportPanel({
             </button>
           </div>
         </div>
-      ) : (
+      ) : null}
+
+      {importMode === 'live' ? (
         <div id="schema-import-panel-live" role="tabpanel" aria-labelledby="schema-import-tab-live">
           <LiveMongoImportForm
             disabled={!apiConnected}
@@ -341,39 +382,15 @@ export function SchemaImportPanel({
             requireAgent={requireAgent}
             onImport={onImportLive}
           />
-        </div>
-      )}
-
-      {onImportBuiltinExample ? (
-        <div className="schema-import-panel__examples schema-import-panel__examples--footer">
-          {importMode === 'live' ? (
+          {onImportBuiltinExample ? (
             <button
               type="button"
               className="tertiary schema-import-panel__sample-link"
-              onClick={() => setImportMode('schema')}
+              onClick={() => setImportMode('example')}
             >
               {t('schema.sampleFooterLive')}
             </button>
-          ) : (
-            <>
-              <p className="schema-import-panel__label">{t('schema.sampleFooter')}</p>
-              <ExampleGallery
-                examples={builtinExamples}
-                loading={loadingExamples}
-                loadingExample={loadingExample}
-                disabled={!apiConnected}
-                onSelect={async (exampleId) => {
-                  setSelectedExampleId(exampleId);
-                  setLoadingExample(true);
-                  try {
-                    await onImportBuiltinExample(exampleId);
-                  } finally {
-                    setLoadingExample(false);
-                  }
-                }}
-              />
-            </>
-          )}
+          ) : null}
         </div>
       ) : null}
     </>
