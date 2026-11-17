@@ -1,3 +1,9 @@
+## hvyMETL 10.1.15
+
+**Schema Creator = TableNode density** — Creator cards reuse SchemaCanvas `.table-node` classes (node `0.8rem`, header pad `0.5rem 0.75rem`, column `0.75rem`/`line-height 1.35`/`pad 0.2rem 1.1rem`, type `0.68rem`) so editable fields no longer shrink below canvas table text. Keeps hairline row dividers.
+
+---
+
 ## hvyMETL 10.1.14
 
 **Schema Creator table cards** — Table name sits in a colored header band (same treatment as SchemaCanvas `accounts`-style nodes), with a clear divider above compact column rows and hairline row separators. Keeps the dense card padding from 10.1.13.

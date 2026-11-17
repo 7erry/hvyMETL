@@ -29,10 +29,10 @@ function SchemaCreatorTableNodeComponent({
   const { table, selected } = data;
 
   return (
-    <div className={selected ? 'schema-creator-node selected' : 'schema-creator-node'}>
-      <header className="schema-creator-node__header">
+    <div className={['table-node', 'schema-creator-node', selected ? 'selected' : ''].filter(Boolean).join(' ')}>
+      <header>
         <input
-          className="schema-creator-node__table-name"
+          className="table-node__name schema-creator-node__field"
           value={table.name}
           aria-label={t('schemaCreator.tableName')}
           onChange={(e) => data.onRenameTable(table.name, e.target.value)}
@@ -48,12 +48,12 @@ function SchemaCreatorTableNodeComponent({
           ×
         </button>
       </header>
-      <ul className="schema-creator-node__columns">
+      <ul>
         {table.columns.map((col: ColumnModel) => {
           const isPk = col.isPrimaryKey || table.primaryKey.includes(col.name);
           const isFk = table.foreignKeys.some((fk) => fk.column === col.name);
           return (
-            <li key={col.name} className={['schema-creator-node__col', isPk ? 'pk' : '', isFk ? 'fk' : ''].filter(Boolean).join(' ')}>
+            <li key={col.name} className={[isPk ? 'pk' : '', isFk ? 'fk' : ''].filter(Boolean).join(' ')}>
               <Handle
                 type="target"
                 position={Position.Left}
@@ -72,14 +72,14 @@ function SchemaCreatorTableNodeComponent({
                 <span>PK</span>
               </label>
               <input
-                className="schema-creator-node__col-name"
+                className="column-name schema-creator-node__field"
                 value={col.name}
                 aria-label={t('schemaCreator.columnName')}
                 onChange={(e) => data.onRenameColumn(table.name, col.name, e.target.value)}
                 onMouseDown={(e) => e.stopPropagation()}
               />
               <select
-                className="schema-creator-node__col-type"
+                className="column-type schema-creator-node__field"
                 value={col.sqlType}
                 aria-label={t('schemaCreator.columnType')}
                 onChange={(e) => data.onChangeColumnType(table.name, col.name, e.target.value)}
