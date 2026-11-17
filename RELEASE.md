@@ -1,3 +1,15 @@
+## hvyMETL 10.1.14
+
+**Schema Creator table cards** — Table name sits in a colored header band (same treatment as SchemaCanvas `accounts`-style nodes), with a clear divider above compact column rows and hairline row separators. Keeps the dense card padding from 10.1.13.
+
+---
+
+## hvyMETL 10.1.13
+
+**Schema Creator layout + densify** — Creator draft, node positions, and viewport persist in session across nav. Initial canvas gaps are wider; table cards use tighter padding to match SchemaCanvas density.
+
+---
+
 ## hvyMETL 10.1.12
 
 **Schema Creator dark chrome** — React Flow zoom/fit/lock controls and MiniMap use the same dark backgrounds and light icons as SchemaCanvas (no more white panels on the dark theme).
