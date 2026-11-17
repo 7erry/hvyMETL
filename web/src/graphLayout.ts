@@ -78,6 +78,19 @@ export const SQL_GRAPH_LAYOUT_OPTIONS: GraphLayoutOptions = {
   maxRowWidth: 2600,
 };
 
+/** Schema Creator first layout — roomier canvas gaps; nodeHeight matches denser cards. */
+export const SCHEMA_CREATOR_LAYOUT_OPTIONS: GraphLayoutOptions = {
+  nodeWidth: 280,
+  nodeHeight: 200,
+  gapX: 120,
+  gapY: 100,
+  padding: 48,
+  componentGapX: 140,
+  componentGapY: 120,
+  grid: DIAGRAM_GRID_UNIT,
+  maxRowWidth: 2600,
+};
+
 function sqlVerticalGap(options: Required<GraphLayoutOptions>): number {
   return Math.max(options.gapY, options.grid * 2);
 }

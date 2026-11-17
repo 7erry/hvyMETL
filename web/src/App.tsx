@@ -266,6 +266,9 @@ export default function App() {
     model,
     positions,
     collectionPositions,
+    schemaCreatorModel,
+    schemaCreatorPositions,
+    schemaCreatorViewport,
     snapToGrid,
     selectedTable,
     selectedCollection,
@@ -325,6 +328,19 @@ export default function App() {
   const setSessionField = useCallback(<K extends keyof SessionState>(key: K, value: SessionState[K]) => {
     setSession((prev) => ({ ...prev, [key]: value }));
   }, []);
+
+  const handleSchemaCreatorModelChange = useCallback(
+    (next: SqlStructuralModel | null) => setSessionField('schemaCreatorModel', next),
+    [setSessionField],
+  );
+  const handleSchemaCreatorPositionsChange = useCallback(
+    (next: Record<string, { x: number; y: number }>) => setSessionField('schemaCreatorPositions', next),
+    [setSessionField],
+  );
+  const handleSchemaCreatorViewportChange = useCallback(
+    (next: { x: number; y: number; zoom: number } | null) => setSessionField('schemaCreatorViewport', next),
+    [setSessionField],
+  );
 
   const handleSchemaImportSidebarWidth = useCallback(
     (width: number) => {
@@ -1698,6 +1714,12 @@ export default function App() {
         ) : view === 'schemaCreator' && uiRole === 'developer' ? (
           <SchemaCreatorView
             initialModel={model}
+            creatorModel={schemaCreatorModel}
+            positions={schemaCreatorPositions}
+            viewport={schemaCreatorViewport}
+            onCreatorModelChange={handleSchemaCreatorModelChange}
+            onPositionsChange={handleSchemaCreatorPositionsChange}
+            onViewportChange={handleSchemaCreatorViewportChange}
             onApplyAsBeforeSql={async (nextDdl, nextModel) => {
               await applySchema(nextDdl, nextModel);
               setActiveNav('schema');

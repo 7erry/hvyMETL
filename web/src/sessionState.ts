@@ -110,6 +110,10 @@ export type SessionState = {
   model: SqlStructuralModel | null;
   positions: Record<string, { x: number; y: number }>;
   collectionPositions: Record<string, { x: number; y: number }>;
+  /** In-progress Schema Creator draft (survives nav away/back). */
+  schemaCreatorModel: SqlStructuralModel | null;
+  schemaCreatorPositions: Record<string, { x: number; y: number }>;
+  schemaCreatorViewport: { x: number; y: number; zoom: number } | null;
   snapToGrid: boolean;
   selectedTable: string | null;
   selectedCollection: string | null;
@@ -148,6 +152,9 @@ export const defaultSessionState = (): SessionState => ({
   model: null,
   positions: {},
   collectionPositions: {},
+  schemaCreatorModel: null,
+  schemaCreatorPositions: {},
+  schemaCreatorViewport: null,
   snapToGrid: true,
   selectedTable: null,
   selectedCollection: null,
