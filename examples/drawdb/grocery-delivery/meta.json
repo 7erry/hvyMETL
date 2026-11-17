@@ -1,0 +1,22 @@
+{
+  "slug": "grocery-delivery",
+  "title": "Grocery delivery database schema (ER diagram + SQL)",
+  "description": "How an online supermarket models its data: per-store catalogue and pricing, weight-priced items billed on what was actually picked, baskets, substitution preferences and real substitutions, picking tasks, capacity-limited delivery windows and inventory counts.",
+  "category": "food",
+  "tags": [
+    "grocery",
+    "fulfilment",
+    "substitutions",
+    "delivery-windows",
+    "inventory",
+    "weight-pricing"
+  ],
+  "primaryDialect": "postgresql",
+  "dialect": "postgresql",
+  "tableCount": 13,
+  "columnCount": 126,
+  "relationshipCount": 19,
+  "sourcePage": "https://www.drawdb.app/examples/grocery-delivery",
+  "license": "CC0-1.0",
+  "attribution": "Vendored from drawDB examples (CC0-1.0). https://www.drawdb.app/examples"
+}

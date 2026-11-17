@@ -1,0 +1,21 @@
+{
+  "slug": "note-taking",
+  "title": "Note-taking app database schema (ER diagram + SQL)",
+  "description": "A local-first SQLite notes database: notebooks and notes, wiki-style backlinks parsed from note bodies into a link graph, tags, attachments, a full-text search index, revision history and last-writer-wins sync with a conflict record.",
+  "category": "productivity",
+  "tags": [
+    "notes",
+    "local-first",
+    "backlinks",
+    "full-text-search",
+    "sqlite"
+  ],
+  "primaryDialect": "sqlite",
+  "dialect": "sqlite",
+  "tableCount": 11,
+  "columnCount": 81,
+  "relationshipCount": 17,
+  "sourcePage": "https://www.drawdb.app/examples/note-taking",
+  "license": "CC0-1.0",
+  "attribution": "Vendored from drawDB examples (CC0-1.0). https://www.drawdb.app/examples"
+}

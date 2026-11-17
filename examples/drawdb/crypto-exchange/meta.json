@@ -1,0 +1,21 @@
+{
+  "slug": "crypto-exchange",
+  "title": "Crypto exchange database schema example (ER + SQL)",
+  "description": "How a centralised crypto exchange models its data: trading pairs, limit orders resting on the book, maker and taker trades, available versus locked balances, on-chain deposits and withdrawals, fee tiers and order book snapshots.",
+  "category": "fintech",
+  "tags": [
+    "order-book",
+    "matching-engine",
+    "wallets",
+    "trading",
+    "blockchain"
+  ],
+  "primaryDialect": "postgresql",
+  "dialect": "postgresql",
+  "tableCount": 12,
+  "columnCount": 128,
+  "relationshipCount": 25,
+  "sourcePage": "https://www.drawdb.app/examples/crypto-exchange",
+  "license": "CC0-1.0",
+  "attribution": "Vendored from drawDB examples (CC0-1.0). https://www.drawdb.app/examples"
+}

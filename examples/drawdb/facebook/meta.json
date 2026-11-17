@@ -1,0 +1,21 @@
+{
+  "slug": "facebook",
+  "title": "Facebook database schema example (ER diagram + SQL)",
+  "description": "How a social network models its data: symmetric friendships stored as one canonical row, posts with audience scoping, typed reactions, groups with membership roles, pages, and events with RSVPs.",
+  "category": "social",
+  "tags": [
+    "friendships",
+    "groups",
+    "events",
+    "reactions",
+    "privacy"
+  ],
+  "primaryDialect": "postgresql",
+  "dialect": "postgresql",
+  "tableCount": 13,
+  "columnCount": 91,
+  "relationshipCount": 27,
+  "sourcePage": "https://www.drawdb.app/examples/facebook",
+  "license": "CC0-1.0",
+  "attribution": "Vendored from drawDB examples (CC0-1.0). https://www.drawdb.app/examples"
+}

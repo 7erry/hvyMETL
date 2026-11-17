@@ -1,0 +1,21 @@
+{
+  "slug": "clinic-appointments",
+  "title": "Clinic appointment scheduling database schema (MySQL)",
+  "description": "Outpatient scheduling in MySQL: recurring availability templates that generate slots, appointments that consume exactly one slot, waitlists that backfill cancellations, two-way reminders, referrals, and a dated no-show policy.",
+  "category": "healthcare",
+  "tags": [
+    "scheduling",
+    "appointments",
+    "waitlist",
+    "reminders",
+    "availability"
+  ],
+  "primaryDialect": "mysql",
+  "dialect": "mysql",
+  "tableCount": 12,
+  "columnCount": 119,
+  "relationshipCount": 30,
+  "sourcePage": "https://www.drawdb.app/examples/clinic-appointments",
+  "license": "CC0-1.0",
+  "attribution": "Vendored from drawDB examples (CC0-1.0). https://www.drawdb.app/examples"
+}

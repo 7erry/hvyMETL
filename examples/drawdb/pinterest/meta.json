@@ -1,0 +1,21 @@
+{
+  "slug": "pinterest",
+  "title": "Pinterest database schema example (ER diagram + SQL)",
+  "description": "How a visual bookmarking app models its data: images deduplicated by content hash, pins as saves rather than uploads, repins as a self-reference to the source pin, boards with sections and collaborators, follows of both people and boards, and saved searches.",
+  "category": "social",
+  "tags": [
+    "bookmarking",
+    "boards",
+    "repins",
+    "collaboration",
+    "search"
+  ],
+  "primaryDialect": "postgresql",
+  "dialect": "postgresql",
+  "tableCount": 11,
+  "columnCount": 73,
+  "relationshipCount": 22,
+  "sourcePage": "https://www.drawdb.app/examples/pinterest",
+  "license": "CC0-1.0",
+  "attribution": "Vendored from drawDB examples (CC0-1.0). https://www.drawdb.app/examples"
+}

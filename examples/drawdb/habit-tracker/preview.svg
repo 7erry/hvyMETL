@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1540 1742" width="1540" height="1742">
+  <rect width="1540" height="1742" fill="#0b1616"/>
+  <line x1="1100.0" y1="841.0" x2="1430.0" y2="903.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="792.0" x2="1430.0" y2="903.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="792.0" x2="1100.0" y2="841.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="40.0" x2="770.0" y2="792.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="490.0" x2="770.0" y2="792.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="903.0" x2="770.0" y2="792.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="1242.0" x2="770.0" y2="792.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="1279.0" x2="440.0" y2="1242.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="1618.0" x2="770.0" y2="792.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <rect x="1340.0" y="883.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1340.0" y="883.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1346.0" y="895.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">users</text>
+  <rect x="1010.0" y="821.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1010.0" y="821.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1016.0" y="833.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">categories</text>
+  <rect x="680.0" y="772.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="680.0" y="772.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="686.0" y="784.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">habits</text>
+  <rect x="350.0" y="20.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="350.0" y="20.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="356.0" y="32.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">habit_schedules</text>
+  <rect x="350.0" y="470.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="350.0" y="470.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="356.0" y="482.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">check_ins</text>
+  <rect x="350.0" y="883.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="350.0" y="883.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="356.0" y="895.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">pauses</text>
+  <rect x="350.0" y="1222.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="350.0" y="1222.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="356.0" y="1234.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">reminders</text>
+  <rect x="20.0" y="1259.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="20.0" y="1259.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="26.0" y="1271.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">reminder_deliveries</text>
+  <rect x="350.0" y="1598.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="350.0" y="1598.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="356.0" y="1610.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">streak_cache</text>
+</svg>

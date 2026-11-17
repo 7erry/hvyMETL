@@ -1,0 +1,22 @@
+{
+  "slug": "ci-cd-pipeline",
+  "title": "CI/CD pipeline database schema (ER diagram + SQL)",
+  "description": "How a build system models its data: versioned pipeline definitions, immutable runs triggered by a commit, stages with approval gates, a job DAG stored as edges, runners and capabilities, attempts and retries, artifacts, caches and streamed logs.",
+  "category": "developer-tools",
+  "tags": [
+    "ci-cd",
+    "build-system",
+    "dag",
+    "scheduling",
+    "artifacts",
+    "runners"
+  ],
+  "primaryDialect": "postgresql",
+  "dialect": "postgresql",
+  "tableCount": 12,
+  "columnCount": 100,
+  "relationshipCount": 17,
+  "sourcePage": "https://www.drawdb.app/examples/ci-cd-pipeline",
+  "license": "CC0-1.0",
+  "attribution": "Vendored from drawDB examples (CC0-1.0). https://www.drawdb.app/examples"
+}

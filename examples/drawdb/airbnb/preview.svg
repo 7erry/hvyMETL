@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1540 2633" width="1540" height="2633">
+  <rect width="1540" height="2633" fill="#0b1616"/>
+  <line x1="1100.0" y1="1443.0" x2="1430.0" y2="1195.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="1100.0" y1="1443.0" x2="1430.0" y2="706.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="418.0" x2="1100.0" y2="1443.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="418.0" x2="1430.0" y2="706.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="107.0" x2="770.0" y2="418.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="107.0" x2="770.0" y2="80.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="712.0" x2="770.0" y2="418.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="712.0" x2="440.0" y2="1089.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="1461.0" x2="770.0" y2="418.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="1461.0" x2="1430.0" y2="1195.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="1461.0" x2="440.0" y2="1089.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="1089.0" x2="770.0" y2="418.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="1089.0" x2="1430.0" y2="1195.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="1089.0" x2="1100.0" y2="1443.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="2059.0" x2="440.0" y2="1089.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="2509.0" x2="440.0" y2="1089.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="2509.0" x2="1100.0" y2="1443.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="40.0" x2="440.0" y2="1089.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="40.0" x2="1430.0" y2="1195.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="40.0" x2="770.0" y2="418.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <rect x="1340.0" y="1175.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1340.0" y="1175.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1346.0" y="1187.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">users</text>
+  <rect x="1010.0" y="1423.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1010.0" y="1423.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1016.0" y="1435.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">hosts</text>
+  <rect x="1340.0" y="686.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1340.0" y="686.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1346.0" y="698.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">cancellation_policies</text>
+  <rect x="680.0" y="398.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="680.0" y="398.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="686.0" y="410.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">listings</text>
+  <rect x="680.0" y="60.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="680.0" y="60.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="686.0" y="72.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">amenities</text>
+  <rect x="350.0" y="87.0" width="160" height="55" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="350.0" y="87.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="356.0" y="99.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">listing_amenities</text>
+  <rect x="20.0" y="692.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="20.0" y="692.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="26.0" y="704.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">listing_calendar</text>
+  <rect x="20.0" y="1441.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="20.0" y="1441.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="26.0" y="1453.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">booking_requests</text>
+  <rect x="350.0" y="1069.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="350.0" y="1069.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="356.0" y="1081.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">reservations</text>
+  <rect x="20.0" y="2039.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="20.0" y="2039.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="26.0" y="2051.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">payments</text>
+  <rect x="20.0" y="2489.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="20.0" y="2489.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="26.0" y="2501.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">payouts</text>
+  <rect x="20.0" y="20.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="20.0" y="20.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="26.0" y="32.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">reviews</text>
+</svg>

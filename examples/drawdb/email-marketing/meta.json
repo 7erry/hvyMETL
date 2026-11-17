@@ -1,0 +1,21 @@
+{
+  "slug": "email-marketing",
+  "title": "Email marketing database schema (ER diagram + SQL)",
+  "description": "How a campaign sender stores its data: lists and contacts with custom fields, rule-based segments, campaigns with A/B variants, one send row per recipient, opens and clicks, bounces and suppressions, and drip automations.",
+  "category": "saas",
+  "tags": [
+    "email",
+    "campaigns",
+    "segmentation",
+    "automation",
+    "analytics"
+  ],
+  "primaryDialect": "postgresql",
+  "dialect": "postgresql",
+  "tableCount": 13,
+  "columnCount": 110,
+  "relationshipCount": 18,
+  "sourcePage": "https://www.drawdb.app/examples/email-marketing",
+  "license": "CC0-1.0",
+  "attribution": "Vendored from drawDB examples (CC0-1.0). https://www.drawdb.app/examples"
+}

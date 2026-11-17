@@ -1,0 +1,21 @@
+{
+  "slug": "social-network",
+  "title": "Social network database schema example (ER diagram + SQL)",
+  "description": "Followers, feeds and direct messages modelled for read volume: asymmetric follows, one posts table for replies and reposts, narrow like rows, per-participant read pointers and notifications.",
+  "category": "social",
+  "tags": [
+    "feed",
+    "follows",
+    "messaging",
+    "notifications",
+    "content"
+  ],
+  "primaryDialect": "postgresql",
+  "dialect": "postgresql",
+  "tableCount": 11,
+  "columnCount": 81,
+  "relationshipCount": 20,
+  "sourcePage": "https://www.drawdb.app/examples/social-network",
+  "license": "CC0-1.0",
+  "attribution": "Vendored from drawDB examples (CC0-1.0). https://www.drawdb.app/examples"
+}

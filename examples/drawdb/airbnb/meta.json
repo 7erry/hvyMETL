@@ -1,0 +1,21 @@
+{
+  "slug": "airbnb",
+  "title": "Airbnb database schema example (ER diagram + SQL)",
+  "description": "How a short-term rental marketplace models its data: hosts and listings, a host-owned per-night calendar, request-to-book versus instant book, reservations, guest payments and host payouts, and two-way reviews that only reveal once both sides have written.",
+  "category": "travel",
+  "tags": [
+    "marketplace",
+    "bookings",
+    "calendar",
+    "reviews",
+    "payouts"
+  ],
+  "primaryDialect": "postgresql",
+  "dialect": "postgresql",
+  "tableCount": 12,
+  "columnCount": 133,
+  "relationshipCount": 20,
+  "sourcePage": "https://www.drawdb.app/examples/airbnb",
+  "license": "CC0-1.0",
+  "attribution": "Vendored from drawDB examples (CC0-1.0). https://www.drawdb.app/examples"
+}

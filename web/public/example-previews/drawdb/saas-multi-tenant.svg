@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1210 2281" width="1210" height="2281">
+  <rect width="1210" height="2281" fill="#0b1616"/>
+  <line x1="770.0" y1="1160.0" x2="1100.0" y2="1376.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="40.0" x2="770.0" y2="1160.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="40.0" x2="770.0" y2="596.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="379.0" x2="770.0" y2="1160.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="379.0" x2="770.0" y2="596.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="792.0" x2="770.0" y2="1160.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="1141.0" x2="770.0" y2="1160.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="1141.0" x2="770.0" y2="596.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="1591.0" x2="770.0" y2="1160.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="1591.0" x2="1100.0" y2="1376.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="2041.0" x2="770.0" y2="1160.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="2157.0" x2="770.0" y2="1160.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="2157.0" x2="770.0" y2="596.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="2157.0" x2="440.0" y2="1141.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <rect x="680.0" y="1140.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="680.0" y="1140.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="686.0" y="1152.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">organizations</text>
+  <rect x="680.0" y="576.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="680.0" y="576.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="686.0" y="588.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">users</text>
+  <rect x="350.0" y="20.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="350.0" y="20.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="356.0" y="32.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">memberships</text>
+  <rect x="350.0" y="359.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="350.0" y="359.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="356.0" y="371.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">invitations</text>
+  <rect x="350.0" y="772.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="350.0" y="772.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="356.0" y="784.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">projects</text>
+  <rect x="350.0" y="1121.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="350.0" y="1121.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="356.0" y="1133.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">api_keys</text>
+  <rect x="1010.0" y="1356.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1010.0" y="1356.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1016.0" y="1368.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">plans</text>
+  <rect x="350.0" y="1571.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="350.0" y="1571.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="356.0" y="1583.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">subscriptions</text>
+  <rect x="350.0" y="2021.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="350.0" y="2021.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="356.0" y="2033.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">usage_records</text>
+  <rect x="20.0" y="2137.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="20.0" y="2137.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="26.0" y="2149.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">audit_logs</text>
+</svg>

@@ -1,0 +1,21 @@
+{
+  "slug": "lending-platform",
+  "title": "Consumer lending database schema (Oracle ER + SQL)",
+  "description": "How a consumer lender models its data in Oracle: applications and verified income, credit decisions with ranked adverse-action reasons, loans, the amortisation schedule as rows, repayments allocated across fees, interest and principal, delinquency buckets and collections.",
+  "category": "fintech",
+  "tags": [
+    "lending",
+    "loan-servicing",
+    "amortisation",
+    "underwriting",
+    "collections"
+  ],
+  "primaryDialect": "oraclesql",
+  "dialect": "oracle",
+  "tableCount": 12,
+  "columnCount": 159,
+  "relationshipCount": 16,
+  "sourcePage": "https://www.drawdb.app/examples/lending-platform",
+  "license": "CC0-1.0",
+  "attribution": "Vendored from drawDB examples (CC0-1.0). https://www.drawdb.app/examples"
+}

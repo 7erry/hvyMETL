@@ -1,0 +1,21 @@
+{
+  "slug": "netflix",
+  "title": "Netflix database schema example (ER diagram + SQL)",
+  "description": "How a video streaming service models its data: films and series in one titles table, seasons and episodes, profiles inside an account, resume positions, per-region licensing windows, My List, ratings and subtitle tracks.",
+  "category": "media",
+  "tags": [
+    "streaming",
+    "video",
+    "profiles",
+    "licensing",
+    "catalog"
+  ],
+  "primaryDialect": "postgresql",
+  "dialect": "postgresql",
+  "tableCount": 12,
+  "columnCount": 86,
+  "relationshipCount": 16,
+  "sourcePage": "https://www.drawdb.app/examples/netflix",
+  "license": "CC0-1.0",
+  "attribution": "Vendored from drawDB examples (CC0-1.0). https://www.drawdb.app/examples"
+}

@@ -1,0 +1,21 @@
+{
+  "slug": "goodreads",
+  "title": "Goodreads database schema example (ER diagram + SQL)",
+  "description": "How a book cataloguing site models its data: works split from editions and ISBNs, contributors with roles, default and custom shelves, reading progress, ratings and reviews, series ordering and a friend activity feed.",
+  "category": "media",
+  "tags": [
+    "books",
+    "catalog",
+    "reviews",
+    "shelves",
+    "social"
+  ],
+  "primaryDialect": "mysql",
+  "dialect": "mysql",
+  "tableCount": 13,
+  "columnCount": 93,
+  "relationshipCount": 19,
+  "sourcePage": "https://www.drawdb.app/examples/goodreads",
+  "license": "CC0-1.0",
+  "attribution": "Vendored from drawDB examples (CC0-1.0). https://www.drawdb.app/examples"
+}

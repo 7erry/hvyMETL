@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1540 1710" width="1540" height="1710">
+  <rect width="1540" height="1710" fill="#0b1616"/>
+  <line x1="1100.0" y1="1046.0" x2="1430.0" y2="573.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="269.0" x2="1430.0" y2="573.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="269.0" x2="1100.0" y2="1046.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="269.0" x2="1100.0" y2="1046.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="40.0" x2="770.0" y2="269.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="40.0" x2="1430.0" y2="573.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="40.0" x2="1100.0" y2="1046.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="697.0" x2="440.0" y2="40.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="321.0" x2="440.0" y2="40.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="93.0" x2="440.0" y2="40.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="885.0" x2="770.0" y2="269.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="885.0" x2="770.0" y2="978.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="885.0" x2="770.0" y2="978.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="1100.0" y1="1422.0" x2="1430.0" y2="573.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="1173.0" x2="1100.0" y2="1422.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="1173.0" x2="770.0" y2="269.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="1586.0" x2="770.0" y2="269.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="1586.0" x2="770.0" y2="978.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="1586.0" x2="1100.0" y2="1046.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <rect x="680.0" y="958.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="680.0" y="958.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="686.0" y="970.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">users</text>
+  <rect x="1340.0" y="553.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1340.0" y="553.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1346.0" y="565.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">projects</text>
+  <rect x="1010.0" y="1026.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1010.0" y="1026.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1016.0" y="1038.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">releases</text>
+  <rect x="680.0" y="249.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="680.0" y="249.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="686.0" y="261.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">issues</text>
+  <rect x="350.0" y="20.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="350.0" y="20.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="356.0" y="32.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">events</text>
+  <rect x="20.0" y="677.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="20.0" y="677.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="26.0" y="689.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">event_stack_frames</text>
+  <rect x="20.0" y="301.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="20.0" y="301.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="26.0" y="313.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">event_breadcrumbs</text>
+  <rect x="20.0" y="73.0" width="160" height="55" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="20.0" y="73.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="26.0" y="85.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">event_tags</text>
+  <rect x="350.0" y="865.0" width="160" height="66" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="350.0" y="865.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="356.0" y="877.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">issue_assignees</text>
+  <rect x="1010.0" y="1402.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1010.0" y="1402.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1016.0" y="1414.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">alert_rules</text>
+  <rect x="350.0" y="1153.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="350.0" y="1153.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="356.0" y="1165.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">alert_notifications</text>
+  <rect x="350.0" y="1566.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="350.0" y="1566.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="356.0" y="1578.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">issue_activity</text>
+</svg>

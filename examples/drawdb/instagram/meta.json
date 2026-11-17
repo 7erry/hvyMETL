@@ -1,0 +1,21 @@
+{
+  "slug": "instagram",
+  "title": "Instagram database schema example (ER diagram + SQL)",
+  "description": "How a photo-sharing app models its data: asymmetric follows with pending requests for private accounts, posts carrying an ordered carousel of media, likes and two-level comments, stories that expire, saved collections and direct messages.",
+  "category": "social",
+  "tags": [
+    "feed",
+    "follows",
+    "media",
+    "stories",
+    "messaging"
+  ],
+  "primaryDialect": "postgresql",
+  "dialect": "postgresql",
+  "tableCount": 13,
+  "columnCount": 83,
+  "relationshipCount": 22,
+  "sourcePage": "https://www.drawdb.app/examples/instagram",
+  "license": "CC0-1.0",
+  "attribution": "Vendored from drawDB examples (CC0-1.0). https://www.drawdb.app/examples"
+}

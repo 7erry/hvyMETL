@@ -1,0 +1,21 @@
+{
+  "slug": "uber-ride-hailing",
+  "title": "Uber ride-hailing schema example (ER diagram + SQL)",
+  "description": "How a ride-hailing app models its data: riders and drivers, vehicles and expiring documents, online sessions, ride requests, dispatch offers that time out, trips as a state machine, GPS pings, itemised fares with surge, and two-way ratings.",
+  "category": "travel",
+  "tags": [
+    "dispatch",
+    "marketplace",
+    "geolocation",
+    "pricing",
+    "state-machine"
+  ],
+  "primaryDialect": "postgresql",
+  "dialect": "postgresql",
+  "tableCount": 14,
+  "columnCount": 147,
+  "relationshipCount": 21,
+  "sourcePage": "https://www.drawdb.app/examples/uber-ride-hailing",
+  "license": "CC0-1.0",
+  "attribution": "Vendored from drawDB examples (CC0-1.0). https://www.drawdb.app/examples"
+}

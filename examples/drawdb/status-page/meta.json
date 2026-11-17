@@ -1,0 +1,21 @@
+{
+  "slug": "status-page",
+  "title": "Status page database schema (ER diagram + SQL)",
+  "description": "How a public status page is modelled: a component hierarchy with status history, incidents and severities, the timestamped public timeline, scheduled maintenance windows, email and webhook subscribers with delivery tracking, uptime samples, computed uptime and postmortems.",
+  "category": "developer-tools",
+  "tags": [
+    "incidents",
+    "uptime",
+    "notifications",
+    "monitoring",
+    "postmortems"
+  ],
+  "primaryDialect": "postgresql",
+  "dialect": "postgresql",
+  "tableCount": 13,
+  "columnCount": 100,
+  "relationshipCount": 16,
+  "sourcePage": "https://www.drawdb.app/examples/status-page",
+  "license": "CC0-1.0",
+  "attribution": "Vendored from drawDB examples (CC0-1.0). https://www.drawdb.app/examples"
+}

@@ -1,0 +1,21 @@
+{
+  "slug": "podcast-app",
+  "title": "Podcast app SQLite database schema example",
+  "description": "How a podcast client stores its data on the device: subscribed shows, episodes mirrored from RSS feeds, playback positions, download state, an ordered queue, per-show settings, feed sync cursors and an offline outbox.",
+  "category": "media",
+  "tags": [
+    "podcast",
+    "local-first",
+    "offline",
+    "mobile",
+    "sync"
+  ],
+  "primaryDialect": "sqlite",
+  "dialect": "sqlite",
+  "tableCount": 11,
+  "columnCount": 82,
+  "relationshipCount": 8,
+  "sourcePage": "https://www.drawdb.app/examples/podcast-app",
+  "license": "CC0-1.0",
+  "attribution": "Vendored from drawDB examples (CC0-1.0). https://www.drawdb.app/examples"
+}

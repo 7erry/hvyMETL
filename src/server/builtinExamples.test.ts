@@ -153,6 +153,13 @@ describe('repo bundled examples', () => {
 
   it('documents the full Load example catalog count (examples/README.md)', () => {
     const { path } = resolveBuiltinExamplesDir();
-    expect(listBuiltinExamples(path)).toHaveLength(42);
+    expect(listBuiltinExamples(path)).toHaveLength(142);
+    const drawdb = listBuiltinExamples(path).filter((item) => item.source === 'drawdb');
+    expect(drawdb).toHaveLength(100);
+    const github = drawdb.find((item) => item.id === 'drawdb/github/schema.sql');
+    expect(github?.previewUrl).toMatch(/\/example-previews\/drawdb\/github\.svg$/);
+    expect(github?.dialect).toBe('postgresql');
+    const { ddl } = readBuiltinExample(path, 'drawdb/github/schema.sql');
+    expect(ddl).toMatch(/CREATE TABLE/i);
   });
 });

@@ -1,0 +1,21 @@
+{
+  "slug": "retail-pos",
+  "title": "Retail POS database schema (ER diagram + SQL)",
+  "description": "How an in-store point of sale is modelled: stores and registers, cashier shifts with opening float and closing count, sales with discounted lines, multi-tender payment, returns against the original sale, drawer movements and approved price overrides.",
+  "category": "commerce",
+  "tags": [
+    "point-of-sale",
+    "retail",
+    "cash-reconciliation",
+    "returns",
+    "tenders"
+  ],
+  "primaryDialect": "mysql",
+  "dialect": "mysql",
+  "tableCount": 12,
+  "columnCount": 115,
+  "relationshipCount": 23,
+  "sourcePage": "https://www.drawdb.app/examples/retail-pos",
+  "license": "CC0-1.0",
+  "attribution": "Vendored from drawDB examples (CC0-1.0). https://www.drawdb.app/examples"
+}

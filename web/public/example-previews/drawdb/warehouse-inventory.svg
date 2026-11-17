@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 2039" width="880" height="2039">
+  <rect width="880" height="2039" fill="#0b1616"/>
+  <line x1="440.0" y1="1518.0" x2="770.0" y2="1473.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="1131.0" x2="770.0" y2="1060.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="1131.0" x2="770.0" y2="517.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="1915.0" x2="770.0" y2="1473.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="1915.0" x2="440.0" y2="1518.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="1915.0" x2="770.0" y2="1060.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="1915.0" x2="440.0" y2="1131.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="1271.0" x2="770.0" y2="1473.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="1271.0" x2="770.0" y2="1060.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="1271.0" x2="440.0" y2="1131.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="1271.0" x2="440.0" y2="1518.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="1271.0" x2="440.0" y2="1518.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="130.0" x2="770.0" y2="517.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="130.0" x2="770.0" y2="1473.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="40.0" x2="440.0" y2="130.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="40.0" x2="770.0" y2="1060.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="607.0" x2="770.0" y2="1473.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="509.0" x2="440.0" y2="607.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="509.0" x2="770.0" y2="1060.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="509.0" x2="440.0" y2="1131.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <rect x="680.0" y="497.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="680.0" y="497.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="686.0" y="509.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">suppliers</text>
+  <rect x="680.0" y="1453.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="680.0" y="1453.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="686.0" y="1465.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">warehouses</text>
+  <rect x="350.0" y="1498.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="350.0" y="1498.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="356.0" y="1510.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">storage_locations</text>
+  <rect x="680.0" y="1040.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="680.0" y="1040.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="686.0" y="1052.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">items</text>
+  <rect x="350.0" y="1111.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="350.0" y="1111.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="356.0" y="1123.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">lots</text>
+  <rect x="20.0" y="1895.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="20.0" y="1895.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="26.0" y="1907.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">stock_levels</text>
+  <rect x="20.0" y="1251.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="20.0" y="1251.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="26.0" y="1263.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">stock_movements</text>
+  <rect x="350.0" y="110.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="350.0" y="110.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="356.0" y="122.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">purchase_orders</text>
+  <rect x="20.0" y="20.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="20.0" y="20.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="26.0" y="32.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">purchase_order_lines</text>
+  <rect x="350.0" y="587.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="350.0" y="587.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="356.0" y="599.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">shipments</text>
+  <rect x="20.0" y="489.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="20.0" y="489.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="26.0" y="501.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">shipment_lines</text>
+</svg>

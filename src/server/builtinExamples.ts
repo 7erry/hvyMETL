@@ -77,6 +77,18 @@ export type BuiltinExampleSummary = {
   dialect: string;
   /** Recommended workload profile when this example is loaded. */
   suggestedProfileId?: string;
+  /** Gallery category chip (drawDB examples). */
+  category?: string;
+  /** Optional tags for search/filter. */
+  tags?: string[];
+  /** Table count for gallery cards. */
+  tableCount?: number;
+  /** Public URL path for ER preview SVG (e.g. /example-previews/drawdb/….svg). */
+  previewUrl?: string;
+  /** Origin of the example pack. */
+  source?: 'hvymetl' | 'drawdb';
+  /** Upstream dialect label when it differs from parser dialect id. */
+  primaryDialect?: string;
 };
 
 /** Resolved examples root plus whether it came from env, home, or repo fallback. */
@@ -188,6 +200,11 @@ export function listBuiltinExamples(examplesDir: string): BuiltinExampleSummary[
     if (!entry.isDirectory()) continue;
     const domain = entry.name;
 
+    if (domain === 'drawdb') {
+      summaries.push(...listDrawdbExamples(join(examplesDir, domain)));
+      continue;
+    }
+
     if (domain === 'oracle') {
       const oracleDir = join(examplesDir, domain);
       for (const fileName of readdirSync(oracleDir).sort()) {
@@ -199,6 +216,8 @@ export function listBuiltinExamples(examplesDir: string): BuiltinExampleSummary[
           label: labelFromOracleFile(fileName),
           description: readFirstCommentLine(filePath) ?? 'Oracle DDL paste example.',
           dialect: 'oracle',
+          source: 'hvymetl',
+          category: 'studio',
         });
       }
       continue;
@@ -218,6 +237,8 @@ export function listBuiltinExamples(examplesDir: string): BuiltinExampleSummary[
             `${getDialectLabel('dynamodb')} template example.`,
           dialect: 'dynamodb',
           suggestedProfileId: DYNAMODB_SUGGESTED_PROFILES[fileName],
+          source: 'hvymetl',
+          category: 'studio',
         });
       }
       continue;
@@ -243,6 +264,8 @@ export function listBuiltinExamples(examplesDir: string): BuiltinExampleSummary[
           description: description ?? `Design-pattern example for ${dialectId}.`,
           dialect: dialectId,
           suggestedProfileId: manifestEntry?.suggestedProfileId ?? inferDialectExampleProfile(description ?? ''),
+          source: 'hvymetl',
+          category: 'studio',
         });
       }
       continue;
@@ -257,10 +280,55 @@ export function listBuiltinExamples(examplesDir: string): BuiltinExampleSummary[
       description: readFirstCommentLine(sqlPath) ?? `Example schema for ${domain}.`,
       dialect: DOMAIN_DIALECTS[domain] ?? 'sqlite',
       suggestedProfileId: SUGGESTED_PROFILE_BY_DOMAIN[domain],
+      source: 'hvymetl',
+      category: 'studio',
     });
   }
 
   return summaries.sort((a, b) => a.label.localeCompare(b.label));
+}
+
+type DrawdbManifestEntry = {
+  id: string;
+  slug: string;
+  label: string;
+  description: string;
+  dialect: string;
+  primaryDialect?: string;
+  category?: string;
+  tags?: string[];
+  tableCount?: number;
+  previewUrl?: string;
+  source?: string;
+  license?: string;
+};
+
+/** List CC0 drawDB gallery examples from examples/drawdb/manifest.json. */
+function listDrawdbExamples(drawdbDir: string): BuiltinExampleSummary[] {
+  const manifestPath = join(drawdbDir, 'manifest.json');
+  if (!existsSync(manifestPath)) return [];
+  try {
+    const manifest = JSON.parse(readFileSync(manifestPath, 'utf8')) as {
+      examples?: DrawdbManifestEntry[];
+    };
+    const entries = Array.isArray(manifest.examples) ? manifest.examples : [];
+    return entries
+      .filter((entry) => entry?.id && existsSync(join(drawdbDir, entry.slug ?? '', 'schema.sql')))
+      .map((entry) => ({
+        id: entry.id,
+        label: entry.label,
+        description: entry.description || `drawDB example (${entry.slug}).`,
+        dialect: entry.dialect || 'postgresql',
+        primaryDialect: entry.primaryDialect,
+        category: entry.category ?? 'general',
+        tags: entry.tags,
+        tableCount: entry.tableCount,
+        previewUrl: entry.previewUrl ?? `/example-previews/drawdb/${entry.slug}.svg`,
+        source: 'drawdb' as const,
+      }));
+  } catch {
+    return [];
+  }
 }
 
 /** Resolve example id to an absolute DDL file path; rejects path traversal. */

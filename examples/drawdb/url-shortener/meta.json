@@ -1,0 +1,21 @@
+{
+  "slug": "url-shortener",
+  "title": "URL shortener database schema (ER diagram + SQL)",
+  "description": "The classic system-design question, modelled properly: short codes from a base62 counter, custom aliases and custom domains, an append-only click log with daily rollups, expiry and click limits, QR codes and blocked-domain safety checks.",
+  "category": "developer-tools",
+  "tags": [
+    "url-shortener",
+    "analytics",
+    "system-design",
+    "redirects",
+    "rollups"
+  ],
+  "primaryDialect": "postgresql",
+  "dialect": "postgresql",
+  "tableCount": 12,
+  "columnCount": 97,
+  "relationshipCount": 13,
+  "sourcePage": "https://www.drawdb.app/examples/url-shortener",
+  "license": "CC0-1.0",
+  "attribution": "Vendored from drawDB examples (CC0-1.0). https://www.drawdb.app/examples"
+}

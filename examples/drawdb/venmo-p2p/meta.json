@@ -1,0 +1,21 @@
+{
+  "slug": "venmo-p2p",
+  "title": "Venmo P2P payments database schema (ER diagram + SQL)",
+  "description": "How a social payments app models its data: wallets and balances, linked bank accounts and cards, transfers between friends, payment requests, bill splits, per-payment privacy, and the feed with comments and likes.",
+  "category": "fintech",
+  "tags": [
+    "wallets",
+    "peer-to-peer",
+    "social-feed",
+    "bill-splitting",
+    "privacy"
+  ],
+  "primaryDialect": "postgresql",
+  "dialect": "postgresql",
+  "tableCount": 12,
+  "columnCount": 113,
+  "relationshipCount": 27,
+  "sourcePage": "https://www.drawdb.app/examples/venmo-p2p",
+  "license": "CC0-1.0",
+  "attribution": "Vendored from drawDB examples (CC0-1.0). https://www.drawdb.app/examples"
+}

@@ -1,0 +1,21 @@
+{
+  "slug": "twitch",
+  "title": "Twitch database schema example (ER diagram + SQL)",
+  "description": "How a live streaming platform models its data: broadcast sessions with start and end times, VODs and clips derived from them, tiered and gifted subscriptions, bits, chat, moderation logs and raids.",
+  "category": "media",
+  "tags": [
+    "live-streaming",
+    "chat",
+    "subscriptions",
+    "moderation",
+    "sessions"
+  ],
+  "primaryDialect": "postgresql",
+  "dialect": "postgresql",
+  "tableCount": 12,
+  "columnCount": 92,
+  "relationshipCount": 24,
+  "sourcePage": "https://www.drawdb.app/examples/twitch",
+  "license": "CC0-1.0",
+  "attribution": "Vendored from drawDB examples (CC0-1.0). https://www.drawdb.app/examples"
+}

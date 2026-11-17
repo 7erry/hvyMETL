@@ -1,0 +1,21 @@
+{
+  "slug": "youtube",
+  "title": "YouTube database schema example (ER diagram + SQL)",
+  "description": "How a video platform models its data: channels and uploads, encoded renditions, view counts rolled up per day, likes, one-level comment threads, subscriptions, playlists, monetisation and community posts.",
+  "category": "media",
+  "tags": [
+    "video",
+    "ugc",
+    "comments",
+    "subscriptions",
+    "analytics"
+  ],
+  "primaryDialect": "postgresql",
+  "dialect": "postgresql",
+  "tableCount": 12,
+  "columnCount": 88,
+  "relationshipCount": 17,
+  "sourcePage": "https://www.drawdb.app/examples/youtube",
+  "license": "CC0-1.0",
+  "attribution": "Vendored from drawDB examples (CC0-1.0). https://www.drawdb.app/examples"
+}

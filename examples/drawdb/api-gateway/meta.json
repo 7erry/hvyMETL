@@ -1,0 +1,21 @@
+{
+  "slug": "api-gateway",
+  "title": "API gateway database schema (ER diagram + SQL)",
+  "description": "How an API platform is modelled: consumers and applications, hashed API keys with scopes and rotation, upstream services and routes, rate limit policies, durable usage counters, rolled-up aggregates, sampled request logs, plans, quotas and overage billing.",
+  "category": "developer-tools",
+  "tags": [
+    "api-keys",
+    "rate-limiting",
+    "quotas",
+    "usage-metering",
+    "developer-platform"
+  ],
+  "primaryDialect": "postgresql",
+  "dialect": "postgresql",
+  "tableCount": 13,
+  "columnCount": 124,
+  "relationshipCount": 16,
+  "sourcePage": "https://www.drawdb.app/examples/api-gateway",
+  "license": "CC0-1.0",
+  "attribution": "Vendored from drawDB examples (CC0-1.0). https://www.drawdb.app/examples"
+}

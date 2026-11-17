@@ -1,0 +1,21 @@
+{
+  "slug": "expense-tracker",
+  "title": "Expense tracker database schema (ER diagram + SQL)",
+  "description": "A local-first SQLite personal finance database: accounts, transactions in integer minor units, a nested category tree, per-period budgets with rollover, recurring rules, statement imports with auto-categorisation, receipts, and transfers modelled as a linked pair of legs.",
+  "category": "fintech",
+  "tags": [
+    "personal-finance",
+    "budgeting",
+    "local-first",
+    "ledger",
+    "sqlite"
+  ],
+  "primaryDialect": "sqlite",
+  "dialect": "sqlite",
+  "tableCount": 11,
+  "columnCount": 107,
+  "relationshipCount": 19,
+  "sourcePage": "https://www.drawdb.app/examples/expense-tracker",
+  "license": "CC0-1.0",
+  "attribution": "Vendored from drawDB examples (CC0-1.0). https://www.drawdb.app/examples"
+}

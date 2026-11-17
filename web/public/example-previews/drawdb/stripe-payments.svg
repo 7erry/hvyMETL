@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2200 3095" width="2200" height="3095">
+  <rect width="2200" height="3095" fill="#0b1616"/>
+  <line x1="1430.0" y1="2971.0" x2="2090.0" y2="2034.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="1430.0" y1="2971.0" x2="1760.0" y2="2719.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="1760.0" y1="2719.0" x2="2090.0" y2="2034.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="1760.0" y1="2719.0" x2="1430.0" y2="2971.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="1100.0" y1="2823.0" x2="2090.0" y2="2034.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="1100.0" y1="2823.0" x2="1430.0" y2="2971.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="1100.0" y1="2823.0" x2="1760.0" y2="2719.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="2341.0" x2="1100.0" y2="2823.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="2341.0" x2="2090.0" y2="2034.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="2341.0" x2="1760.0" y2="2719.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="2098.0" x2="770.0" y2="2341.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="2098.0" x2="2090.0" y2="2034.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="1315.0" x2="770.0" y2="2341.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="1315.0" x2="2090.0" y2="2034.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="2024.0" x2="2090.0" y2="2034.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="2024.0" x2="770.0" y2="2341.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="2024.0" x2="440.0" y2="2098.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="2024.0" x2="440.0" y2="1315.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="2024.0" x2="1760.0" y2="40.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="1760.0" y1="40.0" x2="2090.0" y2="2034.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="1760.0" y1="601.0" x2="2090.0" y2="2034.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="1760.0" y1="1088.0" x2="2090.0" y2="2034.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="1430.0" y1="835.0" x2="1760.0" y2="1088.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="1430.0" y1="835.0" x2="1760.0" y2="601.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="1760.0" y1="1632.0" x2="2090.0" y2="2034.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <rect x="2000.0" y="2014.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="2000.0" y="2014.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="2006.0" y="2026.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">merchants</text>
+  <rect x="1340.0" y="2951.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1340.0" y="2951.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1346.0" y="2963.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">customers</text>
+  <rect x="1670.0" y="2699.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1670.0" y="2699.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1676.0" y="2711.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">payment_methods</text>
+  <rect x="1010.0" y="2803.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1010.0" y="2803.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1016.0" y="2815.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">payment_intents</text>
+  <rect x="680.0" y="2321.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="680.0" y="2321.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="686.0" y="2333.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">charges</text>
+  <rect x="350.0" y="2078.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="350.0" y="2078.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="356.0" y="2090.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">refunds</text>
+  <rect x="350.0" y="1295.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="350.0" y="1295.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="356.0" y="1307.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">disputes</text>
+  <rect x="20.0" y="2004.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="20.0" y="2004.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="26.0" y="2016.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">balance_transactions</text>
+  <rect x="1670.0" y="20.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1670.0" y="20.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1676.0" y="32.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">payouts</text>
+  <rect x="1670.0" y="581.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1670.0" y="581.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1676.0" y="593.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">webhook_endpoints</text>
+  <rect x="1670.0" y="1068.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1670.0" y="1068.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1676.0" y="1080.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">webhook_events</text>
+  <rect x="1340.0" y="815.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1340.0" y="815.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1346.0" y="827.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">webhook_deliveries</text>
+  <rect x="1670.0" y="1612.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1670.0" y="1612.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1676.0" y="1624.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">idempotency_keys</text>
+</svg>

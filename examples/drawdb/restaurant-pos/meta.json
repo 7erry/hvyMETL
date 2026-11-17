@@ -1,0 +1,22 @@
+{
+  "slug": "restaurant-pos",
+  "title": "Restaurant POS database schema (ER diagram + SQL)",
+  "description": "How a dining-room POS models its data: floor plan tables and seats, open checks, courses and fire times, kitchen tickets routed per station, sold-out items, split checks, cashier shifts and tip-outs.",
+  "category": "food",
+  "tags": [
+    "point-of-sale",
+    "restaurant",
+    "kitchen-display",
+    "checks",
+    "tips",
+    "shifts"
+  ],
+  "primaryDialect": "mysql",
+  "dialect": "mysql",
+  "tableCount": 13,
+  "columnCount": 116,
+  "relationshipCount": 22,
+  "sourcePage": "https://www.drawdb.app/examples/restaurant-pos",
+  "license": "CC0-1.0",
+  "attribution": "Vendored from drawDB examples (CC0-1.0). https://www.drawdb.app/examples"
+}

@@ -7,6 +7,7 @@ import { detectDialect, DIALECT_DETECT_MIN_CONFIDENCE } from '../schema/detectDi
 import { isSupportedDialect } from '../../../src/dialects.ts';
 import { validateMongoJsonPaste } from '../../../src/utilities/mongoJsonValidate.ts';
 import type { Dialect } from '../types';
+import { ExampleGallery } from './ExampleGallery';
 import { LiveMongoImportForm } from './LiveMongoImportForm';
 
 const DIALECT_DETECT_DEBOUNCE_MS = 280;
@@ -216,15 +217,6 @@ export function SchemaImportPanel({
     };
   }, [onRequestSidebarWidth]);
 
-  const handleLoadExample = async () => {
-    if (!selectedExampleId || !onImportBuiltinExample) return;
-    setLoadingExample(true);
-    try {
-      await onImportBuiltinExample(selectedExampleId);
-    } finally {
-      setLoadingExample(false);
-    }
-  };
 
   const mongoJsonError = dialect === 'mongodb-json' ? validateMongoJsonPaste(ddl) : null;
 
@@ -362,46 +354,26 @@ export function SchemaImportPanel({
             >
               {t('schema.sampleFooterLive')}
             </button>
-          ) : null}
-          <label className="schema-import-panel__label" htmlFor="builtin-example-select">
-            {t('schema.sampleFooter')}
-          </label>
-          <div className="schema-import-panel__example-row">
-            <select
-              id="builtin-example-select"
-              value={selectedExampleId}
-              onChange={(e) => setSelectedExampleId(e.target.value)}
-              className="schema-import-panel__select"
-              disabled={!apiConnected || loadingExamples || builtinExamples.length === 0}
-            >
-              <option value="">
-                {loadingExamples
-                  ? t('common.loading')
-                  : builtinExamples.length === 0
-                    ? t('schema.noExamples')
-                    : t('schema.chooseExample')}
-              </option>
-              {builtinExamples.map((example) => (
-                <option key={example.id} value={example.id}>
-                  {example.label}
-                </option>
-              ))}
-            </select>
-            <button
-              type="button"
-              className="secondary"
-              onClick={() => void handleLoadExample()}
-              disabled={!apiConnected || !selectedExampleId || loadingExample}
-            >
-              {loadingExample ? t('common.loading') : t('schema.loadExample')}
-            </button>
-          </div>
-          {selectedExampleId ? (
-            <p className="schema-import-panel__hint">
-              {builtinExamples.find((example) => example.id === selectedExampleId)?.description ??
-                t('schema.exampleHint')}
-            </p>
-          ) : null}
+          ) : (
+            <>
+              <p className="schema-import-panel__label">{t('schema.sampleFooter')}</p>
+              <ExampleGallery
+                examples={builtinExamples}
+                loading={loadingExamples}
+                loadingExample={loadingExample}
+                disabled={!apiConnected}
+                onSelect={async (exampleId) => {
+                  setSelectedExampleId(exampleId);
+                  setLoadingExample(true);
+                  try {
+                    await onImportBuiltinExample(exampleId);
+                  } finally {
+                    setLoadingExample(false);
+                  }
+                }}
+              />
+            </>
+          )}
         </div>
       ) : null}
     </>

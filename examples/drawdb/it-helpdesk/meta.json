@@ -1,0 +1,21 @@
+{
+  "slug": "it-helpdesk",
+  "title": "IT helpdesk database schema example (ER + SQL)",
+  "description": "An internal service desk modelled properly: a service catalogue, incidents and requests, ordered approval chains, change requests with risk and rollback plans, linked assets, versioned knowledge base articles, SLA clocks that pause, and satisfaction ratings.",
+  "category": "internal-tools",
+  "tags": [
+    "ticketing",
+    "itsm",
+    "sla",
+    "approvals",
+    "knowledge-base"
+  ],
+  "primaryDialect": "mysql",
+  "dialect": "mysql",
+  "tableCount": 13,
+  "columnCount": 143,
+  "relationshipCount": 27,
+  "sourcePage": "https://www.drawdb.app/examples/it-helpdesk",
+  "license": "CC0-1.0",
+  "attribution": "Vendored from drawDB examples (CC0-1.0). https://www.drawdb.app/examples"
+}

@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1540 2758" width="1540" height="2758">
+  <rect width="1540" height="2758" fill="#0b1616"/>
+  <line x1="1100.0" y1="2606.0" x2="1430.0" y2="1640.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="2634.0" x2="1430.0" y2="1640.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="2634.0" x2="1100.0" y2="2606.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="2127.0" x2="1430.0" y2="1640.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="2127.0" x2="1100.0" y2="2606.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="1219.0" x2="1100.0" y2="1043.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="473.0" x2="1100.0" y2="40.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="473.0" x2="1100.0" y2="1043.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="2049.0" x2="770.0" y2="473.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="2049.0" x2="1430.0" y2="1640.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="2049.0" x2="770.0" y2="2127.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="1229.0" x2="770.0" y2="473.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="1229.0" x2="1100.0" y2="40.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="1229.0" x2="1430.0" y2="1640.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="1229.0" x2="1100.0" y2="2606.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="1229.0" x2="770.0" y2="2127.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="2089.0" x2="440.0" y2="1229.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="1189.0" x2="1430.0" y2="1640.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="1189.0" x2="440.0" y2="1229.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="1639.0" x2="440.0" y2="1229.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="177.0" x2="440.0" y2="1229.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <rect x="1010.0" y="20.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1010.0" y="20.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1016.0" y="32.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">riders</text>
+  <rect x="1340.0" y="1620.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1340.0" y="1620.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1346.0" y="1632.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">drivers</text>
+  <rect x="1010.0" y="2586.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1010.0" y="2586.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1016.0" y="2598.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">vehicles</text>
+  <rect x="680.0" y="2614.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="680.0" y="2614.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="686.0" y="2626.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">documents</text>
+  <rect x="680.0" y="2107.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="680.0" y="2107.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="686.0" y="2119.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">driver_sessions</text>
+  <rect x="1010.0" y="1023.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1010.0" y="1023.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1016.0" y="1035.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">surge_zones</text>
+  <rect x="680.0" y="1199.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="680.0" y="1199.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="686.0" y="1211.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">surge_multipliers</text>
+  <rect x="680.0" y="453.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="680.0" y="453.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="686.0" y="465.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">ride_requests</text>
+  <rect x="350.0" y="2029.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="350.0" y="2029.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="356.0" y="2041.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">dispatch_offers</text>
+  <rect x="350.0" y="1209.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="350.0" y="1209.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="356.0" y="1221.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">trips</text>
+  <rect x="20.0" y="2069.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="20.0" y="2069.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="26.0" y="2081.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">trip_waypoints</text>
+  <rect x="20.0" y="1169.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="20.0" y="1169.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="26.0" y="1181.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">location_pings</text>
+  <rect x="20.0" y="1619.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="20.0" y="1619.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="26.0" y="1631.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">fare_components</text>
+  <rect x="20.0" y="157.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="20.0" y="157.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="26.0" y="169.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">ratings</text>
+</svg>

@@ -1,0 +1,21 @@
+{
+  "slug": "returns-rma",
+  "title": "Returns and RMA database schema (ER diagram + SQL)",
+  "description": "How returns are actually modelled: RMA authorisations and eligibility windows, versioned policies, return reasons, inbound inspection and grading, dispositions from restock to scrap, refunds against exchanges and store credit, labels, restocking fees and return-abuse signals.",
+  "category": "logistics",
+  "tags": [
+    "returns",
+    "rma",
+    "reverse-logistics",
+    "refunds",
+    "fraud-signals"
+  ],
+  "primaryDialect": "postgresql",
+  "dialect": "postgresql",
+  "tableCount": 12,
+  "columnCount": 110,
+  "relationshipCount": 13,
+  "sourcePage": "https://www.drawdb.app/examples/returns-rma",
+  "license": "CC0-1.0",
+  "attribution": "Vendored from drawDB examples (CC0-1.0). https://www.drawdb.app/examples"
+}

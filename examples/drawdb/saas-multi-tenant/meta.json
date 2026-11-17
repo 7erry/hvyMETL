@@ -1,0 +1,21 @@
+{
+  "slug": "saas-multi-tenant",
+  "title": "Multi-tenant SaaS database schema (ER diagram + SQL)",
+  "description": "Shared-database multi-tenancy done properly: organizations as tenants, global users joined through memberships, invitations, scoped API keys, plans, subscriptions, metered usage and an append-only audit log.",
+  "category": "saas",
+  "tags": [
+    "multi-tenancy",
+    "authentication",
+    "billing",
+    "rbac",
+    "audit-log"
+  ],
+  "primaryDialect": "postgresql",
+  "dialect": "postgresql",
+  "tableCount": 10,
+  "columnCount": 77,
+  "relationshipCount": 14,
+  "sourcePage": "https://www.drawdb.app/examples/saas-multi-tenant",
+  "license": "CC0-1.0",
+  "attribution": "Vendored from drawDB examples (CC0-1.0). https://www.drawdb.app/examples"
+}

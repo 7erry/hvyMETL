@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1870 975" width="1870" height="975">
+  <rect width="1870" height="975" fill="#0b1616"/>
+  <line x1="1760.0" y1="40.0" x2="110.0" y2="40.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="1760.0" y1="540.0" x2="110.0" y2="40.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="1760.0" y1="540.0" x2="1760.0" y2="40.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="1760.0" y1="540.0" x2="440.0" y2="40.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="1760.0" y1="540.0" x2="770.0" y2="540.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="40.0" x2="110.0" y2="40.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="40.0" x2="440.0" y2="40.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="540.0" x2="110.0" y2="40.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="540.0" x2="440.0" y2="40.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="540.0" x2="110.0" y2="40.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="540.0" x2="440.0" y2="40.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="540.0" x2="440.0" y2="40.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="540.0" x2="110.0" y2="40.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="540.0" x2="440.0" y2="40.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="1100.0" y1="40.0" x2="110.0" y2="40.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="1100.0" y1="540.0" x2="1100.0" y2="40.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="1100.0" y1="540.0" x2="1760.0" y2="40.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="1430.0" y1="40.0" x2="110.0" y2="40.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="1100.0" y1="879.0" x2="1430.0" y2="40.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="1100.0" y1="879.0" x2="440.0" y2="40.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="1430.0" y1="540.0" x2="110.0" y2="40.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="1430.0" y1="540.0" x2="1760.0" y2="40.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="1430.0" y1="540.0" x2="1760.0" y2="40.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="1430.0" y1="540.0" x2="1430.0" y2="40.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="40.0" x2="110.0" y2="40.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <rect x="20.0" y="20.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="20.0" y="20.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="26.0" y="32.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">projects</text>
+  <rect x="1670.0" y="20.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1670.0" y="20.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1676.0" y="32.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">event_definitions</text>
+  <rect x="1670.0" y="520.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1670.0" y="520.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1676.0" y="532.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">events</text>
+  <rect x="350.0" y="20.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="350.0" y="20.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="356.0" y="32.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">persons</text>
+  <rect x="20.0" y="520.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="20.0" y="520.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="26.0" y="532.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">person_identifiers</text>
+  <rect x="350.0" y="520.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="350.0" y="520.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="356.0" y="532.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">identity_merges</text>
+  <rect x="680.0" y="520.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="680.0" y="520.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="686.0" y="532.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">sessions</text>
+  <rect x="1010.0" y="20.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1010.0" y="20.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1016.0" y="32.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">funnels</text>
+  <rect x="1010.0" y="520.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1010.0" y="520.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1016.0" y="532.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">funnel_steps</text>
+  <rect x="1340.0" y="20.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1340.0" y="20.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1346.0" y="32.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">cohorts</text>
+  <rect x="1010.0" y="859.0" width="160" height="66" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1010.0" y="859.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1016.0" y="871.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">cohort_members</text>
+  <rect x="1340.0" y="520.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1340.0" y="520.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1346.0" y="532.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">retention_reports</text>
+  <rect x="680.0" y="20.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="680.0" y="20.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="686.0" y="32.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">metric_snapshots</text>
+</svg>

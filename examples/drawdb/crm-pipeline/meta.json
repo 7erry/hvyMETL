@@ -1,0 +1,21 @@
+{
+  "slug": "crm-pipeline",
+  "title": "CRM database schema example (ER diagram + SQL)",
+  "description": "A sales CRM modelled end to end: accounts and contacts, leads converted into an account, contact and deal, deals moving through stages with full stage history, activities, quotes, forecasts, territories and custom fields.",
+  "category": "internal-tools",
+  "tags": [
+    "crm",
+    "sales",
+    "pipeline",
+    "forecasting",
+    "lead-management"
+  ],
+  "primaryDialect": "postgresql",
+  "dialect": "postgresql",
+  "tableCount": 13,
+  "columnCount": 132,
+  "relationshipCount": 26,
+  "sourcePage": "https://www.drawdb.app/examples/crm-pipeline",
+  "license": "CC0-1.0",
+  "attribution": "Vendored from drawDB examples (CC0-1.0). https://www.drawdb.app/examples"
+}

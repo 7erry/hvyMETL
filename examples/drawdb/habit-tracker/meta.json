@@ -1,0 +1,21 @@
+{
+  "slug": "habit-tracker",
+  "title": "Habit tracker database schema (ER diagram + SQL)",
+  "description": "A small local-first SQLite schema for habit tracking: habits with date-versioned schedules, one row per completion, pauses that skip a streak instead of breaking it, reminders, and streaks derived from check-ins rather than stored as a counter.",
+  "category": "productivity",
+  "tags": [
+    "habits",
+    "local-first",
+    "streaks",
+    "scheduling",
+    "sqlite"
+  ],
+  "primaryDialect": "sqlite",
+  "dialect": "sqlite",
+  "tableCount": 9,
+  "columnCount": 65,
+  "relationshipCount": 9,
+  "sourcePage": "https://www.drawdb.app/examples/habit-tracker",
+  "license": "CC0-1.0",
+  "attribution": "Vendored from drawDB examples (CC0-1.0). https://www.drawdb.app/examples"
+}

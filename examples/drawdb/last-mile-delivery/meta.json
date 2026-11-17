@@ -1,0 +1,21 @@
+{
+  "slug": "last-mile-delivery",
+  "title": "Last-mile delivery database schema (ER + SQL)",
+  "description": "Delivery operations modelled properly: depots, drivers and shifts, vehicle capacity constraints, orders with time windows, routes planned per day, stops in planned and actual sequence, geofenced arrivals, failed attempts, proof of delivery and re-sequencing history.",
+  "category": "logistics",
+  "tags": [
+    "delivery",
+    "routing",
+    "dispatch",
+    "geofencing",
+    "proof-of-delivery"
+  ],
+  "primaryDialect": "postgresql",
+  "dialect": "postgresql",
+  "tableCount": 12,
+  "columnCount": 127,
+  "relationshipCount": 16,
+  "sourcePage": "https://www.drawdb.app/examples/last-mile-delivery",
+  "license": "CC0-1.0",
+  "attribution": "Vendored from drawDB examples (CC0-1.0). https://www.drawdb.app/examples"
+}

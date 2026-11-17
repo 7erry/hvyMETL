@@ -1,0 +1,21 @@
+{
+  "slug": "strava-fitness",
+  "title": "Strava database schema example (ER diagram + SQL)",
+  "description": "How a fitness tracking app models its data: activities with compressed sensor streams instead of one row per second, segments and segment efforts with materialised leaderboards, personal records, kudos and comments, clubs, gear mileage and training load.",
+  "category": "healthcare",
+  "tags": [
+    "fitness",
+    "gps",
+    "leaderboards",
+    "time-series",
+    "social"
+  ],
+  "primaryDialect": "postgresql",
+  "dialect": "postgresql",
+  "tableCount": 13,
+  "columnCount": 122,
+  "relationshipCount": 20,
+  "sourcePage": "https://www.drawdb.app/examples/strava-fitness",
+  "license": "CC0-1.0",
+  "attribution": "Vendored from drawDB examples (CC0-1.0). https://www.drawdb.app/examples"
+}

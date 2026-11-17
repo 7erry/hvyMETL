@@ -1,0 +1,21 @@
+{
+  "slug": "robinhood-trading",
+  "title": "Robinhood trading database schema (ER diagram + SQL)",
+  "description": "How a retail brokerage models its data: accounts and instruments, orders with type and time-in-force, partial fills, positions derived from executions with average cost basis, cash settlement, dividends, watchlists and price alerts.",
+  "category": "fintech",
+  "tags": [
+    "trading",
+    "brokerage",
+    "orders",
+    "settlement",
+    "positions"
+  ],
+  "primaryDialect": "postgresql",
+  "dialect": "postgresql",
+  "tableCount": 12,
+  "columnCount": 125,
+  "relationshipCount": 17,
+  "sourcePage": "https://www.drawdb.app/examples/robinhood-trading",
+  "license": "CC0-1.0",
+  "attribution": "Vendored from drawDB examples (CC0-1.0). https://www.drawdb.app/examples"
+}

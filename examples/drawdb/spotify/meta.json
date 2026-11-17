@@ -1,0 +1,21 @@
+{
+  "slug": "spotify",
+  "title": "Spotify database schema example (ER diagram + SQL)",
+  "description": "How a music streaming service models its data: artists, albums and tracks, credited roles on a track, ordered playlists with collaborators, saved library, offline downloads and an append-only play log.",
+  "category": "media",
+  "tags": [
+    "music",
+    "streaming",
+    "playlists",
+    "catalog",
+    "event-log"
+  ],
+  "primaryDialect": "postgresql",
+  "dialect": "postgresql",
+  "tableCount": 12,
+  "columnCount": 82,
+  "relationshipCount": 21,
+  "sourcePage": "https://www.drawdb.app/examples/spotify",
+  "license": "CC0-1.0",
+  "attribution": "Vendored from drawDB examples (CC0-1.0). https://www.drawdb.app/examples"
+}

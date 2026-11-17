@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1540 1770" width="1540" height="1770">
+  <rect width="1540" height="1770" fill="#0b1616"/>
+  <line x1="1100.0" y1="1646.0" x2="1430.0" y2="1115.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="1609.0" x2="1100.0" y2="1646.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="672.0" x2="1430.0" y2="1115.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="672.0" x2="1100.0" y2="1646.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="672.0" x2="1100.0" y2="527.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="1384.0" x2="770.0" y2="672.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="1384.0" x2="770.0" y2="1609.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="1384.0" x2="770.0" y2="1233.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="672.0" x2="770.0" y2="672.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="1609.0" x2="440.0" y2="1384.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="1159.0" x2="440.0" y2="1384.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="148.0" x2="770.0" y2="672.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="1100.0" y1="40.0" x2="1430.0" y2="1115.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <rect x="1340.0" y="1095.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1340.0" y="1095.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1346.0" y="1107.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">customers</text>
+  <rect x="1010.0" y="1626.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1010.0" y="1626.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1016.0" y="1638.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">sales_orders</text>
+  <rect x="680.0" y="1589.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="680.0" y="1589.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="686.0" y="1601.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">sales_order_lines</text>
+  <rect x="1010.0" y="507.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1010.0" y="507.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1016.0" y="519.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">return_policies</text>
+  <rect x="680.0" y="1213.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="680.0" y="1213.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="686.0" y="1225.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">return_reasons</text>
+  <rect x="680.0" y="652.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="680.0" y="652.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="686.0" y="664.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">return_authorisations</text>
+  <rect x="350.0" y="1364.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="350.0" y="1364.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="356.0" y="1376.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">return_lines</text>
+  <rect x="350.0" y="652.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="350.0" y="652.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="356.0" y="664.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">return_shipments</text>
+  <rect x="20.0" y="1589.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="20.0" y="1589.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="26.0" y="1601.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">return_inspections</text>
+  <rect x="20.0" y="1139.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="20.0" y="1139.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="26.0" y="1151.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">disposition_events</text>
+  <rect x="350.0" y="128.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="350.0" y="128.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="356.0" y="140.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">return_settlements</text>
+  <rect x="1010.0" y="20.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1010.0" y="20.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1016.0" y="32.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">customer_return_risk</text>
+</svg>

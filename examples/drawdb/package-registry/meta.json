@@ -1,0 +1,21 @@
+{
+  "slug": "package-registry",
+  "title": "Package registry database schema (ER diagram + SQL)",
+  "description": "How a package manager backend stores its data: packages and immutable published versions, integrity hashes, dependency ranges, movable dist tags like latest and beta, owners and scoped access tokens, download rollups, deprecations and yanks.",
+  "category": "developer-tools",
+  "tags": [
+    "package-manager",
+    "versioning",
+    "semver",
+    "supply-chain",
+    "immutability"
+  ],
+  "primaryDialect": "postgresql",
+  "dialect": "postgresql",
+  "tableCount": 11,
+  "columnCount": 84,
+  "relationshipCount": 20,
+  "sourcePage": "https://www.drawdb.app/examples/package-registry",
+  "license": "CC0-1.0",
+  "attribution": "Vendored from drawDB examples (CC0-1.0). https://www.drawdb.app/examples"
+}

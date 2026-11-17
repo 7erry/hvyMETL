@@ -1,0 +1,21 @@
+{
+  "slug": "pharmacy",
+  "title": "Pharmacy database schema example (ER diagram + SQL)",
+  "description": "How a dispensing pharmacy models its data: a drug catalogue by strength and form, stock held as batches with expiry dates picked first-expired-first-out, dispense events, interaction and allergy checks, insurance claims and a controlled-drugs register.",
+  "category": "healthcare",
+  "tags": [
+    "inventory",
+    "dispensing",
+    "batch-tracking",
+    "compliance",
+    "claims"
+  ],
+  "primaryDialect": "postgresql",
+  "dialect": "postgresql",
+  "tableCount": 13,
+  "columnCount": 123,
+  "relationshipCount": 22,
+  "sourcePage": "https://www.drawdb.app/examples/pharmacy",
+  "license": "CC0-1.0",
+  "attribution": "Vendored from drawDB examples (CC0-1.0). https://www.drawdb.app/examples"
+}

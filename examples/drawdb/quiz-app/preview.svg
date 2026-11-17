@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1870 1410" width="1870" height="1410">
+  <rect width="1870" height="1410" fill="#0b1616"/>
+  <line x1="1430.0" y1="1068.0" x2="1760.0" y2="375.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="1100.0" y1="1014.0" x2="1430.0" y2="1068.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="1286.0" x2="1100.0" y2="1014.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="910.0" x2="1100.0" y2="1014.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="1430.0" y1="400.0" x2="1760.0" y2="375.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="1100.0" y1="601.0" x2="1430.0" y2="400.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="1100.0" y1="601.0" x2="1430.0" y2="1068.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="1100.0" y1="40.0" x2="1430.0" y2="400.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="1100.0" y1="40.0" x2="1760.0" y2="375.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="133.0" x2="1100.0" y2="40.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="133.0" x2="1100.0" y2="1014.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="285.0" x2="770.0" y2="133.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="285.0" x2="770.0" y2="910.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="694.0" x2="440.0" y2="285.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="694.0" x2="770.0" y2="1286.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <rect x="1670.0" y="355.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1670.0" y="355.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1676.0" y="367.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">users</text>
+  <rect x="1340.0" y="1048.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1340.0" y="1048.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1346.0" y="1060.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">question_pools</text>
+  <rect x="1010.0" y="994.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1010.0" y="994.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1016.0" y="1006.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">questions</text>
+  <rect x="680.0" y="1266.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="680.0" y="1266.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="686.0" y="1278.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">question_options</text>
+  <rect x="680.0" y="890.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="680.0" y="890.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="686.0" y="902.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">answer_keys</text>
+  <rect x="1340.0" y="380.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1340.0" y="380.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1346.0" y="392.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">quizzes</text>
+  <rect x="1010.0" y="581.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1010.0" y="581.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1016.0" y="593.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">quiz_pool_rules</text>
+  <rect x="1010.0" y="20.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1010.0" y="20.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1016.0" y="32.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">attempts</text>
+  <rect x="680.0" y="113.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="680.0" y="113.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="686.0" y="125.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">attempt_questions</text>
+  <rect x="350.0" y="265.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="350.0" y="265.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="356.0" y="277.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">responses</text>
+  <rect x="20.0" y="674.0" width="160" height="55" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="20.0" y="674.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="26.0" y="686.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">response_selections</text>
+</svg>

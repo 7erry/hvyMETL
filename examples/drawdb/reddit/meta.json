@@ -1,0 +1,21 @@
+{
+  "slug": "reddit",
+  "title": "Reddit database schema example (ER diagram + SQL)",
+  "description": "How a forum models its data: subreddits and subscriptions, link and text posts, arbitrarily deep comment trees stored as materialised paths, narrow vote tables, karma, flairs, and an append-only moderation log with removal reasons.",
+  "category": "social",
+  "tags": [
+    "forum",
+    "comments",
+    "voting",
+    "moderation",
+    "karma"
+  ],
+  "primaryDialect": "postgresql",
+  "dialect": "postgresql",
+  "tableCount": 12,
+  "columnCount": 83,
+  "relationshipCount": 27,
+  "sourcePage": "https://www.drawdb.app/examples/reddit",
+  "license": "CC0-1.0",
+  "attribution": "Vendored from drawDB examples (CC0-1.0). https://www.drawdb.app/examples"
+}

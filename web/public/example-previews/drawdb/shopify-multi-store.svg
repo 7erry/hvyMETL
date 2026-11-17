@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1540 2580" width="1540" height="2580">
+  <rect width="1540" height="2580" fill="#0b1616"/>
+  <line x1="1100.0" y1="1852.0" x2="1430.0" y2="1908.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="247.0" x2="1100.0" y2="1852.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="247.0" x2="1100.0" y2="1068.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="247.0" x2="1100.0" y2="1068.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="660.0" x2="1100.0" y2="1852.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="660.0" x2="1100.0" y2="40.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="1110.0" x2="1100.0" y2="1852.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="1490.0" x2="1100.0" y2="1852.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="1490.0" x2="770.0" y2="1110.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="1560.0" x2="1100.0" y2="1852.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="2220.0" x2="1100.0" y2="1852.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="2220.0" x2="1100.0" y2="2456.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="2220.0" x2="1100.0" y2="1068.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="2239.0" x2="770.0" y2="2220.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="2202.0" x2="440.0" y2="2239.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <rect x="1340.0" y="1888.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1340.0" y="1888.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1346.0" y="1900.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">merchants</text>
+  <rect x="1010.0" y="1832.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1010.0" y="1832.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1016.0" y="1844.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">shops</text>
+  <rect x="1010.0" y="1048.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1010.0" y="1048.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1016.0" y="1060.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">staff_accounts</text>
+  <rect x="680.0" y="227.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="680.0" y="227.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="686.0" y="239.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">shop_staff</text>
+  <rect x="1010.0" y="20.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1010.0" y="20.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1016.0" y="32.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">platform_plans</text>
+  <rect x="680.0" y="640.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="680.0" y="640.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="686.0" y="652.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">shop_subscriptions</text>
+  <rect x="680.0" y="1090.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="680.0" y="1090.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="686.0" y="1102.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">products</text>
+  <rect x="350.0" y="1470.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="350.0" y="1470.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="356.0" y="1482.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">product_variants</text>
+  <rect x="680.0" y="1540.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="680.0" y="1540.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="686.0" y="1552.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">orders</text>
+  <rect x="1010.0" y="2436.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1010.0" y="2436.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1016.0" y="2448.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">apps</text>
+  <rect x="680.0" y="2200.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="680.0" y="2200.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="686.0" y="2212.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">app_installations</text>
+  <rect x="350.0" y="2219.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="350.0" y="2219.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="356.0" y="2231.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">webhook_subscriptions</text>
+  <rect x="20.0" y="2182.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="20.0" y="2182.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="26.0" y="2194.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">webhook_deliveries</text>
+</svg>

@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1210 2326" width="1210" height="2326">
+  <rect width="1210" height="2326" fill="#0b1616"/>
+  <line x1="770.0" y1="1403.0" x2="1100.0" y2="1390.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="1396.0" x2="770.0" y2="1403.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="2230.0" x2="440.0" y2="1396.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="2230.0" x2="1100.0" y2="1390.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="926.0" x2="770.0" y2="942.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="1881.0" x2="440.0" y2="926.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="1881.0" x2="440.0" y2="1396.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="1881.0" x2="770.0" y2="942.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="40.0" x2="440.0" y2="926.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="40.0" x2="770.0" y2="942.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="530.0" x2="770.0" y2="942.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="530.0" x2="1100.0" y2="1390.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="530.0" x2="770.0" y2="942.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="1316.0" x2="770.0" y2="942.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="1316.0" x2="440.0" y2="1396.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="1316.0" x2="770.0" y2="1403.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="1316.0" x2="440.0" y2="926.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="681.0" x2="770.0" y2="942.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="681.0" x2="440.0" y2="1396.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="305.0" x2="770.0" y2="942.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="305.0" x2="440.0" y2="1396.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <rect x="680.0" y="922.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="680.0" y="922.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="686.0" y="934.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">users</text>
+  <rect x="1010.0" y="1370.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1010.0" y="1370.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1016.0" y="1382.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">artists</text>
+  <rect x="680.0" y="1383.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="680.0" y="1383.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="686.0" y="1395.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">albums</text>
+  <rect x="350.0" y="1376.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="350.0" y="1376.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="356.0" y="1388.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">tracks</text>
+  <rect x="20.0" y="2210.0" width="160" height="66" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="20.0" y="2210.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="26.0" y="2222.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">track_artists</text>
+  <rect x="350.0" y="906.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="350.0" y="906.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="356.0" y="918.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">playlists</text>
+  <rect x="20.0" y="1861.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="20.0" y="1861.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="26.0" y="1873.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">playlist_items</text>
+  <rect x="20.0" y="20.0" width="160" height="66" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="20.0" y="20.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="26.0" y="32.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">playlist_collaborators</text>
+  <rect x="350.0" y="510.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="350.0" y="510.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="356.0" y="522.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">follows</text>
+  <rect x="20.0" y="1296.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="20.0" y="1296.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="26.0" y="1308.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">library_items</text>
+  <rect x="20.0" y="661.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="20.0" y="661.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="26.0" y="673.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">play_events</text>
+  <rect x="20.0" y="285.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="20.0" y="285.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="26.0" y="297.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">downloads</text>
+</svg>

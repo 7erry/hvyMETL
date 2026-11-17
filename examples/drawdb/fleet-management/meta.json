@@ -1,0 +1,21 @@
+{
+  "slug": "fleet-management",
+  "title": "Fleet management database schema (ER diagram + SQL)",
+  "description": "How a vehicle fleet is modelled: vehicles and drivers, licence entitlements with expiry, assignment history, downsampled telematics and fault codes, maintenance due by mileage or date, work orders and parts, fuel, inspections and incidents.",
+  "category": "logistics",
+  "tags": [
+    "fleet",
+    "telematics",
+    "maintenance",
+    "compliance",
+    "vehicles"
+  ],
+  "primaryDialect": "postgresql",
+  "dialect": "postgresql",
+  "tableCount": 13,
+  "columnCount": 141,
+  "relationshipCount": 18,
+  "sourcePage": "https://www.drawdb.app/examples/fleet-management",
+  "license": "CC0-1.0",
+  "attribution": "Vendored from drawDB examples (CC0-1.0). https://www.drawdb.app/examples"
+}

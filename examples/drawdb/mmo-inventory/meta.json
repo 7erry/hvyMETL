@@ -1,0 +1,21 @@
+{
+  "slug": "mmo-inventory",
+  "title": "MMO inventory database schema example (ER diagram + SQL)",
+  "description": "How an online game models items: templates versus instances, stacking rules, affixes rolled per copy, bags and bank and equipped slots, soulbinding, durability, two-sided player trades, mail with attachments and an append-only item audit log.",
+  "category": "gaming",
+  "tags": [
+    "inventory",
+    "items",
+    "gaming",
+    "audit-log",
+    "trading"
+  ],
+  "primaryDialect": "postgresql",
+  "dialect": "postgresql",
+  "tableCount": 12,
+  "columnCount": 104,
+  "relationshipCount": 20,
+  "sourcePage": "https://www.drawdb.app/examples/mmo-inventory",
+  "license": "CC0-1.0",
+  "attribution": "Vendored from drawDB examples (CC0-1.0). https://www.drawdb.app/examples"
+}

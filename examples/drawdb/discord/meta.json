@@ -1,0 +1,21 @@
+{
+  "slug": "discord",
+  "title": "Discord database schema example (ER diagram + SQL)",
+  "description": "How a community chat platform models its data: servers with nested channels, roles carrying permission bitfields, three-state per-channel overwrites, per-server nicknames, messages and threads, reactions, attachments, invites and voice sessions.",
+  "category": "communication",
+  "tags": [
+    "chat",
+    "permissions",
+    "roles",
+    "channels",
+    "voice"
+  ],
+  "primaryDialect": "postgresql",
+  "dialect": "postgresql",
+  "tableCount": 13,
+  "columnCount": 106,
+  "relationshipCount": 27,
+  "sourcePage": "https://www.drawdb.app/examples/discord",
+  "license": "CC0-1.0",
+  "attribution": "Vendored from drawDB examples (CC0-1.0). https://www.drawdb.app/examples"
+}

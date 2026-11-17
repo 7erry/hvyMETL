@@ -1,0 +1,21 @@
+{
+  "slug": "banking-ledger",
+  "title": "Banking double-entry ledger database schema example",
+  "description": "A double-entry bank ledger: accounts in a single currency each, balanced journal entries that are never updated, card authorizations that hold funds, transfers kept separate from postings, and frozen statements.",
+  "category": "fintech",
+  "tags": [
+    "double-entry",
+    "ledger",
+    "payments",
+    "audit-log",
+    "money"
+  ],
+  "primaryDialect": "postgresql",
+  "dialect": "postgresql",
+  "tableCount": 10,
+  "columnCount": 89,
+  "relationshipCount": 15,
+  "sourcePage": "https://www.drawdb.app/examples/banking-ledger",
+  "license": "CC0-1.0",
+  "attribution": "Vendored from drawDB examples (CC0-1.0). https://www.drawdb.app/examples"
+}

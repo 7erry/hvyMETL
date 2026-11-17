@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2200 953" width="2200" height="953">
+  <rect width="2200" height="953" fill="#0b1616"/>
+  <line x1="440.0" y1="40.0" x2="110.0" y2="40.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="564.0" x2="110.0" y2="453.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="564.0" x2="110.0" y2="40.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="40.0" x2="110.0" y2="453.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="2090.0" y1="829.0" x2="110.0" y2="453.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="2090.0" y1="829.0" x2="1760.0" y2="490.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="1430.0" y1="40.0" x2="110.0" y2="453.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="1760.0" y1="490.0" x2="110.0" y2="453.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="1760.0" y1="490.0" x2="1430.0" y2="40.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="2090.0" y1="490.0" x2="1760.0" y2="490.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="2090.0" y1="490.0" x2="1760.0" y2="40.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="564.0" x2="110.0" y2="453.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="564.0" x2="110.0" y2="40.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="2090.0" y1="40.0" x2="110.0" y2="453.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="2090.0" y1="40.0" x2="110.0" y2="40.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="2090.0" y1="40.0" x2="1760.0" y2="490.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="1100.0" y1="40.0" x2="110.0" y2="453.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="1100.0" y1="40.0" x2="110.0" y2="40.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <rect x="20.0" y="433.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="20.0" y="433.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="26.0" y="445.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">vehicles</text>
+  <rect x="20.0" y="20.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="20.0" y="20.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="26.0" y="32.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">drivers</text>
+  <rect x="350.0" y="20.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="350.0" y="20.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="356.0" y="32.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">driver_licences</text>
+  <rect x="350.0" y="544.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="350.0" y="544.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="356.0" y="556.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">vehicle_assignments</text>
+  <rect x="680.0" y="20.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="680.0" y="20.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="686.0" y="32.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">telematics_samples</text>
+  <rect x="2000.0" y="809.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="2000.0" y="809.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="2006.0" y="821.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">fault_events</text>
+  <rect x="1340.0" y="20.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1340.0" y="20.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1346.0" y="32.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">maintenance_schedules</text>
+  <rect x="1670.0" y="470.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1670.0" y="470.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1676.0" y="482.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">work_orders</text>
+  <rect x="1670.0" y="20.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1670.0" y="20.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1676.0" y="32.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">parts</text>
+  <rect x="2000.0" y="470.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="2000.0" y="470.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="2006.0" y="482.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">work_order_parts</text>
+  <rect x="680.0" y="544.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="680.0" y="544.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="686.0" y="556.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">fuel_purchases</text>
+  <rect x="2000.0" y="20.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="2000.0" y="20.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="2006.0" y="32.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">inspections</text>
+  <rect x="1010.0" y="20.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1010.0" y="20.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1016.0" y="32.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">incidents</text>
+</svg>

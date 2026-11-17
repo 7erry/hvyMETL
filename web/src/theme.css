@@ -6777,6 +6777,275 @@ button.mongo-shell-tree__toggle:hover:not(:disabled) {
   align-items: center;
 }
 
+/* --- Example gallery (schema import footer) --- */
+.example-gallery {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.example-gallery__toolbar {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.example-gallery__search {
+  width: 100%;
+  min-height: 2.35rem;
+  padding: 0.4rem 0.7rem;
+  border: 1px solid var(--mdb-green-dark-2);
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.35);
+  color: inherit;
+  font-size: 0.875rem;
+}
+
+.example-gallery__search:focus-visible {
+  outline: none;
+  box-shadow: var(--btn-focus-ring);
+}
+
+.example-gallery__search:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.example-gallery__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.example-gallery__chip {
+  min-height: 1.85rem;
+  padding: 0.2rem 0.65rem;
+  border: 1px solid var(--mdb-green-dark-2);
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.25);
+  color: var(--accent-secondary);
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.example-gallery__chip:hover {
+  background: rgba(0, 237, 100, 0.08);
+  color: var(--mdb-spring-green);
+}
+
+.example-gallery__chip.is-active {
+  border-color: var(--mdb-green-base);
+  background: rgba(0, 237, 100, 0.14);
+  color: var(--mdb-green-base);
+}
+
+.example-gallery__chip:focus-visible {
+  outline: none;
+  box-shadow: var(--btn-focus-ring);
+}
+
+.example-gallery__empty {
+  margin: 0.35rem 0 0;
+  font-size: 0.85rem;
+  color: var(--accent-secondary);
+}
+
+.example-gallery__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(11.5rem, 1fr));
+  gap: 0.65rem;
+}
+
+.example-gallery__card {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  text-align: left;
+  padding: 0;
+  border: 1px solid var(--mdb-green-dark-2);
+  border-radius: 10px;
+  background: rgba(17, 39, 51, 0.72);
+  color: inherit;
+  overflow: hidden;
+  cursor: pointer;
+  transition: border-color 160ms ease, background 160ms ease;
+}
+
+.example-gallery__card:hover:not(:disabled),
+.example-gallery__card:focus-visible:not(:disabled) {
+  border-color: var(--mdb-green-base);
+  background: rgba(0, 104, 74, 0.28);
+}
+
+.example-gallery__card:focus-visible {
+  outline: none;
+  box-shadow: var(--btn-focus-ring);
+}
+
+.example-gallery__card:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.example-gallery__preview {
+  position: relative;
+  aspect-ratio: 16 / 10;
+  overflow: hidden;
+  background:
+    linear-gradient(145deg, rgba(0, 104, 74, 0.35), rgba(0, 30, 43, 0.9)),
+    repeating-linear-gradient(
+      -12deg,
+      transparent,
+      transparent 8px,
+      rgba(0, 237, 100, 0.03) 8px,
+      rgba(0, 237, 100, 0.03) 9px
+    );
+}
+
+.example-gallery__preview img,
+.example-gallery__preview-fallback {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scale(1);
+  transform-origin: center center;
+  transition: transform 200ms ease;
+}
+
+.example-gallery__preview-fallback {
+  background:
+    radial-gradient(circle at 30% 35%, rgba(0, 237, 100, 0.18), transparent 45%),
+    radial-gradient(circle at 70% 65%, rgba(107, 158, 146, 0.22), transparent 40%),
+    linear-gradient(160deg, rgba(17, 39, 51, 0.9), rgba(0, 30, 43, 0.95));
+}
+
+.example-gallery__card:hover:not(:disabled) .example-gallery__preview img,
+.example-gallery__card:hover:not(:disabled) .example-gallery__preview-fallback,
+.example-gallery__card:focus-visible:not(:disabled) .example-gallery__preview img,
+.example-gallery__card:focus-visible:not(:disabled) .example-gallery__preview-fallback {
+  transform: scale(1.08);
+}
+
+.example-gallery__meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0.55rem 0.65rem 0.7rem;
+}
+
+.example-gallery__meta-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.example-gallery__dialect {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  min-height: 1.35rem;
+  padding: 0.1rem 0.45rem 0.1rem 0.35rem;
+  border-radius: 999px;
+  border: 1px solid rgba(0, 104, 74, 0.55);
+  background: rgba(0, 0, 0, 0.28);
+  font-size: 0.68rem;
+  font-weight: 650;
+  color: var(--mdb-spring-green);
+}
+
+.example-gallery__dialect-glyph {
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 50%;
+  background: var(--accent-secondary);
+  flex: 0 0 auto;
+}
+
+.example-gallery__dialect--pg .example-gallery__dialect-glyph {
+  background: #336791;
+}
+
+.example-gallery__dialect--mysql .example-gallery__dialect-glyph {
+  background: #00758f;
+}
+
+.example-gallery__dialect--sqlite .example-gallery__dialect-glyph {
+  background: #0f80cc;
+}
+
+.example-gallery__dialect--mssql .example-gallery__dialect-glyph {
+  background: #cc2927;
+}
+
+.example-gallery__dialect--oracle .example-gallery__dialect-glyph {
+  background: #f80000;
+}
+
+.example-gallery__dialect--generic .example-gallery__dialect-glyph {
+  background: var(--mdb-green-base);
+}
+
+.example-gallery__category {
+  display: inline-flex;
+  align-items: center;
+  min-height: 1.35rem;
+  padding: 0.1rem 0.45rem;
+  border-radius: 999px;
+  background: rgba(0, 237, 100, 0.1);
+  color: var(--accent-secondary);
+  font-size: 0.68rem;
+  font-weight: 600;
+}
+
+.example-gallery__title {
+  margin: 0.15rem 0 0;
+  font-size: 0.85rem;
+  font-weight: 650;
+  line-height: 1.25;
+  color: var(--mdb-spring-green);
+}
+
+.example-gallery__description {
+  margin: 0;
+  font-size: 0.72rem;
+  line-height: 1.35;
+  color: var(--accent-secondary);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.example-gallery__stats {
+  margin: 0.15rem 0 0;
+  font-size: 0.68rem;
+  color: rgba(227, 252, 247, 0.65);
+}
+
+@media (max-width: 520px) {
+  .example-gallery__grid {
+    grid-template-columns: repeat(auto-fill, minmax(9.5rem, 1fr));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .example-gallery__card,
+  .example-gallery__preview img,
+  .example-gallery__preview-fallback {
+    transition: none;
+  }
+
+  .example-gallery__card:hover:not(:disabled) .example-gallery__preview img,
+  .example-gallery__card:hover:not(:disabled) .example-gallery__preview-fallback,
+  .example-gallery__card:focus-visible:not(:disabled) .example-gallery__preview img,
+  .example-gallery__card:focus-visible:not(:disabled) .example-gallery__preview-fallback {
+    transform: none;
+  }
+}
+
 /* --- Auth gate (hosted login) --- */
 .auth-gate {
   display: flex;

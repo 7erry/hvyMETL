@@ -1,0 +1,21 @@
+{
+  "slug": "usage-based-billing",
+  "title": "Usage-based billing database schema (ER + SQL)",
+  "description": "Metered billing modelled properly: price plans built from components, tiered and volume and graduated pricing as rows, meters and raw usage, per-period aggregation, invoices with line items, prepaid credits, proration and dunning.",
+  "category": "saas",
+  "tags": [
+    "billing",
+    "metering",
+    "pricing",
+    "invoicing",
+    "subscriptions"
+  ],
+  "primaryDialect": "postgresql",
+  "dialect": "postgresql",
+  "tableCount": 13,
+  "columnCount": 126,
+  "relationshipCount": 20,
+  "sourcePage": "https://www.drawdb.app/examples/usage-based-billing",
+  "license": "CC0-1.0",
+  "attribution": "Vendored from drawDB examples (CC0-1.0). https://www.drawdb.app/examples"
+}

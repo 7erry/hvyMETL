@@ -1,0 +1,21 @@
+{
+  "slug": "tiktok",
+  "title": "TikTok database schema example (ER diagram + SQL)",
+  "description": "How a short-video app models its data: sounds as first-class rows reused across videos, duets and stitches as self-references, an append-only watch-event log feeding a recommendation feed, plus follows, likes, comments and hashtags.",
+  "category": "social",
+  "tags": [
+    "video",
+    "recommendations",
+    "audio",
+    "hashtags",
+    "engagement"
+  ],
+  "primaryDialect": "postgresql",
+  "dialect": "postgresql",
+  "tableCount": 11,
+  "columnCount": 77,
+  "relationshipCount": 20,
+  "sourcePage": "https://www.drawdb.app/examples/tiktok",
+  "license": "CC0-1.0",
+  "attribution": "Vendored from drawDB examples (CC0-1.0). https://www.drawdb.app/examples"
+}

@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 2188" width="880" height="2188">
+  <rect width="880" height="2188" fill="#0b1616"/>
+  <line x1="440.0" y1="40.0" x2="770.0" y2="1252.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="40.0" x2="770.0" y2="324.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="858.0" x2="440.0" y2="858.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="2064.0" x2="440.0" y2="858.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="2064.0" x2="770.0" y2="1252.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="1684.0" x2="770.0" y2="1252.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="1684.0" x2="770.0" y2="324.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="1540.0" x2="440.0" y2="1684.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="1540.0" x2="440.0" y2="858.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="379.0" x2="770.0" y2="324.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="489.0" x2="440.0" y2="858.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="489.0" x2="770.0" y2="1252.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="489.0" x2="770.0" y2="1252.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="489.0" x2="440.0" y2="379.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="1271.0" x2="770.0" y2="1252.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <rect x="680.0" y="304.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="680.0" y="304.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="686.0" y="316.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">customers</text>
+  <rect x="680.0" y="1232.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="680.0" y="1232.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="686.0" y="1244.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">accounts</text>
+  <rect x="350.0" y="20.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="350.0" y="20.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="356.0" y="32.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">account_holders</text>
+  <rect x="350.0" y="838.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="350.0" y="838.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="356.0" y="850.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">transactions</text>
+  <rect x="20.0" y="2044.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="20.0" y="2044.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="26.0" y="2056.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">ledger_entries</text>
+  <rect x="350.0" y="1664.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="350.0" y="1664.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="356.0" y="1676.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">cards</text>
+  <rect x="20.0" y="1520.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="20.0" y="1520.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="26.0" y="1532.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">card_authorizations</text>
+  <rect x="350.0" y="359.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="350.0" y="359.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="356.0" y="371.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">beneficiaries</text>
+  <rect x="20.0" y="469.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="20.0" y="469.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="26.0" y="481.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">transfers</text>
+  <rect x="350.0" y="1251.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="350.0" y="1251.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="356.0" y="1263.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">statements</text>
+</svg>

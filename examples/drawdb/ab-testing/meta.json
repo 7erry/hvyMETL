@@ -1,0 +1,21 @@
+{
+  "slug": "ab-testing",
+  "title": "A/B testing database schema (ER diagram + SQL)",
+  "description": "An experimentation platform end to end: experiments and weighted variants, deterministic hash bucketing, exposure events, metric definitions, per-variant aggregates with sufficient statistics, significance results and staged rollout.",
+  "category": "saas",
+  "tags": [
+    "experimentation",
+    "analytics",
+    "statistics",
+    "bucketing",
+    "metrics"
+  ],
+  "primaryDialect": "postgresql",
+  "dialect": "postgresql",
+  "tableCount": 11,
+  "columnCount": 90,
+  "relationshipCount": 19,
+  "sourcePage": "https://www.drawdb.app/examples/ab-testing",
+  "license": "CC0-1.0",
+  "attribution": "Vendored from drawDB examples (CC0-1.0). https://www.drawdb.app/examples"
+}

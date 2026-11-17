@@ -1,0 +1,21 @@
+{
+  "slug": "calendar-scheduling",
+  "title": "Calendar app database schema (ER diagram + SQL)",
+  "description": "How a calendar app models its data: calendars and sharing, events with their own time zones, RRULE recurrence with exception dates and per-occurrence overrides, attendees and RSVP, reminders, working hours and a free-busy index.",
+  "category": "productivity",
+  "tags": [
+    "calendar",
+    "recurring-events",
+    "time-zones",
+    "scheduling",
+    "free-busy"
+  ],
+  "primaryDialect": "postgresql",
+  "dialect": "postgresql",
+  "tableCount": 11,
+  "columnCount": 84,
+  "relationshipCount": 16,
+  "sourcePage": "https://www.drawdb.app/examples/calendar-scheduling",
+  "license": "CC0-1.0",
+  "attribution": "Vendored from drawDB examples (CC0-1.0). https://www.drawdb.app/examples"
+}

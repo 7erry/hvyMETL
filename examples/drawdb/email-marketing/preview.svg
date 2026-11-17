@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1870 2108" width="1870" height="2108">
+  <rect width="1870" height="2108" fill="#0b1616"/>
+  <line x1="440.0" y1="40.0" x2="1760.0" y2="111.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="40.0" x2="770.0" y2="518.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="1430.0" y1="1357.0" x2="1760.0" y2="111.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="1100.0" y1="1147.0" x2="1760.0" y2="111.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="1100.0" y1="1147.0" x2="1430.0" y2="1357.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="1447.0" x2="1100.0" y2="1147.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="1331.0" x2="1100.0" y2="1147.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="1331.0" x2="770.0" y2="1447.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="1331.0" x2="770.0" y2="518.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="1442.0" x2="440.0" y2="1331.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="200.0" x2="1760.0" y2="111.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="200.0" x2="440.0" y2="1331.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="1005.0" x2="1100.0" y2="554.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="1005.0" x2="1100.0" y2="1147.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="1005.0" x2="770.0" y2="1005.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="555.0" x2="1100.0" y2="554.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="555.0" x2="770.0" y2="518.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="555.0" x2="770.0" y2="1005.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <rect x="680.0" y="498.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="680.0" y="498.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="686.0" y="510.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">contacts</text>
+  <rect x="20.0" y="1964.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="20.0" y="1964.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="26.0" y="1976.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">custom_fields</text>
+  <rect x="1670.0" y="91.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1670.0" y="91.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1676.0" y="103.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">lists</text>
+  <rect x="350.0" y="20.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="350.0" y="20.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="356.0" y="32.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">list_subscriptions</text>
+  <rect x="1340.0" y="1337.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1340.0" y="1337.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1346.0" y="1349.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">segments</text>
+  <rect x="1010.0" y="1127.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1010.0" y="1127.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1016.0" y="1139.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">campaigns</text>
+  <rect x="680.0" y="1427.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="680.0" y="1427.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="686.0" y="1439.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">campaign_variants</text>
+  <rect x="350.0" y="1311.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="350.0" y="1311.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="356.0" y="1323.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">sends</text>
+  <rect x="20.0" y="1422.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="20.0" y="1422.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="26.0" y="1434.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">send_events</text>
+  <rect x="20.0" y="180.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="20.0" y="180.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="26.0" y="192.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">suppressions</text>
+  <rect x="1010.0" y="534.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1010.0" y="534.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1016.0" y="546.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">automations</text>
+  <rect x="680.0" y="985.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="680.0" y="985.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="686.0" y="997.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">automation_steps</text>
+  <rect x="350.0" y="535.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="350.0" y="535.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="356.0" y="547.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">automation_enrolments</text>
+</svg>

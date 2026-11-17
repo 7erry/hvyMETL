@@ -1,0 +1,21 @@
+{
+  "slug": "library-catalog",
+  "title": "Library catalog database schema example (ER + SQL)",
+  "description": "How a public library models its data: works, editions and barcoded copies, branches and holdings, members, loans with renewals, a positioned hold queue, fines and payments, and inter-branch transfers.",
+  "category": "education",
+  "tags": [
+    "library",
+    "catalog",
+    "circulation",
+    "inventory",
+    "queueing"
+  ],
+  "primaryDialect": "mysql",
+  "dialect": "mysql",
+  "tableCount": 13,
+  "columnCount": 118,
+  "relationshipCount": 25,
+  "sourcePage": "https://www.drawdb.app/examples/library-catalog",
+  "license": "CC0-1.0",
+  "attribution": "Vendored from drawDB examples (CC0-1.0). https://www.drawdb.app/examples"
+}

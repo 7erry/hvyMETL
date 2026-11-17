@@ -1,0 +1,21 @@
+{
+  "slug": "analytics-platform",
+  "title": "Product analytics database schema (ER diagram + SQL)",
+  "description": "How a product analytics service stores its data: projects and a discovered event registry, raw events with JSONB properties, anonymous and identified users with identity merges, sessions, funnels, cohorts, retention reports and precomputed metric snapshots.",
+  "category": "saas",
+  "tags": [
+    "analytics",
+    "events",
+    "funnels",
+    "cohorts",
+    "identity-resolution"
+  ],
+  "primaryDialect": "postgresql",
+  "dialect": "postgresql",
+  "tableCount": 13,
+  "columnCount": 112,
+  "relationshipCount": 25,
+  "sourcePage": "https://www.drawdb.app/examples/analytics-platform",
+  "license": "CC0-1.0",
+  "attribution": "Vendored from drawDB examples (CC0-1.0). https://www.drawdb.app/examples"
+}

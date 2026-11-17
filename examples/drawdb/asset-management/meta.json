@@ -1,0 +1,21 @@
+{
+  "slug": "asset-management",
+  "title": "IT asset management database schema (SQL Server)",
+  "description": "How an IT estate is tracked end to end: models versus serialised assets, custody history, software licences and seat allocation with compliance counts, warranties and support contracts, maintenance, depreciation, audits and disposal.",
+  "category": "internal-tools",
+  "tags": [
+    "itam",
+    "asset-tracking",
+    "software-licensing",
+    "depreciation",
+    "audit"
+  ],
+  "primaryDialect": "transactsql",
+  "dialect": "mssql",
+  "tableCount": 13,
+  "columnCount": 140,
+  "relationshipCount": 21,
+  "sourcePage": "https://www.drawdb.app/examples/asset-management",
+  "license": "CC0-1.0",
+  "attribution": "Vendored from drawDB examples (CC0-1.0). https://www.drawdb.app/examples"
+}

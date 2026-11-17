@@ -1,0 +1,21 @@
+{
+  "slug": "news-paywall",
+  "title": "News paywall database schema (ER diagram + SQL)",
+  "description": "How a digital newspaper models a metered paywall: articles with revisions, the per-reader meter, plans and subscriptions, gift links, newsletters and moderated comments.",
+  "category": "media",
+  "tags": [
+    "paywall",
+    "metering",
+    "subscriptions",
+    "publishing",
+    "newsletters"
+  ],
+  "primaryDialect": "postgresql",
+  "dialect": "postgresql",
+  "tableCount": 15,
+  "columnCount": 115,
+  "relationshipCount": 22,
+  "sourcePage": "https://www.drawdb.app/examples/news-paywall",
+  "license": "CC0-1.0",
+  "attribution": "Vendored from drawDB examples (CC0-1.0). https://www.drawdb.app/examples"
+}

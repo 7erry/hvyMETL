@@ -1,0 +1,22 @@
+{
+  "slug": "coursera-mooc",
+  "title": "Coursera database schema example (ER diagram + SQL)",
+  "description": "How a MOOC platform models its data: versioned course content, dated session runs, an outline tree of modules and lectures, quizzes drawn from question banks, peer-graded assignments with rubric criteria, entitlements and certificates.",
+  "category": "education",
+  "tags": [
+    "mooc",
+    "courses",
+    "peer-grading",
+    "quizzes",
+    "certificates",
+    "versioning"
+  ],
+  "primaryDialect": "postgresql",
+  "dialect": "postgresql",
+  "tableCount": 13,
+  "columnCount": 121,
+  "relationshipCount": 19,
+  "sourcePage": "https://www.drawdb.app/examples/coursera-mooc",
+  "license": "CC0-1.0",
+  "attribution": "Vendored from drawDB examples (CC0-1.0). https://www.drawdb.app/examples"
+}

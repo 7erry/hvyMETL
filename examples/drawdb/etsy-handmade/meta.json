@@ -1,0 +1,21 @@
+{
+  "slug": "etsy-handmade",
+  "title": "Etsy handmade marketplace schema (ER diagram + SQL)",
+  "description": "How a handmade marketplace models its data: shops and sections, made-to-order listings with variations and personalisation, cross-shop carts, orders split per shop, shipping profiles and photo reviews.",
+  "category": "commerce",
+  "tags": [
+    "marketplace",
+    "handmade",
+    "made-to-order",
+    "personalisation",
+    "multi-shop-cart"
+  ],
+  "primaryDialect": "mysql",
+  "dialect": "mysql",
+  "tableCount": 13,
+  "columnCount": 113,
+  "relationshipCount": 22,
+  "sourcePage": "https://www.drawdb.app/examples/etsy-handmade",
+  "license": "CC0-1.0",
+  "attribution": "Vendored from drawDB examples (CC0-1.0). https://www.drawdb.app/examples"
+}

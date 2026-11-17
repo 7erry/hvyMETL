@@ -1,0 +1,21 @@
+{
+  "slug": "amazon-marketplace",
+  "title": "Amazon marketplace schema (ER diagram + SQL)",
+  "description": "How a marketplace models many sellers listing the same product: a shared catalogue, competing offers, the buy box decision as a log, orders split into per-seller sub-orders, fulfilment, payouts and product-level reviews.",
+  "category": "commerce",
+  "tags": [
+    "marketplace",
+    "multi-seller",
+    "buy-box",
+    "payouts",
+    "fulfillment"
+  ],
+  "primaryDialect": "postgresql",
+  "dialect": "postgresql",
+  "tableCount": 12,
+  "columnCount": 114,
+  "relationshipCount": 18,
+  "sourcePage": "https://www.drawdb.app/examples/amazon-marketplace",
+  "license": "CC0-1.0",
+  "attribution": "Vendored from drawDB examples (CC0-1.0). https://www.drawdb.app/examples"
+}

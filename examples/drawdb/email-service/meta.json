@@ -1,0 +1,21 @@
+{
+  "slug": "email-service",
+  "title": "Email service database schema example (ER diagram + SQL)",
+  "description": "How a webmail service models its data: labels applied many-to-many instead of IMAP folders, one stored copy per message, conversation threading, attachments deduplicated by content hash, delivery filters, drafts, read state, spam scoring and quota.",
+  "category": "communication",
+  "tags": [
+    "email",
+    "labels",
+    "threading",
+    "deduplication",
+    "spam-filtering"
+  ],
+  "primaryDialect": "postgresql",
+  "dialect": "postgresql",
+  "tableCount": 13,
+  "columnCount": 106,
+  "relationshipCount": 19,
+  "sourcePage": "https://www.drawdb.app/examples/email-service",
+  "license": "CC0-1.0",
+  "attribution": "Vendored from drawDB examples (CC0-1.0). https://www.drawdb.app/examples"
+}

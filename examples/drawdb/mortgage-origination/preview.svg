@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1540 3397" width="1540" height="3397">
+  <rect width="1540" height="3397" fill="#0b1616"/>
+  <line x1="1100.0" y1="921.0" x2="1430.0" y2="976.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="2711.0" x2="1100.0" y2="921.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="3273.0" x2="770.0" y2="2711.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="2712.0" x2="770.0" y2="2711.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="1965.0" x2="1100.0" y2="921.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="2039.0" x2="770.0" y2="1965.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="1330.0" x2="1100.0" y2="921.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="1330.0" x2="770.0" y2="1330.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="695.0" x2="1100.0" y2="921.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="751.0" x2="770.0" y2="695.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="695.0" x2="1100.0" y2="921.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="695.0" x2="770.0" y2="2711.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="695.0" x2="440.0" y2="751.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="40.0" x2="1100.0" y2="921.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="77.0" x2="770.0" y2="40.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <rect x="1340.0" y="956.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1340.0" y="956.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1346.0" y="968.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">loan_products</text>
+  <rect x="1010.0" y="901.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1010.0" y="901.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1016.0" y="913.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">applications</text>
+  <rect x="680.0" y="2691.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="680.0" y="2691.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="686.0" y="2703.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">borrowers</text>
+  <rect x="350.0" y="3253.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="350.0" y="3253.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="356.0" y="3265.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">borrower_incomes</text>
+  <rect x="350.0" y="2692.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="350.0" y="2692.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="356.0" y="2704.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">borrower_liabilities</text>
+  <rect x="680.0" y="1945.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="680.0" y="1945.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="686.0" y="1957.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">subject_properties</text>
+  <rect x="350.0" y="2019.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="350.0" y="2019.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="356.0" y="2031.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">appraisals</text>
+  <rect x="680.0" y="1310.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="680.0" y="1310.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="686.0" y="1322.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">rate_locks</text>
+  <rect x="680.0" y="675.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="680.0" y="675.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="686.0" y="687.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">underwriting_decisions</text>
+  <rect x="350.0" y="731.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="350.0" y="731.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="356.0" y="743.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">underwriting_condition</text>
+  <rect x="20.0" y="675.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="20.0" y="675.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="26.0" y="687.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">document_checklist_ite</text>
+  <rect x="680.0" y="20.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="680.0" y="20.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="686.0" y="32.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">closings</text>
+  <rect x="350.0" y="57.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="350.0" y="57.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="356.0" y="69.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">disbursements</text>
+</svg>

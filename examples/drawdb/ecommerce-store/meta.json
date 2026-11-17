@@ -1,0 +1,21 @@
+{
+  "slug": "ecommerce-store",
+  "title": "E-commerce database schema example (ER diagram + SQL)",
+  "description": "A production-shaped e-commerce schema: products with variants, inventory per location, carts, orders with snapshotted line items, payments and shipments. Open it in the editor or export SQL for six dialects.",
+  "category": "commerce",
+  "tags": [
+    "orders",
+    "inventory",
+    "payments",
+    "catalog",
+    "checkout"
+  ],
+  "primaryDialect": "postgresql",
+  "dialect": "postgresql",
+  "tableCount": 12,
+  "columnCount": 94,
+  "relationshipCount": 13,
+  "sourcePage": "https://www.drawdb.app/examples/ecommerce-store",
+  "license": "CC0-1.0",
+  "attribution": "Vendored from drawDB examples (CC0-1.0). https://www.drawdb.app/examples"
+}

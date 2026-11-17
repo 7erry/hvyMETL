@@ -1,0 +1,22 @@
+{
+  "slug": "student-information",
+  "title": "Student information system database schema (Oracle)",
+  "description": "School administration in Oracle: students and guardians with custody and contact priority, enrolment history per school year, a period-based timetable with room allocation, attendance per lesson, discipline records, transcripts and a fee ledger.",
+  "category": "education",
+  "tags": [
+    "school-admin",
+    "attendance",
+    "timetable",
+    "guardians",
+    "transcripts",
+    "oracle"
+  ],
+  "primaryDialect": "oraclesql",
+  "dialect": "oracle",
+  "tableCount": 13,
+  "columnCount": 130,
+  "relationshipCount": 20,
+  "sourcePage": "https://www.drawdb.app/examples/student-information",
+  "license": "CC0-1.0",
+  "attribution": "Vendored from drawDB examples (CC0-1.0). https://www.drawdb.app/examples"
+}

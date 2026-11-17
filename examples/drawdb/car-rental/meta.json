@@ -1,0 +1,21 @@
+{
+  "slug": "car-rental",
+  "title": "Car rental database schema (ER diagram + SQL)",
+  "description": "A vehicle rental schema: branches, vehicle classes versus the individual cars behind them, a per-branch availability calendar, reservations and signed agreements, mileage and fuel, damage inspections with photos, protection add-ons and one-way fees.",
+  "category": "travel",
+  "tags": [
+    "fleet",
+    "reservations",
+    "inventory",
+    "inspections",
+    "pricing"
+  ],
+  "primaryDialect": "mysql",
+  "dialect": "mysql",
+  "tableCount": 13,
+  "columnCount": 152,
+  "relationshipCount": 26,
+  "sourcePage": "https://www.drawdb.app/examples/car-rental",
+  "license": "CC0-1.0",
+  "attribution": "Vendored from drawDB examples (CC0-1.0). https://www.drawdb.app/examples"
+}

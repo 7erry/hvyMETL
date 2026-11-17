@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1540 2581" width="1540" height="2581">
+  <rect width="1540" height="2581" fill="#0b1616"/>
+  <line x1="1430.0" y1="1930.0" x2="1430.0" y2="1930.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="1100.0" y1="2471.0" x2="1430.0" y2="1930.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="488.0" x2="1100.0" y2="511.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="488.0" x2="1430.0" y2="1930.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="488.0" x2="1100.0" y2="2471.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="488.0" x2="770.0" y2="40.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="488.0" x2="770.0" y2="997.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="488.0" x2="770.0" y2="490.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="40.0" x2="440.0" y2="488.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="40.0" x2="440.0" y2="488.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="1100.0" y1="1785.0" x2="1430.0" y2="1930.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="1558.0" x2="1100.0" y2="1785.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="997.0" x2="1100.0" y2="511.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="997.0" x2="1430.0" y2="1930.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="997.0" x2="1100.0" y2="2471.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="490.0" x2="1100.0" y2="511.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="1971.0" x2="1430.0" y2="1930.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="1971.0" x2="1100.0" y2="2471.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="655.0" x2="440.0" y2="488.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <rect x="1010.0" y="491.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1010.0" y="491.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1016.0" y="503.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">accounts</text>
+  <rect x="1340.0" y="1910.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1340.0" y="1910.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1346.0" y="1922.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">categories</text>
+  <rect x="1010.0" y="2451.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1010.0" y="2451.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1016.0" y="2463.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">payees</text>
+  <rect x="350.0" y="468.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="350.0" y="468.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="356.0" y="480.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">transactions</text>
+  <rect x="680.0" y="20.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="680.0" y="20.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="686.0" y="32.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">transfers</text>
+  <rect x="1010.0" y="1765.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1010.0" y="1765.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1016.0" y="1777.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">budgets</text>
+  <rect x="680.0" y="1538.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="680.0" y="1538.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="686.0" y="1550.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">budget_periods</text>
+  <rect x="680.0" y="977.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="680.0" y="977.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="686.0" y="989.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">recurring_rules</text>
+  <rect x="680.0" y="470.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="680.0" y="470.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="686.0" y="482.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">import_batches</text>
+  <rect x="680.0" y="1951.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="680.0" y="1951.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="686.0" y="1963.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">import_rules</text>
+  <rect x="20.0" y="635.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="20.0" y="635.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="26.0" y="647.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">receipts</text>
+</svg>

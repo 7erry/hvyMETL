@@ -1,0 +1,21 @@
+{
+  "slug": "in-game-economy",
+  "title": "In-game economy database schema (ER diagram + SQL)",
+  "description": "How a game backend models virtual currency: hard and soft currencies, player wallets, an append-only double-entry ledger of every source and sink, a personalised item shop, validated store receipts, refunds and a battle pass.",
+  "category": "gaming",
+  "tags": [
+    "virtual-currency",
+    "gaming",
+    "ledger",
+    "double-entry",
+    "monetisation"
+  ],
+  "primaryDialect": "postgresql",
+  "dialect": "postgresql",
+  "tableCount": 13,
+  "columnCount": 122,
+  "relationshipCount": 24,
+  "sourcePage": "https://www.drawdb.app/examples/in-game-economy",
+  "license": "CC0-1.0",
+  "attribution": "Vendored from drawDB examples (CC0-1.0). https://www.drawdb.app/examples"
+}

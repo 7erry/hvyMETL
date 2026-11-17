@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1210 2405" width="1210" height="2405">
+  <rect width="1210" height="2405" fill="#0b1616"/>
+  <line x1="770.0" y1="1318.0" x2="1100.0" y2="193.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="1318.0" x2="1100.0" y2="1310.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="1010.0" x2="770.0" y2="1318.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="238.0" x2="770.0" y2="1318.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="589.0" x2="440.0" y2="1010.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="589.0" x2="440.0" y2="560.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="2281.0" x2="440.0" y2="1010.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="1868.0" x2="770.0" y2="1318.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="1868.0" x2="440.0" y2="1010.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="1492.0" x2="770.0" y2="1318.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="1492.0" x2="440.0" y2="1608.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="1492.0" x2="440.0" y2="1010.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="40.0" x2="1100.0" y2="193.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="40.0" x2="1100.0" y2="193.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="64.0" x2="1100.0" y2="193.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="64.0" x2="770.0" y2="40.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="64.0" x2="440.0" y2="1010.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <rect x="1010.0" y="173.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1010.0" y="173.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1016.0" y="185.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">members</text>
+  <rect x="1010.0" y="1290.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1010.0" y="1290.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1016.0" y="1302.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">plans</text>
+  <rect x="680.0" y="1298.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="680.0" y="1298.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="686.0" y="1310.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">subscriptions</text>
+  <rect x="350.0" y="990.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="350.0" y="990.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="356.0" y="1002.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">billing_cycles</text>
+  <rect x="350.0" y="218.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="350.0" y="218.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="356.0" y="230.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">member_preferences</text>
+  <rect x="350.0" y="540.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="350.0" y="540.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="356.0" y="552.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">products</text>
+  <rect x="20.0" y="569.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="20.0" y="569.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="26.0" y="581.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">cycle_items</text>
+  <rect x="20.0" y="2261.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="20.0" y="2261.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="26.0" y="2273.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">shipments</text>
+  <rect x="20.0" y="1848.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="20.0" y="1848.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="26.0" y="1860.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">subscription_events</text>
+  <rect x="350.0" y="1588.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="350.0" y="1588.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="356.0" y="1600.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">cancellation_reasons</text>
+  <rect x="20.0" y="1472.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="20.0" y="1472.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="26.0" y="1484.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">cancellations</text>
+  <rect x="680.0" y="20.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="680.0" y="20.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="686.0" y="32.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">referrals</text>
+  <rect x="20.0" y="44.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="20.0" y="44.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="26.0" y="56.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">credits</text>
+</svg>

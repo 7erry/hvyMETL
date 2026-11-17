@@ -1,0 +1,21 @@
+{
+  "slug": "property-listings",
+  "title": "Property listings database schema (ER diagram + SQL)",
+  "description": "How a property portal models its data: properties as durable things versus listings as repeatable campaigns, agents and agencies, ordered media, amenities, price history as rows, viewings, offers and saved searches with alerts.",
+  "category": "real-estate",
+  "tags": [
+    "real-estate",
+    "listings",
+    "search",
+    "media",
+    "offers"
+  ],
+  "primaryDialect": "postgresql",
+  "dialect": "postgresql",
+  "tableCount": 13,
+  "columnCount": 146,
+  "relationshipCount": 21,
+  "sourcePage": "https://www.drawdb.app/examples/property-listings",
+  "license": "CC0-1.0",
+  "attribution": "Vendored from drawDB examples (CC0-1.0). https://www.drawdb.app/examples"
+}

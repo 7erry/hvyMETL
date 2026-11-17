@@ -1,0 +1,21 @@
+{
+  "slug": "mortgage-origination",
+  "title": "Mortgage origination database schema (Oracle)",
+  "description": "How a mortgage lender models a file in Oracle: borrowers and co-borrowers with income and liabilities, the subject property and its appraisals, rate locks that expire, underwriting decisions and conditions to clear, a document checklist, closing and disbursement.",
+  "category": "real-estate",
+  "tags": [
+    "mortgage",
+    "lending",
+    "underwriting",
+    "rate-lock",
+    "closing"
+  ],
+  "primaryDialect": "oraclesql",
+  "dialect": "oracle",
+  "tableCount": 13,
+  "columnCount": 177,
+  "relationshipCount": 15,
+  "sourcePage": "https://www.drawdb.app/examples/mortgage-origination",
+  "license": "CC0-1.0",
+  "attribution": "Vendored from drawDB examples (CC0-1.0). https://www.drawdb.app/examples"
+}

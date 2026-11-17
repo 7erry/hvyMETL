@@ -239,6 +239,12 @@ export type BuiltinExampleSummary = {
   description: string;
   dialect: string;
   suggestedProfileId?: string;
+  category?: string;
+  tags?: string[];
+  tableCount?: number;
+  previewUrl?: string;
+  source?: 'hvymetl' | 'drawdb';
+  primaryDialect?: string;
 };
 
 export async function fetchBuiltinExamples(): Promise<{

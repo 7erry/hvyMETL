@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 2238" width="880" height="2238">
+  <rect width="880" height="2238" fill="#0b1616"/>
+  <line x1="440.0" y1="2075.0" x2="770.0" y2="1743.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="1743.0" x2="770.0" y2="1743.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="2114.0" x2="440.0" y2="2075.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="2114.0" x2="770.0" y2="1743.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="2114.0" x2="770.0" y2="1743.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="1590.0" x2="770.0" y2="789.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="1590.0" x2="440.0" y2="2075.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="1590.0" x2="770.0" y2="1743.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="1066.0" x2="770.0" y2="789.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="653.0" x2="770.0" y2="40.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="653.0" x2="770.0" y2="789.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="49.0" x2="770.0" y2="40.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="653.0" x2="440.0" y2="49.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="653.0" x2="440.0" y2="2075.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="653.0" x2="770.0" y2="1743.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="1177.0" x2="440.0" y2="2075.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="1177.0" x2="770.0" y2="1743.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="388.0" x2="770.0" y2="789.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <rect x="680.0" y="769.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="680.0" y="769.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="686.0" y="781.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">recipes</text>
+  <rect x="350.0" y="2055.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="350.0" y="2055.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="356.0" y="2067.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">ingredients</text>
+  <rect x="680.0" y="1723.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="680.0" y="1723.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="686.0" y="1735.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">units</text>
+  <rect x="20.0" y="2094.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="20.0" y="2094.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="26.0" y="2106.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">unit_conversions</text>
+  <rect x="20.0" y="1570.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="20.0" y="1570.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="26.0" y="1582.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">recipe_ingredients</text>
+  <rect x="350.0" y="1046.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="350.0" y="1046.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="356.0" y="1058.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">recipe_steps</text>
+  <rect x="680.0" y="20.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="680.0" y="20.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="686.0" y="32.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">meal_plans</text>
+  <rect x="350.0" y="633.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="350.0" y="633.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="356.0" y="645.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">meal_plan_entries</text>
+  <rect x="350.0" y="29.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="350.0" y="29.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="356.0" y="41.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">shopping_lists</text>
+  <rect x="20.0" y="633.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="20.0" y="633.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="26.0" y="645.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">shopping_list_items</text>
+  <rect x="20.0" y="1157.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="20.0" y="1157.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="26.0" y="1169.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">pantry_items</text>
+  <rect x="350.0" y="368.0" width="160" height="66" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="350.0" y="368.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="356.0" y="380.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">favorites</text>
+</svg>

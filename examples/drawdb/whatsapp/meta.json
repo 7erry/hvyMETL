@@ -1,0 +1,21 @@
+{
+  "slug": "whatsapp",
+  "title": "WhatsApp database schema example (ER diagram + SQL)",
+  "description": "How a mobile messenger models its data: accounts keyed by phone number, linked devices, private contacts, direct and group chats as one entity, messages with media and replies, per-recipient delivery and read receipts, and disappearing messages with a TTL.",
+  "category": "communication",
+  "tags": [
+    "messaging",
+    "read-receipts",
+    "group-chat",
+    "disappearing-messages",
+    "multi-device"
+  ],
+  "primaryDialect": "postgresql",
+  "dialect": "postgresql",
+  "tableCount": 11,
+  "columnCount": 88,
+  "relationshipCount": 19,
+  "sourcePage": "https://www.drawdb.app/examples/whatsapp",
+  "license": "CC0-1.0",
+  "attribution": "Vendored from drawDB examples (CC0-1.0). https://www.drawdb.app/examples"
+}

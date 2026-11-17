@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1210 1736" width="1210" height="1736">
+  <rect width="1210" height="1736" fill="#0b1616"/>
+  <line x1="770.0" y1="1227.0" x2="1100.0" y2="121.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="950.0" x2="1100.0" y2="121.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="950.0" x2="1100.0" y2="1250.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="685.0" x2="1100.0" y2="1626.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="685.0" x2="1100.0" y2="121.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="1094.0" x2="770.0" y2="151.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="731.0" x2="440.0" y2="1094.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="731.0" x2="770.0" y2="1227.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="731.0" x2="1100.0" y2="121.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="1470.0" x2="770.0" y2="151.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="1470.0" x2="770.0" y2="1227.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="607.0" x2="770.0" y2="151.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="607.0" x2="1100.0" y2="121.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="607.0" x2="770.0" y2="1227.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="268.0" x2="770.0" y2="151.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="268.0" x2="770.0" y2="151.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="40.0" x2="770.0" y2="151.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="40.0" x2="1100.0" y2="121.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="40.0" x2="440.0" y2="607.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <rect x="1010.0" y="101.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1010.0" y="101.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1016.0" y="113.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">works</text>
+  <rect x="680.0" y="1207.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="680.0" y="1207.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="686.0" y="1219.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">editions</text>
+  <rect x="1010.0" y="1230.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1010.0" y="1230.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1016.0" y="1242.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">authors</text>
+  <rect x="680.0" y="930.0" width="160" height="66" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="680.0" y="930.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="686.0" y="942.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">work_contributors</text>
+  <rect x="1010.0" y="1606.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1010.0" y="1606.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1016.0" y="1618.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">series</text>
+  <rect x="680.0" y="665.0" width="160" height="66" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="680.0" y="665.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="686.0" y="677.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">series_works</text>
+  <rect x="680.0" y="131.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="680.0" y="131.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="686.0" y="143.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">users</text>
+  <rect x="350.0" y="1074.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="350.0" y="1074.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="356.0" y="1086.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">shelves</text>
+  <rect x="20.0" y="711.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="20.0" y="711.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="26.0" y="723.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">shelvings</text>
+  <rect x="350.0" y="1450.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="350.0" y="1450.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="356.0" y="1462.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">reading_progress</text>
+  <rect x="350.0" y="587.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="350.0" y="587.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="356.0" y="599.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">reviews</text>
+  <rect x="350.0" y="248.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="350.0" y="248.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="356.0" y="260.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">friendships</text>
+  <rect x="20.0" y="20.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="20.0" y="20.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="26.0" y="32.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">activity_events</text>
+</svg>

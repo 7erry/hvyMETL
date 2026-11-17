@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1210 2569" width="1210" height="2569">
+  <rect width="1210" height="2569" fill="#0b1616"/>
+  <line x1="770.0" y1="1210.0" x2="1100.0" y2="40.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="1210.0" x2="1100.0" y2="1086.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="1699.0" x2="1100.0" y2="40.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="1699.0" x2="1100.0" y2="1086.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="1699.0" x2="440.0" y2="1971.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="709.0" x2="1100.0" y2="40.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="709.0" x2="1100.0" y2="1086.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="602.0" x2="770.0" y2="709.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="602.0" x2="1100.0" y2="40.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="1181.0" x2="770.0" y2="709.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="1181.0" x2="1100.0" y2="1086.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="2153.0" x2="1100.0" y2="1086.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="2153.0" x2="1100.0" y2="2445.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="1323.0" x2="770.0" y2="2153.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="1323.0" x2="440.0" y2="1181.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="1323.0" x2="1100.0" y2="40.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="1971.0" x2="770.0" y2="2153.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="1971.0" x2="1100.0" y2="1086.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="1971.0" x2="1100.0" y2="2445.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="688.0" x2="440.0" y2="1971.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="688.0" x2="1100.0" y2="40.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="688.0" x2="770.0" y2="709.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="688.0" x2="440.0" y2="1181.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="238.0" x2="1100.0" y2="40.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="238.0" x2="1100.0" y2="1086.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="238.0" x2="440.0" y2="1971.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <rect x="1010.0" y="20.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1010.0" y="20.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1016.0" y="32.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">players</text>
+  <rect x="1010.0" y="1066.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1010.0" y="1066.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1016.0" y="1078.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">playlists</text>
+  <rect x="680.0" y="1190.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="680.0" y="1190.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="686.0" y="1202.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">skill_ratings</text>
+  <rect x="20.0" y="1679.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="20.0" y="1679.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="26.0" y="1691.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">rating_history</text>
+  <rect x="680.0" y="689.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="680.0" y="689.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="686.0" y="701.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">parties</text>
+  <rect x="350.0" y="582.0" width="160" height="66" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="350.0" y="582.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="356.0" y="594.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">party_members</text>
+  <rect x="350.0" y="1161.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="350.0" y="1161.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="356.0" y="1173.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">queue_tickets</text>
+  <rect x="1010.0" y="2425.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1010.0" y="2425.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1016.0" y="2437.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">game_servers</text>
+  <rect x="680.0" y="2133.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="680.0" y="2133.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="686.0" y="2145.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">match_proposals</text>
+  <rect x="20.0" y="1303.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="20.0" y="1303.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="26.0" y="1315.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">proposal_responses</text>
+  <rect x="350.0" y="1951.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="350.0" y="1951.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="356.0" y="1963.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">matches</text>
+  <rect x="20.0" y="668.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="20.0" y="668.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="26.0" y="680.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">match_slots</text>
+  <rect x="20.0" y="218.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="20.0" y="218.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="26.0" y="230.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">player_penalties</text>
+</svg>

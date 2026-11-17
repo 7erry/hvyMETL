@@ -1,0 +1,21 @@
+{
+  "slug": "event-ticketing",
+  "title": "Event ticketing database schema (ER diagram + SQL)",
+  "description": "A ticketing schema built around expiring checkout holds: venues with sections and seats, events, general-admission capacity pools, per-seat inventory, orders, tickets with rotating QR identifiers, transfers, door scans and partial refunds.",
+  "category": "travel",
+  "tags": [
+    "ticketing",
+    "seat-maps",
+    "inventory",
+    "checkout",
+    "concurrency"
+  ],
+  "primaryDialect": "postgresql",
+  "dialect": "postgresql",
+  "tableCount": 13,
+  "columnCount": 133,
+  "relationshipCount": 26,
+  "sourcePage": "https://www.drawdb.app/examples/event-ticketing",
+  "license": "CC0-1.0",
+  "attribution": "Vendored from drawDB examples (CC0-1.0). https://www.drawdb.app/examples"
+}

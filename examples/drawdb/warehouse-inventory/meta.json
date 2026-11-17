@@ -1,0 +1,21 @@
+{
+  "slug": "warehouse-inventory",
+  "title": "Warehouse inventory database schema (ER diagram + SQL)",
+  "description": "Bin-level inventory done properly: warehouses and storage locations, lot tracking for recalls, an append-only stock movement log with derived stock levels, purchase orders and outbound shipments.",
+  "category": "logistics",
+  "tags": [
+    "inventory",
+    "orders",
+    "traceability",
+    "audit-log",
+    "fulfilment"
+  ],
+  "primaryDialect": "postgresql",
+  "dialect": "postgresql",
+  "tableCount": 11,
+  "columnCount": 88,
+  "relationshipCount": 20,
+  "sourcePage": "https://www.drawdb.app/examples/warehouse-inventory",
+  "license": "CC0-1.0",
+  "attribution": "Vendored from drawDB examples (CC0-1.0). https://www.drawdb.app/examples"
+}

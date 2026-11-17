@@ -1,0 +1,21 @@
+{
+  "slug": "help-desk",
+  "title": "Help desk database schema example (ER diagram + SQL)",
+  "description": "A support desk modelled properly: tickets in queues, one thread that mixes public replies with internal notes, SLA clocks measured in business hours with breach tracking, macros, tags, merges and CSAT.",
+  "category": "saas",
+  "tags": [
+    "support",
+    "ticketing",
+    "sla",
+    "workflow",
+    "customer-service"
+  ],
+  "primaryDialect": "postgresql",
+  "dialect": "postgresql",
+  "tableCount": 13,
+  "columnCount": 99,
+  "relationshipCount": 24,
+  "sourcePage": "https://www.drawdb.app/examples/help-desk",
+  "license": "CC0-1.0",
+  "attribution": "Vendored from drawDB examples (CC0-1.0). https://www.drawdb.app/examples"
+}

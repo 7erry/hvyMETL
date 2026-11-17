@@ -1,0 +1,21 @@
+{
+  "slug": "blog-cms",
+  "title": "Blog / CMS database schema example (ER diagram + SQL)",
+  "description": "A content management schema that survives contact with editors: posts with an append-only revision history, categories and tags, threaded comments, a real media library, slug redirects and a double opt-in newsletter list.",
+  "category": "media",
+  "tags": [
+    "content",
+    "publishing",
+    "comments",
+    "taxonomy",
+    "seo"
+  ],
+  "primaryDialect": "postgresql",
+  "dialect": "postgresql",
+  "tableCount": 10,
+  "columnCount": 82,
+  "relationshipCount": 14,
+  "sourcePage": "https://www.drawdb.app/examples/blog-cms",
+  "license": "CC0-1.0",
+  "attribution": "Vendored from drawDB examples (CC0-1.0). https://www.drawdb.app/examples"
+}

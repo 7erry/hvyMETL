@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1540 2483" width="1540" height="2483">
+  <rect width="1540" height="2483" fill="#0b1616"/>
+  <line x1="770.0" y1="2233.0" x2="1430.0" y2="995.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="1416.0" x2="1430.0" y2="995.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="1376.0" x2="1430.0" y2="995.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="1376.0" x2="1430.0" y2="995.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="1376.0" x2="770.0" y2="2233.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="1376.0" x2="770.0" y2="2233.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="1376.0" x2="770.0" y2="1416.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="1376.0" x2="770.0" y2="789.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="789.0" x2="1430.0" y2="995.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="789.0" x2="1430.0" y2="995.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="789.0" x2="1100.0" y2="560.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="1100.0" y1="560.0" x2="1430.0" y2="995.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="334.0" x2="1100.0" y2="560.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="334.0" x2="1430.0" y2="995.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="334.0" x2="770.0" y2="789.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="2122.0" x2="1430.0" y2="995.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="2122.0" x2="770.0" y2="2233.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="2122.0" x2="770.0" y2="1416.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="2359.0" x2="770.0" y2="2233.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="2359.0" x2="440.0" y2="1376.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="2359.0" x2="440.0" y2="2122.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="1100.0" y1="164.0" x2="1430.0" y2="995.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="1100.0" y1="164.0" x2="1430.0" y2="995.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="1200.0" x2="440.0" y2="1376.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="1200.0" x2="1430.0" y2="995.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="40.0" x2="440.0" y2="1376.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="40.0" x2="1430.0" y2="995.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <rect x="1340.0" y="975.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1340.0" y="975.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1346.0" y="987.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">users</text>
+  <rect x="680.0" y="2213.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="680.0" y="2213.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="686.0" y="2225.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">wallets</text>
+  <rect x="680.0" y="1396.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="680.0" y="1396.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="686.0" y="1408.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">funding_sources</text>
+  <rect x="350.0" y="1356.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="350.0" y="1356.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="356.0" y="1368.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">transfers</text>
+  <rect x="680.0" y="769.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="680.0" y="769.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="686.0" y="781.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">payment_requests</text>
+  <rect x="1010.0" y="540.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1010.0" y="540.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1016.0" y="552.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">split_requests</text>
+  <rect x="350.0" y="314.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="350.0" y="314.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="356.0" y="326.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">split_participants</text>
+  <rect x="350.0" y="2102.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="350.0" y="2102.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="356.0" y="2114.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">funding_transfers</text>
+  <rect x="20.0" y="2339.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="20.0" y="2339.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="26.0" y="2351.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">wallet_entries</text>
+  <rect x="1010.0" y="144.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1010.0" y="144.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1016.0" y="156.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">friendships</text>
+  <rect x="20.0" y="1180.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="20.0" y="1180.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="26.0" y="1192.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">transfer_comments</text>
+  <rect x="20.0" y="20.0" width="160" height="55" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="20.0" y="20.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="26.0" y="32.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">transfer_likes</text>
+</svg>

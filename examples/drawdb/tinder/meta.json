@@ -1,0 +1,21 @@
+{
+  "slug": "tinder",
+  "title": "Tinder database schema example (ER diagram + SQL)",
+  "description": "How a dating app models its data: profiles with ordered photos, discovery preferences, an append-only swipe log, matches created only on a mutual right swipe, messaging scoped to a match, blocks and reports, and consumable boosts and super likes.",
+  "category": "social",
+  "tags": [
+    "dating-app",
+    "swipes",
+    "matching",
+    "messaging",
+    "entitlements"
+  ],
+  "primaryDialect": "postgresql",
+  "dialect": "postgresql",
+  "tableCount": 13,
+  "columnCount": 97,
+  "relationshipCount": 22,
+  "sourcePage": "https://www.drawdb.app/examples/tinder",
+  "license": "CC0-1.0",
+  "attribution": "Vendored from drawDB examples (CC0-1.0). https://www.drawdb.app/examples"
+}

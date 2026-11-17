@@ -1,0 +1,21 @@
+{
+  "slug": "flight-booking",
+  "title": "Flight booking database schema (ER diagram + SQL)",
+  "description": "An airline reservation schema: airports, scheduled flights and their legs, weekly operating patterns, dated departures, fare classes with overlapping inventory buckets, PNR bookings, e-tickets, seat maps and assignments, and ancillaries.",
+  "category": "travel",
+  "tags": [
+    "reservations",
+    "inventory",
+    "scheduling",
+    "ticketing",
+    "seat-maps"
+  ],
+  "primaryDialect": "postgresql",
+  "dialect": "postgresql",
+  "tableCount": 14,
+  "columnCount": 131,
+  "relationshipCount": 23,
+  "sourcePage": "https://www.drawdb.app/examples/flight-booking",
+  "license": "CC0-1.0",
+  "attribution": "Vendored from drawDB examples (CC0-1.0). https://www.drawdb.app/examples"
+}

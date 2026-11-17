@@ -1,0 +1,21 @@
+{
+  "slug": "project-management",
+  "title": "Project management / issue tracker database schema",
+  "description": "A Jira-shaped tracker: projects with human-readable issue keys, subtasks through a self-reference, fractional board positions for drag-and-drop, labels, milestones, comments, attachments and a worklog.",
+  "category": "internal-tools",
+  "tags": [
+    "issues",
+    "kanban",
+    "scheduling",
+    "collaboration",
+    "time-tracking"
+  ],
+  "primaryDialect": "postgresql",
+  "dialect": "postgresql",
+  "tableCount": 10,
+  "columnCount": 73,
+  "relationshipCount": 18,
+  "sourcePage": "https://www.drawdb.app/examples/project-management",
+  "license": "CC0-1.0",
+  "attribution": "Vendored from drawDB examples (CC0-1.0). https://www.drawdb.app/examples"
+}

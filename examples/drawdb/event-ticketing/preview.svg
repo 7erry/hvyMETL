@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1540 2912" width="1540" height="2912">
+  <rect width="1540" height="2912" fill="#0b1616"/>
+  <line x1="1100.0" y1="2168.0" x2="1430.0" y2="1500.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="2414.0" x2="1100.0" y2="2168.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="1100.0" y1="40.0" x2="1430.0" y2="1500.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="1944.0" x2="1100.0" y2="40.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="1944.0" x2="1100.0" y2="2168.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="1654.0" x2="1100.0" y2="40.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="1654.0" x2="770.0" y2="2414.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="1654.0" x2="440.0" y2="1541.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="1654.0" x2="770.0" y2="1191.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="1541.0" x2="1100.0" y2="40.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="1541.0" x2="1100.0" y2="2168.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="1541.0" x2="1100.0" y2="2802.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="1541.0" x2="770.0" y2="1191.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="1191.0" x2="1100.0" y2="2802.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="1191.0" x2="1100.0" y2="40.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="869.0" x2="770.0" y2="1191.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="869.0" x2="1100.0" y2="40.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="869.0" x2="1100.0" y2="2168.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="869.0" x2="770.0" y2="2414.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="2594.0" x2="440.0" y2="869.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="2594.0" x2="1100.0" y2="2802.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="2594.0" x2="1100.0" y2="2802.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="60.0" x2="440.0" y2="869.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="60.0" x2="1100.0" y2="40.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="730.0" x2="770.0" y2="1191.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="730.0" x2="440.0" y2="869.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <rect x="1340.0" y="1480.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1340.0" y="1480.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1346.0" y="1492.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">venues</text>
+  <rect x="1010.0" y="2148.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1010.0" y="2148.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1016.0" y="2160.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">sections</text>
+  <rect x="680.0" y="2394.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="680.0" y="2394.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="686.0" y="2406.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">seats</text>
+  <rect x="1010.0" y="20.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1010.0" y="20.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1016.0" y="32.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">events</text>
+  <rect x="680.0" y="1924.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="680.0" y="1924.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="686.0" y="1936.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">event_sections</text>
+  <rect x="20.0" y="1634.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="20.0" y="1634.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="26.0" y="1646.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">seat_inventory</text>
+  <rect x="1010.0" y="2782.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1010.0" y="2782.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1016.0" y="2794.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">customers</text>
+  <rect x="350.0" y="1521.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="350.0" y="1521.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="356.0" y="1533.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">holds</text>
+  <rect x="680.0" y="1171.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="680.0" y="1171.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="686.0" y="1183.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">orders</text>
+  <rect x="350.0" y="849.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="350.0" y="849.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="356.0" y="861.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">tickets</text>
+  <rect x="20.0" y="2574.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="20.0" y="2574.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="26.0" y="2586.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">ticket_transfers</text>
+  <rect x="20.0" y="40.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="20.0" y="40.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="26.0" y="52.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">scans</text>
+  <rect x="20.0" y="710.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="20.0" y="710.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="26.0" y="722.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">refunds</text>
+</svg>

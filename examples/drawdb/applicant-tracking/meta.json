@@ -1,0 +1,21 @@
+{
+  "slug": "applicant-tracking",
+  "title": "Applicant tracking system schema (ER diagram + SQL)",
+  "description": "An ATS modelled end to end: jobs with openings and hiring teams, candidates separate from applications, per-job pipeline stages, interviews with panels, structured scorecards, offers with approval chains and a talent pool of near misses.",
+  "category": "internal-tools",
+  "tags": [
+    "recruiting",
+    "hiring",
+    "interviews",
+    "workflow",
+    "hr"
+  ],
+  "primaryDialect": "postgresql",
+  "dialect": "postgresql",
+  "tableCount": 13,
+  "columnCount": 113,
+  "relationshipCount": 27,
+  "sourcePage": "https://www.drawdb.app/examples/applicant-tracking",
+  "license": "CC0-1.0",
+  "attribution": "Vendored from drawDB examples (CC0-1.0). https://www.drawdb.app/examples"
+}

@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1540 2391" width="1540" height="2391">
+  <rect width="1540" height="2391" fill="#0b1616"/>
+  <line x1="1430.0" y1="2179.0" x2="770.0" y2="2267.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="1100.0" y1="1616.0" x2="1430.0" y2="2179.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="1100.0" y1="1616.0" x2="1430.0" y2="40.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="2267.0" x2="1430.0" y2="2179.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="2267.0" x2="1100.0" y2="1616.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="2157.0" x2="770.0" y2="2267.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="2157.0" x2="1100.0" y2="1616.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="2157.0" x2="440.0" y2="1443.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="1443.0" x2="770.0" y2="2267.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="1443.0" x2="1100.0" y2="1616.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="1443.0" x2="1100.0" y2="238.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="1443.0" x2="440.0" y2="1443.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="1855.0" x2="440.0" y2="1443.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="1855.0" x2="1100.0" y2="1616.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="1586.0" x2="440.0" y2="1443.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="1586.0" x2="1100.0" y2="1616.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="723.0" x2="1430.0" y2="2179.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="723.0" x2="1100.0" y2="1616.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="723.0" x2="440.0" y2="1443.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="1210.0" x2="1100.0" y2="1616.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="1210.0" x2="440.0" y2="1443.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="446.0" x2="1430.0" y2="2179.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="446.0" x2="1100.0" y2="238.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="446.0" x2="1100.0" y2="1616.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="446.0" x2="1430.0" y2="40.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="557.0" x2="770.0" y2="446.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <rect x="1340.0" y="2159.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1340.0" y="2159.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1346.0" y="2171.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">workspaces</text>
+  <rect x="1340.0" y="20.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1340.0" y="20.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1346.0" y="32.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">users</text>
+  <rect x="1010.0" y="1596.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1010.0" y="1596.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1016.0" y="1608.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">workspace_members</text>
+  <rect x="680.0" y="2247.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="680.0" y="2247.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="686.0" y="2259.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">channels</text>
+  <rect x="20.0" y="2137.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="20.0" y="2137.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="26.0" y="2149.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">channel_members</text>
+  <rect x="350.0" y="1423.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="350.0" y="1423.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="356.0" y="1435.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">messages</text>
+  <rect x="20.0" y="1835.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="20.0" y="1835.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="26.0" y="1847.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">mentions</text>
+  <rect x="20.0" y="1566.0" width="160" height="66" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="20.0" y="1566.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="26.0" y="1578.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">reactions</text>
+  <rect x="20.0" y="703.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="20.0" y="703.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="26.0" y="715.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">files</text>
+  <rect x="20.0" y="1190.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="20.0" y="1190.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="26.0" y="1202.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">saved_items</text>
+  <rect x="1010.0" y="218.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1010.0" y="218.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1016.0" y="230.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">apps</text>
+  <rect x="680.0" y="426.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="680.0" y="426.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="686.0" y="438.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">app_installations</text>
+  <rect x="350.0" y="537.0" width="160" height="55" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="350.0" y="537.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="356.0" y="549.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">app_installation_scope</text>
+</svg>

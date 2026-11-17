@@ -1,0 +1,21 @@
+{
+  "slug": "forum-community",
+  "title": "Forum database schema example (ER diagram + SQL)",
+  "description": "The phpBB and Discourse shape rather than the Reddit one: curated categories and boards, threads bumped by replies, flat numbered posts with quoting, reputation and badges, a report-driven moderation queue and private messages.",
+  "category": "communication",
+  "tags": [
+    "forum",
+    "threads",
+    "moderation",
+    "reputation",
+    "messaging"
+  ],
+  "primaryDialect": "mysql",
+  "dialect": "mysql",
+  "tableCount": 13,
+  "columnCount": 125,
+  "relationshipCount": 33,
+  "sourcePage": "https://www.drawdb.app/examples/forum-community",
+  "license": "CC0-1.0",
+  "attribution": "Vendored from drawDB examples (CC0-1.0). https://www.drawdb.app/examples"
+}

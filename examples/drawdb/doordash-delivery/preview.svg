@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1540 2222" width="1540" height="2222">
+  <rect width="1540" height="2222" fill="#0b1616"/>
+  <line x1="1100.0" y1="453.0" x2="1430.0" y2="352.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="416.0" x2="1100.0" y2="453.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="40.0" x2="1430.0" y2="352.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="40.0" x2="770.0" y2="40.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="452.0" x2="770.0" y2="416.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="452.0" x2="770.0" y2="40.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="1100.0" y1="1622.0" x2="1430.0" y2="1933.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="1100.0" y1="1622.0" x2="1430.0" y2="352.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="1100.0" y1="1622.0" x2="1430.0" y2="1362.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="2098.0" x2="1100.0" y2="1622.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="2098.0" x2="770.0" y2="416.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="590.0" x2="440.0" y2="2098.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="590.0" x2="440.0" y2="40.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="903.0" x2="1100.0" y2="1622.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="903.0" x2="1430.0" y2="1362.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="1390.0" x2="1430.0" y2="1362.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="1390.0" x2="1100.0" y2="1622.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="1873.0" x2="1100.0" y2="1622.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <rect x="1340.0" y="1913.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1340.0" y="1913.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1346.0" y="1925.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">customers</text>
+  <rect x="1340.0" y="332.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1340.0" y="332.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1346.0" y="344.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">restaurants</text>
+  <rect x="1010.0" y="433.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1010.0" y="433.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1016.0" y="445.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">menu_sections</text>
+  <rect x="680.0" y="396.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="680.0" y="396.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="686.0" y="408.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">menu_items</text>
+  <rect x="680.0" y="20.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="680.0" y="20.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="686.0" y="32.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">modifier_groups</text>
+  <rect x="350.0" y="20.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="350.0" y="20.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="356.0" y="32.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">modifiers</text>
+  <rect x="350.0" y="432.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="350.0" y="432.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="356.0" y="444.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">menu_item_modifier_gro</text>
+  <rect x="1010.0" y="1602.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1010.0" y="1602.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1016.0" y="1614.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">orders</text>
+  <rect x="350.0" y="2078.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="350.0" y="2078.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="356.0" y="2090.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">order_items</text>
+  <rect x="20.0" y="570.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="20.0" y="570.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="26.0" y="582.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">order_item_modifiers</text>
+  <rect x="1340.0" y="1342.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1340.0" y="1342.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1346.0" y="1354.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">couriers</text>
+  <rect x="680.0" y="883.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="680.0" y="883.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="686.0" y="895.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">dispatch_offers</text>
+  <rect x="680.0" y="1370.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="680.0" y="1370.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="686.0" y="1382.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">courier_pings</text>
+  <rect x="680.0" y="1853.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="680.0" y="1853.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="686.0" y="1865.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">order_fees</text>
+</svg>

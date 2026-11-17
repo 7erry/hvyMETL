@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1540 2110" width="1540" height="2110">
+  <rect width="1540" height="2110" fill="#0b1616"/>
+  <line x1="1100.0" y1="886.0" x2="1430.0" y2="132.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="40.0" x2="1100.0" y2="886.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="40.0" x2="1430.0" y2="132.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="1450.0" x2="1100.0" y2="886.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="1450.0" x2="770.0" y2="1450.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="1123.0" x2="1100.0" y2="886.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="1123.0" x2="770.0" y2="1450.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="1986.0" x2="440.0" y2="1123.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="1610.0" x2="440.0" y2="1123.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="1271.0" x2="440.0" y2="1123.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="943.0" x2="1100.0" y2="886.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="999.0" x2="440.0" y2="1123.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="999.0" x2="770.0" y2="943.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="419.0" x2="1100.0" y2="886.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="419.0" x2="1430.0" y2="132.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="419.0" x2="1430.0" y2="132.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="173.0" x2="1430.0" y2="132.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="173.0" x2="1100.0" y2="886.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="173.0" x2="440.0" y2="1123.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <rect x="1340.0" y="112.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1340.0" y="112.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1346.0" y="124.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">users</text>
+  <rect x="1010.0" y="866.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1010.0" y="866.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1016.0" y="878.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">vaults</text>
+  <rect x="680.0" y="20.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="680.0" y="20.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="686.0" y="32.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">vault_members</text>
+  <rect x="680.0" y="1430.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="680.0" y="1430.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="686.0" y="1442.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">folders</text>
+  <rect x="350.0" y="1103.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="350.0" y="1103.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="356.0" y="1115.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">items</text>
+  <rect x="20.0" y="1966.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="20.0" y="1966.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="26.0" y="1978.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">item_fields</text>
+  <rect x="20.0" y="1590.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="20.0" y="1590.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="26.0" y="1602.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">totp_secrets</text>
+  <rect x="20.0" y="1251.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="20.0" y="1251.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="26.0" y="1263.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">password_history</text>
+  <rect x="680.0" y="923.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="680.0" y="923.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="686.0" y="935.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">tags</text>
+  <rect x="20.0" y="979.0" width="160" height="55" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="20.0" y="979.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="26.0" y="991.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">item_tags</text>
+  <rect x="680.0" y="399.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="680.0" y="399.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="686.0" y="411.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">share_invitations</text>
+  <rect x="20.0" y="153.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="20.0" y="153.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="26.0" y="165.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">audit_events</text>
+</svg>

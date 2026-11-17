@@ -1,0 +1,21 @@
+{
+  "slug": "quiz-app",
+  "title": "Quiz app database schema example (ER diagram + SQL)",
+  "description": "A quiz engine that handles four question types at once: reusable question banks, draw rules and randomised papers, typed answer keys, per-question responses, partial credit, negative marking and time limits.",
+  "category": "education",
+  "tags": [
+    "quizzes",
+    "assessment",
+    "question-bank",
+    "scoring",
+    "randomisation"
+  ],
+  "primaryDialect": "mysql",
+  "dialect": "mysql",
+  "tableCount": 11,
+  "columnCount": 91,
+  "relationshipCount": 15,
+  "sourcePage": "https://www.drawdb.app/examples/quiz-app",
+  "license": "CC0-1.0",
+  "attribution": "Vendored from drawDB examples (CC0-1.0). https://www.drawdb.app/examples"
+}

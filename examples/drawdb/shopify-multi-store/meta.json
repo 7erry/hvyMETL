@@ -1,0 +1,21 @@
+{
+  "slug": "shopify-multi-store",
+  "title": "Shopify multi-store schema (ER diagram + SQL)",
+  "description": "How a hosted commerce platform models many shops at once: merchants and shops as tenants, per-shop staff roles, catalogue and orders scoped by shop_id, installed apps with OAuth scopes, and webhook delivery attempts.",
+  "category": "commerce",
+  "tags": [
+    "multi-tenant",
+    "platform",
+    "webhooks",
+    "oauth-scopes",
+    "saas-billing"
+  ],
+  "primaryDialect": "postgresql",
+  "dialect": "postgresql",
+  "tableCount": 13,
+  "columnCount": 113,
+  "relationshipCount": 15,
+  "sourcePage": "https://www.drawdb.app/examples/shopify-multi-store",
+  "license": "CC0-1.0",
+  "attribution": "Vendored from drawDB examples (CC0-1.0). https://www.drawdb.app/examples"
+}

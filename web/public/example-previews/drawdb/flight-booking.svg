@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2200 2888" width="2200" height="2888">
+  <rect width="2200" height="2888" fill="#0b1616"/>
+  <line x1="1760.0" y1="2764.0" x2="2090.0" y2="2370.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="1760.0" y1="2314.0" x2="2090.0" y2="2370.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="1430.0" y1="1258.0" x2="1760.0" y2="2764.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="1430.0" y1="1258.0" x2="1760.0" y2="40.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="1430.0" y1="1258.0" x2="1760.0" y2="40.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="1100.0" y1="411.0" x2="1430.0" y2="1258.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="1100.0" y1="411.0" x2="2090.0" y2="2370.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="421.0" x2="1100.0" y2="411.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="421.0" x2="1100.0" y2="900.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="1968.0" x2="1100.0" y2="1439.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="908.0" x2="1100.0" y2="1439.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="908.0" x2="1100.0" y2="411.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="908.0" x2="1100.0" y2="900.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="1537.0" x2="1100.0" y2="1439.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="1537.0" x2="770.0" y2="1968.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="1537.0" x2="440.0" y2="1537.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="2061.0" x2="770.0" y2="908.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="2061.0" x2="770.0" y2="1968.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="2061.0" x2="1760.0" y2="2314.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="1565.0" x2="1100.0" y2="1439.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="1565.0" x2="770.0" y2="1968.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="1565.0" x2="770.0" y2="908.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="1565.0" x2="440.0" y2="2061.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <rect x="1670.0" y="20.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1670.0" y="20.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1676.0" y="32.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">airports</text>
+  <rect x="2000.0" y="2350.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="2000.0" y="2350.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="2006.0" y="2362.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">aircraft_configuration</text>
+  <rect x="1670.0" y="2294.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1670.0" y="2294.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1676.0" y="2306.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">cabin_seats</text>
+  <rect x="1670.0" y="2744.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1670.0" y="2744.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1676.0" y="2756.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">flights</text>
+  <rect x="1340.0" y="1238.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1340.0" y="1238.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1346.0" y="1250.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">flight_legs</text>
+  <rect x="1010.0" y="391.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1010.0" y="391.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1016.0" y="403.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">flight_departures</text>
+  <rect x="1010.0" y="880.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1010.0" y="880.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1016.0" y="892.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">fare_classes</text>
+  <rect x="680.0" y="401.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="680.0" y="401.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="686.0" y="413.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">inventory_buckets</text>
+  <rect x="1010.0" y="1419.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1010.0" y="1419.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1016.0" y="1431.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">bookings</text>
+  <rect x="680.0" y="1948.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="680.0" y="1948.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="686.0" y="1960.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">passengers</text>
+  <rect x="680.0" y="888.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="680.0" y="888.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="686.0" y="900.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">booking_segments</text>
+  <rect x="350.0" y="1517.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="350.0" y="1517.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="356.0" y="1529.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">tickets</text>
+  <rect x="350.0" y="2041.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="350.0" y="2041.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="356.0" y="2053.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">seat_assignments</text>
+  <rect x="20.0" y="1545.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="20.0" y="1545.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="26.0" y="1557.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">ancillaries</text>
+</svg>

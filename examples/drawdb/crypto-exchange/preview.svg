@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1540 2891" width="1540" height="2891">
+  <rect width="1540" height="2891" fill="#0b1616"/>
+  <line x1="1100.0" y1="1688.0" x2="1430.0" y2="1416.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="1100.0" y1="2138.0" x2="1430.0" y2="1965.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="1100.0" y1="2138.0" x2="1430.0" y2="1965.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="40.0" x2="1100.0" y2="1688.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="40.0" x2="1430.0" y2="1965.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="332.0" x2="1100.0" y2="1688.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="332.0" x2="1430.0" y2="1965.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="332.0" x2="770.0" y2="1512.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="332.0" x2="770.0" y2="362.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="1512.0" x2="1100.0" y2="1688.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="1512.0" x2="1100.0" y2="2138.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="1512.0" x2="1430.0" y2="1416.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="2547.0" x2="1100.0" y2="2138.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="2547.0" x2="770.0" y2="1512.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="2547.0" x2="770.0" y2="1512.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="2419.0" x2="1100.0" y2="1688.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="2419.0" x2="1430.0" y2="1965.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="362.0" x2="1100.0" y2="1688.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="362.0" x2="1430.0" y2="1965.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="2767.0" x2="1100.0" y2="1688.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="2767.0" x2="1430.0" y2="1965.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="2767.0" x2="440.0" y2="2547.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="2767.0" x2="770.0" y2="2419.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="2767.0" x2="770.0" y2="362.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="1054.0" x2="1100.0" y2="2138.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <rect x="1010.0" y="1668.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1010.0" y="1668.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1016.0" y="1680.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">users</text>
+  <rect x="1340.0" y="1945.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1340.0" y="1945.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1346.0" y="1957.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">assets</text>
+  <rect x="1010.0" y="2118.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1010.0" y="2118.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1016.0" y="2130.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">markets</text>
+  <rect x="680.0" y="20.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="680.0" y="20.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="686.0" y="32.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">wallet_balances</text>
+  <rect x="350.0" y="312.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="350.0" y="312.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="356.0" y="324.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">balance_locks</text>
+  <rect x="1340.0" y="1396.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1340.0" y="1396.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1346.0" y="1408.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">fee_tiers</text>
+  <rect x="680.0" y="1492.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="680.0" y="1492.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="686.0" y="1504.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">orders</text>
+  <rect x="350.0" y="2527.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="350.0" y="2527.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="356.0" y="2539.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">trades</text>
+  <rect x="680.0" y="2399.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="680.0" y="2399.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="686.0" y="2411.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">deposits</text>
+  <rect x="680.0" y="342.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="680.0" y="342.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="686.0" y="354.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">withdrawals</text>
+  <rect x="20.0" y="2747.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="20.0" y="2747.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="26.0" y="2759.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">balance_entries</text>
+  <rect x="680.0" y="1034.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="680.0" y="1034.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="686.0" y="1046.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">order_book_snapshots</text>
+</svg>

@@ -1,0 +1,21 @@
+{
+  "slug": "dropbox-file-storage",
+  "title": "Dropbox file storage database schema (ER diagram + SQL)",
+  "description": "How a cloud drive models its data: a folder tree, versioned files, content-addressed blocks that deduplicate identical uploads to a single copy, shares and expiring public links, per-device sync cursors, trash retention and quota accounting.",
+  "category": "productivity",
+  "tags": [
+    "file-storage",
+    "deduplication",
+    "sync",
+    "versioning",
+    "sharing"
+  ],
+  "primaryDialect": "postgresql",
+  "dialect": "postgresql",
+  "tableCount": 12,
+  "columnCount": 94,
+  "relationshipCount": 29,
+  "sourcePage": "https://www.drawdb.app/examples/dropbox-file-storage",
+  "license": "CC0-1.0",
+  "attribution": "Vendored from drawDB examples (CC0-1.0). https://www.drawdb.app/examples"
+}

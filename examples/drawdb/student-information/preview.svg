@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1210 3134" width="1210" height="3134">
+  <rect width="1210" height="3134" fill="#0b1616"/>
+  <line x1="770.0" y1="40.0" x2="1100.0" y2="1807.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="40.0" x2="1100.0" y2="40.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="2486.0" x2="1100.0" y2="1807.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="2486.0" x2="1100.0" y2="2585.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="2486.0" x2="1100.0" y2="957.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="3010.0" x2="1100.0" y2="2585.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="2267.0" x2="1100.0" y2="2585.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="2267.0" x2="770.0" y2="3010.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="2267.0" x2="1100.0" y2="957.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="2267.0" x2="770.0" y2="894.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="557.0" x2="770.0" y2="2486.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="2267.0" x2="770.0" y2="2486.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="2267.0" x2="440.0" y2="2267.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="2267.0" x2="1100.0" y2="957.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="1290.0" x2="1100.0" y2="1807.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="1290.0" x2="1100.0" y2="2585.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="1290.0" x2="1100.0" y2="957.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="1888.0" x2="1100.0" y2="1807.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="1888.0" x2="1100.0" y2="2585.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="1888.0" x2="770.0" y2="1888.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <rect x="1010.0" y="1787.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1010.0" y="1787.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1016.0" y="1799.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">students</text>
+  <rect x="1010.0" y="20.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1010.0" y="20.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1016.0" y="32.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">guardians</text>
+  <rect x="680.0" y="20.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="680.0" y="20.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="686.0" y="32.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">student_guardians</text>
+  <rect x="1010.0" y="2565.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1010.0" y="2565.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1016.0" y="2577.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">school_years</text>
+  <rect x="1010.0" y="937.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1010.0" y="937.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1016.0" y="949.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">staff</text>
+  <rect x="680.0" y="874.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="680.0" y="874.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="686.0" y="886.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">rooms</text>
+  <rect x="680.0" y="2990.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="680.0" y="2990.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="686.0" y="3002.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">periods</text>
+  <rect x="680.0" y="2466.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="680.0" y="2466.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="686.0" y="2478.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">enrollments</text>
+  <rect x="350.0" y="2247.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="350.0" y="2247.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="356.0" y="2259.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">timetable_entries</text>
+  <rect x="350.0" y="537.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="350.0" y="537.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="356.0" y="549.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">subject_registrations</text>
+  <rect x="20.0" y="2247.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="20.0" y="2247.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="26.0" y="2259.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">attendance_marks</text>
+  <rect x="680.0" y="1270.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="680.0" y="1270.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="686.0" y="1282.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">discipline_incidents</text>
+  <rect x="680.0" y="1868.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="680.0" y="1868.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="686.0" y="1880.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">fee_ledger</text>
+</svg>

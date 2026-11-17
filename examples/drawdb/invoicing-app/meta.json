@@ -1,0 +1,21 @@
+{
+  "slug": "invoicing-app",
+  "title": "Invoicing app database schema example (ER + SQL)",
+  "description": "How a freelance and small-business invoicing app models its data in MySQL: clients and projects, tracked time, invoices with per-line tax, partial payments, credit notes, recurring templates, reminder schedules and multi-currency with the rate snapshotted at issue.",
+  "category": "fintech",
+  "tags": [
+    "invoicing",
+    "billing",
+    "time-tracking",
+    "multi-currency",
+    "recurring"
+  ],
+  "primaryDialect": "mysql",
+  "dialect": "mysql",
+  "tableCount": 13,
+  "columnCount": 170,
+  "relationshipCount": 19,
+  "sourcePage": "https://www.drawdb.app/examples/invoicing-app",
+  "license": "CC0-1.0",
+  "attribution": "Vendored from drawDB examples (CC0-1.0). https://www.drawdb.app/examples"
+}

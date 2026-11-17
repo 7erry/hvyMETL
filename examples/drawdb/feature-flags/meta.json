@@ -1,0 +1,21 @@
+{
+  "slug": "feature-flags",
+  "title": "Feature flag database schema example (ER diagram + SQL)",
+  "description": "How a feature management platform stores its data: flags and variations, per-environment settings, ordered targeting rules, reusable segments, percentage rollouts with deterministic bucketing, scheduled changes and a full audit trail.",
+  "category": "developer-tools",
+  "tags": [
+    "feature-flags",
+    "targeting",
+    "rollouts",
+    "experimentation",
+    "audit-log"
+  ],
+  "primaryDialect": "postgresql",
+  "dialect": "postgresql",
+  "tableCount": 13,
+  "columnCount": 98,
+  "relationshipCount": 27,
+  "sourcePage": "https://www.drawdb.app/examples/feature-flags",
+  "license": "CC0-1.0",
+  "attribution": "Vendored from drawDB examples (CC0-1.0). https://www.drawdb.app/examples"
+}

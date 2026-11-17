@@ -1,0 +1,21 @@
+{
+  "slug": "property-management",
+  "title": "Property management database schema (ER + SQL)",
+  "description": "Landlord operations modelled end to end: buildings and units, leases and renewals, co-tenants and guarantors, rent charges generated per period, payments allocated against them, deposits held and returned, maintenance with vendors, and inspections.",
+  "category": "real-estate",
+  "tags": [
+    "rentals",
+    "leases",
+    "billing",
+    "maintenance",
+    "arrears"
+  ],
+  "primaryDialect": "postgresql",
+  "dialect": "postgresql",
+  "tableCount": 13,
+  "columnCount": 158,
+  "relationshipCount": 20,
+  "sourcePage": "https://www.drawdb.app/examples/property-management",
+  "license": "CC0-1.0",
+  "attribution": "Vendored from drawDB examples (CC0-1.0). https://www.drawdb.app/examples"
+}

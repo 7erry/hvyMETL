@@ -1,0 +1,21 @@
+{
+  "slug": "hr-payroll",
+  "title": "HR and payroll database schema (SQL Server)",
+  "description": "How an HR system models data that must never be overwritten: employees, positions and reporting lines as dated rows, compensation history, payroll runs and itemised payslips, tax withholding, time off as a ledger, and benefits enrolment.",
+  "category": "internal-tools",
+  "tags": [
+    "payroll",
+    "hr",
+    "effective-dating",
+    "audit-trail",
+    "time-off"
+  ],
+  "primaryDialect": "transactsql",
+  "dialect": "mssql",
+  "tableCount": 13,
+  "columnCount": 152,
+  "relationshipCount": 23,
+  "sourcePage": "https://www.drawdb.app/examples/hr-payroll",
+  "license": "CC0-1.0",
+  "attribution": "Vendored from drawDB examples (CC0-1.0). https://www.drawdb.app/examples"
+}

@@ -73,6 +73,12 @@ export type MessageKey =
   | 'schema.noExamples'
   | 'schema.chooseExample'
   | 'schema.exampleHint'
+  | 'schema.gallerySearch'
+  | 'schema.galleryCategories'
+  | 'schema.galleryAll'
+  | 'schema.galleryStudio'
+  | 'schema.galleryEmpty'
+  | 'schema.galleryTables'
   | 'live.agentHint'
   | 'live.agentPlatform'
   | 'live.chooseComputer'
@@ -396,6 +402,12 @@ const en: MessageCatalog = {
   'schema.noExamples': 'No examples on server',
   'schema.chooseExample': 'Choose an example…',
   'schema.exampleHint': 'Loads DDL from the server examples folder.',
+  'schema.gallerySearch': 'Search examples…',
+  'schema.galleryCategories': 'Example categories',
+  'schema.galleryAll': 'All',
+  'schema.galleryStudio': 'Studio',
+  'schema.galleryEmpty': 'No examples match your filters.',
+  'schema.galleryTables': '{count} tables',
   'live.agentHint':
     'hvymetl.studio cannot open a database on your computer. Copy the one-liner, run it on the database host, then import when the agent connects.',
   'live.agentPlatform': 'Agent for this computer',
@@ -785,6 +797,12 @@ const pt: MessageCatalog = {
   'schema.noExamples': 'Nenhum exemplo no servidor',
   'schema.chooseExample': 'Escolha um exemplo…',
   'schema.exampleHint': 'Carrega DDL da pasta de exemplos do servidor.',
+  'schema.gallerySearch': 'Buscar exemplos…',
+  'schema.galleryCategories': 'Categorias de exemplos',
+  'schema.galleryAll': 'Todos',
+  'schema.galleryStudio': 'Studio',
+  'schema.galleryEmpty': 'Nenhum exemplo corresponde aos filtros.',
+  'schema.galleryTables': '{count} tabelas',
   'live.agentHint':
     'O hvymetl.studio não abre um banco no seu computador. Copie o one-liner, execute no host do banco e importe quando o agente conectar.',
   'live.agentPlatform': 'Agente para este computador',
@@ -1123,6 +1141,12 @@ const es: MessageCatalog = {
   'schema.noExamples': 'No hay ejemplos en el servidor',
   'schema.chooseExample': 'Elige un ejemplo…',
   'schema.exampleHint': 'Carga DDL de la carpeta de ejemplos del servidor.',
+  'schema.gallerySearch': 'Buscar ejemplos…',
+  'schema.galleryCategories': 'Categorías de ejemplos',
+  'schema.galleryAll': 'Todos',
+  'schema.galleryStudio': 'Studio',
+  'schema.galleryEmpty': 'Ningún ejemplo coincide con los filtros.',
+  'schema.galleryTables': '{count} tablas',
   'live.agentHint':
     'hvymetl.studio no puede abrir una base en tu equipo. Copia el one-liner, ejecútalo en el host de la base e importa cuando el agente se conecte.',
   'live.agentPlatform': 'Agente para este equipo',
@@ -1457,6 +1481,12 @@ const zhCN: MessageCatalog = {
   'schema.noExamples': '服务器上没有示例',
   'schema.chooseExample': '选择示例…',
   'schema.exampleHint': '从服务器 examples 文件夹加载 DDL。',
+  'schema.gallerySearch': '搜索示例…',
+  'schema.galleryCategories': '示例分类',
+  'schema.galleryAll': '全部',
+  'schema.galleryStudio': 'Studio',
+  'schema.galleryEmpty': '没有符合筛选条件的示例。',
+  'schema.galleryTables': '{count} 个表',
   'live.agentHint':
     'hvymetl.studio 无法打开您计算机上的数据库。请复制一行命令，在数据库主机上运行，代理连接后导入。',
   'live.agentPlatform': '此计算机的代理',
@@ -1784,6 +1814,12 @@ const hi: MessageCatalog = {
   'schema.noExamples': 'सर्वर पर कोई उदाहरण नहीं',
   'schema.chooseExample': 'एक उदाहरण चुनें…',
   'schema.exampleHint': 'सर्वर examples फ़ोल्डर से DDL लोड करता है।',
+  'schema.gallerySearch': 'उदाहरण खोजें…',
+  'schema.galleryCategories': 'उदाहरण श्रेणियाँ',
+  'schema.galleryAll': 'सभी',
+  'schema.galleryStudio': 'Studio',
+  'schema.galleryEmpty': 'फ़िल्टर से मेल खाने वाला कोई उदाहरण नहीं।',
+  'schema.galleryTables': '{count} तालिकाएँ',
   'live.agentHint':
     'hvymetl.studio आपके कंप्यूटर पर डेटाबेस नहीं खोल सकता। वन-लाइनर कॉपी करें, डेटाबेस होस्ट पर चलाएँ, फिर एजेंट कनेक्ट होने पर आयात करें।',
   'live.agentPlatform': 'इस कंप्यूटर के लिए एजेंट',

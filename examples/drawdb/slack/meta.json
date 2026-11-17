@@ -1,0 +1,21 @@
+{
+  "slug": "slack",
+  "title": "Slack database schema example (ER diagram + SQL)",
+  "description": "How a team chat product models its data: workspaces and per-workspace identity, public private and shared channels, a read cursor per member instead of a read flag per message, thread replies, mentions, files, saved items and installed apps with granted scopes.",
+  "category": "communication",
+  "tags": [
+    "team-chat",
+    "read-cursor",
+    "threads",
+    "multi-tenant",
+    "integrations"
+  ],
+  "primaryDialect": "postgresql",
+  "dialect": "postgresql",
+  "tableCount": 13,
+  "columnCount": 99,
+  "relationshipCount": 26,
+  "sourcePage": "https://www.drawdb.app/examples/slack",
+  "license": "CC0-1.0",
+  "attribution": "Vendored from drawDB examples (CC0-1.0). https://www.drawdb.app/examples"
+}

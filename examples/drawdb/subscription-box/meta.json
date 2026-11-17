@@ -1,0 +1,21 @@
+{
+  "slug": "subscription-box",
+  "title": "Subscription box database schema (ER diagram + SQL)",
+  "description": "How recurring physical commerce is modelled: plans and subscriptions, one row per billing cycle, preferences that drive curation, per-cycle box contents, shipments, skips and pauses, churn reasons and referral credit.",
+  "category": "commerce",
+  "tags": [
+    "subscriptions",
+    "recurring-billing",
+    "curation",
+    "churn",
+    "referrals"
+  ],
+  "primaryDialect": "postgresql",
+  "dialect": "postgresql",
+  "tableCount": 13,
+  "columnCount": 107,
+  "relationshipCount": 17,
+  "sourcePage": "https://www.drawdb.app/examples/subscription-box",
+  "license": "CC0-1.0",
+  "attribution": "Vendored from drawDB examples (CC0-1.0). https://www.drawdb.app/examples"
+}

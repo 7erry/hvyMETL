@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1540 1848" width="1540" height="1848">
+  <rect width="1540" height="1848" fill="#0b1616"/>
+  <line x1="1100.0" y1="1724.0" x2="1430.0" y2="1072.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="1100.0" y1="888.0" x2="1430.0" y2="1072.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="1100.0" y1="888.0" x2="1430.0" y2="426.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="284.0" x2="1100.0" y2="888.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="284.0" x2="1100.0" y2="401.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="1551.0" x2="1100.0" y2="888.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="1551.0" x2="440.0" y2="1440.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="1551.0" x2="1100.0" y2="401.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="1551.0" x2="1100.0" y2="401.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="1496.0" x2="1100.0" y2="1724.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="1496.0" x2="770.0" y2="1496.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="1496.0" x2="770.0" y2="1496.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="1496.0" x2="1100.0" y2="888.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="1496.0" x2="1100.0" y2="888.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="1440.0" x2="1430.0" y2="1072.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="1440.0" x2="1100.0" y2="1724.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="1440.0" x2="770.0" y2="1496.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="1440.0" x2="770.0" y2="1120.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="1440.0" x2="1100.0" y2="888.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="1440.0" x2="1100.0" y2="888.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="1440.0" x2="1100.0" y2="888.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="40.0" x2="440.0" y2="1440.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="40.0" x2="1100.0" y2="888.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="40.0" x2="1100.0" y2="888.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="1100.0" y1="1301.0" x2="1430.0" y2="1072.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="680.0" x2="1430.0" y2="1072.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="680.0" x2="1100.0" y2="888.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <rect x="1340.0" y="1052.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1340.0" y="1052.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1346.0" y="1064.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">tournaments</text>
+  <rect x="1010.0" y="1704.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1010.0" y="1704.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1016.0" y="1716.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">stages</text>
+  <rect x="680.0" y="1100.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="680.0" y="1100.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="686.0" y="1112.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">venues</text>
+  <rect x="1340.0" y="406.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1340.0" y="406.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1346.0" y="418.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">teams</text>
+  <rect x="1010.0" y="381.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1010.0" y="381.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1016.0" y="393.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">players</text>
+  <rect x="1010.0" y="868.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1010.0" y="868.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1016.0" y="880.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">tournament_entries</text>
+  <rect x="680.0" y="264.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="680.0" y="264.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="686.0" y="276.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">roster_slots</text>
+  <rect x="20.0" y="1531.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="20.0" y="1531.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="26.0" y="1543.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">substitutions</text>
+  <rect x="680.0" y="1476.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="680.0" y="1476.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="686.0" y="1488.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">bracket_nodes</text>
+  <rect x="350.0" y="1420.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="350.0" y="1420.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="356.0" y="1432.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">matches</text>
+  <rect x="20.0" y="20.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="20.0" y="20.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="26.0" y="32.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">match_maps</text>
+  <rect x="1010.0" y="1281.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1010.0" y="1281.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1016.0" y="1293.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">prize_distributions</text>
+  <rect x="680.0" y="660.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="680.0" y="660.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="686.0" y="672.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">placements</text>
+</svg>

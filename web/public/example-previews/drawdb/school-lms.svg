@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1210 1570" width="1210" height="1570">
+  <rect width="1210" height="1570" fill="#0b1616"/>
+  <line x1="770.0" y1="1463.0" x2="1100.0" y2="1033.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="1463.0" x2="1100.0" y2="1033.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="995.0" x2="1100.0" y2="1033.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="995.0" x2="1100.0" y2="1446.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="995.0" x2="1100.0" y2="440.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="285.0" x2="770.0" y2="995.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="285.0" x2="770.0" y2="40.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="1390.0" x2="770.0" y2="995.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="544.0" x2="440.0" y2="1390.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="544.0" x2="770.0" y2="40.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="544.0" x2="1100.0" y2="440.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="1014.0" x2="770.0" y2="995.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="1014.0" x2="770.0" y2="40.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="1014.0" x2="1100.0" y2="440.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <rect x="680.0" y="20.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="680.0" y="20.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="686.0" y="32.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">students</text>
+  <rect x="1010.0" y="420.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1010.0" y="420.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1016.0" y="432.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">instructors</text>
+  <rect x="1010.0" y="1426.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1010.0" y="1426.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1016.0" y="1438.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">terms</text>
+  <rect x="1010.0" y="1013.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1010.0" y="1013.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1016.0" y="1025.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">courses</text>
+  <rect x="680.0" y="1443.0" width="160" height="55" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="680.0" y="1443.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="686.0" y="1455.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">course_prerequisites</text>
+  <rect x="680.0" y="975.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="680.0" y="975.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="686.0" y="987.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">sections</text>
+  <rect x="350.0" y="265.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="350.0" y="265.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="356.0" y="277.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">enrollments</text>
+  <rect x="350.0" y="1370.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="350.0" y="1370.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="356.0" y="1382.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">assignments</text>
+  <rect x="20.0" y="524.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="20.0" y="524.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="26.0" y="536.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">submissions</text>
+  <rect x="350.0" y="994.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="350.0" y="994.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="356.0" y="1006.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">attendance</text>
+</svg>

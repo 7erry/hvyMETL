@@ -1,0 +1,21 @@
+{
+  "slug": "duolingo-language",
+  "title": "Duolingo database schema example (ER diagram + SQL)",
+  "description": "How a gamified language app models its data: directional courses, a skill tree with unlock rules, lessons and exercise items, crown levels, a per-word spaced-repetition schedule, streaks with freezes, hearts and weekly leagues.",
+  "category": "education",
+  "tags": [
+    "gamification",
+    "spaced-repetition",
+    "learning",
+    "leaderboards",
+    "streaks"
+  ],
+  "primaryDialect": "postgresql",
+  "dialect": "postgresql",
+  "tableCount": 13,
+  "columnCount": 104,
+  "relationshipCount": 19,
+  "sourcePage": "https://www.drawdb.app/examples/duolingo-language",
+  "license": "CC0-1.0",
+  "attribution": "Vendored from drawDB examples (CC0-1.0). https://www.drawdb.app/examples"
+}

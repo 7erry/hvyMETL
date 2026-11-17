@@ -1,0 +1,21 @@
+{
+  "slug": "password-manager",
+  "title": "Password manager database schema (ER diagram + SQL)",
+  "description": "A local-first SQLite vault where the secrets are ciphertext the database cannot read: vaults as key boundaries, encrypted item fields, blind indexes for the few searches that must still work, TOTP seeds, password history, sharing and an audit log.",
+  "category": "productivity",
+  "tags": [
+    "encryption",
+    "local-first",
+    "vault",
+    "security",
+    "sqlite"
+  ],
+  "primaryDialect": "sqlite",
+  "dialect": "sqlite",
+  "tableCount": 12,
+  "columnCount": 95,
+  "relationshipCount": 19,
+  "sourcePage": "https://www.drawdb.app/examples/password-manager",
+  "license": "CC0-1.0",
+  "attribution": "Vendored from drawDB examples (CC0-1.0). https://www.drawdb.app/examples"
+}

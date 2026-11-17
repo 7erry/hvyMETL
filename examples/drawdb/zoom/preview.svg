@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2200 2466" width="2200" height="2466">
+  <rect width="2200" height="2466" fill="#0b1616"/>
+  <line x1="1760.0" y1="672.0" x2="2090.0" y2="863.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="1430.0" y1="40.0" x2="2090.0" y2="863.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="1430.0" y1="40.0" x2="1760.0" y2="672.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="1430.0" y1="1094.0" x2="2090.0" y2="863.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="1430.0" y1="1094.0" x2="1760.0" y2="672.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="1100.0" y1="1332.0" x2="1430.0" y2="1094.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="1100.0" y1="1332.0" x2="1760.0" y2="672.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="1679.0" x2="1100.0" y2="1332.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="1679.0" x2="1760.0" y2="672.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="1029.0" x2="1100.0" y2="1332.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="1029.0" x2="1760.0" y2="672.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="1029.0" x2="770.0" y2="1679.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="238.0" x2="1100.0" y2="1332.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="238.0" x2="1760.0" y2="672.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="238.0" x2="440.0" y2="1029.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="238.0" x2="1760.0" y2="672.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="2092.0" x2="1100.0" y2="1332.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="1605.0" x2="770.0" y2="2092.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="1605.0" x2="440.0" y2="1029.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="493.0" x2="1100.0" y2="1332.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="493.0" x2="1760.0" y2="672.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="2342.0" x2="1100.0" y2="1332.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="2342.0" x2="440.0" y2="1029.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="2342.0" x2="440.0" y2="1029.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <rect x="2000.0" y="843.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="2000.0" y="843.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="2006.0" y="855.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">accounts</text>
+  <rect x="1670.0" y="652.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1670.0" y="652.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1676.0" y="664.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">users</text>
+  <rect x="1340.0" y="20.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1340.0" y="20.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1346.0" y="32.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">licenses</text>
+  <rect x="1340.0" y="1074.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1340.0" y="1074.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1346.0" y="1086.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">meetings</text>
+  <rect x="1010.0" y="1312.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1010.0" y="1312.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1016.0" y="1324.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">meeting_occurrences</text>
+  <rect x="680.0" y="1659.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="680.0" y="1659.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="686.0" y="1671.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">registrations</text>
+  <rect x="350.0" y="1009.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="350.0" y="1009.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="356.0" y="1021.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">participants</text>
+  <rect x="20.0" y="218.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="20.0" y="218.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="26.0" y="230.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">waiting_room_admission</text>
+  <rect x="680.0" y="2072.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="680.0" y="2072.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="686.0" y="2084.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">breakout_rooms</text>
+  <rect x="20.0" y="1585.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="20.0" y="1585.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="26.0" y="1597.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">breakout_room_members</text>
+  <rect x="680.0" y="473.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="680.0" y="473.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="686.0" y="485.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">recordings</text>
+  <rect x="20.0" y="2322.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="20.0" y="2322.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="26.0" y="2334.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">meeting_chat_messages</text>
+</svg>

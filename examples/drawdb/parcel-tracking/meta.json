@@ -1,0 +1,21 @@
+{
+  "slug": "parcel-tracking",
+  "title": "Parcel tracking database schema (ER diagram + SQL)",
+  "description": "A courier network schema built on an append-only scan log: shipments and the packages inside them, hubs and planned routes, scan events as the only truth, derived status, delivery attempts, exceptions, proof of delivery, and promised versus actual delivery.",
+  "category": "logistics",
+  "tags": [
+    "tracking",
+    "event-log",
+    "logistics",
+    "delivery",
+    "derived-state"
+  ],
+  "primaryDialect": "postgresql",
+  "dialect": "postgresql",
+  "tableCount": 12,
+  "columnCount": 141,
+  "relationshipCount": 26,
+  "sourcePage": "https://www.drawdb.app/examples/parcel-tracking",
+  "license": "CC0-1.0",
+  "attribution": "Vendored from drawDB examples (CC0-1.0). https://www.drawdb.app/examples"
+}

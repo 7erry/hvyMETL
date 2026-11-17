@@ -1,0 +1,21 @@
+{
+  "slug": "zoom",
+  "title": "Zoom database schema example (ER diagram + SQL)",
+  "description": "How a video meeting platform models its data: accounts and assigned licences, a meeting series separated from its materialised occurrences, registrations, participant join and leave intervals, breakout rooms, recordings, in-meeting chat and waiting room admissions.",
+  "category": "communication",
+  "tags": [
+    "video-conferencing",
+    "recurring-events",
+    "scheduling",
+    "attendance",
+    "recordings"
+  ],
+  "primaryDialect": "postgresql",
+  "dialect": "postgresql",
+  "tableCount": 12,
+  "columnCount": 105,
+  "relationshipCount": 24,
+  "sourcePage": "https://www.drawdb.app/examples/zoom",
+  "license": "CC0-1.0",
+  "attribution": "Vendored from drawDB examples (CC0-1.0). https://www.drawdb.app/examples"
+}

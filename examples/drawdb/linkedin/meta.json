@@ -1,0 +1,21 @@
+{
+  "slug": "linkedin",
+  "title": "LinkedIn database schema example (ER diagram + SQL)",
+  "description": "How a professional network models its data: profiles with a date-ranged career history, symmetric connections created from invitations, canonical skills with endorsements, company pages, job postings and applications, and a feed.",
+  "category": "social",
+  "tags": [
+    "professional-network",
+    "career-history",
+    "connections",
+    "jobs",
+    "endorsements"
+  ],
+  "primaryDialect": "postgresql",
+  "dialect": "postgresql",
+  "tableCount": 13,
+  "columnCount": 109,
+  "relationshipCount": 19,
+  "sourcePage": "https://www.drawdb.app/examples/linkedin",
+  "license": "CC0-1.0",
+  "attribution": "Vendored from drawDB examples (CC0-1.0). https://www.drawdb.app/examples"
+}

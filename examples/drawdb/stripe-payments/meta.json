@@ -1,0 +1,21 @@
+{
+  "slug": "stripe-payments",
+  "title": "Stripe payments database schema (ER diagram + SQL)",
+  "description": "How a payment processor models its data: merchant accounts, tokenised payment methods, the payment intent state machine, charges and partial refunds, chargebacks with evidence deadlines, payouts, webhook deliveries and idempotency keys.",
+  "category": "fintech",
+  "tags": [
+    "payments",
+    "idempotency",
+    "webhooks",
+    "chargebacks",
+    "payouts"
+  ],
+  "primaryDialect": "postgresql",
+  "dialect": "postgresql",
+  "tableCount": 13,
+  "columnCount": 165,
+  "relationshipCount": 25,
+  "sourcePage": "https://www.drawdb.app/examples/stripe-payments",
+  "license": "CC0-1.0",
+  "attribution": "Vendored from drawDB examples (CC0-1.0). https://www.drawdb.app/examples"
+}

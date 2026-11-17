@@ -1,0 +1,22 @@
+{
+  "slug": "github",
+  "title": "GitHub database schema example (ER diagram + SQL)",
+  "description": "How a code hosting platform models its data: users and organisations, repositories, refs and commits, issues and pull requests sharing one number sequence, reviews with comments anchored to a file and line, labels, milestones and workflow runs.",
+  "category": "developer-tools",
+  "tags": [
+    "git",
+    "code-review",
+    "pull-requests",
+    "issues",
+    "ci",
+    "version-control"
+  ],
+  "primaryDialect": "postgresql",
+  "dialect": "postgresql",
+  "tableCount": 14,
+  "columnCount": 137,
+  "relationshipCount": 26,
+  "sourcePage": "https://www.drawdb.app/examples/github",
+  "license": "CC0-1.0",
+  "attribution": "Vendored from drawDB examples (CC0-1.0). https://www.drawdb.app/examples"
+}

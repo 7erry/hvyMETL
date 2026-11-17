@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1540 2724" width="1540" height="2724">
+  <rect width="1540" height="2724" fill="#0b1616"/>
+  <line x1="1100.0" y1="1220.0" x2="1430.0" y2="1660.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="1430.0" y1="1660.0" x2="1100.0" y2="1220.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="1430.0" y1="1660.0" x2="1430.0" y2="1660.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="1465.0" x2="1100.0" y2="1220.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="1465.0" x2="1430.0" y2="1660.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="1465.0" x2="440.0" y2="416.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="416.0" x2="770.0" y2="1465.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="416.0" x2="1100.0" y2="1220.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="416.0" x2="770.0" y2="1032.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="294.0" x2="440.0" y2="416.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="294.0" x2="440.0" y2="40.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="829.0" x2="770.0" y2="1465.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="829.0" x2="1430.0" y2="1660.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="829.0" x2="1100.0" y2="1220.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="829.0" x2="1100.0" y2="1220.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="1663.0" x2="770.0" y2="1465.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="1663.0" x2="1430.0" y2="1660.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="1663.0" x2="1100.0" y2="1220.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="1032.0" x2="1100.0" y2="1220.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="2224.0" x2="1100.0" y2="1220.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="2224.0" x2="770.0" y2="1465.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="2224.0" x2="1430.0" y2="1660.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="2224.0" x2="770.0" y2="1032.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="2600.0" x2="1100.0" y2="1220.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="2600.0" x2="770.0" y2="1465.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="2600.0" x2="1430.0" y2="1660.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="2600.0" x2="1430.0" y2="1660.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="2600.0" x2="1100.0" y2="1220.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="673.0" x2="1100.0" y2="1220.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <rect x="1010.0" y="1200.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1010.0" y="1200.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1016.0" y="1212.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">users</text>
+  <rect x="1340.0" y="1640.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1340.0" y="1640.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1346.0" y="1652.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">folders</text>
+  <rect x="680.0" y="1445.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="680.0" y="1445.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="686.0" y="1457.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">files</text>
+  <rect x="350.0" y="396.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="350.0" y="396.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="356.0" y="408.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">file_versions</text>
+  <rect x="350.0" y="20.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="350.0" y="20.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="356.0" y="32.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">blocks</text>
+  <rect x="20.0" y="274.0" width="160" height="55" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="20.0" y="274.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="26.0" y="286.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">file_version_blocks</text>
+  <rect x="350.0" y="809.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="350.0" y="809.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="356.0" y="821.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">shares</text>
+  <rect x="350.0" y="1643.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="350.0" y="1643.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="356.0" y="1655.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">public_links</text>
+  <rect x="680.0" y="1012.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="680.0" y="1012.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="686.0" y="1024.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">devices</text>
+  <rect x="350.0" y="2204.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="350.0" y="2204.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="356.0" y="2216.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">sync_events</text>
+  <rect x="350.0" y="2580.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="350.0" y="2580.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="356.0" y="2592.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">trash_items</text>
+  <rect x="680.0" y="653.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="680.0" y="653.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="686.0" y="665.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">storage_usage</text>
+</svg>

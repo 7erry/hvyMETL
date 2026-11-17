@@ -1,0 +1,21 @@
+{
+  "slug": "trello-boards",
+  "title": "Trello database schema example (ER diagram + SQL)",
+  "description": "How a kanban board app models its data: boards, lists and cards with fractional positions, labels, checklists and check items, card members and watchers, attachments and covers, power-ups, templates and an activity feed.",
+  "category": "productivity",
+  "tags": [
+    "kanban",
+    "boards",
+    "checklists",
+    "activity-feed",
+    "drag-and-drop"
+  ],
+  "primaryDialect": "postgresql",
+  "dialect": "postgresql",
+  "tableCount": 13,
+  "columnCount": 93,
+  "relationshipCount": 25,
+  "sourcePage": "https://www.drawdb.app/examples/trello-boards",
+  "license": "CC0-1.0",
+  "attribution": "Vendored from drawDB examples (CC0-1.0). https://www.drawdb.app/examples"
+}

@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1540 2702" width="1540" height="2702">
+  <rect width="1540" height="2702" fill="#0b1616"/>
+  <line x1="1100.0" y1="257.0" x2="1100.0" y2="257.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="777.0" x2="1100.0" y2="257.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="777.0" x2="1100.0" y2="806.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="1100.0" y1="806.0" x2="770.0" y2="777.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="1100.0" y1="806.0" x2="1430.0" y2="1353.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="40.0" x2="770.0" y2="777.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="40.0" x2="1430.0" y2="1353.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="315.0" x2="770.0" y2="1264.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="315.0" x2="770.0" y2="183.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="2578.0" x2="770.0" y2="1264.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="1933.0" x2="440.0" y2="2578.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="1933.0" x2="770.0" y2="777.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="785.0" x2="770.0" y2="777.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="785.0" x2="770.0" y2="1264.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="1292.0" x2="770.0" y2="1678.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="1292.0" x2="770.0" y2="1264.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="1641.0" x2="770.0" y2="1678.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="1641.0" x2="770.0" y2="777.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="2091.0" x2="770.0" y2="777.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="2091.0" x2="770.0" y2="1264.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="2091.0" x2="440.0" y2="2091.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="2091.0" x2="1430.0" y2="1353.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <rect x="1010.0" y="237.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1010.0" y="237.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1016.0" y="249.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">sections</text>
+  <rect x="1340.0" y="1333.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1340.0" y="1333.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1346.0" y="1345.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">authors</text>
+  <rect x="680.0" y="757.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="680.0" y="757.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="686.0" y="769.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">articles</text>
+  <rect x="1010.0" y="786.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1010.0" y="786.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1016.0" y="798.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">article_revisions</text>
+  <rect x="350.0" y="20.0" width="160" height="66" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="350.0" y="20.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="356.0" y="32.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">article_authors</text>
+  <rect x="680.0" y="1244.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="680.0" y="1244.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="686.0" y="1256.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">readers</text>
+  <rect x="680.0" y="163.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="680.0" y="163.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="686.0" y="175.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">plans</text>
+  <rect x="350.0" y="295.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="350.0" y="295.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="356.0" y="307.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">subscriptions</text>
+  <rect x="350.0" y="2558.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="350.0" y="2558.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="356.0" y="2570.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">meter_periods</text>
+  <rect x="20.0" y="1913.0" width="160" height="66" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="20.0" y="1913.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="26.0" y="1925.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">meter_views</text>
+  <rect x="350.0" y="765.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="350.0" y="765.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="356.0" y="777.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">gift_links</text>
+  <rect x="680.0" y="1658.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="680.0" y="1658.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="686.0" y="1670.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">newsletters</text>
+  <rect x="350.0" y="1272.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="350.0" y="1272.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="356.0" y="1284.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">newsletter_signups</text>
+  <rect x="350.0" y="1621.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="350.0" y="1621.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="356.0" y="1633.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">newsletter_sends</text>
+  <rect x="350.0" y="2071.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="350.0" y="2071.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="356.0" y="2083.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">comments</text>
+</svg>

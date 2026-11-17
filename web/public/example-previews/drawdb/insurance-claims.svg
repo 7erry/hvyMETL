@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2530 1768" width="2530" height="1768">
+  <rect width="2530" height="1768" fill="#0b1616"/>
+  <line x1="2090.0" y1="40.0" x2="2420.0" y2="185.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="2090.0" y1="786.0" x2="2420.0" y2="185.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="2090.0" y1="786.0" x2="1760.0" y2="828.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="1760.0" y1="828.0" x2="2090.0" y2="786.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="1760.0" y1="405.0" x2="2090.0" y2="1310.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="1760.0" y1="405.0" x2="2420.0" y2="185.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="1430.0" y1="1234.0" x2="1760.0" y2="828.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="1430.0" y1="1234.0" x2="2090.0" y2="786.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="1430.0" y1="1234.0" x2="2090.0" y2="1310.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="1430.0" y1="1234.0" x2="2090.0" y2="1310.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="1430.0" y1="1234.0" x2="1430.0" y2="1234.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="1430.0" y1="1234.0" x2="1760.0" y2="1644.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="1100.0" y1="1305.0" x2="1430.0" y2="1234.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="420.0" x2="1100.0" y2="1305.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="420.0" x2="2090.0" y2="40.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="512.0" x2="770.0" y2="420.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="648.0" x2="1430.0" y2="1234.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="648.0" x2="440.0" y2="512.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="1100.0" y1="556.0" x2="1430.0" y2="1234.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="1100.0" y1="556.0" x2="1760.0" y2="828.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="1760.0" y1="1644.0" x2="2090.0" y2="1310.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <rect x="2330.0" y="165.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="2330.0" y="165.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="2336.0" y="177.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">plans</text>
+  <rect x="2000.0" y="20.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="2000.0" y="20.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="2006.0" y="32.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">benefit_rules</text>
+  <rect x="2000.0" y="766.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="2000.0" y="766.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="2006.0" y="778.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">policies</text>
+  <rect x="1670.0" y="808.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1670.0" y="808.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1676.0" y="820.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">members</text>
+  <rect x="2000.0" y="1290.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="2000.0" y="1290.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="2006.0" y="1302.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">providers</text>
+  <rect x="1670.0" y="385.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1670.0" y="385.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1676.0" y="397.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">provider_network_statu</text>
+  <rect x="1340.0" y="1214.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1340.0" y="1214.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1346.0" y="1226.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">claims</text>
+  <rect x="1010.0" y="1285.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1010.0" y="1285.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1016.0" y="1297.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">claim_lines</text>
+  <rect x="680.0" y="400.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="680.0" y="400.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="686.0" y="412.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">adjudications</text>
+  <rect x="350.0" y="492.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="350.0" y="492.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="356.0" y="504.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">denials</text>
+  <rect x="20.0" y="628.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="20.0" y="628.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="26.0" y="640.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">appeals</text>
+  <rect x="1010.0" y="536.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1010.0" y="536.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1016.0" y="548.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">explanations_of_benefi</text>
+  <rect x="1670.0" y="1624.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1670.0" y="1624.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1676.0" y="1636.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">provider_payments</text>
+</svg>

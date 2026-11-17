@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2530 2730" width="2530" height="2730">
+  <rect width="2530" height="2730" fill="#0b1616"/>
+  <line x1="2090.0" y1="1469.0" x2="2420.0" y2="1577.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="1760.0" y1="1601.0" x2="2420.0" y2="1577.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="1760.0" y1="1601.0" x2="2090.0" y2="1469.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="1760.0" y1="1601.0" x2="1760.0" y2="1601.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="1430.0" y1="40.0" x2="1760.0" y2="1601.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="1430.0" y1="416.0" x2="1760.0" y2="1601.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="1430.0" y1="416.0" x2="2420.0" y2="1577.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="1430.0" y1="1934.0" x2="1760.0" y2="1601.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="1100.0" y1="1951.0" x2="1760.0" y2="1601.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="1100.0" y1="1951.0" x2="2420.0" y2="1577.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="1100.0" y1="1951.0" x2="1430.0" y2="1934.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="2606.0" x2="1100.0" y2="1951.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="2606.0" x2="1760.0" y2="1601.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="2606.0" x2="2420.0" y2="1577.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="1430.0" y1="1632.0" x2="1760.0" y2="1601.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="1659.0" x2="1100.0" y2="1951.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="1659.0" x2="1430.0" y2="1632.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="2410.0" x2="770.0" y2="2606.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="2410.0" x2="2420.0" y2="1577.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="2303.0" x2="770.0" y2="2606.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="2303.0" x2="440.0" y2="2410.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="2303.0" x2="110.0" y2="2303.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="2303.0" x2="2420.0" y2="1577.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="1430.0" y1="997.0" x2="1760.0" y2="1601.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="1430.0" y1="997.0" x2="2420.0" y2="1577.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="1100.0" y1="1071.0" x2="1430.0" y2="997.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <rect x="2330.0" y="1557.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="2330.0" y="1557.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="2336.0" y="1569.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">users</text>
+  <rect x="2000.0" y="1449.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="2000.0" y="1449.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="2006.0" y="1461.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">organizations</text>
+  <rect x="1670.0" y="1581.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1670.0" y="1581.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1676.0" y="1593.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">repositories</text>
+  <rect x="1340.0" y="20.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1340.0" y="20.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1346.0" y="32.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">git_refs</text>
+  <rect x="1340.0" y="396.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1340.0" y="396.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1346.0" y="408.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">commits</text>
+  <rect x="1340.0" y="1914.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1340.0" y="1914.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1346.0" y="1926.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">milestones</text>
+  <rect x="1010.0" y="1931.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1010.0" y="1931.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1016.0" y="1943.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">issues</text>
+  <rect x="680.0" y="2586.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="680.0" y="2586.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="686.0" y="2598.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">pull_requests</text>
+  <rect x="1340.0" y="1612.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1340.0" y="1612.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1346.0" y="1624.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">labels</text>
+  <rect x="680.0" y="1639.0" width="160" height="55" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="680.0" y="1639.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="686.0" y="1651.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">issue_labels</text>
+  <rect x="350.0" y="2390.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="350.0" y="2390.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="356.0" y="2402.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">reviews</text>
+  <rect x="20.0" y="2283.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="20.0" y="2283.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="26.0" y="2295.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">review_comments</text>
+  <rect x="1340.0" y="977.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1340.0" y="977.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1346.0" y="989.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">workflow_runs</text>
+  <rect x="1010.0" y="1051.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1010.0" y="1051.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1016.0" y="1063.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">workflow_jobs</text>
+</svg>

@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1540 4081" width="1540" height="4081">
+  <rect width="1540" height="4081" fill="#0b1616"/>
+  <line x1="1100.0" y1="2259.0" x2="1430.0" y2="1441.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="2139.0" x2="1100.0" y2="2259.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="2139.0" x2="770.0" y2="2139.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="40.0" x2="770.0" y2="2139.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="40.0" x2="770.0" y2="1615.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="3322.0" x2="770.0" y2="2139.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="3957.0" x2="770.0" y2="2139.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="3957.0" x2="770.0" y2="1615.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="3791.0" x2="440.0" y2="3957.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="3791.0" x2="440.0" y2="3322.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="997.0" x2="770.0" y2="2139.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="2200.0" x2="1100.0" y2="2259.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="2200.0" x2="770.0" y2="2139.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="2200.0" x2="770.0" y2="1615.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="960.0" x2="440.0" y2="2200.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="960.0" x2="1100.0" y2="2259.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="960.0" x2="1430.0" y2="1441.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="960.0" x2="440.0" y2="416.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="2761.0" x2="1100.0" y2="2259.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="2761.0" x2="770.0" y2="2139.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <rect x="1340.0" y="1421.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1340.0" y="1421.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1346.0" y="1433.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">buildings</text>
+  <rect x="1010.0" y="2239.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1010.0" y="2239.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1016.0" y="2251.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">units</text>
+  <rect x="680.0" y="1595.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="680.0" y="1595.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="686.0" y="1607.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">tenants</text>
+  <rect x="680.0" y="2119.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="680.0" y="2119.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="686.0" y="2131.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">leases</text>
+  <rect x="350.0" y="20.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="350.0" y="20.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="356.0" y="32.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">lease_tenants</text>
+  <rect x="350.0" y="3302.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="350.0" y="3302.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="356.0" y="3314.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">rent_charges</text>
+  <rect x="350.0" y="3937.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="350.0" y="3937.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="356.0" y="3949.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">payments</text>
+  <rect x="20.0" y="3771.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="20.0" y="3771.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="26.0" y="3783.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">payment_allocations</text>
+  <rect x="350.0" y="977.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="350.0" y="977.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="356.0" y="989.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">security_deposits</text>
+  <rect x="350.0" y="396.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="350.0" y="396.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="356.0" y="408.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">vendors</text>
+  <rect x="350.0" y="2180.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="350.0" y="2180.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="356.0" y="2192.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">maintenance_requests</text>
+  <rect x="20.0" y="940.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="20.0" y="940.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="26.0" y="952.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">work_orders</text>
+  <rect x="350.0" y="2741.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="350.0" y="2741.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="356.0" y="2753.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">inspections</text>
+</svg>

@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1210 2634" width="1210" height="2634">
+  <rect width="1210" height="2634" fill="#0b1616"/>
+  <line x1="770.0" y1="1071.0" x2="1100.0" y2="471.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="1071.0" x2="1100.0" y2="1642.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="1071.0" x2="1100.0" y2="1642.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="106.0" x2="770.0" y2="1071.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="106.0" x2="770.0" y2="40.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="2510.0" x2="1100.0" y2="1642.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="2510.0" x2="770.0" y2="1071.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="1525.0" x2="440.0" y2="2510.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="1525.0" x2="770.0" y2="1071.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="621.0" x2="1100.0" y2="1642.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="621.0" x2="1100.0" y2="1642.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="549.0" x2="770.0" y2="621.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="549.0" x2="1100.0" y2="1642.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="549.0" x2="770.0" y2="1071.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="1578.0" x2="1100.0" y2="1642.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="1578.0" x2="1100.0" y2="1642.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="1480.0" x2="770.0" y2="1578.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="1480.0" x2="770.0" y2="1071.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="1912.0" x2="770.0" y2="1071.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="1912.0" x2="1100.0" y2="1642.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <rect x="1010.0" y="1622.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1010.0" y="1622.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1016.0" y="1634.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">players</text>
+  <rect x="1010.0" y="451.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1010.0" y="451.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1016.0" y="463.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">item_templates</text>
+  <rect x="680.0" y="1051.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="680.0" y="1051.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="686.0" y="1063.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">item_instances</text>
+  <rect x="680.0" y="20.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="680.0" y="20.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="686.0" y="32.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">affix_definitions</text>
+  <rect x="350.0" y="86.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="350.0" y="86.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="356.0" y="98.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">item_affixes</text>
+  <rect x="350.0" y="2490.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="350.0" y="2490.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="356.0" y="2502.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">containers</text>
+  <rect x="20.0" y="1505.0" width="160" height="66" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="20.0" y="1505.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="26.0" y="1517.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">container_slots</text>
+  <rect x="680.0" y="601.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="680.0" y="601.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="686.0" y="613.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">trades</text>
+  <rect x="350.0" y="529.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="350.0" y="529.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="356.0" y="541.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">trade_items</text>
+  <rect x="680.0" y="1558.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="680.0" y="1558.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="686.0" y="1570.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">mail_messages</text>
+  <rect x="350.0" y="1460.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="350.0" y="1460.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="356.0" y="1472.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">mail_attachments</text>
+  <rect x="350.0" y="1892.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="350.0" y="1892.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="356.0" y="1904.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">item_events</text>
+</svg>

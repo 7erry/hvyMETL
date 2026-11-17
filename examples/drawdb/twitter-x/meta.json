@@ -1,0 +1,21 @@
+{
+  "slug": "twitter-x",
+  "title": "Twitter / X database schema example (ER diagram + SQL)",
+  "description": "How a microblogging platform models its data: one tweets table covering tweets, replies, retweets and quotes, an asymmetric follow graph, a fanned-out home timeline, lists, bookmarks, and hashtags and mentions extracted at post time.",
+  "category": "social",
+  "tags": [
+    "timeline",
+    "follows",
+    "retweets",
+    "hashtags",
+    "fan-out"
+  ],
+  "primaryDialect": "postgresql",
+  "dialect": "postgresql",
+  "tableCount": 12,
+  "columnCount": 64,
+  "relationshipCount": 23,
+  "sourcePage": "https://www.drawdb.app/examples/twitter-x",
+  "license": "CC0-1.0",
+  "attribution": "Vendored from drawDB examples (CC0-1.0). https://www.drawdb.app/examples"
+}

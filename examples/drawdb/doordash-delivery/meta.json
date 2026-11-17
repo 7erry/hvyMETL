@@ -1,0 +1,22 @@
+{
+  "slug": "doordash-delivery",
+  "title": "DoorDash database schema example (ER diagram + SQL)",
+  "description": "How a food delivery marketplace models its data: restaurant menus built from reusable modifier groups, orders that snapshot every chosen option, courier dispatch offers, live location tracking, and the fee split between restaurant, courier and platform.",
+  "category": "food",
+  "tags": [
+    "food-delivery",
+    "marketplace",
+    "menus",
+    "modifiers",
+    "dispatch",
+    "geolocation"
+  ],
+  "primaryDialect": "postgresql",
+  "dialect": "postgresql",
+  "tableCount": 14,
+  "columnCount": 134,
+  "relationshipCount": 18,
+  "sourcePage": "https://www.drawdb.app/examples/doordash-delivery",
+  "license": "CC0-1.0",
+  "attribution": "Vendored from drawDB examples (CC0-1.0). https://www.drawdb.app/examples"
+}

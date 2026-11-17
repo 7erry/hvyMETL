@@ -1,0 +1,21 @@
+{
+  "slug": "telemedicine",
+  "title": "Telemedicine database schema example (ER diagram + SQL)",
+  "description": "How a virtual care product models its data: clinician licences per state with expiry dates driving who may treat whom, bookable slots, video consultations with a waiting room, intake forms, e-prescriptions routed to a pharmacy, and per-region pricing.",
+  "category": "healthcare",
+  "tags": [
+    "telehealth",
+    "scheduling",
+    "licensing",
+    "prescriptions",
+    "compliance"
+  ],
+  "primaryDialect": "postgresql",
+  "dialect": "postgresql",
+  "tableCount": 13,
+  "columnCount": 119,
+  "relationshipCount": 19,
+  "sourcePage": "https://www.drawdb.app/examples/telemedicine",
+  "license": "CC0-1.0",
+  "attribution": "Vendored from drawDB examples (CC0-1.0). https://www.drawdb.app/examples"
+}

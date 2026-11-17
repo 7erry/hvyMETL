@@ -1,0 +1,21 @@
+{
+  "slug": "hospital-ehr",
+  "title": "Hospital EHR database schema example (ER diagram + SQL)",
+  "description": "The core of an electronic health record: patients and providers, appointments versus encounters, coded conditions and observations, prescriptions against a drug catalogue, allergies and insurance coverage over time.",
+  "category": "healthcare",
+  "tags": [
+    "ehr",
+    "appointments",
+    "clinical-coding",
+    "audit-log",
+    "scheduling"
+  ],
+  "primaryDialect": "postgresql",
+  "dialect": "postgresql",
+  "tableCount": 11,
+  "columnCount": 97,
+  "relationshipCount": 19,
+  "sourcePage": "https://www.drawdb.app/examples/hospital-ehr",
+  "license": "CC0-1.0",
+  "attribution": "Vendored from drawDB examples (CC0-1.0). https://www.drawdb.app/examples"
+}

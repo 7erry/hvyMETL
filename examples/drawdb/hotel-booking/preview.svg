@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1210 1775" width="1210" height="1775">
+  <rect width="1210" height="1775" fill="#0b1616"/>
+  <line x1="770.0" y1="1604.0" x2="1100.0" y2="1045.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="1651.0" x2="1100.0" y2="1045.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="1651.0" x2="770.0" y2="1604.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="1111.0" x2="1100.0" y2="1045.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="1199.0" x2="770.0" y2="1604.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="1199.0" x2="770.0" y2="1111.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="379.0" x2="1100.0" y2="1045.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="379.0" x2="1100.0" y2="302.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="1337.0" x2="770.0" y2="379.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="1337.0" x2="770.0" y2="1604.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="1337.0" x2="770.0" y2="1111.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="1337.0" x2="440.0" y2="1651.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="490.0" x2="770.0" y2="379.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="40.0" x2="1100.0" y2="1045.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="40.0" x2="770.0" y2="379.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="40.0" x2="1100.0" y2="302.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <rect x="1010.0" y="1025.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1010.0" y="1025.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1016.0" y="1037.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">hotels</text>
+  <rect x="680.0" y="1584.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="680.0" y="1584.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="686.0" y="1596.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">room_types</text>
+  <rect x="350.0" y="1631.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="350.0" y="1631.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="356.0" y="1643.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">rooms</text>
+  <rect x="680.0" y="1091.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="680.0" y="1091.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="686.0" y="1103.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">rate_plans</text>
+  <rect x="350.0" y="1179.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="350.0" y="1179.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="356.0" y="1191.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">room_rates</text>
+  <rect x="1010.0" y="282.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1010.0" y="282.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1016.0" y="294.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">guests</text>
+  <rect x="680.0" y="359.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="680.0" y="359.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="686.0" y="371.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">reservations</text>
+  <rect x="20.0" y="1317.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="20.0" y="1317.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="26.0" y="1329.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">reservation_nights</text>
+  <rect x="350.0" y="470.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="350.0" y="470.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="356.0" y="482.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">payments</text>
+  <rect x="350.0" y="20.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="350.0" y="20.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="356.0" y="32.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">reviews</text>
+</svg>

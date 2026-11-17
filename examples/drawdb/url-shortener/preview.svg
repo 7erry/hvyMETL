@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1540 2205" width="1540" height="2205">
+  <rect width="1540" height="2205" fill="#0b1616"/>
+  <line x1="1100.0" y1="829.0" x2="1430.0" y2="613.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="489.0" x2="1100.0" y2="829.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="489.0" x2="1430.0" y2="613.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="489.0" x2="1430.0" y2="613.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="811.0" x2="1100.0" y2="829.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="626.0" x2="1100.0" y2="829.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="626.0" x2="770.0" y2="811.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="626.0" x2="1430.0" y2="613.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="40.0" x2="440.0" y2="626.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="268.0" x2="440.0" y2="626.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="829.0" x2="440.0" y2="626.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="1205.0" x2="440.0" y2="626.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="1655.0" x2="440.0" y2="626.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <rect x="1340.0" y="593.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1340.0" y="593.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1346.0" y="605.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">users</text>
+  <rect x="1010.0" y="809.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1010.0" y="809.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1016.0" y="821.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">workspaces</text>
+  <rect x="680.0" y="469.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="680.0" y="469.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="686.0" y="481.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">workspace_members</text>
+  <rect x="680.0" y="791.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="680.0" y="791.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="686.0" y="803.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">domains</text>
+  <rect x="20.0" y="2061.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="20.0" y="2061.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="26.0" y="2073.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">code_blocks</text>
+  <rect x="350.0" y="606.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="350.0" y="606.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="356.0" y="618.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">links</text>
+  <rect x="20.0" y="20.0" width="160" height="55" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="20.0" y="20.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="26.0" y="32.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">link_tags</text>
+  <rect x="20.0" y="248.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="20.0" y="248.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="26.0" y="260.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">click_events</text>
+  <rect x="20.0" y="809.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="20.0" y="809.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="26.0" y="821.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">click_daily</text>
+  <rect x="20.0" y="1185.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="20.0" y="1185.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="26.0" y="1197.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">qr_codes</text>
+  <rect x="300.0" y="2061.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="300.0" y="2061.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="306.0" y="2073.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">blocked_domains</text>
+  <rect x="20.0" y="1635.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="20.0" y="1635.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="26.0" y="1647.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">safety_scans</text>
+</svg>

@@ -1,0 +1,21 @@
+{
+  "slug": "error-tracking",
+  "title": "Error tracking database schema example (ER diagram + SQL)",
+  "description": "How an error monitoring service models its data: projects and releases, raw events with stack frames and breadcrumbs, grouping into issues by fingerprint, resolve and regression detection, alert rules and event sampling.",
+  "category": "developer-tools",
+  "tags": [
+    "observability",
+    "error-monitoring",
+    "stack-traces",
+    "alerting",
+    "grouping"
+  ],
+  "primaryDialect": "postgresql",
+  "dialect": "postgresql",
+  "tableCount": 12,
+  "columnCount": 100,
+  "relationshipCount": 19,
+  "sourcePage": "https://www.drawdb.app/examples/error-tracking",
+  "license": "CC0-1.0",
+  "attribution": "Vendored from drawDB examples (CC0-1.0). https://www.drawdb.app/examples"
+}

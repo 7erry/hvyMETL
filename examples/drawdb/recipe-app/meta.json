@@ -1,0 +1,22 @@
+{
+  "slug": "recipe-app",
+  "title": "Recipe app database schema (ER diagram + SQL)",
+  "description": "A local-first SQLite schema for a cooking app: recipes with quantified ingredients, units and ingredient-specific conversions, timed steps, meal plans by day, shopping lists that merge quantities across recipes, pantry stock and favourites.",
+  "category": "food",
+  "tags": [
+    "recipes",
+    "meal-planning",
+    "shopping-list",
+    "local-first",
+    "sqlite",
+    "units"
+  ],
+  "primaryDialect": "sqlite",
+  "dialect": "sqlite",
+  "tableCount": 12,
+  "columnCount": 97,
+  "relationshipCount": 18,
+  "sourcePage": "https://www.drawdb.app/examples/recipe-app",
+  "license": "CC0-1.0",
+  "attribution": "Vendored from drawDB examples (CC0-1.0). https://www.drawdb.app/examples"
+}

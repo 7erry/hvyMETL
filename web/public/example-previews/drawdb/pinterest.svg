@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1540 1929" width="1540" height="1929">
+  <rect width="1540" height="1929" fill="#0b1616"/>
+  <line x1="1100.0" y1="1478.0" x2="1430.0" y2="637.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="1100.0" y1="864.0" x2="1430.0" y2="637.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="1334.0" x2="1100.0" y2="864.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="40.0" x2="1100.0" y2="864.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="40.0" x2="1430.0" y2="637.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="40.0" x2="1430.0" y2="637.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="1312.0" x2="1100.0" y2="1478.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="1312.0" x2="1100.0" y2="864.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="1312.0" x2="770.0" y2="1334.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="1312.0" x2="1430.0" y2="637.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="1312.0" x2="440.0" y2="1312.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="1312.0" x2="440.0" y2="1312.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="1833.0" x2="440.0" y2="1312.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="1833.0" x2="1430.0" y2="637.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="687.0" x2="440.0" y2="1312.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="687.0" x2="1430.0" y2="637.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="687.0" x2="110.0" y2="687.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="1100.0" y1="240.0" x2="1430.0" y2="637.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="1100.0" y1="240.0" x2="1430.0" y2="637.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="720.0" x2="1100.0" y2="864.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="720.0" x2="1430.0" y2="637.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="1100.0" y1="468.0" x2="1430.0" y2="637.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <rect x="1340.0" y="617.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1340.0" y="617.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1346.0" y="629.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">users</text>
+  <rect x="1010.0" y="1458.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1010.0" y="1458.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1016.0" y="1470.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">images</text>
+  <rect x="1010.0" y="844.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1010.0" y="844.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1016.0" y="856.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">boards</text>
+  <rect x="680.0" y="1314.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="680.0" y="1314.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="686.0" y="1326.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">board_sections</text>
+  <rect x="680.0" y="20.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="680.0" y="20.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="686.0" y="32.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">board_collaborators</text>
+  <rect x="350.0" y="1292.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="350.0" y="1292.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="356.0" y="1304.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">pins</text>
+  <rect x="20.0" y="1813.0" width="160" height="66" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="20.0" y="1813.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="26.0" y="1825.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">pin_reactions</text>
+  <rect x="20.0" y="667.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="20.0" y="667.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="26.0" y="679.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">pin_comments</text>
+  <rect x="1010.0" y="220.0" width="160" height="55" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1010.0" y="220.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1016.0" y="232.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">user_follows</text>
+  <rect x="680.0" y="700.0" width="160" height="55" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="680.0" y="700.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="686.0" y="712.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">board_follows</text>
+  <rect x="1010.0" y="448.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1010.0" y="448.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1016.0" y="460.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">saved_searches</text>
+</svg>

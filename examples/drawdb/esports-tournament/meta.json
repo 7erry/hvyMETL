@@ -1,0 +1,21 @@
+{
+  "slug": "esports-tournament",
+  "title": "Esports tournament database schema (ER diagram + SQL)",
+  "description": "How a tournament platform models competition: single and double elimination, round robin and Swiss stages, teams with roster locks, a bracket stored as a node tree, best-of series with per-map results, venues and prize distribution.",
+  "category": "gaming",
+  "tags": [
+    "esports",
+    "tournament",
+    "brackets",
+    "scheduling",
+    "gaming"
+  ],
+  "primaryDialect": "mysql",
+  "dialect": "mysql",
+  "tableCount": 13,
+  "columnCount": 125,
+  "relationshipCount": 27,
+  "sourcePage": "https://www.drawdb.app/examples/esports-tournament",
+  "license": "CC0-1.0",
+  "attribution": "Vendored from drawDB examples (CC0-1.0). https://www.drawdb.app/examples"
+}

@@ -1,0 +1,21 @@
+{
+  "slug": "leaderboards-achievements",
+  "title": "Leaderboard database schema example (ER diagram + SQL)",
+  "description": "How a game backend models progression: score submissions, leaderboards scoped global or regional or friends across daily and seasonal periods, rank derived rather than stored, multi-step achievements with progress, unlock rewards and anti-cheat flags.",
+  "category": "gaming",
+  "tags": [
+    "leaderboard",
+    "achievements",
+    "gaming",
+    "ranking",
+    "anti-cheat"
+  ],
+  "primaryDialect": "postgresql",
+  "dialect": "postgresql",
+  "tableCount": 13,
+  "columnCount": 102,
+  "relationshipCount": 22,
+  "sourcePage": "https://www.drawdb.app/examples/leaderboards-achievements",
+  "license": "CC0-1.0",
+  "attribution": "Vendored from drawDB examples (CC0-1.0). https://www.drawdb.app/examples"
+}

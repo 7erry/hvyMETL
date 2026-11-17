@@ -1,0 +1,21 @@
+{
+  "slug": "notion-workspace",
+  "title": "Notion database schema example (ER diagram + SQL)",
+  "description": "How a docs-and-databases workspace models its data: nested pages, a document stored as an ordered block tree, user-defined databases whose rows are pages, views with filters and sorts, inherited permissions and block-anchored comments.",
+  "category": "productivity",
+  "tags": [
+    "block-editor",
+    "nested-pages",
+    "permissions",
+    "custom-fields",
+    "collaboration"
+  ],
+  "primaryDialect": "postgresql",
+  "dialect": "postgresql",
+  "tableCount": 13,
+  "columnCount": 95,
+  "relationshipCount": 33,
+  "sourcePage": "https://www.drawdb.app/examples/notion-workspace",
+  "license": "CC0-1.0",
+  "attribution": "Vendored from drawDB examples (CC0-1.0). https://www.drawdb.app/examples"
+}

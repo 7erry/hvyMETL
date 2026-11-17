@@ -1,0 +1,21 @@
+{
+  "slug": "freight-forwarding",
+  "title": "Freight forwarding database schema (ER diagram + SQL)",
+  "description": "A SQL Server schema for international freight: bookings and incoterms, shipments and container consolidation, multi-leg sea, air and road journeys, carrier rate contracts, customs declarations, milestone events, documents, charges and invoicing.",
+  "category": "logistics",
+  "tags": [
+    "freight",
+    "shipping",
+    "customs",
+    "containers",
+    "invoicing"
+  ],
+  "primaryDialect": "transactsql",
+  "dialect": "mssql",
+  "tableCount": 13,
+  "columnCount": 139,
+  "relationshipCount": 15,
+  "sourcePage": "https://www.drawdb.app/examples/freight-forwarding",
+  "license": "CC0-1.0",
+  "attribution": "Vendored from drawDB examples (CC0-1.0). https://www.drawdb.app/examples"
+}

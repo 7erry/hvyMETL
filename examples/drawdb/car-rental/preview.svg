@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1870 2410" width="1870" height="2410">
+  <rect width="1870" height="2410" fill="#0b1616"/>
+  <line x1="1430.0" y1="2232.0" x2="1760.0" y2="962.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="1430.0" y1="2232.0" x2="1760.0" y2="2286.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="1430.0" y1="2232.0" x2="1760.0" y2="2286.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="1430.0" y1="1453.0" x2="1760.0" y2="2286.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="1430.0" y1="1453.0" x2="1760.0" y2="962.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="1430.0" y1="744.0" x2="1760.0" y2="40.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="1430.0" y1="744.0" x2="1760.0" y2="962.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="1430.0" y1="744.0" x2="1760.0" y2="2286.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="1430.0" y1="744.0" x2="1760.0" y2="2286.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="1100.0" y1="885.0" x2="1430.0" y2="744.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="1100.0" y1="885.0" x2="1430.0" y2="2232.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="1100.0" y1="885.0" x2="1760.0" y2="40.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="1100.0" y1="885.0" x2="1760.0" y2="2286.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="1100.0" y1="885.0" x2="1760.0" y2="2286.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="2023.0" x2="1100.0" y2="885.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="2023.0" x2="1430.0" y2="2232.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="1804.0" x2="1430.0" y2="2232.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="1804.0" x2="770.0" y2="2023.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="1804.0" x2="770.0" y2="2023.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="1804.0" x2="1100.0" y2="885.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="1915.0" x2="440.0" y2="1804.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="1647.0" x2="1100.0" y2="885.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="1647.0" x2="1100.0" y2="2097.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="1430.0" y1="294.0" x2="1760.0" y2="2286.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="1430.0" y1="294.0" x2="1760.0" y2="2286.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="1430.0" y1="294.0" x2="1760.0" y2="962.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <rect x="1670.0" y="2266.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1670.0" y="2266.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1676.0" y="2278.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">locations</text>
+  <rect x="1670.0" y="942.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1670.0" y="942.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1676.0" y="954.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">vehicle_classes</text>
+  <rect x="1340.0" y="2212.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1340.0" y="2212.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1346.0" y="2224.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">vehicles</text>
+  <rect x="1340.0" y="1433.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1340.0" y="1433.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1346.0" y="1445.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">class_availability</text>
+  <rect x="1670.0" y="20.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1670.0" y="20.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1676.0" y="32.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">customers</text>
+  <rect x="1340.0" y="724.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1340.0" y="724.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1346.0" y="736.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">reservations</text>
+  <rect x="1010.0" y="865.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1010.0" y="865.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1016.0" y="877.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">rentals</text>
+  <rect x="680.0" y="2003.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="680.0" y="2003.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="686.0" y="2015.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">inspections</text>
+  <rect x="350.0" y="1784.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="350.0" y="1784.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="356.0" y="1796.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">damages</text>
+  <rect x="20.0" y="1895.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="20.0" y="1895.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="26.0" y="1907.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">damage_photos</text>
+  <rect x="1010.0" y="2077.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1010.0" y="2077.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1016.0" y="2089.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">protection_products</text>
+  <rect x="680.0" y="1627.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="680.0" y="1627.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="686.0" y="1639.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">rental_protections</text>
+  <rect x="1340.0" y="274.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1340.0" y="274.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1346.0" y="286.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">one_way_fees</text>
+</svg>

@@ -1,0 +1,21 @@
+{
+  "slug": "insurance-claims",
+  "title": "Insurance claims database schema (SQL Server example)",
+  "description": "Payer-side claims processing in SQL Server: plans with benefit rules, policies covering members and dependents, provider network tiers, claims with service lines, per-line adjudication, coded denials, appeals, explanations of benefits and remittance to providers.",
+  "category": "healthcare",
+  "tags": [
+    "claims",
+    "adjudication",
+    "payer",
+    "billing",
+    "denials"
+  ],
+  "primaryDialect": "transactsql",
+  "dialect": "mssql",
+  "tableCount": 13,
+  "columnCount": 149,
+  "relationshipCount": 21,
+  "sourcePage": "https://www.drawdb.app/examples/insurance-claims",
+  "license": "CC0-1.0",
+  "attribution": "Vendored from drawDB examples (CC0-1.0). https://www.drawdb.app/examples"
+}

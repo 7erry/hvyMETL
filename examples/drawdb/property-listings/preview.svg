@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1540 2540" width="1540" height="2540">
+  <rect width="1540" height="2540" fill="#0b1616"/>
+  <line x1="1430.0" y1="452.0" x2="1430.0" y2="452.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="1100.0" y1="2034.0" x2="1430.0" y2="452.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="2389.0" x2="1100.0" y2="2034.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="1100.0" y1="1251.0" x2="1430.0" y2="452.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="1653.0" x2="1100.0" y2="1251.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="1653.0" x2="770.0" y2="2389.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="440.0" y1="1653.0" x2="1100.0" y2="2034.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="2416.0" x2="440.0" y2="1653.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="2416.0" x2="770.0" y2="2389.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="1929.0" x2="440.0" y2="1653.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="959.0" x2="1100.0" y2="1251.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="959.0" x2="1100.0" y2="912.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="1100.0" y1="405.0" x2="1430.0" y2="452.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="1080.0" x2="440.0" y2="1653.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="1080.0" x2="1100.0" y2="405.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="1080.0" x2="770.0" y2="2389.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="416.0" x2="440.0" y2="1653.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="416.0" x2="1100.0" y2="405.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="110.0" y1="416.0" x2="110.0" y2="416.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="40.0" x2="1100.0" y2="405.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <line x1="770.0" y1="40.0" x2="1430.0" y2="452.0" stroke="#2a6b5a" stroke-width="1.2" opacity="0.75"/>
+  <rect x="1340.0" y="432.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1340.0" y="432.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1346.0" y="444.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">areas</text>
+  <rect x="1010.0" y="2014.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1010.0" y="2014.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1016.0" y="2026.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">agencies</text>
+  <rect x="680.0" y="2369.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="680.0" y="2369.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="686.0" y="2381.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">agents</text>
+  <rect x="1010.0" y="1231.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1010.0" y="1231.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1016.0" y="1243.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">properties</text>
+  <rect x="350.0" y="1633.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="350.0" y="1633.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="356.0" y="1645.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">listings</text>
+  <rect x="20.0" y="2396.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="20.0" y="2396.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="26.0" y="2408.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">listing_price_history</text>
+  <rect x="20.0" y="1909.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="20.0" y="1909.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="26.0" y="1921.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">listing_media</text>
+  <rect x="1010.0" y="892.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1010.0" y="892.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1016.0" y="904.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">features</text>
+  <rect x="680.0" y="939.0" width="160" height="66" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="680.0" y="939.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="686.0" y="951.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">property_features</text>
+  <rect x="1010.0" y="385.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="1010.0" y="385.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="1016.0" y="397.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">contacts</text>
+  <rect x="20.0" y="1060.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="20.0" y="1060.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="26.0" y="1072.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">viewings</text>
+  <rect x="20.0" y="396.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="20.0" y="396.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="26.0" y="408.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">offers</text>
+  <rect x="680.0" y="20.0" width="160" height="77" rx="4" fill="#16302c" stroke="#2f8f6d" stroke-width="1"/><rect x="680.0" y="20.0" width="160" height="16" rx="4" fill="#1f4a42"/><text x="686.0" y="32.0" fill="#d7fff0" font-size="9" font-family="system-ui,sans-serif">saved_searches</text>
+</svg>

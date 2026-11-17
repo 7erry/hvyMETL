@@ -1,0 +1,21 @@
+{
+  "slug": "matchmaking",
+  "title": "Matchmaking database schema example (ER diagram + SQL)",
+  "description": "How a competitive game backend matches players: skill ratings with uncertainty and full rating history, parties, regional queues, accept-or-decline proposals, server allocation, match rosters with backfill and abandonment penalties.",
+  "category": "gaming",
+  "tags": [
+    "matchmaking",
+    "gaming",
+    "elo",
+    "queues",
+    "ranking"
+  ],
+  "primaryDialect": "postgresql",
+  "dialect": "postgresql",
+  "tableCount": 13,
+  "columnCount": 123,
+  "relationshipCount": 26,
+  "sourcePage": "https://www.drawdb.app/examples/matchmaking",
+  "license": "CC0-1.0",
+  "attribution": "Vendored from drawDB examples (CC0-1.0). https://www.drawdb.app/examples"
+}

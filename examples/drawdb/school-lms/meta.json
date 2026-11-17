@@ -1,0 +1,21 @@
+{
+  "slug": "school-lms",
+  "title": "School / LMS database schema example (ER diagram + SQL)",
+  "description": "Courses versus sections, terms, enrolments that carry the final grade, prerequisites as a self-join, assignments with weights, per-attempt submissions and idempotent attendance registers.",
+  "category": "education",
+  "tags": [
+    "courses",
+    "enrolment",
+    "grading",
+    "scheduling",
+    "attendance"
+  ],
+  "primaryDialect": "mysql",
+  "dialect": "mysql",
+  "tableCount": 10,
+  "columnCount": 77,
+  "relationshipCount": 14,
+  "sourcePage": "https://www.drawdb.app/examples/school-lms",
+  "license": "CC0-1.0",
+  "attribution": "Vendored from drawDB examples (CC0-1.0). https://www.drawdb.app/examples"
+}

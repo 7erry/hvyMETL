@@ -1,0 +1,21 @@
+{
+  "slug": "hotel-booking",
+  "title": "Hotel booking database schema example (ER diagram + SQL)",
+  "description": "A reservation system that actually handles availability: room types versus rooms, rate plans, a per-night rate and inventory calendar, reservations broken down by night, payments and verified reviews.",
+  "category": "travel",
+  "tags": [
+    "booking",
+    "availability",
+    "scheduling",
+    "payments",
+    "pricing"
+  ],
+  "primaryDialect": "mysql",
+  "dialect": "mysql",
+  "tableCount": 10,
+  "columnCount": 89,
+  "relationshipCount": 16,
+  "sourcePage": "https://www.drawdb.app/examples/hotel-booking",
+  "license": "CC0-1.0",
+  "attribution": "Vendored from drawDB examples (CC0-1.0). https://www.drawdb.app/examples"
+}
