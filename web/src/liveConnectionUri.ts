@@ -57,6 +57,11 @@ export function liveImportEngineFromUri(uri: string): LiveImportEngine | null {
   return null;
 }
 
+/** URI scheme wins when it names an engine. A schemeless URI keeps the stored engine. */
+export function savedLiveImportEngine(engine: LiveImportEngine, uri: string): LiveImportEngine {
+  return liveImportEngineFromUri(uri) ?? engine;
+}
+
 /** Host shown in saved-connection labels (`name (host)`). */
 export function liveConnectionDisplayHost(uri: string, engine: LiveImportEngine): string {
   if (engine === 'sqlite') {

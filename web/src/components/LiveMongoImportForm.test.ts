@@ -5,6 +5,7 @@ import {
   liveAgentOneLiner,
   liveAgentRunCommand,
   liveAgentUriFlag,
+  liveAgentVisibleCommand,
   liveConnectionHint,
   liveImportFormNotice,
 } from './LiveMongoImportForm';
@@ -59,7 +60,7 @@ describe('liveAgentRunCommand', () => {
 describe('liveAgentOneLiner', () => {
   it('downloads the release asset then runs it, preferring env URI when blank', () => {
     const mac = liveAgentOneLiner('macos-aarch64', 'abc', '', '', 'https://hvymetl.studio');
-    expect(mac).toContain("curl -fsSL 'https://github.com/7erry/hvyMETL/releases/download/v11.1.7/hvymetl-agent-macos-aarch64'");
+    expect(mac).toContain("curl -fsSL 'https://github.com/7erry/hvyMETL/releases/download/v11.1.8/hvymetl-agent-macos-aarch64'");
     expect(mac).toContain('--uri "$DATABASE_URL"');
     expect(mac).toContain("--server 'https://hvymetl.studio'");
     expect(mac).not.toContain('npx');
@@ -88,6 +89,18 @@ describe('liveAgentOneLiner', () => {
     expect(win).toContain('--uri');
     expect(win).toContain("--database 'dbo'");
   });
+
+  it('shows the issued session token and never the placeholder', () => {
+    const token = 'a1b2c3d4e5f6';
+    const uri = 'mysql://127.0.0.1:3306/classic_models';
+    const shown = liveAgentVisibleCommand('macos-aarch64', token, uri, 'classic_models', 'http://localhost:3847');
+    expect(shown).toContain(`--token ${token}`);
+    expect(shown).toContain(uri);
+    expect(shown).not.toContain('<token>');
+    expect(liveAgentVisibleCommand('macos-aarch64', '<token>', uri, 'classic_models')).toBe('');
+    expect(liveAgentVisibleCommand('macos-aarch64', '', uri, 'classic_models')).toBe('');
+    expect(liveAgentVisibleCommand('', token, uri, 'classic_models')).toBe('');
+  });
 });
 
 describe('detectLiveAgentPlatform', () => {
@@ -106,7 +119,7 @@ describe('detectLiveAgentPlatform', () => {
     );
     expect(detectLiveAgentPlatform({ userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)', platform: 'MacIntel' })).toBeNull();
     expect(liveAgentDownloadUrl('linux-x64')).toBe(
-      'https://github.com/7erry/hvyMETL/releases/download/v11.1.7/hvymetl-agent-linux-x64',
+      'https://github.com/7erry/hvyMETL/releases/download/v11.1.8/hvymetl-agent-linux-x64',
     );
   });
 });

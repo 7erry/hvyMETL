@@ -3,6 +3,7 @@ import {
   buildLiveConnectionUri,
   liveConnectionDisplayHost,
   parseLiveConnectionUri,
+  savedLiveImportEngine,
 } from './liveConnectionUri';
 
 describe('buildLiveConnectionUri', () => {
@@ -49,6 +50,20 @@ describe('parseLiveConnectionUri', () => {
       sslMode: 'require',
     });
     expect(buildLiveConnectionUri('postgresql', fields)).toBe(uri);
+  });
+});
+
+describe('savedLiveImportEngine', () => {
+  it('uses a mysql URI scheme even when the stored engine is postgresql', () => {
+    const uri = 'mysql://127.0.0.1:3306/classic_models';
+    const engine = savedLiveImportEngine('postgresql', uri);
+    expect(engine).toBe('mysql');
+    expect(buildLiveConnectionUri(engine, parseLiveConnectionUri(engine, uri))).toBe(uri);
+  });
+
+  it('keeps the stored engine when the URI has no scheme', () => {
+    expect(savedLiveImportEngine('mysql', '')).toBe('mysql');
+    expect(savedLiveImportEngine('mysql', '127.0.0.1:3306/classic_models')).toBe('mysql');
   });
 });
 

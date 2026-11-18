@@ -851,7 +851,13 @@ export default function App() {
     }
   };
 
-  const handleImportLive = async (uri: string, database: string, platform = '', copyOnly = false): Promise<string> => {
+  const handleImportLive = async (
+    uri: string,
+    database: string,
+    platform = '',
+    copyOnly = false,
+    existingToken = '',
+  ): Promise<string> => {
     try {
       const hosted = studioHosted || (await studioIsHosted());
       setStudioHosted(hosted);
@@ -874,15 +880,16 @@ export default function App() {
           setStatus('Import failed: Choose your computer before copying the agent command.');
           return '';
         }
-        const session = await createLiveAgentSession();
-        const command = liveAgentOneLiner(platform, session.token, uri.trim(), database.trim(), window.location.origin);
+        const token = existingToken || (await createLiveAgentSession()).token;
+        const command = liveAgentOneLiner(platform, token, uri.trim(), database.trim(), window.location.origin);
+        if (liveAgentPendingRef.current?.token === token) return command;
         setStatus('Waiting for agent… Paste the command in a terminal on the database host.');
         setLiveAgentWaiting(true);
         setLiveAgentReady(false);
-        liveAgentPendingRef.current = { token: session.token, result: null };
-        const token = session.token;
+        liveAgentPendingRef.current = { token, result: null };
         void waitForLiveAgentResult(token)
           .then(async (result) => {
+            if (liveAgentPendingRef.current?.token !== token) return;
             liveAgentPendingRef.current = { token, result };
             setLiveAgentWaiting(false);
             setLiveAgentReady(true);
@@ -896,6 +903,7 @@ export default function App() {
             }
           })
           .catch((error: unknown) => {
+            if (liveAgentPendingRef.current?.token !== token) return;
             setLiveAgentWaiting(false);
             setLiveAgentReady(false);
             liveAgentPendingRef.current = null;

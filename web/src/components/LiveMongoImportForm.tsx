@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
+import { createLiveAgentSession } from '../api';
 import { useT } from '../i18n/LocaleContext';
 import type { MessageKey } from '../i18n/messages';
 import {
@@ -11,6 +12,7 @@ import {
   encodeConnectionUserinfo,
   emptyLiveConnectionFields,
   parseLiveConnectionUri,
+  savedLiveImportEngine,
   type LiveConnectionFields,
 } from '../liveConnectionUri';
 import { SavedLiveImportConnectionField } from './SavedLiveImportConnectionField';
@@ -28,7 +30,13 @@ type LiveMongoImportFormProps = {
   agentWaiting?: boolean;
   /** Hosted studio: Import waits for the agent. Local studio imports the URI directly. */
   requireAgent?: boolean;
-  onImport: (uri: string, database: string, platform: string, copyOnly?: boolean) => void | Promise<string | void>;
+  onImport: (
+    uri: string,
+    database: string,
+    platform: string,
+    copyOnly?: boolean,
+    existingToken?: string,
+  ) => void | Promise<string | void>;
 };
 
 type LiveConnectionHint = {
@@ -93,7 +101,7 @@ export function liveConnectionHint(engine: LiveConnectionEngine): LiveConnection
 export type LiveAgentPlatform = 'macos-aarch64' | 'macos-x64' | 'windows-x64' | 'linux-x64';
 
 /** Studio pins download assets to this GitHub release tag (last published agent builds). */
-export const LIVE_AGENT_RELEASE = 'v11.1.7';
+export const LIVE_AGENT_RELEASE = 'v11.1.8';
 
 const LIVE_AGENT_BUILDS: { id: LiveAgentPlatform; label: string; fileName: string }[] = [
   { id: 'macos-aarch64', label: 'macOS Apple Silicon', fileName: 'hvymetl-agent-macos-aarch64' },
@@ -254,6 +262,28 @@ export function liveAgentOneLiner(
   }
 }
 
+/** Command on screen. Blank until a real session token exists — never the `<token>` placeholder. */
+export function liveAgentVisibleCommand(
+  platform: LiveAgentPlatform | '',
+  token: string,
+  uri: string,
+  database: string,
+  server?: string,
+): string {
+  if (!isLiveAgentPlatform(platform) || !token || token.includes('<')) return '';
+  return liveAgentOneLiner(platform, token, uri, database, server);
+}
+
+function draftFromSavedConnection(saved: LiveImportConnection): {
+  engine: LiveImportEngine;
+  fields: LiveConnectionFields;
+} {
+  const engine = savedLiveImportEngine(saved.engine, saved.uri);
+  const parsed = parseLiveConnectionUri(engine, saved.uri);
+  if (!saved.database) return { engine, fields: parsed };
+  return { engine, fields: { ...parsed, database: saved.database } };
+}
+
 /** Copy during the click that started `command`, before that promise settles. */
 export function copyLiveAgentCommand(command: Promise<string>): Promise<void> {
   const blob = command.then((text) => {
@@ -311,9 +341,15 @@ export function LiveMongoImportForm({
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [binaryOpen, setBinaryOpen] = useState(false);
   const [issuedToken, setIssuedToken] = useState('');
+  const [sessionError, setSessionError] = useState('');
   const [connections, setConnections] = useState<LiveImportConnection[]>(() => listLiveImportConnections());
   const [connectionId, setConnectionId] = useState(() => listLiveImportConnections()[0]?.id ?? '');
   const userPickedPlatform = useRef(false);
+  const issuedTokenRef = useRef('');
+  const sessionRequest = useRef<Promise<string> | null>(null);
+  const waitStarted = useRef('');
+  const onImportRef = useRef(onImport);
+  onImportRef.current = onImport;
   const connection = liveConnectionHint(engine);
   const selected = isLiveAgentPlatform(platform) ? liveAgentBuild(platform) : null;
   const isWindows = platform === 'windows-x64';
@@ -330,6 +366,26 @@ export function LiveMongoImportForm({
     return fields.database.trim();
   }, [inputMode, isSqlite, fields.database]);
 
+  const commandRef = useRef({ uri: effectiveUri, database: effectiveDatabase, platform });
+  commandRef.current = { uri: effectiveUri, database: effectiveDatabase, platform };
+
+  const requestToken = useCallback((): Promise<string> => {
+    if (issuedTokenRef.current) return Promise.resolve(issuedTokenRef.current);
+    if (sessionRequest.current) return sessionRequest.current;
+    const pending = createLiveAgentSession()
+      .then((session) => {
+        issuedTokenRef.current = session.token;
+        setIssuedToken(session.token);
+        setSessionError('');
+        return session.token;
+      })
+      .finally(() => {
+        if (sessionRequest.current === pending) sessionRequest.current = null;
+      });
+    sessionRequest.current = pending;
+    return pending;
+  }, []);
+
   useEffect(() => {
     let cancelled = false;
     void detectClientLiveAgentPlatform().then((detected) => {
@@ -340,37 +396,57 @@ export function LiveMongoImportForm({
     };
   }, []);
 
+  useEffect(() => {
+    if (!isLiveAgentPlatform(platform) || issuedToken) return;
+    let cancelled = false;
+    void requestToken().catch((error: unknown) => {
+      if (cancelled) return;
+      setSessionError(error instanceof Error ? error.message : 'Could not start agent session.');
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [platform, issuedToken, requestToken]);
+
+  useEffect(() => {
+    if (!issuedToken || !isLiveAgentPlatform(platform)) return;
+    if (waitStarted.current === issuedToken) return;
+    waitStarted.current = issuedToken;
+    const current = commandRef.current;
+    if (!isLiveAgentPlatform(current.platform)) return;
+    void Promise.resolve(
+      onImportRef.current(current.uri, current.database, current.platform, true, issuedToken),
+    ).catch(() => undefined);
+  }, [issuedToken, platform]);
+
   const applySavedConnection = (saved: LiveImportConnection): void => {
-    setEngine(saved.engine);
+    const draft = draftFromSavedConnection(saved);
+    setEngine(draft.engine);
     setUri(saved.uri);
-    setFields(parseLiveConnectionUri(saved.engine, saved.uri));
-    if (saved.database) {
-      setFields((prev) => ({ ...prev, database: saved.database || prev.database }));
-    }
+    setFields(draft.fields);
   };
 
   useEffect(() => {
     if (!connectionId) return;
     const saved = connections.find((c) => c.id === connectionId);
     if (!saved) return;
-    setEngine(saved.engine);
+    const draft = draftFromSavedConnection(saved);
+    setEngine(draft.engine);
     setUri(saved.uri);
-    setFields(parseLiveConnectionUri(saved.engine, saved.uri));
-    if (saved.database) {
-      setFields((prev) => ({ ...prev, database: saved.database || prev.database }));
-    }
+    setFields(draft.fields);
   }, [connectionId, connections]);
 
-  const shownCommand = useMemo(() => {
-    if (!isLiveAgentPlatform(platform)) return '';
-    return liveAgentOneLiner(
-      platform,
-      issuedToken || '<token>',
-      effectiveUri,
-      effectiveDatabase,
-      typeof window !== 'undefined' ? window.location.origin : undefined,
-    );
-  }, [platform, issuedToken, effectiveUri, effectiveDatabase]);
+  const shownCommand = useMemo(
+    () =>
+      liveAgentVisibleCommand(
+        platform,
+        issuedToken,
+        effectiveUri,
+        effectiveDatabase,
+        typeof window !== 'undefined' ? window.location.origin : undefined,
+      ),
+    [platform, issuedToken, effectiveUri, effectiveDatabase],
+  );
 
   const patchFields = (patch: Partial<LiveConnectionFields>) => {
     setFields((prev) => ({ ...prev, ...patch }));
@@ -392,7 +468,6 @@ export function LiveMongoImportForm({
         sslMode: prev.sslMode,
       };
     });
-    setIssuedToken('');
   };
 
   const switchInputMode = (mode: InputMode) => {
@@ -407,15 +482,20 @@ export function LiveMongoImportForm({
 
   const runCopy = (event?: FormEvent) => {
     event?.preventDefault();
-    if (busy || !selected) return;
+    if (busy || !isLiveAgentPlatform(platform)) return;
     setBusy(true);
-    const pending = Promise.resolve(onImport(effectiveUri, effectiveDatabase, platform, true)).then(
-      (command) => command ?? '',
-    );
-    void pending.then((command) => {
-      const token = /--token\s+(\S+)/.exec(command)?.[1];
-      if (token) setIssuedToken(token);
-    });
+    const pending = requestToken()
+      .then(async (token) => {
+        const command = await Promise.resolve(
+          onImport(effectiveUri, effectiveDatabase, platform, true, token),
+        );
+        if (typeof command === 'string' && command.includes(token) && !command.includes('<')) return command;
+        return liveAgentVisibleCommand(platform, token, effectiveUri, effectiveDatabase, window.location.origin);
+      })
+      .catch((error: unknown) => {
+        setSessionError(error instanceof Error ? error.message : 'Could not start agent session.');
+        return '';
+      });
     void copyLiveAgentCommand(pending).finally(() => setBusy(false));
   };
 
@@ -425,7 +505,7 @@ export function LiveMongoImportForm({
     void Promise.resolve(onImport(effectiveUri, effectiveDatabase, platform, false)).finally(() => setBusy(false));
   };
 
-  const notice = liveImportFormNotice(status) || (busy ? t('live.reading') : '');
+  const notice = sessionError || liveImportFormNotice(status) || (busy ? t('live.reading') : '');
 
   const badgeLabel = agentWaiting
     ? t('live.waitingAgent')
@@ -638,7 +718,6 @@ export function LiveMongoImportForm({
               userPickedPlatform.current = true;
               const next = event.target.value;
               setPlatform(isLiveAgentPlatform(next) ? next : '');
-              setIssuedToken('');
             }}
           >
             <option value="">{t('live.chooseComputer')}</option>
@@ -668,8 +747,10 @@ export function LiveMongoImportForm({
               {busy ? '…' : '📋'}
             </button>
           </div>
-        ) : (
-          <p className="schema-import-panel__hint">{t('live.chooseComputer')}</p>
+        ) : sessionError ? null : (
+          <p className="schema-import-panel__hint">
+            {isLiveAgentPlatform(platform) ? t('live.waitingAgent') : t('live.chooseComputer')}
+          </p>
         )}
 
         <details

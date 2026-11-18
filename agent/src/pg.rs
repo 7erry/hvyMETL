@@ -11,7 +11,8 @@ const CONNECT_ATTEMPTS: u32 = 3;
 
 /// Connect with rustls. Accepts any server cert (matches MSSQL `trust_cert()`).
 ///
-/// Retries a few times when Kind/kubectl port-forward drops mid-handshake (`tls handshake eof`).
+/// Retries a few times when Kind/kubectl port-forward drops mid-handshake (`tls handshake eof`)
+/// or nothing is listening for about a second (`ConnectionRefused`).
 ///
 /// shortcut: no CA verify — fine for local/dev and self-signed PGO; add verify-full when shipping managed-cloud PG.
 pub async fn connect(uri: &str) -> Result<Client, tokio_postgres::Error> {
@@ -20,14 +21,20 @@ pub async fn connect(uri: &str) -> Result<Client, tokio_postgres::Error> {
     for attempt in 0..CONNECT_ATTEMPTS {
         match connect_once(&uri).await {
             Ok(client) => return Ok(client),
-            Err(err) if is_handshake_eof(&err) && attempt + 1 < CONNECT_ATTEMPTS => {
+            Err(err) if retryable_connect(&err) && attempt + 1 < CONNECT_ATTEMPTS => {
+                // Refused waits past a ~1s kubectl restart. Handshake eof keeps the shorter pause.
+                let unit = if is_connection_refused(&err) {
+                    400
+                } else {
+                    200
+                };
                 last_err = Some(err);
-                tokio::time::sleep(Duration::from_millis(200 * u64::from(attempt + 1))).await;
+                tokio::time::sleep(Duration::from_millis(unit * u64::from(attempt + 1))).await;
             }
             Err(err) => return Err(err),
         }
     }
-    Err(last_err.expect("handshake eof retry left an error"))
+    Err(last_err.expect("connect retry left an error"))
 }
 
 async fn connect_once(uri: &str) -> Result<Client, tokio_postgres::Error> {
@@ -56,9 +63,24 @@ fn ensure_sslmode_require(uri: &str) -> String {
     }
 }
 
+fn retryable_connect(err: &tokio_postgres::Error) -> bool {
+    is_handshake_eof(err) || is_connection_refused(err)
+}
+
 fn is_handshake_eof(err: &tokio_postgres::Error) -> bool {
     let debug = format!("{err:?}");
     debug.contains("tls handshake eof") || debug.contains("UnexpectedEof")
+}
+
+fn is_connection_refused(err: &tokio_postgres::Error) -> bool {
+    let message = err.to_string();
+    let debug = format!("{err:?}");
+    debug.contains("ConnectionRefused")
+        || debug.contains("os error 61")
+        || debug.contains("os error 111")
+        || message.contains("Connection refused")
+        || message.contains("os error 61")
+        || message.contains("os error 111")
 }
 
 #[derive(Debug)]
@@ -111,7 +133,9 @@ impl ServerCertVerifier for TrustAnyCert {
 
 #[cfg(test)]
 mod tests {
-    use super::ensure_sslmode_require;
+    use std::time::{Duration, Instant};
+
+    use super::{connect, ensure_sslmode_require};
 
     #[test]
     fn adds_sslmode_require_when_missing() {
@@ -131,5 +155,21 @@ mod tests {
             ensure_sslmode_require("postgresql://u@127.0.0.1:5432/db?sslmode=prefer"),
             "postgresql://u@127.0.0.1:5432/db?sslmode=prefer"
         );
+    }
+
+    #[tokio::test]
+    async fn connection_refused_retries_then_stays_a_closed_port() {
+        let _ = rustls::crypto::ring::default_provider().install_default();
+        let started = Instant::now();
+        let err = connect("postgresql://u:dummy@127.0.0.1:1/none")
+            .await
+            .expect_err("closed port");
+        let elapsed = started.elapsed();
+        assert!(elapsed >= Duration::from_millis(1100), "{elapsed:?}");
+        assert!(elapsed < Duration::from_secs(5), "{elapsed:?}");
+        let debug = format!("{err:?}");
+        assert!(debug.contains("ConnectionRefused"), "{debug}");
+        let public = crate::catalog::public_error(&err);
+        assert!(public.contains("Nothing is listening"), "{public}");
     }
 }

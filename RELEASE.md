@@ -1,3 +1,15 @@
+## hvyMETL 11.1.8
+
+**Saved connections** — A saved connection follows the URI scheme. A mysql:// URI sets Engine to MySQL and the command scheme is mysql://. A URI without a scheme keeps the stored engine.
+
+**Live command** — The live command shows a real agent token instead of `<token>`. Add data source mints one agent session when the platform is known. Copy reuses that same session. Engine and URI edits rebuild the command around that token.
+
+**PostgreSQL connect** — A brief connection refusal is retried. A port that stays closed still says nothing is listening.
+
+Studio downloads `v11.1.8`.
+
+---
+
 ## hvyMETL 11.1.7
 
 **Live extract** — The live pipeline no longer requires a CSV upload. A failed or idle extract re-enables Start agent. The agent says when the port is actually closed versus when the URI must be percent-encoded. The pipeline command encodes `= { } ^ ,` in the user and password. Studio downloads `v11.1.7`.

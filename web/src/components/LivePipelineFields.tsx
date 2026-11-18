@@ -17,6 +17,7 @@ import {
   isLiveAgentPlatform,
   liveAgentDownloadUrl,
   liveAgentOneLiner,
+  liveAgentVisibleCommand,
   type LiveAgentPlatform,
 } from './LiveMongoImportForm';
 
@@ -106,8 +107,8 @@ export function LivePipelineFields({
   const serverOrigin = typeof window !== 'undefined' ? window.location.origin : undefined;
 
   const shownCommand = useMemo(() => {
-    if (!requireAgent || !isLiveAgentPlatform(platform) || !agentToken) return '';
-    return liveAgentOneLiner(platform, agentToken, uri.trim(), database.trim(), serverOrigin);
+    if (!requireAgent) return '';
+    return liveAgentVisibleCommand(platform, agentToken, uri.trim(), database.trim(), serverOrigin);
   }, [requireAgent, platform, agentToken, uri, database, serverOrigin]);
 
   useEffect(() => {
