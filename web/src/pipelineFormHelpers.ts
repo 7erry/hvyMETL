@@ -137,6 +137,24 @@ export function isLikelyLocalFilesystemPath(path: string): boolean {
   return /^([A-Za-z]:\\|\\\\)/.test(trimmed) || /^\/Users\//.test(trimmed) || /^\/home\//.test(trimmed);
 }
 
+export type PipelineSourceMode = 'real' | 'mock' | 'live';
+
+/** Live extracts are staged by the agent. They are not a CSV upload. */
+export function pipelineSourcePreflight(mode: PipelineSourceMode): 'csv' | 'mock' | 'none' {
+  switch (mode) {
+    case 'live':
+      return 'none';
+    case 'mock':
+      return 'mock';
+    case 'real':
+      return 'csv';
+    default: {
+      const unexpected: never = mode;
+      return unexpected;
+    }
+  }
+}
+
 /** Ignore local-only paths when running against hosted studio. */
 export function resolveHostedCsvSourcePath(path: string | null | undefined, requiresCsvUpload: boolean): string {
   const trimmed = path?.trim() ?? '';

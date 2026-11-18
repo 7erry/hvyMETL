@@ -96,6 +96,76 @@ describe('live agent WebSocket', () => {
 
     expect(readLiveAgentResult(session.token)?.result?.dialect).toBe('postgresql');
     expect(readExtractJob(session.token)?.status).toBe('complete');
+    ws.close();
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    expect(readExtractJob(session.token)?.status).toBe('complete');
+  }, 15_000);
+
+  it('marks the extract failed when the agent drops before any rows', async () => {
+    const stagingRoot = mkdtempSync(join(tmpdir(), 'hvymetl-agent-ws-'));
+    const session = createLiveAgentSession({ wantExtract: true, stagingRoot });
+    const app = express();
+    app.use(express.json());
+    app.use('/api/schema', createLiveAgentStudioRouter());
+    const server = app.listen(0, '127.0.0.1');
+    await once(server, 'listening');
+    servers.push(server);
+    attachLiveAgentWebSocket(server);
+    const address = server.address();
+    if (!address || typeof address === 'string') throw new Error('no port');
+
+    const ws = new WebSocket(`ws://127.0.0.1:${address.port}/api/agent/v2?token=${session.token}`);
+    sockets.push(ws);
+    if (ws.readyState !== WebSocket.OPEN) await once(ws, 'open');
+    const inbox: Record<string, unknown>[] = [];
+    ws.on('message', (raw) => {
+      inbox.push(JSON.parse(String(raw)) as Record<string, unknown>);
+    });
+    ws.send(JSON.stringify({ type: 'hello', protocol: 1, agentVersion: '11.1.6', engines: ['postgresql'] }));
+
+    const waitFor = async (type: string): Promise<Record<string, unknown>> => {
+      const deadline = Date.now() + 5_000;
+      while (Date.now() < deadline) {
+        const hit = inbox.find((payload) => payload.type === type);
+        if (hit) return hit;
+        await new Promise((resolve) => setTimeout(resolve, 20));
+      }
+      throw new Error(`Timed out waiting for ${type}.`);
+    };
+
+    await waitFor('welcome');
+    await waitFor('introspect');
+    ws.send(
+      JSON.stringify({
+        type: 'schema',
+        model: {
+          source: 'ddl:postgresql',
+          tables: [
+            {
+              name: 'actor',
+              columns: [{ name: 'actor_id', sqlType: 'int', bsonType: 'int', nullable: false, isPrimaryKey: true }],
+              primaryKey: ['actor_id'],
+              foreignKeys: [],
+              rowCount: 1,
+            },
+          ],
+          relationships: [],
+        },
+        ddl: '// Live PostgreSQL database dvdrental. Schema read from the catalog.\n',
+        dialect: 'postgresql',
+      }),
+    );
+    await waitFor('extract');
+    ws.close();
+
+    const deadline = Date.now() + 3_000;
+    let job = readExtractJob(session.token);
+    while (job?.status !== 'error' && Date.now() < deadline) {
+      await new Promise((resolve) => setTimeout(resolve, 20));
+      job = readExtractJob(session.token);
+    }
+    expect(job?.status).toBe('error');
+    expect(job?.error ?? '').not.toMatch(/Nothing is listening/);
   }, 15_000);
 
   it('rejects an expired or missing token on upgrade', async () => {

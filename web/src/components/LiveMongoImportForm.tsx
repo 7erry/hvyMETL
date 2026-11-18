@@ -8,6 +8,7 @@ import {
 } from '../liveImportConnections';
 import {
   buildLiveConnectionUri,
+  encodeConnectionUserinfo,
   emptyLiveConnectionFields,
   parseLiveConnectionUri,
   type LiveConnectionFields,
@@ -92,7 +93,7 @@ export function liveConnectionHint(engine: LiveConnectionEngine): LiveConnection
 export type LiveAgentPlatform = 'macos-aarch64' | 'macos-x64' | 'windows-x64' | 'linux-x64';
 
 /** Studio pins download assets to this GitHub release tag (last published agent builds). */
-export const LIVE_AGENT_RELEASE = 'v11.1.6';
+export const LIVE_AGENT_RELEASE = 'v11.1.7';
 
 const LIVE_AGENT_BUILDS: { id: LiveAgentPlatform; label: string; fileName: string }[] = [
   { id: 'macos-aarch64', label: 'macOS Apple Silicon', fileName: 'hvymetl-agent-macos-aarch64' },
@@ -180,7 +181,7 @@ function psQuote(value: string): string {
 
 /** URI flag: typed URI, or shell env so credentials never enter the browser. */
 export function liveAgentUriFlag(platform: LiveAgentPlatform, uri: string): string {
-  const trimmed = uri.trim();
+  const trimmed = encodeConnectionUserinfo(uri.trim());
   if (!trimmed) {
     return platform === 'windows-x64' ? '--uri $env:DATABASE_URL' : '--uri "$DATABASE_URL"';
   }
@@ -309,7 +310,7 @@ export function LiveMongoImportForm({
   const [busy, setBusy] = useState(false);
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [binaryOpen, setBinaryOpen] = useState(false);
-  const [commandPreview, setCommandPreview] = useState('');
+  const [issuedToken, setIssuedToken] = useState('');
   const [connections, setConnections] = useState<LiveImportConnection[]>(() => listLiveImportConnections());
   const [connectionId, setConnectionId] = useState(() => listLiveImportConnections()[0]?.id ?? '');
   const userPickedPlatform = useRef(false);
@@ -360,18 +361,16 @@ export function LiveMongoImportForm({
     }
   }, [connectionId, connections]);
 
-  const previewTemplate = useMemo(() => {
+  const shownCommand = useMemo(() => {
     if (!isLiveAgentPlatform(platform)) return '';
     return liveAgentOneLiner(
       platform,
-      '<token>',
+      issuedToken || '<token>',
       effectiveUri,
       effectiveDatabase,
       typeof window !== 'undefined' ? window.location.origin : undefined,
     );
-  }, [platform, effectiveUri, effectiveDatabase]);
-
-  const shownCommand = commandPreview || previewTemplate;
+  }, [platform, issuedToken, effectiveUri, effectiveDatabase]);
 
   const patchFields = (patch: Partial<LiveConnectionFields>) => {
     setFields((prev) => ({ ...prev, ...patch }));
@@ -393,7 +392,7 @@ export function LiveMongoImportForm({
         sslMode: prev.sslMode,
       };
     });
-    setCommandPreview('');
+    setIssuedToken('');
   };
 
   const switchInputMode = (mode: InputMode) => {
@@ -414,7 +413,8 @@ export function LiveMongoImportForm({
       (command) => command ?? '',
     );
     void pending.then((command) => {
-      if (command) setCommandPreview(command);
+      const token = /--token\s+(\S+)/.exec(command)?.[1];
+      if (token) setIssuedToken(token);
     });
     void copyLiveAgentCommand(pending).finally(() => setBusy(false));
   };
@@ -638,7 +638,7 @@ export function LiveMongoImportForm({
               userPickedPlatform.current = true;
               const next = event.target.value;
               setPlatform(isLiveAgentPlatform(next) ? next : '');
-              setCommandPreview('');
+              setIssuedToken('');
             }}
           >
             <option value="">{t('live.chooseComputer')}</option>

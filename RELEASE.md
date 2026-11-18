@@ -1,3 +1,9 @@
+## hvyMETL 11.1.7
+
+**Live extract** — The live pipeline no longer requires a CSV upload. A failed or idle extract re-enables Start agent. The agent says when the port is actually closed versus when the URI must be percent-encoded. The pipeline command encodes `= { } ^ ,` in the user and password. Studio downloads `v11.1.7`.
+
+---
+
 ## hvyMETL 11.1.6
 
 **PostgreSQL password** — When the database asks for a password and the URI has none, the agent says so instead of `invalid configuration`. Use `postgresql://USER:PASSWORD@127.0.0.1:5432/database`. Studio downloads `v11.1.6`.

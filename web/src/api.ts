@@ -324,12 +324,41 @@ export async function waitForLiveAgentResult(
   throw new Error('The local agent did not return a schema in time.');
 }
 
+/** No rows yet for this long means the database connect or extract never started. */
+export const LIVE_EXTRACT_IDLE_MS = 90_000;
+
+/** ready: finished. error: server reported failure. stalled: still no rows. wait: keep polling. */
+export function liveExtractPollDecision(
+  status: LiveAgentExtractStatus['status'],
+  rowsReceived: number,
+  idleMs: number,
+  idleLimitMs = LIVE_EXTRACT_IDLE_MS,
+): 'ready' | 'error' | 'stalled' | 'wait' {
+  switch (status) {
+    case 'complete':
+      return 'ready';
+    case 'error':
+    case 'cancelled':
+      return 'error';
+    case 'pending':
+    case 'running':
+      // shortcut: a healthy first query slower than idleLimitMs looks stalled; raise the limit then.
+      return rowsReceived === 0 && idleMs >= idleLimitMs ? 'stalled' : 'wait';
+    default: {
+      const unexpected: never = status;
+      return unexpected;
+    }
+  }
+}
+
 /** Poll until the agent extract job finishes (or the session expires). */
 export async function waitForLiveAgentExtract(
   token: string,
   timeoutMs = 12 * 60 * 60 * 1000,
 ): Promise<LiveAgentExtractStatus> {
   const deadline = Date.now() + timeoutMs;
+  let rowsSeen = 0;
+  let progressedAt = Date.now();
   while (Date.now() < deadline) {
     const res = await apiFetch(`${base}/api/schema/agent-extract?token=${encodeURIComponent(token)}`);
     if (res.status === 204) {
@@ -338,9 +367,29 @@ export async function waitForLiveAgentExtract(
     }
     if (!res.ok) throw new Error(await readApiError(res));
     const body = (await res.json()) as LiveAgentExtractStatus;
-    if (body.status === 'complete') return body;
-    if (body.status === 'error') throw new Error(body.error || 'Agent extract failed.');
-    if (body.status === 'cancelled') throw new Error('Agent extract was cancelled.');
+    const rows = body.tables.reduce((sum, table) => sum + table.rowsReceived, 0);
+    if (rows > rowsSeen) {
+      rowsSeen = rows;
+      progressedAt = Date.now();
+    }
+    const decision = liveExtractPollDecision(body.status, rows, Date.now() - progressedAt);
+    switch (decision) {
+      case 'ready':
+        return body;
+      case 'error':
+        if (body.status === 'cancelled') throw new Error('Agent extract was cancelled.');
+        throw new Error(body.error || 'Agent extract failed.');
+      case 'stalled':
+        throw new Error(
+          'Agent connected, but the database extract did not start. Check the connection URI and run the agent again.',
+        );
+      case 'wait':
+        break;
+      default: {
+        const unexpected: never = decision;
+        throw new Error(unexpected);
+      }
+    }
     await new Promise((resolve) => setTimeout(resolve, 1_000));
   }
   throw new Error('The local agent did not finish the extract in time.');

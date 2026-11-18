@@ -71,6 +71,38 @@ export function liveConnectionDisplayHost(uri: string, engine: LiveImportEngine)
   }
 }
 
+/** Percent-encode raw userinfo once. Existing %XX sequences are left as-is. */
+export function encodeConnectionUserinfo(uri: string): string {
+  const schemeIdx = uri.indexOf('://');
+  if (schemeIdx < 0) return uri;
+  const rest = uri.slice(schemeIdx + 3);
+  const at = rest.indexOf('@');
+  if (at < 0) return uri;
+  const userinfo = rest.slice(0, at);
+  const colon = userinfo.indexOf(':');
+  const encoded =
+    colon < 0
+      ? encodeUserinfoPart(userinfo)
+      : `${encodeUserinfoPart(userinfo.slice(0, colon))}:${encodeUserinfoPart(userinfo.slice(colon + 1))}`;
+  return `${uri.slice(0, schemeIdx + 3)}${encoded}${rest.slice(at)}`;
+}
+
+function encodeUserinfoPart(part: string): string {
+  let out = '';
+  let index = 0;
+  while (index < part.length) {
+    if (part[index] === '%' && /^%[0-9A-Fa-f]{2}$/.test(part.slice(index, index + 3))) {
+      out += part.slice(index, index + 3);
+      index += 3;
+      continue;
+    }
+    const ch = part[index] ?? '';
+    out += /^[A-Za-z0-9\-_.!~*'()]$/.test(ch) ? ch : encodeURIComponent(ch);
+    index += 1;
+  }
+  return out;
+}
+
 function encodeAuth(user: string, password: string): string {
   if (!user) return '';
   const u = encodeURIComponent(user);

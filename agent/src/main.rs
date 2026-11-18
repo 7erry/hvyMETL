@@ -48,6 +48,17 @@ fn studio_ws_url(server: &str, token: &str) -> Result<String, String> {
     Ok(format!("{ws}/api/agent/v2?token={token}"))
 }
 
+async fn send_agent_error<S>(write: &mut S, error: &str)
+where
+    S: SinkExt<Message> + Unpin,
+{
+    let _ = write
+        .send(Message::Text(
+            json!({ "type": "error", "message": error }).to_string().into(),
+        ))
+        .await;
+}
+
 async fn run_ws(token: &str, uri: &str, database: &str, server: &str) -> Result<(), String> {
     let engine = detect_engine(uri)?;
     let database = database_name(uri, Some(database).filter(|name| !name.is_empty()), engine)?;
@@ -94,7 +105,13 @@ async fn run_ws(token: &str, uri: &str, database: &str, server: &str) -> Result<
                     .map_err(public_error)?;
             }
             "introspect" => {
-                let schema = introspect(uri, &database, engine).await?;
+                let schema = match introspect(uri, &database, engine).await {
+                    Ok(schema) => schema,
+                    Err(error) => {
+                        send_agent_error(&mut write, &error).await;
+                        return Err(error);
+                    }
+                };
                 write
                     .send(Message::Text(
                         json!({
@@ -146,7 +163,13 @@ async fn run_ws(token: &str, uri: &str, database: &str, server: &str) -> Result<
                     .collect();
                 for table in &mut tables {
                     loop {
-                        let chunk = extract_next_chunk(uri, &database, engine, table, chunk_rows).await?;
+                        let chunk = match extract_next_chunk(uri, &database, engine, table, chunk_rows).await {
+                            Ok(chunk) => chunk,
+                            Err(error) => {
+                                send_agent_error(&mut write, &error).await;
+                                return Err(error);
+                            }
+                        };
                         write
                             .send(Message::Text(
                                 json!({

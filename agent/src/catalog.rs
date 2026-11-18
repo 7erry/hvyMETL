@@ -587,13 +587,39 @@ pub fn public_error(error: impl ToString + std::fmt::Debug) -> String {
     if message == "invalid configuration" && debug.contains("password missing") {
         return "PostgreSQL requires a password. Add the user and password to the connection URI, for example postgresql://USER:PASSWORD@127.0.0.1:5432/database.".to_string();
     }
-    // tokio-postgres Connect: Display is just "error connecting to server" (Debug has ConnectionRefused).
-    if message.contains("error connecting to server")
+    if message == "invalid connection string" {
+        return "The connection URI was rejected. Percent-encode reserved characters in the password (for example = { } ^ ,), then re-run.".to_string();
+    }
+    if message == "authentication error"
+        || (message == "db error"
+            && (debug.contains("password authentication") || debug.contains("authentication failed")))
+    {
+        return "PostgreSQL rejected the user or password in the connection URI.".to_string();
+    }
+    // Kind::Connect Display is always "error connecting to server". Refused, reset, and timeout are only in Debug.
+    let refused = debug.contains("ConnectionRefused")
+        || debug.contains("os error 61")
+        || debug.contains("os error 111")
         || message.contains("Connection refused")
         || message.contains("os error 61")
-        || message.contains("os error 111")
-    {
+        || message.contains("os error 111");
+    if refused {
         return "Could not connect to the database (connection refused). Nothing is listening on the URI host:port — start kubectl port-forward to 127.0.0.1:5432, then re-run.".to_string();
+    }
+    let connect_wrapper = message.contains("error connecting to server") || debug.contains("kind: Connect");
+    let dropped = debug.contains("ConnectionReset")
+        || debug.contains("BrokenPipe")
+        || debug.contains("ConnectionAborted")
+        || debug.contains("TimedOut")
+        || debug.contains("timed out")
+        || debug.contains("os error 54")
+        || debug.contains("os error 104")
+        || debug.contains("os error 32");
+    if connect_wrapper && dropped {
+        return "database connection dropped (is kubectl port-forward still running?)".to_string();
+    }
+    if connect_wrapper || (message.contains("error communicating with the server") && dropped) {
+        return "Could not connect to the database. The port is not closed — check the connection URI, password encoding, and TLS.".to_string();
     }
     if message.contains("/api/agent/") || message.contains("HTTP error:") {
         return "Could not reach the studio over WebSocket.".to_string();
@@ -630,7 +656,46 @@ mod public_error_tests {
 
     #[test]
     fn maps_postgres_connect_refused() {
-        assert!(public_error("error connecting to server").contains("connection refused"));
+        struct Refused;
+        impl std::fmt::Display for Refused {
+            fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                f.write_str("error connecting to server")
+            }
+        }
+        impl std::fmt::Debug for Refused {
+            fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                f.write_str("Error { kind: Connect, cause: Some(Os { code: 61, kind: ConnectionRefused, message: \"Connection refused\" }) }")
+            }
+        }
+        let msg = public_error(Refused);
+        assert!(msg.contains("Nothing is listening"), "{msg}");
+        assert!(public_error("Connection refused").contains("Nothing is listening"));
+    }
+
+    #[test]
+    fn does_not_call_every_connect_error_a_closed_port() {
+        struct Reset;
+        impl std::fmt::Display for Reset {
+            fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                f.write_str("error connecting to server")
+            }
+        }
+        impl std::fmt::Debug for Reset {
+            fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                f.write_str("Error { kind: Connect, cause: Some(Os { code: 54, kind: ConnectionReset, message: \"Connection reset by peer\" }) }")
+            }
+        }
+        let reset = public_error(Reset);
+        assert!(!reset.contains("Nothing is listening"), "{reset}");
+        assert!(reset.contains("port-forward"), "{reset}");
+
+        let bare = public_error("error connecting to server");
+        assert!(!bare.contains("Nothing is listening"), "{bare}");
+        assert!(!bare.contains("connection refused"), "{bare}");
+
+        let uri = public_error("invalid connection string");
+        assert!(uri.contains("Percent-encode"), "{uri}");
+        assert!(!uri.contains("Nothing is listening"), "{uri}");
     }
 
     #[test]

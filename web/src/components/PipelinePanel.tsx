@@ -16,6 +16,7 @@ import { pickCsvDirectory, pickCsvFiles } from '../directoryPicker';
 import {
   hydratePipelineSettingsFromConfig,
   isCsvToAtlasServerConfigured,
+  pipelineSourcePreflight,
   csvToAtlasUserOverridePath,
   isEnvMongoPlaceholder,
   isEnvModelKeyPlaceholder,
@@ -469,6 +470,7 @@ export function PipelinePanel({
 
   const envChecks = useMemo(() => {
     if (!config) return [];
+    const sourceCheck = jsonDocuments ? 'none' : pipelineSourcePreflight(dataSourceMode);
     return [
       { id: 'dialect', label: `Schema dialect (${dialectLabel})`, ok: true },
       {
@@ -497,29 +499,27 @@ export function PipelinePanel({
               ok: hasCsvToAtlas,
             },
           ]),
-      ...(jsonDocuments
-        ? []
-        : [
-            ...(useMockCsv
-              ? [
-                  {
-                    id: 'mockGenerator',
-                    label: config.mockCsvGenerator?.ok
-                      ? `Mock CSV generator (${config.mockCsvGenerator.python ?? 'python3'})`
-                      : 'Mock CSV generator (Python + deps)',
-                    ok: mockGeneratorReady,
-                  },
-                ]
-              : [
-                  {
-                    id: 'data',
-                    label: requiresCsvUpload ? 'CSV files uploaded to studio server' : 'CSV export folder or server path',
-                    ok: hasCsvSource,
-                  },
-                ]),
-          ]),
+      ...(sourceCheck === 'mock'
+        ? [
+            {
+              id: 'mockGenerator',
+              label: config.mockCsvGenerator?.ok
+                ? `Mock CSV generator (${config.mockCsvGenerator.python ?? 'python3'})`
+                : 'Mock CSV generator (Python + deps)',
+              ok: mockGeneratorReady,
+            },
+          ]
+        : sourceCheck === 'csv'
+          ? [
+              {
+                id: 'data',
+                label: requiresCsvUpload ? 'CSV files uploaded to studio server' : 'CSV export folder or server path',
+                ok: hasCsvSource,
+              },
+            ]
+          : []),
     ];
-  }, [config, dialectLabel, mongoReachable, hasCsvToAtlas, hasMongoImport, useMockCsv, hasCsvSource, mockGeneratorReady, requiresCsvUpload, jsonDocuments, mongoTools]);
+  }, [config, dialectLabel, mongoReachable, hasCsvToAtlas, hasMongoImport, hasCsvSource, mockGeneratorReady, requiresCsvUpload, jsonDocuments, mongoTools, dataSourceMode]);
 
   const passedChecks = envChecks.filter((check) => check.ok).length;
   const envReady = envChecks.length > 0 && passedChecks === envChecks.length;

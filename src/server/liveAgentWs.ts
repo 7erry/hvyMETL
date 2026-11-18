@@ -9,6 +9,7 @@ import {
 import {
   readExtractJob,
   readLiveAgentCommand,
+  markLiveAgentDisconnected,
   saveLiveAgentError,
   saveLiveAgentResult,
   sessionFor,
@@ -213,7 +214,10 @@ export function attachLiveAgentWebSocket(server: Server): WebSocketServer {
       const raw = typeof data === 'string' ? data : data.toString('utf8');
       void handleMessage(ws, token, raw);
     });
-    ws.on('close', () => clearInterval(pingTimer));
+    ws.on('close', () => {
+      clearInterval(pingTimer);
+      markLiveAgentDisconnected(token);
+    });
     ws.on('error', () => clearInterval(pingTimer));
   });
 

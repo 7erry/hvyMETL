@@ -7,6 +7,7 @@ import {
   isLikelyLocalFilesystemPath,
   mongoUriInputValue,
   mongoUriOverrideForFetch,
+  pipelineSourcePreflight,
   resolveHostedCsvSourcePath,
 } from './pipelineFormHelpers';
 
@@ -24,6 +25,12 @@ describe('pipelineFormHelpers', () => {
   it('hides env placeholder in the input value', () => {
     expect(mongoUriInputValue('(configured in .env)')).toBe('');
     expect(mongoUriInputValue('mongodb+srv://cluster')).toBe('mongodb+srv://cluster');
+  });
+
+  it('does not require a CSV upload for a live agent extract', () => {
+    expect(pipelineSourcePreflight('live')).toBe('none');
+    expect(pipelineSourcePreflight('real')).toBe('csv');
+    expect(pipelineSourcePreflight('mock')).toBe('mock');
   });
 
   it('ignores local machine paths on hosted studio', () => {

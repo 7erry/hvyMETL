@@ -6,6 +6,7 @@ import {
   cancelExtractJob,
   createExtractJob,
   createExtractStagingDir,
+  markExtractError,
   type ExtractJobState,
 } from './agentExtractStaging.js';
 
@@ -93,6 +94,21 @@ export function saveLiveAgentResult(token: string, payload: AgentImportPayload):
   touchLiveAgentSession(token);
   if (session.wantExtract && !session.extractJob) {
     beginExtractJob(token, payload.model);
+  }
+}
+
+/** Socket closed before schema or before the extract finished. Leaves a completed extract alone. */
+export function markLiveAgentDisconnected(token: string): void {
+  const session = sessionFor(token);
+  if (!session) return;
+  const job = session.extractJob;
+  if (job && job.status !== 'complete' && job.status !== 'cancelled' && job.status !== 'error') {
+    markExtractError(job, 'Agent disconnected before the extract finished.');
+    return;
+  }
+  if (!session.result && !session.error) {
+    session.error = 'Agent disconnected before it sent a schema.';
+    session.command = null;
   }
 }
 
