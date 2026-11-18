@@ -1,3 +1,9 @@
+## hvyMETL 11.1.4
+
+**Live pipeline copy** — Run Full Pipeline → Read live data puts the copy button on the right of the agent command, the same control as Schema Import → Live. Reload the pipeline panel after this deploy.
+
+---
+
 ## hvyMETL 11.1.3
 
 **Live pipeline command** — Run Full Pipeline → Read live data fills `--token` with the agent session token. The page waits on that same token. Reload the pipeline panel after this deploy.

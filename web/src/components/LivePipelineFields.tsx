@@ -288,6 +288,18 @@ export function LivePipelineFields({
               <pre className="live-mongo-import__command-pre" tabIndex={0}>
                 {shownCommand}
               </pre>
+              <button
+                type="button"
+                className="live-mongo-import__copy-btn"
+                disabled={disabled}
+                title="Copy command"
+                aria-label="Copy command"
+                onClick={() => {
+                  void copyLiveAgentCommand(Promise.resolve(shownCommand));
+                }}
+              >
+                📋
+              </button>
             </div>
           ) : null}
           <div className="live-mongo-import__footer" style={{ marginTop: '0.5rem' }}>
