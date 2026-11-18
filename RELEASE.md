@@ -1,3 +1,9 @@
+## hvyMETL 11.1.5
+
+**macOS agent launch** — The macOS agent no longer aborts at startup with `duplicate linked dylib CoreFoundation`. Studio live-import and Read live data download `v11.1.5`. Assets: **`hvymetl-agent-macos-aarch64`**, **`hvymetl-agent-macos-x64`**, **`hvymetl-agent-linux-x64`**, **`hvymetl-agent-windows-x64.exe`**.
+
+---
+
 ## hvyMETL 11.1.4
 
 **Live pipeline copy** — Run Full Pipeline → Read live data puts the copy button on the right of the agent command, the same control as Schema Import → Live. Reload the pipeline panel after this deploy.
