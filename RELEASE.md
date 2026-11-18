@@ -1,3 +1,9 @@
+## hvyMETL 11.1.2
+
+**Schema Creator rows** — Column rows are one line tall, and the name field keeps the width the type menu was using. Names such as `rolled_back_at` and `minimum_detectable_effect` stay visible. Reload Creator after this deploy.
+
+---
+
 ## hvyMETL 11.1.1
 
 **Visual Query** — The Query screen follows the Compass layout: collection tabs, a connection / database / collection breadcrumb, and syntax-highlighted Query, Sort, Projection, Limit, and Skip lines. The Query Builder sits on the right and can be dragged wider. Filter rows are field, operator, type, and value. Result Key, Value, and Type cells use the same type colors as the ER cards. Reload Query after this deploy.
