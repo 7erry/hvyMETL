@@ -305,9 +305,14 @@ export type LiveAgentResult = {
   extract?: LiveAgentExtractStatus | null;
 };
 
-export async function waitForLiveAgentResult(token: string, timeoutMs = 180_000): Promise<LiveAgentResult> {
+export async function waitForLiveAgentResult(
+  token: string,
+  timeoutMs = 180_000,
+  stillWaiting?: () => boolean,
+): Promise<LiveAgentResult> {
   const deadline = Date.now() + timeoutMs;
   while (Date.now() < deadline) {
+    if (stillWaiting && !stillWaiting()) throw new Error('Agent wait cancelled.');
     const res = await apiFetch(`${base}/api/schema/agent-result?token=${encodeURIComponent(token)}`);
     if (res.status === 204) {
       await new Promise((resolve) => setTimeout(resolve, 1_000));

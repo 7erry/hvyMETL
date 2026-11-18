@@ -1,3 +1,9 @@
+## hvyMETL 11.1.3
+
+**Live pipeline command** — Run Full Pipeline → Read live data fills `--token` with the agent session token. The page waits on that same token. Reload the pipeline panel after this deploy.
+
+---
+
 ## hvyMETL 11.1.2
 
 **Schema Creator rows** — Column rows are one line tall, and the name field keeps the width the type menu was using. Names such as `rolled_back_at` and `minimum_detectable_effect` stay visible. Reload Creator after this deploy.
