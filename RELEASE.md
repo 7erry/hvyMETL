@@ -1,3 +1,9 @@
+## hvyMETL 11.1.6
+
+**PostgreSQL password** — When the database asks for a password and the URI has none, the agent says so instead of `invalid configuration`. Use `postgresql://USER:PASSWORD@127.0.0.1:5432/database`. Studio downloads `v11.1.6`.
+
+---
+
 ## hvyMETL 11.1.5
 
 **macOS agent launch** — The macOS agent no longer aborts at startup with `duplicate linked dylib CoreFoundation`. Studio live-import and Read live data download `v11.1.5`. Assets: **`hvymetl-agent-macos-aarch64`**, **`hvymetl-agent-macos-x64`**, **`hvymetl-agent-linux-x64`**, **`hvymetl-agent-windows-x64.exe`**.

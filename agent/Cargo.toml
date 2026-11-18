@@ -1,6 +1,6 @@
 [package]
 name = "hvymetl-agent"
-version = "11.1.0"
+version = "11.1.6"
 description = "Send a local database schema and extract to an hvyMETL studio session over WebSocket"
 edition = "2021"
 license = "BUSL-1.1"

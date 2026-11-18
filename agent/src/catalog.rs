@@ -583,6 +583,10 @@ pub fn public_error(error: impl ToString + std::fmt::Debug) -> String {
     {
         return "database connection dropped (is kubectl port-forward still running?)".to_string();
     }
+    // tokio-postgres Display for a missing password is "invalid configuration"; Debug has the cause.
+    if message == "invalid configuration" && debug.contains("password missing") {
+        return "PostgreSQL requires a password. Add the user and password to the connection URI, for example postgresql://USER:PASSWORD@127.0.0.1:5432/database.".to_string();
+    }
     // tokio-postgres Connect: Display is just "error connecting to server" (Debug has ConnectionRefused).
     if message.contains("error connecting to server")
         || message.contains("Connection refused")
@@ -605,6 +609,24 @@ pub fn public_error(error: impl ToString + std::fmt::Debug) -> String {
 #[cfg(test)]
 mod public_error_tests {
     use super::public_error;
+
+    #[test]
+    fn maps_postgres_password_missing() {
+        struct Opaque;
+        impl std::fmt::Display for Opaque {
+            fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                f.write_str("invalid configuration")
+            }
+        }
+        impl std::fmt::Debug for Opaque {
+            fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                f.write_str("Error { kind: Config, cause: Some(\"password missing\") }")
+            }
+        }
+        let msg = public_error(Opaque);
+        assert!(msg.contains("password"), "{msg}");
+        assert!(msg.contains("postgresql://USER:PASSWORD@"), "{msg}");
+    }
 
     #[test]
     fn maps_postgres_connect_refused() {
