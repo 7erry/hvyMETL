@@ -38,6 +38,12 @@ import {
 } from '../utilities/schemaImport.js';
 import { resolveDesignModel } from '../utilities/resolveDesignModel.js';
 import { generateMockCsvFromDdl, verifyMockCsvGenerator } from '../utilities/mockCsvFromDdl.js';
+import {
+  ddlFromSchemaImage,
+  imageMediaType,
+  readGroveVisionConfig,
+  SCHEMA_IMAGE_MAX_BYTES,
+} from '../utilities/schemaImageImport.js';
 import type { MigrationPlan, SqlStructuralModel } from '../types.js';
 import { readCsvToAtlasPathFromEnv } from '../utilities/csvToAtlas.js';
 import { getPipelineConfigStatus } from './pipelineConfig.js';
@@ -537,6 +543,35 @@ app.post('/api/schema/import-builtin-example', (req, res) => {
   } catch (error) {
     res.status(400).json({ error: String(error) });
   }
+});
+
+/** Turn an ER diagram image into DDL with Grove vision. The existing import parser consumes the SQL. */
+app.post('/api/schema/import-image', (req, res) => {
+  const upload = multer({
+    storage: multer.memoryStorage(),
+    limits: { fileSize: SCHEMA_IMAGE_MAX_BYTES },
+  }).single('image');
+  upload(req, res, (uploadError: unknown) => {
+    if (uploadError) {
+      const tooBig = uploadError instanceof multer.MulterError && uploadError.code === 'LIMIT_FILE_SIZE';
+      res.status(tooBig ? 413 : 400).json({ error: tooBig ? 'Image exceeds 8MB.' : String(uploadError) });
+      return;
+    }
+    const file = req.file;
+    if (!file) {
+      res.status(400).json({ error: 'image file is required' });
+      return;
+    }
+    void (async () => {
+      try {
+        const mediaType = imageMediaType(file.mimetype, file.originalname);
+        const ddl = await ddlFromSchemaImage(file.buffer, mediaType, readGroveVisionConfig());
+        res.json({ ddl });
+      } catch (error) {
+        res.status(400).json({ error: error instanceof Error ? error.message : String(error) });
+      }
+    })();
+  });
 });
 
 /** Import schema from uploaded SQLite database. */

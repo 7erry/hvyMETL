@@ -330,7 +330,7 @@ export function SchemaImportPanel({
               ref={fileInputRef}
               type="file"
               multiple
-              accept=".sql,.ddl,.txt,.json,.ndjson,.yaml,.yml,.csv,.db,.sqlite,.sqlite3"
+              accept=".sql,.ddl,.txt,.json,.ndjson,.yaml,.yml,.csv,.db,.sqlite,.sqlite3,.png,.jpg,.jpeg,.webp,.gif"
               className="schema-import-panel__file-input"
               onChange={(e) => {
                 takeDroppedFiles(e.target.files);
@@ -342,6 +342,7 @@ export function SchemaImportPanel({
               <span>JSON</span>
               <span>CSV</span>
               <span>SQLite</span>
+              <span>Image</span>
             </span>
           </div>
           {dragOver || autoDetectedLabel ? (
@@ -364,6 +365,12 @@ export function SchemaImportPanel({
             className={`schema-import-panel__textarea${dragOver ? ' schema-import-panel__textarea--drop' : ''}`}
           />
           {mongoJsonError ? <p className="schema-import-panel__warn">{mongoJsonError}</p> : null}
+          {status &&
+          (status.startsWith('Reading schema from ') || status.startsWith('Image schema import failed')) ? (
+            <p className="schema-import-panel__warn" role="status">
+              {status}
+            </p>
+          ) : null}
           <div className="button-row schema-import-panel__actions">
             <button type="button" className="primary" onClick={onImportQuery} disabled={!apiConnected}>
               {t('schema.import')}

@@ -408,6 +408,16 @@ export async function importLiveMongo(
   return res.json();
 }
 
+export async function importSchemaImage(file: File): Promise<{ ddl: string }> {
+  const body = new FormData();
+  body.append('image', file);
+  const res = await apiFetch(`${base}/api/schema/import-image`, { method: 'POST', body });
+  if (!res.ok) throw new Error(await readApiError(res));
+  const data = await res.json();
+  if (typeof data.ddl !== 'string' || !data.ddl.trim()) throw new Error('Image import returned no DDL.');
+  return { ddl: data.ddl };
+}
+
 export async function importSqlite(
   file: File,
 ): Promise<{ model: SqlStructuralModel; ddl: string; sourcePath?: string; inferred?: ProfileInference }> {

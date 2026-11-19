@@ -83,6 +83,7 @@ import {
   waitForLiveAgentResult,
   type LiveAgentResult,
   importSqlite,
+  importSchemaImage,
   runDesign,
   runDesignWithCsv,
   explainDesignTransformation,
@@ -948,6 +949,18 @@ export default function App() {
     const sqlite = files.find((file) => /\.(db|sqlite|sqlite3)$/i.test(file.name));
     if (sqlite) {
       await handleSqliteUpload(sqlite);
+      return;
+    }
+    const image = files.find((file) => /\.(png|jpe?g|webp|gif)$/i.test(file.name));
+    if (image) {
+      try {
+        setStatus(`Reading schema from ${image.name}…`);
+        const { ddl: inferredDdl } = await importSchemaImage(image);
+        setSessionField('ddl', inferredDdl);
+        await handleImportQuery(inferredDdl, image.name);
+      } catch (e) {
+        setStatus(`Image schema import failed: ${describeApiError(e)}`);
+      }
       return;
     }
     const csvs = files.filter((file) => /\.csv$/i.test(file.name));
