@@ -216,6 +216,16 @@ npm run start:ui    # production build on http://localhost:3847
 npm run desktop     # same server in a desktop window (Rust + Tauri)
 ```
 
+Local Docker image (nothing from `.env` is copied in):
+
+```bash
+docker build -t hvymetl .
+docker run --rm -p 3847:3847 hvymetl
+curl -fsS http://localhost:3847/api/health
+```
+
+Grove, Mongo, and Auth0 stay optional. Pass them at run time with `-e` or `--env-file`. Mock CSV generation needs Python, which is only in the build stage, not the runtime image.
+
 **Hosted:** [https://hvymetl.studio](https://hvymetl.studio) — Auth0 social login,
 role-based access (`admin`, `developer`, `manager`), and
 [Terms and Conditions](https://hvymetl.studio/terms). Configure Auth0 env vars as
