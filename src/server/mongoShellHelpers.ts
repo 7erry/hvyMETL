@@ -19,13 +19,57 @@ function clampFindLimit(limit: number | undefined): number {
 /** Rewrite mongosh shell helpers / bare expressions into printable JS for --file mode. */
 export function expandMongoshShellHelpers(script: string, findLimit?: number): string {
   const limit = clampFindLimit(findLimit);
-  return script
-    .split(/\r?\n/)
-    .map((line) => expandShellHelperLine(line, limit))
+  const lines = script.split(/\r?\n/);
+  return lines
+    .map((line, index) => expandShellHelperLine(line, limit, nextCodeLine(lines, index)))
     .join('\n');
 }
 
-function expandShellHelperLine(line: string, findLimit: number): string {
+function nextCodeLine(lines: readonly string[], index: number): string | undefined {
+  for (let cursor = index + 1; cursor < lines.length; cursor += 1) {
+    const trimmed = lines[cursor]?.trim() ?? '';
+    if (!trimmed || trimmed.startsWith('//') || trimmed.startsWith('/*') || trimmed.startsWith('*')) {
+      continue;
+    }
+    return trimmed;
+  }
+  return undefined;
+}
+
+/** A following `.filter` or `)` belongs to this line. Wrapping it would strand that token. */
+function expressionContinues(next: string | undefined): boolean {
+  if (!next) return false;
+  return /^[.\])},?:]/.test(next) || /^(?:&&|\|\||\?\?)/.test(next);
+}
+
+function bracketBalance(text: string): number {
+  let balance = 0;
+  let quote: "'" | '"' | '`' | null = null;
+  let escape = false;
+  for (const ch of text) {
+    if (quote) {
+      if (escape) {
+        escape = false;
+        continue;
+      }
+      if (ch === '\\') {
+        escape = true;
+        continue;
+      }
+      if (ch === quote) quote = null;
+      continue;
+    }
+    if (ch === "'" || ch === '"' || ch === '`') {
+      quote = ch;
+      continue;
+    }
+    if (ch === '(' || ch === '[' || ch === '{') balance += 1;
+    else if (ch === ')' || ch === ']' || ch === '}') balance -= 1;
+  }
+  return balance;
+}
+
+function expandShellHelperLine(line: string, findLimit: number, next: string | undefined): string {
   const trimmed = line.trim();
   if (!trimmed || trimmed.startsWith('//') || trimmed.startsWith('/*') || trimmed.startsWith('*')) {
     return line;
@@ -59,7 +103,7 @@ function expandShellHelperLine(line: string, findLimit: number): string {
     return `${indent}${ejsonPrint('db.getProfilingStatus()')}`;
   }
 
-  const printed = wrapDbExpressionForPrint(indent, trimmed, findLimit);
+  const printed = wrapDbExpressionForPrint(indent, trimmed, findLimit, next);
   if (printed) return printed;
 
   return line;
@@ -69,7 +113,12 @@ const DB_CALL =
   String.raw`db(?:\.\w+|\.getCollection\s*\(\s*['"][^'"]+['"]\s*\))+`;
 
 /** Wrap bare db.* expressions so --file mode prints like the mongosh REPL. */
-function wrapDbExpressionForPrint(indent: string, trimmed: string, findLimit: number): string | null {
+function wrapDbExpressionForPrint(
+  indent: string,
+  trimmed: string,
+  findLimit: number,
+  next: string | undefined,
+): string | null {
   const expr = trimmed.replace(/;?\s*$/, '');
   if (!/^db[\.\[]/.test(expr)) return null;
   if (/^(const|let|var|function|class|if|for|while|return|await|import|export)\b/.test(expr)) {
@@ -77,6 +126,7 @@ function wrapDbExpressionForPrint(indent: string, trimmed: string, findLimit: nu
   }
   if (/^(db\s*=)/.test(expr)) return null;
   if (/^(print(json)?|console|EJSON)\s*[\.(]/.test(expr)) return null;
+  if (expressionContinues(next) || bracketBalance(expr) !== 0) return null;
 
   const findMatch = new RegExp(`^(${DB_CALL})\\.find(\\([\\s\\S]*\\))((?:\\.\\w+\\([\\s\\S]*\\))*)$`).exec(
     expr,

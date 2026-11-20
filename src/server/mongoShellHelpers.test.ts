@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { MONGO_SHELL_SNIPPETS } from '../../web/src/mongoShellSnippets';
 import { expandMongoshShellHelpers } from './mongoShellHelpers.js';
 
 describe('expandMongoshShellHelpers', () => {
@@ -38,6 +39,31 @@ describe('expandMongoshShellHelpers', () => {
     expect(expandMongoshShellHelpers('printjson(db.accounts.find().toArray())')).toBe(
       'printjson(db.accounts.find().toArray())',
     );
+  });
+
+  it('keeps a chained db call as one statement', () => {
+    const src = `db.getCollectionNames()
+  .filter(name => !name.startsWith("system."))
+  .forEach(collName => {
+    print(collName);
+  });`;
+    const out = expandMongoshShellHelpers(src);
+    expect(out).toBe(src);
+    expect(() => new Function(out)).not.toThrow();
+  });
+
+  it('leaves an unfinished aggregate call unwrapped', () => {
+    const src = `db.getSiblingDB("admin").aggregate([
+  { $currentOp: { allUsers: true } }
+]).forEach(printjson);`;
+    expect(expandMongoshShellHelpers(src)).toBe(src);
+  });
+
+  it('parses every Scripts menu snippet after the mongosh file rewrite', () => {
+    for (const snippet of MONGO_SHELL_SNIPPETS) {
+      const expanded = expandMongoshShellHelpers(snippet.script);
+      expect(() => new Function(expanded), snippet.id).not.toThrow();
+    }
   });
 
   it('preserves indentation and comments', () => {
