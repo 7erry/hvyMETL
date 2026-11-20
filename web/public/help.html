@@ -44,6 +44,12 @@
     ul { padding-left: 1.25rem; }
     a { color: var(--accent); }
     a:hover { color: var(--text); }
+    video {
+      display: block;
+      width: 100%;
+      margin: 0.35rem 0 1rem;
+      background: #000;
+    }
     .back {
       display: inline-flex;
       align-items: center;
@@ -72,11 +78,26 @@
 
     <h2>Tutorial videos</h2>
     <ul>
-      <li><a href="https://github.com/7erry/hvyMETL/blob/main/docs/tutorials/01-erwin-full-migration.mp4">ERWin diagram through architecture review</a></li>
-      <li><a href="https://github.com/7erry/hvyMETL/blob/main/docs/tutorials/02-creator.mp4">Schema Creator</a></li>
-      <li><a href="https://github.com/7erry/hvyMETL/blob/main/docs/tutorials/03-shell.mp4">MongoDB shell</a></li>
-      <li><a href="https://github.com/7erry/hvyMETL/blob/main/docs/tutorials/04-aggregate.mp4">Aggregation builder</a></li>
-      <li><a href="https://github.com/7erry/hvyMETL/blob/main/docs/tutorials/05-query.mp4">Visual query</a></li>
+      <li>
+        ERWin diagram through architecture review
+        <video controls playsinline preload="metadata" src="https://raw.githubusercontent.com/7erry/hvyMETL/main/docs/tutorials/01-erwin-full-migration.mp4"></video>
+      </li>
+      <li>
+        Schema Creator
+        <video controls playsinline preload="metadata" src="https://raw.githubusercontent.com/7erry/hvyMETL/main/docs/tutorials/02-creator.mp4"></video>
+      </li>
+      <li>
+        MongoDB shell
+        <video controls playsinline preload="metadata" src="https://raw.githubusercontent.com/7erry/hvyMETL/main/docs/tutorials/03-shell.mp4"></video>
+      </li>
+      <li>
+        Aggregation builder
+        <video controls playsinline preload="metadata" src="https://raw.githubusercontent.com/7erry/hvyMETL/main/docs/tutorials/04-aggregate.mp4"></video>
+      </li>
+      <li>
+        Visual query
+        <video controls playsinline preload="metadata" src="https://raw.githubusercontent.com/7erry/hvyMETL/main/docs/tutorials/05-query.mp4"></video>
+      </li>
     </ul>
 
     <a class="back" href="/">Back to Migration Studio</a>

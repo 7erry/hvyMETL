@@ -6,13 +6,20 @@ import { loadHelpPageHtml } from './helpPage.js';
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '../..');
 
 describe('loadHelpPageHtml', () => {
-  it('links the GitHub README and each tutorial video', () => {
+  it('links the GitHub README and embeds each tutorial video', () => {
     const html = loadHelpPageHtml(ROOT);
     expect(html).toContain('https://github.com/7erry/hvyMETL/blob/main/README.md');
-    expect(html).toContain('docs/tutorials/01-erwin-full-migration.mp4');
-    expect(html).toContain('docs/tutorials/02-creator.mp4');
-    expect(html).toContain('docs/tutorials/03-shell.mp4');
-    expect(html).toContain('docs/tutorials/04-aggregate.mp4');
-    expect(html).toContain('docs/tutorials/05-query.mp4');
+    const files = [
+      '01-erwin-full-migration.mp4',
+      '02-creator.mp4',
+      '03-shell.mp4',
+      '04-aggregate.mp4',
+      '05-query.mp4',
+    ];
+    for (const file of files) {
+      const url = `https://raw.githubusercontent.com/7erry/hvyMETL/main/docs/tutorials/${file}`;
+      expect(html).toContain(`<video controls playsinline preload="metadata" src="${url}">`);
+    }
+    expect(html).not.toContain('github.com/7erry/hvyMETL/blob/main/docs/tutorials');
   });
 });
