@@ -35,6 +35,7 @@ import {
   isSameReplicateDestination,
   MONGO_SHELL_REPLICATE_TIMEOUT_MS,
 } from '../mongoShellReplicate';
+import { MONGO_SHELL_SNIPPETS } from '../mongoShellSnippets';
 import {
   collectionNameFromScript,
   resolveShellResultDocuments,
@@ -117,6 +118,7 @@ export function MongoShellView(): ReactElement {
   const [suggestions, setSuggestions] = useState<MongoShellCompletion[]>([]);
   const [activeSuggestion, setActiveSuggestion] = useState(0);
   const [historyOpen, setHistoryOpen] = useState(false);
+  const [snippetsOpen, setSnippetsOpen] = useState(false);
   const [history, setHistory] = useState<MongoShellHistoryEntry[]>(() => listMongoShellHistory());
   const [library, setLibrary] = useState<MongoShellLibraryEntry[]>(() => listMongoShellLibrary());
   const [libraryProject, setLibraryProject] = useState('all');
@@ -354,6 +356,7 @@ export function MongoShellView(): ReactElement {
     setRunError('');
     closeSuggestions();
     setHistoryOpen(false);
+    setSnippetsOpen(false);
     try {
       const next = await runMongoshScript({
         uri,
@@ -965,19 +968,53 @@ export function MongoShellView(): ReactElement {
                   >
                     <span aria-hidden>↓</span> Run to Line
                   </button>
-                  <button
-                    type="button"
-                    className="mongo-shell__tool-btn"
-                    disabled={running || connections.length === 0}
-                    aria-expanded={replicateOpen}
-                    onClick={() => {
-                      if (replicateOpen) setReplicateOpen(false);
-                      else openReplicatePanel();
-                    }}
-                    title="Copy a collection between two saved connections"
-                  >
-                    Replicate collection
-                  </button>
+                  <div className="mongo-shell__history-wrap">
+                    <button
+                      type="button"
+                      className="mongo-shell__tool-btn"
+                      aria-expanded={snippetsOpen}
+                      aria-haspopup="listbox"
+                      title="Insert a mongosh script"
+                      onClick={() => {
+                        setHistoryOpen(false);
+                        setSnippetsOpen((open) => !open);
+                      }}
+                    >
+                      Scripts
+                    </button>
+                    {snippetsOpen ? (
+                      <ul className="mongo-shell__history mongo-shell__snippets" role="listbox" aria-label="mongosh scripts">
+                        <li>
+                          <button
+                            type="button"
+                            role="option"
+                            disabled={running || connections.length === 0}
+                            onClick={() => {
+                              setSnippetsOpen(false);
+                              if (replicateOpen) setReplicateOpen(false);
+                              else openReplicatePanel();
+                            }}
+                          >
+                            Replicate collection
+                          </button>
+                        </li>
+                        {MONGO_SHELL_SNIPPETS.map((snippet) => (
+                          <li key={snippet.id}>
+                            <button
+                              type="button"
+                              role="option"
+                              onClick={() => {
+                                setScript(snippet.script);
+                                setSnippetsOpen(false);
+                              }}
+                            >
+                              {snippet.label}
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : null}
+                  </div>
                   <button
                     type="button"
                     className="mongo-shell__save-btn"
@@ -1022,6 +1059,7 @@ export function MongoShellView(): ReactElement {
                       aria-haspopup="listbox"
                       title="Recent scripts"
                       onClick={() => {
+                        setSnippetsOpen(false);
                         setHistory(listMongoShellHistory());
                         setHistoryOpen((o) => !o);
                       }}

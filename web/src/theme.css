@@ -2767,6 +2767,23 @@ button.mongo-shell__history-btn {
   transform: none;
 }
 
+.mongo-shell__snippets {
+  left: 0;
+  right: auto;
+  min-width: 18rem;
+  max-width: 26rem;
+  max-height: 22rem;
+}
+
+.mongo-shell__snippets button {
+  white-space: normal;
+}
+
+.mongo-shell__snippets button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
 .mongo-shell__editor-wrap {
   position: relative;
   flex: 1;
