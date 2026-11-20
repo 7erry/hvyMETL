@@ -1,3 +1,3 @@
-Schema Creator is where you design the source tables before a migration.
-Add a table, name the columns, and set types and keys.
-The diagram updates from what you build here.
+Schema Creator is where you can design the source tables before a migration or edit existing design from an import.
+Add a table, name the columns, and set types and keys. Additionally you can create relationships by dragging on the right side of any variable within a table.
+You can reset the diagram from the imported schema or push the updates from here to the Before SQL.
