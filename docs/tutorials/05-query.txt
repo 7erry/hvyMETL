@@ -1,0 +1,2 @@
+Query is the visual MongoDB query screen.
+Choose a collection, set the filter, sort and projection and read the results beside the query.

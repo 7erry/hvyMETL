@@ -1,0 +1,2 @@
+The shell is a MongoDB shell inside the studio.
+Pick a saved connection, then run commands against the database you just migrated.

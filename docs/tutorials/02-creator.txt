@@ -1,0 +1,3 @@
+Schema Creator is where you design the source tables before a migration.
+Add a table, name the columns, and set types and keys.
+The diagram updates from what you build here.

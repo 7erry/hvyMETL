@@ -1,0 +1,1 @@
+Aggregate builds a MongoDB aggregation pipeline, add stages, inspect the documents each stage returns and copy the pipeline when it is right.

@@ -1,0 +1,38 @@
+Hvy Metal Studio is an end-to-end SQL to MongoDB migration studio.
+It turns a relational schema into a MongoDB document model,
+builds a pipeline into Atlas,
+and reviews the result with Copilot.
+The top bar is the workflow,
+import DDL before SQL after MongoDB export migration and run pipeline.
+The left rail switches database, schema,
+creator, sizing, shell, aggregate,
+query, copilot, roles, and settings.
+The center is the diagram in the export artifacts,
+Copilot sits on the right with chat, query, translator, Atlas, sizing, and Ha.
+From downloads, drag ERWIN diagram onto the schema import box,
+import the ERWIN diagram by dropping the image on upload.
+The studio reads the picture and loads the tables.
+Embed overrides force all,
+folds every foreign key into its parent.
+The plan is cleared so the next design uses those overrides.
+After MongoDB runs that design and shows the collections.
+Export migration, the migration plan is
+the collection mappings and the read and write concerns.
+The design report explains each embed.
+The Atlas hog guide and the Atlas cluster JSON are
+the provisioning guide in the cluster create document.
+The three prompts are schema design ETL and the repository layer,
+generate repos, writes a node,
+JS typescript data access layer,
+open API, and schemas cover the target collections.
+Run pipeline generates mock rows,
+500 parents about three children each,
+seed 42 into the ERWIN demo database,
+wiping only that database first.
+Verify collections lists each collections,
+documents, size, and indexes in Atlas.
+Architecture review checks the live collections
+against the migration plan,
+embed decisions, indexes, and sizing.
+Google Docs needs a Google sign-in so
+this review is downloaded as markdown.
