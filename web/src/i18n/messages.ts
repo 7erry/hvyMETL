@@ -306,6 +306,7 @@ export type MessageKey =
   | 'sidebar.sessionHint'
   | 'sidebar.clearSession'
   | 'header.signOut'
+  | 'header.help'
   | 'header.terms'
   | 'schemaCreator.title'
   | 'schemaCreator.subtitle'
@@ -652,6 +653,7 @@ const en: MessageCatalog = {
     'Your work is saved in this browser tab. Refreshing keeps schema, layout, and migration artifacts.',
   'sidebar.clearSession': 'Clear session',
   'header.signOut': 'Sign out',
+  'header.help': 'Help',
   'header.terms': 'Terms',
   'schemaCreator.title': 'Schema Creator',
   'schemaCreator.subtitle': 'Design tables and foreign keys on a canvas, then use them as Before · SQL.',
@@ -1000,6 +1002,7 @@ const pt: MessageCatalog = {
     'Seu trabalho é salvo nesta aba. Atualizar mantém esquema, layout e artefatos de migração.',
   'sidebar.clearSession': 'Limpar sessão',
   'header.signOut': 'Sair',
+  'header.help': 'Ajuda',
   'header.terms': 'Termos',
   'schemaCreator.title': 'Criador de esquema',
   'schemaCreator.subtitle': 'Desenhe tabelas e chaves estrangeiras no canvas e use como Before · SQL.',
@@ -1348,6 +1351,7 @@ const es: MessageCatalog = {
     'Su trabajo se guarda en esta pestaña. Al actualizar se conservan esquema, diseño y artefactos.',
   'sidebar.clearSession': 'Borrar sesión',
   'header.signOut': 'Cerrar sesión',
+  'header.help': 'Ayuda',
   'header.terms': 'Términos',
   'schemaCreator.title': 'Creador de esquema',
   'schemaCreator.subtitle': 'Diseñe tablas y claves foráneas en el lienzo y úselas como Before · SQL.',
@@ -1681,6 +1685,7 @@ const zhCN: MessageCatalog = {
   'sidebar.sessionHint': '工作保存在此浏览器标签页。刷新会保留架构、布局与迁移产物。',
   'sidebar.clearSession': '清除会话',
   'header.signOut': '退出',
+  'header.help': '帮助',
   'header.terms': '条款',
   'schemaCreator.title': '架构设计器',
   'schemaCreator.subtitle': '在画布上设计表与外键，然后用作 Before · SQL。',
@@ -2029,6 +2034,7 @@ const hi: MessageCatalog = {
     'आपका काम इस ब्राउज़र टैब में सहेजा जाता है। रीफ़्रेश पर स्कीमा, लेआउट और माइग्रेशन आर्टिफ़ैक्ट बने रहते हैं।',
   'sidebar.clearSession': 'सत्र साफ़ करें',
   'header.signOut': 'साइन आउट',
+  'header.help': 'सहायता',
   'header.terms': 'नियम',
   'schemaCreator.title': 'स्कीमा क्रिएटर',
   'schemaCreator.subtitle': 'कैनवास पर टेबल और विदेशी कुंजियाँ डिज़ाइन करें, फिर Before · SQL के रूप में उपयोग करें।',

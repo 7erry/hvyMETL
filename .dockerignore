@@ -30,4 +30,6 @@ examples/**/*.db
 examples/**/*.db-shm
 examples/**/*.db-wal
 examples/**/*.csv
+# Tutorial mp4s are served from GitHub, not the image.
+docs/tutorials
 *.tsbuildinfo

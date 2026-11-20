@@ -39,6 +39,7 @@ export function AuthGate({ children }: AuthGateProps) {
           <button type="button" className="secondary" onClick={access.logout}>
             {t('common.signOut')}
           </button>
+          <a href="/help">{t('header.help')}</a>
           <a href="/terms">{t('auth.terms')}</a>
           <PrivacyPreferencesLink />
           <LanguageSelect />
@@ -59,6 +60,7 @@ export function AuthGate({ children }: AuthGateProps) {
           <button type="button" className="primary" onClick={() => void access.login()}>
             {t('common.signIn')}
           </button>
+          <a href="/help">{t('header.help')}</a>
           <a href="/terms">{t('auth.terms')}</a>
           <PrivacyPreferencesLink />
           <LanguageSelect />
@@ -83,6 +85,7 @@ export function AuthGate({ children }: AuthGateProps) {
             <code>{'"roles":["developer"]'}</code> or similar. Empty <code>roles</code> means the Login Action
             did not add <code>https://hvymetl.studio/roles</code> to your access token.
           </p>
+          <a href="/help">{t('header.help')}</a>
           <a href="/terms">{t('auth.terms')}</a>
           <PrivacyPreferencesLink />
           <LanguageSelect />

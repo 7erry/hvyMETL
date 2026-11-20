@@ -100,6 +100,7 @@ import {
   resolveEffectiveRoles,
 } from './auth.js';
 import { loadArchitecturePageHtml } from './architecturePage.js';
+import { loadHelpPageHtml } from './helpPage.js';
 import { loadTermsPageHtml } from './termsPage.js';
 import {
   assertPathWithinTenantStorage,
@@ -328,6 +329,14 @@ app.get('/api/auth/me', requireAuth, (req, res) => {
     roles: resolved.roles,
     rolesSource: resolved.source,
   });
+});
+
+app.get('/help', (_req, res) => {
+  try {
+    res.type('html').send(loadHelpPageHtml(ROOT));
+  } catch (error) {
+    res.status(500).type('text/plain').send(String(error));
+  }
 });
 
 app.get('/terms', (_req, res) => {

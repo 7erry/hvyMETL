@@ -1713,6 +1713,9 @@ export default function App() {
               </button>
             </div>
           ) : null}
+          <a className="terms-link" href="/help">
+            {t('header.help')}
+          </a>
           <a className="terms-link" href="/terms">
             {t('header.terms')}
           </a>

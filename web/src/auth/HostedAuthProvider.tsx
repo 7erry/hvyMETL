@@ -116,6 +116,7 @@ function AuthMisconfigScreen(): ReactNode {
           <code>VITE_AUTH0_AUDIENCE</code> into the web build. For production prefer{' '}
           <code>npm run start:ui</code> (static <code>web/dist</code>).
         </p>
+        <a href="/help">Help</a>
         <a href="/terms">Terms and Conditions</a>
       </section>
     </main>

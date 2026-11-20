@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Help — hvyMETL</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #001e2b;
+      --text: #e3fcf7;
+      --accent: #00ed64;
+      --muted: #c0fae6;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+    }
+    main {
+      max-width: 48rem;
+      margin: 0 auto;
+      padding: 1.5rem 1.25rem 3rem;
+    }
+    header {
+      margin-bottom: 1.5rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid #00684a;
+    }
+    h1 {
+      margin: 0 0 0.35rem;
+      font-size: 1.75rem;
+      color: var(--accent);
+    }
+    h2 {
+      margin: 1.75rem 0 0.5rem;
+      font-size: 1.15rem;
+      color: var(--muted);
+    }
+    p, li { font-size: 1rem; }
+    ul { padding-left: 1.25rem; }
+    a { color: var(--accent); }
+    a:hover { color: var(--text); }
+    .back {
+      display: inline-flex;
+      align-items: center;
+      min-height: 3rem;
+      margin-top: 2rem;
+      padding: 0.625rem 1.25rem;
+      border: 1px solid #00684a;
+      border-radius: 8px;
+      color: var(--text);
+      text-decoration: none;
+    }
+    .back:hover { background: rgba(0, 237, 100, 0.1); }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <h1>Help</h1>
+      <p>Documentation and studio tutorials for hvyMETL.</p>
+    </header>
+
+    <h2>Documentation</h2>
+    <ul>
+      <li><a href="https://github.com/7erry/hvyMETL/blob/main/README.md">GitHub README</a></li>
+    </ul>
+
+    <h2>Tutorial videos</h2>
+    <ul>
+      <li><a href="https://github.com/7erry/hvyMETL/blob/main/docs/tutorials/01-erwin-full-migration.mp4">ERWin diagram through architecture review</a></li>
+      <li><a href="https://github.com/7erry/hvyMETL/blob/main/docs/tutorials/02-creator.mp4">Schema Creator</a></li>
+      <li><a href="https://github.com/7erry/hvyMETL/blob/main/docs/tutorials/03-shell.mp4">MongoDB shell</a></li>
+      <li><a href="https://github.com/7erry/hvyMETL/blob/main/docs/tutorials/04-aggregate.mp4">Aggregation builder</a></li>
+      <li><a href="https://github.com/7erry/hvyMETL/blob/main/docs/tutorials/05-query.mp4">Visual query</a></li>
+    </ul>
+
+    <a class="back" href="/">Back to Migration Studio</a>
+  </main>
+</body>
+</html>

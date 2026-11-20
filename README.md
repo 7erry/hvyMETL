@@ -3,27 +3,94 @@
   hvyMETL
 </h1>
 
-**hvyMETL** (**H**igh **V**olume **M**ongoDB **ETL**) is a RAG-driven SQL-to-MongoDB
-migration toolkit. Instead of naive table-to-collection translation, hvyMETL grounds
-every schema decision in a retrievable knowledge base of MongoDB design patterns and
-your workload telemetry (read:write ratio, peak RPM, data growth), then runs a
-parallel, pattern-aware ETL into MongoDB Atlas.
+[![Node.js](https://img.shields.io/badge/node-%3E%3D20-339933)](package.json)
+[![License: BSL 1.1](https://img.shields.io/badge/license-BSL%201.1-blue)](LICENSE)
+[![Release 11.1.8](https://img.shields.io/badge/release-11.1.8-00ED64)](RELEASE.md#hvymetl-1118)
+
+**hvyMETL** (**H**igh **V**olume **M**ongoDB **ETL**) turns a relational schema into pattern-aware MongoDB documents and loads them into Atlas.
+
+![Migration Studio after design — SQL tables become MongoDB collections](web/docs/screenshots/after-mongodb-diagram.png)
 
 **Release:** [`11.1.8`](RELEASE.md#hvymetl-1118) — see [RELEASE.md](RELEASE.md) for full release history.
 
-An optional **ML engine** (`src/ml_engine/`) adds telemetry-aware reranking
-([Voyage rerank-2.5](https://docs.voyageai.com/reference/reranker-api) when
-`MONGODB_MODEL_KEY` is set), a predictive performance critic before ETL handoff, and
-an **in-context self-reflection loop** that logs migration outcomes and writes
-*lessons learned* back into vector memory so future runs avoid past mistakes.
+## Key features
 
-Full per-module reference documentation lives in [docs/](docs/README.md), including a
-mapping of every automated pattern to MongoDB's
-[Building with Patterns series](https://www.mongodb.com/company/blog/building-with-patterns-a-summary).
+- **Parallel ETL** — up to 8 workers, non-overlapping key ranges, idempotent `_id` upserts
+- **Pattern-aware design** — retrieval over MongoDB design patterns plus workload telemetry (read:write ratio, peak RPM, data growth)
+- **Telemetry-aware reranking** — [Voyage rerank-2.5](https://docs.voyageai.com/reference/reranker-api) when `MONGODB_MODEL_KEY` is set; a local cross-encoder otherwise
+- **In-context self-reflection** — logs migration outcomes and writes lessons back into memory so later runs avoid past mistakes
+- **Automated codegen** — typed repositories in 13 languages
+- **Migration Studio** — web UI for diagrams, the full pipeline, and review
 
-**Effort (5.1.37):** about **1,300 person-hours** to produce the current product
-(range 900–1,800). Breakdown, line counts, and the git record:
-**[docs/26-effort-estimate.md](docs/26-effort-estimate.md)**.
+**Effort (5.1.37):** about **1,300 person-hours** (range 900–1,800). Breakdown: **[docs/26-effort-estimate.md](docs/26-effort-estimate.md)**.
+
+## Before and after
+
+The catalog example (`examples/catalog`) keeps a product page in one document: the brand is copied onto the product (extended reference), and only the newest reviews stay embedded (subset). Older reviews remain in their own collection. Field names below follow the catalog plan in [docs/05-design-engine.md](docs/05-design-engine.md) and [knowledge/subset.md](knowledge/subset.md).
+
+Relational SQL:
+
+```sql
+CREATE TABLE brands (
+  id INTEGER PRIMARY KEY,
+  name VARCHAR(120) NOT NULL,
+  country VARCHAR(60) NOT NULL,
+  website VARCHAR(255)
+);
+
+CREATE TABLE products (
+  id INTEGER PRIMARY KEY,
+  brand_id INTEGER NOT NULL REFERENCES brands(id),
+  name VARCHAR(200) NOT NULL,
+  base_price_cents INTEGER NOT NULL
+);
+
+CREATE TABLE reviews (
+  id INTEGER PRIMARY KEY,
+  product_id INTEGER NOT NULL REFERENCES products(id),
+  reviewer_name VARCHAR(120) NOT NULL,
+  stars INTEGER NOT NULL,
+  body TEXT
+);
+```
+
+MongoDB document:
+
+```json
+{
+  "_id": "42",
+  "name": "Widget Pro",
+  "base_price_cents": 1999,
+  "brand": { "name": "Acme", "country": "US", "website": "https://acme.example" },
+  "recentReviews": [
+    { "reviewer_name": "ada", "stars": 5, "body": "Great" }
+  ],
+  "totalReviews": 12000
+}
+```
+
+## Contents
+
+- [Key features](#key-features)
+- [Before and after](#before-and-after)
+- [How it works](#how-it-works)
+- [ML engine](#ml-engine-optional)
+- [Prerequisites](#prerequisites)
+- [Quick Start](#quick-start)
+- [Web UI](#web-ui-optional)
+- [Tutorials](#tutorials)
+- [Run all examples](#run-all-examples-against-atlas)
+- [End-to-end walkthrough](#end-to-end-walkthrough)
+- [Supported SQL dialects](#supported-sql-dialects)
+- [Example domains](#the-example-domains)
+- [Workload profiles](#workload-profiles)
+- [Concurrency-safety guarantees](#concurrency-safety-guarantees)
+- [Tests](#tests)
+- [csvToAtlas](#csvtoatlas-cli-reference)
+- [Documentation](#documentation)
+- [Contributing](#contributing)
+- [FAQ](#faq)
+- [License](#license)
 
 ## How it works
 
@@ -163,13 +230,10 @@ npm rebuild better-sqlite3
 ## Quick Start
 
 ```bash
-# 1. Install dependencies
+git clone https://github.com/7erry/hvyMETL.git
+cd hvyMETL
 npm install
-
-# 2. Build the TypeScript project
 npm run build
-
-# 3. Create local environment file
 cp .env.example .env
 ```
 
@@ -180,6 +244,8 @@ npm run dev:ui
 ```
 
 Then open **http://localhost:3847**.
+
+To just run the UI locally, `.env` can be empty. `npm run dev:ui` does not need `MONGODB_URI`, `CSV_TO_ATLAS_PATH`, or `MONGODB_MODEL_KEY`. Add `MONGODB_URI` and `CSV_TO_ATLAS_PATH` when you import into Atlas. Add `MONGODB_MODEL_KEY` when you want hybrid RAG instead of offline BM25.
 
 | Variable | Required for | Description |
 | --- | --- | --- |
@@ -234,6 +300,18 @@ those vars are unset.
 
 See **[web/README.md](web/README.md)** (screenshots & how-to) and
 **[docs/13-web-ui.md](docs/13-web-ui.md)** (API reference, MongoDB persistence).
+
+## Tutorials
+
+Short studio recordings. GitHub plays each file on its own page. The same links are on **Help** in Migration Studio.
+
+| Video | What it shows |
+| --- | --- |
+| [ERWin full migration](docs/tutorials/01-erwin-full-migration.mp4) | Import an ERWin diagram, design, export, run the pipeline, verify |
+| [Schema Creator](docs/tutorials/02-creator.mp4) | Draw tables and foreign keys |
+| [MongoDB shell](docs/tutorials/03-shell.mp4) | In-studio shell |
+| [Aggregation builder](docs/tutorials/04-aggregate.mp4) | Aggregation pipeline builder |
+| [Visual query](docs/tutorials/05-query.mp4) | Visual query |
 
 Managers and finance stakeholders can use the Manager View to compare migration cost
 scenarios before production cutover: Atlas tier sizing, RAM fit, hot vs archived
@@ -372,6 +450,59 @@ See the [cvsToAtlas README](https://github.com/7erry/cvsToAtlas) for `--analyze`
 
 Files sharing identical headers are treated as partitions of one dataset (the
 parallel ETL's chunk output) and upserted concurrently-safely by `_id`.
+
+## Documentation
+
+Per-module reference, including the map from each automated pattern to MongoDB's [Building with Patterns series](https://www.mongodb.com/company/blog/building-with-patterns-a-summary): **[docs/README.md](docs/README.md)**.
+
+| Document | Covers |
+| --- | --- |
+| [docs/01-cli.md](docs/01-cli.md) | `hvymetl` CLI and profile selection |
+| [docs/02-profiles.md](docs/02-profiles.md) | Workload profiles, write concern, pool tuning |
+| [docs/03-knowledge-rag.md](docs/03-knowledge-rag.md) | Pattern knowledge base, BM25 / hybrid RRF, prompts |
+| [docs/04-adapters.md](docs/04-adapters.md) | SQL source adapter and SQLite |
+| [docs/05-design-engine.md](docs/05-design-engine.md) | Pattern decisions and `migration-plan.json` |
+| [docs/06-etl.md](docs/06-etl.md) | Parallel extraction, range splits, CSV shaping |
+| [docs/07-import-cli.md](docs/07-import-cli.md) | csvToAtlas import |
+| [docs/08-repogen.md](docs/08-repogen.md) | Generated repositories (13 languages) |
+| [docs/09-utilities.md](docs/09-utilities.md) | CSV dialect, ids, naming, DDL parser |
+| [docs/10-examples.md](docs/10-examples.md) | Example SQL domains and the seeder |
+| [docs/11-run-all-examples.md](docs/11-run-all-examples.md) | End-to-end Atlas run of every example |
+| [docs/12-validate-hybrid-rag.md](docs/12-validate-hybrid-rag.md) | Live Model Key + hybrid RAG check |
+| [docs/13-web-ui.md](docs/13-web-ui.md) | Migration Studio API and persistence |
+| [docs/14-validate-csv-to-atlas.md](docs/14-validate-csv-to-atlas.md) | `CSV_TO_ATLAS_PATH` validation |
+| [docs/15-migration-artifacts.md](docs/15-migration-artifacts.md) | Plan, report, prompts, repositories |
+| [docs/16-pipeline-steps.md](docs/16-pipeline-steps.md) | All six pipeline stages |
+| [docs/17-ml-engine.md](docs/17-ml-engine.md) | Reranker, critic, lessons-learned loop |
+| [docs/18-sql-dialects.md](docs/18-sql-dialects.md) | Supported SQL dialects |
+| [docs/19-llm-and-models.md](docs/19-llm-and-models.md) | Embeddings, rerankers, and what is not a chat LLM |
+| [docs/19-json-schema-import.md](docs/19-json-schema-import.md) | JSON Schema as a schema source |
+| [docs/20-agent-copilot.md](docs/20-agent-copilot.md) | Copilot workflow and architecture review |
+| [docs/20-agent-copilot-mongodb-inspect.md](docs/20-agent-copilot-mongodb-inspect.md) | Copilot MongoDB inspect |
+| [docs/20-manager.md](docs/20-manager.md) | Manager view, cost, retention |
+| [docs/20-dynamodb-gsi-mongodb-migration.md](docs/20-dynamodb-gsi-mongodb-migration.md) | DynamoDB GSI to MongoDB indexes |
+| [docs/21-sizing-assistant.md](docs/21-sizing-assistant.md) | Atlas sizing assistant |
+| [docs/21-atlas-logs.md](docs/21-atlas-logs.md) | Atlas logs in Manager view |
+| [docs/22-release-4.0-roadmap.md](docs/22-release-4.0-roadmap.md) | Release 4.0 plan |
+| [docs/23-atlas-connectivity-architect.md](docs/23-atlas-connectivity-architect.md) | PrivateLink / IAM / IaC prompt |
+| [docs/23-high-availability-agent.md](docs/23-high-availability-agent.md) | Multi-region Atlas topology |
+| [docs/24-grove-api.md](docs/24-grove-api.md) | Grove LLM gateway |
+| [docs/25-copilot-security.md](docs/25-copilot-security.md) | Copilot request guardrails |
+| [docs/26-effort-estimate.md](docs/26-effort-estimate.md) | Person-hour estimate |
+| [docs/27-agent-10.0-roadmap.md](docs/27-agent-10.0-roadmap.md) | Rust agent roadmap |
+| [docs/diagrams.md](docs/diagrams.md) | Workflow and schema diagrams |
+| [docs/UIDesignReview.md](docs/UIDesignReview.md) | Studio interaction review |
+| [docs/hvymetl-6.0-json-plan.md](docs/hvymetl-6.0-json-plan.md) | MongoDB JSON / NDJSON import plan |
+
+## Contributing
+
+Setup, `npm test`, and pull requests: **[CONTRIBUTING.md](CONTRIBUTING.md)**.
+
+## FAQ
+
+**csvToAtlas fails.** The importer is the separate [cvsToAtlas](https://github.com/7erry/cvsToAtlas) repo. Clone it, run `npm install && npm run build`, and set `CSV_TO_ATLAS_PATH` to the clone root (the directory that contains `package.json`, not `dist/`). Then run `npm run validate-csv-to-atlas`. A missing variable, a missing `package.json`, or an unbuilt `dist/cli.js` is the usual error. The UI still starts without it. A full pipeline import does not.
+
+**The MongoDB Model Key is not working.** The key is optional. With none set, design stays on lexical BM25 and the report says so. A rejected key fails the hybrid call and falls back to BM25 (`Hybrid retrieval failed … falling back to lexical BM25`). Atlas Model keys start with `al-` and call `https://ai.mongodb.com/v1`. Voyage platform keys start with `pa-` and call `https://api.voyageai.com/v1`. Check a live key with `npm run validate-hybrid-rag`.
 
 ## License
 
