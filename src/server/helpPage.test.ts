@@ -15,6 +15,7 @@ describe('loadHelpPageHtml', () => {
       '03-shell.mp4',
       '04-aggregate.mp4',
       '05-query.mp4',
+      '06-accessed-together.mp4',
     ];
     for (const file of files) {
       const url = `https://raw.githubusercontent.com/7erry/hvyMETL/main/docs/tutorials/${file}`;
