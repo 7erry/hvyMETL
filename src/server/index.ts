@@ -311,7 +311,8 @@ function contentSecurityPolicy(): string {
     `script-src 'self' https://accounts.google.com${auth0Source}`,
     "style-src 'self' 'unsafe-inline'",
     "img-src 'self' data: blob:",
-    "media-src 'self' blob:",
+    // /help <video> tags load the tutorial mp4s from raw GitHub.
+    "media-src 'self' blob: https://raw.githubusercontent.com",
     `connect-src ${sources}`,
     `frame-src https://accounts.google.com https://apis.google.com${auth0Source}`,
     "font-src 'self' data:",
