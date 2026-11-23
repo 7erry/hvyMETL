@@ -168,13 +168,17 @@ export async function runMongoshScript(input: MongoshRunInput): Promise<MongoshR
     : expanded;
   await writeFile(filePath, scriptBody, 'utf8');
 
-  const args = [uri, '--quiet', '--file', filePath];
+  const args = [uri, '--quiet', '--norc', '--file', filePath];
+  const env: NodeJS.ProcessEnv = {
+    PATH: process.env.PATH ?? '',
+    HOME: tmpdir(),
+  };
 
   try {
     return await new Promise<MongoshRunResult>((resolve) => {
       const child = spawnFn(binary, args, {
         stdio: ['ignore', 'pipe', 'pipe'],
-        env: process.env,
+        env,
       });
       let stdout = '';
       let stderr = '';

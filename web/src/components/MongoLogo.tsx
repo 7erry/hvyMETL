@@ -4,7 +4,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
 import rehypeSanitize from 'rehype-sanitize';
-import { fetchApiHealth } from '../api';
+import { fetchReleaseNotes } from '../api';
 import { copilotMarkdownSanitizeSchema } from '../copilot/copilotMarkdownSanitize';
 import { MongoLogoLeaf } from './MongoLogoLeaf';
 
@@ -47,12 +47,12 @@ export function MongoLogo() {
     setReleaseOpen(true);
     setReleaseLoading(true);
     setReleaseError(null);
-    void fetchApiHealth()
-      .then((health) => {
-        setReleaseVersion(health.version);
-        setReleaseHeading(health.releaseHeading ?? `hvyMETL ${health.version}`);
-        setReleaseNotes(health.releaseNotes ?? null);
-        setReleaseNotesSummary(health.releaseNotesSummary ?? health.releaseNotes ?? null);
+    void fetchReleaseNotes()
+      .then((notes) => {
+        setReleaseVersion(notes.version);
+        setReleaseHeading(notes.releaseHeading ?? `hvyMETL ${notes.version}`);
+        setReleaseNotes(notes.releaseNotes ?? null);
+        setReleaseNotesSummary(notes.releaseNotesSummary ?? notes.releaseNotes ?? null);
       })
       .catch(() => {
         setReleaseError('Could not load release notes. Confirm the hvyMETL API is running.');

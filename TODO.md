@@ -35,7 +35,7 @@ Wave A (MongoDB, PostgreSQL, MySQL, MSSQL, SQLite — WSS schema + restartable e
 
 **Cutover / legacy:**
 
-- [ ] Remove deprecated HTTP poll agent (`GET /api/agent/next`, `POST /api/agent/result`, Rust `--http`)
+- [x] Remove deprecated HTTP poll agent (`GET /api/agent/next`, `POST /api/agent/result`, Rust `--http`)
 
 **Explicit non-goals (track only):**
 

@@ -193,7 +193,13 @@ export function attachLiveAgentWebSocket(server: Server): WebSocketServer {
     const host = request.headers.host ?? 'localhost';
     const url = new URL(request.url ?? '/', `http://${host}`);
     if (url.pathname !== '/api/agent/v2') return;
-    const token = url.searchParams.get('token') ?? '';
+    if (url.searchParams.has('token')) {
+      socket.write('HTTP/1.1 401 Unauthorized\r\nConnection: close\r\n\r\n');
+      socket.destroy();
+      return;
+    }
+    const header = request.headers.authorization ?? '';
+    const token = /^Bearer\s+(\S+)/i.exec(header)?.[1] ?? '';
     if (!sessionFor(token)) {
       socket.write('HTTP/1.1 401 Unauthorized\r\nConnection: close\r\n\r\n');
       socket.destroy();

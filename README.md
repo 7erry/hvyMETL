@@ -5,13 +5,13 @@
 
 [![Node.js](https://img.shields.io/badge/node-%3E%3D20-339933)](package.json)
 [![License: BSL 1.1](https://img.shields.io/badge/license-BSL%201.1-blue)](LICENSE)
-[![Release 11.1.8](https://img.shields.io/badge/release-11.1.8-00ED64)](RELEASE.md#hvymetl-1118)
+[![Release 11.1.9](https://img.shields.io/badge/release-11.1.9-00ED64)](RELEASE.md#hvymetl-1119)
 
 **hvyMETL** (**H**igh **V**olume **M**ongoDB **ETL**) turns a relational schema into pattern-aware MongoDB documents and loads them into Atlas.
 
 ![Migration Studio after design — SQL tables become MongoDB collections](web/docs/screenshots/after-mongodb-diagram.png)
 
-**Release:** [`11.1.8`](RELEASE.md#hvymetl-1118) — see [RELEASE.md](RELEASE.md) for full release history.
+**Release:** [`11.1.9`](RELEASE.md#hvymetl-1119) — see [RELEASE.md](RELEASE.md) for full release history.
 
 ## Key features
 

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import type { AtlasSearchPattern } from '../../../../src/copilot/mongoAtlasSearchIndex.ts';
 import { parseMultiDatabaseCollectionError } from '../../../../src/copilot/parseMultiDatabaseCollectionError.ts';
-import { createCopilotMongoAtlasSearchIndex, invokeCopilotMongoInspect } from '../../api';
+import { createCopilotMongoAtlasSearchIndex, invokeCopilotMongoInspect, requestCopilotUserConfirmation } from '../../api';
 import {
   mergeCollectionNameOptions,
   normalizeVectorIndexCollectionHint,
@@ -370,8 +370,13 @@ function MongoAtlasSearchIndexModalPanel({
 
     setBusy(true);
     try {
+      const confirmation = await requestCopilotUserConfirmation(
+        copilot.getChatSessionId(),
+        'createMongoAtlasSearchIndex',
+      );
       const result = await createCopilotMongoAtlasSearchIndex(
         body as import('../../../../src/copilot/mongoAtlasSearchIndex.ts').MongoAtlasSearchIndexInput,
+        confirmation,
       );
       if (!result.ok) {
         setError(result.error ?? result.summary);

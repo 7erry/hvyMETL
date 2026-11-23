@@ -33,7 +33,9 @@ describe('live agent WebSocket', () => {
     const address = server.address();
     if (!address || typeof address === 'string') throw new Error('no port');
 
-    const ws = new WebSocket(`ws://127.0.0.1:${address.port}/api/agent/v2?token=${session.token}`);
+    const ws = new WebSocket(`ws://127.0.0.1:${address.port}/api/agent/v2`, {
+      headers: { Authorization: `Bearer ${session.token}` },
+    });
     sockets.push(ws);
     if (ws.readyState !== WebSocket.OPEN) await once(ws, 'open');
     const inbox: Record<string, unknown>[] = [];
@@ -114,7 +116,9 @@ describe('live agent WebSocket', () => {
     const address = server.address();
     if (!address || typeof address === 'string') throw new Error('no port');
 
-    const ws = new WebSocket(`ws://127.0.0.1:${address.port}/api/agent/v2?token=${session.token}`);
+    const ws = new WebSocket(`ws://127.0.0.1:${address.port}/api/agent/v2`, {
+      headers: { Authorization: `Bearer ${session.token}` },
+    });
     sockets.push(ws);
     if (ws.readyState !== WebSocket.OPEN) await once(ws, 'open');
     const inbox: Record<string, unknown>[] = [];
@@ -176,8 +180,9 @@ describe('live agent WebSocket', () => {
     attachLiveAgentWebSocket(server);
     const address = server.address();
     if (!address || typeof address === 'string') throw new Error('no port');
+    const session = createLiveAgentSession();
     await new Promise<void>((resolve, reject) => {
-      const ws = new WebSocket(`ws://127.0.0.1:${address.port}/api/agent/v2?token=missing`);
+      const ws = new WebSocket(`ws://127.0.0.1:${address.port}/api/agent/v2?token=${session.token}`);
       sockets.push(ws);
       ws.on('open', () => reject(new Error('should not open')));
       ws.on('unexpected-response', (_req, res) => {

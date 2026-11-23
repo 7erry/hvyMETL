@@ -163,46 +163,6 @@ function isStructuralModel(value: unknown): boolean {
   return typeof model.source === 'string' && Array.isArray(model.tables) && Array.isArray(model.relationships);
 }
 
-/** @deprecated Prefer WSS `/api/agent/v2`. Kept for Node `hvymetl agent` transition. */
-export function createLiveAgentPublicRouter(): Router {
-  const router = Router();
-
-  router.get('/next', (req, res) => {
-    const token = typeof req.query.token === 'string' ? req.query.token : '';
-    const command = readLiveAgentCommand(token);
-    if (!sessionFor(token) && !command) {
-      res.status(401).json({ error: 'Agent session expired.' });
-      return;
-    }
-    if (!command) {
-      res.status(204).end();
-      return;
-    }
-    res.json(command);
-  });
-
-  router.post('/result', (req, res) => {
-    const token = typeof req.body?.token === 'string' ? req.body.token : '';
-    try {
-      if (typeof req.body?.error === 'string' && req.body.error.trim()) {
-        saveLiveAgentError(token, req.body.error);
-      } else {
-        saveLiveAgentResult(token, {
-          model: req.body?.model as SqlStructuralModel,
-          ddl: req.body?.ddl,
-          dialect: req.body?.dialect,
-        });
-      }
-      res.json({ ok: true });
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Agent result was rejected.';
-      res.status(400).json({ error: message });
-    }
-  });
-
-  return router;
-}
-
 /** Called by the signed-in studio. */
 export function createLiveAgentStudioRouter(options?: {
   stagingRoot?: string;

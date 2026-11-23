@@ -7,7 +7,6 @@ import {
   getPublicAuthConfig,
   issueSwaggerDocsCookie,
   issuerUrlToDomain,
-  promoteQueryAccessToken,
   promoteSwaggerSessionCookie,
   readAuthDisplayName,
   rolesFromPayload,
@@ -130,45 +129,6 @@ describe('effectiveRolesFromPayload', () => {
     process.env.AUTH0_AUDIENCE = 'https://api.hvymetl.studio';
     process.env.HVYMETL_ADMIN_SUBS = 'google-oauth2|104005738020757337481';
     expect(effectiveRolesFromPayload({ sub: 'google-oauth2|104005738020757337481' })).toEqual(['admin']);
-  });
-});
-
-describe('promoteQueryAccessToken', () => {
-  it('copies access_token query param to Authorization header and strips it from the URL', () => {
-    const req = {
-      headers: {} as Record<string, string>,
-      url: '/api/docs?access_token=jwt-token&foo=1',
-      originalUrl: '/api/docs?access_token=jwt-token&foo=1',
-      query: { access_token: 'jwt-token', foo: '1' },
-    } as Request;
-    promoteQueryAccessToken(req, {} as Response, () => undefined);
-    expect(req.headers.authorization).toBe('Bearer jwt-token');
-    expect(req.url).toBe('/api/docs?foo=1');
-    expect(req.originalUrl).toBe('/api/docs?foo=1');
-  });
-
-  it('does not override an existing Authorization header but still strips query token', () => {
-    const req = {
-      headers: { authorization: 'Bearer existing' },
-      url: '/api/docs?access_token=jwt-token',
-      originalUrl: '/api/docs?access_token=jwt-token',
-      query: { access_token: 'jwt-token' },
-    } as Request;
-    promoteQueryAccessToken(req, {} as Response, () => undefined);
-    expect(req.headers.authorization).toBe('Bearer existing');
-    expect(req.url).toBe('/api/docs');
-    expect(req.originalUrl).toBe('/api/docs');
-  });
-
-  it('reads access_token from req.query when Express has already parsed the URL', () => {
-    const req = {
-      headers: {} as Record<string, string>,
-      url: '/api/docs',
-      originalUrl: '/api/docs?access_token=jwt-token',
-      query: { access_token: 'jwt-token' },
-    } as Request;
-    promoteQueryAccessToken(req, {} as Response, () => undefined);
-    expect(req.headers.authorization).toBe('Bearer jwt-token');
   });
 });
 

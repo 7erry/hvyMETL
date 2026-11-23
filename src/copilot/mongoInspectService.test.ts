@@ -67,7 +67,7 @@ describe('mongoInspectService', () => {
     mockInspectMcp(async (name) => {
       if (name === 'list-databases') {
         return {
-          databases: [{ name: 'terry_walters__mytrains', size: 100 }],
+          databases: [{ name: 'u_3c1bd649__mytrains', size: 100 }],
           totalCount: 1,
         };
       }
@@ -97,14 +97,14 @@ describe('mongoInspectService', () => {
       if (name === 'list-databases') {
         return {
           databases: [
-            { name: 'terry_walters__csv_to_atlas', size: 1 },
-            { name: 'terry_walters__mytrains', size: 500 },
+            { name: 'u_3c1bd649__csv_to_atlas', size: 1 },
+            { name: 'u_3c1bd649__mytrains', size: 500 },
           ],
           totalCount: 2,
         };
       }
       if (name === 'list-collections') {
-        expect(args).toEqual({ connectionId: 'preconfigured', database: 'terry_walters__mytrains' });
+        expect(args).toEqual({ connectionId: 'preconfigured', database: 'u_3c1bd649__mytrains' });
         return {
           collections: [{ name: 'stations' }, { name: 'trains' }],
           totalCount: 2,
@@ -133,14 +133,14 @@ describe('mongoInspectService', () => {
     vi.restoreAllMocks();
   });
 
-  it('lists mytrains from the display-name prefix on the token', async () => {
+  it('lists mytrains from the subject-hash prefix on the token', async () => {
     vi.spyOn(mongoMcpClient, 'isMongoMcpEnabled').mockReturnValue(true);
     mockInspectMcp(async (name) => {
       if (name === 'list-databases') {
         return {
           databases: [
             { name: 'u_c5d09a77__railway_ops', size: 1 },
-            { name: 'terry_walters__mytrains', size: 900 },
+            { name: 'u_3c1bd649__mytrains', size: 900 },
           ],
           totalCount: 2,
         };
@@ -164,14 +164,14 @@ describe('mongoInspectService', () => {
     vi.restoreAllMocks();
   });
 
-  it('lists collections from terry_walters__mytrains when logical mytrains is requested', async () => {
+  it('lists collections from the subject-hash database when logical mytrains is requested', async () => {
     vi.spyOn(mongoMcpClient, 'isMongoMcpEnabled').mockReturnValue(true);
     mockInspectMcp(async (name, args) => {
       if (name === 'list-databases') {
         return {
           databases: [
             { name: 'u_c5d09a77__railway_ops', size: 1 },
-            { name: 'terry_walters__mytrains', size: 900 },
+            { name: 'u_3c1bd649__mytrains', size: 900 },
           ],
           totalCount: 2,
         };
@@ -182,7 +182,7 @@ describe('mongoInspectService', () => {
       }
       if (name === 'collection-storage-size') return { size: 1.5, units: 'MB' };
       if (name === 'collection-indexes') return { classicIndexesCount: 2, searchIndexesCount: 0 };
-      expect(args).toEqual({ connectionId: 'preconfigured', database: 'terry_walters__mytrains' });
+      expect(args).toEqual({ connectionId: 'preconfigured', database: 'u_3c1bd649__mytrains' });
       return {
         collections: [{ name: 'routes' }, { name: 'stations' }, { name: 'trains' }],
         totalCount: 3,
@@ -217,12 +217,12 @@ describe('mongoInspectService', () => {
     const callTool = mockInspectMcp(async (name, args) => {
       if (name === 'list-databases') {
         return {
-          databases: [{ name: 'terry_walters__fromoraclewithlove', size: 900 }],
+          databases: [{ name: 'u_3c1bd649__fromoraclewithlove', size: 900 }],
           totalCount: 1,
         };
       }
       if (name === 'list-collections') {
-        expect(args).toEqual({ connectionId: 'preconfigured', database: 'terry_walters__fromoraclewithlove' });
+        expect(args).toEqual({ connectionId: 'preconfigured', database: 'u_3c1bd649__fromoraclewithlove' });
         return { collections: collectionNames, totalCount: collectionNames.length };
       }
       return {};
@@ -251,7 +251,7 @@ describe('mongoInspectService', () => {
     vi.spyOn(mongoMcpClient, 'isMongoMcpEnabled').mockReturnValue(true);
     const callTool = mockInspectMcp(async (name, args) => {
       if (name === 'list-databases') {
-        return { databases: [{ name: 'terry_walters__myshop', size: 100 }], totalCount: 1 };
+        return { databases: [{ name: 'u_3c1bd649__myshop', size: 100 }], totalCount: 1 };
       }
       if (name === 'list-collections') {
         return { collections: [{ name: 'orders' }], totalCount: 1 };
@@ -259,7 +259,7 @@ describe('mongoInspectService', () => {
       if (name === 'aggregate') {
         expect(args).toMatchObject({
           connectionId: 'preconfigured',
-          database: 'terry_walters__myshop',
+          database: 'u_3c1bd649__myshop',
           collection: 'orders',
         });
         return { documents: [{ _id: 'open', total: 3 }], count: 1, appliedLimits: [] };
@@ -290,7 +290,7 @@ describe('mongoInspectService', () => {
     vi.spyOn(mongoMcpClient, 'isMongoMcpEnabled').mockReturnValue(true);
     mockInspectMcp(async (name, args) => {
       if (name === 'list-databases') {
-        return { databases: [{ name: 'terry_walters__csv_to_atlas', size: 100 }], totalCount: 1 };
+        return { databases: [{ name: 'u_3c1bd649__csv_to_atlas', size: 100 }], totalCount: 1 };
       }
       if (name === 'list-collections') {
         return { collections: [{ name: 'sensors' }], totalCount: 1 };
@@ -298,7 +298,7 @@ describe('mongoInspectService', () => {
       if (name === 'collection-schema') {
         expect(args).toMatchObject({
           connectionId: 'preconfigured',
-          database: 'terry_walters__csv_to_atlas',
+          database: 'u_3c1bd649__csv_to_atlas',
           collection: 'sensors',
         });
         return {
@@ -343,7 +343,7 @@ describe('mongoInspectService', () => {
     vi.spyOn(mongoMcpClient, 'isMongoMcpEnabled').mockReturnValue(true);
     mockInspectMcp(async (name) => {
       if (name === 'list-databases') {
-        return { databases: [{ name: 'terry_walters__myshop', size: 100 }], totalCount: 1 };
+        return { databases: [{ name: 'u_3c1bd649__myshop', size: 100 }], totalCount: 1 };
       }
       if (name === 'collection-schema') {
         return { schema: { properties: { status: { bsonType: 'string' } } }, fieldsCount: 1 };
@@ -417,7 +417,7 @@ describe('mongoInspectService', () => {
     mockInspectMcp(async (name, args) => {
       if (name === 'list-databases') {
         return {
-          databases: [{ name: 'terry_walters__fromoraclewithlove', size: 900 }],
+          databases: [{ name: 'u_3c1bd649__fromoraclewithlove', size: 900 }],
           totalCount: 1,
         };
       }
@@ -427,7 +427,7 @@ describe('mongoInspectService', () => {
       if (name === 'collection-indexes') {
         expect(args).toEqual({
           connectionId: 'preconfigured',
-          database: 'terry_walters__fromoraclewithlove',
+          database: 'u_3c1bd649__fromoraclewithlove',
           collection: 'salesChannels',
         });
         return {
@@ -474,12 +474,12 @@ describe('mongoInspectService', () => {
     mockInspectMcp(async (name, args) => {
       if (name === 'list-databases') {
         return {
-          databases: [{ name: 'terry_walters__whatif', size: 100 }],
+          databases: [{ name: 'u_3c1bd649__whatif', size: 100 }],
           totalCount: 1,
         };
       }
       if (name === 'list-collections') {
-        expect(args).toMatchObject({ database: 'terry_walters__whatif' });
+        expect(args).toMatchObject({ database: 'u_3c1bd649__whatif' });
         return { collections: [{ name: 'orders' }], totalCount: 1 };
       }
       throw new Error(`Unexpected tool ${name}`);
@@ -508,22 +508,22 @@ describe('mongoInspectService', () => {
       if (name === 'list-databases') {
         return {
           databases: [
-            { name: 'terry_walters__fromoraclewithlove', size: 900 },
-            { name: 'terry_walters__mytrains', size: 500 },
-            { name: 'terry_walters__moretrains', size: 400 },
+            { name: 'u_3c1bd649__fromoraclewithlove', size: 900 },
+            { name: 'u_3c1bd649__mytrains', size: 500 },
+            { name: 'u_3c1bd649__moretrains', size: 400 },
           ],
           totalCount: 3,
         };
       }
       if (name === 'list-collections') {
         const database = (args as { database?: string }).database;
-        if (database === 'terry_walters__fromoraclewithlove') {
+        if (database === 'u_3c1bd649__fromoraclewithlove') {
           return { collections: [{ name: 'orders' }], totalCount: 1 };
         }
-        if (database === 'terry_walters__mytrains') {
+        if (database === 'u_3c1bd649__mytrains') {
           return { collections: [{ name: 'trains' }, { name: 'routes' }], totalCount: 2 };
         }
-        if (database === 'terry_walters__moretrains') {
+        if (database === 'u_3c1bd649__moretrains') {
           return { collections: [{ name: 'stations' }], totalCount: 1 };
         }
         return { collections: [], totalCount: 0 };
@@ -531,7 +531,7 @@ describe('mongoInspectService', () => {
       if (name === 'explain') {
         expect(args).toMatchObject({
           connectionId: 'preconfigured',
-          database: 'terry_walters__mytrains',
+          database: 'u_3c1bd649__mytrains',
           collection: 'trains',
         });
         return {
@@ -567,8 +567,8 @@ describe('mongoInspectService', () => {
       if (name === 'list-databases') {
         return {
           databases: [
-            { name: 'terry_walters__mytrains', size: 500 },
-            { name: 'terry_walters__moretrains', size: 400 },
+            { name: 'u_3c1bd649__mytrains', size: 500 },
+            { name: 'u_3c1bd649__moretrains', size: 400 },
           ],
           totalCount: 2,
         };

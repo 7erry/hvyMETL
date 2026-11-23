@@ -101,7 +101,7 @@ export function liveConnectionHint(engine: LiveConnectionEngine): LiveConnection
 export type LiveAgentPlatform = 'macos-aarch64' | 'macos-x64' | 'windows-x64' | 'linux-x64';
 
 /** Studio pins download assets to this GitHub release tag (last published agent builds). */
-export const LIVE_AGENT_RELEASE = 'v11.1.8';
+export const LIVE_AGENT_RELEASE = 'v11.1.9';
 
 const LIVE_AGENT_BUILDS: { id: LiveAgentPlatform; label: string; fileName: string }[] = [
   { id: 'macos-aarch64', label: 'macOS Apple Silicon', fileName: 'hvymetl-agent-macos-aarch64' },

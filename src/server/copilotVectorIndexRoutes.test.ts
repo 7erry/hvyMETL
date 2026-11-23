@@ -1,6 +1,7 @@
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
 import express from 'express';
 import { createCopilotRouter } from './copilotRoutes.js';
+import { issueCopilotUserConfirmation } from './copilotChatSession.js';
 import * as mongoVectorIndexService from '../copilot/mongoVectorIndexService.js';
 import * as mongoMcpClient from '../copilot/mongoMcpClient.js';
 
@@ -41,6 +42,7 @@ describe('copilot vector-index route', () => {
       indexName: 'autoEmbed_body_voyage-4-lite',
     });
 
+    const sessionId = 'vector-index-ok';
     const { status, body } = await postVectorIndex({
       database: 'csv_to_atlas',
       collection: 'products',
@@ -49,6 +51,8 @@ describe('copilot vector-index route', () => {
       quantization: 'scalar',
       numDimensions: 1024,
       similarity: 'cosine',
+      sessionId,
+      confirmationId: issueCopilotUserConfirmation('local-dev', sessionId, 'createMongoAutoEmbedVectorIndex'),
     });
 
     expect(status).toBe(200);
@@ -63,7 +67,13 @@ describe('copilot vector-index route', () => {
       error: 'path is required.',
     });
 
-    const { status, body } = await postVectorIndex({ database: 'db', collection: 'c' });
+    const sessionId = 'vector-index-invalid';
+    const { status, body } = await postVectorIndex({
+      database: 'db',
+      collection: 'c',
+      sessionId,
+      confirmationId: issueCopilotUserConfirmation('local-dev', sessionId, 'createMongoAutoEmbedVectorIndex'),
+    });
     expect(status).toBe(400);
     expect(body.ok).toBe(false);
   });

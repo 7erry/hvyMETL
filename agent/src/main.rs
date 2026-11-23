@@ -13,7 +13,8 @@ use serde_json::{json, Value};
 use tokio_tungstenite::{connect_async, tungstenite::Message};
 
 use catalog::{introspect, public_error};
-use engine::{database_name, detect_engine, Engine, WAVE_A_ENGINES};
+use engine::{database_name, detect_engine, WAVE_A_ENGINES};
+use tokio_tungstenite::tungstenite::client::IntoClientRequest;
 use extract::{extract_next_chunk, ExtractTable};
 
 fn flag(name: &str) -> Option<String> {
@@ -30,11 +31,7 @@ fn flag(name: &str) -> Option<String> {
     None
 }
 
-fn has_flag(name: &str) -> bool {
-    env::args().any(|arg| arg == format!("--{name}"))
-}
-
-fn studio_ws_url(server: &str, token: &str) -> Result<String, String> {
+fn studio_ws_url(server: &str) -> Result<String, String> {
     let trimmed = server.trim_end_matches('/');
     let ws = if let Some(rest) = trimmed.strip_prefix("https://") {
         format!("wss://{rest}")
@@ -45,7 +42,7 @@ fn studio_ws_url(server: &str, token: &str) -> Result<String, String> {
     } else {
         return Err("Studio server must be an http(s) or ws(s) URL.".to_string());
     };
-    Ok(format!("{ws}/api/agent/v2?token={token}"))
+    Ok(format!("{ws}/api/agent/v2"))
 }
 
 async fn send_agent_error<S>(write: &mut S, error: &str)
@@ -62,8 +59,16 @@ where
 async fn run_ws(token: &str, uri: &str, database: &str, server: &str) -> Result<(), String> {
     let engine = detect_engine(uri)?;
     let database = database_name(uri, Some(database).filter(|name| !name.is_empty()), engine)?;
-    let url = studio_ws_url(server, token)?;
-    let (socket, _) = connect_async(&url).await.map_err(public_error)?;
+    let url = studio_ws_url(server)?;
+    let mut request = url.into_client_request().map_err(public_error)?;
+    let header = format!("Bearer {token}");
+    request.headers_mut().insert(
+        "Authorization",
+        header
+            .parse()
+            .map_err(|_| "Agent token is not a valid header value.".to_string())?,
+    );
+    let (socket, _) = connect_async(request).await.map_err(public_error)?;
     let (mut write, mut read) = socket.split();
 
     write
@@ -220,36 +225,6 @@ async fn run_ws(token: &str, uri: &str, database: &str, server: &str) -> Result<
     Ok(())
 }
 
-fn run_http_legacy(token: &str, uri: &str, database_flag: Option<&str>, server: &str) -> Result<(), String> {
-    let engine = detect_engine(uri)?;
-    if engine != Engine::Mongodb {
-        return Err("HTTP poll mode only supports MongoDB. Omit --http to use WebSocket for Wave A engines.".to_string());
-    }
-    let database = database_name(uri, database_flag, engine)?;
-    let server = server.trim_end_matches('/');
-    let next = ureq::get(&format!("{server}/api/agent/next?token={token}")).call();
-    match next {
-        Ok(response) if response.status() == 401 => return Err("Agent session expired.".to_string()),
-        Ok(_) => {}
-        Err(ureq::Error::Status(401, _)) => return Err("Agent session expired.".to_string()),
-        Err(error) => return Err(public_error(error)),
-    }
-    let runtime = tokio::runtime::Runtime::new().map_err(|error| error.to_string())?;
-    let schema = runtime.block_on(introspect(uri, &database, engine))?;
-    let mut payload = schema;
-    payload["token"] = Value::String(token.to_string());
-    let agent = ureq::AgentBuilder::new().timeout(Duration::from_secs(30)).build();
-    let response = agent
-        .post(&format!("{server}/api/agent/result"))
-        .set("content-type", "application/json")
-        .send_json(&payload)
-        .map_err(public_error)?;
-    if response.status() >= 400 {
-        return Err(format!("Studio rejected the schema (HTTP {}).", response.status()));
-    }
-    Ok(())
-}
-
 #[tokio::main]
 async fn main() {
     // Dep tree enables both rustls ring + aws-lc-rs; pick one before any TLS (WSS to studio).
@@ -257,7 +232,7 @@ async fn main() {
 
     if env::args().any(|arg| arg == "--help" || arg == "-h") {
         println!(
-            "hvymetl-agent --token <token> --uri <uri> [--database <name>] [--server <url>] [--http]"
+            "hvymetl-agent --token <token> --uri <uri> [--database <name>] [--server <url>]"
         );
         println!("Engines: mongodb, postgresql, mysql, mssql/sqlserver, sqlite, oracle (12.1+)");
         return;
@@ -268,21 +243,12 @@ async fn main() {
     let server = flag("server").unwrap_or_else(|| "https://hvymetl.studio".to_string());
     if token.is_empty() || uri.is_empty() {
         eprintln!(
-            "hvymetl-agent --token <token> --uri <uri> [--database <name>] [--server <url>] [--http]"
+            "hvymetl-agent --token <token> --uri <uri> [--database <name>] [--server <url>]"
         );
         std::process::exit(2);
     }
 
-    let outcome = if has_flag("http") {
-        run_http_legacy(&token, &uri, database_flag.as_deref(), &server)
-    } else {
-        run_ws(&token, &uri, database_flag.as_deref().unwrap_or(""), &server).await
-    };
-
-    if let Err(error) = outcome {
-        if !error.starts_with("Could not reach the studio") && !has_flag("http") {
-            // Best-effort: HTTP error path for WSS failures before connect is skipped.
-        }
+    if let Err(error) = run_ws(&token, &uri, database_flag.as_deref().unwrap_or(""), &server).await {
         eprintln!("{error}");
         std::process::exit(1);
     }

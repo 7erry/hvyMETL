@@ -154,40 +154,6 @@ export const SWAGGER_AUTH_COOKIE = 'hvymetl_swagger_auth';
 const SWAGGER_AUTH_COOKIE_PATH = '/api/docs';
 const SWAGGER_AUTH_COOKIE_MAX_AGE_SEC = 60;
 
-function readRequestQueryToken(req: Request): string | undefined {
-  const fromQuery = req.query?.access_token;
-  if (typeof fromQuery === 'string' && fromQuery.trim()) return fromQuery.trim();
-  if (Array.isArray(fromQuery)) {
-    const first = fromQuery.find((entry): entry is string => typeof entry === 'string' && Boolean(entry.trim()));
-    if (first) return first.trim();
-  }
-  return undefined;
-}
-
-/** Remove access_token from the request URL so JWT middleware sees only one auth method. */
-function stripAccessTokenFromRequestUrl(req: Request): string | undefined {
-  const readToken = (url: string): { path: string; token?: string } => {
-    const queryIndex = url.indexOf('?');
-    if (queryIndex === -1) return { path: url };
-
-    const pathname = url.slice(0, queryIndex);
-    const params = new URLSearchParams(url.slice(queryIndex + 1));
-    const token = params.get('access_token')?.trim() || undefined;
-    params.delete('access_token');
-    const search = params.toString();
-    return { path: search ? `${pathname}?${search}` : pathname, token };
-  };
-
-  const fromUrl = readToken(req.url);
-  if (!fromUrl.token) return undefined;
-
-  req.url = fromUrl.path;
-  if (typeof req.originalUrl === 'string') {
-    req.originalUrl = readToken(req.originalUrl).path;
-  }
-  return fromUrl.token;
-}
-
 function readCookieValue(req: Request, name: string): string | undefined {
   const header = req.headers.cookie;
   if (!header) return undefined;
@@ -234,7 +200,7 @@ function formatClearSwaggerAuthCookie(): string {
   ].join('; ');
 }
 
-/** Short-lived cookie set by POST /api/docs/bootstrap so Swagger can open in a new tab without ?access_token=. */
+/** Short-lived cookie set by POST /api/docs/bootstrap so Swagger can open in a new tab. */
 export function issueSwaggerDocsCookie(res: Response, bearerToken: string): void {
   const token = bearerToken.trim();
   if (!token) return;
@@ -244,22 +210,6 @@ export function issueSwaggerDocsCookie(res: Response, bearerToken: string): void
 function clearSwaggerDocsCookie(res: Response): void {
   res.append('Set-Cookie', formatClearSwaggerAuthCookie());
 }
-
-/** Allow Swagger UI new-tab links to pass a Bearer token via ?access_token= (legacy fallback). */
-export const promoteQueryAccessToken: RequestHandler = (req, _res, next) => {
-  const urlToken = stripAccessTokenFromRequestUrl(req);
-
-  if (req.headers.authorization?.trim()) {
-    next();
-    return;
-  }
-
-  const queryToken = urlToken ?? readRequestQueryToken(req);
-  if (queryToken) {
-    req.headers.authorization = `Bearer ${queryToken}`;
-  }
-  next();
-};
 
 /** Promote the bootstrap cookie into Authorization for browser new-tab Swagger visits. */
 export const promoteSwaggerSessionCookie: RequestHandler = (req, res, next) => {
@@ -293,7 +243,7 @@ function redirectToStudioSwaggerLogin(req: Request, res: Response): void {
 
 /**
  * Browser visits to /api/docs lack SPA Bearer tokens. Redirect HTML requests to the studio,
- * which opens Swagger in a new tab with ?access_token= after Auth0 login.
+ * which opens Swagger in a new tab after the bootstrap cookie is set.
  */
 export const authenticateSwaggerDocsAccess: RequestHandler = (req, res, next) => {
   if (!isAuthConfigured()) {

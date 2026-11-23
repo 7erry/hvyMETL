@@ -1,6 +1,7 @@
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
 import express from 'express';
 import { createCopilotRouter } from './copilotRoutes.js';
+import { issueCopilotUserConfirmation } from './copilotChatSession.js';
 import * as mongoAtlasSearchIndexService from '../copilot/mongoAtlasSearchIndexService.js';
 import * as mongoMcpClient from '../copilot/mongoMcpClient.js';
 
@@ -42,11 +43,14 @@ describe('copilot atlas-search-index route', () => {
       pattern: 'keyword',
     });
 
+    const sessionId = 'atlas-search-ok';
     const { status, body } = await postAtlasSearchIndex({
       database: 'csv_to_atlas',
       collection: 'products',
       pattern: 'keyword',
       textPaths: ['title', 'description'],
+      sessionId,
+      confirmationId: issueCopilotUserConfirmation('local-dev', sessionId, 'createMongoAtlasSearchIndex'),
     });
 
     expect(status).toBe(200);
@@ -62,7 +66,13 @@ describe('copilot atlas-search-index route', () => {
       error: 'pattern is required.',
     });
 
-    const { status, body } = await postAtlasSearchIndex({ database: 'db', collection: 'c' });
+    const sessionId = 'atlas-search-invalid';
+    const { status, body } = await postAtlasSearchIndex({
+      database: 'db',
+      collection: 'c',
+      sessionId,
+      confirmationId: issueCopilotUserConfirmation('local-dev', sessionId, 'createMongoAtlasSearchIndex'),
+    });
     expect(status).toBe(400);
     expect(body.ok).toBe(false);
   });

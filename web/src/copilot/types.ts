@@ -220,6 +220,7 @@ export type CopilotLlmMessage = {
 export type CopilotChatApiResponse = {
   message: CopilotLlmMessage;
   finishReason: string | null;
+  confirmations?: { confirmationId: string; toolCallId: string; tool: string }[];
 };
 
 export type CopilotStatusResponse = {

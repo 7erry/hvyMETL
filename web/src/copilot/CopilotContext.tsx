@@ -53,7 +53,8 @@ import { buildAggregateInspectArgs } from './runTranslationPipeline';
 import { buildSchemaContextPayload } from './schemaContext';
 import { isArchitectureReviewRequest } from '../../../src/copilot/copilotArchitecturePrompt.ts';
 import { serializeCanvasToolResult, toolExecutionHasStructuredOutput } from './toolExecutionDisplay';
-import { fetchCopilotStatus, fetchPipelineConfig, createCopilotMongoAutoEmbedVectorIndex, createCopilotMongoAtlasSearchIndex, createCopilotMongoClassicIndex, invokeCopilotMongoInspect, sendCopilotChat } from '../api';
+import { fetchCopilotStatus, fetchPipelineConfig, createCopilotMongoAutoEmbedVectorIndex, createCopilotMongoAtlasSearchIndex, createCopilotMongoClassicIndex, invokeCopilotMongoInspect, requestCopilotUserConfirmation, sendCopilotChat, type CopilotIndexConfirmation } from '../api';
+import { isCopilotMutatingTool } from '../../../src/copilot/copilotMutatingTools.ts';
 import type { CopilotVectorSearchIndexRecord } from '../../../src/copilot/copilotVectorSearchContext.ts';
 import { copilotVectorSearchIndexFromCreateResult } from '../../../src/copilot/copilotVectorSearchContext.ts';
 import type { CopilotAtlasSearchIndexRecord } from '../../../src/copilot/copilotAtlasSearchContext.ts';
@@ -69,7 +70,6 @@ import {
 } from './atlasSearchIndexSession';
 import type {
   AgentStatus,
-  CopilotLlmMessage,
   CopilotMessage,
   CopilotNextStep,
   CopilotWorkflowPreset,
@@ -108,6 +108,8 @@ export type CopilotContextValue = {
   mongoInspectMessage: string | null;
   /** Logical MongoDB database for pipeline imports and architecture review titles. */
   targetDatabase: string;
+  /** Server-owned Copilot chat session. Index creates send this id with their confirmation. */
+  getChatSessionId: () => string;
   /** Loaded migration plan used for architecture review Google Docs collection diagrams. */
   migrationPlan: MigrationPlan | null;
   recommendedAtlasTierId?: string;
@@ -302,7 +304,8 @@ export function CopilotProvider({
     [targetDatabase],
   );
 
-  const [llmHistory, setLlmHistory] = useState<CopilotLlmMessage[]>([]);
+  const chatSessionIdRef = useRef(crypto.randomUUID());
+  const getChatSessionId = useCallback(() => chatSessionIdRef.current, []);
   const chatInputFocusRef = useRef<(() => void) | null>(null);
   const chatInputFocusTimersRef = useRef<number[]>([]);
   const prevTableCountRef = useRef(model?.tables.length ?? 0);
@@ -524,7 +527,7 @@ export function CopilotProvider({
   );
 
   const runMongoVectorIndexTool = useCallback(
-    async (args: Record<string, unknown>): Promise<ToolExecutionResult> => {
+    async (args: Record<string, unknown>, confirmation?: CopilotIndexConfirmation): Promise<ToolExecutionResult> => {
       const tool = 'createMongoAutoEmbedVectorIndex' as const;
       try {
         const payload: Record<string, unknown> = { ...args };
@@ -536,6 +539,7 @@ export function CopilotProvider({
         }
         const response = await createCopilotMongoAutoEmbedVectorIndex(
           payload as import('../../../../src/copilot/mongoVectorAutoEmbedIndex.ts').MongoAutoEmbedVectorIndexInput,
+          confirmation,
         );
         const input = payload as import('../../../../src/copilot/mongoVectorAutoEmbedIndex.ts').MongoAutoEmbedVectorIndexInput;
         if (response.ok) {
@@ -576,7 +580,7 @@ export function CopilotProvider({
   );
 
   const runMongoAtlasSearchTool = useCallback(
-    async (args: Record<string, unknown>): Promise<ToolExecutionResult> => {
+    async (args: Record<string, unknown>, confirmation?: CopilotIndexConfirmation): Promise<ToolExecutionResult> => {
       const tool = 'createMongoAtlasSearchIndex' as const;
       try {
         const payload: Record<string, unknown> = { ...args };
@@ -588,6 +592,7 @@ export function CopilotProvider({
         }
         const response = await createCopilotMongoAtlasSearchIndex(
           payload as import('../../../../src/copilot/mongoAtlasSearchIndex.ts').MongoAtlasSearchIndexInput,
+          confirmation,
         );
         const input = payload as import('../../../../src/copilot/mongoAtlasSearchIndex.ts').MongoAtlasSearchIndexInput;
         if (response.ok) {
@@ -621,7 +626,7 @@ export function CopilotProvider({
   );
 
   const runMongoClassicIndexTool = useCallback(
-    async (args: Record<string, unknown>): Promise<ToolExecutionResult> => {
+    async (args: Record<string, unknown>, confirmation?: CopilotIndexConfirmation): Promise<ToolExecutionResult> => {
       const tool = 'createMongoClassicIndex' as const;
       try {
         const payload: Record<string, unknown> = { ...args };
@@ -633,6 +638,7 @@ export function CopilotProvider({
         }
         const response = await createCopilotMongoClassicIndex(
           payload as import('../../../../src/copilot/mongoClassicIndex.ts').MongoClassicIndexInput,
+          confirmation,
         );
         return {
           tool,
@@ -674,7 +680,11 @@ export function CopilotProvider({
   const runMongoClassicIndexDirect = useCallback(
     async (args: Record<string, unknown>) => {
       setStatus('mutating');
-      const result = await runMongoClassicIndexTool(args);
+      const confirmation = await requestCopilotUserConfirmation(
+        chatSessionIdRef.current,
+        'createMongoClassicIndex',
+      );
+      const result = await runMongoClassicIndexTool(args, confirmation);
       appendMessage({
         role: 'agent',
         content: result.ok ? '' : result.summary,
@@ -706,7 +716,7 @@ export function CopilotProvider({
   );
 
   const runLlmTurn = useCallback(
-    async (history: CopilotLlmMessage[]): Promise<CopilotLlmMessage[]> => {
+    async (userContent: string, sessionId: string): Promise<void> => {
       try {
       const schemaContext = buildSchemaContextPayload({
         model,
@@ -721,10 +731,9 @@ export function CopilotProvider({
         atlasSearchIndexes,
       });
 
-      const userMessage =
-        [...history].reverse().find((entry) => entry.role === 'user')?.content.trim() ?? '';
-
-      let messages = [...history];
+      const userMessage = userContent.trim();
+      let pendingContent: string | undefined = userMessage;
+      let pendingToolResults: { tool_call_id: string; content: string }[] | undefined;
       const maxIterations = 10;
       let structuredInspectOutputShown = false;
       let architectureReviewAppended = false;
@@ -732,12 +741,19 @@ export function CopilotProvider({
       for (let i = 0; i < maxIterations; i += 1) {
         setStatus(i === 0 ? 'analyzing' : 'mutating');
         const response = await sendCopilotChat({
-          messages,
+          sessionId,
+          content: pendingContent,
+          toolResults: pendingToolResults,
           schemaContext,
         });
+        pendingContent = undefined;
+        pendingToolResults = undefined;
 
         const assistant = response.message;
-        messages = [...messages, assistant];
+        const issuedConfirmations = new Map(
+          (response.confirmations ?? []).map((item) => [item.toolCallId, item.confirmationId]),
+        );
+        const turnResults: { tool_call_id: string; content: string }[] = [];
 
         const toolCalls = assistant.tool_calls ?? [];
         const parsedBatch = toolCalls
@@ -764,7 +780,7 @@ export function CopilotProvider({
 
         if (!toolCalls.length) {
           setStatus('idle');
-          return messages;
+          return;
         }
 
         let canvasForceEmbed = forceEmbedOverrides;
@@ -774,25 +790,46 @@ export function CopilotProvider({
         for (const toolCall of toolCalls) {
           const parsed = parseOpenAiToolCall(toolCall);
           if (!parsed) {
+            turnResults.push({
+              tool_call_id: toolCall.id,
+              content: JSON.stringify({ ok: false, summary: 'Unrecognized tool call.' }),
+            });
             continue;
           }
 
+          const mutationConfirmation = (): CopilotIndexConfirmation | null => {
+            if (!isCopilotMutatingTool(parsed.tool)) return null;
+            const confirmationId = issuedConfirmations.get(toolCall.id);
+            const preview = JSON.stringify(parsed.args).slice(0, 280);
+            const allowed =
+              Boolean(confirmationId) &&
+              window.confirm(`Copilot wants to run ${parsed.tool}.\n\n${preview}\n\nRun this change?`);
+            if (!allowed || !confirmationId) {
+              turnResults.push({
+                tool_call_id: toolCall.id,
+                content: JSON.stringify({
+                  ok: false,
+                  tool: parsed.tool,
+                  summary: 'Cancelled. The change was not run.',
+                }),
+              });
+              return null;
+            }
+            return { sessionId, confirmationId };
+          };
+
           if (isServerMongoInspectToolCall(parsed)) {
             if (parsed.tool === 'listMongoDatabases' && suppressListMongoDatabases) {
-              messages = [
-                ...messages,
-                {
-                  role: 'tool',
-                  tool_call_id: toolCall.id,
-                  content: serializeMongoInspectToolResult({
-                    ok: true,
-                    tool: 'listMongoDatabases',
-                    summary:
-                      'Skipped listing databases — the user already named a target database or listMongoCollections runs in the same turn.',
-                    data: null,
-                  }),
-                },
-              ];
+              turnResults.push({
+                tool_call_id: toolCall.id,
+                content: serializeMongoInspectToolResult({
+                  ok: true,
+                  tool: 'listMongoDatabases',
+                  summary:
+                    'Skipped listing databases — the user already named a target database or listMongoCollections runs in the same turn.',
+                  data: null,
+                }),
+              });
               continue;
             }
 
@@ -808,107 +845,95 @@ export function CopilotProvider({
               content: '',
               toolExecution: result,
             });
-            messages = [
-              ...messages,
-              {
-                role: 'tool',
-                tool_call_id: toolCall.id,
-                content: serializeMongoInspectToolResult({
-                  ok: result.ok,
-                  tool: parsed.tool,
-                  summary: result.summary,
-                  data: result.data,
-                }),
-              },
-            ];
+            turnResults.push({
+              tool_call_id: toolCall.id,
+              content: serializeMongoInspectToolResult({
+                ok: result.ok,
+                tool: parsed.tool,
+                summary: result.summary,
+                data: result.data,
+              }),
+            });
             continue;
           }
 
           if (isServerMongoVectorIndexToolCall(parsed)) {
-            const result = await runMongoVectorIndexTool(parsed.args);
+            const confirmation = mutationConfirmation();
+            if (!confirmation) continue;
+            const result = await runMongoVectorIndexTool(parsed.args, confirmation);
             appendMessage({
               role: 'agent',
               content: result.ok ? '' : result.summary,
               toolExecution: result,
             });
-            messages = [
-              ...messages,
-              {
-                role: 'tool',
-                tool_call_id: toolCall.id,
-                content: JSON.stringify({
-                  ok: result.ok,
-                  tool: parsed.tool,
-                  summary: result.summary,
-                  indexName: (result.data as { indexName?: string } | undefined)?.indexName,
-                }),
-              },
-            ];
+            turnResults.push({
+              tool_call_id: toolCall.id,
+              content: JSON.stringify({
+                ok: result.ok,
+                tool: parsed.tool,
+                summary: result.summary,
+                indexName: (result.data as { indexName?: string } | undefined)?.indexName,
+              }),
+            });
             continue;
           }
 
           if (isServerMongoAtlasSearchToolCall(parsed)) {
-            const result = await runMongoAtlasSearchTool(parsed.args);
+            const confirmation = mutationConfirmation();
+            if (!confirmation) continue;
+            const result = await runMongoAtlasSearchTool(parsed.args, confirmation);
             appendMessage({
               role: 'agent',
               content: result.ok ? '' : result.summary,
               toolExecution: result,
             });
-            messages = [
-              ...messages,
-              {
-                role: 'tool',
-                tool_call_id: toolCall.id,
-                content: JSON.stringify({
-                  ok: result.ok,
-                  tool: parsed.tool,
-                  summary: result.summary,
-                  indexName: (result.data as { indexName?: string } | undefined)?.indexName,
-                  pattern: (result.data as { pattern?: string } | undefined)?.pattern,
-                }),
-              },
-            ];
+            turnResults.push({
+              tool_call_id: toolCall.id,
+              content: JSON.stringify({
+                ok: result.ok,
+                tool: parsed.tool,
+                summary: result.summary,
+                indexName: (result.data as { indexName?: string } | undefined)?.indexName,
+                pattern: (result.data as { pattern?: string } | undefined)?.pattern,
+              }),
+            });
             continue;
           }
 
           if (isServerMongoClassicIndexToolCall(parsed)) {
-            const result = await runMongoClassicIndexTool(parsed.args);
+            const confirmation = mutationConfirmation();
+            if (!confirmation) continue;
+            const result = await runMongoClassicIndexTool(parsed.args, confirmation);
             appendMessage({
               role: 'agent',
               content: result.ok ? '' : result.summary,
               toolExecution: result,
             });
-            messages = [
-              ...messages,
-              {
-                role: 'tool',
-                tool_call_id: toolCall.id,
-                content: JSON.stringify({
-                  ok: result.ok,
-                  tool: parsed.tool,
-                  summary: result.summary,
-                  indexName: (result.data as { indexName?: string } | undefined)?.indexName,
-                }),
-              },
-            ];
+            turnResults.push({
+              tool_call_id: toolCall.id,
+              content: JSON.stringify({
+                ok: result.ok,
+                tool: parsed.tool,
+                summary: result.summary,
+                indexName: (result.data as { indexName?: string } | undefined)?.indexName,
+              }),
+            });
             continue;
           }
 
           if (isWorkflowToolCallParsed(parsed)) {
+            const confirmation = mutationConfirmation();
+            if (!confirmation) continue;
             const result = await executeWorkflowTool(parsed, workflowHandlers);
             appendMessage({
               role: 'agent',
               content: buildNextStepMessage(result.nextStep),
               toolExecution: result,
             });
-            messages = [
-              ...messages,
-              {
-                role: 'tool',
-                tool_call_id: toolCall.id,
-                content: serializeWorkflowToolResult(result),
-              },
-            ];
+            turnResults.push({
+              tool_call_id: toolCall.id,
+              content: serializeWorkflowToolResult(result),
+            });
             continue;
           }
 
@@ -925,15 +950,12 @@ export function CopilotProvider({
             content: toolExecutionHasStructuredOutput(result) ? '' : result.summary,
             toolExecution: result,
           });
-          messages = [
-            ...messages,
-            {
-              role: 'tool',
-              tool_call_id: toolCall.id,
-              content: serializeCanvasToolResult(result),
-            },
-          ];
+          turnResults.push({
+            tool_call_id: toolCall.id,
+            content: serializeCanvasToolResult(result),
+          });
         }
+        pendingToolResults = turnResults;
       }
 
       if (/Architecture Review/i.test(userMessage) && !architectureReviewAppended) {
@@ -946,7 +968,7 @@ export function CopilotProvider({
       }
 
       setStatus('idle');
-      return messages;
+      return;
       } catch (error) {
         setStatus('idle');
         throw error;
@@ -1111,7 +1133,7 @@ export function CopilotProvider({
       if (parsed && 'message' in parsed) {
         if (parsed.message === '__clear_overrides__') {
           onClearOverrides();
-          setLlmHistory([]);
+          chatSessionIdRef.current = crypto.randomUUID();
           appendMessage({ role: 'agent', content: 'Cleared all embed overrides.' });
           return;
         }
@@ -1129,13 +1151,10 @@ export function CopilotProvider({
 
       if (llmConfigured) {
         setStatus('analyzing');
-        const userTurn: CopilotLlmMessage = { role: 'user', content: trimmed };
-        const nextHistory = isArchitectureReviewRequest(trimmed)
-          ? [userTurn]
-          : [...llmHistory, userTurn];
-        setLlmHistory(nextHistory);
-        void runLlmTurn(nextHistory)
-          .then((updated) => setLlmHistory(updated))
+        if (isArchitectureReviewRequest(trimmed)) {
+          chatSessionIdRef.current = crypto.randomUUID();
+        }
+        void runLlmTurn(trimmed, chatSessionIdRef.current)
           .catch((error: unknown) => {
             setStatus('idle');
             appendMessage({
@@ -1161,7 +1180,7 @@ export function CopilotProvider({
         setStatus('idle');
       }, 400);
     },
-    [appendMessage, llmConfigured, llmHistory, managerCostInputs, model, mongoInspectAvailable, mongoInspectMessage, onClearOverrides, openAtlasSearchIndexDialog, openVectorIndexDialog, plan, runLlmTurn, runMongoInspectDirect, runWorkflowDirect, runTool, targetDatabase],
+    [appendMessage, llmConfigured, managerCostInputs, model, mongoInspectAvailable, mongoInspectMessage, onClearOverrides, openAtlasSearchIndexDialog, openVectorIndexDialog, plan, runLlmTurn, runMongoInspectDirect, runWorkflowDirect, runTool, targetDatabase],
   );
 
   const openWithPrompt = useCallback(
@@ -1336,6 +1355,7 @@ export function CopilotProvider({
       mongoInspectAvailable,
       mongoInspectMessage,
       targetDatabase,
+      getChatSessionId,
       migrationPlan: plan,
       recommendedAtlasTierId,
       setTargetDatabase,
@@ -1397,6 +1417,7 @@ export function CopilotProvider({
       mongoInspectAvailable,
       mongoInspectMessage,
       targetDatabase,
+      getChatSessionId,
       plan,
       recommendedAtlasTierId,
       setTargetDatabase,

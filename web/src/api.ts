@@ -1,7 +1,7 @@
 import type { DiagramExport, Dialect, Profile, SqlStructuralModel } from './types';
 import type { CustomProfileInput, ProfileRequestFields, WorkloadProfile } from './customProfileShared';
 import { formatAuthError, toAuthError } from './auth/authErrors';
-import type { CopilotChatApiResponse, CopilotLlmMessage, CopilotStatusResponse } from './copilot/types';
+import type { CopilotChatApiResponse, CopilotStatusResponse } from './copilot/types';
 import type { CopilotSchemaContextPayload } from './copilot/schemaContext';
 import { readCopilotChatSseResponse } from '../../src/copilot/copilotChatStream.ts';
 
@@ -138,9 +138,12 @@ export type ApiHealthResponse = {
   ok: boolean;
   name: string;
   version: string;
+};
+
+export type ReleaseNotesResponse = ApiHealthResponse & {
   releaseHeading?: string;
   releaseNotes?: string;
-  /** Aggregated RELEASE.md entries for the current major version (e.g. all 5.x). */
+  /** Aggregated RELEASE.md entries for the current major version (e.g. all 11.x). */
   releaseNotesSummary?: string;
 };
 
@@ -148,6 +151,12 @@ export async function fetchApiHealth(): Promise<ApiHealthResponse> {
   const res = await apiFetch(`${base}/api/health`);
   if (!res.ok) throw new Error(await readApiError(res));
   return parseApiJsonResponse<ApiHealthResponse>(res);
+}
+
+export async function fetchReleaseNotes(): Promise<ReleaseNotesResponse> {
+  const res = await apiFetch(`${base}/api/release-notes`);
+  if (!res.ok) throw new Error(await readApiError(res));
+  return parseApiJsonResponse<ReleaseNotesResponse>(res);
 }
 
 export async function checkApiHealth(): Promise<boolean> {
@@ -163,6 +172,7 @@ export type AuthConfigResponse = {
   authEnabled: boolean;
   rolesClaim: string;
   hostedUrl: string;
+  hosted?: boolean;
   domain?: string;
   clientId?: string;
   audience?: string;
@@ -277,10 +287,12 @@ export async function importBuiltinExample(exampleId: string): Promise<{
 }
 
 export async function studioIsHosted(): Promise<boolean> {
-  const res = await apiFetch(`${base}/api/health`);
-  if (!res.ok) return false;
-  const body = (await res.json()) as { hosted?: boolean };
-  return body.hosted === true;
+  try {
+    const config = await fetchAuthConfig();
+    return config.hosted === true;
+  } catch {
+    return false;
+  }
 }
 
 export async function createLiveAgentSession(): Promise<{ token: string; expiresAt: string }> {
@@ -1112,11 +1124,12 @@ export type CopilotMongoAutoEmbedVectorIndexResponse = {
 /** Create an Atlas Vector Search autoEmbed index (Phase 3 — uses MongoDB driver, not read-only MCP). */
 export async function createCopilotMongoAutoEmbedVectorIndex(
   request: import('../../../../src/copilot/mongoVectorAutoEmbedIndex.ts').MongoAutoEmbedVectorIndexInput,
+  confirmation?: CopilotIndexConfirmation,
 ): Promise<CopilotMongoAutoEmbedVectorIndexResponse> {
   const res = await apiFetch(`${base}/api/copilot/mongo/vector-index`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
-    body: JSON.stringify(request),
+    body: JSON.stringify(confirmation ? { ...request, ...confirmation } : request),
   });
   const contentType = res.headers.get('content-type') ?? '';
   const body = await res.text();
@@ -1149,11 +1162,12 @@ export type CopilotMongoAtlasSearchIndexResponse = {
 /** Create an Atlas MongoDB Search (lexical) index — keyword, autocomplete, or faceted. */
 export async function createCopilotMongoAtlasSearchIndex(
   request: import('../../../../src/copilot/mongoAtlasSearchIndex.ts').MongoAtlasSearchIndexInput,
+  confirmation?: CopilotIndexConfirmation,
 ): Promise<CopilotMongoAtlasSearchIndexResponse> {
   const res = await apiFetch(`${base}/api/copilot/mongo/atlas-search-index`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
-    body: JSON.stringify(request),
+    body: JSON.stringify(confirmation ? { ...request, ...confirmation } : request),
   });
   const contentType = res.headers.get('content-type') ?? '';
   const body = await res.text();
@@ -1182,14 +1196,35 @@ export type CopilotMongoClassicIndexResponse = {
   keys?: Record<string, number | string>;
 };
 
+export type CopilotIndexConfirmation = {
+  sessionId: string;
+  confirmationId: string;
+};
+
+export async function requestCopilotUserConfirmation(
+  sessionId: string,
+  tool: string,
+): Promise<CopilotIndexConfirmation> {
+  const res = await apiFetch(`${base}/api/copilot/confirm`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ sessionId, tool }),
+  });
+  if (!res.ok) {
+    throw new Error(await readApiError(res));
+  }
+  return (await res.json()) as CopilotIndexConfirmation;
+}
+
 /** Create a classic MongoDB B-tree index (createIndex). */
 export async function createCopilotMongoClassicIndex(
   request: import('../../../../src/copilot/mongoClassicIndex.ts').MongoClassicIndexInput,
+  confirmation?: CopilotIndexConfirmation,
 ): Promise<CopilotMongoClassicIndexResponse> {
   const res = await apiFetch(`${base}/api/copilot/mongo/classic-index`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
-    body: JSON.stringify(request),
+    body: JSON.stringify(confirmation ? { ...request, ...confirmation } : request),
   });
   const contentType = res.headers.get('content-type') ?? '';
   const body = await res.text();
@@ -1236,7 +1271,9 @@ export async function invokeCopilotMongoInspect(
 }
 
 export async function sendCopilotChat(request: {
-  messages: CopilotLlmMessage[];
+  sessionId: string;
+  content?: string;
+  toolResults?: { tool_call_id: string; content: string }[];
   schemaContext: CopilotSchemaContextPayload;
   toolsEnabled?: boolean;
 }): Promise<CopilotChatApiResponse> {

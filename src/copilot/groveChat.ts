@@ -75,6 +75,7 @@ export type GroveChatRequest = {
 export type GroveChatResponse = {
   message: CopilotChatMessage;
   finishReason: string | null;
+  confirmations?: { confirmationId: string; toolCallId: string; tool: string }[];
 };
 
 export type GroveConfig = {

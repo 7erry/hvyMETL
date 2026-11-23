@@ -37,9 +37,10 @@ describe('tenant helpers', () => {
     expect(tenantDefaultTargetDb('auth0|abc')).toBe(DEFAULT_LOGICAL_TARGET_DB);
   });
 
-  it('derives a user prefix from Auth0 profile fields', () => {
-    expect(tenantDbPrefixFromPayload({ name: 'Terry Walters' })).toBe('terry_walters');
-    expect(tenantDbPrefixFromPayload({ email: 'terry.walters@example.com' })).toBe('terry_walters');
+  it('owns databases by the Auth0 subject hash only', () => {
+    expect(tenantDbPrefixFromPayload({ name: 'Terry Walters' })).toBe(LOCAL_DEV_TENANT_ID);
+    expect(tenantDbPrefixFromPayload({ email: 'terry.walters@example.com' })).toBe(LOCAL_DEV_TENANT_ID);
+    expect(tenantDbPrefixFromPayload({ nickname: 'terry' })).toBe(LOCAL_DEV_TENANT_ID);
     expect(
       tenantDbPrefixFromPayload({ given_name: 'Terry', family_name: 'Walters', sub: 'auth0|abc' }),
     ).toBe(tenantDbPrefixFromSub('auth0|abc'));

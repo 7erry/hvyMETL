@@ -1,3 +1,13 @@
+## hvyMETL 11.1.9
+
+**Agent auth** — The live agent sends `Authorization: Bearer` on the WebSocket. `?token=` and `--http` are gone. Binaries from `v11.1.8` and earlier fail until replaced. Studio downloads `v11.1.9`. Assets: **`hvymetl-agent-macos-aarch64`**, **`hvymetl-agent-macos-x64`**, **`hvymetl-agent-linux-x64`**, **`hvymetl-agent-windows-x64.exe`**.
+
+**Studio** — Mongosh refuses private-network and cloud-metadata hosts. Copilot stores the chat on the server and asks before a mutating tool runs. Public health returns `{ ok, name, version }`.
+
+**Databases** — A database is owned by the Auth0 subject hash. A display name, nickname, or email no longer counts as an owner.
+
+---
+
 ## hvyMETL 11.1.8
 
 **Saved connections** — A saved connection follows the URI scheme. A mysql:// URI sets Engine to MySQL and the command scheme is mysql://. A URI without a scheme keeps the stored engine.

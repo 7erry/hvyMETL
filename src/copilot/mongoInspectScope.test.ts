@@ -22,12 +22,14 @@ describe('mongoInspectScope', () => {
 
     const scope = await resolveTenantMongoInspectScope(req);
     const sanitized = sanitizeDatabaseListForClient(scope, [
-      { name: 'terry_walters__csv_to_atlas', size: 100 },
+      { name: `${scope.primaryPrefix}__csv_to_atlas`, size: 100 },
+      { name: 'terry_walters__csv_to_atlas', size: 80 },
       { name: 'other_user__csv_to_atlas', size: 50 },
       { name: 'sample_mflix', size: 10 },
     ]);
 
     expect(sanitized).toEqual([{ name: 'csv_to_atlas', size: 100 }]);
+    expect(scope.ownsPhysicalDatabase('terry_walters__csv_to_atlas')).toBe(false);
     expect(scope.primaryPrefix.startsWith('u_')).toBe(true);
     expect(scope.resolvePhysicalDatabase('csv_to_atlas')).toBe(`${scope.primaryPrefix}__csv_to_atlas`);
     expect(() => assertDatabaseAccess(scope, 'other_user__csv_to_atlas')).toThrow(/outside your workspace/i);
@@ -44,7 +46,7 @@ describe('mongoInspectScope', () => {
     } as Parameters<typeof resolveTenantMongoInspectScope>[0];
 
     const scope = await resolveTenantMongoInspectScope(req);
-    expect(scope.prefixCandidates).toContain('terry_walters');
+    expect(scope.prefixCandidates).not.toContain('terry_walters');
 
     const hashPrefix = scope.prefixCandidates.find((prefix) => prefix.startsWith('u_'));
     expect(hashPrefix).toBeTruthy();
@@ -92,10 +94,10 @@ describe('mongoInspectScope', () => {
     expect(discoverPrefixCandidatesFromCluster(['terry_walters__mytrains'], ['terry_walters'])).toEqual([
       'terry_walters',
     ]);
-    expect(scope.prefixCandidates).toContain('terry_walters');
+    expect(scope.prefixCandidates).not.toContain('terry_walters');
     expect(
       sanitizeDatabaseListForClient(scope, [{ name: 'terry_walters__mytrains', size: 100 }]),
-    ).toEqual([{ name: 'mytrains', size: 100 }]);
+    ).toEqual([]);
 
     const augmented = augmentTenantMongoInspectScope(
       scope,

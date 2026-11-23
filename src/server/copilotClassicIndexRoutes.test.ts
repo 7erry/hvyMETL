@@ -1,6 +1,7 @@
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
 import express from 'express';
 import { createCopilotRouter } from './copilotRoutes.js';
+import { issueCopilotUserConfirmation } from './copilotChatSession.js';
 import * as mongoClassicIndexService from '../copilot/mongoClassicIndexService.js';
 import * as mongoMcpClient from '../copilot/mongoMcpClient.js';
 
@@ -42,14 +43,28 @@ describe('copilot classic-index route', () => {
       keys: { status: 1 },
     });
 
+    const sessionId = 'classic-index-ok';
+    const confirmationId = issueCopilotUserConfirmation('local-dev', sessionId, 'createMongoClassicIndex');
     const { status, body } = await postClassicIndex({
       database: 'csv_to_atlas',
       collection: 'journalEntries',
       keys: { status: 1 },
+      sessionId,
+      confirmationId,
     });
 
     expect(status).toBe(200);
     expect(body.ok).toBe(true);
     expect(body.indexName).toBe('status_1');
+  });
+
+  it('rejects an index create without a matching confirmation', async () => {
+    const { status, body } = await postClassicIndex({
+      database: 'csv_to_atlas',
+      collection: 'journalEntries',
+      keys: { status: 1 },
+    });
+    expect(status).toBe(400);
+    expect(body.error).toMatch(/Confirmation is required/i);
   });
 });

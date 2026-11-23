@@ -2,7 +2,7 @@ import { createHash, randomBytes } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { isAbsolute, join, relative, resolve } from 'node:path';
 import type { Request } from 'express';
-import { isAuthConfigured, readBearerToken, readAuthDisplayName, resolveAuthDisplayName } from './auth.js';
+import { isAuthConfigured, readBearerToken, resolveAuthDisplayName } from './auth.js';
 
 /** Shared tenant id when Auth0 is disabled (local single-developer mode). */
 export const LOCAL_DEV_TENANT_ID = 'local-dev';
@@ -173,33 +173,13 @@ export async function tenantDbPrefixFromRequest(req: RequestWithAuth): Promise<s
   return candidates[0] ?? LOCAL_DEV_TENANT_ID;
 }
 
-/** Collect slug prefixes derived from Auth0 profile fields for import DB ownership checks. */
+/** Subject-hash prefixes that own this user's databases. Display names are not prefixes. */
 export function authIdentitySlugCandidates(
   payload: Record<string, unknown> | undefined,
-  displayName?: string,
+  _displayName?: string,
   extraPrefixes: string[] = [],
 ): string[] {
   const slugs = new Set<string>(extraPrefixes.filter(Boolean));
-  const givenName = typeof payload?.given_name === 'string' ? payload.given_name.trim() : '';
-  const familyName = typeof payload?.family_name === 'string' ? payload.family_name.trim() : '';
-  const combinedName = [givenName, familyName].filter(Boolean).join(' ');
-
-  const fields = [
-    displayName,
-    readAuthDisplayName(payload),
-    combinedName || undefined,
-    typeof payload?.nickname === 'string' ? payload.nickname : undefined,
-    typeof payload?.preferred_username === 'string' ? payload.preferred_username : undefined,
-    typeof payload?.email === 'string' ? payload.email : undefined,
-  ];
-
-  // shortcut: display-name prefixes stay readable so existing Atlas DBs are not hidden; two users with the same name still share those old DBs until renamed to the sub-hash prefix.
-  for (const raw of fields) {
-    if (typeof raw !== 'string' || !raw.trim()) continue;
-    const slug = tenantDbPrefixFromDisplayName(raw);
-    if (slug) slugs.add(slug);
-  }
-
   const rawSub = typeof payload?.sub === 'string' ? payload.sub.trim() : '';
   if (rawSub) slugs.add(tenantDbPrefixFromSub(rawSub));
   return [...slugs];

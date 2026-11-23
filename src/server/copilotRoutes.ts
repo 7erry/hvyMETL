@@ -6,7 +6,6 @@ import { Router, type Request, type Response } from 'express';
 import {
   auditCopilotEvent,
   CopilotRequestValidationError,
-  sanitizeCopilotChatMessages,
   sanitizeCopilotSchemaContext,
 } from '../copilot/copilotRequestGuard.js';
 import {
@@ -29,6 +28,13 @@ import {
 import { readGoogleDriveClientId } from '../copilot/googleDriveConfig.js';
 import { getRequestTenantId } from './tenant.js';
 import {
+  beginCopilotTurn,
+  consumeCopilotConfirmation,
+  copilotSessionOwner,
+  issueCopilotUserConfirmation,
+  recordCopilotAssistantTurn,
+} from './copilotChatSession.js';
+import {
   beginCopilotChatSse,
   startCopilotChatSseKeepalive,
   writeCopilotChatSseEvent,
@@ -40,6 +46,13 @@ type RequestWithAuth = Request & {
     payload?: Record<string, unknown>;
   };
 };
+
+function requireIndexConfirmation(req: Request, tool: string): void {
+  const sessionId = typeof req.body?.sessionId === 'string' ? req.body.sessionId : '';
+  const confirmationId = typeof req.body?.confirmationId === 'string' ? req.body.confirmationId : '';
+  const identity = readCopilotAuditIdentity(req);
+  consumeCopilotConfirmation(copilotSessionOwner(identity.userSub), sessionId, confirmationId, tool);
+}
 
 function readCopilotAuditIdentity(req: Request): { tenantId: string | null; userSub: string | null } {
   try {
@@ -178,6 +191,7 @@ export function createCopilotRouter(): Router {
 
   router.post('/mongo/vector-index', inspectRateLimit, async (req, res) => {
     try {
+      requireIndexConfirmation(req, 'createMongoAutoEmbedVectorIndex');
       const result = await createMongoAutoEmbedVectorIndex(req, req.body);
       const status = result.serviceUnavailable ? 503 : result.ok ? 200 : 400;
       const identity = readCopilotAuditIdentity(req);
@@ -196,6 +210,7 @@ export function createCopilotRouter(): Router {
 
   router.post('/mongo/classic-index', inspectRateLimit, async (req, res) => {
     try {
+      requireIndexConfirmation(req, 'createMongoClassicIndex');
       const result = await createMongoClassicIndex(req, req.body);
       const status = result.serviceUnavailable ? 503 : result.ok ? 200 : 400;
       const identity = readCopilotAuditIdentity(req);
@@ -214,6 +229,7 @@ export function createCopilotRouter(): Router {
 
   router.post('/mongo/atlas-search-index', inspectRateLimit, async (req, res) => {
     try {
+      requireIndexConfirmation(req, 'createMongoAtlasSearchIndex');
       const result = await createMongoAtlasSearchIndex(req, req.body);
       const status = result.serviceUnavailable ? 503 : result.ok ? 200 : 400;
       const identity = readCopilotAuditIdentity(req);
@@ -261,16 +277,45 @@ export function createCopilotRouter(): Router {
     }
   });
 
+  router.post('/confirm', chatRateLimit, (req, res) => {
+    try {
+      const sessionId = typeof req.body?.sessionId === 'string' ? req.body.sessionId : '';
+      const tool = typeof req.body?.tool === 'string' ? req.body.tool : '';
+      const identity = readCopilotAuditIdentity(req);
+      const confirmationId = issueCopilotUserConfirmation(
+        copilotSessionOwner(identity.userSub),
+        sessionId,
+        tool,
+      );
+      res.json({ sessionId: sessionId.trim(), confirmationId });
+    } catch (error) {
+      handleCopilotError(res, error);
+    }
+  });
+
   router.post('/chat', chatRateLimit, async (req, res) => {
     req.socket.setTimeout(0);
     const identity = readCopilotAuditIdentity(req);
     const useSseStream = req.query.stream === '1' || req.body?.stream === true;
     let stopKeepalive: (() => void) | undefined;
     try {
-      const messages = sanitizeCopilotChatMessages(req.body?.messages, {
-        allowToolMessages: true,
-        allowAssistantMessages: true,
-      });
+      if (req.body?.messages != null) {
+        throw new CopilotRequestValidationError(
+          'Send sessionId and the new user message. Assistant history is stored on the server.',
+        );
+      }
+      const sessionId = typeof req.body?.sessionId === 'string' ? req.body.sessionId : '';
+      const content = typeof req.body?.content === 'string' ? req.body.content : undefined;
+      const toolResults = Array.isArray(req.body?.toolResults)
+        ? req.body.toolResults
+            .filter((item: unknown): item is { tool_call_id: string; content: string } => {
+              if (!item || typeof item !== 'object') return false;
+              const row = item as { tool_call_id?: unknown; content?: unknown };
+              return typeof row.tool_call_id === 'string' && typeof row.content === 'string';
+            })
+        : undefined;
+      const owner = copilotSessionOwner(identity.userSub);
+      const messages = beginCopilotTurn({ userSub: owner, sessionId, content, toolResults });
       const schemaContext = sanitizeCopilotSchemaContext(req.body?.schemaContext);
       const toolsEnabled = req.body?.toolsEnabled !== false;
 
@@ -287,7 +332,9 @@ export function createCopilotRouter(): Router {
         stopKeepalive = startCopilotChatSseKeepalive(res);
       }
 
-      const result = await callGroveChat({ messages, schemaContext, toolsEnabled });
+      const groveResult = await callGroveChat({ messages, schemaContext, toolsEnabled });
+      const confirmations = recordCopilotAssistantTurn(owner, sessionId, groveResult.message);
+      const result = confirmations.length > 0 ? { ...groveResult, confirmations } : groveResult;
 
       if (useSseStream) {
         stopKeepalive?.();

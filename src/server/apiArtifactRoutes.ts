@@ -14,7 +14,7 @@ import {
   serializeApiArtifactBundle,
   type ApiArtifactBundle,
 } from './apiArtifactStore.js';
-import { requireRole, promoteQueryAccessToken, promoteSwaggerSessionCookie, authenticateSwaggerDocsAccess, issueSwaggerDocsCookie } from './auth.js';
+import { requireRole, promoteSwaggerSessionCookie, authenticateSwaggerDocsAccess, issueSwaggerDocsCookie } from './auth.js';
 import { swaggerUiSetupOptions } from './swaggerUiTheme.js';
 import { resolveOpenApiSpecForDocs } from './studioPlatformOpenApi.js';
 import { getRequestTenantId } from './tenant.js';
@@ -22,7 +22,6 @@ import { getRequestTenantId } from './tenant.js';
 const docsRoleCheck = requireRole(['admin', 'developer', 'manager']).slice(1);
 
 const docsAuth: RequestHandler[] = [
-  promoteQueryAccessToken,
   promoteSwaggerSessionCookie,
   authenticateSwaggerDocsAccess,
   ...docsRoleCheck,
@@ -107,7 +106,7 @@ export function registerApiArtifactRoutes(app: Express, rootDir: string): void {
   };
 
   // Register HTML + spec routes before swaggerUi.serve — the static middleware otherwise
-  // 301-redirects /api/docs → /api/docs/ and drops ?access_token= from new-tab auth links.
+  // 301-redirects /api/docs → /api/docs/.
   app.post('/api/docs/bootstrap', ...requireRole(['admin', 'developer', 'manager']), (req, res) => {
     const authHeader = req.headers.authorization?.trim() ?? '';
     const token = authHeader.startsWith('Bearer ') ? authHeader.slice('Bearer '.length).trim() : '';
@@ -124,5 +123,5 @@ export function registerApiArtifactRoutes(app: Express, rootDir: string): void {
   });
 
   app.get(['/api/docs', '/api/docs/'], ...docsAuth, renderSwaggerDocs);
-  app.use('/api/docs', promoteQueryAccessToken, swaggerUi.serve);
+  app.use('/api/docs', swaggerUi.serve);
 }

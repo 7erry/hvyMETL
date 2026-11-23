@@ -58,7 +58,7 @@ hvyMETL does not pin or CI-test these server majors. Driver crate versions and f
 
 ## Security model
 
-- **Outbound only:** agent dials `wss://{studio}/api/agent/v2?token=…` (TLS). No listener on the customer network.
+- **Outbound only:** agent dials `wss://{studio}/api/agent/v2` with `Authorization: Bearer` (TLS). No listener on the customer network. The token is not a query parameter.
 - **Token:** short-lived session from `POST /api/schema/agent-session` with sliding expiry during extract.
 - **No URI on the wire:** connection string stays in agent CLI args / env; schema comments reject `://`.
 - **Payload hygiene:** driver errors are scrubbed before send.

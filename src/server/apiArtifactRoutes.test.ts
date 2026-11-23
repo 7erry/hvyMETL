@@ -60,7 +60,7 @@ describe('registerApiArtifactRoutes', () => {
     expect(result.body).toContain('swagger-ui');
   });
 
-  it('preserves access_token when serving /api/docs', async () => {
+  it('serves Swagger when a query token is present and auth is disabled', async () => {
     const result = await fetchDocs('/api/docs?access_token=abc123');
     expect(result.status).toBe(200);
     expect(result.location).toBeNull();

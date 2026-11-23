@@ -6,8 +6,8 @@ import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 import express from 'express';
 import { runLiveAgent } from '../utilities/runLiveAgent.js';
+import { attachLiveAgentWebSocket } from './liveAgentWs.js';
 import {
-  createLiveAgentPublicRouter,
   createLiveAgentSession,
   createLiveAgentStudioRouter,
   readExtractJob,
@@ -95,10 +95,10 @@ describe('live agent session', () => {
     const session = createLiveAgentSession();
     const app = express();
     app.use(express.json());
-    app.use('/api/agent', createLiveAgentPublicRouter());
     app.use('/api/schema', createLiveAgentStudioRouter());
     const server = app.listen(0, '127.0.0.1');
     await once(server, 'listening');
+    attachLiveAgentWebSocket(server);
     servers.push(server);
     const address = server.address();
     if (!address || typeof address === 'string') throw new Error('test server has no port');

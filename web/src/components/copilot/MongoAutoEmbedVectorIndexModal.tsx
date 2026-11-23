@@ -12,7 +12,7 @@ import {
   type MongoAutoEmbedVectorIndexInput,
 } from '../../../../src/copilot/mongoVectorAutoEmbedIndex.ts';
 import { parseMultiDatabaseCollectionError } from '../../../../src/copilot/parseMultiDatabaseCollectionError.ts';
-import { createCopilotMongoAutoEmbedVectorIndex, invokeCopilotMongoInspect } from '../../api';
+import { createCopilotMongoAutoEmbedVectorIndex, invokeCopilotMongoInspect, requestCopilotUserConfirmation } from '../../api';
 import {
   mergeCollectionNameOptions,
   normalizeVectorIndexCollectionHint,
@@ -373,7 +373,11 @@ function MongoAutoEmbedVectorIndexModalPanel({
 
     setBusy(true);
     try {
-      const result = await createCopilotMongoAutoEmbedVectorIndex(payload);
+      const confirmation = await requestCopilotUserConfirmation(
+        copilot.getChatSessionId(),
+        'createMongoAutoEmbedVectorIndex',
+      );
+      const result = await createCopilotMongoAutoEmbedVectorIndex(payload, confirmation);
       if (!result.ok) {
         setError(result.error ?? result.summary);
         return;

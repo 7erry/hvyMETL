@@ -74,7 +74,7 @@ import {
   resolveCsvUploadBatchDir,
 } from './csvUpload.js';
 import { hostedStudioUrl, isHostedStudioRequest } from './hosted.js';
-import { createLiveAgentPublicRouter, createLiveAgentStudioRouter } from './liveAgent.js';
+import { createLiveAgentStudioRouter } from './liveAgent.js';
 import { attachLiveAgentWebSocket } from './liveAgentWs.js';
 import { createLiveMongoImportRouter } from './liveMongoRoute.js';
 import {
@@ -117,7 +117,7 @@ import {
   sanitizeExecutionTargetDbForClient,
   writeTenantWorkspace,
 } from './tenant.js';
-import { getWebUiBundleAsset, getWebUiMode, mountWebUi } from './setupWebUi.js';
+import { mountWebUi } from './setupWebUi.js';
 import type { DesignFromModelResult } from '../design/designFromModel.js';
 import {
   enrichHostedMongoHint,
@@ -253,8 +253,99 @@ if (
 ) {
   app.set('trust proxy', 1);
 }
-app.use(cors());
+app.disable('x-powered-by');
+app.use(cors({ origin: studioCorsOrigin }));
+app.use((req, res, next) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('Referrer-Policy', 'no-referrer');
+  if (isHostedStudioRequest(req)) {
+    res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+  }
+  res.setHeader('Content-Security-Policy', contentSecurityPolicy());
+  next();
+});
 app.use(express.json({ limit: '4mb' }));
+
+function studioCorsOrigin(
+  origin: string | undefined,
+  callback: (err: Error | null, allow?: boolean) => void,
+): void {
+  if (!origin) {
+    callback(null, true);
+    return;
+  }
+  if (origin === hostedStudioUrl().replace(/\/+$/, '')) {
+    callback(null, true);
+    return;
+  }
+  try {
+    const url = new URL(origin);
+    const local = (url.hostname === 'localhost' || url.hostname === '127.0.0.1') && url.protocol === 'http:';
+    callback(null, local);
+  } catch {
+    callback(null, false);
+  }
+}
+
+function auth0ConnectOrigin(): string | null {
+  const issuer = process.env.AUTH0_ISSUER_BASE_URL?.trim();
+  if (!issuer) return null;
+  try {
+    return new URL(issuer).origin;
+  } catch {
+    return null;
+  }
+}
+
+/** default-src 'self' plus the Auth0 tenant and the Google hosts the Drive picker loads. */
+function contentSecurityPolicy(): string {
+  const auth0 = auth0ConnectOrigin();
+  const extra = [auth0, 'https://accounts.google.com', 'https://apis.google.com', 'https://www.googleapis.com'].filter(
+    (host): host is string => Boolean(host),
+  );
+  const sources = ["'self'", ...extra].join(' ');
+  const auth0Source = auth0 ? ` ${auth0}` : '';
+  return [
+    `default-src ${sources}`,
+    `script-src 'self' https://accounts.google.com${auth0Source}`,
+    "style-src 'self' 'unsafe-inline'",
+    "img-src 'self' data: blob:",
+    "media-src 'self' blob:",
+    `connect-src ${sources}`,
+    `frame-src https://accounts.google.com https://apis.google.com${auth0Source}`,
+    "font-src 'self' data:",
+  ].join('; ');
+}
+
+function readPackageVersion(): string {
+  try {
+    const pkg = JSON.parse(readFileSync(join(ROOT, 'package.json'), 'utf8')) as { version?: string };
+    return pkg.version ?? 'unknown';
+  } catch {
+    return 'unknown';
+  }
+}
+
+function readReleaseNotesPayload(version: string): {
+  releaseHeading?: string;
+  releaseNotes?: string;
+  releaseNotesSummary?: string;
+} {
+  try {
+    const releaseMarkdown = readFileSync(join(ROOT, 'RELEASE.md'), 'utf8');
+    const latest = parseLatestReleaseSection(releaseMarkdown);
+    const major = majorVersionFromSemver(version);
+    return {
+      releaseHeading: latest?.heading,
+      releaseNotes: latest?.body,
+      releaseNotesSummary:
+        major !== null ? (buildMajorVersionReleaseMarkdown(releaseMarkdown, major) ?? undefined) : undefined,
+    };
+  } catch {
+    return {};
+  }
+}
 
 function persistDesignApiArtifacts(
   result: DesignFromModelResult,
@@ -271,50 +362,17 @@ function persistDesignApiArtifacts(
   };
 }
 
-app.get('/api/health', (req, res) => {
-  const ui = getWebUiMode();
-  let version = 'unknown';
-  try {
-    const pkg = JSON.parse(readFileSync(join(ROOT, 'package.json'), 'utf8')) as { version?: string };
-    version = pkg.version ?? version;
-  } catch {
-    // ignore
-  }
-  let releaseHeading: string | undefined;
-  let releaseNotes: string | undefined;
-  let releaseNotesSummary: string | undefined;
-  try {
-    const releaseMarkdown = readFileSync(join(ROOT, 'RELEASE.md'), 'utf8');
-    const latest = parseLatestReleaseSection(releaseMarkdown);
-    if (latest) {
-      releaseHeading = latest.heading;
-      releaseNotes = latest.body;
-    }
-    const major = majorVersionFromSemver(version);
-    if (major !== null) {
-      releaseNotesSummary = buildMajorVersionReleaseMarkdown(releaseMarkdown, major) ?? undefined;
-    }
-  } catch {
-    // ignore missing RELEASE.md
-  }
-  res.json({
-    ok: true,
-    name: 'hvyMETL',
-    version,
-    releaseHeading,
-    releaseNotes,
-    releaseNotesSummary,
-    cli: 'available',
-    ui,
-    uiHealthy: ui === 'static',
-    uiBundle: getWebUiBundleAsset(ROOT),
-    pid: process.pid,
-    hosted: isHostedStudioRequest(req),
-  });
+app.get('/api/health', (_req, res) => {
+  res.json({ ok: true, name: 'hvyMETL', version: readPackageVersion() });
 });
 
-app.get('/api/auth/config', (_req, res) => {
-  res.json(getPublicAuthConfig());
+app.get('/api/release-notes', requireAuth, (_req, res) => {
+  const version = readPackageVersion();
+  res.json({ ok: true, name: 'hvyMETL', version, ...readReleaseNotesPayload(version) });
+});
+
+app.get('/api/auth/config', (req, res) => {
+  res.json({ ...getPublicAuthConfig(), hosted: isHostedStudioRequest(req) });
 });
 
 app.get('/api/auth/me', requireAuth, (req, res) => {
@@ -372,7 +430,6 @@ app.use(
     },
   }),
 );
-app.use('/api/agent', createLiveAgentPublicRouter());
 app.use('/api/design', ...requireRole(['admin', 'developer']));
 app.use('/api/export', ...requireRole(['admin', 'developer']));
 app.use('/api/repogen', ...requireRole(['admin', 'developer']));

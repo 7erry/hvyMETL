@@ -159,6 +159,9 @@ describe('mongoShellRoutes', () => {
       binaryPath: 'mongosh',
       spawnFn: ((command, args, options) => {
         capturedArgs = args;
+        expect(options?.env?.PATH).toBe(process.env.PATH ?? '');
+        expect(options?.env?.HOME).toBeTruthy();
+        expect(options?.env).not.toHaveProperty('MONGODB_URI');
         const fileFlag = args.indexOf('--file');
         scriptBody = readFileSync(String(args[fileFlag + 1]), 'utf8');
         return fakeSpawnSuccess('hi\n')(command, args, options);
@@ -168,6 +171,7 @@ describe('mongoShellRoutes', () => {
     expect(capturedArgs).toEqual([
       'mongodb://localhost:27017',
       '--quiet',
+      '--norc',
       '--file',
       expect.stringMatching(/hvymetl-mongosh-.*\.js$/),
     ]);

@@ -13,20 +13,38 @@ export type ResolvedPipelineCredentials = {
   csvToAtlasPath?: string;
 };
 
-function isDisallowedMongoHost(hostname: string): boolean {
-  const host = hostname.toLowerCase().replace(/^\[|\]$/g, '');
-  if (!host || host === 'localhost' || host.endsWith('.localhost')) return true;
-  if (host === '::1') return true;
-  if (isIP(host) === 4) {
-    const [a, b] = host.split('.').map((part) => Number(part));
-    if (a === 127 || a === 0) return true;
-    if (a === 169 && b === 254) return true;
+const METADATA_HOSTS = new Set([
+  'metadata.google.internal',
+  'metadata.google.com',
+  'metadata.aws',
+]);
+
+function ipv4Private(host: string): boolean {
+  const parts = host.split('.').map((part) => Number(part));
+  if (parts.length !== 4 || parts.some((part) => !Number.isInteger(part) || part < 0 || part > 255)) {
+    return false;
   }
-  if (isIP(host) === 6 && (host === '::1' || host.startsWith('fe80:'))) return true;
+  const [a, b] = parts;
+  if (a === 10 || a === 127 || a === 0) return true;
+  if (a === 169 && b === 254) return true;
+  if (a === 172 && b >= 16 && b <= 31) return true;
+  if (a === 192 && b === 168) return true;
+  if (a === 100 && b >= 64 && b <= 127) return true;
   return false;
 }
 
-/** Reject request-supplied URIs that point at the studio machine or a link-local address. */
+function isDisallowedMongoHost(hostname: string): boolean {
+  const host = hostname.toLowerCase().replace(/^\[|\]$/g, '');
+  if (!host || host === 'localhost' || host.endsWith('.localhost')) return true;
+  if (METADATA_HOSTS.has(host)) return true;
+  if (isIP(host) === 4 && ipv4Private(host)) return true;
+  if (isIP(host) === 6) {
+    if (host === '::1' || host.startsWith('fe80:') || host.startsWith('fc') || host.startsWith('fd')) return true;
+  }
+  return false;
+}
+
+/** Reject request-supplied URIs that point at the studio machine, a private network, or a cloud metadata host. */
 export function assertRequestMongoUri(uri: string): string {
   const trimmed = uri.trim();
   let hostname = '';

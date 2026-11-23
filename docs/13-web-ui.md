@@ -73,7 +73,7 @@ All six pipeline steps (Knowledge + RAG, profiles, design, ETL, import, codegen)
 
 | Method | Path | Body | Response |
 | --- | --- | --- | --- |
-| `GET` | `/api/health` | — | `{ ok, name }` |
+| `GET` | `/api/health` | — | `{ ok, name, version }` |
 | `GET` | `/api/profiles` | — | Workload presets |
 | `POST` | `/api/profiles/infer` | `{ model }` | Infer workload profile from table names and relationships |
 | `GET` | `/api/dialects` | — | Supported database labels |
@@ -85,8 +85,7 @@ All six pipeline steps (Knowledge + RAG, profiles, design, ETL, import, codegen)
 | `POST` | `/api/schema/import-live` | `{ uri, database? }` | `{ model, ddl, dialect, inferred }` from MongoDB, PostgreSQL, or MySQL. Refused on the hosted studio. Oracle is agent-only. |
 | `POST` | `/api/schema/agent-session` | — | `{ token, expiresAt }` for a 15-minute agent session |
 | `GET` | `/api/schema/agent-result` | `token` | `204` until the agent posts, then the same body as import-live |
-| `GET` | `/api/agent/next` | `token` | `{ id, op: "introspect" }` for `hvymetl agent` |
-| `POST` | `/api/agent/result` | `{ token, model, ddl, dialect }` or `{ token, error }` | Schema from the machine running the agent |
+| `GET` | `/api/agent/v2` | WebSocket `Authorization: Bearer` | Live agent session. The token is not a query parameter. |
 | `POST` | `/api/design` | `{ model, profileId, ddl, cardinalityOverrides?, forceEmbedOverrides? }` | `{ plan, designReport, retrievalStrategy }` |
 | `POST` | `/api/export/migration` | `{ model, profileId, ddl, cardinalityOverrides?, forceEmbedOverrides? }` | Downloads: plan JSON, design report, RAG prompts |
 | `POST` | `/api/export/prompts` | `{ ddl, profileId }` | RAG prompt bundle |

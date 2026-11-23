@@ -42,5 +42,13 @@ describe('resolvePipelineCredentials', () => {
     expect(() => assertRequestMongoUri('mongodb://127.0.0.1:27017')).toThrow(/not allowed/);
     expect(() => assertRequestMongoUri('mongodb://169.254.1.1:27017')).toThrow(/not allowed/);
     expect(() => assertRequestMongoUri('mongodb://[::1]:27017')).toThrow(/not allowed/);
+    expect(() => assertRequestMongoUri('mongodb://10.1.2.3:27017')).toThrow(/not allowed/);
+    expect(() => assertRequestMongoUri('mongodb://192.168.1.9:27017')).toThrow(/not allowed/);
+    expect(() => assertRequestMongoUri('mongodb://172.16.0.4:27017')).toThrow(/not allowed/);
+    expect(() => assertRequestMongoUri('mongodb://100.64.0.5:27017')).toThrow(/not allowed/);
+    expect(() => assertRequestMongoUri('mongodb://metadata.google.internal:27017')).toThrow(/not allowed/);
+    expect(assertRequestMongoUri('mongodb+srv://user@cluster.example.net/db')).toBe(
+      'mongodb+srv://user@cluster.example.net/db',
+    );
   });
 });
