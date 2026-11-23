@@ -21,7 +21,7 @@
       line-height: 1.6;
     }
     main {
-      max-width: 48rem;
+      max-width: 72rem;
       margin: 0 auto;
       padding: 1.5rem 1.25rem 3rem;
     }
@@ -47,14 +47,35 @@
     video {
       display: block;
       width: 100%;
-      margin: 0.35rem 0 1rem;
+      height: auto;
+      margin: 0.35rem 0 0;
       background: #000;
+    }
+    header,
+    main > h2:first-of-type,
+    main > ul:first-of-type {
+      max-width: 45.5rem;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    /* 18rem floor keeps a wide page at three columns and lets a narrower one drop to two, then one. */
+    .tutorials ul {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr));
+      gap: 1.25rem 1.5rem;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+    .tutorials li {
+      min-width: 0;
     }
     .back {
       display: inline-flex;
       align-items: center;
       min-height: 3rem;
       margin-top: 2rem;
+      margin-left: max(0px, calc((100% - 45.5rem) / 2));
       padding: 0.625rem 1.25rem;
       border: 1px solid #00684a;
       border-radius: 8px;
@@ -76,33 +97,35 @@
       <li><a href="https://github.com/7erry/hvyMETL/blob/main/README.md">GitHub README</a></li>
     </ul>
 
-    <h2>Tutorial videos</h2>
-    <ul>
-      <li>
-        ERWin diagram through architecture review
-        <video controls playsinline preload="metadata" src="https://raw.githubusercontent.com/7erry/hvyMETL/main/docs/tutorials/01-erwin-full-migration.mp4"></video>
-      </li>
-      <li>
-        Schema Creator
-        <video controls playsinline preload="metadata" src="https://raw.githubusercontent.com/7erry/hvyMETL/main/docs/tutorials/02-creator.mp4"></video>
-      </li>
-      <li>
-        MongoDB shell
-        <video controls playsinline preload="metadata" src="https://raw.githubusercontent.com/7erry/hvyMETL/main/docs/tutorials/03-shell.mp4"></video>
-      </li>
-      <li>
-        Aggregation builder
-        <video controls playsinline preload="metadata" src="https://raw.githubusercontent.com/7erry/hvyMETL/main/docs/tutorials/04-aggregate.mp4"></video>
-      </li>
-      <li>
-        Visual query
-        <video controls playsinline preload="metadata" src="https://raw.githubusercontent.com/7erry/hvyMETL/main/docs/tutorials/05-query.mp4"></video>
-      </li>
-      <li>
-        Data accessed together gets stored together
-        <video controls playsinline preload="metadata" src="https://raw.githubusercontent.com/7erry/hvyMETL/main/docs/tutorials/06-accessed-together.mp4"></video>
-      </li>
-    </ul>
+    <div class="tutorials">
+      <h2>Tutorial videos</h2>
+      <ul>
+        <li>
+          Data accessed together gets stored together
+          <video controls playsinline preload="metadata" src="https://raw.githubusercontent.com/7erry/hvyMETL/main/docs/tutorials/06-accessed-together.mp4"></video>
+        </li>
+        <li>
+          ERWin diagram through architecture review
+          <video controls playsinline preload="metadata" src="https://raw.githubusercontent.com/7erry/hvyMETL/main/docs/tutorials/01-erwin-full-migration.mp4"></video>
+        </li>
+        <li>
+          Schema Creator
+          <video controls playsinline preload="metadata" src="https://raw.githubusercontent.com/7erry/hvyMETL/main/docs/tutorials/02-creator.mp4"></video>
+        </li>
+        <li>
+          MongoDB shell
+          <video controls playsinline preload="metadata" src="https://raw.githubusercontent.com/7erry/hvyMETL/main/docs/tutorials/03-shell.mp4"></video>
+        </li>
+        <li>
+          Aggregation builder
+          <video controls playsinline preload="metadata" src="https://raw.githubusercontent.com/7erry/hvyMETL/main/docs/tutorials/04-aggregate.mp4"></video>
+        </li>
+        <li>
+          Visual query
+          <video controls playsinline preload="metadata" src="https://raw.githubusercontent.com/7erry/hvyMETL/main/docs/tutorials/05-query.mp4"></video>
+        </li>
+      </ul>
+    </div>
 
     <a class="back" href="/">Back to Migration Studio</a>
   </main>
