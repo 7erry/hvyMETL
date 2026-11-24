@@ -10,6 +10,7 @@ describe('loadHelpPageHtml', () => {
     const html = loadHelpPageHtml(ROOT);
     expect(html).toContain('https://github.com/7erry/hvyMETL/blob/main/README.md');
     const files = [
+      '07-mcp-server-magic.mp4',
       '06-accessed-together.mp4',
       '01-erwin-full-migration.mp4',
       '02-creator.mp4',
